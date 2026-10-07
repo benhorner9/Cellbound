@@ -4,6 +4,7 @@ const $=s=>document.querySelector(s);
 let Game=null,db=null,timer=null,busy=false,lastRequired=null,pendingInfo=null;
 const currentBuild=()=>String(window.CELLBOUND_BUILD||'development');
 const currentBuildNumber=()=>Number(window.CELLBOUND_BUILD_NUMBER||0)||0;
+const releaseGateEnabled=()=>/^(?:www\.)?playcellbound\.com$/i.test(String(location.hostname||''));
 
 function overlay(){
   let el=$('#cellboundUpdateGate');
@@ -31,13 +32,21 @@ function playerBusy(){
     const el=$(selector);
     return Boolean(el&&!el.hidden)
   };
+  const activeDungeon=selector=>{
+    const el=$(selector);
+    if(!el||el.hidden)return false;
+    // Tactical briefings are safe to refresh. Treat only an active dungeon
+    // viewer/results screen as busy so a stuck ENTERING briefing cannot trap
+    // staging on an older JavaScript build.
+    return !el.querySelector('.cb2d-brief')
+  };
   return Boolean(
-    visible('#cb2dBackdrop')||
-    visible('#hs2dBackdrop')||
-    visible('#cc2dBackdrop')||
-    visible('#bs2dBackdrop')||
-    visible('#fracturedAgesBackdrop')||
-    visible('#twelveBelowBackdrop')||
+    activeDungeon('#cb2dBackdrop')||
+    activeDungeon('#hs2dBackdrop')||
+    activeDungeon('#cc2dBackdrop')||
+    activeDungeon('#bs2dBackdrop')||
+    activeDungeon('#fracturedAgesBackdrop')||
+    activeDungeon('#twelveBelowBackdrop')||
     visible('#worldBoss2dBackdrop')||
     visible('#attemptModal')||
     visible('#evoExpeditionBackdrop')||
@@ -80,6 +89,41 @@ function flushPending(){
   if(!pendingInfo||playerBusy())return;
   const info=pendingInfo;pendingInfo=null;showGate(info);
 }
+const DEV_BUILD_RELOAD_KEY='cellbound_dev_build_reload_v1';
+function parseDevBuild(html){
+  const source=String(html||'');
+  const build=(source.match(/window\.CELLBOUND_BUILD=['"]([^'"]+)['"]/)||[])[1]||'';
+  const number=Number((source.match(/window\.CELLBOUND_BUILD_NUMBER=['"]([^'"]+)['"]/)||[])[1]||0)||0;
+  return{build:String(build).trim(),number}
+}
+async function checkDevBuild(){
+  if(busy||document.visibilityState==='hidden'||playerBusy())return null;
+  const local=currentBuild(),localNumber=currentBuildNumber();
+  if(!local||local==='development'||local.includes('__CELLBOUND_BUILD__'))return null;
+  busy=true;
+  try{
+    const url=new URL('./guild.html',location.href);
+    url.searchParams.set('devcheck',Date.now().toString());
+    const response=await fetch(url.href,{cache:'no-store',credentials:'same-origin'});
+    if(!response.ok)return null;
+    const remote=parseDevBuild(await response.text());
+    if(!remote.build||remote.build==='development'||remote.build.includes('__CELLBOUND_BUILD__'))return null;
+    const newer=remote.number>0&&localNumber>0?remote.number>localNumber:remote.build!==local;
+    if(!newer)return null;
+    const stamp=remote.build+':'+remote.number;
+    if(sessionStorage.getItem(DEV_BUILD_RELOAD_KEY)===stamp)return remote;
+    sessionStorage.setItem(DEV_BUILD_RELOAD_KEY,stamp);
+    try{await Promise.race([Game?.persistState?.()||Promise.resolve(),new Promise(r=>setTimeout(r,900))])}catch{}
+    const next=new URL('./guild.html',location.href);
+    next.searchParams.set('devbuild',remote.build);
+    next.searchParams.set('t',Date.now().toString());
+    location.replace(next.href);
+    return remote
+  }catch(error){
+    console.warn('Dev build freshness check failed',error);
+    return null
+  }finally{busy=false}
+}
 async function check(){
   if(busy||!db)return;busy=true;
   try{
@@ -105,6 +149,26 @@ async function check(){
 async function init(){
   Game=window.CellboundGame;
   if(!Game?.ready){setTimeout(init,120);return}
+  // Production follows the published release gate. Dev/staging instead watches
+  // its own deployed guild.html build id and performs at most one reload per new build.
+  if(!releaseGateEnabled()){
+    hideGate();
+    window.CellboundRelease={
+      currentBuild:currentBuild(),
+      requiredBuild:null,
+      currentBuildNumber:currentBuildNumber(),
+      requiredBuildNumber:null,
+      message:null,
+      publishedAt:null,
+      channel:'development',
+      refresh:checkDevBuild
+    };
+    setTimeout(checkDevBuild,1800);
+    timer=setInterval(checkDevBuild,12000);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkDevBuild()});
+    window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
+    return;
+  }
   db=Game.getSupabase?.();
   if(!db)return;
   await check();

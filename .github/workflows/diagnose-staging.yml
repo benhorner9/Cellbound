@@ -1,0 +1,58 @@
+name: Diagnose Cellbound Staging Host
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect staging FTP layout
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.STAGING_FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.STAGING_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.STAGING_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.STAGING_FTP_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${FTP_PORT:-21}"
+          for path in "/" "/CB/" "/cb/"; do
+            echo "===== $path ====="
+            curl --insecure --silent --show-error --ssl-reqd               --user "$FTP_USERNAME:$FTP_PASSWORD"               "ftp://$FTP_SERVER:$PORT$path" --list-only | sed -n '1,80p' || true
+            echo
+          done
+          for path in "/index.html" "/CB/index.html" "/cb/index.html"; do
+            echo "===== $path marker ====="
+            curl --insecure --silent --show-error --ssl-reqd               --user "$FTP_USERNAME:$FTP_PASSWORD"               "ftp://$FTP_SERVER:$PORT$path" 2>/dev/null |               grep -Eio 'Cellbound — Coming Soon|Return to your guild|Coming Soon' | head -5 || true
+            echo
+          done
+          echo "===== HTTPS root headers ====="
+          curl --silent --show-error --location --max-redirs 10 --dump-header - --output /tmp/cb-root.html "https://cb.athleticsmanagergame.com/" | sed -n '1,120p' || true
+          echo "===== HTTPS root markers ====="
+          grep -Eio 'Cellbound — Coming Soon|Return to your guild|Coming Soon|Guild Command|REPORT BUG / REQUEST' /tmp/cb-root.html | head -20 || true
+          echo "===== HTTPS root size/head ====="
+          wc -c /tmp/cb-root.html || true
+          sed -n '1,100p' /tmp/cb-root.html || true
+          echo "===== HTTPS root refresh/redirect hooks ====="
+          grep -Ein 'http-equiv|refresh|location\.|location=|window\.location|replace\(|reload\(|setTimeout|setInterval|iframe|canonical' /tmp/cb-root.html | head -80 || true
+          echo "===== HTTPS guild headers ====="
+          curl --silent --show-error --location --max-redirs 10 --dump-header - --output /tmp/cb-guild.html "https://cb.athleticsmanagergame.com/guild.html" | sed -n '1,120p' || true
+          echo "===== HTTPS guild markers ====="
+          grep -Eio 'Beta Support|REPORT BUG / REQUEST|Guild Command|Coming Soon' /tmp/cb-guild.html | head -20 || true
+          echo "===== HTTPS guild size/head ====="
+          wc -c /tmp/cb-guild.html || true
+          sed -n '1,80p' /tmp/cb-guild.html || true
+          echo "===== HTTPS guild refresh/redirect hooks ====="
+          grep -Ein 'http-equiv|refresh|location\.|location=|window\.location|replace\(|reload\(|setTimeout|setInterval|iframe|canonical' /tmp/cb-guild.html | head -80 || true
+          echo "===== Combat Reborn versions by FTP path ====="
+          for path in "/combat-reborn-v1.js" "/cb/combat-reborn-v1.js"; do
+            printf '%s: ' "$path"
+            curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT$path" 2>/dev/null | grep -Eo "const VERSION='[^']+'" | head -1 || true
+          done
+          echo "===== HTTPS Combat Reborn version ====="
+          curl --silent --show-error --location --max-redirs 10 "https://cb.athleticsmanagergame.com/combat-reborn-v1.js?diag=$GITHUB_SHA" | grep -Eo "const VERSION='[^']+'" | head -1 || true

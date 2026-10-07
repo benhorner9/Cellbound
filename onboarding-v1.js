@@ -32,12 +32,14 @@ const SLOTS=[
 ];
 const ROLE_LABEL={tank:'Tank',healer:'Healer',dps:'Damage'};
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
-let draft=[],activeSlot=0,builderStep='race',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
+let draft=[],activeSlot=0,builderStep='form',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
 const raceById=id=>RACES.find(r=>r.id===id)||RACES[0];
 const portraitHTML=(c,size='md')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+esc(c?.portrait||initials(c?.name))+'</b></span>';
+const forgeAppearance=(race,gender=0,prior=null)=>window.CellboundCharacterForge?.appearance?.(race,gender,prior)||{...(prior||{}),race,gender:Number(gender)===1?1:0};
+const forgeAvatar=c=>'<img class="cf-party-avatar" src="'+window.CellboundCharacterForge.asset(c.race,c.appearance?.gender||0)+'" alt="" draggable="false">';
 
 function roleOptions(role){
   const out=[];
@@ -64,7 +66,7 @@ function defaultDraft(){
     const race=RACES.find(r=>r.roles.includes(slot.role))||RACES[0];
     const option=roleOptions(slot.role)[0];
         const name=randomName(race.id,rows.map(x=>x.name));
-    rows.push({slot:slot.key,role:slot.role,race:race.id,klass:option?.klass||'Warrior',spec:option?.spec||'Arms',name,appearance:CP?.randomAppearance?.(race.id)||{race:race.id}});
+    rows.push({slot:slot.key,role:slot.role,race:race.id,klass:option?.klass||'Warrior',spec:option?.spec||'Arms',name,appearance:forgeAppearance(race.id,0)});
   });
   return rows;
 }
@@ -74,7 +76,7 @@ function restoreDraft(){
     draft=saved.map((d,i)=>{
       const slot=SLOTS[i],race=RACES.some(r=>r.id===d.race&&r.roles.includes(slot.role))?d.race:(RACES.find(r=>r.roles.includes(slot.role))?.id||'Veyren');
       const opts=roleOptions(slot.role),valid=opts.find(o=>o.klass===d.klass)||opts[0];
-      const name=String(d.name||randomName(race)).slice(0,24);return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name,appearance:CP?.normalizeAppearance?.(d.appearance,name,race)||d.appearance||{race}};
+      const name=String(d.name||randomName(race)).slice(0,24);return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name,appearance:forgeAppearance(race,d.appearance?.gender,d.appearance)};
     });
   }else draft=defaultDraft();
 }
@@ -143,50 +145,18 @@ function hide(){
 
 function renderPartyBuilder(){
   show();restoreDraft();
-  const d=draft[activeSlot],slot=SLOTS[activeSlot],availableRaces=RACES;
-  const classes=roleOptions(slot.role);
-  const steps=['race','class','appearance','confirm'];
-  if(!steps.includes(builderStep))builderStep='race';
-  const stepIndex=steps.indexOf(builderStep);
-  const allValid=draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
-  d.appearance=CP?.normalizeAppearance?.(d.appearance,d.name||d.race,d.race)||d.appearance||{race:d.race};
-
-  const stepNav=steps.map((step,i)=>{
-    const labels={race:'Race',class:'Class',appearance:'Appearance',confirm:'Confirm'};
-    const unlocked=i<=stepIndex||(step==='class'&&d.race)||(step==='appearance'&&d.klass)||(step==='confirm'&&d.appearance);
-    return '<button class="creator-step '+(step===builderStep?'active':'')+' '+(i<stepIndex?'done':'')+'" data-builder-step="'+step+'" '+(unlocked?'':'disabled')+'><i>'+(i+1)+'</i><span>'+labels[step]+'</span></button>';
-  }).join('');
-
-  const portrait=portraitHTML({name:d.name,race:d.race,class:d.klass,appearance:d.appearance},'lg');
-  const hero='<aside class="creator-hero">'+portrait+'<small>'+ROLE_LABEL[d.role]+' '+(slot.number||'')+'</small><h2>'+esc(d.name||'Unnamed')+'</h2><p>'+raceById(d.race).icon+' '+esc(d.race)+' · '+esc(d.klass)+'</p><div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div></aside>';
-
-  let panel='';
-  if(builderStep==='race'){
-    panel='<section class="creator-panel"><header><small>STEP 1 OF 4</small><h2>Choose a race</h2><p>Choose the ancestry and passive that fits this adventurer.</p></header><div class="race-grid creator-choice-grid">'+availableRaces.map(r=>{const identity=window.CellboundIdentities?.getRace?.(r.id);return '<button class="race-card '+(d.race===r.id?'active':'')+'" data-race="'+r.id+'"><strong>'+r.icon+'</strong><div><b>'+r.id+'</b><small>'+r.trait+'</small><p>'+esc(identity?.strength||r.lore)+'</p></div></button>'}).join('')+'</div><footer><span></span><button class="on-primary" data-next-step="class">CONTINUE TO CLASS →</button></footer></section>';
-  }else if(builderStep==='class'){
-    panel='<section class="creator-panel"><header><small>STEP 2 OF 4</small><h2>Choose a class</h2><p>Choose the class for this '+ROLE_LABEL[slot.role].toLowerCase()+'. Talent paths are chosen later in the game.</p></header><div class="class-grid creator-choice-grid">'+classes.map(o=>{const ci=window.CellboundIdentities?.getSpec?.(o.klass,o.spec);return '<button class="class-choice '+(d.klass===o.klass?'active':'')+'" data-class="'+o.klass+'" data-spec="'+o.spec+'" style="--class-glow:'+o.glow+'"><strong>'+o.icon+'</strong><div><b>'+o.klass+'</b><small>'+esc(ROLE_LABEL[slot.role])+' · TALENTS CHOSEN IN GAME</small><p>'+esc(ci?.strength||'Reliable in this role.')+'</p></div></button>'}).join('')+'</div><footer><button class="creator-back" data-prev-step="race"><span class="creator-back-arrow">←</span><span>BACK TO RACE</span></button><button class="on-primary" data-next-step="appearance">CONTINUE TO APPEARANCE →</button></footer></section>';
-  }else if(builderStep==='appearance'){
-    const appearanceEditor=CP?.editorHTML?.(d.appearance,{characterClass:d.klass,name:d.name,race:d.race})||'';
-    panel='<section class="creator-panel creator-appearance"><header><small>STEP 3 OF 4</small><h2>Appearance</h2><p>Shape the face you will recognise throughout Cellbound.</p></header><div class="creator-editor">'+appearanceEditor+'</div><footer><button class="creator-back" data-prev-step="class"><span class="creator-back-arrow">←</span><span>BACK TO CLASS</span></button><button class="on-primary" data-next-step="confirm">CONTINUE TO CONFIRM →</button></footer></section>';
-  }else{
-    const formation=draft.map((x,i)=>'<button class="creator-confirm-member '+(i===activeSlot?'active':'')+'" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('');
-    panel='<section class="creator-panel creator-confirm"><header><small>STEP 4 OF 4</small><h2>Confirm your party</h2><p>Name this adventurer, then check all five before entering Zeltira.</p></header><div class="name-builder creator-name"><input id="onboardName" maxlength="24" value="'+esc(d.name)+'" autocomplete="off" placeholder="Adventurer name"><button id="randomiseName">RANDOMISE</button></div><div class="creator-confirm-grid">'+formation+'</div><footer><button class="creator-back" data-prev-step="appearance"><span class="creator-back-arrow">←</span><span>BACK TO APPEARANCE</span></button><button id="confirmParty" class="on-primary" '+(allValid?'':'disabled')+'>CONFIRM PARTY & ENTER ZELTIRA →</button></footer><p class="builder-hint">'+(allValid?'Your charter is ready.':'All five characters need unique names of at least 2 characters.')+'</p></section>';
-  }
-
-  const body='<div class="character-creator"><nav class="creator-steps">'+stepNav+'</nav><div class="creator-stage">'+hero+'<main>'+panel+'</main></div></div>';
-  const root=ensureRoot();root.innerHTML=chrome(body,'party-builder');
-
-  root.querySelectorAll('[data-builder-step]').forEach(btn=>btn.onclick=()=>{if(!btn.disabled){builderStep=btn.dataset.builderStep;renderPartyBuilder()}});
-  root.querySelectorAll('[data-next-step]').forEach(btn=>btn.onclick=()=>{builderStep=btn.dataset.nextStep;renderPartyBuilder()});
-  root.querySelectorAll('[data-prev-step]').forEach(btn=>btn.onclick=()=>{builderStep=btn.dataset.prevStep;renderPartyBuilder()});
-  root.querySelectorAll('[data-slot]').forEach(btn=>btn.onclick=()=>{activeSlot=Number(btn.dataset.slot);builderStep='race';renderPartyBuilder()});
-  root.querySelectorAll('[data-race]').forEach(btn=>btn.onclick=()=>{d.race=btn.dataset.race;d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));d.appearance=CP?.randomAppearance?.(d.race)||{race:d.race};saveDraft();renderPartyBuilder()});
-  root.querySelectorAll('[data-class]').forEach(btn=>btn.onclick=()=>{d.klass=btn.dataset.class;d.spec=btn.dataset.spec;saveDraft();renderPartyBuilder()});
-  const input=$('#onboardName');
-  if(input)input.oninput=e=>{d.name=e.target.value;saveDraft();const btn=$('#confirmParty');if(btn)btn.disabled=!(draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5)};
-  $('#randomiseName')?.addEventListener('click',()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));saveDraft();renderPartyBuilder()});
-  if(builderStep==='appearance')CP?.bindEditor?.(root,d.appearance,()=>{saveDraft();renderPartyBuilder()},{characterClass:d.klass,name:d.name,race:d.race});
-  $('#confirmParty')?.addEventListener('click',createParty);
+  const d=draft[activeSlot],slot=SLOTS[activeSlot];
+  const valid=()=>draft.every(x=>x.name.trim().length>=2&&x.name.trim().length<=24)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
+  const root=ensureRoot();root.innerHTML=chrome('<div data-creation-mount></div>','party-builder');
+  window.CellboundCharacterForge.render({mount:root.querySelector('[data-creation-mount]'),draft:d,step:builderStep,
+    races:RACES,classes:roleOptions(slot.role),title:'Build your founding party',confirmTitle:'Confirm your party',confirmLabel:'CONFIRM PARTY & ENTER ZELTIRA →',
+    partyHTML:'<div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+forgeAvatar(x)+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div>',
+    confirmHTML:'<div class="creator-confirm-grid">'+draft.map((x,i)=>'<button class="creator-confirm-member" data-slot="'+i+'">'+forgeAvatar(x)+'<span><b>'+esc(x.name)+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('')+'</div>',
+    hint:valid()?'Your charter is ready.':'All five characters need unique names of at least 2 characters.',valid:valid(),isValid:valid,
+    onStep:step=>{builderStep=step;renderPartyBuilder()},onSlot:i=>{activeSlot=i;builderStep='form';renderPartyBuilder()},
+    onChange:()=>{saveDraft();renderPartyBuilder()},onName:()=>saveDraft(),
+    onRandomName:()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name))},onConfirm:createParty
+  });
 }
 function emptyEquipment(){
   return{Head:null,Chest:null,Weapon:null,Shoulders:null,Hands:null,Waist:null,Legs:null,Feet:null,OffHand:null,Ring1:null,Ring2:null,Trinket1:null,Trinket2:null,Relic:null};
@@ -233,7 +203,7 @@ async function createParty(){
   s.renown=0;s.gold=250;s.bank=[];s.materials={};s.consumables=[];s.recipeScrolls=[];s.discoveredRecipes=[];s.tradeInbox=[];s.collectionHistory=[];s.reports=[];s.bossKills={ashwarden:false,embermaw:false,vaultheart:false};s.progression={ashenVaultUnlocked:false};s.questSystem=null;
   s.activity=['Your first party has been formed.','The road to Zeltira is open.'];
   s.onboarding={version:3,complete:false,stage:'zeltira-arrival',zone:'zeltira',startedAt:s.onboarding?.startedAt||new Date().toISOString(),partyCreatedAt:new Date().toISOString(),firstExpeditionClues:[]};
-  Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);render();
+  Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);roster.forEach(ch=>window.CellboundAnalytics?.characterCreated?.(ch,'onboarding'));render();
   window.CellboundFX?.story?.('The Gate at Dusk','Five names are on the charter. Zeltira is waiting.',{eyebrow:'WELCOME TO CELLBOUND',tone:'story',duration:1600,particles:true});
 }
 
@@ -994,36 +964,36 @@ function tdRenderCombatEvent(e,telegraphs){
     case'COMBAT_END':tdGlobalCastClear();tdFeed(e.result==='victory'?'Encounter clear.':'The Pathfinder ward pulls the party clear.');break;
   }
 }
-async function tdPlayCombat(result,my){
-  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0)),telegraphs={};
-  if(!events.length)return result?.outcome==='victory';
-  return await new Promise(resolve=>{
-    let index=0,simTime=0,wallAnchor=Date.now(),finished=false,raf=0;
-    const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
-    const frame=()=>{
-      if(finished)return;
-      if(my!==tutorialToken){finish(false);return}
-      simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor));
-      const frameStarted=performance.now();let handled=0;
-      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
-        const event=events[index++];handled++;
-        try{tdRenderCombatEvent(event,telegraphs)}
-        catch(error){console.warn('First Expedition combat visual recovered',event?.type,event?.ability,error)}
-      }
-      if(index>=events.length){finish(result?.outcome==='victory');return}
-      raf=requestAnimationFrame(frame)
-    };
-    raf=requestAnimationFrame(frame)
-  })
+async function tdPlayCombat(session,result,my){
+ const telegraphs={};if(!session?.advance)return false;
+ const renderEvents=events=>{for(const event of events||[]){try{tdRenderCombatEvent(event,telegraphs)}catch(error){console.warn('First Expedition live combat visual recovered',event?.type,event?.ability,error)}}};
+ renderEvents(session.drainEvents?.()||[]);
+ return await new Promise(resolve=>{
+  let finished=false,raf=0,lastWall=performance.now();
+  const finish=(value,finalResult=null)=>{
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+   const final=finalResult||session.snapshot?.()||result;if(final)try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}
+   resolve(value)
+  };
+  const frame=now=>{
+   if(finished)return;if(my!==tutorialToken){finish(false);return}
+   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   const delta=Math.max(0,Math.min(250,now-lastWall));lastWall=now;
+   const step=session.advance(delta);if(step.events?.length)renderEvents(step.events);
+   if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
+   raf=requestAnimationFrame(frame)
+  };
+  raf=requestAnimationFrame(frame)
+ })
 }
 async function fightTdPack(encounter,my){
   spawnTdEnemies(encounter);await sleep(350);
-  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+  const C=window.CellboundCombatStandard;if(!C?.createLiveSession)throw new Error('Real-time Combat Reborn standard gateway unavailable');
   const roster=state().roster;
   roster.forEach(c=>tdSetPartyHpByEvent(c,100));
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
   if(tutorialCombatStats){tutorialCombatStats.threat=Object.fromEntries(roster.map(c=>[c.id,0]));tutorialCombatStats.aggro=null;tutorialCombatStats.currentEnemy=encounter.name;tdRenderMeters()}
-  const result=C.simulate({
+  const liveOptions={
     party:combatParty,
     encounter:{
       id:encounter.id,title:encounter.name,kind:encounter.combatKind||(encounter.boss?'boss':'trash'),
@@ -1032,8 +1002,8 @@ async function fightTdPack(encounter,my){
     },
     tactics:{interruptPriority:'high',addPriority:'immediate',defensiveUsage:'aggressive',pullStyle:'safe',movementDiscipline:'safety'},
     seed:['zeltira-first-expedition',my,encounter.id].join(':')
-  },{zone:'zeltira-first-expedition'});
-  const won=await tdPlayCombat(result,my);
+  },liveMeta={zone:'zeltira-first-expedition'},session=C.createLiveSession(liveOptions,liveMeta),result=session.snapshot();
+  const won=await tdPlayCombat(session,result,my);
   if(!won){
     tdFeed('The Pathfinder ward pulls the five back from the brink. Elara resets the approach.');
     return false
@@ -1109,7 +1079,9 @@ async function learnTutorialProfession(){
   if(!c||!P.PROFESSIONS[name])return;
   c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];c.professions[0]={name,level:1,xp:0};
   s.onboarding.stage='craft';s.activity.push(c.name+' learned '+name+' in Zeltira.');
-  Game.save();await Game.persistState();render();
+  Game.save();await Game.persistState();
+  window.CellboundAnalytics?.track?.('profession_learned',{character_id:c.id,class:c.class,race:c.race,profession:name,source:'onboarding'},{key:'profession_learned:'+c.id+':'+name});
+  render();
 }
 function recipeInputs(recipe){
   return Object.entries(recipe.inputs).map(([key,q])=>{
@@ -1143,6 +1115,7 @@ async function craftTutorialItem(){
   prof.xp=(Number(prof.xp)||0)+(recipe.xp||0);
   s.onboarding.craftedItem=out.name;s.onboarding.craftedKey=out.key;s.onboarding.stage='profession-use';s.onboarding.professionComplete=true;
   s.activity.push(c.name+' crafted '+out.name+' — a profession preparation item is ready to use.');
+  window.CellboundAnalytics?.track?.('craft_completed',{character_id:c.id,class:c.class,profession:prof.name,recipe_id:recipe.id,recipe_name:recipe.name,quantity:1,output_category:out.category||'',source:'onboarding'});
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_stage:'tutorial_complete',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   render();

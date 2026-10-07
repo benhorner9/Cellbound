@@ -115,7 +115,7 @@ function renderCard(){
  const root=$('#twelveBelowMount');if(!root||!Game?.ready)return;
  const e=eventState(),gate=partyReady(),left=attemptsLeft(),best=e.bestKills||0;
  root.innerHTML='<article class="tb-world-card">'+
-  '<div class="tb-world-art has-key-art"><img class="tb-world-key-art" src="./assets/world/twelve-below-key-art.webp" alt="" aria-hidden="true" decoding="async" loading="eager"><span>ANCIENT BURIAL GROUND</span><b>THE TWELVE BELOW</b></div>'+
+  '<div class="tb-world-art has-key-art"><img class="tb-world-key-art" src="./assets/world/twelve-below-key-art.webp?v=2" alt="" aria-hidden="true" decoding="async" loading="eager"><span>ANCIENT BURIAL GROUND</span><b>THE TWELVE BELOW</b></div>'+
   '<div class="tb-world-copy"><div class="tb-world-kicker"><span>PRIVATE WORLD EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Twelve Below</h3><p>One tomb opens immediately. Every 20 seconds another vice rises. Kill quickly or the battlefield fills with bosses.</p>'+
   '<div class="tb-world-stats"><span><small>ATTEMPTS TODAY</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+best+' / 12</b></span><span><small>ENTRY / RECOMMENDED</small><b>'+TWELVE_BALANCE.minimumItemLevel+' / '+TWELVE_BALANCE.baseRecommendedItemLevel+'+</b></span><span><small>CHASE REWARD</small><b>T4 RELICS · ILVL 42</b></span></div>'+
   '<div class="tb-world-actions"><button data-tb-open '+(!gate.ok||left<=0?'disabled':'')+'>ENTER THE SEPULCHRE →</button><small>'+(left<=0?'Daily attempts exhausted.':esc(gate.reason))+'</small></div></div></article>';
@@ -258,19 +258,114 @@ function applyRewards(result){
  return{band,gold,renown,shards,relic}
 }
 
+function twelveLiveTotals(final){
+ const s=final?.summary||{},players=s.players||[],map={};
+ players.forEach(p=>{map[p.id]={id:p.id,name:p.name,class:p.class,role:p.role,damage:Number(p.damage)||0,healing:Number(p.healing)||0,damageTaken:Number(p.damageTaken)||0,deaths:Number(p.deaths)||0}});
+ return{
+  damage:Number(s.totalDamage)||0,healing:Number(s.totalHealing)||0,
+  avoidable:players.reduce((n,p)=>n+(Number(p.avoidableDamage)||0),0),
+  mistakes:Number(s.mistakes?.total)||0,deaths:Number(s.deaths)||0,
+  interrupts:Number(s.interrupts?.success)||0,interruptAttempts:Number(s.interrupts?.attempts)||0,players:map
+ }
+}
+function twelveLiveResult(final,outcome){
+ const snapshot=final||run?.liveSession?.snapshot?.()||{},defeated=[...(run?.defeated||[])],active=[...(run?.activeBosses||[])];
+ return{
+  outcome:outcome||snapshot.outcome||'overrun',kills:defeated.length,defeated,aliveBosses:active.map(id=>bossDef(id)).filter(Boolean),
+  timeline:snapshot.events||[],segments:[snapshot],endMs:Number(snapshot.durationMs)||Number(run?.elapsed)||0,
+  totals:twelveLiveTotals(snapshot),party:party(),partyIlvl:Number(Game.partyItemLevel?.())||0,finalPlayers:snapshot.finalState?.players||[]
+ }
+}
+function tbSpawnLiveBoss(session,index){
+ const b=BOSSES[index];if(!b||!session)return false;
+ const id='tb-'+b.id,level=TWELVE_BALANCE.baseBossLevel+Math.floor(index/3),aliveCount=Math.max(1,(Number(run?.activeBosses?.size)||0)+1);
+ session.signal('TOMB_OPEN',{source:id,target:id,ability:b.name,result:'opened',payload:{bossId:b.id,name:b.name,index,vice:b.vice,rune:b.rune}});
+ const spawned=session.spawnEnemy({
+  name:b.name,classification:'boss',absoluteHealth:true,maxHealth:Math.round(b.health*TWELVE_BALANCE.bossHealthScale),level,
+  combatBehaviour:'bruiser',priority:2
+ },{
+  id,mechanics:b.mechanics||[],position:{x:82,y:24+(index%5)*13},
+  scaling:{enemyDamage:(.46+Math.min(.17,index*.013))*TWELVE_BALANCE.pressureScale}
+ });
+ session.setMechanicInterval(Math.max(2400,4300-aliveCount*180));
+ return !!spawned?.ok
+}
+function tbIssueCommand(type,button){
+ const session=run?.liveSession;if(!session?.command)return;
+ const response=session.command(type,{});
+ if(!response?.ok){feed(response?.reason==='cooldown'?'Commander call recovering.':'That command is not available right now.','danger');return}
+ button?.classList.add('active');setTimeout(()=>button?.classList.remove('active'),320);
+ window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-tb-command]','tbCommand');
+ feed('Commander: '+String(type||'command').replace(/-/g,' ')+'.','good')
+}
+async function playLiveRun(session){
+ const token=++playToken,deadline=(BOSSES.length+4)*SPAWN_MS,nextBossAt=i=>i*SPAWN_MS;
+ let nextSpawn=0,finished=false,raf=0,lastWall=performance.now();
+ const finish=async(outcome,finalResult=null)=>{
+  if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);stopClock();
+  const final=finalResult||session.snapshot?.(),result=twelveLiveResult(final,outcome);
+  run.result=result;run.liveSession=null;
+  if(!run.rewardsApplied){run.rewards=applyRewards(result);run.rewardsApplied=true}
+  showResults()
+ };
+ const renderEvents=events=>{
+  for(const event of events||[]){
+   try{handleEvent(event)}catch(error){console.warn('Twelve Below live combat visual recovered',event?.type,event?.ability,error)}
+  }
+ };
+ const openDueBosses=()=>{
+  while(nextSpawn<BOSSES.length&&session.timeMs>=nextBossAt(nextSpawn)){
+   tbSpawnLiveBoss(session,nextSpawn);nextSpawn++
+  }
+ };
+ openDueBosses();renderEvents(session.drainEvents?.()||[]);
+ return await new Promise(resolve=>{
+  const end=value=>{Promise.resolve(value).finally(resolve)};
+  const frame=now=>{
+   if(finished)return;
+   if(token!==playToken||!run){session.stop('overrun');finished=true;resolve();return}
+   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(1,Number(playSpeed)||1);lastWall=now;
+   const step=session.advance(delta);run.elapsed=Number(step.timeMs)||run.elapsed||0;window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-tb-command]','tbCommand');
+   if(step.events?.length)renderEvents(step.events);
+   openDueBosses();const spawnedEvents=session.drainEvents?.()||[];if(spawnedEvents.length)renderEvents(spawnedEvents);
+   const countdown=$('#tbCountdown');
+   if(countdown){
+    if(nextSpawn>=BOSSES.length)countdown.textContent='ALL TOMBS OPEN';
+    else countdown.textContent=formatTime(Math.max(0,nextBossAt(nextSpawn)-session.timeMs))
+   }
+   if(step.finished){end(finish(step.result?.outcome||'defeat',step.result));return}
+   if(run.defeated.size>=BOSSES.length){const final=session.stop('victory');renderEvents(session.drainEvents?.()||[]);end(finish('victory',final));return}
+   if(session.timeMs>=deadline){const final=session.stop('overrun');renderEvents(session.drainEvents?.()||[]);end(finish('overrun',final));return}
+   raf=requestAnimationFrame(frame)
+  };
+  raf=requestAnimationFrame(frame)
+ })
+}
 function startRun(){
  const gate=partyReady();if(!gate.ok||attemptsLeft()<=0)return;
  const root=ensureBackdrop(),btn=root.querySelector('[data-tb-start]');if(btn){btn.disabled=true;btn.textContent='OPENING THE FIRST TOMB…'}
  const e=eventState();e.attemptsUsed++;Game.save?.();persistQuietly();
- let result;
- try{result=simulateRun()}catch(error){
-  console.error(error);e.attemptsUsed=Math.max(0,e.attemptsUsed-1);Game.save?.();persistQuietly();
-  if(btn){btn.disabled=false;btn.textContent='BEGIN SURVIVAL →'}
-  alert(error.message||'The burial ground could not be entered.');openBriefing();return
+ const Combat=window.CellboundCombatStandard;
+ if(!Combat?.createLiveSession){
+  e.attemptsUsed=Math.max(0,e.attemptsUsed-1);Game.save?.();persistQuietly();
+  if(btn){btn.disabled=false;btn.textContent='BEGIN SURVIVAL →'}alert('The real-time combat engine is unavailable.');return
  }
- run={result,rewards:null,rewardsApplied:false,damage:{},healing:{},threat:{},resources:Object.fromEntries(party().map(c=>['p-'+c.id,tbInitialResource(c)])),activeBosses:new Set(),defeated:new Set(),elapsed:0};
+ const analyticsId=globalThis.crypto?.randomUUID?.()||('tb-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
+ const liveParty=party().map(c=>({...c,_combatItemLevel:Game.characterItemLevel(c)}));
+ const encounter={
+  id:'twelve-below-live',title:'The Twelve Below',kind:'world-boss',level:TWELVE_BALANCE.baseBossLevel,
+  recommendedItemLevel:TWELVE_BALANCE.baseRecommendedItemLevel,enemies:[],mechanics:[],suppressAutoVictory:true,
+  mechanicIntervalMs:4300,scaling:{enemyHealth:1,enemyDamage:.46*TWELVE_BALANCE.pressureScale}
+ };
+ const session=Combat.createLiveSession({
+  party:liveParty,encounter,tactics:{interruptPriority:'high',addPriority:'priority',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},
+  seed:'twelve-live:'+todayKey()+':'+e.attemptsUsed,maxDurationMs:(BOSSES.length+4)*SPAWN_MS+5000
+ },{zone:'twelve-below'});
+ run={analyticsId,result:null,rewards:null,rewardsApplied:false,damage:{},healing:{},threat:{},resources:Object.fromEntries(party().map(c=>['p-'+c.id,tbInitialResource(c)])),activeBosses:new Set(),defeated:new Set(),elapsed:0,liveSession:session};
+ window.CellboundAnalytics?.track?.('activity_started',{activity_id:'twelve-below',activity_name:'The Twelve Below',run_id:analyticsId,party_item_level:Number(Game.partyItemLevel?.())||0},{key:'activity_started:'+analyticsId});
  renderLive();window.CellboundFX?.story?.('The Sepulchre of Twelve','One tomb opens now. Another follows every twenty seconds.',{eyebrow:'PRIVATE WORLD EVENT',tone:'danger',duration:1450});
- requestAnimationFrame(()=>playTimeline(result.timeline))
+ playLiveRun(session).catch(error=>{console.error('Twelve Below live runtime',error);if(run){const final=session.stop('defeat');run.result=twelveLiveResult(final,'defeat');run.rewards=applyRewards(run.result);run.rewardsApplied=true;showResults()}})
 }
 
 function tombMarkup(){
@@ -339,20 +434,36 @@ function tbFloat(target,text,kind='damage'){
  const p=tbUnitPos(id.startsWith('tb-')?id.slice(3):id);if(!p)return;
  const n=document.createElement('i');n.className='cb2d-number '+kind;n.textContent=text;n.style.left=p.x+'%';n.style.top=p.y+'%';arena.appendChild(n);setTimeout(()=>n.remove(),900/playSpeed)
 }
+function tbUseCombatPotion(button){
+ const helper=window.CellboundDungeon2D;if(!run?.liveSession||!helper?.useCombatPotion)return;
+ const snap=run.liveSession.snapshot?.(),players=snap?.finalState?.players||[];
+ const hpMap=Object.fromEntries(players.map(p=>[String(p.characterId||p.id||'').replace(/^p-/,''),p.maxHealth?Math.max(0,Math.min(100,Number(p.health)||0)/Math.max(1,Number(p.maxHealth)||1)*100):100]));
+ const used=helper.useCombatPotion({members:party(),getHp:c=>hpMap[String(c.id)]??100,setHp:()=>{}});
+ if(!used.ok){feed(used.reason==='full'?'The party is already at full health.':'No combat potions remain.','good');helper.refreshCombatPotionButton?.(button);return}
+ const healed=run.liveSession.heal?.(used.target.id,used.healApplied,{ability:used.item.name,source:'commander'});
+ if(healed?.ok&&Number.isFinite(Number(healed.targetHpPct)))setPartyHp('p-'+used.target.id,Number(healed.targetHpPct));
+ helper.refreshCombatPotionButton?.(button);feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.','good')
+}
 function renderLive(){
- const root=ensureBackdrop();root.hidden=false;
- root.innerHTML='<section class="cb2d-shell tb-shell"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><div class="cb2d-live"><i></i>LIVE <button data-tb-speed>1×</button></div></header>'+
- '<div class="tb-scorebar"><span><small>DEFEATED</small><b id="tbKilled">0 / 12</b></span><span><small>NEXT TOMB</small><b id="tbCountdown">00:20</b></span><span><small>ATTEMPTS LEFT</small><b>'+attemptsLeft()+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+eventState().bestKills+' / 12</b></span></div>'+
- '<div class="tb-tomb-track">'+tombMarkup()+'</div>'+
- '<div class="cb2d-layout tb-layout"><main><div class="cb2d-arena tb-arena" id="tbArena"><div class="tb-depth-backdrop"><i></i><i></i><i></i></div><div class="cb2d-floor tb-ground"></div><div class="tb-floor-seal"><i></i><b>十二</b></div><div class="tb-crypt-ring">'+burialCryptMarkup()+'</div><div class="tb-burial-architecture"><i></i><i></i><i></i><i></i></div><div class="tb-soul-braziers"><i></i><i></i><i></i><i></i></div><div class="tb-grave-fog fog-a"></div><div class="tb-grave-fog fog-b"></div><div class="tb-spectral-pass"><i></i><i></i><i></i></div><div id="tbTelegraphs"></div><div id="tbBossUnits"></div><div id="tbPartyUnits">'+partyUnitMarkup()+'</div><div id="tbFx"></div><div class="cb2d-room-tag tb-room-tag"><b>Sepulchre Courtyard</b><small>Twelve sealed crypts encircle the frozen burial ground.</small></div><div class="cb2d-caption"><span>PRIVATE SURVIVAL EVENT</span><b id="tbStatus">The first seal breaks…</b></div></div>'+
- '<div class="cb2d-controls tb-controls"><button><b>FOCUS TARGET</b><small>Party burns the active priority.</small></button><button><b>INTERRUPTS</b><small>Critical casts are covered.</small></button><button><b>DEFENSIVES</b><small>Tank stabilises incoming pressure.</small></button><button><b>BOSS CONTROL</b><small>Tank holds active vices together.</small></button><button><b>SURVIVE</b><small>Keep the five alive until the next tomb.</small></button></div>'+
- '<div class="cb2d-feed"><small>COMBAT FEED</small><div id="tbFeed"></div></div></main><aside>'+
- '<div class="cb2d-cast" id="tbCast"><small>ENEMY CAST</small><div><b id="tbCastName">—</b><strong id="tbCastTime">—</strong></div><div class="cb2d-castbar"><i id="tbCastFill"></i></div></div>'+
- '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tbDamageTotal">0 total</span></div><div id="tbDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tbHealingTotal">0 total</span></div><div id="tbHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT · PRIMARY BOSS</small><span id="tbThreatTarget">—</span></div><div id="tbThreatMeter" class="cb2d-meter-list"></div></section></div>'+
- '<div class="cb2d-actions"><small>PARTY ACTIONS</small><div><i class="cb2d-dot tank"></i><b>Tank</b><em>Controlling active bosses</em></div><div><i class="cb2d-dot healer"></i><b>Healer</b><em>Maintaining the five</em></div><div><i class="cb2d-dot dps"></i><b>Damage</b><em>Burning the priority vice</em></div></div>'+
- '<div class="cb2d-party"><small>ACTIVE FIVE · PRIVATE INSTANCE</small><div id="tbPartyRows">'+party().map(c=>{const res=tbInitialResource(c),rk=tbResourceClass(res.name),rpct=clamp(res.value/res.max*100,0,100);return'<div class="cb2d-party-row"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(roleOf(c)).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-tb-side-hp="p-'+esc(c.id)+'" style="width:100%"></i></em><em class="tb-side-resource '+rk+'" data-tb-side-resource="p-'+esc(c.id)+'" title="'+esc(res.name)+' '+Math.round(res.value)+' / '+Math.round(res.max)+'"><i style="width:'+rpct+'%"></i></em></span><strong><span data-tb-side-text="p-'+esc(c.id)+'">100 HP</span><small data-tb-side-resource-label="p-'+esc(c.id)+'">'+esc(res.name)+' '+Math.round(res.value)+'</small></strong></div>'}).join('')+'</div></div>'+
- '<div class="tb-live-rule"><small>ESCALATION RULE</small><b>Another tomb opens every 20 seconds.</b><span>Surviving bosses remain active.</span></div></aside></div></section>';
- root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=playSpeed+'×';resetClockAnchor()}
+ const root=ensureBackdrop(),Viewer=window.CellboundCombatViewer;if(!Viewer?.mount)throw new Error('Canonical combat viewer unavailable');
+ const routeMarkup='<div class="tb-scorebar"><span><small>DEFEATED</small><b id="tbKilled">0 / 12</b></span><span><small>NEXT TOMB</small><b id="tbCountdown">00:20</b></span><span><small>ATTEMPTS LEFT</small><b>'+attemptsLeft()+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+eventState().bestKills+' / 12</b></span></div><div class="tb-tomb-track">'+tombMarkup()+'</div>';
+ const arenaMarkup='<div class="cb2d-arena tb-arena" id="tbArena"><div class="tb-depth-backdrop"><i></i><i></i><i></i></div><div class="cb2d-floor tb-ground"></div><div class="tb-floor-seal"><i></i><b>十二</b></div><div class="tb-crypt-ring">'+burialCryptMarkup()+'</div><div class="tb-burial-architecture"><i></i><i></i><i></i><i></i></div><div class="tb-soul-braziers"><i></i><i></i><i></i><i></i></div><div class="tb-grave-fog fog-a"></div><div class="tb-grave-fog fog-b"></div><div class="tb-spectral-pass"><i></i><i></i><i></i></div><div id="tbTelegraphs"></div><div id="tbBossUnits"></div><div id="tbPartyUnits">'+partyUnitMarkup()+'</div><div id="tbFx"></div><div class="cb2d-caption"><span>PRIVATE SURVIVAL EVENT</span><b id="tbStatus">The first seal breaks…</b></div></div>';
+ const topbar='<div class="cbcombat-battle-topbar"><div class="cb2d-room-tag tb-room-tag"><b>Sepulchre Courtyard</b><small>Twelve sealed crypts encircle the frozen burial ground.</small></div></div>';
+ const cast='<div class="cb2d-cast" id="tbCast"><small>ENEMY CAST</small><div><b id="tbCastName">—</b><strong id="tbCastTime">—</strong></div><div class="cb2d-castbar"><i id="tbCastFill"></i></div></div>';
+ const meters='<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tbDamageTotal">0 total</span></div><div id="tbDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tbHealingTotal">0 total</span></div><div id="tbHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT · PRIMARY BOSS</small><span id="tbThreatTarget">—</span></div><div id="tbThreatMeter" class="cb2d-meter-list"></div></section></div>';
+ const commands='<button data-tb-command="focus"><b>FOCUS</b><small>Burn the priority vice.</small></button><button data-tb-command="interrupt"><b>INTERRUPT</b><small>Stop the dangerous cast now.</small></button><button data-tb-command="spread"><b>SPREAD</b><small>Move clear of marked ground.</small></button><button data-tb-command="stack"><b>STACK</b><small>Collapse around the tank.</small></button><button data-tb-command="regroup"><b>REGROUP</b><small>Reset combat formation.</small></button><button data-tb-command="defensive"><b>DEFENSIVE</b><small>Brace the whole party.</small></button><button data-tb-command="burn"><b>BURN</b><small>Commit damage cooldowns.</small></button>'+(window.CellboundDungeon2D?.combatPotionButtonMarkup?.('data-tb-potion')||'<button type="button" data-tb-potion disabled><b>USE POTION · ×0</b><small>No combat potions available</small></button>')+'<div class="tb-live-rule"><small>ESCALATION RULE</small><b>Another tomb opens every 20 seconds.</b><span>Surviving bosses remain active.</span></div>';
+ const partyMarkup=party().map(c=>{const res=tbInitialResource(c),rk=tbResourceClass(res.name),rpct=clamp(res.value/res.max*100,0,100);return'<div class="cb2d-party-row" data-tb-side-row="'+esc(c.id)+'"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(roleOf(c)).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-tb-side-hp="p-'+esc(c.id)+'" style="width:100%"></i></em><em class="tb-side-resource '+rk+'" data-tb-side-resource="p-'+esc(c.id)+'" title="'+esc(res.name)+' '+Math.round(res.value)+' / '+Math.round(res.max)+'"><i style="width:'+rpct+'%"></i></em></span><strong><span data-tb-side-text="p-'+esc(c.id)+'">100 HP</span><small data-tb-side-resource-label="p-'+esc(c.id)+'">'+esc(res.name)+' '+Math.round(res.value)+'</small></strong></div>'}).join('');
+ Viewer.mount(root,{
+  header:'THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT',title:'The Twelve Below',
+  routeMarkup,partyLabel:'ACTIVE FIVE · PRIVATE INSTANCE',partyMarkup,partyRowsId:'tbPartyRows',
+  battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
+  theme:'twelve',battleClass:'tb-shell',partySize:party().length,speedAttribute:'data-tb-speed',closeAttribute:'data-tb-close',speedLabel:playSpeed+'×'
+ });
+ root.querySelector('[data-tb-close]').onclick=close;
+ root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=playSpeed+'×'};
+ root.querySelectorAll('[data-tb-command]').forEach(b=>b.onclick=()=>tbIssueCommand(b.dataset.tbCommand,b));
+ root.querySelector('[data-tb-potion]')?.addEventListener('click',e=>tbUseCombatPotion(e.currentTarget));
+ window.CellboundDungeon2D?.refreshCombatPotionButton?.(root.querySelector('[data-tb-potion]'),Game?.getState?.()||undefined);
  requestAnimationFrame(()=>{party().forEach((ch,i)=>{const p=tbPartyFormation(ch,i),el=$('[data-tb-unit="p-'+ch.id+'"]');tbSetPos(el,p.x,p.y,0);const res=run.resources['p-'+ch.id]||tbInitialResource(ch);tbSetResource('p-'+ch.id,res.name,res.value,res.max)});renderMeters();tbAtmosphere()})
 }
 function feed(text,kind=''){
@@ -364,11 +475,11 @@ function spawnBoss(id){
  const idx=BOSSES.findIndex(x=>x.id===id),entryY=24+(idx%5)*13;
  const accent=TB_VICE_COLORS[idx%TB_VICE_COLORS.length];
  root.insertAdjacentHTML('beforeend','<div class="cb2d-unit tb-unit enemy boss" data-tb-boss="'+id+'" data-x="96" data-y="'+entryY+'" style="left:96%;top:'+entryY+'%;--tb-boss-accent:'+accent+'"><i></i><span>'+esc(b.vice)+'<small class="cb2d-unit-meta">'+esc(b.name)+'</small></span><em class="cb2d-unit-hp"><i style="width:100%"></i></em></div>');
- run.activeBosses.add(id);layoutBosses(760);
+ run.activeBosses.add(id);run.liveSession?.setMechanicInterval?.(Math.max(2400,4300-run.activeBosses.size*180));layoutBosses(760);
  const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.add('open');crypt?.classList.add('opening');setTimeout(()=>{crypt?.classList.remove('opening');crypt?.classList.add('open')},650/playSpeed);tbArenaBurst(id,'open');tbAtmosphere();window.CellboundFX?.callout?.({eyebrow:'TOMB OPENED · '+b.vice,title:b.name,tone:'danger',duration:1200});feed(b.name+' rises from the tomb.','spawn');$('#tbStatus').textContent=b.name+' has entered the burial ground.'
 }
 function defeatBoss(id){
- run.activeBosses.delete(id);run.defeated.add(id);const dead=$('[data-tb-boss="'+id+'"]');if(dead){dead.classList.add('dead');setTimeout(()=>{dead.remove();layoutBosses(420)},420/playSpeed)}const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');crypt?.classList.remove('open','opening');crypt?.classList.add('defeated');tbArenaBurst(id,'death');tbAtmosphere();$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
+ run.activeBosses.delete(id);run.defeated.add(id);run.liveSession?.setMechanicInterval?.(Math.max(2400,4300-run.activeBosses.size*180));const dead=$('[data-tb-boss="'+id+'"]');if(dead){dead.classList.add('dead');setTimeout(()=>{dead.remove();layoutBosses(420)},420/playSpeed)}const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');crypt?.classList.remove('open','opening');crypt?.classList.add('defeated');tbArenaBurst(id,'death');tbAtmosphere();$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
 }
 function setPartyHp(id,pct){
  const value=clamp(Number(pct)||0,0,100),u=$('[data-tb-unit="'+id+'"]');if(u){u.querySelector('em i').style.width=value+'%';u.classList.toggle('dead',value<=0)}const bar=$('[data-tb-side-hp="'+id+'"]'),txt=$('[data-tb-side-text="'+id+'"]');if(bar)bar.style.width=value+'%';if(txt)txt.textContent=Math.round(value)+' HP'
@@ -419,6 +530,7 @@ function handleEvent(e){
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tbArena'),resolve:id=>tbStatusTargets(id)?.[0]?.el||tbStatusTargets(id)?.[0]||null,speed:()=>playSpeed});
  if(window.CellboundCombatStatuses?.handle(e,{resolve:tbStatusTargets,speed:()=>playSpeed}))return;
  if(e.type==='TOMB_OPEN'){spawnBoss(e.payload?.bossId);return}
+ if(e.type==='PARTY_COMMAND'){if(e.result!=='cooldown')feed('Party executes '+String(e.ability||'command').replace(/-/g,' ')+'.','good');return}
  if(e.type==='MOVEMENT_START'&&e.payload?.to){if(window.CellboundCombatFX?.ownsMovement)return;const el=String(e.source||'').startsWith('tb-')?$('[data-tb-boss="'+String(e.source).slice(3)+'"]'):$('[data-tb-unit="'+e.source+'"]');tbSetPos(el,e.payload.to.x,e.payload.to.y,e.payload.duration||420);return}
  if(e.type==='ABILITY_START'){tbLunge(e.source,e.target);return}
  if(e.type==='VICE_DEFEATED'){defeatBoss(e.payload?.bossId);return}
@@ -437,7 +549,7 @@ function handleEvent(e){
    tbSetResource(e.source,e.payload?.resource||previous.name||fallback.name,e.payload?.value??previous.value??fallback.start,e.payload?.max??previous.max??fallback.max);
    return
  }
- if(e.type==='THREAT_GENERATED'&&String(e.target||'').startsWith('tb-')){const bid=String(e.target).slice(3);run.threat[bid]=run.threat[bid]||{};run.threat[bid][e.source]=(Number(run.threat[bid][e.source])||0)+(Number(e.amount)||0);queueMeterRender();return}
+ if(e.type==='THREAT_GENERATED'&&String(e.target||'').startsWith('tb-')){const bid=String(e.target).slice(3);run.threat[bid]=run.threat[bid]||{};run.threat[bid][e.source]=Number(e.payload?.total??((Number(run.threat[bid][e.source])||0)+(Number(e.amount)||0)));queueMeterRender();return}
  if(e.type==='PLAYER_DEFEATED'){setPartyHp(e.target,0);feed((party().find(c=>'p-'+c.id===e.target)?.name||'An adventurer')+' has fallen.','danger');return}
  if(e.type==='MECHANIC_TELEGRAPH'){mechanicFlash(e);return}
  if(e.type==='CAST_START'&&e.result==='enemy'){castStart(e);return}
@@ -488,6 +600,7 @@ function resultPlayerRows(){
 }
 function showResults(){
  const root=ensureBackdrop(),r=run.result,w=run.rewards;
+ if(run?.analyticsId)window.CellboundAnalytics?.track?.('activity_completed',{activity_id:'twelve-below',activity_name:'The Twelve Below',run_id:run.analyticsId,kills:Number(r.kills)||0,outcome:r.outcome||'',time_ms:Number(r.endMs)||0,deaths:Number(r.totals?.deaths)||0,mistakes:Number(r.totals?.mistakes)||0},{key:'activity_completed:'+run.analyticsId});
  root.innerHTML='<section class="cb2d-shell cb2d-loot-screen tb-results"><header class="cb2d-head"><div><small>THE TWELVE BELOW · ATTEMPT COMPLETE</small><h2>'+r.kills+' of 12 defeated</h2></div><button data-tb-close aria-label="Close Twelve Below">×</button></header>'+
  '<div class="tb-result-hero '+w.band.tone+'"><div><small>'+w.band.label+'</small><h3>'+(r.kills===12?'No vice remains buried.':r.outcome==='defeat'?'The burial ground claimed the party.':'The guild withdrew from the Sepulchre.')+'</h3><p>Every additional vice defeated improved the reward cache.</p></div><strong>'+r.kills+' / 12</strong></div>'+
  '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+w.gold+'</b><small>Guild treasury</small></article><article><span>RENOWN</span><b>+'+w.renown+'</b><small>Guild reputation</small></article><article><span>CELL SHARDS</span><b>+'+w.shards+'</b><small>Relic material</small></article><article><span>BEST</span><b>'+eventState().bestKills+' / 12</b><small>Personal record</small></article></div>'+

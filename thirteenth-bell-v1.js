@@ -125,7 +125,7 @@ function formatClock(minute){
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')
 }
 const BELL_COMIC_ROOT='./assets/comics/thirteenth-bell/';
-function bellArt(name){return BELL_COMIC_ROOT+name+'.jpg?v=7'}
+function bellArt(name){return BELL_COMIC_ROOT+name+'.webp?v=8'}
 function bellPanel(art,eyebrow,title,text,extra={}){
   return{kind:extra.kind||'location',artwork:bellArt(art),eyebrow,title,text,icon:extra.icon||'',speaker:extra.speaker||'',wide:!!extra.wide}
 }

@@ -94,7 +94,7 @@ async function fight(room){
  run.lastCombat={outcome:result.outcome,enemies:enc.enemies.map(e=>e.name),damage:result.summary?.totalDamage||0,healing:result.summary?.totalHealing||0};persist();
  const roomVisual=room.type==='breach'?'breach':(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4]);
  const outcome=await viewer.playSharedEncounter({
-   party,encounter:enc,result,
+   party,encounter:enc,result,zone:'null-complex',
    header:'THE NULL COMPLEX · FLOOR '+run.floor,
    title:room.type==='breach'?'Containment Breach':'Experiment Chamber',
    subtitle:'NULL COMPLEX EXPEDITION',

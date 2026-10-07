@@ -111,6 +111,7 @@ async function mount(page,seedState=null,owner=false,options={}){
         if(name==='cellbound_admin_status')return{data:owner?{is_admin:true,role:'owner',auto_clear_cell_shock:false}:{is_admin:false,role:null,auto_clear_cell_shock:false},error:null};
         if(name==='cellbound_release_status')return{data:null,error:null};
         if(name==='cellbound_admin_market_summary')return{data:{active_gear:0,buy_orders:0,sell_orders:0,trades_24:0,volume_24:0,tax_24:0,top_items:[]},error:null};
+        if(name==='cellbound_admin_analytics_summary')return{data:{channel:args.p_channel||'staging',days:Number(args.p_days)||30,since:new Date(Date.now()-86400000).toISOString(),overview:{active_testers:3,sessions:7,events:48,characters_tracked:15,quests_completed:4,crafts_completed:6,items_equipped:9,items_dismantled:3},classes:[{name:'Warrior',count:5},{name:'Mage',count:4}],races:[{name:'Veyren',count:6},{name:'Nymari',count:3}],class_race:[{class:'Warrior',race:'Veyren',count:3}],dungeons:[{id:'ashen-vault',name:'The Ashen Vault',starts:8,completions:6,unique_players:3,completion_rate:75}],quests:[{id:'ashes-east-road',name:'Ashes on the East Road',completions:3,unique_players:3}],features:[{name:'content',opens:12,unique_players:3}],levels:[{level:5,characters:4,players:3}],professions:[{name:'Alchemy',learned:2,crafts:5,players:2}],daily_activity:[{date:'2026-10-03',players:3,sessions:7}]},error:null};
         if(simulateDungeonRuntime&&name==='resume_dungeon_attempt'){
           const saved=readAttempt();return{data:saved?.active?saved:{active:false},error:null};
         }
@@ -159,36 +160,60 @@ async function mount(page,seedState=null,owner=false,options={}){
   return errors;
 }
 
-async function creatorPlaythrough(browser){
-  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
+  const page=await browser.newPage({viewport});
   const errors=await mount(page,null);
-  await page.waitForSelector('#cellboundOnboarding:not([hidden]) .character-creator');
-  assert.equal(await page.locator('.creator-party-dots button').count(),5,'creator shows all five party roles');
+  await page.waitForSelector('#cellboundOnboarding:not([hidden]) .cellbound-character-forge');
+  assert.equal(await page.locator('.creator-party-dots button').count(),5,'Character Forge shows all five party roles');
+  // Equipment remains on the existing rig while base character artwork migrates.
+  const plateFit=await page.evaluate(()=>{
+    const P=CellboundPortraits,host=document.createElement('div'),failures=[];
+    host.style.cssText='position:fixed;left:-2000px;width:240px;height:410px;visibility:hidden';document.body.append(host);
+    let checked=0;
+    for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame of [0,1,2])for(const tier of [1,2,3,4,5]){
+      const c={id:'plate-fit-'+checked,race,class:'Warrior',appearance:{gender,frame},equipment:{Chest:{id:'plate-chest-'+tier,slot:'Chest',class:'Warrior',tier}}};
+      host.innerHTML=P.paperDollSVG(c);
+      const chest=host.querySelector('.cb-paper-slot-chest'),box=chest?.getBBox();
+      if(!box||box.width<20||box.height<20||box.y+box.height>266)failures.push({race,gender,frame,tier,reason:'classic chest exceeds waist band',bottom:box?.y+box?.height});
+      checked++;
+    }
+    host.remove();return {checked,failures};
+  });
+  assert.equal(plateFit.checked,180);assert.deepEqual(plateFit.failures,[],'Classic paper-doll armour remains bounded at the waist band');
 
-  await page.locator('[data-next-step="class"]').click();
-  assert(await page.locator('[data-class]').count()>=1,'class choices render');
-  assert(await page.locator('[data-class]').count()>=1,'damage/tank/healer class choices remain usable');
+  for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']){
+    await page.locator('[data-forge-race="'+race+'"]').click();
+    for(const gender of [0,1]){
+      await page.locator('[data-forge-sex="'+gender+'"]').click();
+      const model=page.locator('.cf-preview>.cf-model').first();
+      assert.equal(await model.getAttribute('data-gender'),gender?'female':'male','Classic Forge preview tracks selected sex');
+      const svg=model.locator('svg').first();
+      assert.equal(await svg.getAttribute('data-race'),race,'Classic Forge preview tracks '+race);
+      assert.equal(await svg.getAttribute('data-character-style'),'classic-paper-doll','Forge preview uses the restored classic paper-doll style');
+    }
+  }
+  assert.equal(await page.locator('[data-appearance-field]').count(),0,'Beta Character Forge exposes no unfinished appearance controls');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Character Forge fits the viewport');
 
-  await page.locator('[data-next-step="appearance"]').click();
-  await page.waitForSelector('[data-appearance-editor]');
-  const before=await page.locator('[data-appearance-editor]').innerHTML();
-  await page.locator('[data-appearance-field]').first().click();
-  await page.waitForTimeout(30);
-  const after=await page.locator('[data-appearance-editor]').innerHTML();
-  assert.notEqual(after,before,'appearance controls rerender the preview');
-  await page.locator('[data-appearance-randomize]').click();
-  await page.waitForSelector('[data-appearance-editor]');
-
-  await page.locator('[data-next-step="confirm"]').click();
+  await page.locator('[data-forge-step="class"]').click();
+  assert(await page.locator('[data-forge-class]').count()>=1,'class choices render');
+  await page.locator('[data-forge-step="identity"]').click();
+  await page.waitForSelector('#cfCharacterName');
+  await page.locator('[data-forge-step="confirm"]').click();
   assert.equal(await page.locator('.creator-confirm-member').count(),5,'confirm screen includes all five adventurers');
-  assert.equal(await page.locator('#confirmParty').isDisabled(),false,'generated party is valid');
-  await page.locator('#confirmParty').click();
+  assert.equal(await page.locator('[data-forge-confirm]').isDisabled(),false,'generated party is valid');
+  await page.locator('[data-forge-confirm]').click();
   await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
   const fresh=await page.evaluate(()=>({slots:CellboundGame.getState().roster.map(c=>c.professions?.length),classes:CellboundGame.getState().roster.map(c=>c.class),allBeta:CellboundGame.getState().roster.every(c=>CellboundGame.isCharacterBetaPlayable(c))}));
   assert.deepEqual(fresh.slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
-  assert.equal(fresh.allBeta,true,'fresh guild creator only produces beta-playable classes');
+  assert.equal(fresh.allBeta,true,'fresh guild creator only produces currently playable classes');
   assert(fresh.classes.includes('Paladin'),'Paladin can fill the beta healer role');
-  assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party contains only the five beta classes');
+  assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party uses valid playable classes');
+  const createdAppearance=await page.evaluate(()=>CellboundGame.getState().roster.map(c=>({id:c.id,race:c.race,appearance:c.appearance})));
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.CellboundGame?.ready===true);
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.getState().roster.map(c=>({id:c.id,race:c.race,appearance:c.appearance}))),createdAppearance,'Created appearances survive refresh');
+  await page.screenshot({path:'/tmp/cellbound-creator-'+viewport.width+'.png',fullPage:true});
   assert.deepEqual(errors,[],'creator/onboarding emitted no browser errors');
   await page.close();
 }
@@ -282,13 +307,21 @@ async function mainGamePlaythrough(browser){
   assert(allOrder[0].startsWith('gear:'),'All Items puts equipment before crafting stock');
 
   await page.locator('[data-bank-category="Reagent"]').click();
-  await page.waitForTimeout(80);
+  await page.waitForFunction(()=>{
+    const select=document.querySelector('#bankCategory');
+    const visible=[...document.querySelectorAll('#bankGrid .bank-item')].filter(x=>x.dataset.hidden!=='1');
+    return select?.value==='Reagent'&&visible.length>0&&visible.every(x=>(x.dataset.evoKey||'').startsWith('mat:'));
+  },{},{timeout:5000,polling:25});
   const materialView=await page.evaluate(()=>[...document.querySelectorAll('#bankGrid .bank-item')]
     .filter(x=>x.dataset.hidden!=='1').map(x=>x.dataset.evoKey||''));
   assert(materialView.length>0&&materialView.every(x=>x.startsWith('mat:')),'Materials tab isolates reagents');
 
   await page.locator('[data-bank-category="Gear"]').click();
-  await page.waitForTimeout(80);
+  await page.waitForFunction(()=>{
+    const select=document.querySelector('#bankCategory');
+    const visible=[...document.querySelectorAll('#bankGrid .bank-item')].filter(x=>x.dataset.hidden!=='1');
+    return select?.value==='Gear'&&visible.length>0&&visible.every(x=>(x.dataset.evoKey||'').startsWith('gear:'));
+  },{},{timeout:5000,polling:25});
   const gearView=await page.evaluate(()=>[...document.querySelectorAll('#bankGrid .bank-item')]
     .filter(x=>x.dataset.hidden!=='1').map(x=>x.dataset.evoKey||''));
   assert(gearView.length>0&&gearView.every(x=>x.startsWith('gear:')),'Equipment tab contains only equipment');
@@ -328,7 +361,8 @@ async function mainGamePlaythrough(browser){
   assert(await page.locator('#chat').isVisible(),'social view renders');
 
   await page.evaluate(()=>CellboundGame.switchView('content'));
-  await page.waitForSelector('#betaQuickReportTrigger',{timeout:5000});
+  await page.waitForFunction(()=>Boolean(window.CellboundBetaOps),{},{timeout:10000,polling:50});
+  await page.waitForSelector('#betaQuickReportTrigger',{timeout:10000});
   assert(await page.locator('#betaQuickReportTrigger').isVisible(),'persistent Report Bug / Request button is visible');
   await page.locator('#betaQuickReportTrigger').click();
   await page.locator('[data-quick-report="feature"]').click();
@@ -340,7 +374,7 @@ async function mainGamePlaythrough(browser){
   await page.locator('#betaReportSummary').fill('QA support ticket');
   await page.locator('#betaReportDetails').fill('The automated beta operations playthrough is testing the support submission path.');
   await page.locator('#betaReportSubmit').click();
-  await page.waitForFunction(()=>document.querySelector('#betaReportMessage')?.textContent?.includes('Report sent'),{},{timeout:5000,polling:50});
+  await page.waitForFunction(()=>document.querySelector('#betaReportMessage')?.textContent?.includes('Report sent'),{},{timeout:8000,polling:50});
   assert((await page.locator('#betaReportMessage').textContent()).includes('Report sent'),'beta report submission path completes');
 
   for(const size of [{width:768,height:1024},{width:390,height:844},{width:1024,height:1366}]){
@@ -454,7 +488,7 @@ async function coreGameplayLoopPlaythrough(browser){
   await page.close();
 }
 
-async function betaClassAndNullGatePlaythrough(browser){
+async function classAvailabilityAndNullGatePlaythrough(browser){
   const seed=matureState();
   seed.progression.manorRaidCleared=false;
   seed.progression.nullComplexUnlocked=false;
@@ -464,8 +498,8 @@ async function betaClassAndNullGatePlaythrough(browser){
   const errors=await mount(page,seed);
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
 
-  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),['Warrior','Paladin','Hunter','Rogue','Mage'],'beta exposes exactly the five selected classes');
-  assert.equal(await page.evaluate(()=>['Priest','Druid','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'].every(x=>!CellboundGame.isBetaClassPlayable(x))),true,'all other classes are unavailable during beta');
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),await page.evaluate(()=>Object.keys(CellboundGame.classes)),'staging balance pass exposes the full class roster');
+  assert.equal(await page.evaluate(()=>Object.keys(CellboundGame.classes).every(x=>CellboundGame.isBetaClassPlayable(x))),true,'every class is playable during the staging balance pass');
 
   const oldSaveLock=await page.evaluate(()=>{
     const s=CellboundGame.getState(),healer=s.roster.find(c=>c.id==='heal');
@@ -475,8 +509,8 @@ async function betaClassAndNullGatePlaythrough(browser){
     healer.class=original.class;healer.spec=original.spec;CellboundGame.renderAll();
     return result;
   });
-  assert.equal(oldSaveLock.playable,false,'future-class characters from old saves remain preserved but unavailable');
-  assert.equal(oldSaveLock.partyCount,4,'an unavailable old-save class cannot participate in the active five');
+  assert.equal(oldSaveLock.playable,true,'all-class staging balance pass keeps legacy class characters playable');
+  assert.equal(oldSaveLock.partyCount,5,'all-class staging balance pass preserves a complete active party');
 
   const contentRuntime=await page.evaluate(()=>({
     hollow:typeof window.CellboundHollowSanctum,
@@ -495,12 +529,12 @@ async function betaClassAndNullGatePlaythrough(browser){
   await page.waitForTimeout(80);
   assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('AVAILABLE'),'The Manor clear unlocks Signal From Nowhere');
 
-  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'beta class/Null gate validation emitted no unexpected browser errors');
+  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'class availability/Null gate validation emitted no unexpected browser errors');
   await page.close();
 }
 
 async function breakGamePlaythrough(browser){
-  // Corrupted/legacy save: duplicate party ids, unavailable beta class, negative stacks and currencies.
+  // Corrupted/legacy save: duplicate party ids, mixed class data, negative stacks and currencies.
   const corrupt=matureState();
   corrupt.roster[1]={...corrupt.roster[1],class:'Priest',spec:'Holy',level:99,xp:999};
   corrupt.party={tank:'tank',healer:'heal',dps:['mage','mage','rogue']};
@@ -523,7 +557,7 @@ async function breakGamePlaythrough(browser){
     };
   });
   assert.equal(repaired.unique,true,'corrupted saves cannot duplicate the same adventurer across party slots');
-  assert.equal(repaired.oldPriestInParty,false,'locked beta classes are removed from corrupted active-party state');
+  assert.equal(repaired.oldPriestInParty,true,'playable classes remain in the repaired active-party state');
   assert.equal(repaired.badQty,1,'negative Bank stack quantities are repaired to one');
   assert.equal(repaired.shards,0,'negative material balances are clamped to zero');
   assert.equal(repaired.hollowroot,3,'fractional material balances are normalised');
@@ -616,11 +650,29 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
   await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner',{},{timeout:10000,polling:50});
   await page.evaluate(()=>CellboundGame.switchView('admin'));
-  await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
   await page.waitForFunction(()=>Boolean(window.CellboundAdminBetaOps),{},{timeout:5000,polling:50});
-  assert(await page.locator('#adminBetaReportQueue').isVisible(),'owner can access the beta report triage queue');
-  assert(await page.locator('#adminPlayerLookup').isVisible(),'owner can access targeted player recovery');
+  await page.waitForFunction(()=>Boolean(window.CellboundAdminAnalytics),{},{timeout:5000,polling:50});
+  assert(await page.locator('.admin-workspace-nav').isVisible(),'Admin opens with focused workspace navigation');
+  assert(await page.locator('[data-admin-panel-tab="overview"]').evaluate(el=>el.classList.contains('active')),'Admin defaults to Overview');
+
+  await page.locator('[data-admin-panel-tab="reports"]').click();
+  assert(await page.locator('#adminBetaReportQueue').isVisible(),'Reports workspace exposes beta triage');
+  assert.equal(await page.locator('#adminBetaStatus').inputValue(),'open','Reports defaults to actionable open tickets');
+
+  await page.locator('[data-admin-panel-tab="players"]').click();
+  assert(await page.locator('#adminPlayerLookup').isVisible(),'Players workspace exposes targeted recovery');
   assert.equal(await page.locator('#adminPlayerRecoveryActions [data-recover-player]').count(),3,'recovery console exposes only the three audited support actions');
+
+  await page.locator('[data-admin-panel-tab="analytics"]').click();
+  assert(await page.locator('#adminAnalyticsKpis').isVisible(),'Analytics workspace exposes Beta Analytics');
+  await page.waitForFunction(()=>document.querySelector('#adminAnalyticsClasses')?.textContent?.includes('Warrior'),{},{timeout:5000,polling:50});
+  assert((await page.locator('#adminAnalyticsDungeons').innerText()).includes('The Ashen Vault'),'analytics dashboard renders dungeon starts and clears');
+  assert((await page.locator('#adminAnalyticsRaces').innerText()).includes('Veyren'),'analytics dashboard renders race popularity');
+  assert.equal(await page.locator('#adminAnalyticsChannel').inputValue(),'staging','dev analytics defaults to the staging channel');
+
+  await page.locator('[data-admin-panel-tab="tools"]').click();
+  await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
+  assert(await page.locator('#dungeonGeneratorEntry').isVisible(),'owner tools appear only inside Tools workspace');
   await page.locator('#openDungeonGenerator').click();
   await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
 
@@ -660,12 +712,13 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   const browser=await engine.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
   try{
     await creatorPlaythrough(browser);
+    await creatorPlaythrough(browser,{width:390,height:844});
     await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
     await coreGameplayLoopPlaythrough(browser);
-    await betaClassAndNullGatePlaythrough(browser);
+    await classAvailabilityAndNullGatePlaythrough(browser);
     await breakGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, all-class staging access, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, beta analytics, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});

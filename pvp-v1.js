@@ -2,7 +2,7 @@
 'use strict';
 
 const PVP_ENABLED=false;
-const pvpEnabled=()=>PVP_ENABLED||window.CellboundAdmin?.role==='owner';
+const pvpEnabled=()=>false;
 const PVP_LOCK_MESSAGE='PvP is currently locked while the launch game is being finished. Battlegrounds, Arena, PvP gear and progression will return in a future update.';
 
 const $=s=>document.querySelector(s);
@@ -189,7 +189,7 @@ function matchResultMarkup(m){
   return `<article class="pvp-panel pvp-result ${colour}"><header><div><small>${m.kind==='arena'?'RATED ARENA':'BATTLEGROUND COMPLETE'}</small><h3>${win?'VICTORY':'DEFEAT'}</h3></div><b>${m.kind==='arena'?`${m.ratingBefore} → ${m.ratingAfter}`:`+${m.rankXp} RANK XP`}</b></header><div class="pvp-result-grid"><div><span>Score</span><b>${esc(m.scoreText)}</b></div><div><span>${m.kind==='arena'?'Arena Seals':'War Marks'}</span><b>+${m.currency}</b></div><div><span>Cell Shock</span><b>${m.shockDelta>0?'+':''}${m.shockDelta}%</b></div><div><span>${m.kind==='arena'?'Rating':'Objectives'}</span><b>${m.kind==='arena'?(m.ratingDelta>0?'+':'')+m.ratingDelta:m.objectives}</b></div></div><p>${esc(m.summary)}</p></article>`
 }
 function lockedMarkup(){
-  return `<div class="pvp-hero"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>${esc(PVP_LOCK_MESSAGE)}</p></div><div class="pvp-rank-card"><span>STATUS</span><b>LOCKED</b><small>Coming in a future update</small></div></div><div class="pvp-body"><article class="pvp-panel"><header><div><small>FEATURE PAUSED</small><h3>PvP is not available yet</h3></div><b>LOCKED</b></header><p>The Crucible is staying in the game, but matchmaking and PvP progression are disabled for now. Your existing PvP systems have not been removed.</p></article></div>`;
+  return `<div class="pvp-hero"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>${esc(PVP_LOCK_MESSAGE)}</p></div><div class="pvp-rank-card"><span>STATUS</span><b>LOCKED</b><small>Coming in a future update</small></div></div><div class="pvp-body"><article class="pvp-panel"><header><div><small>FEATURE PAUSED</small><h3>PvP is not available yet</h3></div><b>LOCKED</b></header><p>The Crucible is staying in the game, but matchmaking and PvP progression are disabled while PvP is rebuilt on the shared Combat Reborn and Cellbound combat viewer framework.</p></article></div>`;
 }
 function render(){
   const mount=$('#pvpMount');if(!mount||!game()?.ready)return;
@@ -290,7 +290,7 @@ function buyGear(tier,slot){
   game()?.save?.();render()
 }
 
-window.CellboundPvP={version:'1.3.1',get enabled(){return pvpEnabled()},render,arenaUnlocked,getRank:()=>pvpEnabled()?bgRank(ensureState()):null,getState:()=>pvpEnabled()?ensureState():null};
+window.CellboundPvP={version:'1.4.0',get enabled(){return pvpEnabled()},render,arenaUnlocked,getRank:()=>pvpEnabled()?bgRank(ensureState()):null,getState:()=>pvpEnabled()?ensureState():null};
 window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render()});
 window.addEventListener('cellbound:admin-status',()=>{if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()});
 let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);

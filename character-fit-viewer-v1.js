@@ -23,6 +23,7 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function isOwner(){return Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'}
 function G(){return window.CellboundGear}
 function CP(){return window.CellboundPortraits}
+function CR(){return window.CellboundCharacterRig}
 function positions(){return G()?.EQUIPMENT_POSITION_ORDER||['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic']}
 function slotForPosition(pos){return pos?.startsWith('Ring')?'Ring':pos?.startsWith('Trinket')?'Trinket':pos}
 function allItems(){return (G()?.items||[]).filter(x=>x&&x.enabled!==false)}
@@ -78,17 +79,18 @@ function character(overrides={}){
   };
 }
 function anchorSVG(c){
-  if(!state.anchors||!CP()?.gearFitProfile)return'';
-  const f=CP().gearFitProfile(c),wf=CP()?.weaponFitProfile?.(c,c?.equipment?.Weapon),marks=[
-    [f.leftShoulder,f.shoulderY,'SH'],[f.rightShoulder,f.shoulderY,'SH'],
-    [f.leftHand,f.handY,'H'],[f.rightHand,f.handY,'H'],
-    [120-f.waistHalf,f.waistY,'W'],[120+f.waistHalf,f.waistY,'W'],
-    [f.leftLeg,302,'L'],[f.rightLeg,302,'L'],
-    [wf?.anchorX??f.weaponX,wf?.anchorY??f.handY,'MH'],[f.offhandX,f.handY,'OH']
+  if(!state.anchors||!CR()?.anchors)return'';
+  const a=CR().anchors(c),marks=[
+    [a.leftShoulder,'SH'],[a.rightShoulder,'SH'],
+    [a.leftHand,'H'],[a.rightHand,'H'],
+    [a.leftHip,'HIP'],[a.rightHip,'HIP'],
+    [a.mainHand,'MH'],[a.offHand,'OH'],
+    [a.leftFoot,'FT'],[a.rightFoot,'FT'],
+    [a.crown,'CR'],[a.hairline,'HL']
   ];
   return '<svg class="cfv-anchor-layer" viewBox="0 0 240 410" aria-hidden="true">'+
-    marks.map(([x,y,l])=>'<g><circle cx="'+x+'" cy="'+y+'" r="3.2"/><text x="'+(x+5)+'" y="'+(y-4)+'">'+l+'</text></g>').join('')+
-    '<path d="M'+(120-f.hipHalf)+' 252 H'+(120+f.hipHalf)+' M'+(120-f.waistHalf)+' 247 H'+(120+f.waistHalf)+'" />'+
+    marks.map(([p,l])=>'<g><circle cx="'+p.x+'" cy="'+p.y+'" r="3.2"/><text x="'+(p.x+5)+'" y="'+(p.y-4)+'">'+l+'</text></g>').join('')+
+    '<path d="M'+a.leftHip.x+' '+a.waist.y+' H'+a.rightHip.x+' M'+a.leftShoulder.x+' '+a.leftShoulder.y+' H'+a.rightShoulder.x+'" />'+
   '</svg>';
 }
 function modelHTML(c,label){
@@ -98,7 +100,7 @@ function modelHTML(c,label){
     '<div class="cfv-model-stage" style="--cfv-zoom:'+(Math.max(60,Math.min(150,Number(state.zoom)||100))/100)+'">'+
       '<div class="cfv-model-inner">'+doll+anchorSVG(c)+'</div>'+
     '</div>'+
-    '<footer><span>'+esc(state.loadout==='base'?'BASE BODY':state.loadout==='full'?c.class+' T'+state.tier+' FULL SET':item?.name||'NO ITEM')+'</span><em>'+esc(state.loadout==='single'?state.position:'ALL FIT POINTS')+'</em></footer></article>';
+    '<footer><span>'+esc(state.loadout==='base'?'BASE BODY':state.loadout==='full'?c.class+' T'+state.tier+' FULL SET':item?.name||'NO ITEM')+'</span><em>'+esc((CR()?.masterRig?.(c)?.id||'rig')+' · '+(state.loadout==='single'?state.position:'ALL FIT POINTS'))+'</em></footer></article>';
 }
 function comparisonModels(){
   if(state.compare==='frames')return [0,1,2].map(frame=>({c:character({frame}),label:FRAME_NAMES[frame]}));
@@ -114,25 +116,53 @@ function groupedItemOptions(){
     return '<optgroup label="'+esc(klass)+'">'+rows+'</optgroup>';
   }).join('');
 }
+function fitFamily(klass){
+  return String(klass||'Warrior').toLowerCase().replace(/\s+/g,'-');
+}
+function svgNumber(html,name){
+  const m=html.match(new RegExp(name+'="(-?[0-9.]+)"'));return m?Number(m[1]):NaN;
+}
+function closeTo(a,b,t=.12){return Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=t}
 function validateCharacter(c,{highlight='',requireFull=false}={}){
-  const P=CP(),html=P.paperDollHTML(c,{size:'equipment',highlightedSlot:highlight,showGear:true}),fit=P.gearFitProfile(c);
-  const nums=['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','offhandX'];
+  const P=CP(),R=CR(),html=P.paperDollHTML(c,{size:'equipment',highlightedSlot:highlight,showGear:true}),fit=P.gearFitProfile(c);
+  const nums=['leftShoulder','rightShoulder','leftHand','rightHand','baseRightHand','handY','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','weaponY','offhandX','offhandY'];
+  if(P.equipmentFitVersion!==4||R?.fitVersion!==4)throw new Error('equipment fit v4 is not active');
   if(nums.some(k=>!Number.isFinite(fit[k])))throw new Error('invalid anchors');
-  if(/NaN|undefined/.test(html))throw new Error('invalid SVG output');
-  if(!(fit.leftShoulder<fit.rightShoulder&&fit.leftLeg<fit.rightLeg&&fit.waistHalf>0&&fit.hipHalf>0))throw new Error('invalid body anchor ordering');
-  if(c.equipment?.Chest){
-    const match=html.match(/data-chest-top="([0-9.]+)"/),top=Number(match?.[1]);
-    if(!Number.isFinite(top)||top>121.01)throw new Error('chest armour is not locked to the raised torso anchor');
+  if(/NaN|Infinity|undefined/.test(html))throw new Error('invalid SVG output');
+  if(!html.includes('data-equipment-fit="v4"'))throw new Error('model is not using equipment fit v4');
+  if(!(fit.leftShoulder<fit.rightShoulder&&fit.leftHand<fit.rightHand&&fit.leftLeg<fit.rightLeg&&fit.waistHalf>0&&fit.hipHalf>0))throw new Error('invalid body anchor ordering');
+
+  const core=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'];
+  for(const slot of core){
+    if(!c.equipment?.[slot])continue;
+    if(!html.includes('cb-paper-slot-'+slot.toLowerCase()))throw new Error(slot+' layer missing');
+    if(!html.includes('data-fit-version="4"')||!html.includes('data-alignment="v4"'))throw new Error(slot+' is not on fit/alignment v3');
+    const b=R?.fitSlot?.(c,slot,{family:fitFamily(c.class),tier:c.equipment[slot]?.tier||1});
+    if(!b||!Number.isFinite(b.y)||!Number.isFinite(b.w)||!Number.isFinite(b.h)||b.w<=3||b.h<=3||b.y<-20||b.y>410)throw new Error(slot+' fit bounds invalid');
   }
-  const baseAt=html.indexOf('cb-illustrated-base'),weaponAt=html.indexOf('cb-paper-front-weapon');
-  if(c.equipment?.Weapon&&(weaponAt<0||weaponAt<baseAt))throw new Error('main-hand weapon is not on the front layer');
+
+  if(c.equipment?.Hands){
+    if(!closeTo(svgNumber(html,'data-left-hand-x'),fit.leftHand)||!closeTo(svgNumber(html,'data-right-hand-x'),fit.rightHand)||!closeTo(svgNumber(html,'data-hand-y'),fit.handY))throw new Error('gloves are not locked to the hand anchors');
+  }
+  if(c.equipment?.Shoulders){
+    if(!closeTo(svgNumber(html,'data-left-shoulder-x'),fit.leftShoulder)||!closeTo(svgNumber(html,'data-right-shoulder-x'),fit.rightShoulder))throw new Error('shoulders are not locked to the shoulder anchors');
+  }
+  if(c.equipment?.Weapon){
+    const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
+    if(weaponAt<0||weaponAt<headAt||!html.includes('data-weapon-pose="side-held"'))throw new Error('main-hand weapon is not using the side-held pose');
+    const weaponHtml=html.slice(weaponAt);if(!closeTo(svgNumber(weaponHtml,'data-grip-x'),fit.weaponX)||!closeTo(svgNumber(weaponHtml,'data-grip-y'),fit.weaponY))throw new Error('main-hand side grip is not attached to the posed right hand');
+    if(fit.weaponX<fit.weaponSideMin)throw new Error('main-hand weapon crossed inward over the torso');
+  }
   if(c.equipment?.OffHand){
-    const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"');
+    const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"'),armsAt=html.indexOf('cb-paper-arms'),headAt=html.indexOf('cb-paper-head'),weaponAt=html.indexOf('cb-paper-side-weapon');
     if(offAt<0)throw new Error('off-hand layer missing');
-    if(type==='shield'&&offAt>baseAt)throw new Error('shield must remain behind the body');
-    if(type!=='shield'&&offAt<baseAt)throw new Error('non-shield off-hand must remain in front');
+    if(!closeTo(svgNumber(html.slice(offAt),'data-grip-x'),fit.offhandX)||!closeTo(svgNumber(html.slice(offAt),'data-grip-y'),fit.offhandY))throw new Error('off-hand grip is not attached to the left hand');
+    if(type==='shield'&&offAt>armsAt)throw new Error('shield must remain behind the body');
+    if(type!=='shield'&&offAt<headAt)throw new Error('front off-hand must remain above the body');
     if(c.equipment?.Weapon&&type!=='shield'&&weaponAt<offAt)throw new Error('main-hand must remain above front off-hand');
   }
+  if(c.equipment?.Ring1&&!closeTo(svgNumber(html,'data-ring-x'),fit.leftHand))throw new Error('Ring1 is not attached to the left hand');
+
   if(requireFull){
     for(const pos of positions())if(!c.equipment?.[pos])throw new Error('catalogue missing '+pos);
     for(const pos of positions())if(!html.includes('cb-paper-slot-'+String(pos).toLowerCase()))throw new Error('render missing '+pos);
@@ -140,11 +170,12 @@ function validateCharacter(c,{highlight='',requireFull=false}={}){
   return html;
 }
 function auditCurrent(){
-  const P=CP(),item=canonicalItem();
-  if(!P?.paperDollHTML||!P?.gearFitProfile)return{ok:0,total:0,failures:['Character visual engine unavailable.']};
+  const P=CP(),R=CR(),item=canonicalItem();
+  if(!P?.paperDollHTML||!P?.gearFitProfile||!R?.validateAll)return{ok:0,total:0,failures:['Master rig / character visual engine unavailable.']};
+  const rigAudit=R.validateAll(),failures=[...rigAudit.errors];let ok=rigAudit.ok?R.masterRigCount:0,total=R.masterRigCount;
   const cases=[];
   RACES.forEach(race=>[0,1].forEach(gender=>[0,1,2].forEach(frame=>cases.push({race,gender,frame}))));
-  const failures=[];let ok=0;
+  total+=cases.length;
   for(const body of cases){
     try{
       const c=character(body),html=validateCharacter(c,{highlight:state.loadout==='single'?state.position:''});
@@ -152,7 +183,7 @@ function auditCurrent(){
       ok++;
     }catch(error){failures.push(body.race+' '+GENDER_NAMES[body.gender]+' '+FRAME_NAMES[body.frame]+': '+(error?.message||error))}
   }
-  return{ok,total:cases.length,failures};
+  return{ok,total,failures,rigCount:R.masterRigCount,variantCount:cases.length};
 }
 function auditBetaMatrix(){
   const P=CP(),classes=G()?.CLASS_ORDER||[];
@@ -180,7 +211,8 @@ function statsHTML(){
   return '<div class="cfv-stats">'+
     '<div><span>CATALOGUE</span><b>'+count+' items</b></div>'+
     '<div><span>MODEL LOCK</span><b>'+esc(CP()?.modelContract||'unlocked')+'</b></div>'+
-    '<div><span>BODY MATRIX</span><b>36 bodies</b></div>'+
+    '<div><span>FIT CONTRACT</span><b>V'+esc(CP()?.equipmentFitVersion||0)+' · '+esc(CR()?.fitVersion||0)+' rig</b></div>'+
+    '<div><span>MASTER RIGS</span><b>'+esc(CR()?.masterRigCount||0)+' locked · 36 bodies</b></div>'+
     '<div><span>VIEWING</span><b>'+esc(state.loadout==='full'?'Full set':state.loadout==='single'?'Single item':'Base only')+'</b></div>'+
     '<div><span>ITEM</span><b>'+esc(item?item.slot+' · T'+item.tier:'None')+'</b></div>'+
   '</div>';
@@ -191,7 +223,7 @@ function render(){
   if(item&&state.itemId!==item.itemId){state.itemId=item.itemId;saveState()}
   const compareClass='cfv-compare-'+state.compare;
   mount.innerHTML='<section class="cfv-shell">'+
-    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · V9 BETA LOCK</small><h2>Character Fit Viewer</h2><p>Inspect every equipment piece against every v9 race, sex and body frame without changing live character data.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN 36-BODY AUDIT</button><button id="cfvBetaAudit" type="button">RUN BETA MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
+    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · FIT V4</small><h2>Character Fit Viewer</h2><p>Inspect every equipment slot against all race/sex master models and body variants. Fit V4 also checks side-held weapons and varied robe/skirt lower silhouettes.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN CURRENT ITEM AUDIT</button><button id="cfvBetaAudit" type="button">RUN FULL FIT MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
     statsHTML()+
     '<div class="cfv-toolbar">'+
       '<label><span>RACE</span><select id="cfvRace">'+RACES.map(x=>option(x,x,state.race)).join('')+'</select></label>'+
@@ -248,12 +280,12 @@ function showAuditResult(result,label){
   el.hidden=false;el.dataset.tone=result.failures.length?'error':'ok';
   el.innerHTML=result.failures.length
     ?'<b>'+result.ok+' / '+result.total+' '+esc(label)+' PASSED</b><span>'+esc(result.failures.slice(0,4).join(' · '))+(result.failures.length>4?' · +'+(result.failures.length-4)+' more':'')+'</span>'
-    :'<b>'+result.ok+' / '+result.total+' '+esc(label)+' PASSED</b><span>No missing layers, invalid anchors, bad chest anchors, layer-order faults or broken SVG values were found.</span>';
+    :'<b>'+result.ok+' / '+result.total+' '+esc(label)+' PASSED</b><span>No missing layers, invalid anchors, hand/grip mismatches, slot-fit faults, layer-order faults or broken SVG values were found.</span>';
 }
-function runAudit(){showAuditResult(auditCurrent(),'BODY CONFIGURATIONS')}
+function runAudit(){showAuditResult(auditCurrent(),'CURRENT ITEM · ALL 36 BODIES')}
 function runBetaAudit(){
-  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING V9 BETA MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
-  setTimeout(()=>showAuditResult(auditBetaMatrix(),'BETA CONFIGURATIONS'),0);
+  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING EQUIPMENT FIT V4 MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
+  setTimeout(()=>showAuditResult(auditBetaMatrix(),'FULL LOADOUT CONFIGURATIONS'),0);
 }
 function bind(){
   setValue('cfvRace','race');

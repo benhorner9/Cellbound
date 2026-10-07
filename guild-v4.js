@@ -101,9 +101,15 @@ const classes={
   }}
 };
 
-const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage']);
+const BETA_PLAYABLE_CLASSES=Object.freeze(Object.keys(classes)); // staging balance pass: all classes unlocked
 const BETA_PLAYABLE_CLASS_SET=new Set(BETA_PLAYABLE_CLASSES);
-function isBetaClassPlayable(name){return BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
+function adminRole(){
+  const role=String(account?.admin_role||globalThis.CellboundAdmin?.role||'').toLowerCase();
+  return role==='owner'||role==='admin'?role:null;
+}
+function hasStaffClassAccess(){return Boolean(adminRole())}
+function availableClassNames(){return hasStaffClassAccess()?Object.keys(classes):BETA_PLAYABLE_CLASSES.slice()}
+function isBetaClassPlayable(name){return hasStaffClassAccess()||BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
 function isCharacterBetaPlayable(c){return Boolean(c&&isBetaClassPlayable(c.class))}
 
 const RECRUIT_RACES=[
@@ -165,8 +171,8 @@ function entitlementFromAccount(a){
   const until=a?.membership_active_until?new Date(a.membership_active_until).getTime():0;
   const staffMember=Boolean(a?.staff_member);
   const member=staffMember||Boolean(a?.membership_override)||(until>Date.now());
-  const isAdmin=Boolean(globalThis.CellboundAdmin?.isAdmin);
-  return {member,staffMember,isAdmin,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
+  const isAdmin=Boolean(adminRole());
+  return {member,staffMember,isAdmin,adminRole:adminRole(),chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
 }
 function entitlements(){return entitlementFromAccount(account);}
 function classDef(c){return classes[c.class]||classes.Warrior;}
@@ -238,7 +244,11 @@ async function awardPartyXp(amount,{source='Progression'}={}){
   });
   state.activity=Array.isArray(state.activity)?state.activity:[];
   state.activity.push(source+': active five earned '+reward.toLocaleString()+' XP each.');
-  gains.filter(x=>x.levels>0).forEach(x=>state.activity.push(x.name+' reached Level '+x.afterLevel+'.'));
+  gains.filter(x=>x.levels>0).forEach(x=>{
+    state.activity.push(x.name+' reached Level '+x.afterLevel+'.');
+    const ch=chars.find(c=>c.id===x.id);
+    for(let level=x.beforeLevel+1;level<=x.afterLevel;level++)window.CellboundAnalytics?.levelReached?.(ch,level,source)
+  });
   save();await persistState();
   if(currentUser){
     const now=new Date().toISOString();
@@ -413,18 +423,19 @@ function flushPendingSave(){
 }
 async function loadAccount(user){
   currentUser=user;setSync('Loading…','busy');
-  const [accountResult,identityResult]=await Promise.all([
+  const [accountResult,identityResult,adminResult]=await Promise.all([
     supabaseClient.from('guild_accounts').select('user_id,game_state,guild_name,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle(),
-    supabaseClient.rpc('cellbound_social_identity')
+    supabaseClient.rpc('cellbound_social_identity'),
+    supabaseClient.rpc('cellbound_admin_status')
   ]);
-  const {data,error}=accountResult,identity=identityResult?.data;
+  const {data,error}=accountResult,identity=identityResult?.data,adminStatus=adminResult?.data||{};
   if(error){
     console.error('Cellbound account load failed',error);
-    account={user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+    account={user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible),admin_role:adminStatus?.is_admin?adminStatus.role:null};
     state=migrateState(localCandidate(user.id)||initialState());setSync('Local fallback','error');writeLocal();return;
   }
   if(identityResult?.error)console.warn('Cellbound social identity unavailable',identityResult.error);
-  account={...(data||{user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+  account={...(data||{user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible),admin_role:adminStatus?.is_admin?adminStatus.role:null};
   const remoteRaw=data?.game_state&&typeof data.game_state==='object'&&Object.keys(data.game_state).length?data.game_state:null;
   const localRaw=localCandidate(user.id);
   const remoteRoster=Array.isArray(remoteRaw?.roster)?remoteRaw.roster.length:0;
@@ -461,12 +472,13 @@ async function refreshMembershipStatus({render=true,silent=false}={}){
   const partyBefore=JSON.stringify(partySlotIds());
   const results=await Promise.all([
     supabaseClient.from('guild_accounts').select('membership_active_until,membership_override').eq('user_id',currentUser.id).maybeSingle(),
-    supabaseClient.rpc('cellbound_social_identity')
+    supabaseClient.rpc('cellbound_social_identity'),
+    supabaseClient.rpc('cellbound_admin_status')
   ]);
-  const accountResult=results[0],identityResult=results[1];
+  const accountResult=results[0],identityResult=results[1],adminResult=results[2];
   if(accountResult.error){if(!silent)console.warn('Membership refresh failed',accountResult.error);return entitlements().member}
   const identity=identityResult&&identityResult.data?identityResult.data:{};
-  account=Object.assign({},account||{},accountResult.data||{}, {staff_member:Boolean(identity.staff_member),chat_badge:identity.chat_badge||(account&&account.chat_badge)||'player',player_mod_discount_eligible:Boolean(identity.player_mod_discount_eligible)});
+  account=Object.assign({},account||{},accountResult.data||{}, {staff_member:Boolean(identity.staff_member),chat_badge:identity.chat_badge||(account&&account.chat_badge)||'player',player_mod_discount_eligible:Boolean(identity.player_mod_discount_eligible),admin_role:adminResult?.data?.is_admin?adminResult.data.role:null});
   const after=entitlements().member;
   removeInvalidPartyMembers(state);
   const partyChanged=partyBefore!==JSON.stringify(partySlotIds());
@@ -617,37 +629,23 @@ function openRecruit(slotIndex){
   const e=entitlements();
   if(e.rosterCap<=5||!state.onboarding?.complete||state.roster.length>=e.rosterCap||slotIndex!==state.roster.length)return;
   const klass=BETA_PLAYABLE_CLASSES[0],spec=Object.keys(classes[klass]?.specs||{})[0];
-  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:CP?.randomAppearance?.('Veyren')||{race:'Veyren'}};renderRecruitModal()
+  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:window.CellboundCharacterForge?.appearance?.('Veyren',0)||{race:'Veyren',gender:0}};renderRecruitModal()
 }
 function closeRecruit(){
   const root=$('#recruitAdventurerModal');if(root)root.hidden=true;document.body.classList.remove('recruit-adventurer-open');recruitDraft=null
 }
 function renderRecruitModal(){
   const root=ensureRecruitModal();if(!recruitDraft)return;
-  const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],specs=Object.entries(classes[recruitDraft.klass]?.specs||{}),role=classes[recruitDraft.klass]?.specs?.[recruitDraft.spec]?.role||'dps';
-  recruitDraft.appearance=CP?.normalizeAppearance?.(recruitDraft.appearance,recruitDraft.name||recruitDraft.race,recruitDraft.race)||recruitDraft.appearance||{race:recruitDraft.race};
-  const appearanceEditor=CP?.editorHTML?.(recruitDraft.appearance,{characterClass:recruitDraft.klass,name:recruitDraft.name,race:recruitDraft.race})||'';
   root.hidden=false;document.body.classList.add('recruit-adventurer-open');
-  const e=entitlements(),adminSlot=e.isAdmin&&state.roster.length>=10;
-  root.innerHTML='<section class="recruit-modal"><button class="modal-close" data-close-recruit>×</button>'+
-    '<header><small>'+(adminSlot?'ADMIN ROSTER':'MEMBERSHIP ROSTER')+' · SLOT '+(state.roster.length+1)+' OF '+e.rosterCap+'</small><h2>Recruit Adventurer</h2><p>'+(e.isAdmin?'Admin accounts can maintain up to 20 adventurers.':'Membership adds five roster slots. Recruit them whenever you need them.')+'</p></header>'+
-    '<div class="recruit-body">'+
-      '<label><span>Race</span><select id="recruitRace">'+RECRUIT_RACES.map(r=>'<option value="'+r.id+'" '+(r.id===recruitDraft.race?'selected':'')+'>'+r.icon+' '+r.id+' · '+r.trait+'</option>').join('')+'</select></label>'+
-      '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).filter(([name])=>isBetaClassPlayable(name)).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
-      '<label><span>Specialisation</span><select id="recruitSpec">'+specs.map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.spec?'selected':'')+'>'+name+' · '+roleLabel(d.role)+'</option>').join('')+'</select></label>'+
-      '<div class="recruit-appearance-wrap"><small>APPEARANCE</small>'+appearanceEditor+'</div>'+ 
-      '<label class="recruit-name-label"><span>Name</span><div class="recruit-name"><input id="recruitName" maxlength="24" autocomplete="off" value="'+esc(recruitDraft.name)+'"><button type="button" data-random-recruit>RANDOMISE</button></div></label>'+
-    '</div>'+
-    '<div class="recruit-preview">'+portraitHTML({race:recruitDraft.race,appearance:recruitDraft.appearance,class:recruitDraft.klass,name:recruitDraft.name},'lg')+'<div><small>NEW LEVEL 1 ADVENTURER</small><b>'+esc(recruitDraft.name||'Unnamed')+'</b><span>'+race.id+' · '+recruitDraft.klass+' · '+recruitDraft.spec+' · '+roleLabel(role)+'</span></div></div>'+
-    '<footer><small>Starts with basic equipment · 0% Cell Shock · independent spec builds and professions</small><button class="on-primary" data-confirm-recruit>CONFIRM RECRUIT →</button></footer></section>';
-  root.querySelector('[data-close-recruit]').onclick=closeRecruit;
-  root.querySelector('#recruitRace').onchange=e=>{recruitDraft.race=e.target.value;recruitDraft.name=recruitRandomName(recruitDraft.race);recruitDraft.appearance=CP?.randomAppearance?.(recruitDraft.race)||{race:recruitDraft.race};renderRecruitModal()};
-  root.querySelector('#recruitClass').onchange=e=>{recruitDraft.klass=e.target.value;recruitDraft.spec=Object.keys(classes[recruitDraft.klass]?.specs||{})[0];renderRecruitModal()};
-  root.querySelector('#recruitSpec').onchange=e=>{recruitDraft.spec=e.target.value;renderRecruitModal()};
-  root.querySelector('#recruitName').oninput=e=>{recruitDraft.name=e.target.value};
-  root.querySelector('[data-random-recruit]').onclick=()=>{recruitDraft.name=recruitRandomName(recruitDraft.race);renderRecruitModal()};
-  CP?.bindEditor?.(root,recruitDraft.appearance,()=>renderRecruitModal(),{characterClass:recruitDraft.klass,name:recruitDraft.name});
-  root.querySelector('[data-confirm-recruit]').onclick=createRecruit;
+  root.innerHTML='<section class="recruit-modal"><div data-creation-mount></div></section>';
+  const valid=()=>{const n=String(recruitDraft.name||'').trim();return n.length>=2&&n.length<=24&&!state.roster.some(c=>String(c.name||'').toLowerCase()===n.toLowerCase())};
+  const allowed=new Set(availableClassNames());
+  const choices=Object.entries(classes).filter(([name])=>allowed.has(name)).flatMap(([klass,c])=>Object.entries(c.specs||{}).map(([spec,d])=>({klass,spec,label:spec+' · '+roleLabel(d.role),icon:c.icon})));
+  window.CellboundCharacterForge.render({mount:root.querySelector('[data-creation-mount]'),draft:recruitDraft,step:recruitDraft.creationStep||'form',
+    races:RECRUIT_RACES,classes:choices,title:'Recruit a guild member',confirmLabel:'CONFIRM RECRUIT →',valid:valid(),isValid:valid,
+    hint:'Choose a unique name. Your recruit starts at level 1 with basic equipment.',onStep:step=>{recruitDraft.creationStep=step;renderRecruitModal()},
+    onChange:()=>renderRecruitModal(),onName:()=>{},onRandomName:()=>{recruitDraft.name=recruitRandomName(recruitDraft.race)},onClose:closeRecruit,onConfirm:createRecruit
+  });
 }
 async function createRecruit(){
   if(!recruitDraft)return;
@@ -656,7 +654,7 @@ async function createRecruit(){
   if(e.rosterCap<=5||state.roster.length>=e.rosterCap){closeRecruit();renderAll();return}
   const name=String(recruitDraft.name||'').trim().replace(/\s+/g,' ');
   if(name.length<2||name.length>24||state.roster.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase())){
-    const input=$('#recruitName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
+    const input=$('#cfCharacterName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
   }
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec;
   if(!isBetaClassPlayable(klass)){alert('That class is not available during beta.');renderRecruitModal();return}
@@ -672,6 +670,7 @@ async function createRecruit(){
   const combatStyle=['Mage','Priest','Druid','Hunter'].includes(ch.class)?'ranged':'melee';
   const mirror=await supabaseClient.from('characters').insert({user_id:currentUser.id,name:ch.name,combat_style:combatStyle,tutorial_complete:true,creation_complete:true,appearance:{...(ch.appearance||{}),race:ch.race,class:ch.class,spec:ch.spec,role,roster_slot:state.roster.length-1,recruited:true},level:1,xp:0,current_hp:100,max_hp:100,current_location:'zeltira',tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()});
   if(mirror.error)console.warn('Recruit character mirror record skipped',mirror.error);
+  window.CellboundAnalytics?.characterCreated?.(ch,'recruit');
   renderAll()
 }
 
@@ -917,6 +916,7 @@ function disposeBankBulk(mode){
     items.forEach(item=>removeBankQuantity(item,Math.max(1,Number(item.quantity)||1)));
     Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
     state.activity.push(`Bulk dismantled ${units} item${units===1?'':'s'} from ${items.length} bank stack${items.length===1?'':'s'}: ${materialSummary}.`);
+    window.CellboundAnalytics?.track?.('item_dismantled',{quantity:units,stacks:items.length,mode:'bulk'});
   }else return;
   bankBulkSelected.clear();
   bankBulkMode=false;
@@ -1071,6 +1071,7 @@ function disposeBankItem(id,mode){
     if(!confirm(`Dismantle ${qty} × ${name}?\n\nYou will receive: ${summary}.${gemWarning}\n\nThis cannot be undone.`))return;
     removeBankQuantity(item,qty);Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
     state.activity.push(`Dismantled ${qty} × ${name}: ${summary}.`);
+    window.CellboundAnalytics?.track?.('item_dismantled',{quantity:qty,item_name:name,item_id:item.itemId||'',tier:Number(item.tier)||0,rarity:item.rarity||'',mode:'single'});
   }else return;
   save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
 }
@@ -1194,7 +1195,7 @@ function equipBankItem(itemId,charId,requestedSlot=null){
   const old=canonicalItem(c.equipment?.[slot]);
   if(old?.name){c.power=Math.max(1,(Number(c.power)||1)-(Number(old.power)||0));addBankItem({...old,source:`Unequipped from ${c.name}`},false)}
   c.equipment[slot]={...incoming,source:'Equipped'};c.power=Math.max(1,(Number(c.power)||1)+(Number(incoming?.power)||0));
-  c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} to ${String(slot).replace(/(\d)/,' $1')} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
+  c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} to ${String(slot).replace(/(\d)/,' $1')} (iLvl ${item.itemLevel}).`);window.CellboundAnalytics?.track?.('item_equipped',{character_id:c.id,class:c.class,race:c.race,item_id:item.itemId||'',item_name:item.name,slot,item_level:Number(item.itemLevel)||0,tier:Number(item.tier)||0});save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
 }
 $('[data-bank-close]')?.addEventListener('click',()=>{ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')});ui.bankModal?.addEventListener('click',e=>{if(e.target===ui.bankModal){ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')}});
 function setBankCategory(value){
@@ -1268,10 +1269,10 @@ function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(
 window.CellboundGame={
   ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
   characterItemLevel,partyItemLevel,averagePartyLevel,xpNeeded,awardPartyXp,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
-  betaPlayableClasses:BETA_PLAYABLE_CLASSES,isBetaClassPlayable,isCharacterBetaPlayable,
+  betaPlayableClasses:BETA_PLAYABLE_CLASSES,getPlayableClasses:availableClassNames,isBetaClassPlayable,isCharacterBetaPlayable,isStaffAdmin:hasStaffClassAccess,adminRole,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
-  applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
+  applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));window.CellboundAnalytics?.track?.('cell_shock_applied',{amount:Number(amount)||0,party_size:chars.length,locked:chars.filter(ch=>isUnavailable(ch)).length});save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
 };
 $('#signOut')?.addEventListener('click',async()=>{clearTimeout(syncTimer);await persistState();await supabaseClient.auth.signOut();location.replace('./index.html');});
 (async()=>{

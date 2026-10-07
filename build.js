@@ -2,19 +2,36 @@ const fs=require('fs');
 const path=require('path');
 const vm=require('vm');
 const zlib=require('zlib');
-const files=['index.html','styles.css','website-v1.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','item-art-v1.css','foundations.css','presentation-fx-v1.css','combat-polish-v2.css','economy-v2.css','trading-post-v3.css','social-v3.css','pvp-v1.css','pvp-viewer-v1.css','pvp-match-v1.css','evolution-v1.css','dungeon-2d-v1.css','combat-3d-v1.css','expedition-presentation-v1.css','null-complex-v1.css','boss-dossier-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','manor-raid-v1.css','twelve-below-v1.css','admin-v1.css','beta-ops-v1.css','admin-beta-ops-v1.css','living-world-v1.css','dungeon-generator-v1.css','character-fit-viewer-v1.css','release-v1.css','comic-scenes-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','no-way-back-v1.css','fractured-ages-v1.css','dungeon-theme-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css','roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','bank-v2.css','character-command-v1.css','character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','layout-safety-v1.css','class-build-v1.js','gear-data.js','profession-data.js','balance-v1.js','item-art-v1.js','character-portraits-v1.js','combat-portraits-v1.js','combat-identities-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','combat-polish-v2.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-v1.js','evolution-v1.js','expedition-presentation-v1.js','null-complex-v1.js','boss-dossier-v1.js','ashen-live-scenes-v1.js','dungeon-2d-v1.js','combat-3d-v1.js','twelve-below-v1.js','admin-v1.js','beta-ops-v1.js','admin-beta-ops-v1.js','world-presence-v1.js','living-world-v1.js','dungeon-generator-v1.js','character-fit-viewer-v1.js','release-v1.js','comic-scenes-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','manor-raid-v1.js','quests-v2.js','fourfold-lock-v1.js','no-way-back-v1.js','fractured-ages-v1.js','mobile-v1.js','game-feel-v1.js'];
-files.push('combat-polish-v3.js','combat-polish-v3.css','combat-physical-v4.js','combat-physical-v4.css');
-const assets=['assets/gear/cellbound-gear-atlas.webp','assets/combat/status-icons-v1.webp','assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp','assets/bosses/no-way-back-three-hounds-v3.jpg','assets/bosses/no-way-back-silas-vane-v3.jpg','assets/ashen-vault/environment/floor-atlas.png','assets/ashen-vault/environment/props-atlas.png','assets/ashen-vault/battlefields/broken-gate.avif','assets/ashen-vault/battlefields/hall-embers.avif','assets/ashen-vault/battlefields/kael.avif','assets/ashen-vault/battlefields/furnace.avif','assets/ashen-vault/battlefields/embermaw.avif','assets/ashen-vault/battlefields/vault-depths.avif','assets/ashen-vault/battlefields/vaultheart.avif','assets/chaos-canyon/rooms/canyon-mouth.webp','assets/chaos-canyon/rooms/thorn-trail.webp','assets/chaos-canyon/rooms/sentinel.webp','assets/chaos-canyon/rooms/crossing.webp','assets/chaos-canyon/rooms/warden.webp','assets/chaos-canyon/rooms/wildheart.webp','assets/chaos-canyon/rooms/vorran.webp','assets/hollow-sanctum/rooms/gallery.webp','assets/hollow-sanctum/rooms/sentinel.webp','assets/hollow-sanctum/rooms/choir.webp','assets/blackout-station/rooms/reactor-core.webp','assets/blackout-station/rooms/vex-calder-room.avif','assets/fractured-ages/rooms/high-noon.webp','assets/fractured-ages/rooms/iron-kingdom.webp','assets/fractured-ages/rooms/first-kingdom.webp','assets/fractured-ages/rooms/silent-frontier.webp','assets/fractured-ages/rooms/funhouse.webp','assets/dungeons/ashen-vault.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp','assets/quests/ashes-east-road-cinder-cart.webp','assets/tutorial/battlefields/rootling-nest.webp','assets/tutorial/battlefields/collapsed-gallery.webp','assets/tutorial/battlefields/hollow-warden.webp','assets/world/twelve-below-key-art.webp','assets/manor/manor-butler.webp','assets/manor/manor-maids.webp','assets/manor/manor-engineer.webp','assets/manor/manor-master.webp','assets/manor/manor-raid-hero.webp','assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp','assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','assets/comics/tutorial/the_quartermaster_s_choice.webp','assets/comics/tutorial/warden_s_descent_into_the_ruins.webp','assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp','assets/comics/thirteenth-bell/sealed_letter.jpg','assets/comics/thirteenth-bell/greywake_arrival.jpg','assets/comics/thirteenth-bell/locked_house.jpg','assets/comics/thirteenth-bell/final_run.jpg','assets/comics/thirteenth-bell/bellkeeper.jpg','assets/comics/thirteenth-bell/bell_breaks.jpg','assets/comics/thirteenth-bell/greywake_freed.jpg','assets/comics/thirteenth-bell/departure.jpg','assets/comics/null-complex/voss-signal.webp','assets/comics/null-complex/facility-entry.webp','assets/comics/null-complex/first-aberrant.webp','assets/comics/null-complex/orin-recording.webp','assets/comics/null-complex/subject-zero.webp','assets/comics/null-complex/teleporter.webp','assets/comics/null-complex/overseer-awakens.webp','assets/comics/null-complex/prototype-07.webp','assets/comics/null-complex/escape.webp','assets/comics/null-complex/subject-zero-awake.webp'];
-for(const required of ['assets/hollow-sanctum/rooms/gallery.webp','assets/hollow-sanctum/rooms/sentinel.webp','assets/hollow-sanctum/rooms/choir.webp']){
+const RuntimeManifest=require('./tools/runtime-manifest.cjs');
+const files=RuntimeManifest.files;
+const sourcePath=file=>RuntimeManifest.sourcePath(__dirname,file);
+const readSource=file=>fs.readFileSync(sourcePath(file),'utf8');
+const retiredCombatSources=['combat-3d-v1.js','combat-3d-v1.css','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-viewer-v1.css','pvp-match-v1.js','pvp-match-v1.css'];
+for(const retired of retiredCombatSources)if(fs.existsSync(path.join(__dirname,retired)))throw new Error('Retired standalone combat source returned: '+retired);
+const retiredCharacterSources=['creation-centre-v1.js','creation-centre-v1.css','scripts/package-race-bases.cjs'];
+for(const retired of retiredCharacterSources)if(fs.existsSync(path.join(__dirname,retired)))throw new Error('Retired character source returned: '+retired);
+const retiredRaceBases=['veyren','stoneborn','aelari','thornkin','emberkin','nymari'].flatMap(r=>['male','female'].map(sex=>'assets/characters/race-bases/'+r+'-'+sex+'.webp'));
+for(const retired of retiredRaceBases)if(fs.existsSync(path.join(__dirname,retired)))throw new Error('Retired race-base derivative returned: '+retired);
+const retiredChaosAvif=['canyon-mouth','crossing','sentinel','thorn-trail','vorran','warden','wildheart'].map(name=>'assets/chaos-canyon/rooms/'+name+'.avif');
+for(const retired of retiredChaosAvif)if(fs.existsSync(path.join(__dirname,retired)))throw new Error('Unused Chaos Canyon AVIF duplicate returned: '+retired);
+const retiredBellJpg=['sealed_letter','greywake_arrival','locked_house','final_run','bellkeeper','bell_breaks','greywake_freed','departure'].map(name=>'assets/comics/thirteenth-bell/'+name+'.jpg');
+for(const retired of retiredBellJpg)if(fs.existsSync(path.join(__dirname,retired)))throw new Error('Legacy Thirteenth Bell JPG returned: '+retired);
+const forgeBaseAssets=['veyren','stoneborn','aelari','thornkin','emberkin','nymari'].flatMap(r=>['male','female'].map(sex=>'assets/characters/forge-bases/'+r+'-'+sex+'.png'));
+const assets=[...forgeBaseAssets,...['warrior','paladin','hunter','rogue','mage','weapons','secondary','heads','accessories','resources'].map(name=>'assets/items/illustrated-v2/'+name+'.webp'),'assets/combat/status-icons-v1.webp','assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp','assets/bosses/no-way-back-three-hounds-v3.jpg','assets/bosses/no-way-back-silas-vane-v3.jpg','assets/ashen-vault/rooms/broken-gate.webp','assets/ashen-vault/rooms/hall-embers.webp','assets/ashen-vault/rooms/kael.webp','assets/ashen-vault/rooms/furnace.webp','assets/ashen-vault/rooms/embermaw.webp','assets/ashen-vault/rooms/vault-depths.webp','assets/ashen-vault/rooms/vaultheart.webp','assets/chaos-canyon/rooms/canyon-mouth.webp','assets/chaos-canyon/rooms/thorn-trail.webp','assets/chaos-canyon/rooms/sentinel.webp','assets/chaos-canyon/rooms/crossing.webp','assets/chaos-canyon/rooms/warden.webp','assets/chaos-canyon/rooms/wildheart.webp','assets/chaos-canyon/rooms/vorran.webp','assets/hollow-sanctum/rooms/gallery-void-v2.webp','assets/hollow-sanctum/rooms/sentinel-void-v2.webp','assets/hollow-sanctum/rooms/choir-void-v2.webp','assets/blackout-station/rooms/vex-calder-room.avif','assets/fractured-ages/rooms/high-noon.webp','assets/fractured-ages/rooms/iron-kingdom.webp','assets/fractured-ages/rooms/first-kingdom.webp','assets/fractured-ages/rooms/silent-frontier.webp','assets/fractured-ages/rooms/funhouse.webp','assets/dungeons/ashen-vault.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp','assets/quests/ashes-east-road-cinder-cart.webp','assets/tutorial/battlefields/rootling-nest.webp','assets/tutorial/battlefields/collapsed-gallery.webp','assets/tutorial/battlefields/hollow-warden.webp','assets/world/twelve-below-key-art.webp','assets/manor/manor-butler.webp','assets/manor/manor-maids.webp','assets/manor/manor-engineer.webp','assets/manor/manor-master.webp','assets/manor/manor-raid-hero.webp','assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp','assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','assets/comics/tutorial/the_quartermaster_s_choice.webp','assets/comics/tutorial/warden_s_descent_into_the_ruins.webp','assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp','assets/comics/thirteenth-bell/sealed_letter.webp','assets/comics/thirteenth-bell/greywake_arrival.webp','assets/comics/thirteenth-bell/locked_house.webp','assets/comics/thirteenth-bell/final_run.webp','assets/comics/thirteenth-bell/bellkeeper.webp','assets/comics/thirteenth-bell/bell_breaks.webp','assets/comics/thirteenth-bell/greywake_freed.webp','assets/comics/thirteenth-bell/departure.webp','assets/comics/null-complex/voss-signal.webp','assets/comics/null-complex/facility-entry.webp','assets/comics/null-complex/first-aberrant.webp','assets/comics/null-complex/orin-recording.webp','assets/comics/null-complex/subject-zero.webp','assets/comics/null-complex/teleporter.webp','assets/comics/null-complex/overseer-awakens.webp','assets/comics/null-complex/prototype-07.webp','assets/comics/null-complex/escape.webp','assets/comics/null-complex/subject-zero-awake.webp'];
+for(const required of ['assets/hollow-sanctum/rooms/gallery-void-v2.webp','assets/hollow-sanctum/rooms/sentinel-void-v2.webp','assets/hollow-sanctum/rooms/choir-void-v2.webp']){
   if(!assets.includes(required))throw new Error('Hollow Sanctum rendered room asset is not shipped: '+required);
 }
-if(!assets.includes('assets/blackout-station/rooms/reactor-core.webp'))throw new Error('Blackout Station Reactor Core battlefield is not shipped');
+if(!assets.includes('assets/blackout-station/rooms/vex-calder-room.avif'))throw new Error('Blackout Station Reactor Core battlefield is not shipped');
 if(!assets.includes('assets/quests/ashes-east-road-cinder-cart.webp'))throw new Error('Ashes on the East Road battlefield is not shipped');
 if(!assets.includes('assets/tutorial/battlefields/rootling-nest.webp'))throw new Error('Chapter 0 Rootling Nest battlefield is not shipped');
 if(!assets.includes('assets/tutorial/battlefields/collapsed-gallery.webp'))throw new Error('Chapter 0 Collapsed Gallery battlefield is not shipped');
 if(!assets.includes('assets/tutorial/battlefields/hollow-warden.webp'))throw new Error('Chapter 0 Hollow Warden battlefield is not shipped');
 for(const required of ['assets/fractured-ages/rooms/high-noon.webp','assets/fractured-ages/rooms/iron-kingdom.webp','assets/fractured-ages/rooms/first-kingdom.webp','assets/fractured-ages/rooms/silent-frontier.webp','assets/fractured-ages/rooms/funhouse.webp']){if(!assets.includes(required))throw new Error('Fractured Ages rendered battlefield is not shipped: '+required)}
-for(const required of ['assets/chaos-canyon/rooms/canyon-mouth.webp','assets/chaos-canyon/rooms/thorn-trail.webp','assets/chaos-canyon/rooms/sentinel.webp','assets/chaos-canyon/rooms/crossing.webp','assets/chaos-canyon/rooms/warden.webp','assets/chaos-canyon/rooms/wildheart.webp','assets/chaos-canyon/rooms/vorran.webp']){if(!assets.includes(required))throw new Error('Chaos Canyon rendered room asset is not shipped: '+required)}
+for(const required of ['assets/chaos-canyon/rooms/canyon-mouth.webp','assets/chaos-canyon/rooms/thorn-trail.webp','assets/chaos-canyon/rooms/sentinel.webp','assets/chaos-canyon/rooms/crossing.webp','assets/chaos-canyon/rooms/warden.webp','assets/chaos-canyon/rooms/wildheart.webp','assets/chaos-canyon/rooms/vorran.webp']){
+  if(!assets.includes(required))throw new Error('Chaos Canyon rendered room asset is not shipped: '+required);
+  const roomBytes=fs.statSync(path.join(__dirname,required)).size;
+  if(roomBytes<45000)throw new Error('Chaos Canyon room art is unexpectedly low quality: '+required+' ('+roomBytes+' bytes)');
+}
 for(const [label,list] of [['runtime file',files],['asset',assets]]){
   const duplicates=[...new Set(list.filter((entry,index)=>list.indexOf(entry)!==index))];
   if(duplicates.length)throw new Error('Duplicate '+label+' entries in build manifest: '+duplicates.join(', '));
@@ -22,6 +39,10 @@ for(const [label,list] of [['runtime file',files],['asset',assets]]){
 const rootRuntimeFiles=fs.readdirSync(__dirname).filter(name=>/\.(?:js|css)$/.test(name)&&name!=='build.js');
 const orphanRuntimeFiles=rootRuntimeFiles.filter(name=>!files.includes(name));
 if(orphanRuntimeFiles.length)throw new Error('Unshipped root runtime files must be linked or removed: '+orphanRuntimeFiles.join(', '));
+const misplacedMovedRuntime=RuntimeManifest.moved.filter(name=>fs.existsSync(path.join(__dirname,name)));
+if(misplacedMovedRuntime.length)throw new Error('Domain-organised runtime returned to repository root: '+misplacedMovedRuntime.join(', '));
+const missingRuntimeSources=files.filter(file=>!fs.existsSync(sourcePath(file)));
+if(missingRuntimeSources.length)throw new Error('Runtime source manifest points at missing files: '+missingRuntimeSources.join(', '));
 
 const out=path.join(__dirname,'dist');
 const buildId=String(process.env.GITHUB_SHA||process.env.CELLBOUND_BUILD||'local-dev').trim();
@@ -30,7 +51,7 @@ fs.rmSync(out,{recursive:true,force:true});
 fs.mkdirSync(out,{recursive:true});
 const touchFix=`\n<style id="cellbound-ios-touch-fix">html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}button,a,input,label,[role="button"]{touch-action:manipulation}@media (hover:none) and (pointer:coarse){input,select,textarea{font-size:16px!important}}</style>\n`;
 for(const file of files){
-  const src=path.join(__dirname,file),dest=path.join(out,file);
+  const src=sourcePath(file),dest=path.join(out,file);
   let contents=fs.readFileSync(src,'utf8');
   if(file.endsWith('.js')){
     try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}
@@ -61,7 +82,10 @@ for(const file of files){
   if(file==='combat-polish-v2.css'){
     for(const hook of ['.cbvfx-layer','.cbvfx-events','.cbvfx-burst.damage','.cbvfx-burst.heal','.cbvfx-burst.interrupt','.cbvfx-burst.death','data-cbvfx-theme="ashen"','data-cbvfx-theme="hollow"','data-cbvfx-theme="chaos"','data-cbvfx-theme="blackout"','data-cbvfx-theme="pvp"','cbvfxLootReveal','prefers-reduced-motion'])if(!contents.includes(hook))throw new Error('Shared combat VFX styling is missing '+hook);
   }
-  if(file==='quests-v2.js'){
+    if(file==='dungeon-2d-v1.js'){
+    for(const hook of ['function refreshCombatCommandCooldowns','function refreshExternalCommandCooldowns','function selectCommanderTarget(','cbrCommandPower','cbrCommandTarget','COMMAND POWER',"small.textContent='NEED '+state.cost+' CP'",'commandState:type=>session.commandState?.(type)','commandPowerState:()=>session.commandPowerState?.()',"id:'stack'","id:'regroup'"])if(!contents.includes(hook))throw new Error('Commander v2 UI is missing '+hook);
+  }
+if(file==='quests-v2.js'){
     for(const hook of ["id:'signal-from-nowhere'","Prototype 07 — The Reconstituted","progression.nullComplexUnlocked","isNullComplexUnlocked"])if(!contents.includes(hook))throw new Error('Signal From Nowhere quest is missing '+hook);
     for(const hook of ['function qCombatants()','participants:[...p]',"String(config.quest||config.title||'Quest').toUpperCase()","Quest combat viewer failed to initialise"])if(!contents.includes(hook))throw new Error('Quest combat safety is missing '+hook);
     for(const hook of ['function classTrialPartyState(','function classTrialMechanics(','function classTrialCombat(','featuredCharacterId:t.character.id',"partyLabel:'CLASS-LED PARTY'","ENTER PARTY TRIAL →","mode:'party'"])if(!contents.includes(hook))throw new Error('Class-led party trial flow is missing '+hook);
@@ -104,7 +128,7 @@ for(const file of files){
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
-    for(const hook of ["effect==='socket-gem'","effect==='character-gadget'","effect==='party-food'","effect==='party-scroll'","attachmentFamily==='relic-core'"])if(!contents.includes(hook))throw new Error('New crafted item artwork type is missing '+hook);
+    for(const hook of ["effect==='socket-gem'","effect==='character-gadget'","effect==='party-food'","effect==='party-scroll'","attachmentFamily==='relic-core'"])if(!readSource('item-visuals-v2.js').includes(hook))throw new Error('New crafted item artwork type is missing '+hook);
     if(!contents.includes('P?.craftedRarity?.(r.level,r.endgame)'))throw new Error('Crafted item artwork rarity no longer follows profession progression');
   }
   if(file==='evolution-v1.css'){
@@ -152,17 +176,28 @@ for(const file of files){
   if(file==='blackout-station-v1.js'&&!contents.includes('craftedGridOverrideStack'))throw new Error('Crafted Engineering grid bypass is not integrated');
   if(file==='blackout-station-v1.js'&&!contents.includes('bs-grid-rig'))throw new Error('Blackout distribution board alignment rig is missing');
   if(file==='blackout-station-v1.css'&&(!contents.includes('top:37.5%')||!contents.includes('top:62.5%')||!contents.includes('Blackout Station exact cable alignment pass v3')))throw new Error('Blackout source/breaker alignment contract is missing');
-  if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
+  if(file==='combat-standard-v1.js'){
+    if(!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
+    for(const hook of ["const CONTRACT_VERSION='1.1.0'","function createLiveSession(","engine.createLiveSession","liveReady:!!window.CellboundCombatReborn?.createLiveSession"])if(!contents.includes(hook))throw new Error('Real-time combat gateway contract is missing '+hook);
+  }
 
+  if(file==='guild.html'){
+    const rigAt=contents.indexOf('./character-rig-v1.js'),portraitAt=contents.indexOf('./character-portraits-v1.js');
+    if(rigAt<0||portraitAt<0||rigAt>portraitAt)throw new Error('Master character rig must load before the portrait renderer');
+  }
+  if(file==='character-forge-v1.js'){
+    for(const hook of ["window.CellboundCharacterForge","const STEPS=['form','class','identity','confirm']","function modelSVG(","classic-paper-doll-v1","data-forge-sex","data-forge-race","data-forge-class"])if(!contents.includes(hook))throw new Error('Character Forge classic paper-doll runtime is missing '+hook);
+    for(const retired of ['data-appearance-field','data-appearance-randomize','cc-editor-appearance'])if(contents.includes(retired))throw new Error('Character Forge must remain race/sex only for beta: '+retired);
+  }
+  if(file==='character-rig-v1.js'){
+    for(const hook of ["window.CellboundCharacterRig","CONTRACT='master-rig-v1'","FIT_VERSION=4","fitVersion:FIT_VERSION","masterRigCount:12","function validateAll()","function fitSlot(","function anchors(","function masterRig(","REQUIRED_ANCHORS","LAYER_ORDER"])if(!contents.includes(hook))throw new Error('Master character rig is missing '+hook);
+    const sandbox={window:{}};vm.createContext(sandbox);vm.runInContext(contents,sandbox,{filename:file});
+    const audit=sandbox.window.CellboundCharacterRig?.validateAll?.();
+    if(!audit?.ok||audit.count!==12)throw new Error('Master character rig validation failed: '+JSON.stringify(audit?.errors||audit));
+  }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','CHARACTER_MODEL_VERSION=9',"CHARACTER_MODEL_CONTRACT='v9-beta-locked'","EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-front'",'normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','weaponFitProfile','paperHeadGearOnly','tierVisualProfile','tierChestAdornment','tierHeadAdornment','tierWeaponAdornment','tierOffHandAdornment','paperOffHandBack','paperOffHandFront','data-chest-top','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
-    if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
-    if(!contents.includes('var baseFigure=illustratedBaseFigure(model')||contents.includes('paperBodyBase(model,a,skin,profile,uid)'))throw new Error('Equipped gear must layer over the same v9 illustrated character body used by the base model');
-    for(const hook of ['leftRingX=fit.leftHand','rightRingX=fit.rightHand','fit.weaponX','fit.offhandX','fit.leftLeg','fit.rightLeg'])if(!contents.includes(hook))throw new Error('Adaptive equipment fitting is missing '+hook);
-    if(!contents.includes("chestTop:gender===1?121:119"))throw new Error('Global chest armour realignment is missing');
-    if(!contents.includes("paperBackLayer(model)+\n    paperOffHandBack(model,highlighted)+\n    baseFigure+")||!contents.includes("paperOffHandFront(model,highlighted)+\n    paperWeapon(model,highlighted)+"))throw new Error('Equipment layer order must keep shields behind, non-shield off-hands in front, and main-hand weapon topmost');
-    for(const hook of ["data-render-layer=\"front\"","data-grip-x","data-grip-y","anchorX:fit.weaponX","pivotX:","pivotY:"])if(!contents.includes(hook))throw new Error('Type-aware front weapon fitting is missing '+hook);
-    for(const hook of ['if(tier>=2)','if(tier>=3)','if(tier>=4)','if(tier>=5)'])if(!contents.includes(hook))throw new Error('Tier silhouette progression is missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','const CLASS_GEAR_STYLE=','const SET_VISUALS=','const MATERIAL_VISUALS=','function gearPalette(','function classGlyph(','function raceFacePath(','function raceFaceDetails(','function paperRaceSilhouette(','function paperRaceTorsoDetails(','function paperRaceLegDetails(','function paperRaceFootDetails(','function paperRaceNeck(','function paperFit(','function clothLowerStyle(','function lowerSilhouetteMarkup(','function betaHeadDetail(','function betaChestDetail(','function betaShoulderDetail(','function betaHandDetail(','function betaWaistDetail(','function betaLegDetail(','function betaFootDetail(','function betaWeaponDetail(','function betaOffhandDetail(','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-race-identity="v2"','data-equipment-fit="v4"','data-item-visuals="v2"','data-palette-mode="gear-owned"','data-weapon-pose="side-held-v1"','data-alignment="v4"','data-fit-version',"ITEM_VISUALS_VERSION=2","EQUIPMENT_FIT_VERSION=4","RACE_IDENTITY_VERSION=2","WEAPON_POSE_VERSION=1","CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
+    if(contents.includes('illustratedEquipment(')||contents.includes('cb-forge-base'))throw new Error('Painted/Forge character renderer must remain disabled during the classic visual rollback');
   }
   if(file==='roster-v2.css'){
     if(!contents.includes('.roster-card-portrait{')||!contents.includes('border:0;')||!contents.includes('background:none;')||!contents.includes('box-shadow:none'))throw new Error('Roster portrait wrapper must stay frameless');
@@ -172,7 +207,7 @@ for(const file of files){
     for(const hook of ['#party .party-choice{','grid-template-columns:56px minmax(0,1fr) auto','#party .party-choice>div:nth-child(2){','text-overflow:ellipsis'])if(!contents.includes(hook))throw new Error('Active Party portrait/text spacing is missing '+hook);
   }
   if(file==='character-fit-viewer-v1.js'){
-    for(const hook of ['function isOwner()','function auditCurrent()','function auditBetaMatrix()','function validateCharacter(','36 bodies','RUN BETA MATRIX','CP()?.modelContract','compare===\'frames\'','compare===\'sexes\'','compare===\'races\'','AUTO CYCLE ITEMS','SHOW FIT POINTS','gearFitProfile','main-hand weapon is not on the front layer','shield must remain behind the body'])if(!contents.includes(hook))throw new Error('Owner Character Fit Viewer is missing '+hook);
+    for(const hook of ['function isOwner()','function auditCurrent()','function auditBetaMatrix()','function validateCharacter(','36 bodies','RUN CURRENT ITEM AUDIT','RUN FULL FIT MATRIX','CP()?.modelContract','function CR(){return window.CellboundCharacterRig}','R.validateAll()','compare===\'frames\'','compare===\'sexes\'','compare===\'races\'','AUTO CYCLE ITEMS','SHOW FIT POINTS','gearFitProfile','equipmentFitVersion!==4','main-hand weapon is not using the side-held pose','shield must remain behind the body'])if(!contents.includes(hook))throw new Error('Owner Character Fit Viewer is missing '+hook);
     if(!contents.includes("toLowerCase()==='owner'"))throw new Error('Character Fit Viewer must remain owner-only');
     if(contents.includes('Game.save')||contents.includes('persistState'))throw new Error('Character Fit Viewer must not mutate live game state');
   }
@@ -200,7 +235,8 @@ for(const file of files){
     for(const hook of ['.gear-set-panel','.cb-set-summary','.cb2d-loot-set','.tp-set-bonus'])if(!contents.includes(hook))throw new Error('Equipment set bonus styling is missing '+hook);
   }
   if(file==='item-art-v1.js'){
-    for(const hook of ["window.CellboundItemArt","function genericGear","function material","function consumable","function collection","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Complete item artwork system is missing '+hook);
+    for(const hook of ["window.CellboundItemArt","CELLBOUND_ITEM_ART_DIRECTION='class-tier-v2'","ITEM_VISUALS_VERSION=2","const SET_VISUALS=","const MATERIAL_VISUALS=","const FULL_CLASSES=","function itemSetId(","function classIconGlyph(","function artBody(","function genericGearBase(","function betaIconOverlay(","function genericGear(","data-palette-mode","function materialHTML","function consumableHTML","function collectionHTML","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Item Visuals V2 artwork system is missing '+hook);
+    if(contents.includes('CellboundItemVisuals.icon'))throw new Error('Classic item icons must not delegate to the newer Forge vector renderer');
   }
   if(file==='class-build-v1.js'){
     for(const hook of ["CURRENT_SPEC_POINT_CAP=12","TALENT_TIER_REQUIREMENTS=[0,2,4,6,8]","'Priest|Shadow':'dps'","'Hunter|Beast Mastery':'dps'","function talentBudgetForLevel","function talentRemaining"])if(!contents.includes(hook))throw new Error('Class build foundation is incomplete: '+hook);
@@ -236,6 +272,13 @@ for(const file of files){
     if(!contents.includes('enemyHealth:1.50,enemyDamage:1.38')||!contents.includes('enemyHealth:1.60*(1+(t-1)*.08)'))throw new Error('Full-gear Heroic / Cellbound+ combat tuning is missing');
     if(!contents.includes('uniqueChance:{normal:0'))throw new Error('Tier 4 uniques must not leak into Normal difficulty');
   }
+  if(file.endsWith('.js')){
+    if(file!=='combat-reborn-v1.js'&&contents.includes('window.CellboundCombatReborn='))throw new Error(file+' defines a second Combat Reborn engine');
+    if(file!=='combat-standard-v1.js'&&contents.includes('window.CellboundCombatStandard='))throw new Error(file+' defines a second combat gateway');
+    if(file!=='combat-viewer-v1.js'&&contents.includes('window.CellboundCombatViewer='))throw new Error(file+' defines a second combat viewer');
+    if(contents.includes('window.CellboundPvPCombat='))throw new Error(file+' defines a retired standalone PvP combat engine');
+    if(contents.includes('window.CellboundCombat3D='))throw new Error(file+' defines a retired standalone 3D combat renderer');
+  }
   if(file==='combat-identities-v1.js'){
     if(contents.includes('COMBAT REBORN BUNDLED FALLBACK')||contents.includes('window.CellboundCombatReborn='))throw new Error('Combat identities must not bundle a second Combat Reborn engine');
     if(!contents.includes('function ratingCurve')||!contents.includes('function primaryCurve'))throw new Error('Full-loadout rating diminishing returns are missing');
@@ -250,7 +293,7 @@ for(const file of files){
   }
   if(file==='combat-reborn-v1.js'){
     for(const hook of ['professionProcs,relicOpeningUsed:false','professionProcs?.openingBurstPct','professionProcs?.executeDamagePct','professionProcs?.lowHealthWardPct','professionProcs?.triageHealPct'])if(!contents.includes(hook))throw new Error('Conditional profession combat effect is missing '+hook);
-    if(!contents.includes('normalisePlayer(c,i,options.professionZone)'))throw new Error('Scribing encounter affinity must enter combat player normalisation');
+    if(!contents.includes('normalisePlayer(ch,i,options.professionZone)')&&!contents.includes('normalisePlayer(c,i,options.professionZone)'))throw new Error('Scribing encounter affinity must enter combat player normalisation');
     if(!contents.includes("if(!moveIntoRange(ctx,u,target,5))return true")||!contents.includes("_combatTalentTimers"))throw new Error('Bladestorm melee movement rule is missing');
     for(const hook of ['function professionCombatBonuses','professionOutputScale(u,\'damage\')','professionOutputScale(healer,\'healing\')','professionBonuses?.haste','professionBonuses?.crit','professionBonuses?.block','profession.magicWardPct'])if(!contents.includes(hook))throw new Error('Profession attachments are not wired into real combat: '+hook);
     for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'fel-barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
@@ -264,7 +307,11 @@ for(const file of files){
     for(const hook of ["spec:'Outlaw'","id:'sinister-strike'","id:'pistol-shot'","id:'dispatch'","id:'roll-the-bones'","id:'blade-flurry'","id:'between-the-eyes'","id:'adrenaline-rush'","id:'killing-spree'","COMBO_POINTS_CHANGED","Opportunity","Quick Draw","Ruthlessness","Outlaw Rogue Combo Points","Outlaw Roll the Bones","Outlaw Blade Flurry","Outlaw Between the Eyes","Outlaw Killing Spree","Outlaw Rogue Talent Skill Gates"])if(!contents.includes(hook))throw new Error('Outlaw Rogue combat migration is incomplete: '+hook);
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!contents.includes("const VERSION='1.5.1'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("const VERSION='1.7.0'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical pre-direct-control Combat Reborn engine/version is missing');
+    for(const hook of ['function createCombatContext(','function advanceCombatTick(','function createLiveSession(','const advance=deltaMs=>','spawnEnemy,addMechanics,setMechanicInterval,signal','version:VERSION,seed:ctx.seed,advance,command,commandState,commandPowerState:powerState,heal','get timeMs(){return ctx.time}'])if(!contents.includes(hook))throw new Error('Real-time Combat Reborn session contract is missing '+hook);
+    for(const hook of ['function applyPartyCommand(','function schedulePartyCommands(','PARTY_COMMAND','COMMAND_POWER','commandFocusId','mechanicRng','refillMechanicBag','combatBehaviour','const COMMAND_RULES=','COMMAND_POWER_MAX=5','COMMAND_POWER_START=2','function gainCommandPower(','function tickCommandPower(','commandCooldowns:{}','commandPower:clamp(','commandRemainingMs','sharedRemainingMs',"type==='stack'","type==='regroup'"])if(!contents.includes(hook))throw new Error('Commander v2 combat contract is missing '+hook);
+    for(const hook of ['function lateBalanceFactor(','function specEndgameDamageAdjustment(','function specEndgameHealingAdjustment(','function specEndgameTankTakenAdjustment(','specEndgameDamageAdjustment(u)','specEndgameHealingAdjustment(healer)','specEndgameTankTakenAdjustment(target)'])if(!contents.includes(hook))throw new Error('Post real-time level-15 balance contract is missing '+hook);
+    if(!contents.includes("effect:{outgoingDamage:.12,haste:.05}")||!contents.includes("effect:{incomingDamageReduction:.18}"))throw new Error('Commander power tuning contract is missing');
     for(const hook of ['function bodyRadius(','function physicalPosition(','function bodyClearance(','function openPhysicalPosition(','function segmentBodyHit(','function collisionWaypoint(','physicalSpace:encounter.physicalSpace!==false','bodyCollision:bodyRoute.body?','collisionContinuation:Boolean(collisionFinal)',"combatRange&&los&&ctx.physicalSpace&&u.role!=='tank'",'Physical Space Bodies','Physical Collision Metadata','Collision Melee Uptime'])if(!contents.includes(hook))throw new Error('Combat Reborn physical-space collision is missing '+hook);
     for(const hook of ['setBonusRulesFor','talentSkillCooldownScale','incomingDamageReduction','setBonuses?.damageScale','setBonuses?.healingScale'])if(!contents.includes(hook))throw new Error('Combat adaptive set foundation is missing '+hook);
     for(const hook of ["'Evoker|Devastation':[.92,.92,.92]","id:'word-of-glory'","id==='purifying-brew'","range:30,heal:24,cost:18,gcd:1500,cast:1700,cd:6500","range:30,heal:34,cost:15,gcd:1500,cast:1700,cd:0,chainBounces:3","range:30,heal:20,cost:16,gcd:1500,cast:0,cd:6000"])if(!contents.includes(hook))throw new Error('Chapter-wide role balance contract is missing '+hook);
@@ -320,12 +367,17 @@ for(const file of files){
     for(const hook of ['focus-visible','min-height:44px','.workspace-tabs','overflow-x:auto','prefers-reduced-motion','.resource-strip'])if(!contents.includes(hook))throw new Error('Global UI polish layer is missing '+hook);
   }
   if(file==='layout-safety-v1.css'){
-    for(const hook of ['iPad / landscape live-combat viewport lock','height:calc(100dvh - 32px)!important','grid-template-rows:minmax(0,1fr) auto minmax(72px,96px)','grid-template-rows:auto auto auto minmax(0,1fr)','overscroll-behavior:contain','>.cb2d-plan'])if(!contents.includes(hook))throw new Error('Live combat viewport lock is missing '+hook);
+    for(const hook of ['iPad / landscape live-combat viewport lock','min-height:calc(100dvh - 32px)!important','grid-template-rows:470px auto','.cb2d-layout>main>.cb2d-feed{display:none!important}','grid-template-rows:auto auto auto minmax(0,1fr)','overscroll-behavior:contain','>.cb2d-plan'])if(!contents.includes(hook))throw new Error('Live combat viewport lock is missing '+hook);
+    for(const hook of ['RESULTS MODE FINAL AUTHORITY','.results-mode>.cbcombat-grid','.results-mode>.cb2d-end'])if(!contents.includes(hook))throw new Error('Canonical results screen override is missing '+hook);
   }
   if(file==='dungeon-2d-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Ashen Vault');
   if(file==='hollow-sanctum-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Hollow Sanctum');
   if(file==='hollow-sanctum-v1.js'){
+    for(const hook of ["./assets/hollow-sanctum/rooms/gallery-void-v2.webp","./assets/hollow-sanctum/rooms/sentinel-void-v2.webp","./assets/hollow-sanctum/rooms/choir-void-v2.webp"])if(!contents.includes(hook))throw new Error('Hollow Sanctum replacement room artwork is missing '+hook);
+    if(contents.includes('./assets/dungeons/hollow-sanctum.webp'))throw new Error('Deleted legacy Hollow Sanctum artwork must never be used as a fallback');
+    if(/assets\/hollow-sanctum\/rooms\/[^'"]+\.webp\?v=/.test(contents))throw new Error('Hollow Sanctum room artwork must not use query-string cache busting on staging');
     for(const hook of ["unitId='p-'+c.id","move('p-'+ch.id","if(id.startsWith('p-'))return party().some","CellboundCombatPortraits?.refresh?.()"])if(!contents.includes(hook))throw new Error('Hollow Sanctum must use canonical player IDs for combat portraits: '+hook);
+    for(const hook of ["addAnchors:[{x:35,y:57},{x:65,y:57}]","mechanic.spawnPoints=room.addAnchors","sentinel-void-core","entry:{x:50,y:98}"])if(!contents.includes(hook))throw new Error('Hollow Sanctum replacement-room combat mapping is missing '+hook);
     if(contents.includes("addUnit('p'+i")||contents.includes("move('p'+i"))throw new Error('Legacy Hollow Sanctum p0-p4 player tokens break shared combat portraits');
   }
   if(file==='chaos-canyon-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Chaos Canyon');
@@ -337,8 +389,8 @@ for(const file of files){
     if(!contents.includes(compactHook))throw new Error('Dungeon completion screen must use the compact results dashboard: '+file);
   }
   if(file==='dungeon-2d-v1.css'){
-    for(const hook of ['Ashen Vault generated environment asset pass',"url('./assets/ashen-vault/environment/floor-atlas.png')","url('./assets/ashen-vault/environment/props-atlas.png')",'.cb2d-arena.theme-ashen.room-vaultheart-sanctum .cb2d-floor'])if(!contents.includes(hook))throw new Error('Ashen Vault generated environment assets are missing '+hook);
-    for(const hook of ['.cb2d-results-compact .cb2d-loot-actions','.cb2d-result-details>summary','.cb2d-result-details[open]>summary'])if(!contents.includes(hook))throw new Error('Compact dungeon results styling is missing '+hook);
+    for(const hook of ['Ashen Vault illustrated room artwork v2','aspect-ratio:16/9!important'])if(!contents.includes(hook))throw new Error('Ashen Vault illustrated room styling is missing '+hook);
+    if(contents.includes('assets/ashen-vault/environment/'))throw new Error('Legacy Ashen Vault atlas artwork must not be referenced');
   }
   if(file==='twelve-below-v1.js'&&!contents.includes('aria-label="Close Twelve Below"'))throw new Error('Accessible close control is missing from Twelve Below');
   if(file==='fourfold-lock-v1.js'&&!contents.includes('aria-label="Close map"'))throw new Error('Accessible close control is missing from Fourfold Lock');
@@ -346,13 +398,13 @@ for(const file of files){
     for(const hook of ["#cb2dBackdrop{","#hs2dBackdrop{","#cc2dBackdrop{","#bs2dBackdrop{","#fracturedAgesBackdrop{",".theme-ashen",".theme-hollow",".theme-canyon",".theme-blackout",".theme-fractured","Mechanic telegraphs/class colours are intentionally not overridden"])if(!contents.includes(hook))throw new Error('Dungeon theme system is missing '+hook);
   }
   if(file==='expedition-presentation-v1.js'){
-    for(const hook of ["const VERSION='1.1.0'","'ashen-vault'","'hollow-sanctum'","'chaos-canyon'","'blackout-station'","'fractured-ages'","async function enter(","async function room(","if(!isBoss&&!options.force)return;","BOSS AHEAD","window.CellboundExpeditionPresentation"])if(!contents.includes(hook))throw new Error('PvE expedition presentation is missing '+hook);
+    for(const hook of ["const VERSION='1.1.1'","'ashen-vault'","'hollow-sanctum'","'chaos-canyon'","'blackout-station'","'fractured-ages'","async function enter(","async function room(","if(!isBoss&&!options.force)return;","BOSS AHEAD","window.CellboundExpeditionPresentation"])if(!contents.includes(hook))throw new Error('PvE expedition presentation is missing '+hook);
   }
   if(file==='expedition-presentation-v1.css'){
     for(const hook of [".cbx-transition{",".cbx-enter",".cbx-room",".cb2d-backdrop",".hs2d-backdrop",".cc2d-backdrop",".bs2d-backdrop",".fa-backdrop","100dvh"])if(!contents.includes(hook))throw new Error('PvE full-screen expedition styling is missing '+hook);
   }
   if(file==='boss-dossier-v1.js'){
-    for(const hook of ["const VERSION='1.3.5'","'vaultheart'","'bound-choir'","'vorran'","'vex-calder'","'old-man'","'three-hounds'","'silas-vane'","./assets/bosses/ashen-vault-vaultheart.webp","./assets/bosses/hollow-sanctum-bound-choir.webp","./assets/bosses/chaos-canyon-vorran.webp","./assets/bosses/blackout-station-calder.webp","./assets/bosses/fractured-ages-old-man.webp","./assets/bosses/no-way-back-three-hounds-v3.jpg","./assets/bosses/no-way-back-silas-vane-v3.jpg","async function show(","Skip the full briefing on future runs","window.CellboundBossDossier"])if(!contents.includes(hook))throw new Error('Final boss dossier runtime is missing '+hook);
+    for(const hook of ["const VERSION='1.3.6'","'vaultheart'","'bound-choir'","'vorran'","'vex-calder'","'old-man'","'three-hounds'","'silas-vane'","./assets/bosses/ashen-vault-vaultheart.webp","./assets/bosses/hollow-sanctum-bound-choir.webp","./assets/bosses/chaos-canyon-vorran.webp","./assets/bosses/blackout-station-calder.webp","./assets/bosses/fractured-ages-old-man.webp","./assets/bosses/no-way-back-three-hounds-v3.jpg","./assets/bosses/no-way-back-silas-vane-v3.jpg","async function show(","Promise.race([","Boss dossier stinger failed open","Skip the full briefing on future runs","window.CellboundBossDossier"])if(!contents.includes(hook))throw new Error('Final boss dossier runtime is missing '+hook);
   }
   if(file==='boss-dossier-v1.css'){
     for(const hook of [".cbd-backdrop",".cbd-shell",".cbd-art",".cbd-art-backdrop",".cbd-ability",".cbd-intel",".cbd-stinger","theme-fractured","prefers-reduced-motion"])if(!contents.includes(hook))throw new Error('Final boss dossier styling is missing '+hook);
@@ -368,26 +420,25 @@ for(const file of files){
     if(file!=='dungeon-2d-v1.js'&&!contents.includes('rollClearLootBundle'))throw new Error(file+' must use the balanced multi-drop clear reward bundle');
     if(!contents.includes('recommendedItemLevel')||!contents.includes('requires Item Level'))throw new Error(file+' must enforce selected-difficulty Item Level requirements');
   }
-  if(file==='pvp-viewer-v1.css'){
-    for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px",".pvp2d-lower>section.pvp2d-meters","grid-template-columns:repeat(3,minmax(0,1fr))",".pvp2d-map{",".pvp2d-map-block",".pvp2d-map-area.tunnel",".pvp2d-hill-site",".pvp2d-hill.rotating","score-tick","pvpScoreTick","shifting-court","veilspire-arena",".pvp2d-arena-storm",".pvp2d-storm-fog","pvpStormDrift"])if(!contents.includes(hook))throw new Error('PvP combat feed/map/healing-meter presentation is missing '+hook);
-  }
-  if(file==='pvp-combat-v1.js'){
-    for(const hook of ["const VERSION='1.8.0'","cellwind-bastion","shifting-court","veilspire-arena","PVP_MAPS","findMapPath","hasLineOfSight","LOS_BLOCKED","ARENA_STORM_PHASES","arenaStormAtTime","arenaAct","arenaTick","storm-progress","dampening","assignKothRoles","rotateHill","kothAct","hill-rotate","hill-contested","hill-score","assignCtfRoles","ctfCarrierAct","ctfAct","ctf-standoff","carryFlagHome","resolveDroppedFlag","window.CellboundPvPCombat"])if(!contents.includes(hook))throw new Error('PvP combat engine is missing '+hook);
-    if(/THREAT_GENERATED|AGGRO_CHANGED|threatTable|\bthreat\b/i.test(contents))throw new Error('PvP combat must never use PvE threat or aggro');
-  }
-  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','quests-v2.js','pvp-viewer-v1.js'].includes(file)){
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','quests-v2.js'].includes(file)){
     if(!contents.includes('CellboundCombatFX'))throw new Error(file+' is not wired to the shared combat VFX layer');
   }
   if(file==='dungeon-2d-v1.js'){
-    for(const hook of ['function combatPotionStacks(','function combatPotionButtonMarkup(','function useCombatPotion(','data-combat-potion','data-shared-potion','combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,useCombatPotion'])if(!contents.includes(hook))throw new Error('Shared combat potion runtime is missing '+hook);
+    for(const hook of ['function combatPotionStacks(','function combatPotionButtonMarkup(','function useCombatPotion(','data-combat-potion','data-shared-potion','combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,refreshExternalCommandCooldowns,useCombatPotion'])if(!contents.includes(hook))throw new Error('Shared combat potion runtime is missing '+hook);
     if(contents.includes("find(y=>!y.payload?.effect)"))throw new Error('Combat potion command must never consume an unrelated consumable');
   }
   if(['hollow-sanctum-v1.js','chaos-canyon-v1.js'].includes(file)){
     for(const hook of ['CellboundDungeon2D','useCombatPotion','refreshCombatPotionButton'])if(!contents.includes(hook))throw new Error(file+' is missing shared combat potion integration '+hook);
     if(contents.includes("||list[0]"))throw new Error(file+' can still consume a non-potion item from the combat consumable button');
   }
+  if(file==='chaos-canyon-v1.js'){
+    for(const hook of ["canyon-mouth.webp?v=4","thorn-trail.webp?v=4","sentinel.webp?v=4","crossing.webp?v=4","warden.webp?v=4","wildheart.webp?v=4","vorran.webp?v=4","entry:{x:50,y:98}","arenaBounds:{left:39,right:61,top:43,bottom:62}","y:52+(Number(y)-52)*scale","Seven unstable stepping stones span the chaos-lit gulf"])if(!contents.includes(hook))throw new Error('Chaos Canyon wooded-room mapping is missing '+hook);
+  }
   if(file==='blackout-station-v1.js'){
     for(const hook of ['function bsUseCombatPotion(','data-bs-potion','combatPotionButtonMarkup','refreshCombatPotionButton'])if(!contents.includes(hook))throw new Error('Blackout Station combat potion control is missing '+hook);
+  }
+  if(file==='dungeon-2d-v1.js'){
+    for(const hook of ["./assets/ashen-vault/rooms/broken-gate.webp","./assets/ashen-vault/rooms/hall-embers.webp","./assets/ashen-vault/rooms/kael.webp","./assets/ashen-vault/rooms/furnace.webp","./assets/ashen-vault/rooms/embermaw.webp","./assets/ashen-vault/rooms/vault-depths.webp","./assets/ashen-vault/rooms/vaultheart.webp","addAnchors","mechanic.spawnPoints=room.addAnchors"])if(!contents.includes(hook))throw new Error('Ashen Vault illustrated room/collision wiring is missing '+hook);
   }
   if(file==='quests-v2.js'){
     for(const hook of ['function qPotionMarkup(','function qUseCombatPotion(','data-q-potion','combatPotionButtonMarkup','refreshCombatPotionButton'])if(!contents.includes(hook))throw new Error('Quest/Fractured Ages combat potion control is missing '+hook);
@@ -399,18 +450,9 @@ for(const file of files){
   if(file==='blackout-station-v1.css'&&!contents.includes('.bs-authority>.cb2d-potion-button'))throw new Error('Blackout Station potion action styling is missing');
   if(file==='economy-v2.js'&&!contents.includes('USE POTION button'))throw new Error('Crafted combat potions must explain their live-combat use');
 
-  if(file==='pvp-viewer-v1.js'){
-    for(const hook of ["const VERSION='2.0.0'","requestAnimationFrame(frame)","'DAMAGE_DEALT'","'HEAL_RECEIVED'","'PLAYER_DEFEATED'","'FLAG_STATE'","'ARENA_STATE'","LOS_BLOCKED","mapMarkup","Cellwind Bastion","VEILSPIRE","pvp2d-arena-storm","storm-progress","Battle Fatigue","updateArenaStorm","pvp2d-hill-site","hill-rotate","hill-roles","hill-contested","hill-score","updateHill","score-tick","$(root,'[data-pvp2d-hill-site]')","ctf-opening","ctf-roles","ctf-standoff","FLAG STANDOFF","objectiveBadge","e.payload?.from","dataNode","viewer recovery active","carryFlagVisual","resetFlagVisual","REAL TIME","window.CellboundPvPViewer"])if(!contents.includes(hook))throw new Error('PvP 2D viewer is missing '+hook);
-    if(/data-pvp-speed|pb\.speed|simTime\s*\+=\s*delta\s*\*/.test(contents))throw new Error('PvP viewer must be locked to real-time 1x playback');
-    if(contents.includes('CSS.escape'))throw new Error('PvP viewer must use iPad-safe data selectors instead of CSS.escape');
-    if(!contents.includes("e.result==='returned'")||!contents.includes("e.result==='dropped'"))throw new Error('PvP viewer must render CTF dropped and returned flag states');
-  }
-  if(file==='pvp-match-v1.js'){
-    for(const hook of ["const VERSION='1.0.0'","OPPONENT FOUND","deadline=Date.now()+10000","CellboundPvPViewer","RETURN TO THE CRUCIBLE","window.CellboundPvPMatch"])if(!contents.includes(hook))throw new Error('Dedicated PvP match flow is missing '+hook);
-  }
   if(file==='pvp-v1.js'){
-    for(const hook of ["'capture-the-flag'","'king-of-the-hill'","const ARENA_UNLOCK_RANK=5","pvpEquipment","seasonCrests","CellboundPvPCombat","CellboundPvPViewer","CellboundPvPMatch","FIND ","window.CellboundPvP"])if(!contents.includes(hook))throw new Error('PvP foundation is missing '+hook);
-    if(contents.includes('characterItemLevel(c)'))throw new Error('PvP equipment must remain isolated from PvE Item Level');
+    for(const hook of ["const PVP_ENABLED=false","const pvpEnabled=()=>false","PvP is currently locked","shared Combat Reborn and Cellbound combat viewer framework","window.CellboundPvP"])if(!contents.includes(hook))throw new Error('Locked PvP shell contract is missing '+hook);
+    if(contents.includes("CellboundAdmin?.role==='owner'"))throw new Error('Locked PvP must not expose an owner bypass to a retired standalone engine');
   }
   if(file==='evolution-v1.js'){
     if(/worldBossGrid|CellboundWorldBoss2D|WORLD_BOSS_META/.test(contents))throw new Error('Legacy shared World Boss presentation must remain removed');
@@ -434,7 +476,7 @@ for(const file of files){
     if(!contents.includes('minimumItemLevel:38')||!contents.includes('baseRecommendedItemLevel:40')||!contents.includes('bossHealthScale:1.55')||!contents.includes('pressureScale:1.24'))throw new Error('Twelve Below full-gear balance contract is missing');
     if((contents.match(/itemLevel:42,power:10,statBudgetMultiplier:1/g)||[]).length!==6)throw new Error('Twelve Below relics must remain six iLvl 42 endgame chase pieces');
     if(contents.includes("toISOString().slice(0,10)"))throw new Error('Twelve Below daily reset must use local calendar time');
-    if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Twelve Below playback must use the continuous frame clock');
+    for(const hook of ['async function playLiveRun(','Combat.createLiveSession(','session.spawnEnemy(','session.signal(\'TOMB_OPEN\'','session.advance(delta)','data-tb-command','suppressAutoVictory:true'])if(!contents.includes(hook))throw new Error('Twelve Below real-time survival runtime is missing '+hook);
     if(!contents.includes("if(kills>=12)return .55")||!contents.includes("shards=kills+Math.floor(kills/4)*2+(kills===12?2:0)"))throw new Error('Twelve Below chase reward balance regressed');
     for(const hook of ['function burialCryptMarkup','function tbAtmosphere','function tbArenaBurst','tb-depth-backdrop','tb-crypt-ring','tb-soul-braziers','tb-grave-fog','TB_VICE_COLORS'])if(!contents.includes(hook))throw new Error('Twelve Below visual-reborn runtime is missing '+hook);
   }
@@ -481,23 +523,63 @@ for(const file of files){
   if(resumableDungeonHooks[file])for(const hook of resumableDungeonHooks[file])if(!contents.includes(hook))throw new Error(file+' resumable dungeon runtime is missing '+hook);
   if(file==='manor-raid-v1.js'&&!contents.includes('startAt:readyStartAt()'))throw new Error('The Manor shared viewer must resume from the server encounter clock');
   if(file==='quests-v2.js'&&(!contents.includes('config.seed||')||!contents.includes('wallClockStartAt:Number(config.wallClockStartAt)')))throw new Error('Quest combat must support deterministic resumed dungeon playback');
-  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','world-boss-2d-v1.js','pvp-viewer-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
+    if(!contents.includes('requestAnimationFrame(frame)')||!contents.includes('document.hidden')||!contents.includes('session.advance('))throw new Error(file+' must advance a real-time Combat Reborn session from the browser frame loop');
+  }
+  const canonicalCombatViewHooks={
+    'dungeon-2d-v1.js':['window.CellboundCombatViewer','Viewer.mount(rootEl,{'],
+    'hollow-sanctum-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
+    'chaos-canyon-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
+    'blackout-station-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
+    'twelve-below-v1.js':['window.CellboundCombatViewer','Viewer.mount(root,{'],
+    'quests-v2.js':['window.CellboundCombatViewer','Viewer.mount(root,{'],
+    'fractured-ages-v1.js':["presentationKind:'dungeon'"],
+    'manor-raid-v1.js':['playSharedEncounter({'],
+    'onboarding-v1.js':['playSharedEncounter({']
+  };
+  if(canonicalCombatViewHooks[file])for(const hook of canonicalCombatViewHooks[file])if(!contents.includes(hook))throw new Error(file+' must use the canonical Cellbound combat viewer: missing '+hook);
+  if(file!=='combat-viewer-v1.js'&&contents.includes('<section class="cbcombat-shell'))
+    throw new Error(file+' must not construct the canonical combat shell directly; use CellboundCombatViewer');
+  if(file.endsWith('.js')&&contents.includes('combat-hud-fullscreen cbstd-hud'))
+    throw new Error(file+' reintroduced a legacy standalone combat shell instead of CellboundCombatViewer');
+  if(file==='combat-viewer-v1.js'){
+    for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","data-combat-profile=\"pve\"","function mount(root,options={})","function setResults(root,enabled=true)","cbcombat-grid","cbcombat-arena-wrap '+esc(battleClass)","arena.dataset.combatArena='canonical'"])
+      if(!contents.includes(hook))throw new Error('Canonical combat viewer contract is missing '+hook);
+    if(contents.includes('markup:shellMarkup'))throw new Error('CellboundCombatViewer markup-only public API must stay retired');
+    if(contents.includes("cbcombat-standard-hud '+esc(shellClass)"))throw new Error('PvE encounter classes must not be applied to the canonical outer shell');
+  }
+  if(['hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js'].includes(file)){
+    for(const legacy of ["$('.hs2d-route')","$('.cc2d-route')","$('.hs2d-shell')","$('.cc2d-shell')","$('.bs2d-shell')"])
+      if(contents.includes(legacy))throw new Error(file+' still depends on a retired standalone combat-shell selector: '+legacy);
+  }
+  if(file==='hollow-sanctum-v1.js'&&(!contents.includes("routeId:'hs2dRoute'")||!contents.includes("$('#hs2dRoute').innerHTML")))throw new Error('Hollow route updates must target the canonical viewer route');
+  if(file==='chaos-canyon-v1.js'&&(!contents.includes("routeId:'cc2dRoute'")||!contents.includes("$('#cc2dRoute').innerHTML")))throw new Error('Chaos route updates must target the canonical viewer route');
+  if(file!=='combat-viewer-v1.js'&&file.endsWith('.js')&&contents.includes('CellboundCombatViewer')&&contents.includes('Viewer.markup('))throw new Error(file+' must use CellboundCombatViewer.mount(); markup-only render paths are retired');
+  if(file==='guild.html'&&!/combat-viewer-v1\.js\?v=\d+/.test(contents))throw new Error('Canonical combat viewer is not loaded by guild.html');
+  if(file==='combat-hud-standard-v1.js'){
+    for(const hook of ['data-combat-view="canonical-v1"','orderMeters(shell)','organiseCommands(shell)','upgradeRows(shell)'])
+      if(!contents.includes(hook))throw new Error('Canonical combat HUD behaviour is missing '+hook);
+    if(contents.includes('adoptAshenFrame'))throw new Error('Legacy combat-view conversion must not return; all combat mounts CellboundCombatViewer directly');
+  }
+  if(file==='layout-safety-v1.css'){
+    for(const hook of ['data-combat-view="canonical-v1"','.cbcombat-arena-wrap',').cbcombat-backdrop{','.cbcombat-party-rows','Canonical viewer hard sandbox'])
+      if(!contents.includes(hook))throw new Error('Canonical combat-view CSS contract is missing '+hook);
+  }
+  if(file==='world-boss-2d-v1.js'){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
       if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
     }
     if(!contents.includes('Date.now()-wallAnchor')&&!contents.includes('Date.now()-playStartedAt'))throw new Error(file+' must use a wall-clock combat timeline');
   }
   if(file==='quests-v2.js'){
-    if(!contents.includes("Number(lastResult?.durationMs)"))throw new Error('Interactive slice duration must use lastResult');
-    if(!contents.includes("_combatTalentTimers:x.talentTimers||{}")||!contents.includes("talentTimers=Object.fromEntries"))throw new Error('Quest sliced talent state carry is missing');
-    if(!contents.includes("_combatPosition:x.position||null")||!contents.includes("enemyPositions[i]=e.position"))throw new Error('Interactive quest position carry is missing');
-    if(!contents.includes("focusSelected:i===focus")||!contents.includes("focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly)"))throw new Error('Interactive quest focus marker is missing');
+    for(const hook of ['async function runInteractiveQuest2DFight','C.createLiveSession({party:partyInput','suppressAutoVictory:true',"session.focus('e-'+initialFocus)",'session?.reviveEnemy?.','session.stop(\'victory\')','reviveWindowMs'])if(!contents.includes(hook))throw new Error('Interactive quest real-time revive-window combat is missing '+hook);
+    if(!contents.includes("focusSelected:i===initialFocus")||!contents.includes("focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly)"))throw new Error('Interactive quest focus marker is missing');
     if(!contents.includes('config.autoContinueOnVictory')||!contents.includes('autoContinueDelayMs'))throw new Error('Interactive quest combat must support automatic victory flow');
     if((contents.match(/if\(config\.autoContinueOnVictory\)/g)||[]).length<2)throw new Error('Both standard and interactive quest combat must support automatic victory flow');
     if(!contents.includes("$$('[data-q-target]').forEach"))throw new Error('Live quest target controls must use querySelectorAll');
-    if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
+    if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous real-time Combat Reborn');
     for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef','function qPulseUnit'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
-    if(!contents.includes("Date.now()-wallAnchor")||!contents.includes("Math.max(.25,Number(questFight?.speed)||1)"))throw new Error('Quest combat playback must use a speed-aware wall clock');
+    for(const hook of ['questFight?.liveSession','session.advance(delta)','C.createLiveSession(liveOptions,liveMeta)','document.hidden'])if(!contents.includes(hook))throw new Error('Quest real-time combat loop is missing '+hook);
     if(!contents.includes("level:2,recommendedItemLevel:18")||!contents.includes("level:4,recommendedItemLevel:20")||!contents.includes("level:5,recommendedItemLevel:22")||!contents.includes("level:6,recommendedItemLevel:24"))throw new Error('Quest combat progression targets are missing');
   }
   if(file==='thirteenth-bell-v1.js'){
@@ -551,7 +633,7 @@ for(const file of files){
     if(!hasVersionedAsset('boss-dossier-v1.js'))throw new Error('Boss dossier cache version is stale in guild.html');
     if(!hasVersionedAsset('quests-v2.js')||!hasVersionedAsset('thirteenth-bell-v1.js')||!hasVersionedAsset('no-way-back-v1.js'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
     if(!hasVersionedAsset('no-way-back-v1.css')||!hasVersionedAsset('no-way-back-v1.js'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
-    if(!hasVersionedAsset('comic-scenes-v1.css')||!hasVersionedAsset('comic-scenes-v1.js')||!hasVersionedAsset('onboarding-v1.js')||!hasVersionedAsset('onboarding-v1.css'))throw new Error('Tutorial/creator assets are missing cache versions in guild.html');
+    if(!hasVersionedAsset('comic-scenes-v1.css')||!hasVersionedAsset('comic-scenes-v1.js')||!hasVersionedAsset('onboarding-v1.js')||!hasVersionedAsset('onboarding-v1.css')||!hasVersionedAsset('character-forge-v1.js')||!hasVersionedAsset('character-forge-v1.css'))throw new Error('Tutorial/Character Forge assets are missing cache versions in guild.html');
     if(!hasVersionedAsset('item-art-v1.css')||!hasVersionedAsset('item-art-v1.js'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!hasVersionedAsset('economy-v2.css')||!hasVersionedAsset('profession-data.js')||!hasVersionedAsset('guild-v4.js')||!hasVersionedAsset('economy-v2.js'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!hasVersionedAsset('endgame-v1.css')||!hasVersionedAsset('endgame-v1.js'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
@@ -562,7 +644,7 @@ for(const file of files){
     const layoutSafetyLink=(contents.match(/<link rel="stylesheet" href="\.\/layout-safety-v1\.css\?v=[0-9]+">/)||[])[0]||'';
     if(!layoutSafetyLink||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
-    if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
+    for(const asset of ['combat-reborn-v1.js','combat-standard-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js'])if(!contents.includes(asset))throw new Error('Canonical combat stack is not linked from guild.html: '+asset);
     if(!contents.includes('expedition-presentation-v1.css')||!contents.includes('expedition-presentation-v1.js'))throw new Error('Shared PvE expedition presentation assets are not linked from guild.html');
     if(!contents.includes('boss-dossier-v1.css')||!contents.includes('boss-dossier-v1.js'))throw new Error('Final boss dossier assets are not linked from guild.html');
     if(!contents.includes('dungeon-theme-v1.css'))throw new Error('Per-dungeon PvE theme layer is not linked from guild.html');
@@ -570,7 +652,8 @@ for(const file of files){
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','twelveBelowMount','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
     for(const id of required)if(!contents.includes(`id="${id}"`))throw new Error(`Missing required Evolution hook: ${id}`);
     if(!contents.includes('evolution-v1.css')||!contents.includes('evolution-v1.js'))throw new Error('Evolution Pass assets are not linked from guild.html');
-    if(!contents.includes('pvp-v1.css')||!contents.includes('pvp-viewer-v1.css')||!contents.includes('pvp-match-v1.css')||!contents.includes('pvp-combat-v1.js')||!contents.includes('pvp-viewer-v1.js')||!contents.includes('pvp-match-v1.js')||!contents.includes('pvp-v1.js')||!contents.includes('id="pvpMount"')||!contents.includes('data-hub="pvp"'))throw new Error('PvP assets or mount are not linked from guild.html');
+    if(!contents.includes('pvp-v1.css')||!contents.includes('pvp-v1.js')||!contents.includes('id="pvpMount"')||!contents.includes('data-hub="pvp"'))throw new Error('Locked PvP shell or mount is not linked from guild.html');
+    for(const retired of ['pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-viewer-v1.css','pvp-match-v1.css'])if(contents.includes(retired))throw new Error('Standalone PvP runtime must not be linked: '+retired);
     for(const hook of ['data-view="party" data-mobile-core','data-view="content" data-mobile-core','data-view="quests" data-mobile-core','data-view="bank" data-mobile-core','data-mobile-more'])if(!contents.includes(hook))throw new Error('Direct navigation flow is missing '+hook);
     if(contents.includes('id="workspaceTabs"'))throw new Error('Redundant workspace navigation strip must remain removed');
     if(contents.includes('data-view="reports"'))throw new Error('Run Reports must stay incorporated into Endgame rather than return as a separate destination');
@@ -584,7 +667,7 @@ for(const file of files){
     if(qNav<0||dNav<0||aNav<0||rNav<0||!(qNav<dNav&&dNav<aNav&&aNav<rNav))throw new Error('Adventure navigation must remain Quests → Dungeons → Activities → Raids');
     if(contents.includes('data-hub="adventure" data-view="endgame"'))throw new Error('Endgame must not return as a primary Adventure navigation destination');
     if(!contents.includes('<section id="raids" class="view">')||!contents.includes('id="manorRaidMount"'))throw new Error('Raids view or Manor raid mount is missing');
-    const manorRuntime=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8'),sharedViewerRuntime=fs.readFileSync(path.join(__dirname,'dungeon-2d-v1.js'),'utf8');
+    const manorRuntime=readSource('manor-raid-v1.js'),sharedViewerRuntime=readSource('dungeon-2d-v1.js');
     if(!manorRuntime.includes("function combatEngine(){return window.CellboundCombatStandard}")||!manorRuntime.includes("zone:'manor-raid'")||!manorRuntime.includes('playSharedEncounter'))throw new Error('The Manor must use the standard Combat Reborn gateway and shared CB2D viewer');
     for(const hook of ["manor_set_ready","3 SECOND COUNTDOWN","subscribeRaidRealtime","encounterStartAt","readyA","readyB"])if(!manorRuntime.includes(hook))throw new Error('Manor synchronized ready check is missing '+hook);
     for(const hook of ["pendingRewardSession","UNCLAIMED MANOR REWARD","data-mr-pending-loot"])if(!manorRuntime.includes(hook))throw new Error('Manor released-group reward recovery is missing '+hook);
@@ -593,12 +676,13 @@ for(const file of files){
     const callbackAt=sharedViewerRuntime.indexOf('run.externalOnEvent(event,result)'),renderAt=sharedViewerRuntime.indexOf('renderRebornEvent(event,result,replayMode)',callbackAt);
     if(callbackAt<0||renderAt<0||callbackAt>renderAt)throw new Error('Raid interaction callbacks must fire before visual event rendering');
     for(const hook of ["host.style.setProperty('z-index','2147483647','important')","host.style.setProperty('display','grid','important')","handledScreechTokens","Manor Screech menu failed to open"])if(!manorRuntime.includes(hook))throw new Error('Manor Screech modal hardening is missing '+hook);
-    const combatRuntime=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
+    for(const hook of ["mountMaidLinkOverlay","updateMaidLinkOverlay","LINKED MAIDS · LIVE SYNC","PARTNER ROOM","HEAL PENALTY"])if(!manorRuntime.includes(hook))throw new Error('Manor linked-Maid live overlay is missing '+hook);
+    const combatRuntime=readSource('combat-reborn-v1.js');
     if(!combatRuntime.includes("emit(ctx,'INTERACTION_REQUIRED'")||!manorRuntime.includes("type:'interaction'")||!manorRuntime.includes('onEvent:handleRaidCombatEvent'))throw new Error('Manor Screech must be driven by Combat Reborn interaction events');
     const endgameStart=contents.indexOf('<section id="endgame" class="view">'),endgameEnd=contents.indexOf('<section id="world" class="view">',endgameStart);
     if(endgameStart<0||endgameEnd<0||contents.slice(endgameStart,endgameEnd).includes('manorRaidMount'))throw new Error('The Manor must not be mounted inside Endgame');
     if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
-    if(!contents.includes('combat-3d-v1.css')||!contents.includes('combat-3d-v1.js'))throw new Error('Optional 3D combat prototype assets are not linked from guild.html');
+    if(contents.includes('combat-3d-v1.css')||contents.includes('combat-3d-v1.js'))throw new Error('Retired 2.5D/3D combat renderer must not be linked from guild.html');
     if(!contents.includes('chaos-canyon-v1.css')||!contents.includes('chaos-canyon-v1.js')||!contents.includes('id="chaosCanyonMount"'))throw new Error('Chaos Canyon assets or mount are not linked from guild.html');
     if(!contents.includes('blackout-station-v1.css')||!contents.includes('blackout-station-v1.js')||!contents.includes('id="blackoutStationMount"'))throw new Error('Blackout Station assets or mount are not linked from guild.html');
     if(contents.includes('world-boss-2d-v1.css')||contents.includes('world-boss-2d-v1.js')||contents.includes('id="worldBossGrid"'))throw new Error('Legacy shared World Boss assets must not be linked from guild.html');
@@ -636,126 +720,98 @@ for(const file of files){
 {
   const portraitSandbox={console,Math,Date};portraitSandbox.window=portraitSandbox;portraitSandbox.globalThis=portraitSandbox;
   vm.createContext(portraitSandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(readSource(file),portraitSandbox);
+  vm.runInContext(readSource('character-portraits-v1.js'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
-  if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Equipment Visuals V2 runtime failed to load');
-  const appearance={race:'Veyren',skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
-  const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2};
-  const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2};
-  if(P.weaponType(sword,{class:'Warrior'})!=='sword'||P.weaponType(spear,{class:'Warrior'})!=='spear')throw new Error('Weapon visual type swap failed');
+  if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Classic paper-doll runtime failed to load');
+  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==4||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll Item Visuals V2 / fit v4 contract is missing');
+  const appearance={race:'Veyren',gender:0,frame:1,skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
+  const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2,weaponType:'sword'};
+  const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2,weaponType:'spear'};
+  if(P.weaponType(sword,{class:'Warrior'})!=='sword'||P.weaponType(spear,{class:'Warrior'})!=='spear')throw new Error('Classic weapon visual type swap failed');
   const base={id:'paper-test',name:'Test',race:'Veyren',class:'Warrior',appearance,equipment:{Weapon:sword,Waist:{name:'Test Belt',itemId:'test-belt',class:'Warrior',slot:'Waist',tier:2},Ring1:{name:'Test Ring',itemId:'test-ring',class:'Warrior',slot:'Ring',tier:2}}};
   const swordView=P.paperDollHTML(base,{highlightedSlot:'Weapon'});
   const spearView=P.paperDollHTML({...base,equipment:{...base.equipment,Weapon:spear}},{highlightedSlot:'Weapon'});
-  if(swordView===spearView||!swordView.includes('data-weapon-type="sword"')||!spearView.includes('data-weapon-type="spear"'))throw new Error('Sword-to-spear paper doll visual swap failed');
-  if(!swordView.includes('cb-paper-slot-waist')||!swordView.includes('cb-paper-slot-ring1'))throw new Error('14-slot paper doll accessory coverage failed');
-  const emptyArmour=P.paperDollHTML({...base,equipment:{}},{});
-  if(!emptyArmour.includes('cb-illustrated-base')||emptyArmour.includes('cb-paper-slot-chest')||emptyArmour.includes('cb-paper-slot-legs')||emptyArmour.includes('cb-paper-slot-feet'))throw new Error('Unequipped paper doll must render the clean v9 illustrated character body without equipment layers');
+  if(swordView===spearView||!swordView.includes('data-weapon-type="sword"')||!spearView.includes('data-weapon-type="spear"'))throw new Error('Sword-to-spear classic visual swap failed');
+  if(!swordView.includes('data-character-style="classic-paper-doll"')||!swordView.includes('cb-paper-side-weapon')||!swordView.includes('data-render-layer="mainhand-side"')||!swordView.includes('data-weapon-pose="side-held"'))throw new Error('Side-held main-hand presentation markers are missing');
+  if(!swordView.includes('cb-paper-slot-waist')||!swordView.includes('cb-paper-slot-ring1'))throw new Error('14-slot classic paper doll accessory coverage failed');
+  const emptyArmour=P.paperDollHTML({...base,equipment:{}},{showGear:false});
+  if(!emptyArmour.includes('data-model-mode="base"')||emptyArmour.includes('cb-paper-slot-chest')||emptyArmour.includes('cb-paper-slot-legs')||emptyArmour.includes('cb-paper-slot-feet'))throw new Error('Classic base model must render cleanly without equipment');
   const chestItem={name:'Test Chest',itemId:'warrior-t2-chest',class:'Warrior',slot:'Chest',tier:2};
   const chestView=P.paperDollHTML({...base,equipment:{Chest:chestItem}},{});
-  if(!chestView.includes('cb-illustrated-base')||!chestView.includes('data-item-key="warrior-t2-chest"'))throw new Error('Equipped chest must layer over the same v9 illustrated character body');
+  if(!chestView.includes('data-character-style="classic-paper-doll"')||!chestView.includes('data-item-key="warrior-t2-chest"'))throw new Error('Classic chest overlay failed');
   const setEquipment={};
   ['Head','Shoulders','Chest','Hands'].forEach(slot=>setEquipment[slot]={name:'Warlord '+slot,itemId:'warrior-t4-'+slot.toLowerCase(),class:'Warrior',slot,tier:4,setId:'warrior-t4',setName:'Warlord Set'});
   const setView=P.paperDollHTML({...base,equipment:setEquipment},{highlightedSlot:'Chest'});
-  if(!setView.includes('set-pieces-4')||!setView.includes('cb-paper-set-glow')||!setView.includes('is-set-item'))throw new Error('Set prestige visual treatment failed');
-  const classVisualCases=[
+  if(!setView.includes('set-pieces-4')||!setView.includes('cb-paper-set-glow')||!setView.includes('is-set-item'))throw new Error('Classic set prestige visual treatment failed');
+  for(const [klass,weaponType,offHandType] of [
     ['Warrior','greatsword','shield'],['Paladin','hammer','shield'],['Priest','staff','tome'],['Druid','staff','idol'],
     ['Hunter','bow','quiver'],['Rogue','dagger','dagger'],['Mage','staff','focus'],['Shaman','hammer','idol'],
     ['Warlock','staff','tome'],['Monk','staff','focus'],['Death Knight','greatsword','focus'],['Demon Hunter','sword','dagger'],['Evoker','staff','focus']
-  ];
-  for(const [klass,weaponType,offHandType] of classVisualCases){
-    const gear={};
-    ['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'].forEach(slot=>gear[slot]={name:klass+' Test '+slot,itemId:klass.toLowerCase().replace(/[^a-z]+/g,'-')+'-t5-'+slot.toLowerCase(),class:klass,slot,tier:5,setId:klass+'-t5',setName:klass+' Raid Set'});
+  ]){
+    const gear={},classSlug=klass.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    ['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'].forEach(slot=>gear[slot]={name:klass+' Test '+slot,itemId:classSlug+'-t5-'+slot.toLowerCase(),class:klass,slot,tier:5,setId:classSlug+'-t5',setName:klass+' Raid Set'});
     gear.Weapon={name:klass+' Test Weapon',itemId:klass+'-weapon',class:klass,slot:'Weapon',tier:5,weaponType};
     gear.OffHand={name:klass+' Test Offhand',itemId:klass+'-offhand',class:klass,slot:'OffHand',tier:5,offHandType};
-    const html=P.paperDollHTML({...base,id:'class-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},{});
-    if(!html.includes('data-gear-class="'+klass+'"')||!html.includes('cb-paper-slot-head')||!html.includes('cb-paper-slot-feet'))throw new Error('Complete modular class visual failed for '+klass);
-    if(!html.includes('cb-paper-front-weapon')||!html.includes('data-render-layer="front"')||!html.includes('data-grip-x=')||!html.includes('data-grip-y='))throw new Error('Main-hand weapon is not front-aligned for '+klass);
-    const wf=P.weaponFitProfile({...base,id:'weapon-fit-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},gear.Weapon);
-    if(!wf||![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid main-hand alignment profile for '+klass);
+    const testCharacter={...base,id:'class-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear};
+    const html=P.paperDollHTML(testCharacter,{});
+    if(!html.includes('cb-paper-slot-head')||!html.includes('cb-paper-slot-feet')||!html.includes('data-character-style="classic-paper-doll"'))throw new Error('Complete classic modular class visual failed for '+klass);
+    if(!html.includes('data-class-visual="'+classSlug+'"')||!html.includes('data-palette-mode="set-first"'))throw new Error('Full-class Item Visuals V2 identity/palette missing for '+klass);
+    const setPalette=P.gearPalette(testCharacter,gear.Chest,5,'Chest');
+    if(setPalette.paletteMode!=='set-first'||String(setPalette.base).toLowerCase()===String(P.CLASS_COLORS[klass]||'').toLowerCase())throw new Error('Set palette must own its colour identity instead of copying '+klass+' class colour');
+    const fit=P.gearFitProfile(testCharacter),weaponAt=html.indexOf('cb-paper-side-weapon'),weaponHtml=weaponAt>=0?html.slice(weaponAt):'',gripX=Number((weaponHtml.match(/data-grip-x="([0-9.-]+)"/)||[])[1]),gripY=Number((weaponHtml.match(/data-grip-y="([0-9.-]+)"/)||[])[1]);
+    if(weaponAt<0||!html.includes('data-equipment-fit="v4"')||Math.abs(gripX-fit.weaponX)>.11||Math.abs(gripY-fit.weaponY)>.11||fit.weaponX<fit.weaponSideMin)throw new Error('Side-held main-hand fit is not anchored outside the torso for '+klass);
+    const wf=P.weaponFitProfile(testCharacter,gear.Weapon);
+    if(!wf||![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit profile for '+klass);
   }
-
-  const fitRaces=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'];
-  for(const race of fitRaces){
-    for(const gender of [0,1]){
-      for(const frame of [0,1,2]){
-        const appearanceCase={...appearance,race,gender,frame};
-        const fit=P.gearFitProfile({id:'fit-'+race+'-'+gender+'-'+frame,race,appearance:appearanceCase});
-        const numeric=['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','legHalf','calfHalf','footHalf','weaponX','offhandX'];
-        if(numeric.some(k=>!Number.isFinite(fit[k])))throw new Error('Non-finite equipment anchor for '+race+' gender '+gender+' frame '+frame);
-        if(!(fit.leftShoulder<fit.rightShoulder&&fit.leftLeg<fit.rightLeg&&fit.waistHalf>0&&fit.hipHalf>0))throw new Error('Invalid equipment anchor ordering for '+race+' gender '+gender+' frame '+frame);
-        const gear={
-          Head:{name:'Fit Head',itemId:'fit-head',class:'Warrior',slot:'Head',tier:5,setId:'fit'},
-          Shoulders:{name:'Fit Shoulders',itemId:'fit-shoulders',class:'Warrior',slot:'Shoulders',tier:5,setId:'fit'},
-          Chest:{name:'Fit Chest',itemId:'fit-chest',class:'Warrior',slot:'Chest',tier:5,setId:'fit'},
-          Hands:{name:'Fit Hands',itemId:'fit-hands',class:'Warrior',slot:'Hands',tier:5,setId:'fit'},
-          Waist:{name:'Fit Waist',itemId:'fit-waist',class:'Warrior',slot:'Waist',tier:5,setId:'fit'},
-          Legs:{name:'Fit Legs',itemId:'fit-legs',class:'Warrior',slot:'Legs',tier:5,setId:'fit'},
-          Feet:{name:'Fit Feet',itemId:'fit-feet',class:'Warrior',slot:'Feet',tier:5,setId:'fit'},
-          Weapon:{name:'Fit Sword',itemId:'fit-weapon',class:'Warrior',slot:'Weapon',tier:5,weaponType:'sword'},
-          OffHand:{name:'Fit Shield',itemId:'fit-offhand',class:'Warrior',slot:'OffHand',tier:5,offHandType:'shield'},
-          Ring1:{name:'Fit Ring 1',itemId:'fit-ring-1',class:'Warrior',slot:'Ring',tier:5},
-          Ring2:{name:'Fit Ring 2',itemId:'fit-ring-2',class:'Warrior',slot:'Ring',tier:5},
-          Trinket1:{name:'Fit Trinket 1',itemId:'fit-trinket-1',class:'Warrior',slot:'Trinket',tier:5},
-          Trinket2:{name:'Fit Trinket 2',itemId:'fit-trinket-2',class:'Warrior',slot:'Trinket',tier:5},
-          Relic:{name:'Fit Relic',itemId:'fit-relic',class:'Warrior',slot:'Relic',tier:5}
-        };
-        const html=P.paperDollHTML({id:'fit-'+race+'-'+gender+'-'+frame,name:'Fit',race,class:'Warrior',appearance:appearanceCase,equipment:gear},{});
-        for(const slot of ['head','shoulders','chest','hands','waist','legs','feet','weapon','offhand','ring1','ring2','trinket1','trinket2','relic']){
-          if(!html.includes('cb-paper-slot-'+slot))throw new Error('Missing fitted '+slot+' layer for '+race+' gender '+gender+' frame '+frame);
-        }
-        if(/NaN|undefined/.test(html))throw new Error('Broken fitted equipment markup for '+race+' gender '+gender+' frame '+frame);
-      }
-    }
-  }
-
 }
 
-/* Beta character/equipment lock: every generated catalogue loadout must render
-   safely on every v9 race/sex/frame combination at every gear tier. */
+/* Classic character/equipment beta lock: every generated catalogue loadout must
+   render safely across the current race/class/tier matrix while the temporary
+   paper-doll visual direction is active. */
 {
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
+  vm.runInContext(readSource('class-build-v1.js'),sandbox,{filename:'class-build-v1.js'});
+  vm.runInContext(readSource('gear-data.js'),sandbox,{filename:'gear-data.js'});
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(readSource(file),sandbox);
+  vm.runInContext(readSource('character-portraits-v1.js'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
-  if(!G||!P)throw new Error('Beta character/equipment lock runtime failed to load');
-  if(P.version!==9||P.modelContract!=='v9-beta-locked')throw new Error('Character model v9 beta lock is missing');
-  if(P.equipmentLayerContract!=='shield-back|body|armour|front-offhand|mainhand-front')throw new Error('Equipment layer contract changed without an intentional beta model revision');
+  if(!G||!P)throw new Error('Classic beta character/equipment runtime failed to load');
+  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==4||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll full-class Item Visuals V2 / fit v4 lock is missing');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
-  const tiers=[1,2,3,4,5].map(t=>P.tierVisualProfile(t));
-  for(let i=1;i<tiers.length;i++){
-    const before=tiers[i-1],after=tiers[i];
-    if(!(after.shoulder>before.shoulder&&after.chest>before.chest&&after.collar>before.collar&&after.weapon>before.weapon))throw new Error('Gear tier silhouette progression is not strictly increasing from Tier '+i+' to Tier '+(i+1));
-  }
   let checked=0;
-  for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of races)for(const gender of [0,1])for(const frame of [0,1,2]){
+  for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of races)for(const gender of [0,1]){
     const equipment={};
     for(const pos of positions){
       const slot=slotFor(pos),item=G.items.find(x=>x.class===klass&&Number(x.tier)===tier&&x.slot===slot);
-      if(!item)throw new Error('Character beta matrix is missing '+klass+' Tier '+tier+' '+pos);
+      if(!item)throw new Error('Classic beta matrix is missing '+klass+' Tier '+tier+' '+pos);
       equipment[pos]=item;
     }
-    const appearance={race,gender,frame,skinTone:2,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
-    const c={id:'beta-lock-'+checked,name:'Beta Lock',race,class:klass,spec:'',level:15,power:100,appearance,equipment};
-    const html=P.paperDollHTML(c,{size:'equipment',showGear:true}),fit=P.gearFitProfile(c),wf=P.weaponFitProfile(c,equipment.Weapon);
-    if(/NaN|undefined/.test(html))throw new Error('Broken character SVG in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    for(const key of ['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','offhandX'])if(!Number.isFinite(fit[key]))throw new Error('Invalid '+key+' in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    if(![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid main-hand weapon fit in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    for(const pos of positions)if(!html.includes('cb-paper-slot-'+pos.toLowerCase()))throw new Error('Missing '+pos+' render in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    const chestTop=Number(html.match(/data-chest-top="([0-9.]+)"/)?.[1]);
-    if(!Number.isFinite(chestTop)||chestTop>121.01)throw new Error('Chest armour dropped below the locked upper-torso anchor: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    const baseAt=html.indexOf('cb-illustrated-base'),weaponAt=html.indexOf('cb-paper-front-weapon'),offType=P.offHandType(equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+offType+'"');
-    if(baseAt<0||weaponAt<0||offAt<0)throw new Error('Required equipment layer marker missing in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    if(weaponAt<baseAt)throw new Error('Main-hand weapon fell behind the character body: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    if(offType==='shield'&&offAt>baseAt)throw new Error('Shield moved in front of the body: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    if(offType!=='shield'&&(offAt<baseAt||weaponAt<offAt))throw new Error('Front off-hand/main-hand layer order regressed: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    const appearance={race,gender,frame:1,skinTone:2,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
+    const character={id:'classic-lock-'+checked,name:'Classic Lock',race,class:klass,spec:'',level:15,power:100,appearance,equipment};
+    const html=P.paperDollHTML(character,{size:'equipment',showGear:true}),fit=P.gearFitProfile(character),wf=P.weaponFitProfile(character,equipment.Weapon);
+    if(/NaN|undefined/.test(html))throw new Error('Broken classic character SVG: '+klass+' T'+tier+' '+race+' '+gender);
+    if(!html.includes('data-character-style="classic-paper-doll"'))throw new Error('Classic character marker missing: '+klass+' T'+tier+' '+race+' '+gender);
+    const classSlug=klass.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    if(!html.includes('data-item-visuals="v2"')||!html.includes('data-class-visual="'+classSlug+'"'))throw new Error('Full-class Item Visuals V2 identity missing: '+klass+' T'+tier+' '+race+' '+gender);
+    if(tier>=4&&!html.includes('data-palette-mode="set-first"'))throw new Error('Set-first palette missing: '+klass+' T'+tier+' '+race+' '+gender);
+    if(tier<4&&!html.includes('data-palette-mode="material-first"'))throw new Error('Material-first palette missing: '+klass+' T'+tier+' '+race+' '+gender);
+    for(const key of ['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','leftLeg','rightLeg','weaponX','offhandX'])if(!Number.isFinite(fit[key]))throw new Error('Invalid classic '+key+': '+klass+' T'+tier+' '+race+' '+gender);
+    if(![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit: '+klass+' T'+tier+' '+race+' '+gender);
+    for(const pos of positions)if(!html.includes('cb-paper-slot-'+pos.toLowerCase()))throw new Error('Missing classic '+pos+' render: '+klass+' T'+tier+' '+race+' '+gender);
+    if(!html.includes('data-equipment-fit="v4"')||!html.includes('data-fit-version="4"')||!html.includes('data-alignment="v4"'))throw new Error('Equipment fit v4 markers missing: '+klass+' T'+tier+' '+race+' '+gender);
+    if(!html.includes('cb-paper-side-weapon')||!html.includes('data-weapon-pose="side-held"')||fit.weaponX<fit.weaponSideMin)throw new Error('Side-held weapon presentation missing: '+klass+' T'+tier+' '+race+' '+gender);
     checked++;
   }
-  const expected=G.CLASS_ORDER.length*5*races.length*2*3;
-  if(checked!==expected)throw new Error('Character beta matrix coverage incomplete: '+checked+' / '+expected);
-  console.log('Character v9 beta lock passed '+checked+' class/tier/body combinations.');
+  for(const klass of ['Mage','Priest','Warlock','Druid']){
+    const styles=[1,2,3,4,5].map(tier=>P.clothLowerStyle(G.items.find(x=>x.class===klass&&Number(x.tier)===tier&&x.slot==='Legs')));
+    if(!styles.includes('trousers')||!styles.some(x=>x!=='trousers'))throw new Error('Cloth lower-body variety missing for '+klass+': '+styles.join(','));
+  }
+  const expected=G.CLASS_ORDER.length*5*races.length*2;
+  if(checked!==expected)throw new Error('Classic character beta matrix coverage incomplete: '+checked+' / '+expected);
+  console.log('Full-class Item Visuals V2 / fit v4 lock passed '+checked+' class/tier/body combinations with set-first palettes, side-held weapons and cloth silhouette variety.');
 }
 
 for(const htmlFile of ['index.html','guild.html']){
@@ -823,31 +879,15 @@ for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out
   if(found!==allowed.size)throw new Error('Living World phase 2 art archive incomplete: '+found+'/'+allowed.size);
 }
 
-/* Reconstruct bespoke Ashen Vault battlefields from repository-safe base64 sources. */
-{
-  const slugs=['broken-gate','hall-embers','kael','furnace','embermaw','vault-depths','vaultheart'];
-  const sourceDir=path.join(__dirname,'asset-source','ashen-vault','battlefields');
-  const outputDir=path.join(out,'assets','ashen-vault','battlefields');
-  fs.mkdirSync(outputDir,{recursive:true});
-  for(const slug of slugs){
-    const source=path.join(sourceDir,slug+'.avif.b64');
-    if(!fs.existsSync(source))throw new Error('Missing bespoke Ashen Vault battlefield source: '+slug);
-    const encoded=fs.readFileSync(source,'utf8').replace(/\\s+/g,'');
-    const bytes=Buffer.from(encoded,'base64');
-    if(bytes.length<12000)throw new Error('Bespoke Ashen Vault battlefield failed reconstruction: '+slug);
-    const output=path.join(outputDir,slug+'.avif');
-    fs.writeFileSync(output,bytes);
-    if(!fs.existsSync(output)||fs.statSync(output).size<12000)throw new Error('Missing bespoke Ashen Vault battlefield in production package: '+slug)
-  }
-}
-for(const file of ['assets/ashen-vault/battlefields/broken-gate.avif','assets/ashen-vault/battlefields/hall-embers.avif','assets/ashen-vault/battlefields/kael.avif','assets/ashen-vault/battlefields/furnace.avif','assets/ashen-vault/battlefields/embermaw.avif','assets/ashen-vault/battlefields/vault-depths.avif','assets/ashen-vault/battlefields/vaultheart.avif']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Ashen Vault bespoke battlefield in production package: ${file}`)}
+/* Ashen Vault illustrated room art ships directly as WebP assets. */
+for(const file of ["assets/ashen-vault/rooms/broken-gate.webp","assets/ashen-vault/rooms/hall-embers.webp","assets/ashen-vault/rooms/kael.webp","assets/ashen-vault/rooms/furnace.webp","assets/ashen-vault/rooms/embermaw.webp","assets/ashen-vault/rooms/vault-depths.webp","assets/ashen-vault/rooms/vaultheart.webp"]){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Ashen Vault illustrated room in production package: ${file}`)}
 for(const file of ["assets/comics/null-complex/voss-signal.webp","assets/comics/null-complex/facility-entry.webp","assets/comics/null-complex/first-aberrant.webp","assets/comics/null-complex/orin-recording.webp","assets/comics/null-complex/subject-zero.webp","assets/comics/null-complex/teleporter.webp","assets/comics/null-complex/overseer-awakens.webp","assets/comics/null-complex/prototype-07.webp","assets/comics/null-complex/escape.webp","assets/comics/null-complex/subject-zero-awake.webp"]){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Null Complex comic artwork in production package: ${file}`)}
-for(const file of ['assets/comics/thirteenth-bell/sealed_letter.jpg','assets/comics/thirteenth-bell/greywake_arrival.jpg','assets/comics/thirteenth-bell/locked_house.jpg','assets/comics/thirteenth-bell/final_run.jpg','assets/comics/thirteenth-bell/bellkeeper.jpg','assets/comics/thirteenth-bell/bell_breaks.jpg','assets/comics/thirteenth-bell/greywake_freed.jpg','assets/comics/thirteenth-bell/departure.jpg']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Thirteenth Bell comic artwork in production package: ${file}`)}
+for(const file of ['assets/comics/thirteenth-bell/sealed_letter.webp','assets/comics/thirteenth-bell/greywake_arrival.webp','assets/comics/thirteenth-bell/locked_house.webp','assets/comics/thirteenth-bell/final_run.webp','assets/comics/thirteenth-bell/bellkeeper.webp','assets/comics/thirteenth-bell/bell_breaks.webp','assets/comics/thirteenth-bell/greywake_freed.webp','assets/comics/thirteenth-bell/departure.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing optimized Thirteenth Bell comic artwork in production package: ${file}`)}
 for(const file of ['assets/dungeons/ashen-vault.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Dungeon Journal artwork in production package: ${file}`)}
 for(const file of ['assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing final boss artwork in production package: ${file}`)}
-const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portraits-v1.js'),'utf8');
+const combatPortraitRuntime=readSource('combat-portraits-v1.js');
  for(const hook of ['cb-combat-has-boss-portrait','ashen-vault-vaultheart.webp','hollow-sanctum-bound-choir.webp','chaos-canyon-vorran.webp','blackout-station-calder.webp','fractured-ages-old-man.webp'])if(!combatPortraitRuntime.includes(hook))throw new Error('Boss combat portrait mapping is missing '+hook);
- for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','manor-raid-v1.css','manor-raid-v1.js','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js','pvp-v1.css','pvp-viewer-v1.css','pvp-match-v1.css','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-v1.js','expedition-presentation-v1.css','expedition-presentation-v1.js','boss-dossier-v1.css','boss-dossier-v1.js','dungeon-theme-v1.css','twelve-below-v1.css','twelve-below-v1.js','combat-polish-v2.css','combat-polish-v2.js','combat-portraits-v1.css','combat-portraits-v1.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
+ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','manor-raid-v1.css','manor-raid-v1.js','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js','pvp-v1.css','pvp-v1.js','expedition-presentation-v1.css','expedition-presentation-v1.js','boss-dossier-v1.css','boss-dossier-v1.js','dungeon-theme-v1.css','twelve-below-v1.css','twelve-below-v1.js','combat-polish-v2.css','combat-polish-v2.js','combat-portraits-v1.css','combat-portraits-v1.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
 {
   const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
   if(!blackoutCss.includes('.bs-role-zones.resolving .bs-role-zone'))throw new Error('Resolved Blackout role-circle fade is missing');
@@ -874,9 +914,9 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 {
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'endgame-data-v1.js'),'utf8'),sandbox,{filename:'endgame-data-v1.js'});
+  vm.runInContext(readSource('class-build-v1.js'),sandbox,{filename:'class-build-v1.js'});
+  vm.runInContext(readSource('gear-data.js'),sandbox,{filename:'gear-data.js'});
+  vm.runInContext(readSource('endgame-data-v1.js'),sandbox,{filename:'endgame-data-v1.js'});
   const G=sandbox.CellboundGear,D=sandbox.CellboundEndgameData;
   if(!G||!D)throw new Error('Chapter 1 gear validation runtime failed to load');
   const progression=[
@@ -924,8 +964,9 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const fractured=D.lootProfileFor('fractured-ages','normal',0),peak=D.lootProfileFor('chaos-canyon','cellbound',20);
   if(fractured.itemLevel?.Weapon!==40||Math.max(...Object.keys(fractured.tiers||{}).map(Number))>4)throw new Error('Fractured Ages loot profile exceeds Chapter 1 Normal ceiling');
   if(peak.itemLevel?.Weapon!==44||Number(peak.tiers?.[5]||0)>0)throw new Error('Cellbound+ exceeds Tier 4 / Item Level 44 ceiling');
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'profession-data.js'),'utf8'),sandbox,{filename:'profession-data.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'item-art-v1.js'),'utf8'),sandbox,{filename:'item-art-v1.js'});
+  vm.runInContext(readSource('profession-data.js'),sandbox,{filename:'profession-data.js'});
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(readSource(file),sandbox);
+  vm.runInContext(readSource('item-art-v1.js'),sandbox,{filename:'item-art-v1.js'});
   const P=sandbox.CellboundProfessions,IA=sandbox.CellboundItemArt;
   if(!P||!IA)throw new Error('Complete item artwork runtime failed to load');
   const professionEntries=Object.entries(P.PROFESSIONS||{});
@@ -987,12 +1028,12 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Chapter 1 gear ladder validation passed. Full item artwork coverage passed: '+G.items.length+' gear, '+Object.keys(P.MATERIALS||{}).length+' materials, '+craftOutputs.length+' crafted items.');
 }
 {
-  const combatCode=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
-  const combatStandardCode=fs.readFileSync(path.join(__dirname,'combat-standard-v1.js'),'utf8');
+  const combatCode=readSource('combat-reborn-v1.js');
+  const combatStandardCode=readSource('combat-standard-v1.js');
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
+  vm.runInContext(readSource('class-build-v1.js'),sandbox,{filename:'class-build-v1.js'});
+  vm.runInContext(readSource('gear-data.js'),sandbox,{filename:'gear-data.js'});
   vm.runInContext(combatCode,sandbox,{filename:'combat-reborn-v1.js'});
   vm.runInContext(combatStandardCode,sandbox,{filename:'combat-standard-v1.js'});
   const result=sandbox.CellboundCombatReborn?.tests?.run?.();
@@ -1001,6 +1042,26 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     throw new Error('Combat Reborn self-tests failed: '+(failed||'test runtime unavailable'));
   }
   console.log('Combat Reborn self-tests passed: '+result.passed+'/'+result.total+'.');
+  const liveParty=[
+    {id:'live-tank',name:'Live Tank',class:'Warrior',spec:'Protection',power:12,level:10},
+    {id:'live-heal',name:'Live Heal',class:'Priest',spec:'Holy',power:12,level:10},
+    {id:'live-d1',name:'Live Mage',class:'Mage',spec:'Arcane',power:12,level:10},
+    {id:'live-d2',name:'Live Hunter',class:'Hunter',spec:'Marksman',power:12,level:10},
+    {id:'live-d3',name:'Live Rogue',class:'Rogue',spec:'Assassination',power:12,level:10}
+  ];
+  const liveEncounter={id:'build-live-smoke',kind:'boss',level:10,enemies:[{name:'Live Smoke Boss',classification:'boss'}],enemyHealth:4200,mechanicIntervalMs:2200,mechanics:[['Pulse','circles',1200],['Cast','interrupt',1300]]};
+  const economy=sandbox.CellboundCombatStandard.createLiveSession({party:liveParty,encounter:{...liveEncounter,enemyHealth:99999},seed:'build-command-power-smoke'},{zone:'ashen-vault'});
+  if(!economy||typeof economy.advance!=='function'||typeof economy.command!=='function'||typeof economy.commandPowerState!=='function')throw new Error('Commander Power live-session API failed to initialise');
+  const initialPower=economy.commandPowerState();if(initialPower.value!==2||initialPower.max!==5)throw new Error('Commander Power must start at 2 / 5');
+  const blockedBurn=economy.command('burn');if(blockedBurn.ok||blockedBurn.reason!=='no-power')throw new Error('Burn must require 3 Command Power');
+  economy.advance(8200);if(economy.commandPowerState().value<3)throw new Error('Commander Power did not regenerate during live combat');
+  const poweredBurn=economy.command('burn');if(!poweredBurn.ok)throw new Error('Burn did not execute after enough Command Power was earned');
+  const live=sandbox.CellboundCombatStandard.createLiveSession({party:liveParty,encounter:liveEncounter,seed:'build-live-smoke',commandPower:5},{zone:'ashen-vault'});
+  if(!live||typeof live.advance!=='function'||typeof live.command!=='function')throw new Error('Real-time Combat Reborn session failed to initialise');
+  live.advance(1600);const command=live.command('burn');if(!command.ok)throw new Error('Real-time Combat Reborn command did not mutate the running session');
+  let liveResult=null,liveGuard=0;while(!live.finished&&liveGuard++<3000){const step=live.advance(100);if(step.result)liveResult=step.result}
+  if(!liveResult||!['victory','defeat'].includes(liveResult.outcome)||!liveResult.events.some(e=>e.type==='PARTY_COMMAND'))throw new Error('Real-time Combat Reborn smoke test did not finish with live command events');
+  console.log('Combat Reborn real-time session smoke test passed.');
   const raidParty=[
     {id:'rt1',name:'Tank A',class:'Warrior',spec:'Protection',power:44,level:15,itemLevel:44},
     {id:'rh1',name:'Healer A',class:'Priest',spec:'Holy',power:44,level:15,itemLevel:44},
@@ -1023,6 +1084,8 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   if(raid.combatModel!=='Combat Reborn'||raid.combatZone!=='manor-raid')throw new Error('Manor raid did not use the standard Combat Reborn gateway');
   if(raid.summary.players.length!==10)throw new Error('Combat Reborn raid smoke test did not preserve all 10 characters');
   if(!raid.events.some(e=>e.type==='GROUND_HAZARD_SPAWNED'))throw new Error('Combat Reborn raid smoke test did not produce persistent floor hazards');
+  if(!raid.events.some(e=>e.type==='GROUND_HAZARD_TICK'))throw new Error('Combat Reborn persistent floor hazards did not tick');
+  if(!raid.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='persistent ground escape'))throw new Error('Combat Reborn party did not actively escape persistent floor hazards');
   if(!raid.events.some(e=>e.type==='TANK_MARK'))throw new Error('Combat Reborn raid smoke test did not produce tank-mark mechanics');
   console.log('Combat Reborn 10-character Manor smoke test passed.');
   sandbox.CellboundCombatStandard.register('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-cb2d'});
@@ -1036,18 +1099,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Chapter 0 Combat Reborn tutorial smoke test passed.');
 }
 {
-  const pvpCode=fs.readFileSync(path.join(__dirname,'pvp-combat-v1.js'),'utf8');
-  const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
-  vm.createContext(sandbox);vm.runInContext(pvpCode,sandbox,{filename:'pvp-combat-v1.js'});
-  const result=sandbox.CellboundPvPCombat?.tests?.run?.();
-  if(!result||result.passed!==result.total){
-    const failed=(result?.tests||[]).filter(x=>!x.pass).map(x=>x.name).join(', ');
-    throw new Error('PvP combat self-tests failed: '+(failed||'test runtime unavailable'));
-  }
-  console.log('PvP combat self-tests passed: '+result.passed+'/'+result.total+'.');
-}
-{
-  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  const playthrough=readSource('tests/full-playthrough.browser.cjs');
   for(const hook of [
     'function coreGameplayLoopPlaythrough(browser)',
     "CellboundGame.partyItemLevel()),29",
@@ -1059,7 +1111,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "the same harder dungeon becomes enterable after progression raises party Item Level"
   ])if(!playthrough.includes(hook))throw new Error('Beta core gameplay loop regression coverage is missing '+hook);
 
-  const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
+  const quests=readSource('quests-v2.js');
   for(const hook of [
     "G?.createQuestGear?.(c,slot,tier,profile",
     "Game.addBankItem?.(item)",
@@ -1067,7 +1119,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "q.flags.hollowSanctumUnlocked=true"
   ])if(!quests.includes(hook))throw new Error('Quest-to-Bank/unlock core loop contract is missing '+hook);
 
-  const bank=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  const bank=readSource('guild-v4.js');
   for(const hook of [
     'function equipBankItem(',
     'function bankDismantleYield(',
@@ -1075,7 +1127,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n))"
   ])if(!bank.includes(hook))throw new Error('Bank equipment/salvage core loop contract is missing '+hook);
 
-  const economy=fs.readFileSync(path.join(__dirname,'economy-v2.js'),'utf8');
+  const economy=readSource('economy-v2.js');
   for(const hook of [
     'function beginCraft(',
     'function finishTimedCraft(',
@@ -1083,14 +1135,14 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "if(out.category==='consumable')addConsumable"
   ])if(!economy.includes(hook))throw new Error('Profession crafting core loop contract is missing '+hook);
 
-  const professions=fs.readFileSync(path.join(__dirname,'profession-data.js'),'utf8');
+  const professions=readSource('profession-data.js');
   for(const hook of [
     "Alchemy:[\n    [1,{'hollowroot':2}]",
     "function rollReagents(bossId)",
     "function rollContentReagents(contentId"
   ])if(!professions.includes(hook))throw new Error('Dungeon profession-reagent loop contract is missing '+hook);
 
-  const ashen=fs.readFileSync(path.join(__dirname,'dungeon-2d-v1.js'),'utf8');
+  const ashen=readSource('dungeon-2d-v1.js');
   for(const hook of [
     'P.rollReagents(s.bossId)',
     'Game.addMaterial(d.key,d.quantity)',
@@ -1101,22 +1153,28 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 }
 
 {
-  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  const guild=readSource('guild-v4.js');
   for(const hook of [
-    "const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])",
+    "const BETA_PLAYABLE_CLASSES=Object.freeze(Object.keys(classes))",
+    "function adminRole()",
+    "role==='owner'||role==='admin'",
+    "function hasStaffClassAccess()",
+    "hasStaffClassAccess()||BETA_PLAYABLE_CLASS_SET.has",
+    "supabaseClient.rpc('cellbound_admin_status')",
     "isCharacterBetaPlayable(c)",
     "state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)",
+    "getPlayableClasses:availableClassNames",
     "betaPlayableClasses:BETA_PLAYABLE_CLASSES"
-  ])if(!guild.includes(hook))throw new Error('Five-class beta contract is missing '+hook);
+  ])if(!guild.includes(hook))throw new Error('Staging balance class access / Owner-Admin bypass contract is missing '+hook);
 
-  const onboarding=fs.readFileSync(path.join(__dirname,'onboarding-v1.js'),'utf8');
+  const onboarding=readSource('onboarding-v1.js');
   for(const hook of [
     "Game?.isBetaClassPlayable&&!Game.isBetaClassPlayable(klass)",
     "const safeDraft=draft.map",
     "No beta-playable class is available for "
   ])if(!onboarding.includes(hook))throw new Error('Character creator beta-class lock is missing '+hook);
 
-  const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
+  const quests=readSource('quests-v2.js');
   for(const hook of [
     "const manorCleared=()=>",
     "const nullQuestAvailable=()=>",
@@ -1124,7 +1182,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "Complete The Manor raid before investigating NULL//07."
   ])if(!quests.includes(hook))throw new Error('Manor-gated Null Complex quest contract is missing '+hook);
 
-  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  const manor=readSource('manor-raid-v1.js');
   for(const hook of [
     "async function markManorCleared()",
     "s.progression.manorRaidCleared=true",
@@ -1132,17 +1190,17 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "Game.isBetaClassPlayable(requested)?requested"
   ])if(!manor.includes(hook))throw new Error('Manor completion/reward beta contract is missing '+hook);
 
-  const endgame=fs.readFileSync(path.join(__dirname,'endgame-v1.js'),'utf8');
+  const endgame=readSource('endgame-v1.js');
   if(!endgame.includes("Game.isBetaClassPlayable(x.class)"))throw new Error('Weekly endgame rewards must exclude unavailable beta classes');
 
-  const nullComplex=fs.readFileSync(path.join(__dirname,'null-complex-v1.js'),'utf8');
+  const nullComplex=readSource('null-complex-v1.js');
   for(const hook of [
     "function manorCleared()",
     "manorCleared()&&(s?.progression?.nullComplexUnlocked",
     "Complete The Manor raid before investigating the Null Complex."
   ])if(!nullComplex.includes(hook))throw new Error('Null Complex activity Manor gate is missing '+hook);
 
-  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const shell=readSource('guild.html');
   for(const hook of [
     'chaos-canyon-v1.js',
     'blackout-station-v1.js',
@@ -1152,18 +1210,18 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'id="fracturedAgesMount"'
   ])if(!shell.includes(hook))throw new Error('Full dungeon content must remain included during beta: '+hook);
 
-  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  const playthrough=readSource('tests/full-playthrough.browser.cjs');
   for(const hook of [
-    'function betaClassAndNullGatePlaythrough(browser)',
+    'function classAvailabilityAndNullGatePlaythrough(browser)',
     'all dungeon runtimes remain included',
     'The Manor clear unlocks Signal From Nowhere'
-  ])if(!playthrough.includes(hook))throw new Error('Five-class/full-content beta regression coverage is missing '+hook);
+  ])if(!playthrough.includes(hook))throw new Error('All-class/full-content staging regression coverage is missing '+hook);
 
-  console.log('Five-class beta lock passed with full dungeon content retained and Null Complex Manor-gated.');
+  console.log('All-class staging balance access passed with full dungeon content retained and Null Complex Manor-gated.');
 }
 
 {
-  const balance=fs.readFileSync(path.join(__dirname,'balance-v1.js'),'utf8');
+  const balance=readSource('balance-v1.js');
   for(const hook of [
     "SHIPWRIGHT_KIT_COST=1000",
     "ashesEastRoad:1850",
@@ -1171,20 +1229,20 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "return [0,.35,.60,.85][n]||.35"
   ])if(!balance.includes(hook))throw new Error('Beta balance contract is missing '+hook);
 
-  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const shell=readSource('guild.html');
   if(!/balance-v1\.js\?v=\d+/.test(shell))throw new Error('Beta balance runtime is not versioned in guild.html');
 
-  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  const guild=readSource('guild-v4.js');
   for(const hook of ['function awardPartyXp(', 'averagePartyLevel', 'BAL?.PVE_WIPE_CELL_SHOCK'])if(!guild.includes(hook))throw new Error('Shared beta progression balance is missing '+hook);
 
-  const bell=fs.readFileSync(path.join(__dirname,'thirteenth-bell-v1.js'),'utf8');
+  const bell=readSource('thirteenth-bell-v1.js');
   if(!bell.includes('hollowFirstClear'))throw new Error('The Thirteenth Bell must follow a Hollow Sanctum clear');
 
   console.log('Beta Step 6 progression and economy contracts are release-gated.');
 }
 
 {
-  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  const guild=readSource('guild-v4.js');
   for(const hook of [
     'const bankUpgradeCooldowns=new Map()',
     'const seen=new Set(),slots=',
@@ -1194,15 +1252,15 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'bankUpgradeCooldowns.set(id,now+800)'
   ])if(!guild.includes(hook))throw new Error('Beta Step 8 save/action hardening is missing '+hook);
 
-  const endgame=fs.readFileSync(path.join(__dirname,'endgame-v1.js'),'utf8');
+  const endgame=readSource('endgame-v1.js');
   for(const hook of ['attemptStartPromises={}', 'if(attemptStartPromises[dungeonId])return attemptStartPromises[dungeonId]', 'delete attemptStartPromises[dungeonId]'])
     if(!endgame.includes(hook))throw new Error('Beta Step 8 dungeon-start dedupe is missing '+hook);
 
-  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  const manor=readSource('manor-raid-v1.js');
   for(const hook of ['raidStartBusy=false', 'if(raidStartBusy)return;raidStartBusy=true', 'finally{raidStartBusy=false}'])
     if(!manor.includes(hook))throw new Error('Beta Step 8 Manor start guard is missing '+hook);
 
-  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  const playthrough=readSource('tests/full-playthrough.browser.cjs');
   for(const hook of [
     'async function breakGamePlaythrough(browser)',
     'corrupted saves cannot duplicate the same adventurer across party slots',
@@ -1212,10 +1270,10 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'refresh during a saved combat phase resumes the existing dungeon attempt'
   ])if(!playthrough.includes(hook))throw new Error('Beta Step 8 adversarial browser coverage is missing '+hook);
 
-  const auth=fs.readFileSync(path.join(__dirname,'auth.js'),'utf8');
+  const auth=readSource('auth.js');
   for(const hook of ["const authReturnUrl=()=>new URL('./index.html',location.href).href", 'emailRedirectTo:authReturnUrl()', 'redirectTo:authReturnUrl()'])
     if(!auth.includes(hook))throw new Error('Beta Step 8 auth return-path hardening is missing '+hook);
-  const login=fs.readFileSync(path.join(__dirname,'tests/login-screen.browser.cjs'),'utf8');
+  const login=readSource('tests/login-screen.browser.cjs');
   for(const hook of ['verification email returns to the current Cellbound host', 'password reset email returns to the current Cellbound host'])
     if(!login.includes(hook))throw new Error('Beta Step 8 auth redirect regression is missing '+hook);
 
@@ -1224,7 +1282,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 
 
 {
-  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const shell=readSource('guild.html');
   for(const hook of [
     'data-view="support"',
     'id="betaReportForm"',
@@ -1232,19 +1290,19 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'id="adminBetaReportQueue"',
     'id="adminPlayerLookup"',
     'beta-ops-v1.js?v=2',
-    'admin-beta-ops-v1.js?v=1'
+    'admin-beta-ops-v1.js?v=2'
   ])if(!shell.includes(hook))throw new Error('Beta Step 9 game/admin support surface is missing '+hook);
 
-  const playerOps=fs.readFileSync(path.join(__dirname,'beta-ops-v1.js'),'utf8');
+  const playerOps=readSource('beta-ops-v1.js');
   for(const hook of ["db.from('beta_reports').insert(payload)",'contextSnapshot(sourceView)','PATCH_NOTES','refreshReports','ensureLauncher()','openReport(kind','data-quick-report="feature"'])
     if(!playerOps.includes(hook))throw new Error('Beta Step 9 player support runtime is missing '+hook);
 
-  const adminOps=fs.readFileSync(path.join(__dirname,'admin-beta-ops-v1.js'),'utf8');
+  const adminOps=readSource('admin-beta-ops-v1.js');
   for(const hook of ['cellbound_admin_beta_reports','cellbound_admin_update_beta_report','cellbound_admin_player_lookup','cellbound_admin_recover_player'])
     if(!adminOps.includes(hook))throw new Error('Beta Step 9 admin operations runtime is missing '+hook);
 
-  const migration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003181012_beta_operations_foundation.sql'),'utf8');
-  const featureMigration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003185957_beta_report_feature_requests.sql'),'utf8');
+  const migration=readSource('supabase/migrations/20261003181012_beta_operations_foundation.sql');
+  const featureMigration=readSource('supabase/migrations/20261003185957_beta_report_feature_requests.sql');
   for(const hook of ['alter table public.beta_reports enable row level security','with check ((select auth.uid()) = user_id)','revoke all on table public.beta_reports from anon, authenticated','cellbound_admin_recover_player'])
     if(!migration.includes(hook))throw new Error('Beta Step 9 database security contract is missing '+hook);
   if(!featureMigration.includes("'feature'::text"))throw new Error('Beta feature-request category migration is missing');
@@ -1255,11 +1313,53 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Beta Step 9 operations contracts are release-gated.');
 }
 
+{
+  const shell=readSource('guild.html');
+  for(const hook of ['analytics-v1.js?v=2','admin-analytics-v1.js?v=1','admin-analytics-v1.css?v=1','id="adminAnalyticsClasses"','id="adminAnalyticsDungeons"','id="adminAnalyticsFeatures"'])
+    if(!shell.includes(hook))throw new Error('Beta analytics Admin surface is missing '+hook);
+
+  const analytics=readSource('analytics-v1.js');
+  for(const hook of ['character_created','level_reached','view_opened','app_open','cellbound_record_analytics_event','existing_at_tracking_start'])
+    if(!analytics.includes(hook))throw new Error('Beta analytics runtime is missing '+hook);
+
+  const adminAnalytics=readSource('admin-analytics-v1.js');
+  for(const hook of ['cellbound_admin_analytics_summary','adminAnalyticsClasses','adminAnalyticsDungeons','completion_rate','daily_activity'])
+    if(!adminAnalytics.includes(hook))throw new Error('Beta analytics dashboard runtime is missing '+hook);
+
+  const analyticsMigration=readSource('supabase/migrations/20261003195133_beta_analytics_foundation.sql');
+  for(const hook of ['alter table public.analytics_events enable row level security','with check ((select auth.uid()) = user_id)','cellbound_admin_analytics_summary','revoke all on table public.analytics_events from anon, authenticated'])
+    if(!analyticsMigration.includes(hook))throw new Error('Beta analytics database contract is missing '+hook);
+
+  console.log('Beta analytics collection and Admin dashboard are release-gated.');
+}
+
+{
+  const shell=readSource('guild.html');
+  for(const hook of ['class="admin-workspace-nav"','data-admin-panel-tab="reports"','data-admin-panel-tab="analytics"','data-admin-panel-tab="players"','data-admin-panel-tab="tools"','<option value="open" selected>Open reports</option>'])
+    if(!shell.includes(hook))throw new Error('Admin UX workspace contract is missing '+hook);
+
+  const admin=readSource('admin-v1.js');
+  for(const hook of ['function setPanel(panel','cellbound:admin-panel-changed','admin-panel-filtered'])
+    if(!admin.includes(hook))throw new Error('Admin UX runtime is missing '+hook);
+
+  console.log('Admin workspace optimization is release-gated.');
+}
+
+if(process.env.GITHUB_BASE_REF==='staging'||process.env.CELLBOUND_CHANNEL==='staging'){
+  const stagingGuild=readSource('guild.html');
+  if(/http-equiv=["']refresh["'][^>]*index\.html/i.test(stagingGuild)||/location\.replace\(["']\.\/index\.html["']\)/.test(stagingGuild)){
+    throw new Error('Staging guild.html must not force-redirect authenticated players back to index.html');
+  }
+  console.log('Staging navigation guard passed: Guild Command remains directly playable.');
+}
+
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
 require('./tests/beta-balance.cjs');
 require('./tests/beta-ui-polish.cjs');
 require('./tests/beta-operations.cjs');
+require('./tests/beta-analytics.cjs');
+require('./tests/admin-ux.cjs');
 require('./tests/living-combat.authority.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}

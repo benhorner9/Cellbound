@@ -69,7 +69,7 @@ const SCREECH_COLOURS=[
 ];
 const SCREECH_TIMEOUT_MS=4500;
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null,pendingRewardSession=null;
-let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0;
+let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0,maidOverlayPenaltyKey='';
 const handledScreechTokens=new Set();
 const resolvingScreechTokens=new Set();
 const screechPromptTimers=new Map();
@@ -351,6 +351,7 @@ async function startRaid(){
    const {data:latest,error:membersError}=await db.from('party_finder_members').select('listing_id,user_id,party_snapshot').eq('listing_id',myGroup.id);if(membersError)throw membersError;
    if(!raidRowsReady(latest||[]))throw new Error('Both raid parties must contain five Level 15 adventurers before The Manor can begin.');
    const {data,error}=await db.rpc('start_manor_raid',{p_listing_id:myGroup.id});if(error)throw error;
+   window.CellboundAnalytics?.track?.('raid_started',{raid_id:'manor',raid_name:'The Manor',session_id:data?.id||'',listing_id:myGroup.id,party_item_level:Number(Game.partyItemLevel?.())||0},{key:data?.id?'raid_started:'+data.id:null});
    await fetchHub();await openRaid(data)
  }catch(e){alert(e.message||'The Manor could not be started')}
  finally{raidStartBusy=false}
@@ -532,8 +533,8 @@ async function syncSharedRaidView(force=false){
  const recoveryNote=session.stage==='maids'
    ?(entryHealthForSide(side)<100?' Your party was recovered after the previous room and enters at 50% health.':'')
    :((entryHealthForSide(0)<100||entryHealthForSide(1)<100)?' One five-character party was recovered after the previous room and enters at 50% health.':'');
- viewer.playSharedEncounter({
-   party:pack.party,encounter:pack.encounter,result:pack.result,
+ const play=viewer.playSharedEncounter({
+   party:pack.party,encounter:pack.encounter,result:pack.result,zone:'manor-raid',
    enemyDisplayMax:null,
    startAt:readyStartAt()||stamp(session?.state?.stageStartedAt),
    header:'THE MANOR · '+String(room).toUpperCase()+' · LIVE 2D RAID',
@@ -545,7 +546,9 @@ async function syncSharedRaidView(force=false){
    planCopy:'Combat Reborn controls movement, threat, resources, healing, interrupts, deaths and boss mechanics. Raid-only interactions are layered over the same event stream.',
    onEvent:handleRaidCombatEvent,
    onClose:()=>closeRaid(true)
- }).catch(error=>console.error('Manor shared viewer failed',error));
+ });
+ if(session.stage==='maids')mountMaidLinkOverlay();
+ play.catch(error=>console.error('Manor shared viewer failed',error));
  scheduleOwnScreechPrompts()
 }
 async function pollRaidSession(id){
@@ -574,7 +577,7 @@ async function openRaid(id){
 }
 function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
- clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';clearReadyLaunch();resolvingScreechTokens.clear();clearScreechPromptTimers();
+ clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';maidOverlayPenaltyKey='';clearReadyLaunch();resolvingScreechTokens.clear();clearScreechPromptTimers();
  unsubscribeRaidRealtime();
  const host=$('#mrScreechHost');if(host){host.innerHTML='';host.style.setProperty('display','none','important');host.style.setProperty('pointer-events','none','important')}document.documentElement.classList.remove('mr-screech-active');document.body.classList.remove('mr-screech-active');handledScreechTokens.clear();
  if(!fromShared)window.CellboundDungeon2D?.closeShared?.(true);
@@ -647,6 +650,7 @@ function tickRaid(){
  if(session.status==='failed'||session.status==='completed'||session.stage==='victory')return;
  if(!encounterIsLive()){renderReadyGate();return}
  const e=stageElapsed();
+ if(session.stage==='maids')updateMaidLinkOverlay(e);
  resolveExpiredScreeches(e);
  if(isLeader()){
    if(session.stage==='maids')driveMaids(e);
@@ -689,6 +693,63 @@ function unit(c,i,e){
  const engineHp=combatPlayerHp(c,e),danger=engineHp===null?90:engineHp;
  const hp=session.stage==='housebound'?bossHp('housebound',e):100,chosen=session.stage==='housebound'&&hp<=60&&hp>30&&i===Math.floor(e/6500)%10;
  return '<div class="mr-unit u'+i+' '+(chosen?'chosen':'')+'" style="--class:'+color+'"><div class="mr-unit-pic">'+p+'</div><span>'+esc(c.name)+'</span><div class="mr-unit-hp"><i style="width:'+Math.max(0,danger)+'%"></i></div></div>'
+}
+function maidPenaltyFor(side){return Math.max(0,Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0)}
+function maidScreechProgress(side){
+ const count=Math.max(0,Number(session?.state?.[side===0?'screechCountA':'screechCountB'])||0);
+ const success=Math.max(0,Number(session?.state?.[side===0?'screechSuccessA':'screechSuccessB'])||0);
+ return{count,success}
+}
+function maidNextScreechLabel(side,elapsed){
+ const next=screechEvents('maids',side).find(event=>!screechResolved('maids',side,screechEventMs(event)));
+ if(!next)return'SCREECHES COMPLETE';
+ const left=screechEventMs(next)-elapsed;
+ if(left<=0)return'SCREECH ACTIVE';
+ return'NEXT SCREECH · '+Math.max(1,Math.ceil(left/1000))+'s'
+}
+function latestMaidResolution(){
+ const rows=Object.entries(session?.state?.screechResolved||{}).filter(([token])=>String(token).startsWith('maids:')).map(([token,value])=>{
+   const bits=String(token).split(':'),v=value||{},side=Number(v.side??bits[1]),eventMs=Number(bits[2])||0;
+   return{token,side:Number.isFinite(side)?side:0,eventMs,outcome:String(v.outcome||v.result||'').toLowerCase(),resolvedAt:stamp(v.resolvedAt)||eventMs}
+ }).filter(row=>row.outcome);
+ return rows.sort((a,b)=>b.resolvedAt-a.resolvedAt)[0]||null
+}
+function maidLinkEventCopy(mine){
+ const event=latestMaidResolution();if(!event)return'Both rooms are linked. A failed Screech can strengthen the other Maid.';
+ const actor=event.side===mine?'YOU':'PARTNER';
+ if(event.outcome==='success')return actor+' RESISTED SCREECH · NO BOSS EMPOWERMENT';
+ if(event.outcome==='timeout')return actor+' TIMED OUT · BOTH MAIDS +10% DAMAGE / +15% HEAL';
+ const target=event.side===0?1:0,targetLabel=target===mine?'YOUR MAID':'PARTNER MAID';
+ return actor+' FAILED SCREECH · '+targetLabel+' +10% DAMAGE / +15% HEAL'
+}
+function maidLinkCard(side,mine,elapsed){
+ const penalty=maidPenaltyFor(side),hp=Math.max(0,Math.min(100,Math.round(Number(maidBossHp(side,elapsed))||0))),progress=maidScreechProgress(side),damage=penalty*10,heal=penalty*15;
+ const who=side===mine?'YOUR ROOM':'PARTNER ROOM',name=commanderLabel(side),state=penalty?'EMPOWERED ×'+penalty:'STABLE';
+ return'<article class="mr-maid-link-card '+(penalty?'is-empowered':'is-stable')+'"><header><span>'+who+'</span><b>'+esc(name)+'</b><em>'+state+'</em></header>'+
+  '<div class="mr-maid-link-hp"><span><b>THE MAID</b><strong>'+hp+'%</strong></span><i><u style="width:'+hp+'%"></u></i></div>'+
+  '<div class="mr-maid-link-stats"><span>DAMAGE <b>+'+damage+'%</b></span><span>HEAL PENALTY <b>+'+heal+'%</b></span></div>'+
+  '<footer><span>SCREECH '+progress.success+'/'+progress.count+' CLEAN</span><b>'+maidNextScreechLabel(side,elapsed)+'</b></footer></article>'
+}
+function mountMaidLinkOverlay(){
+ if(session?.stage!=='maids')return;
+ const arena=document.querySelector('#cb2dArena');if(!arena)return;
+ let overlay=arena.querySelector('#mrMaidLinkOverlay');
+ if(!overlay){overlay=document.createElement('section');overlay.id='mrMaidLinkOverlay';overlay.className='mr-maid-link-overlay';overlay.setAttribute('aria-live','polite');arena.appendChild(overlay)}
+ updateMaidLinkOverlay(stageElapsed(),true)
+}
+function updateMaidLinkOverlay(elapsed=stageElapsed(),force=false){
+ if(session?.stage!=='maids')return;
+ let overlay=document.querySelector('#mrMaidLinkOverlay');if(!overlay){mountMaidLinkOverlay();overlay=document.querySelector('#mrMaidLinkOverlay');if(!overlay)return}
+ const mine=myRaidSide(),pa=maidPenaltyFor(0),pb=maidPenaltyFor(1),penaltyKey=pa+'|'+pb,latest=latestMaidResolution();
+ const key=[Math.round(elapsed/500),pa,pb,session?.state?.screechCountA||0,session?.state?.screechCountB||0,session?.state?.screechSuccessA||0,session?.state?.screechSuccessB||0,latest?.token||'',latest?.outcome||''].join('|');
+ if(!force&&overlay.dataset.key===key)return;
+ const changed=Boolean(maidOverlayPenaltyKey&&maidOverlayPenaltyKey!==penaltyKey);
+ overlay.dataset.key=key;
+ overlay.innerHTML='<header class="mr-maid-link-head"><div><small>LINKED MAIDS · LIVE SYNC</small><b>Your partner\'s Screech can empower your boss.</b></div><strong>'+(pa+pb?'BOSS POWER CHANGED':'LINK STABLE')+'</strong></header>'+
+  '<div class="mr-maid-link-grid">'+maidLinkCard(mine,mine,elapsed)+maidLinkCard(mine===0?1:0,mine,elapsed)+'</div>'+
+  '<div class="mr-maid-link-event">'+esc(maidLinkEventCopy(mine))+'</div>';
+ if(changed){overlay.classList.remove('penalty-flash');void overlay.offsetWidth;overlay.classList.add('penalty-flash')}
+ maidOverlayPenaltyKey=penaltyKey
 }
 function masterPenaltyStacks(){return Math.max(0,Number(session?.state?.masterScreechFailures)||0)}
 async function driveMaids(e){
@@ -769,6 +830,7 @@ function renderWipeShell(){
 }
 function renderVictoryShell(){
  markManorCleared().catch(error=>console.warn('Could not persist Manor clear progression',error));
+ if(session?.id)window.CellboundAnalytics?.track?.('raid_completed',{raid_id:'manor',raid_name:'The Manor',session_id:session.id},{key:'raid_completed:'+session.id});
  const root=ensureOverlay(),claimed=Boolean(state()?.raidRewardClaims?.[session.id]);
  root.innerHTML='<section class="mr-raid-shell mr-victory-shell"><header class="mr-raid-head"><div><small>THE MANOR · THE ATTIC</small><h2>Raid Complete</h2></div><button data-mr-close>×</button></header><div class="mr-victory-art"><span>◈</span><small>THE HOUSE FALLS SILENT</small><h1>The Master of the Manor</h1><p>The creature collapses into the attic floorboards. Every door below unlocks at once.</p></div><div class="mr-victory-loot"><small>PERSONAL RAID LOOT</small><h2>2 × Tier 5 Items</h2><p>Orange-framed Chapter 1 raid equipment. Four rolled stats with Tier 5 raid-set progression.</p><button data-mr-claim '+(claimed?'disabled':'')+'>'+(claimed?'REWARDS SECURED':'REVEAL RAID LOOT →')+'</button><div id="mrLootDrops"></div></div></section>';
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);

@@ -1,0 +1,198 @@
+/* Character portraits in every player-controlled combat renderer */
+.cb2d-unit.cb-combat-has-portrait>i{opacity:0}
+.cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
+  position:absolute;
+  z-index:3;
+  display:block!important;
+  min-width:0!important;
+  left:50%;
+  top:50%;
+  width:34px;
+  height:34px;
+  transform:translate(-50%,-50%);
+  overflow:hidden;
+  border:2px solid var(--cb-combat-class,#76d7d0);
+  border-radius:50%;
+  background:#081115;
+  box-shadow:
+    0 0 0 2px rgba(2,6,8,.82),
+    0 0 13px color-mix(in srgb,var(--cb-combat-class,#76d7d0) 42%,transparent);
+  pointer-events:none
+}
+.cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait .cb-portrait{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:#091216;
+  box-shadow:none
+}
+.cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait svg{width:100%;height:100%}
+.cb-combat-portrait .cb-portrait svg>rect:last-child{display:none}
+.cb2d-unit.cb-combat-has-portrait>span:not(.cb-combat-portrait){top:34px}
+.cb2d-unit.cb-combat-has-portrait .cb2d-unit-hp{top:-15px;width:46px}
+.cb2d-unit.cb-combat-has-portrait.attacking>.cb-combat-portrait{animation:cbCombatPortraitAttack .42s ease-out}
+.cb2d-unit.cb-combat-has-portrait.hit>.cb-combat-portrait{animation:cbCombatPortraitHit .28s ease-out}
+.cb2d-unit.cb-combat-has-portrait.healed>.cb-combat-portrait{animation:cbCombatPortraitHeal .34s ease-out}
+.cb2d-unit.cb-combat-has-portrait.dying>.cb-combat-portrait{animation:cbCombatPortraitDown .3s ease-in forwards}
+
+.wb2d-unit.cb-combat-has-portrait .wb2d-unit-dot{opacity:0}
+.wb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
+  position:absolute;
+  z-index:3;
+  display:block!important;
+  min-width:0!important;
+  left:50%;
+  top:50%;
+  width:32px;
+  height:32px;
+  transform:translate(-50%,-50%);
+  overflow:hidden;
+  border:2px solid var(--cb-combat-class,#76d7d0);
+  border-radius:50%;
+  background:#081115;
+  box-shadow:0 0 0 2px rgba(2,6,8,.78),0 0 12px color-mix(in srgb,var(--cb-combat-class,#76d7d0) 38%,transparent);
+  pointer-events:none
+}
+.wb2d-unit.cb-combat-has-portrait>.cb-combat-portrait .cb-portrait{width:100%;height:100%;border-radius:50%;box-shadow:none}
+.wb2d-unit.cb-combat-has-portrait .wb2d-unit-hp{top:-9px}
+.wb2d-unit.cb-combat-has-portrait.attacking>.cb-combat-portrait{transform:translate(-50%,-50%) scale(1.1)}
+
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token>i,
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token>span:not(.cb-combat-portrait){opacity:0}
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token>.cb-combat-portrait{
+  position:absolute;
+  inset:2px;
+  z-index:2;
+  display:block!important;
+  min-width:0!important;
+  overflow:hidden;
+  border-radius:50%;
+  pointer-events:none
+}
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token>.cb-combat-portrait .cb-portrait{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:#091216;
+  box-shadow:none
+}
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token{border-color:var(--cb-combat-class,var(--pvp-class))}
+.pvp2d-unit.cb-combat-has-portrait.attacking .pvp2d-token>.cb-combat-portrait{transform:scale(1.06)}
+.pvp2d-unit.cb-combat-has-portrait.hit .pvp2d-token>.cb-combat-portrait{filter:brightness(1.35)}
+.pvp2d-unit.cb-combat-has-portrait.healing .pvp2d-token>.cb-combat-portrait{filter:brightness(1.12)}
+
+@keyframes cbCombatPortraitAttack{0%{transform:translate(-50%,-50%) scale(1)}35%{transform:translate(-50%,-50%) scale(1.2);filter:brightness(1.35)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes cbCombatPortraitHit{0%{filter:brightness(1)}45%{filter:brightness(1.7)}100%{filter:brightness(1)}}
+@keyframes cbCombatPortraitHeal{0%{box-shadow:0 0 0 2px rgba(2,6,8,.82),0 0 8px rgba(105,217,155,.1)}50%{box-shadow:0 0 0 2px rgba(2,6,8,.82),0 0 24px rgba(105,217,155,.58)}100%{box-shadow:0 0 0 2px rgba(2,6,8,.82),0 0 13px color-mix(in srgb,var(--cb-combat-class,#76d7d0) 42%,transparent)}}
+@keyframes cbCombatPortraitDown{to{transform:translate(-50%,-50%) scale(.78) rotate(8deg);filter:grayscale(.8);opacity:.35}}
+
+@media(max-width:540px){
+  .cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{width:30px;height:30px}
+  .cb2d-unit.cb-combat-has-portrait>span:not(.cb-combat-portrait){top:31px}
+  .pvp2d-unit.cb-combat-has-portrait .pvp2d-token>.cb-combat-portrait{inset:2px}
+}
+
+/* Named final bosses use their real dossier artwork in combat. */
+.cb2d-unit.cb-combat-has-boss-portrait>i{opacity:0!important}
+.cb2d-unit.cb-combat-has-boss-portrait>.cb-combat-boss-portrait{
+  position:absolute;
+  z-index:3;
+  display:block!important;
+  min-width:0!important;
+  left:50%;
+  top:50%;
+  width:50px;
+  height:50px;
+  transform:translate(-50%,-50%);
+  overflow:hidden;
+  border:2px solid #d7b45b;
+  border-radius:50%;
+  background:#180b0a;
+  box-shadow:
+    0 0 0 2px rgba(118,28,25,.92),
+    0 0 0 4px rgba(3,6,8,.88),
+    0 0 24px rgba(215,180,91,.42),
+    0 0 34px rgba(179,48,38,.22);
+  pointer-events:none
+}
+.cb2d-unit.cb-combat-has-boss-portrait>.cb-combat-boss-portrait:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.48),inset 0 -8px 16px rgba(70,10,8,.28);
+  pointer-events:none
+}
+.cb2d-unit.cb-combat-has-boss-portrait>.cb-combat-boss-portrait img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 28%;
+  transform:scale(1.08);
+  filter:saturate(1.06) contrast(1.04)
+}
+.cb2d-unit.cb-combat-has-boss-portrait>span{top:53px!important;color:#efcf72!important;text-shadow:0 1px 3px #000,0 0 9px rgba(215,180,91,.28)!important}
+.cb2d-unit.cb-combat-has-boss-portrait .cb2d-unit-hp,
+.cb2d-unit.cb-combat-has-boss-portrait>em{top:-24px!important;width:78px!important}
+.cb2d-unit.cb-combat-has-boss-portrait>.cbs-strip{top:-52px!important}
+.cb2d-unit.cb-combat-has-boss-portrait.attacking>.cb-combat-boss-portrait{animation:cbCombatBossAttack .42s ease-out}
+.cb2d-unit.cb-combat-has-boss-portrait.hit>.cb-combat-boss-portrait{animation:cbCombatBossHit .28s ease-out}
+.cb2d-unit.cb-combat-has-boss-portrait.dying>.cb-combat-boss-portrait,
+.cb2d-unit.cb-combat-has-boss-portrait.dead>.cb-combat-boss-portrait{animation:cbCombatBossDown .34s ease-in forwards}
+@keyframes cbCombatBossAttack{0%{transform:translate(-50%,-50%) scale(1)}38%{transform:translate(-50%,-50%) scale(1.12);filter:brightness(1.22)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes cbCombatBossHit{0%{filter:brightness(1)}45%{filter:brightness(1.62) saturate(1.2)}100%{filter:brightness(1)}}
+@keyframes cbCombatBossDown{to{transform:translate(-50%,-50%) scale(.82);filter:grayscale(.75) brightness(.55);opacity:.35}}
+
+@media(max-width:540px){
+  .cb2d-unit.cb-combat-has-boss-portrait>.cb-combat-boss-portrait{width:42px;height:42px}
+  .cb2d-unit.cb-combat-has-boss-portrait .cb2d-unit-hp,
+  .cb2d-unit.cb-combat-has-boss-portrait>em{top:-21px!important;width:70px!important}
+}
+
+.cb-combat-has-monster-portrait>i:first-child{opacity:0!important}
+.cb-combat-monster-portrait{position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);border:2px solid #a67d67;border-radius:46%;background:radial-gradient(circle at 40% 25%,#384046,#121b20);box-shadow:0 3px 5px #0008;z-index:3;overflow:hidden;pointer-events:none}
+.cb-combat-monster-portrait svg{width:100%;height:100%}
+.boss>.cb-combat-monster-portrait{width:52px;height:52px;border:3px solid #c79c5c;box-shadow:0 4px 7px #0009,0 0 0 2px #6c352b}
+.elite>.cb-combat-monster-portrait{width:40px;height:40px;border-color:#b6a58a}
+
+/* Shared character silhouettes retain the existing simulation hitboxes. */
+.cb-combat-full-model .cb-combat-portrait,.cb2d-unit.cb-combat-full-model>.cb-combat-portrait{width:48px!important;height:82px!important;border:0!important;border-radius:0!important;background:none!important;overflow:visible!important;box-shadow:none!important;top:50%;transform:translate(-50%,-75%)}
+.cb-combat-full-model .cb-paper-doll--combat{display:block;width:48px;height:82px;background:none}
+.cb-combat-full-model .cb-paper-doll--combat svg{width:100%;height:100%;overflow:visible}
+.cb-combat-full-model .cb-paper-glow,.cb-combat-full-model .cb-paper-set-glow{animation:none!important}
+@media(prefers-reduced-motion:reduce){.cb-combat-full-model *{animation:none!important}}
+
+
+/* Canonical PVE full-model cleanup — one character renderer, no legacy token halo */
+.cbcombat-shell[data-combat-profile="pve"] .cb2d-unit>.cbl-facing{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  width:0!important;
+  height:0!important;
+  background:none!important;
+  box-shadow:none!important
+}
+.cbcombat-shell[data-combat-profile="pve"] .cb2d-unit:is(.cb-combat-has-portrait,.cb-combat-has-boss-portrait,.cb-combat-has-monster-portrait)>i:first-child{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  background:none!important;
+  box-shadow:none!important
+}
+.cbcombat-shell[data-combat-profile="pve"] .cb2d-unit>.cbl-ground{
+  display:block!important;
+  visibility:visible!important;
+  width:38px!important;
+  height:12px!important;
+  top:70%!important;
+  opacity:.58!important;
+  background:radial-gradient(ellipse,rgba(0,0,0,.76) 0 28%,rgba(0,0,0,.34) 46%,transparent 74%)!important;
+  box-shadow:none!important;
+  filter:none!important
+}
+.cbcombat-shell[data-combat-profile="pve"] .cb2d-unit.boss>.cbl-ground{
+  width:58px!important;
+  height:18px!important
+}

@@ -299,16 +299,20 @@ body.bs2d-open{
   overflow:hidden;
 }
 
+/* Combat feed removed: keep the battlefield and Commander controls as the primary play surface. */
+.cb2d-layout>main>.cb2d-feed{display:none!important}
+
 @media (min-width:1051px) and (min-height:650px){
   body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
   body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
   body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
   body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode){
     display:grid;
-    grid-template-rows:auto auto minmax(0,1fr) auto;
-    height:calc(100dvh - 32px)!important;
-    max-height:calc(100dvh - 32px)!important;
-    overflow:hidden!important;
+    grid-template-rows:auto auto auto auto;
+    min-height:calc(100dvh - 32px)!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
     overscroll-behavior:none;
   }
 
@@ -318,7 +322,7 @@ body.bs2d-open{
   body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout{
     height:auto;
     min-height:0!important;
-    overflow:hidden;
+    overflow:visible;
   }
 
   body.cb2d-open .cb2d-layout>main,
@@ -326,17 +330,22 @@ body.bs2d-open{
   body.cc2d-open .cb2d-layout>main,
   body.bs2d-open .cb2d-layout>main{
     display:grid;
-    grid-template-rows:minmax(0,1fr) auto minmax(72px,96px);
+    grid-template-rows:470px auto;
+    min-width:0;
     min-height:0;
-    overflow:hidden;
+    overflow:visible;
   }
 
   body.cb2d-open .cb2d-layout>main>.cb2d-arena,
   body.hs2d-open .cb2d-layout>main>.cb2d-arena,
   body.cc2d-open .cb2d-layout>main>.cb2d-arena,
   body.bs2d-open .cb2d-layout>main>.cb2d-arena{
-    height:auto!important;
-    min-height:0!important;
+    width:100%!important;
+    max-width:none!important;
+    height:470px!important;
+    min-height:470px!important;
+    max-height:470px!important;
+    justify-self:stretch;
     align-self:stretch;
   }
 
@@ -344,6 +353,7 @@ body.bs2d-open{
   body.hs2d-open .cb2d-layout>main>.cb2d-feed,
   body.cc2d-open .cb2d-layout>main>.cb2d-feed,
   body.bs2d-open .cb2d-layout>main>.cb2d-feed{
+    display:none!important;
     min-height:0;
     max-height:96px;
     overflow:hidden;
@@ -415,5 +425,3649 @@ body.bs2d-open{
   body.cc2d-open .cb2d-party-row,
   body.bs2d-open .cb2d-party-row{
     padding:6px 0;
+  }
+}
+
+
+/* Fullscreen Combat HUD v1
+   Combat Reborn / shared CB2D: the battlefield owns the viewport.
+   Navigation, meters and Commander controls sit over the live scene instead of shrinking it. */
+@media (min-width:1051px) and (min-height:650px){
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode){
+    position:relative!important;
+    display:block!important;
+    width:100vw!important;
+    height:100dvh!important;
+    min-height:100dvh!important;
+    max-height:100dvh!important;
+    overflow:hidden!important;
+    border:0!important;
+    background:#05090b!important;
+  }
+
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-head,
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-head,
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-head,
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-head{
+    position:absolute!important;
+    z-index:120;
+    left:0;right:0;top:0;
+    min-height:76px;
+    box-sizing:border-box;
+    background:linear-gradient(180deg,rgba(5,9,11,.96),rgba(5,9,11,.82) 72%,rgba(5,9,11,0))!important;
+    border-bottom:0!important;
+    backdrop-filter:blur(8px);
+  }
+
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-route,
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-route,
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-route,
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-route{
+    position:absolute!important;
+    z-index:118;
+    left:14px;right:350px;top:78px;
+    padding:6px!important;
+    border:1px solid rgba(255,255,255,.06)!important;
+    border-radius:8px;
+    background:rgba(5,11,14,.72)!important;
+    backdrop-filter:blur(9px);
+    box-shadow:0 10px 30px rgba(0,0,0,.22);
+  }
+
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout{
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+
+  body.cb2d-open .cb2d-layout>main,
+  body.hs2d-open .cb2d-layout>main,
+  body.cc2d-open .cb2d-layout>main,
+  body.bs2d-open .cb2d-layout>main{
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    padding:0!important;
+    overflow:hidden!important;
+    background:transparent!important;
+  }
+
+  body.cb2d-open .cb2d-layout>main>.cb2d-arena,
+  body.hs2d-open .cb2d-layout>main>.cb2d-arena,
+  body.cc2d-open .cb2d-layout>main>.cb2d-arena,
+  body.bs2d-open .cb2d-layout>main>.cb2d-arena{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:100%!important;
+    max-height:none!important;
+    aspect-ratio:auto!important;
+    border:0!important;
+    box-shadow:none!important;
+  }
+
+  body.cb2d-open .cb2d-arena>.cb2d-room-tag,
+  body.hs2d-open .cb2d-arena>.cb2d-room-tag,
+  body.cc2d-open .cb2d-arena>.cb2d-room-tag,
+  body.bs2d-open .cb2d-arena>.cb2d-room-tag{
+    left:16px!important;
+    top:132px!important;
+    max-width:250px;
+    background:rgba(4,9,11,.76)!important;
+    backdrop-filter:blur(7px);
+  }
+
+  body.cb2d-open .cb2d-arena>.cb2d-ground-legend,
+  body.hs2d-open .cb2d-arena>.cb2d-ground-legend,
+  body.cc2d-open .cb2d-arena>.cb2d-ground-legend,
+  body.bs2d-open .cb2d-arena>.cb2d-ground-legend{
+    top:132px!important;
+    right:350px!important;
+  }
+
+  body.cb2d-open .cb2d-arena>.cb2d-caption,
+  body.hs2d-open .cb2d-arena>.cb2d-caption,
+  body.cc2d-open .cb2d-arena>.cb2d-caption,
+  body.bs2d-open .cb2d-arena>.cb2d-caption{
+    left:16px!important;
+    bottom:178px!important;
+    background:rgba(4,9,11,.78)!important;
+    backdrop-filter:blur(7px);
+  }
+
+  body.cb2d-open .cb2d-layout>aside,
+  body.hs2d-open .cb2d-layout>aside,
+  body.cc2d-open .cb2d-layout>aside,
+  body.bs2d-open .cb2d-layout>aside{
+    position:absolute!important;
+    z-index:110;
+    top:92px;right:14px;bottom:14px;
+    width:318px!important;
+    min-width:318px!important;
+    padding:9px!important;
+    display:flex!important;
+    flex-direction:column;
+    gap:7px!important;
+    overflow:auto!important;
+    border:1px solid rgba(216,185,118,.12)!important;
+    border-radius:10px;
+    background:linear-gradient(180deg,rgba(6,12,15,.86),rgba(5,10,13,.76))!important;
+    box-shadow:0 16px 42px rgba(0,0,0,.34);
+    backdrop-filter:blur(12px);
+  }
+
+  body.cb2d-open .cb2d-layout>aside>.cb2d-cast,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-cast,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-cast,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-cast,
+  body.cb2d-open .cb2d-layout>aside>.cb2d-combat-meters,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-combat-meters,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-combat-meters,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-combat-meters,
+  body.cb2d-open .cb2d-layout>aside>.cb2d-party,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-party,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-party,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-party{
+    background:rgba(5,12,15,.66)!important;
+    border-color:rgba(216,185,118,.10)!important;
+    backdrop-filter:blur(6px);
+  }
+
+  body.cb2d-open .cb2d-layout>aside>.cb2d-actions,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-actions,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-actions,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-actions,
+  body.cb2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-plan{
+    display:none!important;
+  }
+
+  body.cb2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.hs2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.cc2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.bs2d-open .cb2d-layout>main>.cbr-command-panel{
+    position:absolute!important;
+    z-index:112;
+    left:14px;right:350px;bottom:14px;
+    margin:0!important;
+    padding:9px 10px!important;
+    border:1px solid rgba(104,173,220,.28)!important;
+    border-radius:10px!important;
+    background:linear-gradient(180deg,rgba(6,16,24,.88),rgba(4,11,17,.82))!important;
+    box-shadow:0 16px 44px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.025);
+    backdrop-filter:blur(12px);
+  }
+
+  body.cb2d-open .cbr-command-copy,
+  body.hs2d-open .cbr-command-copy,
+  body.cc2d-open .cbr-command-copy,
+  body.bs2d-open .cbr-command-copy{
+    margin-bottom:5px;
+  }
+  body.cb2d-open .cbr-command-copy span,
+  body.hs2d-open .cbr-command-copy span,
+  body.cc2d-open .cbr-command-copy span,
+  body.bs2d-open .cbr-command-copy span{
+    display:none;
+  }
+  body.cb2d-open .cbr-command-meta,
+  body.hs2d-open .cbr-command-meta,
+  body.cc2d-open .cbr-command-meta,
+  body.bs2d-open .cbr-command-meta{
+    margin-bottom:6px;
+    padding:5px 7px;
+  }
+  body.cb2d-open .cbr-command-grid,
+  body.hs2d-open .cbr-command-grid,
+  body.cc2d-open .cbr-command-grid,
+  body.bs2d-open .cbr-command-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:5px!important;
+  }
+  body.cb2d-open .cb2d-controls .cbr-command,
+  body.hs2d-open .cb2d-controls .cbr-command,
+  body.cc2d-open .cb2d-controls .cbr-command,
+  body.bs2d-open .cb2d-controls .cbr-command{
+    min-height:44px!important;
+    padding:6px 7px!important;
+  }
+
+  body.cb2d-open .cb2d-layout>main>.cb2d-feed,
+  body.hs2d-open .cb2d-layout>main>.cb2d-feed,
+  body.cc2d-open .cb2d-layout>main>.cb2d-feed,
+  body.bs2d-open .cb2d-layout>main>.cb2d-feed{
+    display:none!important;
+  }
+}
+
+
+/* Fullscreen Combat HUD v2 — MMO command layout.
+   Battlefield owns the viewport; party frames, meters and commands are edge HUD overlays. */
+@media (min-width:1051px) and (min-height:650px){
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode){
+    --hud-edge:14px;
+    --hud-party-w:258px;
+    --hud-meter-w:270px;
+    --hud-command-h:82px;
+    position:relative!important;
+    width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;
+    overflow:hidden!important;border:0!important;background:#030608!important;
+  }
+
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-head,
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-head,
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-head,
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-head{
+    position:absolute!important;z-index:150;left:0;right:0;top:0;height:68px;min-height:68px;
+    padding:10px 18px!important;border:0!important;
+    background:linear-gradient(180deg,rgba(3,7,9,.94),rgba(3,7,9,.58) 76%,transparent)!important;
+    backdrop-filter:blur(7px);pointer-events:auto;
+  }
+  body.cb2d-open .cb2d-head h2,
+  body.hs2d-open .cb2d-head h2,
+  body.cc2d-open .cb2d-head h2,
+  body.bs2d-open .cb2d-head h2{font-size:1.35rem!important;margin-top:2px!important}
+  body.cb2d-open .cb2d-head small,
+  body.hs2d-open .cb2d-head small,
+  body.cc2d-open .cb2d-head small,
+  body.bs2d-open .cb2d-head small{font-size:.38rem!important}
+
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-route,
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-route,
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-route,
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-route{
+    position:absolute!important;z-index:155;left:50%;top:12px;right:auto;width:min(620px,46vw);
+    transform:translateX(-50%);padding:4px!important;gap:3px!important;border:0!important;border-radius:8px;
+    background:rgba(4,10,13,.58)!important;backdrop-filter:blur(8px);box-shadow:0 8px 22px rgba(0,0,0,.18);
+  }
+  body.cb2d-open .cb2d-route span,
+  body.hs2d-open .cb2d-route span,
+  body.cc2d-open .cb2d-route span,
+  body.bs2d-open .cb2d-route span{
+    min-width:0!important;flex:1 1 0;padding:5px 6px!important;font-size:.36rem!important;overflow:hidden;text-overflow:ellipsis;
+  }
+  body.cb2d-open .cb2d-route span i,
+  body.hs2d-open .cb2d-route span i,
+  body.cc2d-open .cb2d-route span i,
+  body.bs2d-open .cb2d-route span i{width:15px!important;height:15px!important;flex:0 0 15px}
+
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.cb2d-open .cb2d-layout>main,
+  body.hs2d-open .cb2d-layout>main,
+  body.cc2d-open .cb2d-layout>main,
+  body.bs2d-open .cb2d-layout>main{
+    position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;
+    min-width:0!important;min-height:0!important;padding:0!important;overflow:hidden!important;background:transparent!important;
+  }
+
+  body.cb2d-open .cb2d-layout>main>.cb2d-arena,
+  body.hs2d-open .cb2d-layout>main>.cb2d-arena,
+  body.cc2d-open .cb2d-layout>main>.cb2d-arena,
+  body.bs2d-open .cb2d-layout>main>.cb2d-arena{
+    position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100%!important;max-height:none!important;
+    aspect-ratio:auto!important;border:0!important;box-shadow:none!important;
+  }
+
+  body.cb2d-open .cb2d-arena>.cb2d-room-tag,
+  body.hs2d-open .cb2d-arena>.cb2d-room-tag,
+  body.cc2d-open .cb2d-arena>.cb2d-room-tag,
+  body.bs2d-open .cb2d-arena>.cb2d-room-tag{
+    left:calc(var(--hud-edge) + var(--hud-party-w) + 12px)!important;top:82px!important;max-width:230px!important;
+    padding:5px 7px!important;background:rgba(3,8,10,.55)!important;border-color:rgba(255,255,255,.045)!important;
+    backdrop-filter:blur(7px);
+  }
+  body.cb2d-open .cb2d-arena>.cb2d-ground-legend,
+  body.hs2d-open .cb2d-arena>.cb2d-ground-legend,
+  body.cc2d-open .cb2d-arena>.cb2d-ground-legend,
+  body.bs2d-open .cb2d-arena>.cb2d-ground-legend{
+    right:calc(var(--hud-edge) + var(--hud-meter-w) + 10px)!important;top:82px!important;opacity:.78;
+  }
+  body.cb2d-open .cb2d-arena>.cb2d-caption,
+  body.hs2d-open .cb2d-arena>.cb2d-caption,
+  body.cc2d-open .cb2d-arena>.cb2d-caption,
+  body.bs2d-open .cb2d-arena>.cb2d-caption{
+    left:calc(var(--hud-edge) + var(--hud-party-w) + 12px)!important;bottom:calc(var(--hud-command-h) + 25px)!important;
+    background:rgba(3,8,10,.58)!important;border-color:rgba(255,255,255,.05)!important;backdrop-filter:blur(7px);
+  }
+
+  /* Aside becomes a transparent HUD host instead of a right sidebar. */
+  body.cb2d-open .cb2d-layout>aside,
+  body.hs2d-open .cb2d-layout>aside,
+  body.cc2d-open .cb2d-layout>aside,
+  body.bs2d-open .cb2d-layout>aside{
+    position:absolute!important;z-index:130;inset:0!important;width:auto!important;min-width:0!important;
+    display:block!important;padding:0!important;margin:0!important;overflow:visible!important;
+    border:0!important;background:none!important;box-shadow:none!important;pointer-events:none;
+  }
+  body.cb2d-open .cb2d-layout>aside>div,
+  body.hs2d-open .cb2d-layout>aside>div,
+  body.cc2d-open .cb2d-layout>aside>div,
+  body.bs2d-open .cb2d-layout>aside>div{pointer-events:auto;margin:0!important}
+
+  /* Left: MMO party frames. */
+  body.cb2d-open .cb2d-layout>aside>.cb2d-party,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-party,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-party,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-party{
+    position:absolute!important;left:var(--hud-edge)!important;top:86px!important;bottom:calc(var(--hud-command-h) + 22px)!important;
+    width:var(--hud-party-w)!important;display:flex!important;flex-direction:column!important;min-height:0!important;
+    padding:0!important;border:0!important;background:none!important;box-shadow:none!important;overflow:visible!important;
+  }
+  body.cb2d-open .cb2d-party>small,
+  body.hs2d-open .cb2d-party>small,
+  body.cc2d-open .cb2d-party>small,
+  body.bs2d-open .cb2d-party>small{
+    margin:0 0 6px 4px;color:rgba(224,214,190,.78)!important;font-size:.36rem!important;letter-spacing:.12em!important;
+  }
+  body.cb2d-open #cb2dRows,
+  body.hs2d-open #cb2dRows,
+  body.cc2d-open #cb2dRows,
+  body.bs2d-open #cb2dRows{
+    display:flex!important;flex-direction:column!important;gap:6px!important;overflow:visible!important;padding:0!important;
+  }
+  body.cb2d-open .cb2d-party-row,
+  body.hs2d-open .cb2d-party-row,
+  body.cc2d-open .cb2d-party-row,
+  body.bs2d-open .cb2d-party-row{
+    position:relative!important;display:grid!important;grid-template-columns:40px minmax(0,1fr) 82px!important;gap:7px!important;align-items:center!important;
+    min-height:68px!important;padding:5px 7px 5px 5px!important;border:1px solid color-mix(in srgb,var(--hud-class,#78d7cf) 22%,rgba(255,255,255,.04))!important;
+    border-left:3px solid var(--hud-class,#78d7cf)!important;border-radius:7px!important;
+    background:linear-gradient(90deg,rgba(3,9,12,.80),rgba(3,9,12,.52) 74%,rgba(3,9,12,.18))!important;
+    box-shadow:0 7px 18px rgba(0,0,0,.20)!important;backdrop-filter:blur(7px);
+  }
+  body.cb2d-open .cb2d-party-row.dead,
+  body.hs2d-open .cb2d-party-row.dead,
+  body.cc2d-open .cb2d-party-row.dead,
+  body.bs2d-open .cb2d-party-row.dead{filter:grayscale(.88);opacity:.62}
+  body.cb2d-open .cb2d-party-row>strong,
+  body.hs2d-open .cb2d-party-row>strong,
+  body.cc2d-open .cb2d-party-row>strong,
+  body.bs2d-open .cb2d-party-row>strong{
+    position:absolute!important;right:92px!important;top:8px!important;min-width:0!important;color:#e6efeb!important;font-size:.40rem!important;text-align:right!important;
+  }
+
+  .cb2d-party-avatar{
+    position:relative;display:grid;place-items:center;width:38px;height:38px;border:2px solid var(--hud-class,#78d7cf);border-radius:50%;
+    overflow:hidden;background:#081115;box-shadow:0 0 12px color-mix(in srgb,var(--hud-class,#78d7cf) 30%,transparent);
+  }
+  .cb2d-party-avatar>.cb2d-party-fallback{font-style:normal;color:#dce8e4;font-size:9px;font-weight:900;letter-spacing:.02em}
+  .cb2d-party-avatar>em{
+    position:absolute;right:-1px;bottom:-1px;z-index:5;display:grid;place-items:center;width:14px;height:14px;border-radius:50%;
+    background:#071013;border:1px solid var(--hud-class,#78d7cf);color:#fff;font-style:normal;font-size:7px;font-weight:900;
+  }
+  .cb2d-party-avatar>.cb-combat-portrait{
+    position:absolute!important;inset:0!important;z-index:3!important;display:block!important;width:100%!important;height:100%!important;
+    overflow:hidden!important;border:0!important;border-radius:50%!important;background:#081115!important;pointer-events:none!important;
+  }
+  .cb2d-party-avatar>.cb-combat-portrait .cb-portrait,
+  .cb2d-party-avatar>.cb-combat-portrait svg{width:100%!important;height:100%!important;border-radius:50%!important}
+  .cb2d-party-row.cb-combat-has-portrait .cb2d-party-fallback{opacity:0}
+
+  .cb2d-party-main{display:block!important;min-width:0!important}
+  .cb2d-party-name{display:flex!important;align-items:center!important;gap:5px!important;min-width:0!important}
+  .cb2d-party-name>b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#eef4f1!important;font-size:.48rem!important}
+  .cb2d-party-name>em{color:var(--hud-class,#78d7cf);font-size:.29rem!important;font-style:normal!important;font-weight:900;letter-spacing:.08em}
+  .cb2d-party-action{display:block!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#91a49e!important;font-size:.34rem!important}
+  .cb2d-party-statline{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:6px!important;margin-top:2px!important}
+  .cb2d-party-statline small{color:#73857f!important;font-size:.26rem!important;font-weight:900!important;letter-spacing:.06em!important;text-transform:uppercase!important}
+  .cb2d-party-statline b{color:#dce8e4!important;font-size:.27rem!important;font-weight:800!important}
+  .cb2d-party-statline.resource small{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .cb2d-party-condition{display:block!important;margin-top:2px!important;color:#657873!important;font-size:.25rem!important}
+  .cb2d-party-row .cb2d-side-hp,.cb2d-party-row .cb2d-side-resource{display:block!important;overflow:hidden!important;border-radius:999px!important;background:rgba(0,0,0,.48)!important}
+  .cb2d-party-row .cb2d-side-hp{height:5px!important;margin-top:2px!important}
+  .cb2d-party-row .cb2d-side-resource{height:4px!important;margin-top:2px!important}
+  .cb2d-party-row .cb2d-side-hp>i,.cb2d-party-row .cb2d-side-resource>i{display:block!important;height:100%!important;transition:width .22s linear!important}
+  .cb2d-party-row .cb2d-side-hp>i{background:linear-gradient(90deg,#3e9d61,#72d392)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-mana>i{background:linear-gradient(90deg,#3b6fc5,#6ba8ee)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-rage>i{background:linear-gradient(90deg,#9f352f,#dd5d4e)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-energy>i{background:linear-gradient(90deg,#a8862c,#e0c657)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-focus>i{background:linear-gradient(90deg,#a7612d,#df9b53)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-runic-power>i{background:linear-gradient(90deg,#397b9a,#69c5df)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-fury>i{background:linear-gradient(90deg,#713ca5,#b06ce0)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-essence>i{background:linear-gradient(90deg,#2f8274,#61c8b3)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-insanity>i{background:linear-gradient(90deg,#62408c,#a77ad1)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-maelstrom>i{background:linear-gradient(90deg,#356f9e,#67aee0)!important}
+
+  .cb2d-party-target{
+    min-width:0;display:grid!important;grid-template-columns:23px minmax(0,1fr)!important;gap:5px!important;align-items:center!important;
+    padding:4px 5px!important;border-left:1px solid rgba(255,255,255,.055)!important;background:rgba(0,0,0,.10)!important;
+  }
+  .cb2d-party-target>i{
+    display:grid;place-items:center;width:22px;height:22px;border-radius:50%;font-style:normal;font-size:12px;font-weight:900;
+    border:1px solid rgba(231,126,96,.48);background:rgba(87,29,20,.34);color:#ef9c82;
+  }
+  .cb2d-party-target.friendly>i{border-color:rgba(105,219,161,.50);background:rgba(20,72,52,.36);color:#8ae4b3}
+  .cb2d-party-target span{min-width:0!important}
+  .cb2d-party-target small,.cb2d-party-target b{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .cb2d-party-target small{color:#61746e!important;font-size:.25rem!important;letter-spacing:.08em!important}
+  .cb2d-party-target b{margin-top:1px;color:#c8d4d0!important;font-size:.34rem!important}
+
+  /* Right: meter overlay, no opaque sidebar card. */
+  body.cb2d-open .cb2d-layout>aside>.cb2d-cast,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-cast,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-cast,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-cast{
+    position:absolute!important;right:var(--hud-edge)!important;top:86px!important;width:var(--hud-meter-w)!important;
+    padding:8px 9px!important;border:0!important;border-radius:7px!important;
+    background:linear-gradient(90deg,rgba(3,8,10,.22),rgba(3,8,10,.70))!important;backdrop-filter:blur(7px);box-shadow:none!important;
+  }
+  body.cb2d-open .cb2d-layout>aside>.cb2d-combat-meters,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-combat-meters,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-combat-meters,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-combat-meters{
+    position:absolute!important;right:var(--hud-edge)!important;top:150px!important;bottom:calc(var(--hud-command-h) + 22px)!important;
+    width:var(--hud-meter-w)!important;display:flex!important;flex-direction:column!important;gap:8px!important;overflow:hidden!important;margin:0!important;
+    background:none!important;border:0!important;pointer-events:none;
+  }
+  body.cb2d-open .cb2d-meter-panel,
+  body.hs2d-open .cb2d-meter-panel,
+  body.cc2d-open .cb2d-meter-panel,
+  body.bs2d-open .cb2d-meter-panel{
+    min-width:0!important;padding:7px 8px!important;border:0!important;border-radius:6px!important;
+    background:linear-gradient(90deg,rgba(2,7,9,.08),rgba(2,7,9,.60))!important;backdrop-filter:blur(6px);box-shadow:none!important;pointer-events:auto;
+  }
+  body.cb2d-open .cb2d-meter-head,
+  body.hs2d-open .cb2d-meter-head,
+  body.cc2d-open .cb2d-meter-head,
+  body.bs2d-open .cb2d-meter-head{margin-bottom:4px!important}
+  body.cb2d-open .cb2d-meter-head small,
+  body.hs2d-open .cb2d-meter-head small,
+  body.cc2d-open .cb2d-meter-head small,
+  body.bs2d-open .cb2d-meter-head small{font-size:.31rem!important;color:#d5b576!important}
+  body.cb2d-open .cb2d-meter-list,
+  body.hs2d-open .cb2d-meter-list,
+  body.cc2d-open .cb2d-meter-list,
+  body.bs2d-open .cb2d-meter-list{gap:3px!important}
+  body.cb2d-open .cb2d-meter-label b,
+  body.hs2d-open .cb2d-meter-label b,
+  body.cc2d-open .cb2d-meter-label b,
+  body.bs2d-open .cb2d-meter-label b{font-size:.32rem!important}
+  body.cb2d-open .cb2d-meter-label span,
+  body.hs2d-open .cb2d-meter-label span,
+  body.cc2d-open .cb2d-meter-label span,
+  body.bs2d-open .cb2d-meter-label span{font-size:.25rem!important}
+  body.cb2d-open .cb2d-meter-row>em,
+  body.hs2d-open .cb2d-meter-row>em,
+  body.cc2d-open .cb2d-meter-row>em,
+  body.bs2d-open .cb2d-meter-row>em{height:3px!important;background:rgba(255,255,255,.07)!important}
+  body.cb2d-open .cb2d-meter-panel.threat .cb2d-meter-row.aggro,
+  body.hs2d-open .cb2d-meter-panel.threat .cb2d-meter-row.aggro,
+  body.cc2d-open .cb2d-meter-panel.threat .cb2d-meter-row.aggro,
+  body.bs2d-open .cb2d-meter-panel.threat .cb2d-meter-row.aggro{background:rgba(202,169,83,.06)!important}
+
+  body.cb2d-open .cb2d-layout>aside>.cb2d-actions,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-actions,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-actions,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-actions,
+  body.cb2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-plan{display:none!important}
+
+  /* Bottom: one continuous Commander action bar. */
+  body.cb2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.hs2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.cc2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.bs2d-open .cb2d-layout>main>.cbr-command-panel{
+    position:absolute!important;z-index:142;left:var(--hud-edge)!important;right:var(--hud-edge)!important;bottom:var(--hud-edge)!important;
+    height:var(--hud-command-h)!important;box-sizing:border-box!important;display:grid!important;grid-template-columns:220px minmax(0,1fr)!important;gap:7px!important;
+    align-items:stretch!important;margin:0!important;padding:7px!important;border:1px solid rgba(112,180,220,.20)!important;border-radius:9px!important;
+    background:linear-gradient(180deg,rgba(4,12,18,.83),rgba(3,9,14,.76))!important;backdrop-filter:blur(11px);
+    box-shadow:0 12px 34px rgba(0,0,0,.30)!important;
+  }
+  body.cb2d-open .cbr-command-copy,
+  body.hs2d-open .cbr-command-copy,
+  body.cc2d-open .cbr-command-copy,
+  body.bs2d-open .cbr-command-copy{display:none!important}
+  body.cb2d-open .cbr-command-meta,
+  body.hs2d-open .cbr-command-meta,
+  body.cc2d-open .cbr-command-meta,
+  body.bs2d-open .cbr-command-meta{
+    display:grid!important;grid-template-columns:1fr auto!important;align-items:center!important;gap:6px!important;margin:0!important;padding:6px 7px!important;
+    border-color:rgba(113,164,197,.16)!important;background:rgba(3,10,15,.48)!important;
+  }
+  body.cb2d-open .cbr-command-meta>div,
+  body.hs2d-open .cbr-command-meta>div,
+  body.cc2d-open .cbr-command-meta>div,
+  body.bs2d-open .cbr-command-meta>div{display:grid!important;gap:3px!important}
+  body.cb2d-open .cbr-command-meta span,
+  body.hs2d-open .cbr-command-meta span,
+  body.cc2d-open .cbr-command-meta span,
+  body.bs2d-open .cbr-command-meta span{font-size:7px!important}
+  body.cb2d-open .cbr-command-target,
+  body.hs2d-open .cbr-command-target,
+  body.cc2d-open .cbr-command-target,
+  body.bs2d-open .cbr-command-target{min-height:31px!important;max-width:92px!important;font-size:7px!important}
+  body.cb2d-open .cbr-command-grid,
+  body.hs2d-open .cbr-command-grid,
+  body.cc2d-open .cbr-command-grid,
+  body.bs2d-open .cbr-command-grid{
+    display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:5px!important;align-items:stretch!important;min-width:0!important;
+  }
+  body.cb2d-open .cb2d-controls .cbr-command,
+  body.hs2d-open .cb2d-controls .cbr-command,
+  body.cc2d-open .cb2d-controls .cbr-command,
+  body.bs2d-open .cb2d-controls .cbr-command,
+  body.cb2d-open .cbr-command-grid .cb2d-potion-button,
+  body.hs2d-open .cbr-command-grid .cb2d-potion-button,
+  body.cc2d-open .cbr-command-grid .cb2d-potion-button,
+  body.bs2d-open .cbr-command-grid .cb2d-potion-button{
+    min-width:0!important;min-height:0!important;height:100%!important;padding:6px 6px!important;border-radius:6px!important;
+  }
+  body.cb2d-open .cb2d-controls .cbr-command b,
+  body.hs2d-open .cb2d-controls .cbr-command b,
+  body.cc2d-open .cb2d-controls .cbr-command b,
+  body.bs2d-open .cb2d-controls .cbr-command b,
+  body.cb2d-open .cbr-command-grid .cb2d-potion-button b,
+  body.hs2d-open .cbr-command-grid .cb2d-potion-button b,
+  body.cc2d-open .cbr-command-grid .cb2d-potion-button b,
+  body.bs2d-open .cbr-command-grid .cb2d-potion-button b{font-size:.34rem!important;white-space:nowrap!important}
+  body.cb2d-open .cb2d-controls .cbr-command small,
+  body.hs2d-open .cb2d-controls .cbr-command small,
+  body.cc2d-open .cb2d-controls .cbr-command small,
+  body.bs2d-open .cb2d-controls .cbr-command small,
+  body.cb2d-open .cbr-command-grid .cb2d-potion-button small,
+  body.hs2d-open .cbr-command-grid .cb2d-potion-button small,
+  body.cc2d-open .cbr-command-grid .cb2d-potion-button small,
+  body.bs2d-open .cbr-command-grid .cb2d-potion-button small{
+    margin-top:3px!important;font-size:.25rem!important;line-height:1.1!important;display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  }
+
+  /* Dedicated boss frame floats over the upper centre of the battlefield. */
+  .cbr-boss-frame{
+    position:absolute;z-index:126;left:50%;top:74px;transform:translateX(-50%);display:grid;grid-template-columns:auto minmax(180px,300px) auto;gap:7px;align-items:center;
+    min-width:330px;padding:6px 9px;border:1px solid rgba(225,129,69,.20);border-radius:8px;
+    background:rgba(19,8,7,.58);backdrop-filter:blur(8px);box-shadow:0 10px 26px rgba(0,0,0,.24);pointer-events:none;
+  }
+  .cbr-boss-frame>small{color:#d99662;font-size:7px;font-weight:900;letter-spacing:.12em}
+  .cbr-boss-frame>b{grid-column:2;color:#f0e6dc;font:600 .56rem Georgia,serif;text-align:center}
+  .cbr-boss-frame>em{grid-column:2;display:block;height:5px;overflow:hidden;border-radius:999px;background:rgba(0,0,0,.55)}
+  .cbr-boss-frame>em>i{display:block;height:100%;background:linear-gradient(90deg,#8d2c26,#da6246);transition:width .18s linear}
+  .cbr-boss-frame>strong{grid-column:3;grid-row:1/3;color:#e7b291;font-size:.42rem}
+
+  body.cb2d-open .cb2d-layout>main>.cb2d-feed,
+  body.hs2d-open .cb2d-layout>main>.cb2d-feed,
+  body.cc2d-open .cb2d-layout>main>.cb2d-feed,
+  body.bs2d-open .cb2d-layout>main>.cb2d-feed{display:none!important}
+
+  /* Never let transition/fallback layers cover the live battlefield in fullscreen HUD mode. */
+  body.cb2d-open .cb2d-arena .cb2d-room-fade,
+  body.hs2d-open .cb2d-arena .cb2d-room-fade,
+  body.cc2d-open .cb2d-arena .cb2d-room-fade,
+  body.bs2d-open .cb2d-arena .cb2d-room-fade{display:none!important}
+
+  body.cb2d-open .cb2d-arena #cb2dUnits,
+  body.hs2d-open .cb2d-arena #cb2dUnits,
+  body.cc2d-open .cb2d-arena #cb2dUnits,
+  body.bs2d-open .cb2d-arena #cb2dUnits{z-index:72!important}
+
+  body.cb2d-open .cb2d-arena #cb2dTelegraphs,
+  body.hs2d-open .cb2d-arena #cb2dTelegraphs,
+  body.cc2d-open .cb2d-arena #cb2dTelegraphs,
+  body.bs2d-open .cb2d-arena #cb2dTelegraphs{z-index:68!important}
+}
+
+/* Slightly tighter HUD for smaller iPad landscape widths while preserving the one-row Commander bar. */
+@media (min-width:1051px) and (max-width:1220px) and (min-height:650px){
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode){
+    --hud-party-w:230px;--hud-meter-w:238px;
+  }
+  body.cb2d-open .cb2d-party-row,
+  body.hs2d-open .cb2d-party-row,
+  body.cc2d-open .cb2d-party-row,
+  body.bs2d-open .cb2d-party-row{grid-template-columns:36px minmax(0,1fr) 68px!important}
+  .cb2d-party-avatar{width:34px;height:34px}
+  body.cb2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.hs2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.cc2d-open .cb2d-layout>main>.cbr-command-panel,
+  body.bs2d-open .cb2d-layout>main>.cbr-command-panel{grid-template-columns:190px minmax(0,1fr)!important}
+}
+
+
+/* Fullscreen HUD theme collision fix v1
+   dungeon-theme-v1 gives the normal aside an opaque themed background with ID
+   specificity. In fullscreen combat the aside is deliberately stretched over the
+   whole arena as a HUD host, so that normal background becomes a full-screen black
+   sheet. Override it at equal/higher specificity after dungeon-theme-v1. */
+@media (min-width:1051px) and (min-height:650px){
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside{
+    background:transparent!important;
+    background-image:none!important;
+    border:0!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+  }
+
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>main{
+    background:transparent!important;
+    background-image:none!important;
+  }
+
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside>.cb2d-party{
+    background:linear-gradient(90deg,rgba(3,9,12,.36),rgba(3,9,12,.08))!important;
+    border-color:transparent!important;
+    box-shadow:none!important;
+  }
+
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside>.cb2d-cast{
+    background:linear-gradient(90deg,rgba(3,8,10,.08),rgba(3,8,10,.52))!important;
+    border-color:transparent!important;
+    box-shadow:none!important;
+  }
+
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside .cb2d-meter-panel{
+    background:linear-gradient(90deg,rgba(2,7,9,.02),rgba(2,7,9,.46))!important;
+    border-color:transparent!important;
+    box-shadow:none!important;
+  }
+}
+
+
+/* Shared dungeon fullscreen HUD v3
+   One presentation contract for Ashen Vault, Hollow Sanctum, Chaos Canyon,
+   Blackout Station, shared CB2D encounters and dungeon-presented quest fights. */
+@media (min-width:1051px) and (min-height:650px){
+  :is(.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop):has(>.combat-hud-fullscreen){
+    padding:0!important;
+    place-items:stretch!important;
+    background:#030608!important;
+    background-image:none!important;
+    backdrop-filter:none!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen:not(.cb2d-brief):not(.results-mode){
+    --hud-edge:14px;
+    --hud-party-w:252px;
+    --hud-meter-w:264px;
+    --hud-command-h:78px;
+    position:relative!important;
+    display:block!important;
+    width:100vw!important;
+    height:100dvh!important;
+    min-height:100dvh!important;
+    max-height:100dvh!important;
+    overflow:hidden!important;
+    border:0!important;
+    background:#030608!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen>.cb2d-head{
+    position:absolute!important;
+    z-index:150!important;
+    left:0!important;right:0!important;top:0!important;
+    height:66px!important;min-height:66px!important;
+    padding:9px 17px!important;
+    border:0!important;
+    background:linear-gradient(180deg,rgba(3,7,9,.94),rgba(3,7,9,.58) 76%,transparent)!important;
+    backdrop-filter:none!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen>.cb2d-route{
+    position:absolute!important;
+    z-index:155!important;
+    left:50%!important;top:12px!important;right:auto!important;
+    width:min(620px,46vw)!important;
+    transform:translateX(-50%)!important;
+    padding:4px!important;
+    border:0!important;
+    border-radius:8px!important;
+    background:rgba(4,10,13,.68)!important;
+    backdrop-filter:none!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.18)!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen>.cb2d-layout,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>main{
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    background:transparent!important;
+    background-image:none!important;
+  }
+
+  /* Keep the game world on a true 16:9 logical plane instead of stretching it
+     to the iPad's 4:3 viewport. The HUD can still use the full viewport. */
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>main>.cb2d-arena{
+    position:absolute!important;
+    left:50%!important;
+    top:50%!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:min(100vw,177.7778dvh)!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    aspect-ratio:16/9!important;
+    transform:translate(-50%,-50%)!important;
+    border:0!important;
+    box-shadow:none!important;
+    overflow:hidden!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen :is(.cb2d-stage-image,.hs2d-room-art,.cc2d-room-art,.bs-room-art,.fa-room-art){
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+    object-position:center!important;
+    transform:none!important;
+    filter:none!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside{
+    position:absolute!important;
+    z-index:130!important;
+    inset:0!important;
+    display:block!important;
+    width:auto!important;
+    min-width:0!important;
+    padding:0!important;
+    margin:0!important;
+    overflow:visible!important;
+    border:0!important;
+    background:transparent!important;
+    background-image:none!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+    pointer-events:none!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>div{
+    pointer-events:auto!important;
+    margin:0!important;
+  }
+
+  /* Left party column — crisp transparent HUD, no blurred side panel. */
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-party{
+    position:absolute!important;
+    left:var(--hud-edge)!important;
+    top:84px!important;
+    bottom:calc(var(--hud-command-h) + 22px)!important;
+    width:var(--hud-party-w)!important;
+    min-height:0!important;
+    padding:0!important;
+    border:0!important;
+    background:linear-gradient(90deg,rgba(2,7,9,.70),rgba(2,7,9,.18) 76%,transparent)!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+    overflow:visible!important;
+  }
+
+  /* Right cast + meters — readable but intentionally not frosted/blurred. */
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-cast{
+    position:absolute!important;
+    right:var(--hud-edge)!important;
+    top:84px!important;
+    width:var(--hud-meter-w)!important;
+    padding:7px 8px!important;
+    border:0!important;
+    background:linear-gradient(90deg,transparent,rgba(2,7,9,.68))!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-combat-meters{
+    position:absolute!important;
+    right:var(--hud-edge)!important;
+    top:146px!important;
+    bottom:calc(var(--hud-command-h) + 22px)!important;
+    width:var(--hud-meter-w)!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:7px!important;
+    overflow:hidden!important;
+    margin:0!important;
+    background:none!important;
+    border:0!important;
+    pointer-events:none!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-meter-panel{
+    min-width:0!important;
+    padding:6px 7px!important;
+    border:0!important;
+    background:linear-gradient(90deg,transparent,rgba(2,7,9,.56))!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+    pointer-events:auto!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-actions,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-plan,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>main>.cb2d-feed{
+    display:none!important;
+  }
+
+  /* Shared bottom Commander bar. */
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>main>.cbr-command-panel{
+    position:absolute!important;
+    z-index:142!important;
+    left:var(--hud-edge)!important;
+    right:var(--hud-edge)!important;
+    bottom:var(--hud-edge)!important;
+    height:var(--hud-command-h)!important;
+    box-sizing:border-box!important;
+    margin:0!important;
+    padding:6px!important;
+    border:1px solid rgba(112,180,220,.18)!important;
+    border-radius:8px!important;
+    background:rgba(3,10,15,.86)!important;
+    background-image:none!important;
+    box-shadow:0 10px 28px rgba(0,0,0,.26)!important;
+    backdrop-filter:none!important;
+  }
+
+  /* Native Ashen/shared deck has meta + grid. */
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel:not(.cbr-external-command-panel){
+    display:grid!important;
+    grid-template-columns:210px minmax(0,1fr)!important;
+    gap:6px!important;
+  }
+
+  /* External dungeon decks are direct children; keep every command in one row. */
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel{
+    display:flex!important;
+    align-items:stretch!important;
+    gap:5px!important;
+    overflow:hidden!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>.cbr-inline-power{
+    flex:0 0 160px!important;
+    min-width:160px!important;
+    display:grid!important;
+    grid-template-columns:1fr auto!important;
+    align-content:center!important;
+    gap:3px 8px!important;
+    padding:6px 8px!important;
+    border:1px solid rgba(109,171,207,.14)!important;
+    background:rgba(6,17,24,.62)!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-inline-power>span{
+    grid-column:1/-1;
+    font-size:7px!important;
+    letter-spacing:.08em!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-inline-power>b{
+    display:flex!important;
+    align-items:center!important;
+    gap:3px!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-inline-power>b>i{
+    width:9px!important;
+    height:9px!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-inline-power>strong{
+    font-size:9px!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>.cbr-command,
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>.cb2d-potion-button,
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>[data-hs-override],
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>[data-cc-override],
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>[data-bs-potion],
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>[data-q-potion]{
+    flex:1 1 0!important;
+    min-width:0!important;
+    height:100%!important;
+    min-height:0!important;
+    padding:5px 6px!important;
+    border-radius:6px!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel :is(button) b{
+    font-size:.33rem!important;
+    white-space:nowrap!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel :is(button) small{
+    display:block!important;
+    margin-top:3px!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    font-size:.24rem!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>.bs-command-copy{
+    display:none!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>.bs-overcharge{
+    flex:0 0 118px!important;
+    min-width:118px!important;
+    display:grid!important;
+    align-content:center!important;
+    padding:5px 6px!important;
+    background:rgba(31,24,7,.58)!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-boss-frame{
+    backdrop-filter:none!important;
+    background:rgba(19,8,7,.74)!important;
+  }
+}
+
+@media (min-width:1051px) and (max-width:1220px) and (min-height:650px){
+  .cb2d-shell.combat-hud-fullscreen{
+    --hud-party-w:226px;
+    --hud-meter-w:232px;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>.cbr-inline-power{
+    flex-basis:138px!important;
+    min-width:138px!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>.bs-overcharge{
+    flex-basis:96px!important;
+    min-width:96px!important;
+  }
+}
+
+
+/* Fullscreen dungeon HUD polish v4
+   Move arena metadata into the top bar, remove the floating status caption,
+   eliminate side frosting, and make unavailable commands visibly unavailable. */
+@media (min-width:1051px) and (min-height:650px){
+  .cb2d-shell.combat-hud-fullscreen>.cb2d-head{
+    height:92px!important;
+    min-height:92px!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context{
+    position:absolute!important;
+    z-index:4!important;
+    left:258px!important;
+    right:282px!important;
+    bottom:7px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:14px!important;
+    min-width:0!important;
+    pointer-events:none!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-room{
+    position:static!important;
+    inset:auto!important;
+    display:flex!important;
+    align-items:baseline!important;
+    gap:7px!important;
+    max-width:360px!important;
+    min-width:0!important;
+    padding:0!important;
+    margin:0!important;
+    border:0!important;
+    background:none!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    white-space:nowrap!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-room b{
+    flex:0 0 auto!important;
+    display:block!important;
+    color:#d7c4a2!important;
+    font-family:Georgia,serif!important;
+    font-size:.43rem!important;
+    font-weight:400!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-room small{
+    min-width:0!important;
+    display:block!important;
+    margin:0!important;
+    overflow:hidden!important;
+    color:#8d9a94!important;
+    font-size:.30rem!important;
+    line-height:1.2!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-legend{
+    position:static!important;
+    inset:auto!important;
+    flex:0 0 auto!important;
+    display:flex!important;
+    gap:5px!important;
+    margin:0!important;
+    pointer-events:none!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-legend span{
+    padding:3px 5px!important;
+    border:1px solid rgba(255,255,255,.045)!important;
+    background:rgba(3,8,10,.74)!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    font-size:.28rem!important;
+    letter-spacing:.045em!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-status-caption,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>main>.cb2d-arena>.cb2d-caption{
+    display:none!important;
+  }
+
+  /* No frosted/blurred side panels. The world should stay sharp underneath. */
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-party,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-cast,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-combat-meters,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside .cb2d-meter-panel,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>main>.cbr-command-panel{
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-combat-meters::before,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-combat-meters::after{
+    display:none!important;
+    content:none!important;
+  }
+
+  /* Commands are neutral grey until the engine + encounter context says they can fire. */
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command:disabled,
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command.context-locked,
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>button:disabled{
+    opacity:1!important;
+    border-color:rgba(120,130,134,.10)!important;
+    background:rgba(13,17,19,.90)!important;
+    background-image:none!important;
+    color:#5f6b70!important;
+    box-shadow:none!important;
+    filter:grayscale(1) saturate(.12)!important;
+    cursor:not-allowed!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command:disabled b,
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command.context-locked b,
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>button:disabled b{
+    color:#69757a!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command:disabled small,
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command.context-locked small,
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>button:disabled small{
+    color:#465158!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command.recommended:disabled{
+    border-color:rgba(120,130,134,.10)!important;
+    background:rgba(13,17,19,.90)!important;
+    box-shadow:none!important;
+  }
+}
+
+@media (min-width:1051px) and (max-width:1220px) and (min-height:650px){
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context{
+    left:222px!important;
+    right:250px!important;
+    gap:8px!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-room{
+    max-width:270px!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-legend span{
+    padding:3px 4px!important;
+    font-size:.25rem!important;
+  }
+}
+
+
+/* Fullscreen HUD motion pass v5 — smooth data changes without slowing input. */
+@media (min-width:1051px) and (min-height:650px){
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-row .cb2d-side-hp>i,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-row .cb2d-side-resource>i,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-meter-row>em>i,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-castbar>i{
+    transition-property:width!important;
+    transition-timing-function:cubic-bezier(.22,.72,.22,1)!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-row .cb2d-side-hp>i,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-row .cb2d-side-resource>i{
+    transition-duration:.24s!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-meter-row>em>i{
+    transition-duration:.32s!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel button{
+    transition:background .16s ease,border-color .16s ease,color .16s ease,opacity .16s ease,filter .16s ease,transform .12s ease!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-target,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-action{
+    transition:color .18s ease,background .18s ease,border-color .18s ease!important;
+  }
+}
+
+/* === FRESH COMBAT VIEW V1 ===
+   Single active combat presentation. No fullscreen HUD overlays or view-mode variants. */
+.cb2d-backdrop.cbcombat-backdrop{
+  padding:8px!important;
+  place-items:stretch!important;
+  background:#03070a!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  overflow:hidden!important;
+}
+.cbcombat-shell{
+  --cbcombat-gap:10px;
+  --cbcombat-left:clamp(250px,23vw,330px);
+  --cbcombat-right:clamp(210px,17vw,270px);
+  box-sizing:border-box;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:grid;
+  grid-template-rows:auto auto minmax(0,1fr);
+  overflow:hidden;
+  color:#dfe5e1;
+  border:1px solid rgba(122,162,184,.14);
+  border-radius:10px;
+  background:#050b0f;
+  box-shadow:0 22px 70px rgba(0,0,0,.52)
+}
+.cbcombat-header{
+  min-width:0;
+  min-height:58px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:16px;
+  align-items:center;
+  padding:9px 14px;
+  border-bottom:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(90deg,#17130d,#071015)
+}
+.cbcombat-title{min-width:0}
+.cbcombat-title small{
+  display:block;
+  color:#a78d59;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.14em
+}
+.cbcombat-title h2{
+  margin:3px 0 0;
+  overflow:hidden;
+  color:#eee8dc;
+  font-family:Georgia,serif;
+  font-size:21px;
+  font-weight:400;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.cbcombat-header-actions{
+  display:flex;
+  align-items:center;
+  gap:7px
+}
+.cbcombat-live-dot{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#9caaa5;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.08em
+}
+.cbcombat-live-dot i{
+  width:7px;height:7px;border-radius:50%;
+  background:#6fd49b;
+  box-shadow:0 0 12px rgba(111,212,155,.45)
+}
+.cbcombat-header-actions button{
+  min-width:36px;height:34px;
+  padding:0 9px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:4px;
+  background:#0b1417;
+  color:#a8b5b0;
+  font-size:10px;
+  font-weight:900;
+  touch-action:manipulation
+}
+.cbcombat-route{
+  display:flex;
+  gap:5px;
+  min-width:0;
+  min-height:31px;
+  padding:4px 8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  border-bottom:1px solid rgba(255,255,255,.045);
+  background:#060e12;
+  scrollbar-width:none
+}
+.cbcombat-route::-webkit-scrollbar{display:none}
+.cbcombat-route span{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-width:106px;
+  padding:4px 6px;
+  border:1px solid rgba(255,255,255,.045);
+  color:#5e6e68;
+  font-size:7px;
+  white-space:nowrap
+}
+.cbcombat-route span i{
+  width:16px;height:16px;
+  display:grid;place-items:center;
+  border-radius:50%;
+  background:#111a1d;
+  font-style:normal
+}
+.cbcombat-route span.current{
+  border-color:rgba(216,185,118,.28);
+  background:#211d14;
+  color:#e4d19b
+}
+.cbcombat-route span.done{color:#76b98d}
+.cbcombat-route span.done i{background:#122018;color:#79c895}
+
+.cbcombat-grid{
+  min-width:0;
+  min-height:0;
+  display:grid;
+  grid-template-columns:var(--cbcombat-left) minmax(0,1fr) var(--cbcombat-right);
+  grid-template-rows:minmax(0,1fr);
+  gap:var(--cbcombat-gap);
+  padding:var(--cbcombat-gap);
+  overflow:hidden;
+  background:#03080b
+}
+.cbcombat-left-column{
+  min-width:0;
+  min-height:0;
+  display:grid;
+  grid-template-columns:1fr;
+  grid-template-rows:minmax(0,1fr) minmax(205px,.52fr);
+  gap:var(--cbcombat-gap);
+  overflow:hidden
+}
+.cbcombat-panel{
+  box-sizing:border-box;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  border:1px solid rgba(123,168,194,.16);
+  border-radius:9px;
+  background:linear-gradient(180deg,#09151b,#061015);
+  box-shadow:0 8px 24px rgba(0,0,0,.16)
+}
+
+/* PARTY + TARGET PANEL */
+.cbcombat-party-panel{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  padding:9px
+}
+.cbcombat-party-panel .cbr-target-card{
+  flex:0 0 auto;
+  margin:0;
+  padding:9px;
+  border:1px solid rgba(216,185,118,.18);
+  border-radius:7px;
+  background:#11120f
+}
+.cbcombat-party-panel .cbr-target-card>small{
+  display:block;
+  margin-bottom:6px;
+  color:#b99c64;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.11em
+}
+.cbcombat-party-panel .cbr-target-main{
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center
+}
+.cbcombat-party-panel .cbr-target-avatar{
+  width:38px;height:38px;
+  display:grid;place-items:center;
+  border:1px solid rgba(224,119,83,.28);
+  border-radius:6px;
+  background:#241411;
+  color:#efb08d;
+  font-size:14px;
+  font-weight:900
+}
+.cbcombat-party-panel .cbr-target-main span:nth-child(2){min-width:0}
+.cbcombat-party-panel .cbr-target-main b{
+  display:block;
+  overflow:hidden;
+  color:#f1e5d7;
+  font-size:10px;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.cbcombat-party-panel .cbr-target-main em{
+  display:block;
+  margin-top:3px;
+  overflow:hidden;
+  color:#8b7a6e;
+  font-size:7px;
+  font-style:normal;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.cbcombat-party-panel .cbr-target-main strong{
+  color:#e8c86d;
+  font-size:11px
+}
+.cbcombat-party-panel .cbr-target-hp{
+  display:block;
+  height:5px;
+  margin-top:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#211a18
+}
+.cbcombat-party-panel .cbr-target-hp>i{
+  display:block;height:100%;
+  background:linear-gradient(90deg,#9d332b,#da654d);
+  transition:width .2s ease
+}
+.cbcombat-party-panel .cbr-target-card.empty{opacity:.68}
+.cbcombat-party{
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden;
+  border:0!important;
+  background:transparent!important
+}
+.cbcombat-party>small{
+  flex:0 0 auto;
+  display:block;
+  margin:0 0 5px!important;
+  color:#7da3b8!important;
+  font-size:7px!important;
+  font-weight:900;
+  letter-spacing:.1em
+}
+.cbcombat-party #cb2dRows{
+  flex:1 1 auto;
+  width:100%!important;
+  min-width:0!important;
+  min-height:0;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:repeat(5,minmax(60px,1fr))!important;
+  grid-auto-flow:row!important;
+  gap:5px!important;
+  overflow:hidden!important
+}
+.cbcombat-party #cb2dRows>.cb2d-party-row{
+  position:relative!important;
+  inset:auto!important;
+  display:grid!important;
+  visibility:visible!important;
+  opacity:1!important;
+  grid-template-columns:34px minmax(0,1fr)!important;
+  grid-template-rows:1fr!important;
+  gap:7px!important;
+  align-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:60px!important;
+  max-height:none!important;
+  height:100%!important;
+  margin:0!important;
+  padding:6px 7px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:7px!important;
+  background:#0a1418!important;
+  transform:none!important;
+  cursor:default;
+  touch-action:manipulation
+}
+
+.cbcombat-party #cb2dRows>.cb2d-party-row:nth-child(n+6){display:none!important}
+.cbcombat-party #cb2dRows>.cb2d-party-row>*{min-width:0!important}
+.cbcombat-party .cb2d-party-avatar{
+  width:32px!important;height:32px!important
+}
+.cbcombat-party .cb2d-party-main{
+  min-width:0;
+  display:block!important
+}
+.cbcombat-party .cb2d-party-name{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:6px!important
+}
+.cbcombat-party .cb2d-party-name b{font-size:9px!important}
+.cbcombat-party .cb2d-party-name em{font-size:6px!important}
+.cbcombat-party .cb2d-party-action{
+  display:block!important;
+  max-width:100%;
+  margin-top:1px!important;
+  overflow:hidden;
+  font-size:6px!important;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.cbcombat-party .cb2d-party-statline{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:6px!important;
+  margin-top:2px!important;
+  font-size:6px!important
+}
+.cbcombat-party .cb2d-party-statline small,
+.cbcombat-party .cb2d-party-statline b{
+  display:block!important;
+  font-size:6px!important
+}
+.cbcombat-party .cb2d-party-target,
+.cbcombat-party .cb2d-party-condition{display:none!important}
+.cbcombat-party .cb2d-side-hp,
+.cbcombat-party .cb2d-side-resource{
+  display:block!important;
+  width:100%!important;
+  height:4px!important;
+  margin-top:1px!important
+}
+
+/* COMMAND PANEL */
+.cbcombat-command-panel.cb2d-controls{
+  position:relative!important;
+  inset:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  width:auto!important;
+  height:auto!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:9px!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,#09151d,#061017)!important
+}
+.cbcombat-command-panel .cbr-command-copy{
+  flex:0 0 auto;
+  display:block!important;
+  margin:0 0 5px!important
+}
+.cbcombat-command-panel .cbr-command-copy small{font-size:7px!important}
+.cbcombat-command-panel .cbr-command-copy b{
+  display:block;
+  margin-top:2px;
+  font-size:10px!important
+}
+.cbcombat-command-panel .cbr-command-copy span{display:none!important}
+.cbcombat-command-panel .cbr-command-meta{
+  flex:0 0 auto;
+  margin:0 0 5px!important;
+  padding:5px 6px!important
+}
+.cbcombat-command-panel .cbr-command-meta span{font-size:6px!important}
+.cbcombat-command-panel .cbr-command-target{
+  min-height:29px!important;
+  padding:4px 6px!important;
+  font-size:7px!important
+}
+.cbcombat-command-panel #cbrCommandPower>i{
+  width:9px!important;height:9px!important
+}
+.cbcombat-command-panel .cbr-command-grid{
+  flex:1 1 auto;
+  width:100%!important;
+  min-width:0!important;
+  min-height:0;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-rows:repeat(2,minmax(0,1fr))!important;
+  grid-auto-flow:row!important;
+  align-content:stretch!important;
+  justify-content:stretch!important;
+  gap:6px!important;
+  overflow:hidden!important
+}
+.cbcombat-command-panel .cbr-command,
+.cbcombat-command-panel .cb2d-potion-button{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  height:100%!important;
+  padding:7px!important;
+  margin:0!important;
+  border-radius:7px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+  touch-action:manipulation
+}
+.cbcombat-command-panel .cbr-command b,
+.cbcombat-command-panel .cb2d-potion-button b{
+  font-size:8px!important
+}
+.cbcombat-command-panel .cbr-command small,
+.cbcombat-command-panel .cb2d-potion-button small{
+  display:block!important;
+  margin-top:2px!important;
+  overflow:hidden!important;
+  font-size:6px!important;
+  line-height:1.15!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important
+}
+
+/* BATTLEFIELD PANEL */
+.cbcombat-battle-panel{
+  position:relative;
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:6px!important;
+  padding:8px;
+  background:#070f13
+}
+.cbcombat-battle-topbar{
+  min-width:0!important;
+  min-height:38px!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:10px!important;
+  align-items:center!important;
+  padding:5px 7px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:7px!important;
+  background:#081216!important
+}
+.cbcombat-battle-topbar .cb2d-room-tag{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  top:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:1!important;
+  width:auto!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important
+}
+.cbcombat-battle-topbar .cb2d-room-tag b{
+  display:block!important;
+  color:#d7c49b!important;
+  font-size:8px!important;
+  line-height:1.1!important
+}
+.cbcombat-battle-topbar .cb2d-room-tag small{
+  display:block!important;
+  margin-top:2px!important;
+  overflow:hidden!important;
+  color:#8f755c!important;
+  font-size:6px!important;
+  line-height:1.2!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important
+}
+.cbcombat-battle-topbar .cb2d-ground-legend{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  top:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:1!important;
+  display:flex!important;
+  gap:5px!important;
+  align-items:center!important;
+  margin:0!important;
+  pointer-events:none!important
+}
+.cbcombat-battle-topbar .cb2d-ground-legend span{
+  padding:4px 6px!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:4px!important;
+  background:#0b171b!important;
+  font-size:6px!important;
+  white-space:nowrap!important
+}
+.cbcombat-battle-panel>.cb2d-arena.cbcombat-arena{
+  position:relative!important;
+  inset:auto!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  transform:none!important;
+  margin:0!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:7px!important;
+  box-shadow:inset 0 0 50px rgba(0,0,0,.15)!important;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none
+}
+.cbcombat-battle-panel .cb2d-stage-image{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:var(--cb2d-battlefield-position,50% 50%)!important;
+  transform:none!important;
+  filter:none!important
+}
+.cbcombat-battle-panel .cbcombat-cast{
+  position:absolute!important;
+  z-index:60!important;
+  left:50%!important;
+  top:auto!important;
+  right:auto!important;
+  bottom:10px!important;
+  width:min(460px,58%)!important;
+  margin:0!important;
+  padding:8px 10px!important;
+  transform:translateX(-50%)!important;
+  border:1px solid rgba(221,113,84,.24)!important;
+  border-radius:7px!important;
+  background:rgba(5,11,14,.90)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.22)!important;
+  pointer-events:none!important
+}
+.cbcombat-battle-panel .cbcombat-cast>small{font-size:7px!important}
+.cbcombat-battle-panel .cbcombat-cast b{font-size:10px!important}
+.cbcombat-battle-panel .cbcombat-cast strong{font-size:8px!important}
+.cbcombat-battle-panel .cbcombat-cast .cb2d-castbar{
+  height:6px!important;
+  margin-top:5px!important
+}
+.cbcombat-battle-panel .cb2d-room-tag{
+  top:10px!important;
+  left:10px!important;
+  max-width:34%!important
+}
+.cbcombat-battle-panel .cb2d-ground-legend{
+  top:10px!important;
+  right:10px!important
+}
+.cbcombat-battle-panel .cb2d-caption{
+  left:10px!important;
+  bottom:10px!important;
+  max-width:28%!important;
+  padding:6px 8px!important;
+  pointer-events:none
+}
+
+
+.cbcombat-battle-panel .cbr-boss-frame{
+  position:absolute!important;
+  z-index:62!important;
+  left:50%!important;
+  top:10px!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translateX(-50%)!important;
+  display:grid!important;
+  grid-template-columns:auto minmax(220px,420px) auto!important;
+  gap:8px!important;
+  align-items:center!important;
+  width:min(560px,72%)!important;
+  min-width:0!important;
+  padding:7px 10px!important;
+  border:1px solid rgba(225,129,69,.25)!important;
+  border-radius:7px!important;
+  background:rgba(15,8,7,.90)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.28)!important;
+  backdrop-filter:blur(8px)!important;
+  pointer-events:none!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>small{
+  color:#d99662!important;
+  font-size:7px!important;
+  font-weight:900!important;
+  letter-spacing:.12em!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>b{
+  grid-column:2!important;
+  color:#f0e6dc!important;
+  font:600 10px Georgia,serif!important;
+  text-align:center!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>em{
+  grid-column:2!important;
+  display:block!important;
+  height:7px!important;
+  overflow:hidden!important;
+  border-radius:999px!important;
+  background:rgba(0,0,0,.58)!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>em>i{
+  display:block!important;
+  height:100%!important;
+  background:linear-gradient(90deg,#8d2c26,#da6246)!important;
+  transition:width .18s linear!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>strong{
+  grid-column:3!important;
+  grid-row:1/3!important;
+  color:#e7b291!important;
+  font-size:8px!important
+}
+
+/* Large, deliberate iPad touch targets. */
+.cbcombat-battle-panel .cb2d-unit{
+  width:66px!important;height:66px!important;
+  display:grid!important;place-items:center!important;
+  margin-left:-33px!important;margin-top:-33px!important;
+  transform:translate3d(var(--unit-x,0px),var(--unit-y,0px),0)!important;
+  pointer-events:auto!important
+}
+.cbcombat-battle-panel .cb2d-unit>i{
+  width:43px!important;height:43px!important;
+  border-width:0!important;
+  box-shadow:0 0 0 5px rgba(255,255,255,.045),0 0 22px currentColor!important
+}
+.cbcombat-battle-panel .cb2d-unit.enemy>i{width:39px!important;height:39px!important}
+.cbcombat-battle-panel .cb2d-unit.enemy.small>i{width:31px!important;height:31px!important}
+.cbcombat-battle-panel .cb2d-unit.enemy.big>i,
+.cbcombat-battle-panel .cb2d-unit.enemy.boss>i{
+  width:60px!important;height:60px!important
+}
+.cbcombat-battle-panel .cb2d-unit>span{
+  top:58px!important;
+  min-width:126px!important;
+  font-size:9px!important;
+  font-weight:800!important;
+  line-height:1.15!important
+}
+.cbcombat-battle-panel .cb2d-unit.enemy.big>span,
+.cbcombat-battle-panel .cb2d-unit.enemy.boss>span{top:68px!important}
+.cbcombat-battle-panel .cb2d-unit-hp{
+  top:2px!important;
+  width:55px!important;
+  height:6px!important
+}
+.cbcombat-battle-panel .cb2d-unit.enemy .cb2d-unit-hp{width:50px!important}
+.cbcombat-battle-panel .cb2d-unit.big .cb2d-unit-hp,
+.cbcombat-battle-panel .cb2d-unit.boss .cb2d-unit-hp{
+  top:-2px!important;
+  width:80px!important;
+  height:7px!important
+}
+.cbcombat-battle-panel .cb2d-unit .cbr-resource{
+  top:52px!important;
+  width:56px!important;
+  height:5px!important
+}
+
+/* METERS PANEL */
+.cbcombat-meters-panel{
+  padding:9px;
+  background:linear-gradient(180deg,#09151b,#061015)
+}
+.cbcombat-meter-stack{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:transparent!important;
+  border:0!important
+}
+.cbcombat-meter-stack .cb2d-meter-panel{
+  min-width:0!important;
+  min-height:0!important;
+  padding:9px!important;
+  margin:0!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:7px!important;
+  background:#0a1418!important;
+  box-shadow:none!important
+}
+.cbcombat-meter-stack .cb2d-meter-head{margin-bottom:8px!important}
+.cbcombat-meter-stack .cb2d-meter-head small{font-size:8px!important}
+.cbcombat-meter-stack .cb2d-meter-head span{font-size:6px!important}
+.cbcombat-meter-stack .cb2d-meter-list{gap:6px!important}
+.cbcombat-meter-stack .cb2d-meter-label b{font-size:8px!important}
+.cbcombat-meter-stack .cb2d-meter-label span{font-size:6px!important}
+.cbcombat-meter-stack .cb2d-meter-row>em{height:5px!important}
+
+/* RESULTS reuse the existing reward content, but not the retired combat shell. */
+.cbcombat-shell.results-mode{
+  display:block!important;
+  height:100%!important;
+  overflow:auto!important;
+  background:#05090b
+}
+.cbcombat-shell.results-mode>.cbcombat-header,
+.cbcombat-shell.results-mode>.cbcombat-route,
+.cbcombat-shell.results-mode>.cbcombat-grid{
+  display:none!important
+}
+.cbcombat-shell.results-mode>.cb2d-end{
+  position:relative!important;
+  inset:auto!important;
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:100%!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+  border:0!important;
+  background:
+    radial-gradient(circle at 50% 0,rgba(203,158,72,.10),transparent 28%),
+    linear-gradient(180deg,#091215,#05090b)!important
+}
+.cbcombat-shell.results-mode .cb2d-loot-wrap{
+  box-sizing:border-box;
+  width:min(1040px,calc(100% - 32px))!important;
+  max-width:1040px!important;
+  margin:0 auto!important;
+  padding:24px 0 30px!important
+}
+
+/* Keep exploration functional without resurrecting another renderer. */
+.cbcombat-shell .cb2d-explore-controls{
+  width:100%;
+  height:100%
+}
+
+/* Narrow fallback: panels stack; never overlay each other. */
+@media(max-width:849px){
+  .cb2d-backdrop.cbcombat-backdrop{overflow:auto!important}
+  .cbcombat-shell{
+    height:auto;
+    min-height:100%;
+    overflow:visible
+  }
+  .cbcombat-grid{
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
+    overflow:visible
+  }
+  .cbcombat-left-column{
+    grid-template-rows:auto auto;
+    overflow:visible
+  }
+  .cbcombat-battle-panel{
+    grid-row:1;
+    min-height:440px
+  }
+  .cbcombat-left-column{grid-row:2}
+  .cbcombat-meters-panel{
+    grid-row:3;
+    min-height:420px
+  }
+  .cbcombat-party-panel{min-height:390px}
+  .cbcombat-command-panel{min-height:360px}
+}
+@media(min-width:850px) and (max-width:1120px){
+  .cbcombat-shell{
+    --cbcombat-gap:7px;
+    --cbcombat-left:clamp(225px,25vw,275px);
+    --cbcombat-right:clamp(180px,19vw,220px)
+  }
+  .cbcombat-grid{padding:7px}
+  .cbcombat-left-column{grid-template-rows:minmax(0,1fr) minmax(195px,.50fr)}
+  .cbcombat-command-panel .cbr-command-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    grid-template-rows:repeat(2,minmax(0,1fr))!important
+  }
+  .cbcombat-party-panel,
+  .cbcombat-command-panel,
+  .cbcombat-battle-panel,
+  .cbcombat-meters-panel{padding:7px}
+}
+
+
+/* Ashen Vault live HUD: targets left, compact meters + commands right. */
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-left-column{
+  grid-template-rows:minmax(0,1fr)!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column{
+  min-width:0;
+  min-height:0;
+  display:grid;
+  grid-template-columns:1fr;
+  grid-template-rows:minmax(260px,.46fr) minmax(300px,.54fr);
+  gap:var(--cbcombat-gap);
+  overflow:hidden
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column>.cbcombat-panel{
+  width:100%;
+  height:100%
+}
+
+/* Party cards gain a dedicated live target row. */
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party #cb2dRows{
+  grid-template-rows:repeat(5,minmax(82px,1fr))!important;
+  gap:6px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party #cb2dRows>.cb2d-party-row{
+  grid-template-columns:34px minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr) 27px!important;
+  min-height:82px!important;
+  padding:6px 7px 5px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-avatar{
+  grid-column:1;
+  grid-row:1
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-main{
+  grid-column:2;
+  grid-row:1
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-target{
+  grid-column:1/-1;
+  grid-row:2;
+  min-width:0;
+  display:grid!important;
+  grid-template-columns:20px minmax(0,1fr);
+  gap:6px;
+  align-items:center;
+  height:25px;
+  margin-top:2px;
+  padding:3px 6px;
+  overflow:hidden;
+  border:1px solid rgba(213,91,72,.25);
+  border-radius:5px;
+  background:rgba(43,15,14,.62)
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-target.friendly{
+  border-color:rgba(88,168,205,.25);
+  background:rgba(10,30,42,.68)
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-target>i{
+  width:18px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:50%;
+  color:#f0d8cd;
+  font-size:6px;
+  font-style:normal;
+  font-weight:900
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-target>span{
+  min-width:0;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:6px;
+  align-items:center
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-target small{
+  display:block!important;
+  color:#c67b6c!important;
+  font-size:6px!important;
+  font-weight:900;
+  letter-spacing:.08em
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-target.friendly small{
+  color:#7bb8d6!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party .cb2d-party-target b{
+  min-width:0;
+  overflow:hidden;
+  color:#e8e4dc;
+  font-size:7px!important;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+/* Active pets/summons sit under the five party cards and share their live targets. */
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-rows{
+  flex:0 0 auto;
+  max-height:126px;
+  margin-top:6px;
+  padding-top:6px;
+  overflow-y:auto;
+  border-top:1px solid rgba(173,92,177,.16)
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-rows[hidden]{display:none!important}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-rows>small{
+  display:block;
+  margin:0 0 5px;
+  color:#c379c7;
+  font-size:6px;
+  font-weight:900;
+  letter-spacing:.11em
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-row{
+  min-width:0;
+  display:grid;
+  grid-template-columns:20px minmax(0,1fr) minmax(82px,.8fr);
+  gap:6px;
+  align-items:center;
+  min-height:37px;
+  margin-top:4px;
+  padding:5px 6px;
+  border:1px solid rgba(173,92,177,.18);
+  border-radius:6px;
+  background:rgba(25,10,31,.52)
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-icon{
+  width:20px;
+  height:20px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(194,106,200,.28);
+  border-radius:50%;
+  color:#d58cda;
+  font-size:8px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-main,
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target>span{min-width:0}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-main b{
+  display:block;
+  overflow:hidden;
+  color:#e7d7e9;
+  font-size:7px;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-main small{
+  display:block!important;
+  margin-top:2px;
+  overflow:hidden;
+  color:#9d72a0!important;
+  font-size:6px!important;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target{
+  min-width:0;
+  display:grid;
+  grid-template-columns:16px minmax(0,1fr);
+  gap:5px;
+  align-items:center
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target>i{
+  width:16px;height:16px;
+  display:grid;place-items:center;
+  border:1px solid rgba(213,91,72,.22);
+  border-radius:50%;
+  color:#dfb1a9;
+  font-size:5px;
+  font-style:normal
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target small{
+  display:block;
+  color:#bd7468;
+  font-size:5px;
+  font-weight:900;
+  letter-spacing:.06em
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target b{
+  display:block;
+  overflow:hidden;
+  color:#d9d5cf;
+  font-size:6px;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+/* Keep Threat, Damage and Healing together at the top of the right rail. */
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meters-panel{
+  padding:7px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meter-stack{
+  height:auto!important;
+  grid-template-rows:repeat(3,minmax(0,auto))!important;
+  align-content:start!important;
+  gap:6px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meter-stack .cb2d-meter-panel{
+  padding:6px 7px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meter-stack .cb2d-meter-head{
+  margin-bottom:4px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meter-stack .cb2d-meter-list{
+  gap:3px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meter-stack .cb2d-meter-row{
+  min-height:0!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meter-stack .cb2d-meter-label b{
+  font-size:7px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meter-stack .cb2d-meter-label span{
+  font-size:5px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-meter-stack .cb2d-meter-row>em{
+  height:3px!important
+}
+
+/* Full two-column command deck occupies the saved lower-right space. */
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbcombat-command-panel{
+  min-height:0!important;
+  padding:8px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-copy{
+  margin-bottom:4px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-meta{
+  margin-bottom:6px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-groups{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important;
+  align-items:stretch!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-group{
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:5px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-group>small{
+  flex:0 0 auto;
+  margin-bottom:4px!important;
+  font-size:7px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-column{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  gap:5px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-column .cbr-command,
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-column .cb2d-potion-button{
+  min-height:0!important;
+  height:100%!important;
+  padding:6px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-column .cbr-command b,
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-column .cb2d-potion-button b{
+  font-size:7px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-column .cbr-command small,
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column .cbr-command-column .cb2d-potion-button small{
+  font-size:5px!important;
+  white-space:normal!important;
+  line-height:1.2!important
+}
+
+@media(max-width:849px){
+  .cbcombat-shell.cbcombat-standard-hud .cbcombat-right-column{
+    grid-row:3;
+    display:grid;
+    grid-template-rows:auto auto;
+    overflow:visible
+  }
+  .cbcombat-shell.cbcombat-standard-hud .cbcombat-meters-panel{min-height:320px}
+  .cbcombat-shell.cbcombat-standard-hud .cbcombat-command-panel{min-height:360px!important}
+}
+
+
+/* Ashen combat is a fixed game HUD: party + summons never become scroll regions. */
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party{
+  overflow:hidden!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party #cb2dRows{
+  flex:1 1 auto!important;
+  min-height:0!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-rows{
+  flex:0 0 auto!important;
+  width:100%;
+  max-height:none!important;
+  overflow:visible!important;
+  scrollbar-width:none
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-rows::-webkit-scrollbar{
+  display:none
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-rows:not([hidden]){
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-auto-rows:30px;
+  gap:4px;
+  margin-top:5px;
+  padding-top:5px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-rows>small{
+  grid-column:1/-1;
+  margin:0!important;
+  min-height:12px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-row{
+  grid-template-columns:16px minmax(0,1fr);
+  grid-template-rows:1fr;
+  gap:5px;
+  min-height:30px;
+  height:30px;
+  margin:0;
+  padding:4px 5px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-icon{
+  width:16px;height:16px;
+  font-size:6px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-main b{
+  font-size:6px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-main small{
+  margin-top:1px;
+  font-size:5px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target{
+  grid-column:1/-1;
+  position:absolute;
+  right:5px;
+  bottom:3px;
+  width:auto;
+  max-width:48%;
+  display:flex;
+  gap:3px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target>i{
+  display:none
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target small{
+  display:none
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-target b{
+  font-size:5px;
+  color:#cfa9d2
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-pet-row{
+  position:relative
+}
+
+/* When summons are present, reclaim a little height from each party card rather than scrolling. */
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.has-pets #cb2dRows{
+  grid-template-rows:repeat(5,minmax(68px,1fr))!important;
+  gap:4px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.has-pets #cb2dRows>.cb2d-party-row{
+  min-height:68px!important;
+  grid-template-rows:minmax(0,1fr) 22px!important;
+  padding:5px 6px 4px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.has-pets .cb2d-party-avatar{
+  width:29px!important;
+  height:29px!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.has-pets .cb2d-party-target{
+  height:21px;
+  padding:2px 5px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.has-pets .cb2d-party-action{
+  margin-top:0!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.has-pets .cb2d-side-hp,
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.has-pets .cb2d-side-resource{
+  height:3px!important
+}
+
+/* Larger summon sets remain on-screen by becoming denser, never scrollable. */
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.has-pets .cbcombat-pet-rows{
+  grid-template-columns:repeat(2,minmax(0,1fr))
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.pets-dense .cbcombat-pet-rows{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-auto-rows:27px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.pets-dense .cbcombat-pet-row{
+  height:27px;
+  min-height:27px;
+  padding:3px 4px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.pets-ultra .cbcombat-pet-rows{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-auto-rows:24px;
+  gap:3px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.pets-ultra .cbcombat-pet-row{
+  height:24px;
+  min-height:24px;
+  padding:2px 3px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.pets-ultra .cbcombat-pet-main small{
+  display:none!important
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.pets-ultra .cbcombat-pet-main b{
+  font-size:5.5px
+}
+.cbcombat-shell.cbcombat-standard-hud .cbcombat-party.pets-ultra .cbcombat-pet-target{
+  max-width:44%
+}
+
+
+/* === SHARED PVE COMBAT HUD STANDARD ===
+   Dungeons, raids and quest fights use one fixed game HUD:
+   party + targets + summons left, battlefield centre, meters + commands right. */
+@media(min-width:850px){
+  .cb2d-backdrop:has(.cb2d-shell.cbstd-hud){
+    padding:8px!important;
+    place-items:stretch!important;
+    overflow:hidden!important;
+    background:#03070a!important
+  }
+  .cb2d-shell.cbstd-hud{
+    box-sizing:border-box;
+    width:100%!important;
+    height:100%!important;
+    max-height:none!important;
+    min-width:0!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-rows:auto auto minmax(0,1fr)!important;
+    overflow:hidden!important;
+    overscroll-behavior:none!important;
+    background:#050b0f
+  }
+  .cb2d-shell.cbstd-hud>.cb2d-layout{
+    min-width:0!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:clamp(250px,23vw,330px) minmax(0,1fr) clamp(210px,17vw,280px)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    gap:10px!important;
+    padding:10px!important;
+    overflow:hidden!important;
+    background:#03080b
+  }
+  .cb2d-shell.cbstd-hud>.cb2d-layout>main,
+  .cb2d-shell.cbstd-hud>.cb2d-layout>aside{
+    display:contents!important
+  }
+
+  /* LEFT — party, live targets, active pets/summons. */
+  .cb2d-shell.cbstd-hud .cb2d-party{
+    grid-column:1!important;
+    grid-row:1!important;
+    align-self:stretch!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    margin:0!important;
+    padding:9px!important;
+    overflow:hidden!important;
+    border:1px solid rgba(123,168,194,.16)!important;
+    border-radius:9px!important;
+    background:linear-gradient(180deg,#09151b,#061015)!important
+  }
+  .cb2d-shell.cbstd-hud .cb2d-party>small{
+    flex:0 0 auto;
+    margin:0 0 5px!important;
+    color:#9a8864!important;
+    font-size:7px!important;
+    font-weight:900!important;
+    letter-spacing:.1em!important
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-rows{
+    flex:1 1 auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:repeat(5,minmax(68px,1fr))!important;
+    gap:5px!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-rows>.cb2d-party-row{
+    position:relative!important;
+    inset:auto!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:0!important;
+    min-height:68px!important;
+    display:grid!important;
+    grid-template-columns:18px minmax(0,1fr) auto!important;
+    grid-template-rows:minmax(0,1fr) 24px!important;
+    gap:5px 7px!important;
+    align-items:center!important;
+    margin:0!important;
+    padding:6px 7px 5px!important;
+    overflow:hidden!important;
+    border:1px solid rgba(255,255,255,.055)!important;
+    border-radius:7px!important;
+    background:#0a1418!important
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-rows>.cb2d-party-row>i.cb2d-dot{
+    grid-column:1;
+    grid-row:1
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-rows>.cb2d-party-row>span:not(.cbstd-party-target){
+    grid-column:2;
+    grid-row:1;
+    min-width:0!important
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-rows>.cb2d-party-row>strong{
+    grid-column:3;
+    grid-row:1;
+    align-self:start;
+    font-size:7px!important;
+    white-space:nowrap
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-rows .cb2d-side-hp,
+  .cb2d-shell.cbstd-hud .cbstd-party-rows .q2d-side-resource,
+  .cb2d-shell.cbstd-hud .cbstd-party-rows .td-side-resource,
+  .cb2d-shell.cbstd-hud .cbstd-party-rows .tb-side-resource{
+    display:block!important;
+    height:4px!important;
+    margin-top:2px!important
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-rows .cbstd-party-target{
+    grid-column:1/-1;
+    grid-row:2;
+    min-width:0;
+    height:22px;
+    display:grid!important;
+    grid-template-columns:18px minmax(0,1fr);
+    gap:6px;
+    align-items:center;
+    padding:2px 6px;
+    overflow:hidden;
+    border:1px solid rgba(213,91,72,.24);
+    border-radius:5px;
+    background:rgba(43,15,14,.62)
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-target.friendly{
+    border-color:rgba(88,168,205,.25);
+    background:rgba(10,30,42,.68)
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-target>i{
+    width:16px;height:16px;
+    display:grid;place-items:center;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:50%;
+    color:#f0d8cd;
+    font-size:5px;
+    font-style:normal;
+    font-weight:900
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-target>span{
+    min-width:0;
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    gap:6px;
+    align-items:center
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-target small{
+    color:#c67b6c!important;
+    font-size:5px!important;
+    font-weight:900!important;
+    letter-spacing:.08em!important
+  }
+  .cb2d-shell.cbstd-hud .cbstd-party-target.friendly small{color:#7bb8d6!important}
+  .cb2d-shell.cbstd-hud .cbstd-party-target b{
+    min-width:0;
+    overflow:hidden;
+    color:#e8e4dc!important;
+    font-size:7px!important;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+
+  .cb2d-shell.cbstd-hud .cbstd-pets{
+    flex:0 0 auto!important;
+    width:100%;
+    max-height:none!important;
+    margin-top:5px;
+    padding-top:5px;
+    overflow:hidden!important;
+    border-top:1px solid rgba(173,92,177,.16)
+  }
+  .cb2d-shell.cbstd-hud .cbstd-pets[hidden]{display:none!important}
+  .cb2d-shell.cbstd-hud .cbstd-pets:not([hidden]){
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-auto-rows:30px;
+    gap:4px
+  }
+  .cb2d-shell.cbstd-hud .cbstd-pets>small{
+    grid-column:1/-1;
+    margin:0!important;
+    color:#c379c7!important;
+    font-size:6px!important;
+    font-weight:900;
+    letter-spacing:.11em
+  }
+  .cb2d-shell.cbstd-hud .cbstd-pet-row{
+    position:relative;
+    min-width:0;
+    height:30px;
+    display:grid;
+    grid-template-columns:15px minmax(0,1fr);
+    gap:5px;
+    align-items:center;
+    padding:3px 5px;
+    overflow:hidden;
+    border:1px solid rgba(173,92,177,.18);
+    border-radius:6px;
+    background:rgba(25,10,31,.52)
+  }
+  .cb2d-shell.cbstd-hud .cbstd-pet-row>i{
+    width:15px;height:15px;
+    display:grid;place-items:center;
+    border:1px solid rgba(194,106,200,.28);
+    border-radius:50%;
+    color:#d58cda;
+    font-size:6px;
+    font-style:normal
+  }
+  .cb2d-shell.cbstd-hud .cbstd-pet-row>span{min-width:0}
+  .cb2d-shell.cbstd-hud .cbstd-pet-row>span b{
+    display:block;
+    overflow:hidden;
+    color:#e7d7e9;
+    font-size:6px;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+  .cb2d-shell.cbstd-hud .cbstd-pet-row>span small{
+    display:block;
+    overflow:hidden;
+    color:#9d72a0;
+    font-size:5px;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+  .cb2d-shell.cbstd-hud .cbstd-pet-row>em{
+    position:absolute;
+    right:4px;
+    bottom:2px;
+    max-width:45%;
+    overflow:hidden;
+    font-style:normal
+  }
+  .cb2d-shell.cbstd-hud .cbstd-pet-row>em small{display:none}
+  .cb2d-shell.cbstd-hud .cbstd-pet-row>em b{
+    display:block;
+    overflow:hidden;
+    color:#cfa9d2;
+    font-size:5px;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+  .cb2d-shell.cbstd-hud .cb2d-party.cbstd-has-pets .cbstd-party-rows{
+    grid-template-rows:repeat(5,minmax(58px,1fr))!important;
+    gap:4px!important
+  }
+  .cb2d-shell.cbstd-hud .cb2d-party.cbstd-has-pets .cbstd-party-rows>.cb2d-party-row{
+    min-height:58px!important;
+    grid-template-rows:minmax(0,1fr) 20px!important;
+    padding:4px 6px!important
+  }
+  .cb2d-shell.cbstd-hud .cb2d-party.cbstd-pets-dense .cbstd-pets{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-auto-rows:27px
+  }
+  .cb2d-shell.cbstd-hud .cb2d-party.cbstd-pets-dense .cbstd-pet-row{
+    height:27px;padding:2px 4px
+  }
+  .cb2d-shell.cbstd-hud .cb2d-party.cbstd-pets-ultra .cbstd-pets{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-auto-rows:24px;
+    gap:3px
+  }
+  .cb2d-shell.cbstd-hud .cb2d-party.cbstd-pets-ultra .cbstd-pet-row{height:24px;padding:2px 3px}
+  .cb2d-shell.cbstd-hud .cb2d-party.cbstd-pets-ultra .cbstd-pet-row>span small{display:none}
+
+  /* CENTRE — battlefield stays the dominant play surface. */
+  .cb2d-shell.cbstd-hud .cb2d-arena{
+    grid-column:2!important;
+    grid-row:1!important;
+    align-self:stretch!important;
+    justify-self:stretch!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    max-width:none!important;
+    max-height:none!important;
+    margin:0!important
+  }
+  .cb2d-shell.cbstd-hud .cb2d-cast{
+    grid-column:2!important;
+    grid-row:1!important;
+    z-index:80!important;
+    align-self:end!important;
+    justify-self:center!important;
+    width:min(62%,460px)!important;
+    margin:0 0 12px!important;
+    padding:7px 9px!important;
+    background:rgba(10,10,10,.88)!important;
+    pointer-events:none
+  }
+
+  /* RIGHT TOP — Threat, Damage, Healing. */
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters{
+    grid-column:3!important;
+    grid-row:1!important;
+    z-index:4;
+    align-self:start!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:auto!important;
+    max-height:46%!important;
+    min-width:0!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:repeat(3,minmax(0,auto))!important;
+    gap:6px!important;
+    margin:0!important;
+    padding:7px!important;
+    overflow:hidden!important;
+    border:1px solid rgba(123,168,194,.16)!important;
+    border-radius:9px!important;
+    background:linear-gradient(180deg,#09151b,#061015)!important
+  }
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters .cb2d-meter-panel{
+    min-width:0!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:6px 7px!important;
+    overflow:hidden!important;
+    border:1px solid rgba(255,255,255,.055)!important;
+    border-radius:7px!important;
+    background:#0a1418!important
+  }
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters .cb2d-meter-head{margin-bottom:4px!important}
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters .cb2d-meter-head small{font-size:7px!important}
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters .cb2d-meter-head span{font-size:5px!important}
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters .cb2d-meter-list{gap:3px!important}
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters .cb2d-meter-label b{font-size:7px!important}
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters .cb2d-meter-label span{font-size:5px!important}
+  .cb2d-shell.cbstd-hud .cb2d-combat-meters .cb2d-meter-row>em{height:3px!important}
+
+  /* RIGHT BOTTOM — grouped command panel. */
+  .cb2d-shell.cbstd-hud .cb2d-controls{
+    grid-column:3!important;
+    grid-row:1!important;
+    z-index:5;
+    align-self:end!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:52%!important;
+    min-width:0!important;
+    min-height:0!important;
+    max-height:52%!important;
+    margin:0!important;
+    padding:8px!important;
+    overflow:hidden!important;
+    border:1px solid rgba(123,168,194,.16)!important;
+    border-radius:9px!important;
+    background:linear-gradient(180deg,#09151d,#061017)!important
+  }
+  .cb2d-shell.cbstd-hud .cbstd-command-groups{
+    width:100%;
+    height:100%;
+    min-height:0;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:6px
+  }
+  .cb2d-shell.cbstd-hud .cbstd-command-group{
+    min-width:0;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    padding:5px;
+    border:1px solid rgba(113,164,197,.12);
+    border-radius:7px;
+    background:rgba(5,15,22,.5)
+  }
+  .cb2d-shell.cbstd-hud .cbstd-command-group>small{
+    flex:0 0 auto;
+    display:block;
+    margin:0 0 4px!important;
+    color:#7d9fb3!important;
+    font-size:6px!important;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-align:center
+  }
+  .cb2d-shell.cbstd-hud .cbstd-command-group.attack>small{color:#d6a768!important}
+  .cb2d-shell.cbstd-hud .cbstd-command-group.defence>small{color:#72b9d8!important}
+  .cb2d-shell.cbstd-hud .cbstd-command-group>div{
+    flex:1 1 auto;
+    min-height:0;
+    display:grid;
+    grid-template-columns:1fr;
+    grid-template-rows:repeat(4,minmax(0,1fr));
+    gap:5px
+  }
+  .cb2d-shell.cbstd-hud .cbstd-command-group button{
+    width:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    height:100%!important;
+    margin:0!important;
+    padding:5px 6px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    justify-content:center!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-hud .cbstd-command-group button b{font-size:7px!important}
+  .cb2d-shell.cbstd-hud .cbstd-command-group button small{
+    display:block!important;
+    margin-top:1px!important;
+    overflow:hidden!important;
+    font-size:5px!important;
+    line-height:1.15!important;
+    white-space:normal!important
+  }
+  .cb2d-shell.cbstd-hud .cb2d-controls.cbr-plan-lock,
+  .cb2d-shell.cbstd-hud .cb2d-controls.quest-live-targets{
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important
+  }
+
+  /* Old web-page panels are not part of the fixed game HUD. */
+  .cb2d-shell.cbstd-hud .cb2d-feed,
+  .cb2d-shell.cbstd-hud .cb2d-actions,
+  .cb2d-shell.cbstd-hud .cb2d-plan{
+    display:none!important
+  }
+}
+
+/* Shared raid viewer: show all ten characters in one fixed left rail. */
+.cbcombat-shell.cbcombat-standard-hud[data-party-size="10"]{
+  --cbcombat-left:clamp(320px,28vw,420px)
+}
+.cbcombat-shell.cbcombat-standard-hud[data-party-size="10"] .cbcombat-party #cb2dRows{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-rows:repeat(5,minmax(58px,1fr))!important;
+  grid-auto-flow:column!important;
+  gap:5px!important
+}
+.cbcombat-shell.cbcombat-standard-hud[data-party-size="10"] .cbcombat-party #cb2dRows>.cb2d-party-row:nth-child(n+6){
+  display:grid!important
+}
+.cbcombat-shell.cbcombat-standard-hud[data-party-size="10"] .cbcombat-party #cb2dRows>.cb2d-party-row{
+  min-height:58px!important;
+  grid-template-columns:28px minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr) 20px!important;
+  padding:4px 5px!important
+}
+.cbcombat-shell.cbcombat-standard-hud[data-party-size="10"] .cbcombat-party .cb2d-party-avatar{
+  width:27px!important;height:27px!important
+}
+.cbcombat-shell.cbcombat-standard-hud[data-party-size="10"] .cbcombat-party .cb2d-party-target{
+  height:19px!important;
+  padding:1px 4px!important
+}
+.cbcombat-shell.cbcombat-standard-hud[data-party-size="10"] .cbcombat-party .cb2d-party-action{
+  font-size:5px!important
+}
+
+
+/* Compact content-specific details inside the shared right command rail. */
+@media(min-width:850px){
+  .cb2d-shell.cbstd-hud .cbr-command-panel{
+    display:flex!important;
+    flex-direction:column!important
+  }
+  .cb2d-shell.cbstd-hud .cbr-command-panel>.cbstd-command-groups{
+    flex:1 1 auto!important;
+    height:auto!important;
+    min-height:0!important
+  }
+  .cb2d-shell.cbstd-hud .bs-command-copy,
+  .cb2d-shell.cbstd-hud .bs-overcharge,
+  .cb2d-shell.cbstd-hud .quest-live-target-inline{
+    flex:0 0 auto!important
+  }
+  .cb2d-shell.cbstd-hud .bs-command-copy{
+    margin:0 0 4px!important
+  }
+  .cb2d-shell.cbstd-hud .bs-command-copy small{
+    display:none!important
+  }
+  .cb2d-shell.cbstd-hud .bs-overcharge{
+    min-height:20px!important;
+    margin:4px 0 0!important;
+    padding:3px 5px!important
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline{
+    min-width:0;
+    margin:0 0 5px;
+    padding:4px 5px;
+    overflow:hidden;
+    border:1px solid rgba(225,183,91,.15);
+    border-radius:6px;
+    background:rgba(32,27,15,.42)
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline>small{
+    display:block;
+    margin:0 0 3px;
+    color:#cfb46e;
+    font-size:5px;
+    font-weight:900;
+    letter-spacing:.08em
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline .quest-live-target-grid{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:3px!important
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline .quest-live-target-grid button{
+    min-width:0!important;
+    min-height:25px!important;
+    height:25px!important;
+    padding:3px 4px!important;
+    overflow:hidden
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline .quest-live-target-grid button span{
+    display:block;
+    overflow:hidden;
+    font-size:5px!important;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline .quest-live-target-grid button small{
+    font-size:5px!important
+  }
+  .cb2d-shell.cbstd-hud .tb-live-rule{
+    display:none!important
+  }
+  .cb2d-shell.cbstd-hud .tb-event-route{
+    min-height:42px!important;
+    display:grid!important;
+    grid-template-columns:minmax(250px,.55fr) minmax(0,1fr)!important;
+    gap:8px!important;
+    align-items:center!important;
+    padding:4px 8px!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-hud .tb-event-route .tb-scorebar,
+  .cb2d-shell.cbstd-hud .tb-event-route .tb-tomb-track{
+    min-width:0!important;
+    margin:0!important
+  }
+}
+
+
+/* Shared HUD wins over legacy per-view tablet locks. */
+body.quest-cb2d-open,
+body.tb-open{
+  overflow:hidden!important
+}
+@media(min-width:850px){
+  body.cb2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode),
+  body.hs2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode),
+  body.cc2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode),
+  body.bs2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode),
+  body.quest-cb2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode),
+  body.tb-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode){
+    position:relative!important;
+    display:grid!important;
+    grid-template-rows:auto auto minmax(0,1fr)!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:hidden!important;
+    border:1px solid rgba(122,162,184,.14)!important
+  }
+  body.cb2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.hs2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.cc2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.bs2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.quest-cb2d-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.tb-open .cb2d-shell.cbstd-hud:not(.cb2d-brief):not(.results-mode)>.cb2d-layout{
+    height:auto!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:clamp(250px,23vw,330px) minmax(0,1fr) clamp(210px,17vw,280px)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    overflow:hidden!important
+  }
+  body.cb2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>main,
+  body.cb2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>aside,
+  body.hs2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>main,
+  body.hs2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>aside,
+  body.cc2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>main,
+  body.cc2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>aside,
+  body.bs2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>main,
+  body.bs2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>aside,
+  body.quest-cb2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>main,
+  body.quest-cb2d-open .cb2d-shell.cbstd-hud>.cb2d-layout>aside,
+  body.tb-open .cb2d-shell.cbstd-hud>.cb2d-layout>main,
+  body.tb-open .cb2d-shell.cbstd-hud>.cb2d-layout>aside{
+    display:contents!important
+  }
+  body.cb2d-open .cb2d-shell.cbstd-hud .cb2d-arena,
+  body.hs2d-open .cb2d-shell.cbstd-hud .cb2d-arena,
+  body.cc2d-open .cb2d-shell.cbstd-hud .cb2d-arena,
+  body.bs2d-open .cb2d-shell.cbstd-hud .cb2d-arena,
+  body.quest-cb2d-open .cb2d-shell.cbstd-hud .cb2d-arena,
+  body.tb-open .cb2d-shell.cbstd-hud .cb2d-arena{
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   ASHEN VIEW CONTRACT — all standard PvE combat adopts the same live frame.
+   The HUD adapter preserves encounter-specific IDs/mechanics while moving the
+   live nodes into Ashen's party / battlefield / meters+commands structure.
+   -------------------------------------------------------------------------- */
+@media(min-width:850px){
+  .cb2d-shell.cbstd-ashen-frame{
+    --cbcombat-gap:10px;
+    --cbcombat-left:clamp(250px,23vw,330px);
+    --cbcombat-right:clamp(210px,17vw,270px);
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    display:grid!important;
+    grid-template-rows:auto auto minmax(0,1fr)!important;
+    overflow:hidden!important;
+    border:1px solid rgba(122,162,184,.14)!important;
+    border-radius:10px!important;
+    background:#050b0f!important;
+    box-shadow:0 22px 70px rgba(0,0,0,.52)!important
+  }
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-header{
+    position:relative!important;
+    inset:auto!important;
+    left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    width:auto!important;
+    height:auto!important;
+    min-height:58px!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:16px!important;
+    align-items:center!important;
+    padding:9px 14px!important;
+    border:0!important;
+    border-bottom:1px solid rgba(255,255,255,.055)!important;
+    background:linear-gradient(90deg,#17130d,#071015)!important
+  }
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-header .cbcombat-title small{
+    color:#a78d59!important;font-size:8px!important;font-weight:900!important;letter-spacing:.14em!important
+  }
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-header .cbcombat-title h2{
+    margin:3px 0 0!important;color:#eee8dc!important;font-family:Georgia,serif!important;font-size:21px!important;font-weight:400!important
+  }
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-header .cbcombat-header-actions{
+    display:flex!important;align-items:center!important;gap:7px!important;color:#9caaa5!important;font-size:9px!important;font-weight:900!important;letter-spacing:.08em!important
+  }
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-header .cbcombat-live-dot>i{
+    width:7px!important;height:7px!important;border-radius:50%!important;background:#6fd49b!important;box-shadow:0 0 12px rgba(111,212,155,.45)!important
+  }
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-header .cbcombat-header-actions button{
+    min-width:36px!important;height:34px!important;padding:0 9px!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:4px!important;background:#0b1417!important;color:#a8b5b0!important;font-size:10px!important
+  }
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-route{
+    position:relative!important;
+    inset:auto!important;
+    left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    width:auto!important;
+    min-height:31px!important;
+    transform:none!important;
+    display:flex!important;
+    gap:5px!important;
+    padding:4px 8px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    border:0!important;
+    border-bottom:1px solid rgba(255,255,255,.045)!important;
+    border-radius:0!important;
+    background:#060e12!important;
+    box-shadow:none!important
+  }
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-grid{
+    position:relative!important;
+    inset:auto!important;
+    width:auto!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:var(--cbcombat-left) minmax(0,1fr) var(--cbcombat-right)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    gap:var(--cbcombat-gap)!important;
+    padding:var(--cbcombat-gap)!important;
+    overflow:hidden!important;
+    background:#03080b!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbstd-legacy-extras{display:none!important}
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-left-column,
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-right-column{
+    min-width:0!important;min-height:0!important;overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-left-column{
+    display:grid!important;grid-template-rows:minmax(0,1fr)!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-right-column{
+    display:grid!important;grid-template-rows:minmax(260px,.46fr) minmax(300px,.54fr)!important;gap:var(--cbcombat-gap)!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party-panel>.cb2d-party.cbcombat-party{
+    grid-column:auto!important;grid-row:auto!important;
+    width:100%!important;height:100%!important;
+    min-width:0!important;min-height:0!important;
+    margin:0!important;padding:0!important;
+    border:0!important;background:transparent!important;overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-battle-panel{
+    min-width:0!important;min-height:0!important;display:grid!important;grid-template-rows:auto minmax(0,1fr)!important;gap:6px!important;padding:8px!important;overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-battle-panel>.cb2d-arena.cbcombat-arena{
+    position:relative!important;
+    inset:auto!important;
+    grid-column:auto!important;grid-row:auto!important;
+    width:100%!important;height:100%!important;
+    min-width:0!important;min-height:0!important;
+    max-width:none!important;max-height:none!important;
+    aspect-ratio:auto!important;
+    transform:none!important;margin:0!important;
+    overflow:hidden!important;
+    border:1px solid rgba(255,255,255,.055)!important;border-radius:7px!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-battle-panel .cb2d-cast.cbcombat-cast{
+    position:absolute!important;
+    z-index:60!important;
+    left:50%!important;top:auto!important;right:auto!important;bottom:10px!important;
+    grid-column:auto!important;grid-row:auto!important;
+    width:min(460px,58%)!important;
+    margin:0!important;padding:8px 10px!important;
+    transform:translateX(-50%)!important;
+    border:1px solid rgba(221,113,84,.24)!important;border-radius:7px!important;
+    background:rgba(5,11,14,.90)!important;
+    pointer-events:none!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-meters-panel>.cb2d-combat-meters.cbcombat-meter-stack{
+    grid-column:auto!important;grid-row:auto!important;
+    align-self:stretch!important;
+    width:100%!important;height:100%!important;max-height:none!important;
+    min-width:0!important;min-height:0!important;
+    display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(3,minmax(0,auto))!important;
+    align-content:start!important;gap:6px!important;
+    margin:0!important;padding:0!important;overflow:hidden!important;border:0!important;background:transparent!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-right-column>.cb2d-controls.cbcombat-command-panel{
+    grid-column:auto!important;grid-row:auto!important;
+    align-self:stretch!important;
+    width:100%!important;height:100%!important;max-height:none!important;
+    min-width:0!important;min-height:0!important;
+    margin:0!important;padding:8px!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-command-panel>.cbr-command-groups{
+    flex:1 1 auto!important;min-height:0!important;
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-command-panel .cbr-command-column{
+    min-height:0!important;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(4,minmax(0,1fr))!important;gap:5px!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-command-panel .cbr-command-column>button{
+    width:100%!important;height:100%!important;min-height:0!important;margin:0!important
+  }
+}
+
+
+/* Ashen frame promotion cleanup: legacy backdrops must become the same fixed
+   viewport used by the native Ashen combat viewer. */
+:is(.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop,.tb-backdrop).cbcombat-backdrop{
+  position:fixed!important;
+  inset:0!important;
+  z-index:1200!important;
+  box-sizing:border-box!important;
+  width:100vw!important;
+  height:100dvh!important;
+  padding:8px!important;
+  display:grid!important;
+  place-items:stretch!important;
+  overflow:hidden!important;
+  background:#03070a!important;
+  background-image:none!important;
+  backdrop-filter:none!important
+}
+@media(min-width:850px){
+  .cb2d-shell.cbstd-ashen-frame>.cbcombat-grid{
+    flex:1 1 auto!important;
+    min-height:0!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-left-column,
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-battle-panel,
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-right-column{
+    height:100%!important;
+    max-height:none!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party-panel,
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-meters-panel,
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-command-panel{
+    position:relative!important;
+    inset:auto!important;
+    grid-column:auto!important;
+    grid-row:auto!important;
+    align-self:stretch!important;
+    justify-self:stretch!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party-panel{
+    height:100%!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-right-column{
+    grid-template-rows:minmax(0,.46fr) minmax(0,.54fr)!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-meters-panel,
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-command-panel{
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbstd-legacy-extras{
+    display:none!important
+  }
+}
+
+
+/* Legacy party markup, once promoted, uses Ashen's five-card party geometry. */
+@media(min-width:850px){
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cbcombat-party-rows{
+    flex:1 1 auto!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:repeat(5,minmax(72px,1fr))!important;
+    gap:6px!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cbcombat-party-rows>.cb2d-party-row{
+    position:relative!important;
+    inset:auto!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:0!important;
+    min-height:72px!important;
+    max-height:none!important;
+    display:grid!important;
+    grid-template-columns:34px minmax(0,1fr)!important;
+    grid-template-rows:minmax(0,1fr) 27px!important;
+    gap:5px 7px!important;
+    align-items:center!important;
+    margin:0!important;
+    padding:6px 7px 5px!important;
+    overflow:hidden!important;
+    border:1px solid rgba(255,255,255,.055)!important;
+    border-radius:7px!important;
+    background:#0a1418!important;
+    transform:none!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cbcombat-party-rows>.cb2d-party-row>.cb2d-party-avatar{
+    grid-column:1!important;
+    grid-row:1!important;
+    align-self:center!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cbcombat-party-rows>.cb2d-party-row>.cb2d-party-main{
+    grid-column:2!important;
+    grid-row:1!important;
+    min-width:0!important;
+    padding-right:42px!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cbcombat-party-rows>.cb2d-party-row>strong{
+    position:absolute!important;
+    top:7px!important;
+    right:7px!important;
+    max-width:48px!important;
+    overflow:hidden!important;
+    color:#cfd8d4!important;
+    font-size:6px!important;
+    text-align:right!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cbcombat-party-rows>.cb2d-party-row>.cb2d-party-target{
+    grid-column:1/-1!important;
+    grid-row:2!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cb2d-party-main>b{
+    display:block!important;
+    overflow:hidden!important;
+    color:#eef1ed!important;
+    font-size:9px!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cb2d-party-main>small{
+    display:block!important;
+    margin-top:2px!important;
+    overflow:hidden!important;
+    color:#7f918a!important;
+    font-size:7px!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cb2d-party-main .cb2d-side-hp,
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cb2d-party-main .q2d-side-resource,
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party .cb2d-party-main .tb-side-resource{
+    display:block!important;
+    width:100%!important;
+    height:4px!important;
+    margin-top:3px!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-party>.cbcombat-pet-rows{
+    flex:0 0 auto!important;
+    max-height:120px!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-command-panel>.bs-command-copy{
+    display:none!important
+  }
+  .cb2d-shell.cbstd-ashen-frame .cbcombat-command-panel>.bs-overcharge{
+    flex:0 0 auto!important;
+    min-height:28px!important;
+    margin:0 0 5px!important;
+    padding:5px 7px!important;
+    overflow:hidden!important
+  }
+}
+
+
+/* === CANONICAL COMBAT VIEWER ===
+   One full-screen viewer shared by every PvE encounter. */
+.cbcombat-shell[data-combat-view="canonical-v1"]{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-arena-wrap{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-arena-wrap>[data-combat-arena="canonical"]{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  margin:0!important;
+  transform:none!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:7px!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-arena-wrap>.cbcombat-cast{
+  position:absolute!important;
+  z-index:60!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:10px!important;
+  width:min(460px,58%)!important;
+  margin:0!important;
+  transform:translateX(-50%)!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows{
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:repeat(5,minmax(60px,1fr))!important;
+  gap:5px!important;
+  overflow:hidden!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows>.cb2d-party-row{
+  position:relative!important;
+  inset:auto!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:60px!important;
+  max-height:none!important;
+  display:grid!important;
+  grid-template-columns:34px minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr) 27px!important;
+  gap:5px 7px!important;
+  align-items:center!important;
+  margin:0!important;
+  padding:6px 7px 5px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:7px!important;
+  background:#0a1418!important;
+  transform:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows>.cb2d-party-row>.cb2d-party-avatar{
+  grid-column:1!important;
+  grid-row:1!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows>.cb2d-party-row>.cb2d-party-main{
+  grid-column:2!important;
+  grid-row:1!important;
+  min-width:0!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows>.cb2d-party-row>.cb2d-party-target,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows>.cb2d-party-row>.cbstd-party-target{
+  grid-column:1/-1!important;
+  grid-row:2!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-pet-rows{
+  flex:0 0 auto!important;
+  max-height:120px!important;
+  overflow:hidden!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-right-column{
+  min-width:0!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-rows:minmax(0,.46fr) minmax(0,.54fr)!important;
+  gap:var(--cbcombat-gap)!important;
+  overflow:hidden!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-meters-panel,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel>.cbr-command-groups,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel>.cbstd-command-groups{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel .cbr-command-column{
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  gap:5px!important
+}
+@media(min-width:850px){
+  :is(.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop,.tb-backdrop).cbcombat-backdrop{
+    position:fixed!important;
+    inset:0!important;
+    z-index:1200!important;
+    width:100vw!important;
+    height:100dvh!important;
+    box-sizing:border-box!important;
+    padding:8px!important;
+    display:grid!important;
+    place-items:stretch!important;
+    overflow:hidden!important;
+    background:#03070a!important;
+    background-image:none!important;
+    backdrop-filter:none!important
+  }
+}
+
+
+/* Canonical combat viewer owns the entire viewport. Content-specific roots no
+   longer decide combat height, placement or scroll behaviour. */
+.cbcombat-backdrop{
+  position:fixed!important;
+  inset:0!important;
+  z-index:1200!important;
+  box-sizing:border-box!important;
+  width:100vw!important;
+  height:100dvh!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:8px!important;
+  display:grid!important;
+  place-items:stretch!important;
+  overflow:hidden!important;
+  background:#03070a!important;
+  background-image:none!important;
+  backdrop-filter:none!important
+}
+.cbcombat-backdrop>.cbcombat-shell[data-combat-view="canonical-v1"]{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"]:not([data-combat-profile="pvp"]) .cbcombat-left-column{
+  grid-template-rows:minmax(0,1fr)!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-panel,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-arena-wrap{
+  height:100%!important;
+  min-height:0!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pvp"]{
+  display:flex!important;
+  flex-direction:column!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pvp"]>.cbcombat-pvp-grid{
+  flex:1 1 auto!important;
+  min-height:0!important
+}
+
+
+/* Canonical viewer hard sandbox: encounter/theme classes may style battlefield
+   contents only. They cannot alter the shared PvE frame geometry. */
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]{
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr)!important;
+  overflow:hidden!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]>.cbcombat-grid{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  display:grid!important;
+  grid-template-columns:var(--cbcombat-left) minmax(0,1fr) var(--cbcombat-right)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:var(--cbcombat-gap)!important;
+  overflow:hidden!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-left-column,
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-battle-panel,
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-right-column{
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  align-self:stretch!important;
+  justify-self:stretch!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-arena-wrap{
+  position:relative!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:block!important;
+  overflow:hidden!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-command-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  grid-template-columns:none!important
+}
+
+
+/* Arena identity is an attribute, not a class: room scripts may replace
+   className while swapping themes/stages, but cannot opt out of the shared
+   viewport contract. */
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-arena-wrap>[data-combat-arena="canonical"]{
+  position:absolute!important;
+  inset:0!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  margin:0!important;
+  transform:none!important;
+  overflow:hidden!important
+}
+
+
+/* RESULTS MODE FINAL AUTHORITY — reward screen replaces live combat */
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode{
+  position:relative!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:block!important;
+  overflow:hidden!important;
+  background:#05090b!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cbcombat-header,
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cbcombat-route,
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cbcombat-grid{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cb2d-end{
+  position:absolute!important;
+  inset:0!important;
+  z-index:500!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:block!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  background:#05090b!important;
+  backdrop-filter:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cb2d-end[hidden]{
+  display:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cb2d-end:not([hidden]){
+  display:block!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode .cb2d-loot-wrap{
+  box-sizing:border-box!important;
+  width:min(1120px,calc(100% - 32px))!important;
+  max-width:1120px!important;
+  min-height:100%!important;
+  margin:0 auto!important;
+  padding:28px 0 36px!important
+}
+@media(max-width:760px){
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode .cb2d-loot-wrap{
+    width:calc(100% - 20px)!important;
+    padding:18px 0 28px!important
   }
 }

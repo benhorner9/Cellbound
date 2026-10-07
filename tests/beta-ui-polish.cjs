@@ -2,7 +2,8 @@ const fs=require('fs');
 const path=require('path');
 const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
-const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+const RuntimeManifest=require('../tools/runtime-manifest.cjs');
+const read=file=>fs.readFileSync(RuntimeManifest.sourcePath(root,file),'utf8');
 
 const shell=read('guild.html');
 assert(!shell.includes('maximum-scale=1'),'beta shell must allow browser zoom');

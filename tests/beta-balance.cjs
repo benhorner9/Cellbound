@@ -3,11 +3,14 @@ const path=require('path');
 const vm=require('vm');
 const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
+const RuntimeManifest=require('../tools/runtime-manifest.cjs');
+const sourcePath=file=>RuntimeManifest.sourcePath(root,file);
+const read=file=>fs.readFileSync(sourcePath(file),'utf8');
 
 function load(file){
   const sandbox={window:{},console,Math,Date};sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox,{filename:file});
+  vm.runInContext(read(file),sandbox,{filename:file});
   return sandbox.window;
 }
 
@@ -74,7 +77,7 @@ assert(boat.includes('SHIPWRIGHT_KIT_COST'),'No Way Back uses the balance contra
 const manor=fs.readFileSync(path.join(root,'manor-raid-v1.js'),'utf8');
 assert(manor.includes('Every active adventurer must reach Level 15'),'Manor enforces its displayed level requirement');
 for(const file of ['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js']){
-  const src=fs.readFileSync(path.join(root,file),'utf8');
+  const src=read(file);
   assert(src.includes('BAL?.dungeonXp?.')||file==='dungeon-2d-v1.js'&&src.includes("BAL?.dungeonXp?.('ashen-vault'"),file+' must use first-clear/repeat XP from the balance contract');
   assert(src.includes('Game?.xpNeeded?.')||src.includes('Game?.xpNeeded?.('),file+' must use the shared beta level curve');
 }

@@ -3,6 +3,7 @@ name: Validate Cellbound
 on:
   pull_request:
     branches:
+      - staging
       - main
   workflow_dispatch:
 
@@ -15,7 +16,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Production build validation
+    name: Cellbound build validation
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -29,7 +30,9 @@ jobs:
           node-version: '20'
 
       - name: Build and run regressions
-        run: npm run build
+        run: |
+          npm run build
+          npm run test:appearance
 
       - name: Verify deployment package
         shell: bash
@@ -40,7 +43,9 @@ jobs:
           test -f dist/auth.js
           test -f dist/guild-v4.js
           test -f dist/combat-reborn-v1.js
-          test -f dist/assets/gear/cellbound-gear-atlas.webp
+          test -f dist/item-atlas-v2.js
+          test -f dist/item-visuals-v2.js
+          for atlas in warrior paladin hunter rogue mage weapons secondary heads accessories resources; do test -f "dist/assets/items/illustrated-v2/$atlas.webp"; done
           test -f dist/assets/combat/status-icons-v1.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 
@@ -53,6 +58,21 @@ jobs:
         run: |
           node tests/living-combat.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/living-combat.browser.cjs
+
+      - name: Equipment fit browser regression
+        run: |
+          node tests/equipment-fit.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/equipment-fit.browser.cjs
+
+      - name: Race identity browser regression
+        run: |
+          node tests/race-identity.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/race-identity.browser.cjs
+
+      - name: Item Visuals V2 browser regression
+        run: |
+          node tests/item-visuals-v2.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/item-visuals-v2.browser.cjs
 
       - name: Full game browser playthrough
         run: |
@@ -71,6 +91,10 @@ jobs:
           name: cellbound-release-review
           path: |
             /tmp/cellbound-living-combat.png
+            /tmp/cellbound-equipment-fit-*.png
+            /tmp/cellbound-race-identity-v2-*.png
+            /tmp/cellbound-item-visuals-v2-*.png
             /tmp/cellbound-full-playthrough.png
             /tmp/cellbound-login-screen.png
+            /tmp/cellbound-creator-*.png
           if-no-files-found: ignore

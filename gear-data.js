@@ -555,13 +555,9 @@ function artStyle(item,size=64){
   return pos?`display:inline-block;position:relative;overflow:hidden;width:${size}px;height:${size}px;min-width:${size}px;min-height:${size}px;background:#070b0e;`:''
 }
 function artHTML(item,size=64,extra=''){
-  if(item?.questArtMaterial&&window.CellboundProfessions?.materialArtHTML)return window.CellboundProfessions.materialArtHTML(item.questArtMaterial,size,'gear-art quest-gear-art '+extra);
-  const pos=artCoordinates(item,size),canonical=pos?.canonical||byName(item?.name)||byId(item?.itemId)||item;
-  if(!canonical)return`<span class="gear-art gear-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">◇</span>`;
-  if(!pos){const glyph=SLOT_GLYPHS[canonical.slot]||'◇';return`<span class="gear-art gear-art-fallback gear-slot-${slug(canonical.slot||'item')} ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center;font-size:${Math.max(18,Math.round(size*.42))}px" aria-label="${canonical.name||canonical.slot}" title="${canonical.name||canonical.slot}">${glyph}</span>`}
-  const glyph=SLOT_GLYPHS[canonical.slot]||'◇',fit=artFit(canonical),cell=Math.max(1,Math.round(size*fit)),inset=Math.round((size-cell)/2);
-  const slotClass='gear-slot-'+slug(canonical.slot||'item'),classClass='gear-class-'+slug(canonical.class||'all');
-  return `<span class="gear-art tier-${canonical.tier||1} ${slotClass} ${classClass} ${extra}" data-gear-fit="${fit.toFixed(3)}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><span class="gear-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=4" alt="" draggable="false" onerror="this.style.display='none'" style="position:absolute;max-width:none;width:${21*cell}px;height:${3*cell}px;left:-${pos.col*cell}px;top:-${pos.row*cell}px"></span></span>`;
+  if(window.CellboundItemArt)return window.CellboundItemArt.artHTML(item,size,'gear-art '+extra);
+  const V=window.CellboundItemVisuals;
+  return V&&item?'<span class="gear-art cb-item-art" style="width:'+size+'px;height:'+size+'px">'+V.icon(item)+'</span>':'';
 }
 window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,SPEC_SET_BONUSES,SOCKET_ELIGIBLE_SLOTS,SOCKET_CHANCE,setBonusRulesFor,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,socketEligible,socketCountFor,ensureSockets,socketBonusMap,socketSummary,inferWeaponType,inferOffHandType,equipmentPositions,canEquipInSlot,artFit,artStyle,artHTML};
 })();

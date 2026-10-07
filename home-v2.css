@@ -75,7 +75,7 @@
 .home-destination b{position:relative;z-index:1;display:block;margin-top:3px;font:500 1.05rem Georgia,serif}
 .home-destination em{position:relative;z-index:1;display:block;margin-top:5px;color:#7e8e89;font-size:.6rem;font-style:normal}
 .home-destination:hover{transform:translateY(-2px);border-color:rgba(216,185,118,.32);background:linear-gradient(155deg,#172429,#0a1418)}
-.home-destination.events{background:linear-gradient(90deg,rgba(9,16,19,.96),rgba(10,18,20,.84)),url('./assets/world/twelve-below-key-art.webp') center/cover}
+.home-destination.events{background:linear-gradient(90deg,rgba(9,16,19,.96),rgba(10,18,20,.84)),url('./assets/world/twelve-below-key-art.webp?v=2') center/cover}
 .home-destination.events:after{background:linear-gradient(90deg,rgba(9,16,19,.12),rgba(211,174,96,.08));inset:0;width:auto;height:auto;border-radius:0;right:0;top:0}
 .home-destination.raids{background:
   linear-gradient(90deg,rgba(5,10,13,.96) 0%,rgba(5,10,13,.82) 36%,rgba(5,10,13,.46) 68%,rgba(5,10,13,.22) 100%),
