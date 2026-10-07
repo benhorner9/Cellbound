@@ -530,6 +530,7 @@ async function syncSharedRaidView(force=false){
  const viewer=window.CellboundDungeon2D;
  if(!viewer?.playSharedEncounter){console.error('The shared CB2D combat viewer is unavailable');return}
  const room=session.stage==='maids'?(side===0?'Dining Room':'Kitchen'):stageRoom(session.stage);
+ const layoutRoom=session.stage==='maids'?(side===0?'dining-room':'kitchen'):({butler:'entrance-hall',engineer:'workshop',bedroom:'bedroom',housebound:'attic'}[session.stage]||session.stage);
  const recoveryNote=session.stage==='maids'
    ?(entryHealthForSide(side)<100?' Your party was recovered after the previous room and enters at 50% health.':'')
    :((entryHealthForSide(0)<100||entryHealthForSide(1)<100)?' One five-character party was recovered after the previous room and enters at 50% health.':'');
@@ -540,6 +541,7 @@ async function syncSharedRaidView(force=false){
    header:'THE MANOR · '+String(room).toUpperCase()+' · LIVE 2D RAID',
    title:session.stage==='maids'?'The Maid':stageName(session.stage),
    route:sharedRaidRoute(),currentId:session.stage,theme:'manor',room:'manor-'+session.stage,
+   layoutContent:'the-manor',layoutRoom,
    roomLabel:room,ambience:(session.stage==='maids'?'Your five-character party is separated from the other commander. Screech links both rooms.':'The raid fights together as one ten-character group.')+recoveryNote,
    shellClass:'cb2d-manor-raid',arenaClass:'cb2d-manor-arena',
    planTitle:'Both parties fight under the same rules. Coordinate your calls before the house splits you.',
