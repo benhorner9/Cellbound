@@ -10,6 +10,12 @@ const rig=read('character-rig-v1.js');
 assert(!forge.includes('forge-bases'),'Character Forge must not fall back to multi-megabyte raster base models');
 assert(!rig.includes('forge-bases'),'Character rig must not retain obsolete raster base-model metadata');
 
+const combatEngine=read('src/combat/combat-reborn-v1.js');
+const combatData=read('src/combat/combat-data-v1.js');
+assert(Buffer.byteLength(combatEngine)<350000,'Combat Reborn engine should stay below 350 KB after static data extraction');
+assert(Buffer.byteLength(combatData)>60000&&Buffer.byteLength(combatData)<100000,'Combat static data split has an unexpected size');
+assert(combatEngine.includes('CellboundCombatData')&&combatData.includes('window.CellboundCombatData'),'Combat engine/data split contract is missing');
+
 const build=read('build.js');
 for(const hook of ['UI_BUNDLE_SOURCES','cellbound-ui-bundle-v1.css','stylesheet request budget','Obsolete raster forge base returned'])assert(build.includes(hook),'Block 4 build optimisation is missing '+hook);
 
@@ -30,4 +36,4 @@ assert(fs.existsSync(path.join(root,'dist/cellbound-ui-bundle-v1.css')),'generat
 assert(!fs.existsSync(path.join(root,'dist/assets/characters/forge-bases')),'obsolete forge PNGs must not ship');
 assert(!fs.existsSync(path.join(root,'dist/assets/blackout-station/rooms/reactor-core.webp')),'retired Blackout art must not ship');
 
-console.log('Block 4 performance contracts passed: obsolete raster bases removed and late UI CSS consolidated within the request budget.');
+console.log('Block 4 performance contracts passed: obsolete raster bases removed, UI CSS consolidated, and static combat data split from the hot simulation engine.');
