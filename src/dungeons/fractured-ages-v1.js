@@ -239,6 +239,8 @@ async function transition(){
  if(s.id==='funhouse'){
   if(run.finalDossierPending)return;
   run.finalDossierPending=true;
+  if(stageIndex>0)await window.CellboundExpeditionPresentation?.room?.('fractured-ages',{title:s.era+' · '+s.boss,index:stageIndex,total:STAGES.length,kind:'FINAL BOSS'});
+  if(!run||run.stage!==stageIndex)return;
   await Promise.resolve(window.CellboundBossDossier?.show?.('old-man')??true);
   if(!run||run.stage!==stageIndex)return;
   run.finalDossierPending=false;
