@@ -30,19 +30,20 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build Cellbound
-        run: npm run build
+      - name: Build public Cellbound website
+        run: npm run build:site
 
       - name: Verify deployment package
         shell: bash
         run: |
           set -euo pipefail
-          test -f dist/index.html
-          test -f dist/guild.html
-          test -f dist/auth.js
-          test -f dist/guild-v4.js
-          test -f dist/assets/gear/cellbound-gear-atlas.webp
-          ! grep -R --line-number -E 'href="/|src="/' dist/*.html
+          test -f dist-site/index.html
+          test -f dist-site/website-v1.css
+          test -f dist-site/assets/dungeons/ashen-vault.webp
+          test -f dist-site/assets/manor/manor-raid-hero.webp
+          ! test -f dist-site/guild.html
+          ! test -f dist-site/auth.js
+          ! grep -R --line-number -E 'guild\.html|auth\.js|supabase' dist-site/index.html
 
       - name: Deploy approved build to playcellbound.com
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
@@ -53,5 +54,5 @@ jobs:
           protocol: ftps
           port: ${{ secrets.FTP_PORT || 21 }}
           server-dir: ./
-          local-dir: ./dist/
+          local-dir: ./dist-site/
           log-level: standard
