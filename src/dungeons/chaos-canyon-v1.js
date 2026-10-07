@@ -730,6 +730,9 @@ async function ccRunFrom(startIndex,tok){
   run._restored=false;
   await ccSaveRuntime('stage');
   const s=STAGES[i];
+  if(i>Math.max(0,Number(startIndex)||0)&&['boss','final'].includes(s.combatKind)){
+   await window.CellboundExpeditionPresentation?.room?.('chaos-canyon',{title:s.title,index:i,total:STAGES.length,kind:s.combatKind==='final'?'FINAL BOSS':'BOSS'});
+  }
   if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('vorran');
   if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);
   $('#cc2dTitle').textContent=s.title;$('#cc2dRoute').innerHTML=ccRouteMarkup(s.id,false);
