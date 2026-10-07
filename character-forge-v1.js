@@ -14,7 +14,6 @@ const LORE={
 };
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sexName=g=>Number(g)===1?'Female':'Male';
-const asset=(race,gender)=>'./assets/characters/forge-bases/'+String(race||'Veyren').toLowerCase()+'-'+(Number(gender)===1?'female':'male')+'.png';
 function appearance(race,gender,prior){
  const raw={...(prior||{}),race,gender:Number(gender)===1?1:0,frame:1,skinTone:0,face:0,brows:0,nose:0,mouth:0,eyeShape:0,eyes:0,hair:0,hairColor:0,facialHair:0,marking:0,feature:0,pattern:0,featureColor:0,texture:0,glow:0};
  const a=P?.normalizeAppearance?P.normalizeAppearance(raw,'forge',race):raw;
@@ -29,7 +28,9 @@ function ensureDraft(d){
 function normaliseStep(step){return STEPS.includes(step)?step:(step==='race'||step==='appearance'||step==='features'?'form':'form')}
 function modelSVG(race,gender,klass){
  const subject={id:'forge-preview-'+race+'-'+gender,race,class:klass||'Warrior',appearance:appearance(race,gender),equipment:{}};
- return P?.paperDollSVG?P.paperDollSVG(subject,{showGear:false}):'<img src="'+asset(race,gender)+'" alt="">';
+ if(P?.paperDollSVG)return P.paperDollSVG(subject,{showGear:false});
+ const label=esc(race||'Character');
+ return '<svg viewBox="0 0 240 400" role="img" aria-label="'+label+' preview" class="cb-forge-fallback"><rect x="0" y="0" width="240" height="400" rx="18" fill="#091418"/><circle cx="120" cy="86" r="38" fill="#22363a"/><path d="M72 164 Q120 128 168 164 L184 340 Q120 382 56 340Z" fill="#1a2b30"/><text x="120" y="374" text-anchor="middle" fill="#8aa19d" font-size="15">'+label+'</text></svg>';
 }
 function previewHTML(d,cls=''){
  return '<div class="cf-model '+cls+'" data-forge-art="classic-paper-doll-v1" data-gender="'+(Number(d.appearance.gender)===1?'female':'male')+'">'+modelSVG(d.race,d.appearance.gender,d.klass)+'</div>';
