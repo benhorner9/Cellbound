@@ -12,7 +12,7 @@ const ROLE_ZONES={
  dps:{x:48,y:74,radius:14,color:'yellow',label:'DAMAGE'},
  healer:{x:73,y:27,radius:9,color:'blue',label:'HEALER'}
 };
-const BLACKOUT_REACTOR_SCENE='./assets/blackout-station/rooms/reactor-core.webp?v=1';
+const BLACKOUT_REACTOR_SCENE='./assets/blackout-station/rooms/vex-calder-room.avif?v=2';
 const CABLES=['se','sw','se','sw','nw','v','v','v','se','nw','v','ne','ne','h','nw'];
 const CABLE_LINKS={h:['w','e'],v:['n','s'],ne:['n','e'],nw:['n','w'],se:['s','e'],sw:['s','w']};
 const GRID_INPUT_INDEX=4,GRID_BREAKER_INDEX=11;
