@@ -1315,7 +1315,7 @@ const combatPortraitRuntime=readSource('combat-portraits-v1.js');
 
 {
   const shell=readSource('guild.html');
-  for(const hook of ['analytics-v1.js?v=1','admin-analytics-v1.js?v=1','admin-analytics-v1.css?v=1','id="adminAnalyticsClasses"','id="adminAnalyticsDungeons"','id="adminAnalyticsFeatures"'])
+  for(const hook of ['analytics-v1.js?v=2','admin-analytics-v1.js?v=1','admin-analytics-v1.css?v=1','id="adminAnalyticsClasses"','id="adminAnalyticsDungeons"','id="adminAnalyticsFeatures"'])
     if(!shell.includes(hook))throw new Error('Beta analytics Admin surface is missing '+hook);
 
   const analytics=readSource('analytics-v1.js');
