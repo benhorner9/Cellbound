@@ -39,7 +39,7 @@ const onboarding=()=>state()?.onboarding||{};
 const raceById=id=>RACES.find(r=>r.id===id)||RACES[0];
 const portraitHTML=(c,size='md')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+esc(c?.portrait||initials(c?.name))+'</b></span>';
 const forgeAppearance=(race,gender=0,prior=null)=>window.CellboundCharacterForge?.appearance?.(race,gender,prior)||{...(prior||{}),race,gender:Number(gender)===1?1:0};
-const forgeAvatar=c=>'<img class="cf-party-avatar" src="'+window.CellboundCharacterForge.asset(c.race,c.appearance?.gender||0)+'" alt="" draggable="false">';
+const forgeAvatar=c=>'<span class="cf-party-avatar" aria-hidden="true">'+(window.CellboundCharacterForge?.modelSVG?.(c.race,c.appearance?.gender||0,c.klass)||'<span class="cf-party-avatar-fallback">'+esc(initials(c.name))+'</span>')+'</span>';
 
 function roleOptions(role){
   const out=[];
