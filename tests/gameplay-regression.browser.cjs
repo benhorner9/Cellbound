@@ -85,7 +85,7 @@ async function waitClosed(page,selector){
     assert(/DR\. VEX CALDER|VEX CALDER/i.test(vex),'owner skip lands in the Dr. Vex Calder encounter');
     const roomArt=await page.evaluate(()=>document.querySelector('#bs2dBackdrop')?.innerHTML||'');
     assert(roomArt.includes('vex-calder-room.avif'),'Dr. Vex encounter uses the approved generator-hall artwork');
-    await page.locator('#bs2dBackdrop [data-close]').click();
+    await page.locator('#bs2dBackdrop [data-bs-close]').click();
     await waitClosed(page,'#bs2dBackdrop');
 
     // Raid hub and ten-character snapshot contract.
