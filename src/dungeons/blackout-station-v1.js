@@ -477,8 +477,12 @@ async function playTimeline(result,tok){
   let finished=false,raf=0,lastWall=performance.now();
   const finish=(value,finalResult=null)=>{
    if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
-   const final=finalResult||session.snapshot?.()||result;if(final){try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}run.result=final}
-   if(run?.liveCombat){run.liveCombat.result=final;run.liveCombat.issue=null;run.liveCombat.session=null}
+   const final=finalResult||session.snapshot?.()||result;
+   if(final){
+     try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}
+     if(run&&tok===token)run.result=final
+   }
+   if(run&&tok===token&&run.liveCombat){run.liveCombat.result=final;run.liveCombat.issue=null;run.liveCombat.session=null}
    resolve(value)
   };
   const frame=now=>{
