@@ -2293,22 +2293,28 @@ function ensureCombatRebornEngine(){
  if(rebornLoaderPromise)return rebornLoaderPromise;
  status('Loading combat…');
  log('Combat is not ready yet. Reloading the encounter.');
- rebornLoaderPromise=new Promise((resolve,reject)=>{
-   let settled=false;
-   const finish=(ok,error)=>{
-     if(settled)return;settled=true;clearTimeout(timeout);
-     if(ok&&combatRebornReady())resolve(window.CellboundCombatReborn);
-     else reject(error||new Error('Combat Reborn engine failed to initialise'))
-   };
+ const loadRecoveryAsset=(src,marker)=>new Promise((resolve,reject)=>{
+   const existing=document.querySelector('script[data-'+marker+']');
+   if(existing){
+     if(existing.dataset.loaded==='1'){resolve();return}
+     existing.addEventListener('load',()=>resolve(),{once:true});
+     existing.addEventListener('error',()=>reject(new Error('Combat core asset could not be loaded')),{once:true});
+     return
+   }
    const script=document.createElement('script');
-   script.src='./combat-reborn-v1.js?v=1&recover=1';
-   script.async=true;
-   script.dataset.combatRebornRecovery='1';
-   script.onload=()=>finish(true);
-   script.onerror=()=>finish(false,new Error('Combat core asset could not be loaded'));
-   document.head.appendChild(script);
-   const timeout=setTimeout(()=>finish(false,new Error('Combat Reborn runtime timed out while loading')),8000);
- }).finally(()=>{rebornLoaderPromise=null});
+   script.src=src;script.async=true;script.dataset[marker]='1';
+   script.onload=()=>{script.dataset.loaded='1';resolve()};
+   script.onerror=()=>reject(new Error('Combat core asset could not be loaded'));
+   document.head.appendChild(script)
+ });
+ const load=(async()=>{
+   if(!window.CellboundCombatData)await loadRecoveryAsset('./combat-data-v1.js?v=1&recover=1','combatDataRecovery');
+   if(!combatRebornReady())await loadRecoveryAsset('./combat-reborn-v1.js?v=44&recover=1','combatRebornRecovery');
+   if(!combatRebornReady())throw new Error('Combat Reborn engine failed to initialise');
+   return window.CellboundCombatReborn
+ })();
+ const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Combat Reborn runtime timed out while loading')),8000));
+ rebornLoaderPromise=Promise.race([load,timeout]).finally(()=>{rebornLoaderPromise=null});
  return rebornLoaderPromise
 }
 function showRebornStartupFailure(error,s,tok){
