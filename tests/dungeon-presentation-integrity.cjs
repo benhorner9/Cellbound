@@ -42,6 +42,7 @@ for(const [id,src] of [['ashen-vault',ashen],['hollow-sanctum',hollow],['chaos-c
 if(!hollow.includes("CellboundExpeditionPresentation?.room?.('hollow-sanctum'"))fail('Hollow Sanctum missing shared boss-room transition');
 if(!chaos.includes("CellboundExpeditionPresentation?.room?.('chaos-canyon'"))fail('Chaos Canyon missing shared boss-room transition');
 if(!blackout.includes("CellboundExpeditionPresentation?.room?.('blackout-station'"))fail('Blackout Station missing shared boss-room transition');
+if(!fractured.includes("kind:'FINAL BOSS'"))fail('Fractured Ages Funhouse missing final-boss transition');
 if(!blackout.includes('bs-puzzle-room-art'))fail('Blackout Grid Alignment missing production-art backdrop');
 if(!read('src/dungeons/hollow-sanctum-v1.css').includes('.hs2d-arena.hollow-live-room .hs2d-unit:before{display:none!important}'))fail('Hollow unit halo suppression missing');
 if(!read('src/dungeons/chaos-canyon-v1.css').includes('.cc2d-arena.canyon-live-room .cc2d-unit:before{display:none!important}'))fail('Chaos unit halo suppression missing');
