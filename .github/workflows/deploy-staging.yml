@@ -220,11 +220,15 @@ jobs:
           test -f dist/item-atlas-v2.js
           test -f dist/item-visuals-v2.js
           for atlas in warrior paladin hunter rogue mage weapons secondary heads accessories resources; do test -f "dist/assets/items/illustrated-v2/$atlas.webp"; done
+          test -f dist/combat-data-v1.js
+          test -f dist/combat-reborn-v1.js
           test -f dist/combat-viewer-v1.js
           test -f dist/cellbound-ui-bundle-v1.css
           ! test -e dist/assets/characters/forge-bases/veyren-male.png
           ! test -e dist/assets/blackout-station/rooms/reactor-core.webp
           grep -F ':focus-visible' dist/cellbound-ui-bundle-v1.css
+          grep -F 'CellboundCombatData' dist/combat-data-v1.js
+          grep -F 'Cellbound combat data is unavailable' dist/combat-reborn-v1.js
           grep -F 'data-combat-view="canonical-v1"' dist/combat-viewer-v1.js
           grep -F "combat-viewer-v1.js?b=$GITHUB_SHA" dist/guild.html
           grep -F 'CANONICAL COMBAT VIEWER' dist/layout-safety-v1.css
