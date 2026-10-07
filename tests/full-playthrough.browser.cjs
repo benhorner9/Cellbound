@@ -375,7 +375,7 @@ async function mainGamePlaythrough(browser){
   assert(await page.locator('#betaPatchNotes .beta-note').count()>=1,'beta patch notes render');
   await page.locator('#betaReportSummary').fill('QA support ticket');
   await page.locator('#betaReportDetails').fill('The automated beta operations playthrough is testing the support submission path.');
-  await page.locator('#betaReportSubmit').evaluate(button=>button.click());
+  await page.locator('#betaReportForm').evaluate(form=>form.requestSubmit());
   await page.waitForFunction(()=>{
     const message=document.querySelector('#betaReportMessage')?.textContent||'';
     return message.includes('Report sent');
