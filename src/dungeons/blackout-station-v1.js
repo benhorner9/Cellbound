@@ -13,6 +13,20 @@ const ROLE_ZONES={
  dps:{x:48,y:74,radius:14,color:'yellow',label:'DAMAGE'},
  healer:{x:73,y:27,radius:9,color:'blue',label:'HEALER'}
 };
+window.CellboundRoomLayouts?.registerDefaults?.('blackout-station','calder',[
+ {kind:'entry',label:'Entrance',x:10,y:50},
+ {kind:'party',label:'Party 1',x:40,y:60},{kind:'party',label:'Party 2',x:27,y:67},{kind:'party',label:'Party 3',x:34,y:73},{kind:'party',label:'Party 4',x:45,y:76},{kind:'party',label:'Party 5',x:54,y:72},
+ {kind:'enemy',label:'Dr. Vex Calder',x:62,y:42},
+ {kind:'mechanic',label:'Tank',x:27,y:27},{kind:'mechanic',label:'Damage',x:48,y:74},{kind:'mechanic',label:'Healer',x:73,y:27}
+]);
+function bsRoleZones(){
+ const out=JSON.parse(JSON.stringify(ROLE_ZONES)),named=window.CellboundRoomLayouts?.namedMechanics?.('blackout-station','calder')||{};
+ const map={tank:'tank',damage:'dps',dps:'dps',healer:'healer'};
+ Object.entries(named).forEach(([label,p])=>{const role=map[label];if(role&&out[role]){out[role].x=Number(p.x);out[role].y=Number(p.y)}});
+ return out
+}
+function bsLayoutPoints(kind,base){return window.CellboundRoomLayouts?.pointsFor?.('blackout-station','calder',kind,base)||base}
+
 const BLACKOUT_REACTOR_SCENE='./assets/blackout-station/rooms/vex-calder-room.avif?v=1';
 const CABLES=['se','sw','se','sw','nw','v','v','v','se','nw','v','ne','ne','h','nw'];
 const CABLE_LINKS={h:['w','e'],v:['n','s'],ne:['n','e'],nw:['n','w'],se:['s','e'],sw:['s','w']};
@@ -264,7 +278,7 @@ async function powerOn(mode=false){
 }
 
 function bossEncounter(){
- const overload={name:'Emergency Overload',type:'role-circles',duration:5000,danger:'fatal',strict:true,zones:ROLE_ZONES};
+ const overload={name:'Emergency Overload',type:'role-circles',duration:5000,danger:'fatal',strict:true,zones:bsRoleZones()};
  const overcharge=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT,bossHealth=Math.round(2450*(1+overcharge/100));
  const base={
   id:'vex-calder',title:'Dr. Vex Calder',kind:'final',level:BOSS_LEVEL,recommendedItemLevel:ENTRY_ILVL,
@@ -389,7 +403,7 @@ function showRoleZones(zones){
  const layer=$('#bsRoleZones');if(!layer)return'';
  const epoch=String((Number(layer.dataset.zoneEpoch)||0)+1);
  layer.dataset.zoneEpoch=epoch;layer.classList.remove('resolving');layer.innerHTML='';
- Object.entries(zones||ROLE_ZONES).forEach(([r,z])=>{const e=document.createElement('div');e.className='bs-role-zone '+(z.color||r);e.style.left=z.x+'%';e.style.top=z.y+'%';e.style.width=(z.radius*2)+'%';e.style.aspectRatio='1';e.innerHTML='<b>'+esc(z.label||r.toUpperCase())+'</b>';layer.appendChild(e)});
+ Object.entries(zones||bsRoleZones()).forEach(([r,z])=>{const e=document.createElement('div');e.className='bs-role-zone '+(z.color||r);e.style.left=z.x+'%';e.style.top=z.y+'%';e.style.width=(z.radius*2)+'%';e.style.aspectRatio='1';e.innerHTML='<b>'+esc(z.label||r.toUpperCase())+'</b>';layer.appendChild(e)});
  $('#bsArena')?.classList.add('blackout');
  return epoch
 }
@@ -554,10 +568,10 @@ function drawCombat(){
  window.CellboundDungeon2D?.refreshCombatPotionButton?.(r.querySelector('[data-bs-potion]'),state());
  renderPartyRows();
  bsMountReactorScene();
- const p=party(),starts=[[40,60],[27,67],[34,73],[45,76],[54,72]];
+ const p=party(),starts=bsLayoutPoints('party',[[40,60],[27,67],[34,73],[45,76],[54,72]]);
  p.forEach((c,i)=>{const start=starts[i]||[30+i*7,70];addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),start[0],start[1],false,c.id)});
  p.forEach(c=>mountResource(c));
- addUnit('e0','Dr. Vex Calder','enemy boss',62,42,true);renderMeters();
+ const bossPoint=bsLayoutPoints('enemy',[[62,42]])[0]||[62,42];addUnit('e0','Dr. Vex Calder','enemy boss',Number(bossPoint.x??bossPoint[0])||62,Number(bossPoint.y??bossPoint[1])||42,true);renderMeters();
  requestAnimationFrame(()=>{window.CellboundCombatPortraits?.refresh?.();bsStripDirectionBlips()});
  feed('Power restored. Dr. Vex Calder enters the generator hall.')
 }
