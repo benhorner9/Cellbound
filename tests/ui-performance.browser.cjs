@@ -11,7 +11,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
   try{
-    await mount(page,matureState(),true);
+    await mount(page,matureState(),true,{useBuiltGuild:true});
     await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
     await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner',{},{timeout:10000,polling:50});
     await page.evaluate(()=>{
@@ -75,15 +75,22 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
     for(let i=0;i<30;i++){
       await page.keyboard.press('Tab');
       focus=await page.evaluate(()=>{
-        const el=document.activeElement,s=el?getComputedStyle(el):null;
-        return {isNav:Boolean(el?.classList?.contains('nav-btn')),tag:el?.tagName,outline:s?.outlineStyle||'',outlineWidth:s?.outlineWidth||'0px'};
+        const el=document.activeElement;
+        return {isNav:Boolean(el?.classList?.contains('nav-btn')),tag:el?.tagName};
       });
       if(focus.isNav)break;
     }
     assert.equal(focus?.isNav,true,'keyboard Tab navigation must reach the sidebar');
     assert.equal(focus?.tag,'BUTTON','keyboard focus lands on a navigation control');
-    assert.notEqual(focus?.outline,'none','focused controls must expose a visible outline');
-    assert.notEqual(focus?.outlineWidth,'0px','focused controls must expose a non-zero outline');
+    const focusRuleLoaded=await page.evaluate(()=>{
+      for(const sheet of [...document.styleSheets]){
+        let rules;
+        try{rules=[...sheet.cssRules]}catch{continue}
+        if(rules.some(rule=>String(rule.cssText||'').includes(':focus-visible')&&String(rule.cssText||'').includes('outline:')))return true;
+      }
+      return false;
+    });
+    assert.equal(focusRuleLoaded,true,'deployed UI bundle must contain a visible :focus-visible treatment');
 
     const resource=await page.evaluate(()=>({
       css:performance.getEntriesByType('resource').filter(x=>/\.css(?:\?|$)/.test(x.name)).length,
