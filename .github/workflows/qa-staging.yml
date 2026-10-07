@@ -37,6 +37,7 @@ jobs:
           node tests/beta-balance.cjs
           node tests/beta-operations.cjs
           node tests/beta-ui-polish.cjs
+          node tests/gameplay-contracts.cjs
           node tests/living-combat.authority.cjs
 
       - name: Install browser QA tools
@@ -56,6 +57,7 @@ jobs:
             tests/equipment-fit.browser.cjs \
             tests/race-identity.browser.cjs \
             tests/item-visuals-v2.browser.cjs \
+            tests/gameplay-regression.browser.cjs \
             tests/full-playthrough.browser.cjs
           do
             echo "===== Chromium: $test ====="
@@ -77,6 +79,7 @@ jobs:
             tests/equipment-fit.browser.cjs \
             tests/race-identity.browser.cjs \
             tests/item-visuals-v2.browser.cjs \
+            tests/gameplay-regression.browser.cjs \
             tests/full-playthrough.browser.cjs
           do
             echo "===== WebKit: $test ====="

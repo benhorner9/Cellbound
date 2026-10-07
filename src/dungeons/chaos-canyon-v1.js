@@ -135,7 +135,7 @@ function ccBindEndgamePrep(){
 function ccStrategyButtons(key,items){
  return '<div class="eg-prep-tabs hs-strategy-tabs" data-cc-plan="'+key+'">'+items.map(x=>'<button type="button" data-cc-pick="'+key+'|'+x[0]+'" class="'+(ccTactics[key]===x[0]?'active':'')+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')+'</div>';
 }
-function applyHsStrategyPreset(value){
+function applyCcStrategyPreset(value){
  ccTactics.strategyPreset=value;
  if(value==='safe'){
    Object.assign(ccTactics,{pullStyle:'safe',cooldownUse:'difficult',interruptPriority:'high',interruptAssignment:'best',crowdControl:'enabled',defensiveUsage:'aggressive',addPriority:'immediate',movementDiscipline:'safe',bossPlan:'control'});
@@ -148,7 +148,7 @@ function applyHsStrategyPreset(value){
 function ccBindStrategy(){
  $$('[data-cc-pick]').forEach(b=>b.addEventListener('click',()=>{
   const [key,value]=b.dataset.ccPick.split('|');
-  if(key==='strategyPreset')applyHsStrategyPreset(value);else ccTactics[key]=value;
+  if(key==='strategyPreset')applyCcStrategyPreset(value);else ccTactics[key]=value;
   $$('[data-cc-plan="'+key+'"] button').forEach(x=>x.classList.toggle('active',x===b));
  }))
 }

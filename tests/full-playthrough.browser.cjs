@@ -118,12 +118,14 @@ async function mount(page,seedState=null,owner=false,options={}){
         if(simulateDungeonRuntime&&name==='begin_dungeon_attempt'){
           const count=Math.max(0,Number(localStorage.getItem(TEST_BEGIN_KEY))||0)+1;localStorage.setItem(TEST_BEGIN_KEY,String(count));
           const existing=readAttempt();if(existing?.active)return{data:existing,error:null};
-          const attempt={active:true,attemptId:'qa-attempt-1',seed:'qa-resume-seed',difficulty:args.p_difficulty||'normal',tier:Number(args.p_tier)||0,dungeonVersion:Number(args.p_dungeon_version)||2,seasonId:args.p_season_id||'qa',targetTimeMs:720000,runtimeState:{}};
+          const attempt={active:true,attemptId:'qa-attempt-'+count,seed:'qa-resume-seed-'+count,difficulty:args.p_difficulty||'normal',tier:Number(args.p_tier)||0,dungeonVersion:Number(args.p_dungeon_version)||2,seasonId:args.p_season_id||'qa',targetTimeMs:720000,runtimeState:{}};
           writeAttempt(attempt);return{data:attempt,error:null};
         }
         if(simulateDungeonRuntime&&name==='save_dungeon_attempt_runtime'){
           const saved=readAttempt()||{active:true,attemptId:args.p_attempt_id||'qa-attempt-1'};
-          const next={...saved,active:true,runtimeState:args.p_runtime_state||{},runtimeUpdatedAt:new Date().toISOString()};writeAttempt(next);return{data:{ok:true},error:null};
+          const phase=String(args.p_runtime_state?.phase||'');
+          const active=!['abandoned','failed','completed'].includes(phase);
+          const next={...saved,active,runtimeState:args.p_runtime_state||{},runtimeUpdatedAt:new Date().toISOString()};writeAttempt(next);return{data:{ok:true},error:null};
         }
         if(simulateDungeonRuntime&&name==='record_dungeon_run_v3'){
           const saved=readAttempt();if(saved)writeAttempt({...saved,active:false});
@@ -708,6 +710,9 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.close();
 }
 
+module.exports={mount,matureState,coreLoopState};
+
+if(require.main===module){
 (async()=>{
   const browser=await engine.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
   try{
@@ -722,3 +727,4 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, all-class staging access, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, beta analytics, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
+}
