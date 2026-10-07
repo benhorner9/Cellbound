@@ -210,3 +210,15 @@ body.cbcomic-open{overflow:hidden}
 .cbcomic-panel.has-art .cbcomic-panel-speaker,
 .cbcomic-panel.has-art .cbcomic-panel-caption,
 .cbcomic-panel.has-art .cbcomic-reveal-caption{z-index:3!important}
+
+/* Shared quest comic identity: keep later adventures inside the same presentation language. */
+.cbcomic-backdrop[data-theme="fourfold"]{--comic-gold:#d8b367;--comic-line:#7f6741}
+.cbcomic-backdrop[data-theme="fourfold"] .cbcomic-head{background:linear-gradient(90deg,#17130d,#101117 56%,#17101f)}
+.cbcomic-backdrop[data-theme="fourfold"] .cbcomic-page{background:#17120e}
+.cbcomic-backdrop[data-theme="manor"]{--comic-gold:#c79263;--comic-line:#784a3f}
+.cbcomic-backdrop[data-theme="manor"] .cbcomic-head{background:linear-gradient(90deg,#1a1110,#0b1116 58%,#170c0d)}
+.cbcomic-backdrop[data-theme="manor"] .cbcomic-page{background:#160f0e}
+.cbcomic-backdrop[data-theme="manor"] .cbcomic-panel:after{background:linear-gradient(180deg,rgba(7,2,2,.04) 12%,rgba(7,2,2,.28) 52%,rgba(5,2,2,.9) 100%)}
+.cbcomic-backdrop[data-theme="null"]{--comic-gold:#72d9d1;--comic-line:#397a7f}
+.cbcomic-backdrop[data-theme="null"] .cbcomic-head{background:linear-gradient(90deg,#07191c,#071013 58%,#06151a)}
+.cbcomic-backdrop[data-theme="null"] .cbcomic-page{background:#071315}
