@@ -96,6 +96,7 @@ const groups=Object.freeze({
   "world-presence-v1.js",
   "living-world-v1.js",
   "character-fit-viewer-v1.js",
+  "room-layout-runtime-v1.js",
   "release-v1.js",
   "comic-scenes-v1.js",
   "onboarding-v1.js",
