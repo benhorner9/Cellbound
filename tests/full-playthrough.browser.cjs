@@ -206,9 +206,9 @@ async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
   await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
   const fresh=await page.evaluate(()=>({slots:CellboundGame.getState().roster.map(c=>c.professions?.length),classes:CellboundGame.getState().roster.map(c=>c.class),allBeta:CellboundGame.getState().roster.every(c=>CellboundGame.isCharacterBetaPlayable(c))}));
   assert.deepEqual(fresh.slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
-  assert.equal(fresh.allBeta,true,'fresh guild creator only produces beta-playable classes');
+  assert.equal(fresh.allBeta,true,'fresh guild creator only produces currently playable classes');
   assert(fresh.classes.includes('Paladin'),'Paladin can fill the beta healer role');
-  assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party contains only the five beta classes');
+  assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party uses valid playable classes');
   const createdAppearance=await page.evaluate(()=>CellboundGame.getState().roster.map(c=>({id:c.id,race:c.race,appearance:c.appearance})));
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.CellboundGame?.ready===true);
@@ -307,13 +307,21 @@ async function mainGamePlaythrough(browser){
   assert(allOrder[0].startsWith('gear:'),'All Items puts equipment before crafting stock');
 
   await page.locator('[data-bank-category="Reagent"]').click();
-  await page.waitForTimeout(80);
+  await page.waitForFunction(()=>{
+    const select=document.querySelector('#bankCategory');
+    const visible=[...document.querySelectorAll('#bankGrid .bank-item')].filter(x=>x.dataset.hidden!=='1');
+    return select?.value==='Reagent'&&visible.length>0&&visible.every(x=>(x.dataset.evoKey||'').startsWith('mat:'));
+  },{},{timeout:5000,polling:25});
   const materialView=await page.evaluate(()=>[...document.querySelectorAll('#bankGrid .bank-item')]
     .filter(x=>x.dataset.hidden!=='1').map(x=>x.dataset.evoKey||''));
   assert(materialView.length>0&&materialView.every(x=>x.startsWith('mat:')),'Materials tab isolates reagents');
 
   await page.locator('[data-bank-category="Gear"]').click();
-  await page.waitForTimeout(80);
+  await page.waitForFunction(()=>{
+    const select=document.querySelector('#bankCategory');
+    const visible=[...document.querySelectorAll('#bankGrid .bank-item')].filter(x=>x.dataset.hidden!=='1');
+    return select?.value==='Gear'&&visible.length>0&&visible.every(x=>(x.dataset.evoKey||'').startsWith('gear:'));
+  },{},{timeout:5000,polling:25});
   const gearView=await page.evaluate(()=>[...document.querySelectorAll('#bankGrid .bank-item')]
     .filter(x=>x.dataset.hidden!=='1').map(x=>x.dataset.evoKey||''));
   assert(gearView.length>0&&gearView.every(x=>x.startsWith('gear:')),'Equipment tab contains only equipment');
@@ -521,12 +529,12 @@ async function classAvailabilityAndNullGatePlaythrough(browser){
   await page.waitForTimeout(80);
   assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('AVAILABLE'),'The Manor clear unlocks Signal From Nowhere');
 
-  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'beta class/Null gate validation emitted no unexpected browser errors');
+  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'class availability/Null gate validation emitted no unexpected browser errors');
   await page.close();
 }
 
 async function breakGamePlaythrough(browser){
-  // Corrupted/legacy save: duplicate party ids, unavailable beta class, negative stacks and currencies.
+  // Corrupted/legacy save: duplicate party ids, mixed class data, negative stacks and currencies.
   const corrupt=matureState();
   corrupt.roster[1]={...corrupt.roster[1],class:'Priest',spec:'Holy',level:99,xp:999};
   corrupt.party={tank:'tank',healer:'heal',dps:['mage','mage','rogue']};
@@ -711,6 +719,6 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await classAvailabilityAndNullGatePlaythrough(browser);
     await breakGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, beta analytics, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, all-class staging access, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, beta analytics, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
