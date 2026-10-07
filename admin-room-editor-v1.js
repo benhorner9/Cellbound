@@ -33,7 +33,7 @@ const CATALOG=[
   ['vorran','Archdruid Vorran','./assets/chaos-canyon/rooms/vorran.webp',[pt('entry','Entrance',50,98),pt('party','Party',50,70),pt('enemy','Vorran',50,38)]]
  ]},
  {id:'blackout-station',name:'Blackout Station',type:'Dungeon',rooms:[
-  ['grid','Grid Alignment',null,[pt('entry','Entrance',50,92),pt('exit','Generator Hall',50,8),pt('party','Party',50,76)]],
+  ['grid','Grid Alignment','./assets/dungeons/blackout-station.webp',[pt('entry','Entrance',50,92),pt('exit','Generator Hall',50,8),pt('party','Party',50,76)]],
   ['calder','Dr. Vex Calder','./assets/blackout-station/rooms/vex-calder-room.avif',[pt('entry','Entrance',10,50),pt('party','Party',30,50),pt('enemy','Dr. Calder',62,50),pt('mechanic','Tank',27,27),pt('mechanic','Damage',48,74),pt('mechanic','Healer',73,27)]]
  ]},
  {id:'fractured-ages',name:'The Fractured Ages',type:'Dungeon',rooms:[
@@ -54,13 +54,10 @@ const CATALOG=[
 ].map(group=>({...group,rooms:group.rooms.map(r=>({id:r[0],name:r[1],art:r[2],markers:r[3]}))}));
 
 const AUDIT=[
- {level:'blocker',title:'Hollow Sanctum quest card',copy:'quests-v2.js references assets/dungeons/hollow-sanctum.webp, but that file is not present in the repository.'},
- {level:'work',title:'Blackout Station room coverage',copy:'Only the Calder generator hall has dedicated playable room artwork. The grid/puzzle stage still needs its own production room scene.'},
- {level:'work',title:'The Manor room coverage',copy:'Current raid visuals are encounter/boss art. West Bedroom has no art at all; Dining Room and Kitchen currently share the Maids image.'},
- {level:'work',title:'Quest comic coverage',copy:'Tutorial and Null Complex have dedicated comic sets. Fourfold Lock and No Way Back currently have no comic presentation integration.'},
- {level:'review',title:'UI / combat style stack',copy:'The live shell still loads overlapping generations of combat polish and older quest/UI styles. These need a later cleanup pass before beta lock.'},
- {level:'review',title:'Fractured Ages placement',copy:'All five encounter images exist, but spawn/entrance/exit placement needs owner review because this content does not yet use one shared room-layout schema.'}
-];
+ {level:'work',title:'The Manor room coverage',copy:'Raid room artwork is handled in Step 4. The room editor deliberately does not substitute boss portraits for proper raid-room backgrounds.'},
+ {level:'work',title:'Quest comic coverage',copy:'Remaining story/comic presentation is handled in Step 3 after the dungeon presentation pass.'},
+ {level:'review',title:'Final beta UI cleanup',copy:'Global UI/combat style cleanup remains part of the hard Beta Gate after dungeon and story presentation are locked.'}
+]
 
 let opened=false;
 let contentId='ashen-vault';
