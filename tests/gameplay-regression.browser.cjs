@@ -77,7 +77,9 @@ async function waitClosed(page,selector){
     await page.evaluate(()=>CellboundBlackoutStation.open());
     await page.waitForSelector('#bs2dBackdrop:not([hidden]) [data-bs-owner-start]',{timeout:5000});
     await page.locator('#bs2dBackdrop [data-bs-owner-start]').click();
-    await page.waitForSelector('#bs2dBackdrop [data-combat-view="canonical-v1"]',{timeout:9000});
+    await page.waitForSelector('.cbd-backdrop[data-boss="vex-calder"] [data-cbd-begin]',{timeout:7000});
+    await page.locator('.cbd-backdrop[data-boss="vex-calder"] [data-cbd-begin]').click();
+    await page.waitForSelector('#bs2dBackdrop [data-combat-view="canonical-v1"]',{timeout:12000});
     assert.equal(await page.evaluate(()=>Number(localStorage.getItem('cellbound-test-dungeon-begins-v1'))),2,'re-entry after leaving starts a fresh Blackout attempt');
     const vex=await page.locator('#bs2dBackdrop [data-combat-view="canonical-v1"]').innerText();
     assert(/DR\. VEX CALDER|VEX CALDER/i.test(vex),'owner skip lands in the Dr. Vex Calder encounter');
