@@ -15,8 +15,168 @@ concurrency:
 
 jobs:
   qa:
-    name: Required staging QA
-    uses: ./.github/workflows/qa-staging.yml
+    name: Build and static QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact pushed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build
+        run: npm run build
+
+      - name: Appearance foundation tests
+        run: npm run test:appearance
+
+      - name: Core regression tests
+        run: |
+          node tests/admin-ux.cjs
+          node tests/beta-analytics.cjs
+          node tests/beta-balance.cjs
+          node tests/beta-operations.cjs
+          node tests/beta-ui-polish.cjs
+          node tests/gameplay-contracts.cjs
+          node tests/living-combat.authority.cjs
+
+      - name: Install browser QA tools
+        run: |
+          npm install --no-save --package-lock=false playwright@1.51.1
+          npx playwright install --with-deps chromium webkit
+
+      - name: Chromium browser regressions
+        id: chromium
+        continue-on-error: true
+        shell: bash
+        run: |
+          failed=0
+          for test in \
+            tests/login-screen.browser.cjs \
+            tests/living-combat.browser.cjs \
+            tests/equipment-fit.browser.cjs \
+            tests/race-identity.browser.cjs \
+            tests/item-visuals-v2.browser.cjs \
+            tests/gameplay-regression.browser.cjs \
+            tests/full-playthrough.browser.cjs
+          do
+            echo "===== Chromium: $test ====="
+            node "$test" || failed=1
+          done
+          exit "$failed"
+
+      - name: WebKit browser regressions
+        id: webkit
+        continue-on-error: true
+        shell: bash
+        env:
+          CELLBOUND_TEST_ENGINE: webkit
+        run: |
+          failed=0
+          for test in \
+            tests/login-screen.browser.cjs \
+            tests/living-combat.browser.cjs \
+            tests/equipment-fit.browser.cjs \
+            tests/race-identity.browser.cjs \
+            tests/item-visuals-v2.browser.cjs \
+            tests/gameplay-regression.browser.cjs \
+            tests/full-playthrough.browser.cjs
+          do
+            echo "===== WebKit: $test ====="
+            node "$test" || failed=1
+          done
+          exit "$failed"
+
+      - name: JavaScript syntax sweep
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r file; do
+            node --check "$file" >/dev/null
+          done < <(find . -type f \( -name '*.js' -o -name '*.cjs' \) \
+            -not -path './node_modules/*' -not -path './dist/*' -print)
+          echo "JavaScript syntax sweep passed."
+
+      - name: HTML and built-asset integrity
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path=require('path');
+          let failed=false;
+          const fail=m=>{console.error('ERROR:',m);failed=true};
+          const warn=m=>console.warn('WARN:',m);
+
+          for(const htmlName of ['index.html','guild.html']){
+            const p=path.join('dist',htmlName);
+            if(!fs.existsSync(p)){fail('Missing '+p);continue}
+            const html=fs.readFileSync(p,'utf8');
+
+            const ids=[...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
+            const seen=new Map();
+            for(const id of ids) seen.set(id,(seen.get(id)||0)+1);
+            for(const [id,count] of seen) if(count>1) fail(htmlName+' duplicate id "'+id+'" x'+count);
+
+            const refs=[...html.matchAll(/\b(?:src|href)=["']([^"'#?]+)(?:[?#][^"']*)?["']/g)].map(m=>m[1]);
+            for(const ref of refs){
+              if(/^(?:https?:|mailto:|tel:|data:|javascript:)/i.test(ref)) continue;
+              const clean=ref.replace(/^\.\//,'');
+              const target=path.join('dist',clean);
+              if(clean && !fs.existsSync(target)) fail(htmlName+' missing local reference '+ref);
+            }
+          }
+
+          const guild=fs.readFileSync('dist/guild.html','utf8');
+          const scripts=[...guild.matchAll(/<script[^>]+src=["']([^"']+)["']/g)].map(m=>m[1].split('?')[0]);
+          const styles=[...guild.matchAll(/<link[^>]+rel=["']stylesheet["'][^>]+href=["']([^"']+)["']/g)].map(m=>m[1].split('?')[0]);
+          for(const [kind,list] of [['script',scripts],['stylesheet',styles]]){
+            const counts=new Map();
+            list.forEach(x=>counts.set(x,(counts.get(x)||0)+1));
+            for(const [ref,count] of counts) if(count>1) fail('guild.html duplicate '+kind+' '+ref+' x'+count);
+          }
+
+          const big=[];
+          const walk=d=>{
+            for(const e of fs.readdirSync(d,{withFileTypes:true})){
+              const p=path.join(d,e.name);
+              if(e.isDirectory()) walk(p);
+              else {
+                const size=fs.statSync(p).size;
+                if(/\.(?:js|css)$/i.test(p)&&size>250000) big.push([p,size]);
+              }
+            }
+          };
+          walk('dist');
+          big.sort((a,b)=>b[1]-a[1]);
+          big.forEach(([p,s])=>warn('Large runtime asset '+p+' '+Math.round(s/1024)+' KB'));
+
+          if(failed) process.exit(1);
+          console.log('HTML and built-asset integrity passed.');
+          NODE
+
+      - name: Browser regression gate
+        if: always() && (steps.chromium.outcome == 'failure' || steps.webkit.outcome == 'failure')
+        run: |
+          echo "One or more browser regression suites failed. See the Chromium/WebKit steps above."
+          exit 1
+
+      - name: QA inventory
+        if: always()
+        shell: bash
+        run: |
+          echo "===== Largest JS/CSS ====="
+          find dist -type f \( -name '*.js' -o -name '*.css' \) -printf '%s %p\n' | sort -nr | head -25
+          echo "===== TODO/FIXME/HACK markers ====="
+          grep -RniE 'TODO|FIXME|HACK|TEMPORARY' --include='*.js' --include='*.css' --include='*.html' . \
+            --exclude-dir=node_modules --exclude-dir=dist | head -100 || true
+          echo "===== Console warnings/errors in source ====="
+          grep -RniE 'console\.(warn|error)\(' --include='*.js' . \
+            --exclude-dir=node_modules --exclude-dir=dist | head -100 || true
 
   deploy:
     name: Deploy QA-approved staging build
