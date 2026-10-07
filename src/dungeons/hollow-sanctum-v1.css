@@ -821,7 +821,7 @@
 .hs2d-arena.hollow-live-room .hs2d-unit{
   transform:translate(-50%,-50%) scale(var(--hs-depth-scale,1));
   transform-origin:50% 75%;
-  filter:drop-shadow(0 7px 5px rgba(0,0,0,.52)) drop-shadow(0 0 4px rgba(72,225,215,.13));
+  filter:drop-shadow(0 7px 5px rgba(0,0,0,.52));
   transition:left .55s ease,top .55s ease,opacity .3s ease,transform .25s ease;
 }
 .hs2d-arena.hollow-live-room .hs2d-unit.attack{transform:translate(-50%,-50%) scale(calc(var(--hs-depth-scale,1) * 1.13))}
@@ -901,7 +901,7 @@
   box-shadow:inset 0 0 46px rgba(0,0,0,.14);
 }
 .hs2d-arena.hollow-live-room .hs2d-unit{
-  filter:drop-shadow(0 7px 5px rgba(0,0,0,.55)) drop-shadow(0 0 4px rgba(49,223,210,.14));
+  filter:drop-shadow(0 7px 5px rgba(0,0,0,.55));
 }
 .hs2d-arena.hollow-live-room .hs2d-unit:before{
   background:radial-gradient(ellipse,rgba(0,0,0,.78) 0 25%,rgba(0,0,0,.38) 44%,transparent 73%);
@@ -921,3 +921,6 @@
 .hs2d-unified-shell .cb2d-controls button.recommended b{color:#f2d68f}
 @media(max-width:900px){.hs2d-unified-shell .cb2d-controls{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.hs2d-unified-shell .cb2d-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Match the canonical Ashen character grounding: no artificial halo/disc below units. */
+.hs2d-arena.hollow-live-room .hs2d-unit:before{display:none!important}
