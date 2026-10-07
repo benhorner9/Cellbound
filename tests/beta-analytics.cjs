@@ -4,7 +4,7 @@ const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 const analytics=read('analytics-v1.js');
 for(const hook of [
-  "db.from('analytics_events').insert(row)",
+  "db.rpc('cellbound_record_analytics_event'",
   "track('app_open'",
   "track('view_opened'",
   "characterCreated(c,'existing_at_tracking_start')",
@@ -83,6 +83,13 @@ for(const hook of [
   'public.cellbound_admin_analytics_summary',
   'Admin access required'
 ])assert(migration.includes(hook),'Analytics database contract is missing '+hook);
+const stabilityMigration=read('supabase/migrations/20261007084500_block1_runtime_stability.sql');
+for(const hook of [
+  'public.cellbound_record_analytics_event',
+  'on conflict do nothing',
+  'grant execute on function public.cellbound_record_analytics_event',
+  'delete from public.cellbound_world_presence as stale'
+])assert(stabilityMigration.includes(hook),'Block 1 analytics/presence stability contract is missing '+hook);
 assert(!migration.includes('grant select on table public.analytics_events to authenticated'),'Players must not be able to read the analytics event table directly');
 assert(!migration.includes('grant update on table public.analytics_events to authenticated'),'Analytics events must be append-only for players');
 assert(!migration.includes('grant delete on table public.analytics_events to authenticated'),'Analytics events must not be deletable by players');
