@@ -2,8 +2,10 @@ const fs=require('fs');
 const path=require('path');
 const vm=require('vm');
 const zlib=require('zlib');
-const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','item-art-v1.css','foundations.css','presentation-fx-v1.css','combat-polish-v2.css','economy-v2.css','trading-post-v3.css','social-v3.css','pvp-v1.css','evolution-v1.css','dungeon-2d-v1.css','expedition-presentation-v1.css','null-complex-v1.css','boss-dossier-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','manor-raid-v1.css','twelve-below-v1.css','admin-v1.css','beta-ops-v1.css','admin-beta-ops-v1.css','admin-analytics-v1.css','living-world-v1.css','dungeon-generator-v1.css','character-fit-viewer-v1.css','release-v1.css','comic-scenes-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','no-way-back-v1.css','fractured-ages-v1.css','dungeon-theme-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css','roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','bank-v2.css','character-command-v1.css','character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','layout-safety-v1.css','class-build-v1.js','gear-data.js','profession-data.js','balance-v1.js','item-atlas-v2.js','item-visuals-v2.js','item-art-v1.js','character-rig-v1.js','character-portraits-v1.js','combat-portraits-v1.js','combat-identities-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','combat-polish-v2.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','pvp-v1.js','evolution-v1.js','expedition-presentation-v1.js','null-complex-v1.js','boss-dossier-v1.js','ashen-live-scenes-v1.js','dungeon-2d-v1.js','twelve-below-v1.js','admin-v1.js','analytics-v1.js','beta-ops-v1.js','admin-beta-ops-v1.js','admin-analytics-v1.js','world-presence-v1.js','living-world-v1.js','dungeon-generator-v1.js','character-fit-viewer-v1.js','release-v1.js','comic-scenes-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','manor-raid-v1.js','quests-v2.js','fourfold-lock-v1.js','no-way-back-v1.js','fractured-ages-v1.js','mobile-v1.js','game-feel-v1.js'];
-files.push('character-forge-v1.js','character-forge-v1.css','combat-polish-v3.js','combat-polish-v3.css','combat-physical-v4.js','combat-physical-v4.css');
+const RuntimeManifest=require('./tools/runtime-manifest.cjs');
+const files=RuntimeManifest.files;
+const sourcePath=file=>RuntimeManifest.sourcePath(__dirname,file);
+const readSource=file=>fs.readFileSync(sourcePath(file),'utf8');
 const retiredCombatSources=['combat-3d-v1.js','combat-3d-v1.css','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-viewer-v1.css','pvp-match-v1.js','pvp-match-v1.css'];
 for(const retired of retiredCombatSources)if(fs.existsSync(path.join(__dirname,retired)))throw new Error('Retired standalone combat source returned: '+retired);
 const retiredCharacterSources=['creation-centre-v1.js','creation-centre-v1.css','scripts/package-race-bases.cjs'];
@@ -37,6 +39,10 @@ for(const [label,list] of [['runtime file',files],['asset',assets]]){
 const rootRuntimeFiles=fs.readdirSync(__dirname).filter(name=>/\.(?:js|css)$/.test(name)&&name!=='build.js');
 const orphanRuntimeFiles=rootRuntimeFiles.filter(name=>!files.includes(name));
 if(orphanRuntimeFiles.length)throw new Error('Unshipped root runtime files must be linked or removed: '+orphanRuntimeFiles.join(', '));
+const misplacedMovedRuntime=RuntimeManifest.moved.filter(name=>fs.existsSync(path.join(__dirname,name)));
+if(misplacedMovedRuntime.length)throw new Error('Domain-organised runtime returned to repository root: '+misplacedMovedRuntime.join(', '));
+const missingRuntimeSources=files.filter(file=>!fs.existsSync(sourcePath(file)));
+if(missingRuntimeSources.length)throw new Error('Runtime source manifest points at missing files: '+missingRuntimeSources.join(', '));
 
 const out=path.join(__dirname,'dist');
 const buildId=String(process.env.GITHUB_SHA||process.env.CELLBOUND_BUILD||'local-dev').trim();
@@ -45,7 +51,7 @@ fs.rmSync(out,{recursive:true,force:true});
 fs.mkdirSync(out,{recursive:true});
 const touchFix=`\n<style id="cellbound-ios-touch-fix">html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}button,a,input,label,[role="button"]{touch-action:manipulation}@media (hover:none) and (pointer:coarse){input,select,textarea{font-size:16px!important}}</style>\n`;
 for(const file of files){
-  const src=path.join(__dirname,file),dest=path.join(out,file);
+  const src=sourcePath(file),dest=path.join(out,file);
   let contents=fs.readFileSync(src,'utf8');
   if(file.endsWith('.js')){
     try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}
@@ -122,7 +128,7 @@ if(file==='quests-v2.js'){
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
-    for(const hook of ["effect==='socket-gem'","effect==='character-gadget'","effect==='party-food'","effect==='party-scroll'","attachmentFamily==='relic-core'"])if(!fs.readFileSync(path.join(__dirname,'item-visuals-v2.js'),'utf8').includes(hook))throw new Error('New crafted item artwork type is missing '+hook);
+    for(const hook of ["effect==='socket-gem'","effect==='character-gadget'","effect==='party-food'","effect==='party-scroll'","attachmentFamily==='relic-core'"])if(!readSource('item-visuals-v2.js').includes(hook))throw new Error('New crafted item artwork type is missing '+hook);
     if(!contents.includes('P?.craftedRarity?.(r.level,r.endgame)'))throw new Error('Crafted item artwork rarity no longer follows profession progression');
   }
   if(file==='evolution-v1.css'){
@@ -661,7 +667,7 @@ if(file==='quests-v2.js'){
     if(qNav<0||dNav<0||aNav<0||rNav<0||!(qNav<dNav&&dNav<aNav&&aNav<rNav))throw new Error('Adventure navigation must remain Quests → Dungeons → Activities → Raids');
     if(contents.includes('data-hub="adventure" data-view="endgame"'))throw new Error('Endgame must not return as a primary Adventure navigation destination');
     if(!contents.includes('<section id="raids" class="view">')||!contents.includes('id="manorRaidMount"'))throw new Error('Raids view or Manor raid mount is missing');
-    const manorRuntime=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8'),sharedViewerRuntime=fs.readFileSync(path.join(__dirname,'dungeon-2d-v1.js'),'utf8');
+    const manorRuntime=readSource('manor-raid-v1.js'),sharedViewerRuntime=readSource('dungeon-2d-v1.js');
     if(!manorRuntime.includes("function combatEngine(){return window.CellboundCombatStandard}")||!manorRuntime.includes("zone:'manor-raid'")||!manorRuntime.includes('playSharedEncounter'))throw new Error('The Manor must use the standard Combat Reborn gateway and shared CB2D viewer');
     for(const hook of ["manor_set_ready","3 SECOND COUNTDOWN","subscribeRaidRealtime","encounterStartAt","readyA","readyB"])if(!manorRuntime.includes(hook))throw new Error('Manor synchronized ready check is missing '+hook);
     for(const hook of ["pendingRewardSession","UNCLAIMED MANOR REWARD","data-mr-pending-loot"])if(!manorRuntime.includes(hook))throw new Error('Manor released-group reward recovery is missing '+hook);
@@ -671,7 +677,7 @@ if(file==='quests-v2.js'){
     if(callbackAt<0||renderAt<0||callbackAt>renderAt)throw new Error('Raid interaction callbacks must fire before visual event rendering');
     for(const hook of ["host.style.setProperty('z-index','2147483647','important')","host.style.setProperty('display','grid','important')","handledScreechTokens","Manor Screech menu failed to open"])if(!manorRuntime.includes(hook))throw new Error('Manor Screech modal hardening is missing '+hook);
     for(const hook of ["mountMaidLinkOverlay","updateMaidLinkOverlay","LINKED MAIDS · LIVE SYNC","PARTNER ROOM","HEAL PENALTY"])if(!manorRuntime.includes(hook))throw new Error('Manor linked-Maid live overlay is missing '+hook);
-    const combatRuntime=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
+    const combatRuntime=readSource('combat-reborn-v1.js');
     if(!combatRuntime.includes("emit(ctx,'INTERACTION_REQUIRED'")||!manorRuntime.includes("type:'interaction'")||!manorRuntime.includes('onEvent:handleRaidCombatEvent'))throw new Error('Manor Screech must be driven by Combat Reborn interaction events');
     const endgameStart=contents.indexOf('<section id="endgame" class="view">'),endgameEnd=contents.indexOf('<section id="world" class="view">',endgameStart);
     if(endgameStart<0||endgameEnd<0||contents.slice(endgameStart,endgameEnd).includes('manorRaidMount'))throw new Error('The Manor must not be mounted inside Endgame');
@@ -714,8 +720,8 @@ if(file==='quests-v2.js'){
 {
   const portraitSandbox={console,Math,Date};portraitSandbox.window=portraitSandbox;portraitSandbox.globalThis=portraitSandbox;
   vm.createContext(portraitSandbox);
-  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),portraitSandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(readSource(file),portraitSandbox);
+  vm.runInContext(readSource('character-portraits-v1.js'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
   if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Classic paper-doll runtime failed to load');
   if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==4||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll Item Visuals V2 / fit v4 contract is missing');
@@ -766,10 +772,10 @@ if(file==='quests-v2.js'){
 {
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
-  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
+  vm.runInContext(readSource('class-build-v1.js'),sandbox,{filename:'class-build-v1.js'});
+  vm.runInContext(readSource('gear-data.js'),sandbox,{filename:'gear-data.js'});
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(readSource(file),sandbox);
+  vm.runInContext(readSource('character-portraits-v1.js'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
   if(!G||!P)throw new Error('Classic beta character/equipment runtime failed to load');
   if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==4||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll full-class Item Visuals V2 / fit v4 lock is missing');
@@ -879,7 +885,7 @@ for(const file of ["assets/comics/null-complex/voss-signal.webp","assets/comics/
 for(const file of ['assets/comics/thirteenth-bell/sealed_letter.webp','assets/comics/thirteenth-bell/greywake_arrival.webp','assets/comics/thirteenth-bell/locked_house.webp','assets/comics/thirteenth-bell/final_run.webp','assets/comics/thirteenth-bell/bellkeeper.webp','assets/comics/thirteenth-bell/bell_breaks.webp','assets/comics/thirteenth-bell/greywake_freed.webp','assets/comics/thirteenth-bell/departure.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing optimized Thirteenth Bell comic artwork in production package: ${file}`)}
 for(const file of ['assets/dungeons/ashen-vault.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Dungeon Journal artwork in production package: ${file}`)}
 for(const file of ['assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing final boss artwork in production package: ${file}`)}
-const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portraits-v1.js'),'utf8');
+const combatPortraitRuntime=readSource('combat-portraits-v1.js');
  for(const hook of ['cb-combat-has-boss-portrait','ashen-vault-vaultheart.webp','hollow-sanctum-bound-choir.webp','chaos-canyon-vorran.webp','blackout-station-calder.webp','fractured-ages-old-man.webp'])if(!combatPortraitRuntime.includes(hook))throw new Error('Boss combat portrait mapping is missing '+hook);
  for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','manor-raid-v1.css','manor-raid-v1.js','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js','pvp-v1.css','pvp-v1.js','expedition-presentation-v1.css','expedition-presentation-v1.js','boss-dossier-v1.css','boss-dossier-v1.js','dungeon-theme-v1.css','twelve-below-v1.css','twelve-below-v1.js','combat-polish-v2.css','combat-polish-v2.js','combat-portraits-v1.css','combat-portraits-v1.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
 {
@@ -908,9 +914,9 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 {
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'endgame-data-v1.js'),'utf8'),sandbox,{filename:'endgame-data-v1.js'});
+  vm.runInContext(readSource('class-build-v1.js'),sandbox,{filename:'class-build-v1.js'});
+  vm.runInContext(readSource('gear-data.js'),sandbox,{filename:'gear-data.js'});
+  vm.runInContext(readSource('endgame-data-v1.js'),sandbox,{filename:'endgame-data-v1.js'});
   const G=sandbox.CellboundGear,D=sandbox.CellboundEndgameData;
   if(!G||!D)throw new Error('Chapter 1 gear validation runtime failed to load');
   const progression=[
@@ -958,9 +964,9 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const fractured=D.lootProfileFor('fractured-ages','normal',0),peak=D.lootProfileFor('chaos-canyon','cellbound',20);
   if(fractured.itemLevel?.Weapon!==40||Math.max(...Object.keys(fractured.tiers||{}).map(Number))>4)throw new Error('Fractured Ages loot profile exceeds Chapter 1 Normal ceiling');
   if(peak.itemLevel?.Weapon!==44||Number(peak.tiers?.[5]||0)>0)throw new Error('Cellbound+ exceeds Tier 4 / Item Level 44 ceiling');
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'profession-data.js'),'utf8'),sandbox,{filename:'profession-data.js'});
-  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'item-art-v1.js'),'utf8'),sandbox,{filename:'item-art-v1.js'});
+  vm.runInContext(readSource('profession-data.js'),sandbox,{filename:'profession-data.js'});
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(readSource(file),sandbox);
+  vm.runInContext(readSource('item-art-v1.js'),sandbox,{filename:'item-art-v1.js'});
   const P=sandbox.CellboundProfessions,IA=sandbox.CellboundItemArt;
   if(!P||!IA)throw new Error('Complete item artwork runtime failed to load');
   const professionEntries=Object.entries(P.PROFESSIONS||{});
@@ -1022,12 +1028,12 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Chapter 1 gear ladder validation passed. Full item artwork coverage passed: '+G.items.length+' gear, '+Object.keys(P.MATERIALS||{}).length+' materials, '+craftOutputs.length+' crafted items.');
 }
 {
-  const combatCode=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
-  const combatStandardCode=fs.readFileSync(path.join(__dirname,'combat-standard-v1.js'),'utf8');
+  const combatCode=readSource('combat-reborn-v1.js');
+  const combatStandardCode=readSource('combat-standard-v1.js');
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
+  vm.runInContext(readSource('class-build-v1.js'),sandbox,{filename:'class-build-v1.js'});
+  vm.runInContext(readSource('gear-data.js'),sandbox,{filename:'gear-data.js'});
   vm.runInContext(combatCode,sandbox,{filename:'combat-reborn-v1.js'});
   vm.runInContext(combatStandardCode,sandbox,{filename:'combat-standard-v1.js'});
   const result=sandbox.CellboundCombatReborn?.tests?.run?.();
@@ -1093,7 +1099,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Chapter 0 Combat Reborn tutorial smoke test passed.');
 }
 {
-  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  const playthrough=readSource('tests/full-playthrough.browser.cjs');
   for(const hook of [
     'function coreGameplayLoopPlaythrough(browser)',
     "CellboundGame.partyItemLevel()),29",
@@ -1105,7 +1111,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "the same harder dungeon becomes enterable after progression raises party Item Level"
   ])if(!playthrough.includes(hook))throw new Error('Beta core gameplay loop regression coverage is missing '+hook);
 
-  const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
+  const quests=readSource('quests-v2.js');
   for(const hook of [
     "G?.createQuestGear?.(c,slot,tier,profile",
     "Game.addBankItem?.(item)",
@@ -1113,7 +1119,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "q.flags.hollowSanctumUnlocked=true"
   ])if(!quests.includes(hook))throw new Error('Quest-to-Bank/unlock core loop contract is missing '+hook);
 
-  const bank=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  const bank=readSource('guild-v4.js');
   for(const hook of [
     'function equipBankItem(',
     'function bankDismantleYield(',
@@ -1121,7 +1127,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n))"
   ])if(!bank.includes(hook))throw new Error('Bank equipment/salvage core loop contract is missing '+hook);
 
-  const economy=fs.readFileSync(path.join(__dirname,'economy-v2.js'),'utf8');
+  const economy=readSource('economy-v2.js');
   for(const hook of [
     'function beginCraft(',
     'function finishTimedCraft(',
@@ -1129,14 +1135,14 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "if(out.category==='consumable')addConsumable"
   ])if(!economy.includes(hook))throw new Error('Profession crafting core loop contract is missing '+hook);
 
-  const professions=fs.readFileSync(path.join(__dirname,'profession-data.js'),'utf8');
+  const professions=readSource('profession-data.js');
   for(const hook of [
     "Alchemy:[\n    [1,{'hollowroot':2}]",
     "function rollReagents(bossId)",
     "function rollContentReagents(contentId"
   ])if(!professions.includes(hook))throw new Error('Dungeon profession-reagent loop contract is missing '+hook);
 
-  const ashen=fs.readFileSync(path.join(__dirname,'dungeon-2d-v1.js'),'utf8');
+  const ashen=readSource('dungeon-2d-v1.js');
   for(const hook of [
     'P.rollReagents(s.bossId)',
     'Game.addMaterial(d.key,d.quantity)',
@@ -1147,7 +1153,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 }
 
 {
-  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  const guild=readSource('guild-v4.js');
   for(const hook of [
     "const BETA_PLAYABLE_CLASSES=Object.freeze(Object.keys(classes))",
     "function adminRole()",
@@ -1161,14 +1167,14 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "betaPlayableClasses:BETA_PLAYABLE_CLASSES"
   ])if(!guild.includes(hook))throw new Error('Staging balance class access / Owner-Admin bypass contract is missing '+hook);
 
-  const onboarding=fs.readFileSync(path.join(__dirname,'onboarding-v1.js'),'utf8');
+  const onboarding=readSource('onboarding-v1.js');
   for(const hook of [
     "Game?.isBetaClassPlayable&&!Game.isBetaClassPlayable(klass)",
     "const safeDraft=draft.map",
     "No beta-playable class is available for "
   ])if(!onboarding.includes(hook))throw new Error('Character creator beta-class lock is missing '+hook);
 
-  const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
+  const quests=readSource('quests-v2.js');
   for(const hook of [
     "const manorCleared=()=>",
     "const nullQuestAvailable=()=>",
@@ -1176,7 +1182,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "Complete The Manor raid before investigating NULL//07."
   ])if(!quests.includes(hook))throw new Error('Manor-gated Null Complex quest contract is missing '+hook);
 
-  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  const manor=readSource('manor-raid-v1.js');
   for(const hook of [
     "async function markManorCleared()",
     "s.progression.manorRaidCleared=true",
@@ -1184,17 +1190,17 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "Game.isBetaClassPlayable(requested)?requested"
   ])if(!manor.includes(hook))throw new Error('Manor completion/reward beta contract is missing '+hook);
 
-  const endgame=fs.readFileSync(path.join(__dirname,'endgame-v1.js'),'utf8');
+  const endgame=readSource('endgame-v1.js');
   if(!endgame.includes("Game.isBetaClassPlayable(x.class)"))throw new Error('Weekly endgame rewards must exclude unavailable beta classes');
 
-  const nullComplex=fs.readFileSync(path.join(__dirname,'null-complex-v1.js'),'utf8');
+  const nullComplex=readSource('null-complex-v1.js');
   for(const hook of [
     "function manorCleared()",
     "manorCleared()&&(s?.progression?.nullComplexUnlocked",
     "Complete The Manor raid before investigating the Null Complex."
   ])if(!nullComplex.includes(hook))throw new Error('Null Complex activity Manor gate is missing '+hook);
 
-  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const shell=readSource('guild.html');
   for(const hook of [
     'chaos-canyon-v1.js',
     'blackout-station-v1.js',
@@ -1204,7 +1210,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'id="fracturedAgesMount"'
   ])if(!shell.includes(hook))throw new Error('Full dungeon content must remain included during beta: '+hook);
 
-  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  const playthrough=readSource('tests/full-playthrough.browser.cjs');
   for(const hook of [
     'function betaClassAndNullGatePlaythrough(browser)',
     'all dungeon runtimes remain included',
@@ -1215,7 +1221,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 }
 
 {
-  const balance=fs.readFileSync(path.join(__dirname,'balance-v1.js'),'utf8');
+  const balance=readSource('balance-v1.js');
   for(const hook of [
     "SHIPWRIGHT_KIT_COST=1000",
     "ashesEastRoad:1850",
@@ -1223,20 +1229,20 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "return [0,.35,.60,.85][n]||.35"
   ])if(!balance.includes(hook))throw new Error('Beta balance contract is missing '+hook);
 
-  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const shell=readSource('guild.html');
   if(!/balance-v1\.js\?v=\d+/.test(shell))throw new Error('Beta balance runtime is not versioned in guild.html');
 
-  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  const guild=readSource('guild-v4.js');
   for(const hook of ['function awardPartyXp(', 'averagePartyLevel', 'BAL?.PVE_WIPE_CELL_SHOCK'])if(!guild.includes(hook))throw new Error('Shared beta progression balance is missing '+hook);
 
-  const bell=fs.readFileSync(path.join(__dirname,'thirteenth-bell-v1.js'),'utf8');
+  const bell=readSource('thirteenth-bell-v1.js');
   if(!bell.includes('hollowFirstClear'))throw new Error('The Thirteenth Bell must follow a Hollow Sanctum clear');
 
   console.log('Beta Step 6 progression and economy contracts are release-gated.');
 }
 
 {
-  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  const guild=readSource('guild-v4.js');
   for(const hook of [
     'const bankUpgradeCooldowns=new Map()',
     'const seen=new Set(),slots=',
@@ -1246,15 +1252,15 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'bankUpgradeCooldowns.set(id,now+800)'
   ])if(!guild.includes(hook))throw new Error('Beta Step 8 save/action hardening is missing '+hook);
 
-  const endgame=fs.readFileSync(path.join(__dirname,'endgame-v1.js'),'utf8');
+  const endgame=readSource('endgame-v1.js');
   for(const hook of ['attemptStartPromises={}', 'if(attemptStartPromises[dungeonId])return attemptStartPromises[dungeonId]', 'delete attemptStartPromises[dungeonId]'])
     if(!endgame.includes(hook))throw new Error('Beta Step 8 dungeon-start dedupe is missing '+hook);
 
-  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  const manor=readSource('manor-raid-v1.js');
   for(const hook of ['raidStartBusy=false', 'if(raidStartBusy)return;raidStartBusy=true', 'finally{raidStartBusy=false}'])
     if(!manor.includes(hook))throw new Error('Beta Step 8 Manor start guard is missing '+hook);
 
-  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  const playthrough=readSource('tests/full-playthrough.browser.cjs');
   for(const hook of [
     'async function breakGamePlaythrough(browser)',
     'corrupted saves cannot duplicate the same adventurer across party slots',
@@ -1264,10 +1270,10 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'refresh during a saved combat phase resumes the existing dungeon attempt'
   ])if(!playthrough.includes(hook))throw new Error('Beta Step 8 adversarial browser coverage is missing '+hook);
 
-  const auth=fs.readFileSync(path.join(__dirname,'auth.js'),'utf8');
+  const auth=readSource('auth.js');
   for(const hook of ["const authReturnUrl=()=>new URL('./index.html',location.href).href", 'emailRedirectTo:authReturnUrl()', 'redirectTo:authReturnUrl()'])
     if(!auth.includes(hook))throw new Error('Beta Step 8 auth return-path hardening is missing '+hook);
-  const login=fs.readFileSync(path.join(__dirname,'tests/login-screen.browser.cjs'),'utf8');
+  const login=readSource('tests/login-screen.browser.cjs');
   for(const hook of ['verification email returns to the current Cellbound host', 'password reset email returns to the current Cellbound host'])
     if(!login.includes(hook))throw new Error('Beta Step 8 auth redirect regression is missing '+hook);
 
@@ -1276,7 +1282,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 
 
 {
-  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const shell=readSource('guild.html');
   for(const hook of [
     'data-view="support"',
     'id="betaReportForm"',
@@ -1287,16 +1293,16 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'admin-beta-ops-v1.js?v=2'
   ])if(!shell.includes(hook))throw new Error('Beta Step 9 game/admin support surface is missing '+hook);
 
-  const playerOps=fs.readFileSync(path.join(__dirname,'beta-ops-v1.js'),'utf8');
+  const playerOps=readSource('beta-ops-v1.js');
   for(const hook of ["db.from('beta_reports').insert(payload)",'contextSnapshot(sourceView)','PATCH_NOTES','refreshReports','ensureLauncher()','openReport(kind','data-quick-report="feature"'])
     if(!playerOps.includes(hook))throw new Error('Beta Step 9 player support runtime is missing '+hook);
 
-  const adminOps=fs.readFileSync(path.join(__dirname,'admin-beta-ops-v1.js'),'utf8');
+  const adminOps=readSource('admin-beta-ops-v1.js');
   for(const hook of ['cellbound_admin_beta_reports','cellbound_admin_update_beta_report','cellbound_admin_player_lookup','cellbound_admin_recover_player'])
     if(!adminOps.includes(hook))throw new Error('Beta Step 9 admin operations runtime is missing '+hook);
 
-  const migration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003181012_beta_operations_foundation.sql'),'utf8');
-  const featureMigration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003185957_beta_report_feature_requests.sql'),'utf8');
+  const migration=readSource('supabase/migrations/20261003181012_beta_operations_foundation.sql');
+  const featureMigration=readSource('supabase/migrations/20261003185957_beta_report_feature_requests.sql');
   for(const hook of ['alter table public.beta_reports enable row level security','with check ((select auth.uid()) = user_id)','revoke all on table public.beta_reports from anon, authenticated','cellbound_admin_recover_player'])
     if(!migration.includes(hook))throw new Error('Beta Step 9 database security contract is missing '+hook);
   if(!featureMigration.includes("'feature'::text"))throw new Error('Beta feature-request category migration is missing');
@@ -1308,19 +1314,19 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 }
 
 {
-  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const shell=readSource('guild.html');
   for(const hook of ['analytics-v1.js?v=1','admin-analytics-v1.js?v=1','admin-analytics-v1.css?v=1','id="adminAnalyticsClasses"','id="adminAnalyticsDungeons"','id="adminAnalyticsFeatures"'])
     if(!shell.includes(hook))throw new Error('Beta analytics Admin surface is missing '+hook);
 
-  const analytics=fs.readFileSync(path.join(__dirname,'analytics-v1.js'),'utf8');
+  const analytics=readSource('analytics-v1.js');
   for(const hook of ['character_created','level_reached','view_opened','app_open','analytics_events','existing_at_tracking_start'])
     if(!analytics.includes(hook))throw new Error('Beta analytics runtime is missing '+hook);
 
-  const adminAnalytics=fs.readFileSync(path.join(__dirname,'admin-analytics-v1.js'),'utf8');
+  const adminAnalytics=readSource('admin-analytics-v1.js');
   for(const hook of ['cellbound_admin_analytics_summary','adminAnalyticsClasses','adminAnalyticsDungeons','completion_rate','daily_activity'])
     if(!adminAnalytics.includes(hook))throw new Error('Beta analytics dashboard runtime is missing '+hook);
 
-  const analyticsMigration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003195133_beta_analytics_foundation.sql'),'utf8');
+  const analyticsMigration=readSource('supabase/migrations/20261003195133_beta_analytics_foundation.sql');
   for(const hook of ['alter table public.analytics_events enable row level security','with check ((select auth.uid()) = user_id)','cellbound_admin_analytics_summary','revoke all on table public.analytics_events from anon, authenticated'])
     if(!analyticsMigration.includes(hook))throw new Error('Beta analytics database contract is missing '+hook);
 
@@ -1328,11 +1334,11 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 }
 
 {
-  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const shell=readSource('guild.html');
   for(const hook of ['class="admin-workspace-nav"','data-admin-panel-tab="reports"','data-admin-panel-tab="analytics"','data-admin-panel-tab="players"','data-admin-panel-tab="tools"','<option value="open" selected>Open reports</option>'])
     if(!shell.includes(hook))throw new Error('Admin UX workspace contract is missing '+hook);
 
-  const admin=fs.readFileSync(path.join(__dirname,'admin-v1.js'),'utf8');
+  const admin=readSource('admin-v1.js');
   for(const hook of ['function setPanel(panel','cellbound:admin-panel-changed','admin-panel-filtered'])
     if(!admin.includes(hook))throw new Error('Admin UX runtime is missing '+hook);
 
@@ -1340,7 +1346,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 }
 
 if(process.env.GITHUB_BASE_REF==='staging'||process.env.CELLBOUND_CHANNEL==='staging'){
-  const stagingGuild=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  const stagingGuild=readSource('guild.html');
   if(/http-equiv=["']refresh["'][^>]*index\.html/i.test(stagingGuild)||/location\.replace\(["']\.\/index\.html["']\)/.test(stagingGuild)){
     throw new Error('Staging guild.html must not force-redirect authenticated players back to index.html');
   }

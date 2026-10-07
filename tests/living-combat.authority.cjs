@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
-const sandbox={window:{},console};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'..','combat-reborn-v1.js'),'utf8'),sandbox);
+const RuntimeManifest=require('../tools/runtime-manifest.cjs'),root=path.resolve(__dirname,'..');
+const sandbox={window:{},console};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(RuntimeManifest.sourcePath(root,'combat-reborn-v1.js'),'utf8'),sandbox);
 const party=Array.from({length:10},(_,i)=>({id:'raid-'+i,name:'Raider '+i,class:i%5===0?'Warrior':i%5===1?'Priest':'Mage',spec:i%5===0?'Protection':i%5===1?'Holy':'Arcane',power:10,level:15}));
 const options={party,encounter:{id:'living-raid',kind:'boss',enemies:['Boss'],enemyHealth:9000,mechanics:[]},seed:'living-raid-formation',maxDurationMs:10000};
 const run=()=>sandbox.window.CellboundCombatReborn.simulate(options),a=run(),b=run();
