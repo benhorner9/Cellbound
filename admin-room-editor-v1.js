@@ -161,6 +161,12 @@ function bind(draft){
  $('#rqeCopy')?.addEventListener('click',()=>copyText(jsonFor(draft),'Room JSON copied.'));
  $('#rqeCopyAll')?.addEventListener('click',()=>copyText(JSON.stringify(state,null,2),'All room-editor drafts copied.'));
  const canvas=$('#rqeCanvas');
+ if(canvas){
+  const stopGesture=e=>{if(e.target?.closest?.('[data-marker]'))return;e.preventDefault()};
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+  canvas.addEventListener('dragstart',e=>e.preventDefault());
+  canvas.querySelectorAll('img').forEach(img=>{img.draggable=false;img.addEventListener('dragstart',e=>e.preventDefault())});
+ }
  canvas?.querySelectorAll('[data-marker]').forEach(el=>{
   let dragging=false;
   const move=e=>{
@@ -172,10 +178,11 @@ function bind(draft){
    const pre=$('#rqeJson');if(pre)pre.textContent=jsonFor(draft);
    setDirty();e.preventDefault()
   };
-  el.addEventListener('pointerdown',e=>{dragging=true;el.setPointerCapture?.(e.pointerId);move(e)});
-  el.addEventListener('pointermove',move);
-  el.addEventListener('pointerup',e=>{dragging=false;el.releasePointerCapture?.(e.pointerId)});
-  el.addEventListener('pointercancel',()=>{dragging=false})
+  el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();dragging=true;el.setPointerCapture?.(e.pointerId);move(e)});
+  el.addEventListener('pointermove',e=>{if(dragging){e.preventDefault();e.stopPropagation()}move(e)});
+  el.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();dragging=false;el.releasePointerCapture?.(e.pointerId)});
+  el.addEventListener('pointercancel',e=>{e.preventDefault();dragging=false});
+  el.addEventListener('contextmenu',e=>e.preventDefault())
  })
  $('#rqeReview')?.addEventListener('change',e=>{state.rooms=state.rooms||{};state.rooms[roomKey()]={...(state.rooms[roomKey()]||{}),markers:clone(draft.markers),review:e.target.value};setDirty()})
 }
