@@ -101,7 +101,7 @@ async function waitClosed(page,selector){
     // Social / Party Finder.
     await page.evaluate(()=>CellboundGame.switchView('chat'));
     await page.evaluate(()=>CellboundSocial.refreshAll());
-    await page.waitForSelector('#partyFinderTarget option',{timeout:5000});
+    await page.waitForFunction(()=>document.querySelectorAll('#partyFinderTarget option').length>=6,{},{timeout:5000,polling:25});
     const targets=await page.locator('#partyFinderTarget option').allTextContents();
     for(const label of ['The Ashen Vault','The Hollow Sanctum','Chaos Canyon','Blackout Station','The Fractured Ages','The Manor']){
       assert(targets.some(x=>x.includes(label)),'Party Finder must offer '+label);
