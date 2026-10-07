@@ -70,15 +70,20 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
     }
 
     await page.setViewportSize({width:1366,height:1024});
-    await page.evaluate(()=>CellboundGame.switchView('overview'));
-    await page.locator('[data-view="roster"]').first().focus();
-    const focus=await page.evaluate(()=>{
-      const el=document.activeElement,s=getComputedStyle(el);
-      return {tag:el?.tagName,outline:s.outlineStyle,outlineWidth:s.outlineWidth};
-    });
-    assert.equal(focus.tag,'BUTTON','keyboard focus lands on a navigation control');
-    assert.notEqual(focus.outline,'none','focused controls must expose a visible outline');
-    assert.notEqual(focus.outlineWidth,'0px','focused controls must expose a non-zero outline');
+    await page.evaluate(()=>{CellboundGame.switchView('overview');document.body.focus()});
+    let focus=null;
+    for(let i=0;i<30;i++){
+      await page.keyboard.press('Tab');
+      focus=await page.evaluate(()=>{
+        const el=document.activeElement,s=el?getComputedStyle(el):null;
+        return {isNav:Boolean(el?.classList?.contains('nav-btn')),tag:el?.tagName,outline:s?.outlineStyle||'',outlineWidth:s?.outlineWidth||'0px'};
+      });
+      if(focus.isNav)break;
+    }
+    assert.equal(focus?.isNav,true,'keyboard Tab navigation must reach the sidebar');
+    assert.equal(focus?.tag,'BUTTON','keyboard focus lands on a navigation control');
+    assert.notEqual(focus?.outline,'none','focused controls must expose a visible outline');
+    assert.notEqual(focus?.outlineWidth,'0px','focused controls must expose a non-zero outline');
 
     const resource=await page.evaluate(()=>({
       css:performance.getEntriesByType('resource').filter(x=>/\.css(?:\?|$)/.test(x.name)).length,
