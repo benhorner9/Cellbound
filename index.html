@@ -4,35 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#090d0f" />
-  <title>Cellbound — Build the Guild They Remember</title>
-  <meta name="description" content="Cellbound is a browser-based fantasy guild-management RPG in development. Build your roster, command a five-character party and take on dungeons, raids and the world beyond Zeltira." />
-  <link rel="stylesheet" href="./website-v1.css?v=1" />
+  <title>Cellbound — A Guild-Management Fantasy RPG</title>
+  <meta name="description" content="Cellbound is a browser-based fantasy guild-management RPG in development. Build a roster, choose your five and lead them through dungeons, raids and the world beyond Zeltira." />
+  <link rel="stylesheet" href="./website-v1.css?v=2" />
 </head>
 <body>
   <div class="site-shell">
     <header class="site-nav">
       <a class="brand" href="#top" aria-label="Cellbound home">
         <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
-        <span class="brand-copy"><strong>CELLBOUND</strong><small>Founding Season</small></span>
+        <span class="brand-copy"><strong>CELLBOUND</strong><small>in development</small></span>
       </a>
 
       <nav class="desktop-nav" aria-label="Primary navigation">
-        <a href="#game">The Game</a>
-        <a href="#features">Features</a>
-        <a href="#dungeons">Dungeons</a>
-        <a href="#raid">Raids</a>
+        <a href="#game">The game</a>
+        <a href="#dungeons">Places</a>
         <a href="#development">Development</a>
       </nav>
 
-      <span class="build-state">IN DEVELOPMENT</span>
+      <p class="nav-note">Not playable publicly yet.</p>
 
       <details class="mobile-menu">
         <summary aria-label="Open navigation">Menu</summary>
         <nav aria-label="Mobile navigation">
-          <a href="#game">The Game</a>
-          <a href="#features">Features</a>
-          <a href="#dungeons">Dungeons</a>
-          <a href="#raid">Raids</a>
+          <a href="#game">The game</a>
+          <a href="#dungeons">Places</a>
           <a href="#development">Development</a>
         </nav>
       </details>
@@ -42,146 +38,146 @@
       <section class="hero">
         <div class="hero-art" aria-hidden="true">
           <img src="./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp" alt="" />
-          <span class="hero-mist hero-mist-one"></span>
-          <span class="hero-mist hero-mist-two"></span>
         </div>
 
         <div class="hero-content">
-          <p class="eyebrow"><span></span> A GUILD-MANAGEMENT FANTASY RPG</p>
-          <h1>Build the guild<br><em>they remember.</em></h1>
-          <p class="hero-lead">Recruit your roster. Form a five-character party. Gear them, train them and lead them into dungeons, raids and the places beyond Zeltira.</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#game">Explore Cellbound <span>↓</span></a>
-            <a class="button button-ghost" href="#development">Development status</a>
-          </div>
-          <p class="hero-status"><b>Pre-alpha.</b> The public game is not available yet.</p>
+          <p class="overline">A browser RPG about building a guild</p>
+          <h1>Choose your five.<br><em>Then live with the choice.</em></h1>
+          <p class="hero-lead">Cellbound is about the bit before the fight as much as the fight itself — who you bring, what they are wearing, what they can make and whether the party you built can actually handle what is waiting inside.</p>
+          <a class="text-link" href="#game">See what the game is becoming <span>↓</span></a>
+          <p class="hero-status">Pre-alpha · public access stays closed while the game is still moving around underneath us.</p>
         </div>
 
-        <div class="hero-rail" aria-label="Core loop">
-          <span><i>01</i><b>Recruit</b><small>Build your roster</small></span>
-          <span><i>02</i><b>Prepare</b><small>Gear and professions</small></span>
-          <span><i>03</i><b>Command</b><small>Lead the expedition</small></span>
+        <aside class="hero-note">
+          <span>Current focus</span>
+          <p>Getting the combat, UI and artwork to feel like they all belong to the same game.</p>
+        </aside>
+      </section>
+
+      <section id="game" class="story-section">
+        <div class="story-title">
+          <p class="hand-note">The short version</p>
+          <h2>You do not play one hero.<br>You run the whole guild.</h2>
+        </div>
+
+        <div class="story-copy">
+          <p>You recruit the roster, pick an active party of five and decide how that group is built. Tanks, healers and damage dealers all have a job, but the interesting part is making five characters work together rather than chasing one perfect build.</p>
+          <p>Between runs you are back in the guild: sorting gear, crafting, changing the party, taking quests and deciding what is worth attempting next.</p>
         </div>
       </section>
 
-      <section id="game" class="section intro-section">
-        <div class="section-heading">
-          <p class="eyebrow"><span></span> THE GAME</p>
-          <h2>Your party fights.<br><em>You make the calls.</em></h2>
-        </div>
-        <div class="intro-copy">
-          <p>Cellbound puts you in charge of a growing guild rather than a single hero. Build a roster around different classes and roles, decide who earns a place in your active party, then take that group into content built around preparation, timing and adaptation.</p>
-          <p>Progress does not stop when a fight ends. Equipment, professions, quests, trading and the wider guild all feed back into the next expedition.</p>
-        </div>
-      </section>
-
-      <section class="combat-showcase">
-        <div class="combat-image">
+      <section class="combat-section">
+        <figure class="combat-shot">
           <img src="./assets/ashen-vault/battlefields/hall-embers.avif" alt="Illustrated battlefield inside the Ashen Vault" />
-          <div class="combat-overlay">
-            <span>REAL-TIME PARTY COMBAT</span>
-            <b>Five adventurers. One command view.</b>
-          </div>
-        </div>
+          <figcaption>Ashen Vault — one of the first dungeons being rebuilt around the shared combat view.</figcaption>
+        </figure>
+
         <div class="combat-copy">
-          <p class="section-number">01 / COMMAND</p>
-          <h3>Read the fight. Change it.</h3>
-          <p>Your party acts in real time while you control the moments that matter: targets, commands, interrupts, defensive calls and the decisions that keep a bad pull from becoming a wipe.</p>
-          <div class="feature-lines">
-            <span><b>Target</b><small>Focus priority enemies and mechanics</small></span>
-            <span><b>Interrupt</b><small>Stop dangerous casts before they land</small></span>
-            <span><b>Adapt</b><small>React to hazards, pressure and changing threats</small></span>
+          <p class="hand-note">During a fight</p>
+          <h2>The party keeps moving.<br>You step in when it matters.</h2>
+          <p>Combat runs in real time. Your characters handle their normal attacks and abilities while you deal with priority targets, interrupts, defensive calls and the moments where the plan starts falling apart.</p>
+
+          <div class="plain-list">
+            <p><b>Target the problem.</b> Boss mechanic, healer, add, whatever needs attention now.</p>
+            <p><b>Spend commands carefully.</b> They are there to change a fight, not to become another button-mashing rotation.</p>
+            <p><b>Watch the whole party.</b> Health, resources, threat, summons and positioning all matter at the same time.</p>
           </div>
         </div>
       </section>
 
-      <section id="features" class="section systems-section">
-        <div class="section-heading compact">
-          <p class="eyebrow"><span></span> BUILD YOUR GUILD</p>
-          <h2>More than the next fight.</h2>
-          <p>Every part of the guild gives you another way to prepare for what comes next.</p>
+      <section class="guild-section">
+        <div class="guild-intro">
+          <p class="hand-note">Back at the guild</p>
+          <h2>Most of the decisions happen before you press Enter.</h2>
         </div>
 
-        <div class="systems-grid">
+        <div class="guild-lines">
           <article>
-            <span class="system-icon">✦</span>
-            <p>ROSTER</p>
-            <h3>Build the right party</h3>
-            <small>Recruit across distinct classes and roles, then shape a five-character team for the content ahead.</small>
-          </article>
-          <article>
-            <span class="system-icon">◇</span>
-            <p>GEAR</p>
-            <h3>Earn the upgrade</h3>
-            <small>Find stronger equipment, chase better rolls and turn your best adventurers into recognisable endgame builds.</small>
-          </article>
-          <article>
-            <span class="system-icon">⌁</span>
-            <p>PROFESSIONS</p>
-            <h3>Make preparation matter</h3>
-            <small>Craft useful equipment, consumables and attachments that change how ready your party is for the next run.</small>
-          </article>
-          <article>
-            <span class="system-icon">△</span>
-            <p>GUILD</p>
-            <h3>Grow beyond one party</h3>
-            <small>Trade, prepare, take on quests and build a roster that can answer more than one kind of challenge.</small>
-          </article>
-        </div>
-      </section>
-
-      <section id="dungeons" class="dungeon-section">
-        <div class="section dungeon-heading">
-          <div class="section-heading compact">
-            <p class="eyebrow"><span></span> EXPEDITIONS</p>
-            <h2>Every dungeon should feel like somewhere.</h2>
-            <p>Different environments, mechanics and bosses demand different decisions from the same party.</p>
-          </div>
-        </div>
-
-        <div class="dungeon-grid">
-          <article class="dungeon-card dungeon-wide">
-            <img src="./assets/dungeons/ashen-vault.webp" alt="Ashen Vault dungeon artwork" />
+            <span>01</span>
             <div>
-              <p>EPISODE ONE</p>
-              <h3>Ashen Vault</h3>
-              <small>Heat, collapsing ground and a descent toward the Vaultheart.</small>
+              <h3>Roster</h3>
+              <p>Build more than one useful team. Different classes, different roles, different answers when a dungeon starts asking awkward questions.</p>
             </div>
           </article>
 
-          <article class="dungeon-card">
+          <article>
+            <span>02</span>
+            <div>
+              <h3>Gear</h3>
+              <p>Items roll differently, better tiers change how a character develops, and the best piece on paper is not always the piece your party actually needs.</p>
+            </div>
+          </article>
+
+          <article>
+            <span>03</span>
+            <div>
+              <h3>Professions</h3>
+              <p>Every character gets one. Craft gear, consumables and attachments that make preparation part of the run instead of a menu you ignore.</p>
+            </div>
+          </article>
+
+          <article>
+            <span>04</span>
+            <div>
+              <h3>The wider game</h3>
+              <p>Quests, trading, activities, world bosses, raids and social systems all feed back into the same roster rather than living as separate mini-games.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="dungeons" class="places-section">
+        <div class="places-intro">
+          <p class="hand-note">Places we have actually built</p>
+          <h2>Not five versions of the same corridor.</h2>
+          <p>Each dungeon is being treated like a place with its own mood and mechanics, not a background swap around the same encounter.</p>
+        </div>
+
+        <article class="place place-featured">
+          <img src="./assets/dungeons/ashen-vault.webp" alt="Ashen Vault dungeon artwork" />
+          <div>
+            <span>01</span>
+            <h3>Ashen Vault</h3>
+            <p>Hot, cramped and getting worse the deeper you go. The Vaultheart is waiting at the bottom.</p>
+          </div>
+        </article>
+
+        <div class="place-pair">
+          <article class="place">
             <img src="./assets/hollow-sanctum/rooms/gallery.webp" alt="Hollow Sanctum dungeon artwork" />
             <div>
-              <p>EPISODE ONE</p>
+              <span>02</span>
               <h3>Hollow Sanctum</h3>
-              <small>A ruined sacred place where every room pulls you deeper.</small>
+              <p>Three rooms, a broken sacred place and a choir that should probably have stayed quiet.</p>
             </div>
           </article>
 
-          <article class="dungeon-card">
+          <article class="place offset">
             <img src="./assets/chaos-canyon/rooms/canyon-mouth.webp" alt="Chaos Canyon dungeon artwork" />
             <div>
-              <p>EPISODE ONE</p>
+              <span>03</span>
               <h3>Chaos Canyon</h3>
-              <small>Wild growth, unstable paths and a druid guarding the heart of the canyon.</small>
+              <p>Green, overgrown and increasingly unstable. One bad crossing can make the next boss harder.</p>
             </div>
           </article>
+        </div>
 
-          <article class="dungeon-card">
-            <img src="./assets/blackout-station/rooms/vex-calder-room.avif" alt="Blackout Station abandoned power plant artwork" />
+        <div class="place-pair lower">
+          <article class="place offset-small">
+            <img src="./assets/blackout-station/rooms/vex-calder-room.avif" alt="Blackout Station dungeon artwork" />
             <div>
-              <p>EPISODE ONE</p>
+              <span>04</span>
               <h3>Blackout Station</h3>
-              <small>An abandoned power plant still carrying more charge than it should.</small>
+              <p>An abandoned power station full of bad wiring, worse ideas and Dr Vex Calder.</p>
             </div>
           </article>
 
-          <article class="dungeon-card">
+          <article class="place">
             <img src="./assets/fractured-ages/rooms/high-noon.webp" alt="Fractured Ages High Noon dungeon artwork" />
             <div>
-              <p>EPISODE ONE</p>
+              <span>05</span>
               <h3>Fractured Ages</h3>
-              <small>One expedition split across places and eras that should never meet.</small>
+              <p>Western town, medieval castle, ancient kingdom, space and a funhouse. It is meant to feel a little unhinged.</p>
             </div>
           </article>
         </div>
@@ -190,49 +186,37 @@
       <section id="raid" class="raid-section">
         <img src="./assets/manor/manor-raid-hero.webp" alt="The Manor raid artwork" />
         <div class="raid-wash"></div>
+
         <div class="raid-content">
-          <p class="eyebrow"><span></span> RAID</p>
+          <p class="hand-note light">The first raid</p>
           <h2>The Manor</h2>
-          <p>Two guildmasters. Ten characters. A raid built around split groups, shared pressure and knowing what is happening on the other side of the house.</p>
-          <div class="raid-meta">
-            <span><b>10</b><small>Characters</small></span>
-            <span><b>2</b><small>Players</small></span>
-            <span><b>1</b><small>Shared run</small></span>
-          </div>
+          <p>Two players bring five characters each. The raid splits both parties through different parts of the house, then forces them back together with the consequences of what happened while they were apart.</p>
+          <p class="raid-aside">Ten characters sounds like chaos. That is partly the point.</p>
         </div>
       </section>
 
       <section class="world-section">
-        <div class="world-image">
-          <img src="./assets/world/twelve-below-key-art.webp" alt="Cellbound world artwork" />
-        </div>
         <div class="world-copy">
-          <p class="section-number">02 / THE WORLD</p>
-          <h3>The guild is only the beginning.</h3>
-          <p>Zeltira is the point you return to, not the edge of the game. Quests, activities, world bosses, professions, trading and future social systems all push the guild beyond a simple dungeon list.</p>
-          <div class="world-tags" aria-label="World features">
-            <span>Quests</span>
-            <span>Activities</span>
-            <span>World Bosses</span>
-            <span>Trading</span>
-            <span>Professions</span>
-            <span>Guilds</span>
-            <span>PvP</span>
-          </div>
+          <p class="hand-note">Outside the dungeon list</p>
+          <h2>Zeltira needs to feel like somewhere you return to.</h2>
+          <p>The long-term direction is a proper living hub rather than a stack of menus: places to craft, trade, pick up quests, meet other players and head back out again.</p>
+          <p>Some of that exists already. Some of it is still sketches, rough systems and half-finished ideas. The site will change as the game does.</p>
         </div>
+
+        <figure class="world-image">
+          <img src="./assets/world/twelve-below-key-art.webp" alt="Cellbound world artwork" />
+          <figcaption>Twelve Below — world/activity key art currently used in-game.</figcaption>
+        </figure>
       </section>
 
-      <section id="development" class="section development-section">
-        <div class="development-panel">
-          <div>
-            <p class="eyebrow"><span></span> CURRENT STATUS</p>
-            <h2>Cellbound is being built in public view,<br><em>but not released yet.</em></h2>
-          </div>
-          <div class="development-copy">
-            <p>The game is currently in pre-alpha development. Systems, balance, artwork and content are still changing, so public game access stays closed while the playable build is tested separately.</p>
-            <p>This site is the public home for Cellbound. The game itself will only be connected here once it is ready for players.</p>
-            <span class="status-chip"><i></i> FOUNDING SEASON · IN DEVELOPMENT</span>
-          </div>
+      <section id="development" class="development-section">
+        <div class="dev-rule"></div>
+        <div class="development-copy">
+          <p class="hand-note">A note on development</p>
+          <h2>No fake trailer. No pretend launch date.</h2>
+          <p>Cellbound is still pre-alpha. Combat is being rebuilt, old artwork is being replaced, the UI is being tightened up and content is still changing. The public game is staying closed until those pieces feel like one coherent thing.</p>
+          <p>This website is here to show the direction without pretending the game is further along than it is.</p>
+          <strong>When there is something worth playing publicly, the button will appear here.</strong>
         </div>
       </section>
 
@@ -241,10 +225,9 @@
           <img src="./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp" alt="" />
         </div>
         <div class="final-content">
-          <p class="eyebrow"><span></span> CELLBOUND</p>
-          <h2>The gates are not open yet.</h2>
-          <p>But the guild is taking shape.</p>
-          <span class="closed-button" aria-disabled="true">PUBLIC ACCESS COMING LATER</span>
+          <p class="hand-note light">For now</p>
+          <h2>The gates stay shut.</h2>
+          <p>We keep building.</p>
         </div>
       </section>
     </main>
@@ -252,10 +235,10 @@
     <footer class="site-footer">
       <a class="brand footer-brand" href="#top" aria-label="Back to top">
         <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
-        <span class="brand-copy"><strong>CELLBOUND</strong><small>Founding Season</small></span>
+        <span class="brand-copy"><strong>CELLBOUND</strong></span>
       </a>
-      <p>Browser-based fantasy guild-management RPG · In development</p>
-      <span>© 2026 CELLBOUND</span>
+      <p>Browser-based fantasy guild-management RPG · Pre-alpha</p>
+      <span>© 2026</span>
     </footer>
   </div>
 </body>
