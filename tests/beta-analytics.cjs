@@ -56,7 +56,7 @@ for(const hook of ["track?.('activity_started'","track?.('activity_completed'"])
 
 const shell=read('guild.html');
 for(const hook of [
-  'analytics-v1.js?v=1',
+  'analytics-v1.js?v=2',
   'admin-analytics-v1.js?v=1',
   'admin-analytics-v1.css?v=1',
   'id="adminAnalyticsClasses"',
