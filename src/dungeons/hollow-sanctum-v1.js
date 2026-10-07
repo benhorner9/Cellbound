@@ -65,6 +65,11 @@ const HOLLOW_ROOMS={
   blockers:[{id:'choir-fractured-shrine',shape:'ellipse',x:50,y:31,rx:13,ry:18,blocksLos:false,blocksMovement:true}]
  }
 };
+window.CellboundRoomLayouts?.registerRoomConfigs?.('hollow-sanctum',HOLLOW_ROOMS);
+function hollowRoomConfig(id){
+ const key=id&&HOLLOW_ROOMS[id]?id:'gallery',base=HOLLOW_ROOMS[key];
+ return window.CellboundRoomLayouts?.applyRoomConfig?.('hollow-sanctum',key,base)||base
+}
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
 const XP=1200;
 const wait=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
@@ -251,11 +256,11 @@ function hsRouteOffset(point,from,to,slot=0,spread=2){
  return{x:Number(point.x)+(-dy/len)*amount,y:Number(point.y)+(dx/len)*amount}
 }
 function hsPartyStagePosition(s,i){
- const room=HOLLOW_ROOMS[s?.id]||HOLLOW_ROOMS.gallery,p=room.route?.partyAnchors?.[i]||room.route?.entryInside||[35,50];
+ const room=hollowRoomConfig(s?.id),p=room.route?.partyAnchors?.[i]||room.route?.entryInside||[35,50];
  return Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p.x),y:Number(p.y)}
 }
 function hsEnemyStagePosition(s,i){
- const room=HOLLOW_ROOMS[s?.id]||HOLLOW_ROOMS.gallery,p=room.enemyAnchors?.[i]||room.enemyAnchors?.[room.enemyAnchors.length-1]||[68,50];
+ const room=hollowRoomConfig(s?.id),p=room.enemyAnchors?.[i]||room.enemyAnchors?.[room.enemyAnchors.length-1]||[68,50];
  return Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p.x),y:Number(p.y)}
 }
 function hsEnsureFade(){
@@ -279,7 +284,7 @@ async function hsWaitForRoomArt(art,timeout=1400){
  try{await art.decode?.()}catch(error){}
 }
 function stageEnvironment(s){
- const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment'),src=room.art;
+ const room=hollowRoomConfig(s.id),arena=$('#hs2dArena'),environment=$('#hs2dEnvironment'),src=room.art;
  arena.className='cb2d-arena hs2d-arena hs2d-unified-arena hollow-live-room stage-'+s.id;
  arena.dataset.hollowRoom=s.id;arena.dataset.bespokeBattlefield='1';arena.dataset.directRoomArt='1';
  delete arena.dataset.liveSceneReady;
@@ -300,7 +305,7 @@ function stageEnvironment(s){
 }
 async function spawnStage(s){
  const art=stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
- const chars=party(),room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,route=room.route||{},entry=route.entry||{x:5,y:50},inside=route.entryInside||{x:20,y:50},spread=Number(route.spread)||2;
+ const chars=party(),room=hollowRoomConfig(s.id),route=room.route||{},entry=route.entry||{x:5,y:50},inside=route.entryInside||{x:20,y:50},spread=Number(route.spread)||2;
  const arena=$('#hs2dArena');arena?.classList.add('room-entering');
  chars.forEach((c,i)=>{
   const start=hsRouteOffset(entry,entry,inside,i,spread),target=hsPartyStagePosition(s,i),unitId='p-'+c.id;
@@ -332,7 +337,7 @@ function hsRenderId(unitId){
 function hsCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(x=>String(x.id)===id.slice(2)):null}
 function hsAttackKind(c){return c?.class==='Hunter'?'arrow':['Mage','Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
 function hsRebornEncounter(s){
- const room=HOLLOW_ROOMS[s.id]||{};
+ const room=hollowRoomConfig(s.id)||{};
  const enemies=s.enemies.map((name,i)=>({name,currentPosition:hsEnemyStagePosition(s,i)}));
  const environment={room:s.id,bounds:{...(room.bounds||{})},arena:room.arena?{...room.arena}:undefined,walkable:Array.isArray(room.walkable)?room.walkable.map(p=>[Number(p[0]),Number(p[1])]):undefined,blockers:(room.blockers||[]).map(b=>({...b,points:Array.isArray(b.points)?b.points.map(p=>[Number(p[0]),Number(p[1])]):b.points,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))};
  const mechanics=(s.mechanics||[]).map(m=>{const mechanic=Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m};if(mechanic.type==='adds'&&Array.isArray(room.addAnchors)&&room.addAnchors.length)mechanic.spawnPoints=room.addAnchors.map(p=>({x:Number(p.x),y:Number(p.y)}));return mechanic});
@@ -352,7 +357,7 @@ function hsMechanicFromEvent(e){
    ids.forEach((id,i)=>{const t=hsTelegraph('circle',i===0?(e.ability||'TARGETED AREA'):'',null,id,145);if(t){t.dataset.hsMulti=tokenId}})
    tg={remove:()=>$$('[data-hs-multi="'+tokenId+'"]').forEach(x=>x.remove()),classList:{add:k=>$$('[data-hs-multi="'+tokenId+'"]').forEach(x=>x.classList.add(k))}};
  }else if(type==='adds'){
-   const layer=$('#hs2dTelegraphs'),room=HOLLOW_ROOMS[STAGES[run?.stage]?.id]||{},anchors=Array.isArray(room.addAnchors)&&room.addAnchors.length?room.addAnchors:[{x:68,y:50}];
+   const layer=$('#hs2dTelegraphs'),room=hollowRoomConfig(STAGES[run?.stage]?.id)||{},anchors=Array.isArray(room.addAnchors)&&room.addAnchors.length?room.addAnchors:[{x:68,y:50}];
    if(layer){tg=document.createElement('div');tg.className='hs2d-add-spawn-wrap';tg.style.cssText='position:absolute;inset:0;pointer-events:none';anchors.forEach((p,i)=>{const mark=document.createElement('div');mark.className='hs2d-tele circle dynamic';mark.innerHTML='<span>'+(i===0?'ADDS SPAWNING':'ADD')+'</span>';mark.style.left=Number(p.x)+'%';mark.style.top=Number(p.y)+'%';mark.style.width='112px';mark.style.height='112px';mark.style.transform='translate(-50%,-50%)';tg.appendChild(mark)});layer.appendChild(tg)}
  }else if(type==='interrupt'){
    const layer=$('#hs2dTelegraphs');if(layer){tg=document.createElement('div');tg.className='hs2d-tele circle dynamic';tg.innerHTML='<span>INTERRUPT '+esc(e.ability||'CAST')+'</span>';const p=hsPoint(source);if(p){tg.style.left=p.x+'px';tg.style.top=p.y+'px';tg.style.width='92px';tg.style.height='92px';tg.style.transform='translate(-50%,-50%)'}layer.appendChild(tg)}
@@ -721,7 +726,7 @@ function hsRestoreRuntime(attempt){
 }
 async function hsTravelDeeper(currentStage,nextStage,tok){
  if(tok!==token||!run)return;
- const arena=$('#hs2dArena'),room=HOLLOW_ROOMS[currentStage?.id]||HOLLOW_ROOMS.gallery,route=room.route||{},path=Array.isArray(route.exitPath)?route.exitPath:[],chars=party(),spread=Number(route.spread)||2;
+ const arena=$('#hs2dArena'),room=hollowRoomConfig(currentStage?.id),route=room.route||{},path=Array.isArray(route.exitPath)?route.exitPath:[],chars=party(),spread=Number(route.spread)||2;
  if(!path.length)return;
  arena?.classList.add('travelling');setStatus('Path clear · moving deeper into the Sanctum');
  feed('The party advances toward '+nextStage.title+'.');
