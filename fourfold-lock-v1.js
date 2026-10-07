@@ -43,7 +43,20 @@ function notify(label,title,text){
  e.innerHTML='<small>'+esc(label)+'</small><b>'+esc(title)+'</b><span>'+esc(text||'')+'</span>';e.classList.add('show');
  clearTimeout(e._timer);e._timer=setTimeout(()=>e.classList.remove('show'),4300)
 }
-function story(title,speaker,lines,onDone,buttonText){
+const FOURFOLD_STORY_ART={
+ oldMan:'./assets/bosses/fractured-ages-old-man.webp',
+ hero:'./assets/dungeons/fractured-ages.webp',
+ highNoon:'./assets/fractured-ages/rooms/high-noon.webp',
+ firstKingdom:'./assets/fractured-ages/rooms/first-kingdom.webp',
+ silentFrontier:'./assets/fractured-ages/rooms/silent-frontier.webp',
+ funhouse:'./assets/fractured-ages/rooms/funhouse.webp'
+};
+function fourfoldStoryArt(title){
+ const key=String(title||'').toLowerCase();
+ if(key.includes('journey through the ages'))return[FOURFOLD_STORY_ART.oldMan,FOURFOLD_STORY_ART.highNoon,FOURFOLD_STORY_ART.funhouse];
+ return[FOURFOLD_STORY_ART.oldMan,FOURFOLD_STORY_ART.hero,FOURFOLD_STORY_ART.funhouse]
+}
+function legacyStory(title,speaker,lines,onDone,buttonText){
  let root=$('#fourfoldStory');if(!root){root=document.createElement('div');root.id='fourfoldStory';root.className='fourfold-story-backdrop';root.hidden=true;document.body.appendChild(root)}
  let index=0;
  const draw=()=>{
@@ -52,6 +65,41 @@ function story(title,speaker,lines,onDone,buttonText){
   root.hidden=false;root.querySelector('[data-fourfold-next]').onclick=async()=>{if(!last){index++;draw();return}root.hidden=true;if(onDone)await onDone()}
  };
  draw()
+}
+function story(title,speaker,lines,onDone,buttonText){
+ const C=window.CellboundComicScenes;
+ if(typeof C?.show!=='function'){legacyStory(title,speaker,lines,onDone,buttonText);return}
+ const art=fourfoldStoryArt(title),panels=art.map((artwork,i)=>({
+  kind:i===0?'npc':'location',artwork,
+  eyebrow:i===0?'ZELTIRA MARKETPLACE':'THE FRACTURED AGES',
+  title:i===0?speaker:'',
+  text:'',wide:false
+ }));
+ const placements=['bottom-left','top-right','bottom-right','top-left'];
+ C.show({
+  eyebrow:'CELLBOUND · MYSTERY',
+  title,
+  subtitle:speaker,
+  page:'THE FOURFOLD LOCK',
+  theme:'fourfold',
+  panels,
+  reveals:(Array.isArray(lines)?lines:[lines]).map((text,i)=>({
+   panel:i%panels.length,
+   placement:placements[i%placements.length],
+   speaker,
+   eyebrow:i===0?'A STRANGE ENCOUNTER':'',
+   text:String(text||'')
+  })),
+  progressive:true,
+  panelOnly:true,
+  allowSkip:true,
+  skipLabel:'SKIP STORY',
+  nextLabel:'NEXT →',
+  continueLabel:buttonText||'CONTINUE →'
+ }).then(async()=>{if(onDone)await onDone()}).catch(error=>{
+  console.warn('Fourfold comic presentation recovered',error);
+  legacyStory(title,speaker,lines,onDone,buttonText)
+ })
 }
 async function start(){
  const q=ensure();if(!available()&&!q.started)return;
@@ -172,7 +220,22 @@ async function finish(){
   completion()
  },'FOLLOW THE OLD MAN')
 }
-function completion(){
+async function completion(){
+ const C=window.CellboundComicScenes;
+ if(typeof C?.show==='function'){
+  try{
+   await C.show({
+    eyebrow:'QUEST COMPLETE',title:'The Fourfold Lock',subtitle:'The map is ash. The road through time is open.',page:'COMPLETE',theme:'fourfold',
+    panels:[
+     {kind:'npc',artwork:FOURFOLD_STORY_ART.oldMan,eyebrow:'THE STRANGE OLD MAN',title:'He kept his promise.',text:'The lockbox is empty. The living map is gone. Only the route remains.'},
+     {kind:'location',artwork:FOURFOLD_STORY_ART.hero,eyebrow:'PERMANENT UNLOCK',title:'THE FRACTURED AGES',text:'A fifth dungeon now exists beyond the normal roads of the world.'},
+     {kind:'location',artwork:FOURFOLD_STORY_ART.funhouse,eyebrow:'REWARDS',title:'+400 Gold · +250 Renown · +'+(BAL?.CAMPAIGN_XP?.fourfoldLock||3800)+' XP',text:'The active five are rewarded and the Fractured Ages is permanently unlocked.'}
+    ],
+    progressive:true,panelOnly:true,allowSkip:false,nextLabel:'NEXT →',continueLabel:'OPEN DUNGEON JOURNAL →'
+   });
+   Game.switchView?.('content');setTimeout(()=>window.CellboundDungeonBrowser?.open?.('fractured-ages'),50);return
+  }catch(error){console.warn('Fourfold completion comic recovered',error)}
+ }
  const root=document.createElement('div');root.className='fourfold-complete-backdrop';
  root.innerHTML='<section class="fourfold-complete"><small>QUEST COMPLETE</small><h2>The Fourfold Lock</h2><p>The box is empty. The map is ash. Somewhere beyond the marketplace, history has stopped behaving.</p><div><article><span>GOLD</span><b>+400</b></article><article><span>RENOWN</span><b>+250</b></article><article><span>PARTY XP</span><b>+'+(BAL?.CAMPAIGN_XP?.fourfoldLock||3800)+'</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><section><small>PERMANENT UNLOCK</small><h3>The Fractured Ages</h3><p>Follow the Strange Old Man through a western shootout, an iron kingdom, an ancient temple, the lunar frontier and whatever waits at the end of time.</p></section><button>OPEN DUNGEON JOURNAL →</button></section>';
  document.body.appendChild(root);root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content');setTimeout(()=>window.CellboundDungeonBrowser?.open?.('fractured-ages'),50)}
