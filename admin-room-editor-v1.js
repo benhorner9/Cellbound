@@ -55,7 +55,6 @@ const CATALOG=[
 
 const AUDIT=[
  {level:'work',title:'The Manor room coverage',copy:'Raid room artwork is handled in Step 4. The room editor deliberately does not substitute boss portraits for proper raid-room backgrounds.'},
- {level:'work',title:'Quest comic coverage',copy:'Remaining story/comic presentation is handled in Step 3 after the dungeon presentation pass.'},
  {level:'review',title:'Final beta UI cleanup',copy:'Global UI/combat style cleanup remains part of the hard Beta Gate after dungeon and story presentation are locked.'}
 ]
 
