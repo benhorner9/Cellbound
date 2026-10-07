@@ -734,9 +734,7 @@ const UI_BUNDLE_SOURCES=[
   const bundleName='cellbound-ui-bundle-v1.css';
   fs.writeFileSync(path.join(out,bundleName),bundle);
   let guildBuilt=fs.readFileSync(path.join(out,'guild.html'),'utf8');
-  const escapeRegex=s=>s.replace(/[|\\{}()[\]^$+*?.-]/g,'\\  fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,contents)
-}
-{');
+  const escapeRegex=s=>s.replaceAll('.','\\.').replaceAll('-','\\-');
   for(const file of UI_BUNDLE_SOURCES){
     const re=new RegExp('\\s*<link\\s+rel=["\\\']stylesheet["\\\']\\s+href=["\\\']\\.\\/'+escapeRegex(file)+'(?:\\?[^"\\\']*)?["\\\']\\s*\\/?>','g');
     const before=guildBuilt;
