@@ -10,28 +10,40 @@ permissions:
   contents: read
 
 concurrency:
-  group: cellbound-staging-deploy-v2
-  cancel-in-progress: false
+  group: cellbound-staging-release-v3
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
-    name: Deploy staging to cb.athleticsmanagergame.com
+  qa:
+    name: Required staging QA
+    uses: ./.github/workflows/qa-staging.yml
+
+  deploy:
+    name: Deploy QA-approved staging build
+    needs: qa
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
 
     steps:
-      - name: Check out Cellbound staging
+      - name: Check out exact approved commit
         uses: actions/checkout@v4
         with:
-          ref: staging
+          ref: ${{ github.sha }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Build Cellbound
+      - name: Build exact approved commit
         run: npm run build
+
+      - name: Stamp deployment identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const fs=require('fs');fs.writeFileSync('dist/build-meta.json',JSON.stringify({commit:process.env.GITHUB_SHA,branch:'staging',deployedAt:new Date().toISOString()},null,2)+'\\n')"
+          cat dist/build-meta.json
 
       - name: Verify deployment package
         shell: bash
@@ -41,19 +53,19 @@ jobs:
           test -f dist/guild.html
           test -f dist/auth.js
           test -f dist/guild-v4.js
-          ! grep -F 'http-equiv="refresh" content="0;url=./index.html"' dist/guild.html
-          ! grep -F 'window.location.replace("./index.html")' dist/guild.html
+          test -f dist/build-meta.json
           test -f dist/item-atlas-v2.js
           test -f dist/item-visuals-v2.js
           for atlas in warrior paladin hunter rogue mage weapons secondary heads accessories resources; do test -f "dist/assets/items/illustrated-v2/$atlas.webp"; done
           test -f dist/combat-viewer-v1.js
           grep -F 'data-combat-view="canonical-v1"' dist/combat-viewer-v1.js
-          grep -F 'combat-viewer-v1.js?b=' dist/guild.html
+          grep -F "combat-viewer-v1.js?b=$GITHUB_SHA" dist/guild.html
           grep -F 'CANONICAL COMBAT VIEWER' dist/layout-safety-v1.css
           ! grep -F 'combat-3d-v1.js' dist/guild.html
           ! grep -F 'combat-3d-v1.css' dist/guild.html
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
-          echo "Verified fresh combat package for staging commit $GITHUB_SHA"
+          grep -F "$GITHUB_SHA" dist/build-meta.json
+          echo "Verified deploy package for $GITHUB_SHA"
 
       - name: Deploy staging build
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
@@ -66,3 +78,118 @@ jobs:
           server-dir: ./cb/
           local-dir: ./dist/
           log-level: standard
+
+      - name: Verify the exact deployed commit over HTTPS
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for attempt in $(seq 1 18); do
+            echo "Smoke attempt $attempt/18"
+            if curl --fail --silent --show-error --location --max-time 20 \
+              "https://cb.athleticsmanagergame.com/build-meta.json?verify=$GITHUB_SHA" \
+              --output /tmp/cellbound-build-meta.json; then
+              if node -e "const m=require('/tmp/cellbound-build-meta.json'); if(m.commit!==process.env.GITHUB_SHA) process.exit(1)"; then
+                ok=1
+                break
+              fi
+            fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          cat /tmp/cellbound-build-meta.json
+
+          curl --fail --silent --show-error --location --max-time 20 \
+            "https://cb.athleticsmanagergame.com/guild.html?verify=$GITHUB_SHA" \
+            --output /tmp/cellbound-guild.html
+          grep -F "combat-viewer-v1.js?b=$GITHUB_SHA" /tmp/cellbound-guild.html
+          grep -F "analytics-v1.js?b=$GITHUB_SHA" /tmp/cellbound-guild.html
+
+          curl --fail --silent --show-error --location --max-time 20 \
+            "https://cb.athleticsmanagergame.com/combat-viewer-v1.js?verify=$GITHUB_SHA" \
+            --output /tmp/cellbound-combat-viewer.js
+          grep -F "data-combat-view" /tmp/cellbound-combat-viewer.js >/dev/null
+          echo "HTTPS smoke test confirms staging commit $GITHUB_SHA"
+
+      - name: Remove obsolete uppercase CB staging copy
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.STAGING_FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.STAGING_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.STAGING_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.STAGING_FTP_PORT }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from ftplib import FTP_TLS, error_perm
+
+          host=os.environ["FTP_SERVER"]
+          user=os.environ["FTP_USERNAME"]
+          password=os.environ["FTP_PASSWORD"]
+          port=int(os.environ.get("FTP_PORT") or 21)
+
+          ftp=FTP_TLS()
+          ftp.connect(host,port,timeout=30)
+          ftp.login(user,password)
+          ftp.prot_p()
+
+          def is_dir(path):
+              current=ftp.pwd()
+              try:
+                  ftp.cwd(path)
+                  ftp.cwd(current)
+                  return True
+              except error_perm:
+                  try: ftp.cwd(current)
+                  except Exception: pass
+                  return False
+
+          def remove_tree(path):
+              try:
+                  names=ftp.nlst(path)
+              except error_perm as exc:
+                  if str(exc).startswith("550"):
+                      return False
+                  raise
+              for name in names:
+                  leaf=name.rstrip("/").split("/")[-1]
+                  if leaf in (".",".."):
+                      continue
+                  target=name if name.startswith("/") else "/" + name
+                  if is_dir(target):
+                      remove_tree(target)
+                  else:
+                      try: ftp.delete(target)
+                      except error_perm as exc:
+                          if not str(exc).startswith("550"): raise
+              try:
+                  ftp.rmd(path)
+              except error_perm as exc:
+                  if not str(exc).startswith("550"): raise
+              return True
+
+          removed=remove_tree("/CB")
+          print("Legacy /CB cleanup:", "removed" if removed else "already absent")
+          ftp.quit()
+          PY
+
+      - name: Post-deploy canonical host diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "===== Build identity ====="
+          curl --fail --silent --show-error --location \
+            "https://cb.athleticsmanagergame.com/build-meta.json?diag=$GITHUB_SHA"
+          echo
+          echo "===== Root ====="
+          curl --fail --silent --show-error --location --dump-header /tmp/root.headers \
+            --output /tmp/root.html "https://cb.athleticsmanagergame.com/?diag=$GITHUB_SHA"
+          sed -n '1,40p' /tmp/root.headers
+          grep -Eio 'Guild Command|Return to your guild' /tmp/root.html | head -10
+          echo "===== Guild ====="
+          curl --fail --silent --show-error --location --dump-header /tmp/guild.headers \
+            --output /tmp/guild.html "https://cb.athleticsmanagergame.com/guild.html?diag=$GITHUB_SHA"
+          sed -n '1,40p' /tmp/guild.headers
+          grep -F "combat-viewer-v1.js?b=$GITHUB_SHA" /tmp/guild.html
+          echo "Post-deploy diagnostics passed for $GITHUB_SHA"

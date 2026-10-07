@@ -1,9 +1,7 @@
 name: QA Cellbound Staging
 
 on:
-  push:
-    branches:
-      - staging
+  workflow_call:
   workflow_dispatch:
 
 permissions:
