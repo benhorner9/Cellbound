@@ -1212,12 +1212,12 @@ const combatPortraitRuntime=readSource('combat-portraits-v1.js');
 
   const playthrough=readSource('tests/full-playthrough.browser.cjs');
   for(const hook of [
-    'function betaClassAndNullGatePlaythrough(browser)',
+    'function classAvailabilityAndNullGatePlaythrough(browser)',
     'all dungeon runtimes remain included',
     'The Manor clear unlocks Signal From Nowhere'
-  ])if(!playthrough.includes(hook))throw new Error('Five-class/full-content beta regression coverage is missing '+hook);
+  ])if(!playthrough.includes(hook))throw new Error('All-class/full-content staging regression coverage is missing '+hook);
 
-  console.log('Five-class beta lock passed with full dungeon content retained and Null Complex Manor-gated.');
+  console.log('All-class staging balance access passed with full dungeon content retained and Null Complex Manor-gated.');
 }
 
 {
