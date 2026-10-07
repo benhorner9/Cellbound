@@ -751,6 +751,9 @@ async function hsRunFrom(startIndex,tok){
   run._restored=false;
   await hsSaveRuntime('stage');
   const s=STAGES[i];
+  if(i>Math.max(0,Number(startIndex)||0)&&['boss','final'].includes(s.combatKind)){
+   await window.CellboundExpeditionPresentation?.room?.('hollow-sanctum',{title:s.title,index:i,total:STAGES.length,kind:s.combatKind==='final'?'FINAL BOSS':'BOSS'});
+  }
   if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('bound-choir');
   if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);
   $('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;
@@ -779,11 +782,7 @@ async function start(){
  }else{
   run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},runtimeStageStartedAt:Date.now()}
  }
- try{
-  window.CellboundExpeditionPresentation?.leave?.();
-  document.querySelectorAll('.cbx-transition').forEach(node=>node.remove());
-  document.body.classList.remove('cbx-transition-open')
- }catch(error){console.warn('Hollow entry transition cleanup skipped',error)}
+ await window.CellboundExpeditionPresentation?.enter?.('hollow-sanctum',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
  draw();
  try{
   await hsRunFrom(Math.min(STAGES.length-1,Number(run.stage)||0),tok)
