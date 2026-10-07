@@ -7,12 +7,13 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const XP=2000,ENTRY_ILVL=34,BOSS_LEVEL=13;
 const GRID_OVERRIDE_ID='grid-override-module',GRID_OVERRIDE_DROP_CHANCE=.10,GRID_OVERRIDE_MAX_CHARGES=5;
+const PLAYCELLBOUND_TEST_EMAIL='playcellbound@gmail.com';
 const ROLE_ZONES={
  tank:{x:27,y:27,radius:9,color:'red',label:'TANK'},
  dps:{x:48,y:74,radius:14,color:'yellow',label:'DAMAGE'},
  healer:{x:73,y:27,radius:9,color:'blue',label:'HEALER'}
 };
-const BLACKOUT_REACTOR_SCENE='./assets/blackout-station/rooms/reactor-core.webp?v=1';
+const BLACKOUT_REACTOR_SCENE='./assets/blackout-station/rooms/vex-calder-room.avif?v=1';
 const CABLES=['se','sw','se','sw','nw','v','v','v','se','nw','v','ne','ne','h','nw'];
 const CABLE_LINKS={h:['w','e'],v:['n','s'],ne:['n','e'],nw:['n','w'],se:['s','e'],sw:['s','w']};
 const GRID_INPUT_INDEX=4,GRID_BREAKER_INDEX=11;
@@ -33,6 +34,11 @@ const party=()=>Game?.getPartyCharacters?.()||[];
 const role=c=>Game?.classes?.[c.class]?.specs?.[c.spec]?.role||'dps';
 const classKey=c=>'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const ilvl=()=>Number(Game?.partyItemLevel?.())||0;
+function canSkipBlackoutGrid(){
+ const email=String(Game?.getUser?.()?.email||'').trim().toLowerCase();
+ const admin=window.CellboundAdmin||{};
+ return email===PLAYCELLBOUND_TEST_EMAIL||Boolean(admin.isAdmin)||String(admin.role||'').toLowerCase()==='owner'
+}
 
 function createGridOverrideModule(){
  return{
@@ -108,9 +114,10 @@ function briefing(){
   window.CellboundDungeon2D?.dockFullscreenCombatMeta?.(r);
  r.querySelector('[data-bs-close]').onclick=close;r.querySelector('[data-bs-party]').onclick=()=>{close();Game.switchView?.('party')};return
  }
- r.innerHTML='<section class="cb2d-shell cb2d-brief bs2d-shell"><header class="cb2d-head"><div><small>BLACKOUT STATION · DUNGEON 4 · ILVL '+ENTRY_ILVL+'+</small><h2>Restore the grid. Survive the overload.</h2></div><button data-bs-close aria-label="Close dungeon">×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">There are no trash packs here. The expedition begins at a dead control board. Solve the sliding cable puzzle and the station powers up, revealing Dr. Vex Calder in the generator hall.</p>'+bsEndgamePrepMarkup()+'<div class="bs-brief-rules"><article><span>1</span><div><b>ALIGN THE GRID</b><p>Slide adjacent cable tiles into the empty space until every section returns to the correct circuit layout.</p></div></article><article><span>2</span><div><b>WATCH THE LIGHTS</b><p>At 75%, 50% and 25% boss health, Calder pulls the power and the room goes dark.</p></div></article><article><span>3</span><div><b>GET TO YOUR ROLE CIRCUIT</b><p><strong class="bs-red">RED = TANK</strong> · <strong class="bs-yellow">YELLOW = DAMAGE</strong> · <strong class="bs-blue">BLUE = HEALER</strong>. The shockwave is lethal outside the correct colour.</p></div></article></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+(ilvl()||'—')+'</small>'+party().map(ch=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(ch)+'"></i><span><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+' · '+role(ch).toUpperCase()+'</small></span></div>').join('')+'<div class="cb2d-prep-summary bs-entry-status"><small>STATION STATUS</small><p><b>GRID OFFLINE</b><span>Restore the distribution board to open the Generator Hall.</span></p><p><b>CALDER DETECTED</b><span>Role circuits become critical once Emergency Overload begins.</span></p></div><button class="cb2d-start bs2d-start" data-bs-start '+(!gate.ok?'disabled':'')+'>BEGIN RESTORATION →</button><p class="bs-entry-ready">'+esc(gate.reason)+'</p></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief bs2d-shell"><header class="cb2d-head"><div><small>BLACKOUT STATION · DUNGEON 4 · ILVL '+ENTRY_ILVL+'+</small><h2>Restore the grid. Survive the overload.</h2></div><button data-bs-close aria-label="Close dungeon">×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">There are no trash packs here. The expedition begins at a dead control board. Solve the sliding cable puzzle and the station powers up, revealing Dr. Vex Calder in the generator hall.</p>'+bsEndgamePrepMarkup()+'<div class="bs-brief-rules"><article><span>1</span><div><b>ALIGN THE GRID</b><p>Slide adjacent cable tiles into the empty space until every section returns to the correct circuit layout.</p></div></article><article><span>2</span><div><b>WATCH THE LIGHTS</b><p>At 75%, 50% and 25% boss health, Calder pulls the power and the room goes dark.</p></div></article><article><span>3</span><div><b>GET TO YOUR ROLE CIRCUIT</b><p><strong class="bs-red">RED = TANK</strong> · <strong class="bs-yellow">YELLOW = DAMAGE</strong> · <strong class="bs-blue">BLUE = HEALER</strong>. The shockwave is lethal outside the correct colour.</p></div></article></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+(ilvl()||'—')+'</small>'+party().map(ch=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(ch)+'"></i><span><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+' · '+role(ch).toUpperCase()+'</small></span></div>').join('')+'<div class="cb2d-prep-summary bs-entry-status"><small>STATION STATUS</small><p><b>GRID OFFLINE</b><span>Restore the distribution board to open the Generator Hall.</span></p><p><b>CALDER DETECTED</b><span>Role circuits become critical once Emergency Overload begins.</span></p></div><button class="cb2d-start bs2d-start" data-bs-start '+(!gate.ok?'disabled':'')+'>BEGIN RESTORATION →</button>'+(canSkipBlackoutGrid()?'<button class="cb2d-start bs2d-start" data-bs-owner-start '+(!gate.ok?'disabled':'')+'>START AT DR. VEX →</button><p class="bs-entry-ready"><b>ADMIN TEST CONTROL:</b> bypass Grid Alignment with no item use or Calder Overcharge.</p>':'<p class="bs-entry-ready">'+esc(gate.reason)+'</p>')</aside></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
  r.querySelector('[data-bs-start]')?.addEventListener('click',startRun);
+ r.querySelector('[data-bs-owner-start]')?.addEventListener('click',()=>startRun({skipGrid:true}));
  try{bsBindEndgamePrep()}catch(error){console.warn('Blackout Station difficulty controls failed to bind',error)}
 }
 function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('blackout-station',options.difficulty,options.tier||1);briefing()}
@@ -188,6 +195,7 @@ function renderPuzzle(){
  const stationTitle=run.powered?'Station online.':circuit.breakerLive&&quick?'Breaker path found.':progress>0?'Current is flowing.':'The station is dark.';
  const stationCopy=run.powered?'The main breaker is closed and the generator hall is live.':quick?(progress>0?'On repeat runs, reach the main breaker to start the station.':'Repeat runs only need one valid path from GRID INPUT to MAIN BREAKER.'):(progress>0?'Powered cable glows from the grid input. On your first clear, every tile must connect.':'First-clear rule: all 15 cable tiles must form one continuous powered circuit from GRID INPUT to MAIN BREAKER.');
  const override=activeGridOverride(),overrideCharges=gridOverrideCharges(),overrideReady=quick&&override&&!run.powered&&!run.overrideInProgress,craftedOverride=craftedGridOverrideStack(),craftedReady=quick&&craftedOverride&&!run.powered&&!run.overrideInProgress;
+ const ownerSkipPanel=canSkipBlackoutGrid()?'<div class="bs-override-panel ready"><div><span>ADMIN TEST CONTROL</span><b>PLAYCELLBOUND</b></div><p>Skip Grid Alignment and open the Generator Hall immediately. No item, charge or diagnostic is consumed.</p><button data-bs-owner-skip '+(run.powered||run.overrideInProgress?'disabled':'')+'>'+(run.overrideInProgress?'SKIPPING GRID…':'SKIP GRID ALIGNMENT →')+'</button></div>':'';
  const overridePanel='<div class="bs-override-panel '+(overrideReady?'ready':'')+'"><div><span>GRID OVERRIDE MODULE</span><b>'+(override?Math.max(0,Number(override.charges)||0)+' / '+Math.max(1,Number(override.maxCharges)||GRID_OVERRIDE_MAX_CHARGES)+' USES':'NOT OWNED')+'</b></div><p>'+(!quick?'Complete the grid manually once before Override Modules can be used.':override?'Consumes one charge and restores the grid automatically. No diagnostic penalty.': 'Rare 10% drop from Dr. Vex Calder. Tradeable on the Trading Post.')+'</p><button data-bs-override '+(overrideReady?'':'disabled')+'>'+(run.overrideInProgress?'OVERRIDING GRID…':overrideReady?'USE GRID OVERRIDE · '+Math.max(0,Number(override.charges)||0)+' CHARGES':!quick?'LOCKED UNTIL FIRST CLEAR':'NO MODULE AVAILABLE')+'</button>'+(overrideCharges>0?'<small>'+overrideCharges+' total charge'+(overrideCharges===1?'':'s')+' across your Bank</small>':'')+'</div>';
  const engineeredPanel='<div class="bs-override-panel '+(craftedReady?'ready':'')+'"><div><span>ENGINEERING · GRID OVERRIDE CHARGE</span><b>'+(craftedOverride?Math.max(0,Number(craftedOverride.quantity)||0)+' CRAFTED':'NONE IN BANK')+'</b></div><p>'+(!quick?'Complete the grid manually once before using an Engineering Override Charge.':craftedOverride?'Consumes one crafted charge to reconnect the grid automatically with no diagnostic penalty.':'Engineers can craft tradeable, single-use alternatives to the rare module.')+'</p><button data-bs-crafted-override '+(craftedReady?'':'disabled')+'>'+(run.overrideInProgress?'OVERRIDING GRID…':craftedReady?'USE CRAFTED CHARGE':!quick?'LOCKED UNTIL FIRST CLEAR':'NO CRAFTED CHARGE')+'</button></div>';
  const cells=run.board.map((tile,pos)=>{
@@ -196,13 +204,21 @@ function renderPuzzle(){
    ?'<div class="bs-grid-empty '+(cluePositions().has(pos)?'clue':'')+'" data-pos="'+pos+'"><span>EMPTY</span>'+ghost+'</div>'
    :'<button class="bs-grid-tile '+(circuit.connected.has(pos)?'live ':'')+(cluePositions().has(pos)?'clue ':'')+(cluePositions().has(pos)&&type===CABLES[pos]?'clue-correct':'')+'" data-tile-pos="'+pos+'" data-cable="'+type+'" aria-label="Cable tile">'+cableMarkup(type)+ghost+'</button>'
  }).join('');
- r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL · '+modeLabel+'</small><h2>Main Distribution Board</h2><p>'+headerCopy+'</p></div><button data-bs-close aria-label="Close dungeon">×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-rig"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+cells+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><span>RULE <b>'+modeLabel+'</b></span><span>CALDER OVERCHARGE <b>+'+overcharge+'%</b></span><button data-bs-reset '+(run.overrideInProgress?'disabled':'')+'>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-diagnostics"><div><span>EMERGENCY DIAGNOSTICS</span><b>'+run.cluesRemaining+' / 5</b></div><p>Each diagnostic reveals more of the original full-grid layout, but increases Dr. Vex Calder\'s maximum health by <strong>8%</strong>.</p><button data-bs-clue '+(run.cluesRemaining<=0||run.powered||run.overrideInProgress?'disabled':'')+'>USE DIAGNOSTIC · +8% BOSS HP</button></div>'+overridePanel+engineeredPanel+'<div class="bs-puzzle-log">'+run.log.slice(-5).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
+ r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL · '+modeLabel+'</small><h2>Main Distribution Board</h2><p>'+headerCopy+'</p></div><button data-bs-close aria-label="Close dungeon">×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-rig"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+cells+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><span>RULE <b>'+modeLabel+'</b></span><span>CALDER OVERCHARGE <b>+'+overcharge+'%</b></span><button data-bs-reset '+(run.overrideInProgress?'disabled':'')+'>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-diagnostics"><div><span>EMERGENCY DIAGNOSTICS</span><b>'+run.cluesRemaining+' / 5</b></div><p>Each diagnostic reveals more of the original full-grid layout, but increases Dr. Vex Calder\'s maximum health by <strong>8%</strong>.</p><button data-bs-clue '+(run.cluesRemaining<=0||run.powered||run.overrideInProgress?'disabled':'')+'>USE DIAGNOSTIC · +8% BOSS HP</button></div>'+ownerSkipPanel+overridePanel+engineeredPanel+'<div class="bs-puzzle-log">'+run.log.slice(-5).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
  r.querySelector('[data-bs-reset]').onclick=()=>{run.board=shuffledBoard();run.moves=0;run.log.push('The board was reshuffled. Diagnostics already used remain active.');renderPuzzle()};
  r.querySelector('[data-bs-clue]')?.addEventListener('click',useClue);
+ r.querySelector('[data-bs-owner-skip]')?.addEventListener('click',skipGridForPlaycellbound);
  r.querySelector('[data-bs-override]')?.addEventListener('click',()=>useGridOverride('module'));
  r.querySelector('[data-bs-crafted-override]')?.addEventListener('click',()=>useGridOverride('crafted'));
  r.querySelectorAll('[data-tile-pos]').forEach(b=>{if(run.overrideInProgress)b.disabled=true;else b.onclick=()=>slideTile(Number(b.dataset.tilePos),blank)})
+}
+async function skipGridForPlaycellbound(){
+ if(!run||run.powered||run.overrideInProgress||!canSkipBlackoutGrid())return;
+ if(!confirm('Skip Grid Alignment and go directly to Dr. Vex Calder?\n\nThis admin testing control does not consume an Override item or add Calder Overcharge.'))return;
+ run.overrideInProgress=true;run.ownerGridSkipped=true;run.cluesUsed=0;run.cluesRemaining=5;run.board=solvedBoard();run.moves=0;
+ run.log.push('Admin test control accepted. Grid Alignment skipped and the main breaker was forced online.');renderPuzzle();
+ await wait(180);if(!run)return;run.overrideInProgress=false;await powerOn('owner')
 }
 async function useGridOverride(source='module'){
  if(!run||run.powered||run.overrideInProgress)return;
@@ -237,8 +253,8 @@ async function slideTile(pos,blank){
  await bsSaveRuntime('puzzle');
  if(solved)await powerOn()
 }
-async function powerOn(overridden=false){
- if(!run||run.powered)return;run.powered=true;run.log.push(overridden?'Grid Override completed. Main breaker closing automatically.':run.quickReconnect?'Valid bridge established. Main breaker closing.':'Full circuit complete. Main breaker closing.');await bsSaveRuntime('boss-pending');
+async function powerOn(mode=false){
+ if(!run||run.powered)return;run.powered=true;const ownerSkip=mode==='owner',overridden=mode===true||mode==='override';run.log.push(ownerSkip?'Admin test skip complete. Main breaker forced online.':overridden?'Grid Override completed. Main breaker closing automatically.':run.quickReconnect?'Valid bridge established. Main breaker closing.':'Full circuit complete. Main breaker closing.');await bsSaveRuntime('boss-pending');
  const board=$('.bs-grid-frame');board?.classList.add('solved');const schematic=$('.bs-station-schematic');if(schematic)schematic.classList.add('online');
  const label=$('.bs-station-schematic strong');if(label)label.textContent='100%';
  await wait(500);
@@ -502,7 +518,7 @@ function bsReactorLifeMarkup(){
 }
 function bsMountReactorScene(){
  const arena=$('#bsArena');if(!arena)return;
- arena.dataset.bespokeBattlefield='1';arena.dataset.blackoutRoom='reactor-core';
+ arena.dataset.bespokeBattlefield='1';arena.dataset.blackoutRoom='vex-calder-room';
  (window.CellboundLivingScenes||window.CellboundAshenLiveScenes)?.mount?.(arena,{src:BLACKOUT_REACTOR_SCENE,profile:'blackout-reactor'})
 }
 function bsPowerSurge(ms=760){
@@ -515,7 +531,7 @@ function bsPowerSurge(ms=760){
 function drawCombat(){
  const r=root(),oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT,Viewer=window.CellboundCombatViewer;if(!Viewer?.mount)throw new Error('Canonical combat viewer unavailable');
  const arenaMarkup='<div id="bsArena" class="cb2d-arena bs-arena bs-live-room"><div class="cb2d-floor bs-station-env"><img class="bs-room-art" src="'+BLACKOUT_REACTOR_SCENE+'" alt="" decoding="async" draggable="false"></div>'+bsReactorLifeMarkup()+'<div id="bsRoleZones" class="bs-role-zones"></div><div id="bsTelegraphs"></div><div id="bsUnits"></div><div id="bsFx"></div><div class="cb2d-caption"><span>FINAL BOSS</span><b id="bsStatus">Power restored. Calder engages.</b></div></div>';
- const topbar='<div class="cbcombat-battle-topbar"><div class="cb2d-room-tag"><small>REACTOR CORE</small><b>Main turbine chamber</b></div><div class="cb2d-ground-legend"><span class="danger">RED · TANK</span><span class="spawn">YELLOW · DAMAGE</span><span class="aggro">BLUE · HEALER</span></div></div>';
+ const topbar='<div class="cbcombat-battle-topbar"><div class="cb2d-room-tag"><small>GENERATOR HALL</small><b>Dr. Vex Calder chamber</b></div><div class="cb2d-ground-legend"><span class="danger">RED · TANK</span><span class="spawn">YELLOW · DAMAGE</span><span class="aggro">BLUE · HEALER</span></div></div>';
  const cast='<div class="cb2d-cast" id="bsCast"><small>ENEMY CAST</small><div><b id="bsCastName">—</b><strong id="bsCastTime">—</strong></div><div class="cb2d-castbar"><i id="bsCastFill"></i></div></div>';
  const meters='<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span>LIVE</span></div><div id="bsDamage" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span>LIVE</span></div><div id="bsHealing" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span>Calder</span></div><div id="bsThreat" class="cb2d-meter-list"></div></section></div>';
  const commands='<div class="bs-command-copy"><b>PARTY COMMANDS</b><small>React to Calder while role circuits remain automatic.</small></div><button type="button" class="cbr-command" data-bs-command="focus"><b>FOCUS</b><small>Force priority damage.</small></button><button type="button" class="cbr-command" data-bs-command="interrupt"><b>INTERRUPT</b><small>Stop Core Siphon.</small></button><button type="button" class="cbr-command" data-bs-command="spread"><b>SPREAD</b><small>Move clear of danger.</small></button><button type="button" class="cbr-command" data-bs-command="stack"><b>STACK</b><small>Collapse around the tank.</small></button><button type="button" class="cbr-command" data-bs-command="regroup"><b>REGROUP</b><small>Reset combat formation.</small></button><button type="button" class="cbr-command" data-bs-command="defensive"><b>DEFENSIVE</b><small>Brace for heavy damage.</small></button><button type="button" class="cbr-command" data-bs-command="burn"><b>BURN</b><small>Commit damage cooldowns.</small></button><div class="bs-overcharge"><b>OVERCHARGE +'+oc+'%</b><small>From diagnostics used.</small></div>'+(window.CellboundDungeon2D?.combatPotionButtonMarkup?.('data-bs-potion')||'<button type="button" data-bs-potion disabled><b>USE POTION · ×0</b><small>No combat potions available</small></button>');
@@ -539,7 +555,7 @@ function drawCombat(){
  p.forEach(c=>mountResource(c));
  addUnit('e0','Dr. Vex Calder','enemy boss',62,42,true);renderMeters();
  requestAnimationFrame(()=>{window.CellboundCombatPortraits?.refresh?.();bsStripDirectionBlips()});
- feed('Power restored. Dr. Vex Calder enters the reactor core.')
+ feed('Power restored. Dr. Vex Calder enters the generator hall.')
 }
 async function startBoss(resumed=false){
  if(!run)return;if(!resumed)await window.CellboundBossDossier?.show?.('vex-calder');drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.createLiveSession){setStatus('Combat failed to start');feed('The real-time combat engine could not start. Reload and try again.');return}
@@ -644,8 +660,9 @@ function bsRestoreRuntime(attempt){
 async function fail(){
  Game.applyPartyCellShock?.(25);await Game.persistState?.();await bsSaveRuntime('failed');const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end bs-wipe-report cb2d-results-screen';window.CellboundCombatViewer?.setResults?.(root(),true);e.innerHTML='<div><small>BLACKOUT STATION · EXPEDITION FAILED</small><h3>Party Wiped</h3><p>'+esc(failureDiagnosis())+'</p><strong>Every adventurer gained 25% Cell Shock.</strong></div><button data-bs-return>RETURN TO DUNGEONS →</button>';e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')}
 }
-async function startRun(){
+async function startRun(options={}){
  const gate=readiness();if(!gate.ok)return;
+ const ownerSkip=Boolean(options?.skipGrid)&&canSkipBlackoutGrid();
  const startButton=root().querySelector('[data-bs-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
  const service=await bsWaitForEndgame(),eg=bsEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('blackout-station')||await service?.beginAttempt?.('blackout-station');
@@ -655,16 +672,20 @@ async function startRun(){
    const phase=bsRestoreRuntime(attempt);
    await window.CellboundExpeditionPresentation?.enter?.('blackout-station',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
    if(phase==='combat'||phase==='boss-pending'||run.powered){if(!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Number(attempt.runtimeUpdatedAt?Date.parse(attempt.runtimeUpdatedAt):0)||Date.now();return startBoss(true)}
+   if(ownerSkip){run.cluesUsed=0;run.cluesRemaining=5;run.board=solvedBoard();run.moves=0;run.overrideInProgress=false;return powerOn('owner')}
    renderPuzzle();return
  }
  const quickReconnect=(Number(state()?.blackoutStationCompletions)||0)>0;
  run={speed:1,seed:attempt.seed||Date.now().toString(36),startedAt:Date.now(),endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId},board:shuffledBoard(),moves:0,powered:false,quickReconnect,overrideInProgress:false,overrideUsed:false,cluesUsed:0,cluesRemaining:5,log:[quickReconnect?'Previous clear recognised. One continuous path to the breaker is enough.':'First-clear protocol active. Restore all 15 cable tiles before the breaker will close.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),resources:Object.fromEntries(party().map(c=>{const d=resourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),aggro:null,combatElapsed:0,movementEpoch:{},result:null,runtimeStageStartedAt:0};
- await window.CellboundExpeditionPresentation?.enter?.('blackout-station',{difficulty:eg.diff?.name||'Normal'});renderPuzzle();await bsSaveRuntime('puzzle')
+ await window.CellboundExpeditionPresentation?.enter?.('blackout-station',{difficulty:eg.diff?.name||'Normal'});
+ if(ownerSkip){run.board=solvedBoard();run.moves=0;return powerOn('owner')}
+ renderPuzzle();await bsSaveRuntime('puzzle')
 }
 function init(){
  Game=window.CellboundGame;G=window.CellboundGear;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();
  document.querySelector('.nav-btn[data-view="content"]')?.addEventListener('click',renderCard);
  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='content')renderCard()});
+ window.addEventListener('cellbound:admin-status',()=>{if(run&&!run.powered&&root().querySelector('.bs-puzzle-shell'))renderPuzzle()});
  window.CellboundBlackoutStation={open:openDungeon,renderCard}
 }
 init();
