@@ -263,7 +263,7 @@ async function fightStage(s){
  let mountTries=0;const mountTimer=setInterval(()=>{mountTries++;if(mountStage()||mountTries>40)clearInterval(mountTimer)},50);
  const won=await Q.runQuest2DFight({
   quest:'The Fractured Ages',title:s.boss,location:s.era,ambience:s.intro,
-  presentationKind:'dungeon',phases:STAGES.map(x=>x.era),phaseIndex:run.stage,partyLabel:'PARTY CONDITION · ILVL '+ilvl(),
+  presentationKind:'dungeon',roomLayout:{content:'fractured-ages',room:s.id},phases:STAGES.map(x=>x.era),phaseIndex:run.stage,partyLabel:'PARTY CONDITION · ILVL '+ilvl(),
   enemies:s.enemies,eliteIndex:s.id==='funhouse'?1:0,visualClass:s.visual,environmentMarkup:s.environment,combat,
   combatState:run?.combatState||null,onResult:result=>{combatResult=result},
   wallClockStartAt:Number(run.runtimeStageStartedAt)||Date.now(),
