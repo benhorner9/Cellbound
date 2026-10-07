@@ -78,6 +78,11 @@ const CANYON_ROOMS={
   blockers:[]
  }
 };
+window.CellboundRoomLayouts?.registerRoomConfigs?.('chaos-canyon',CANYON_ROOMS);
+function canyonRoomConfig(id){
+ const key=id&&CANYON_ROOMS[id]?id:'canyon-mouth',base=CANYON_ROOMS[key];
+ return window.CellboundRoomLayouts?.applyRoomConfig?.('chaos-canyon',key,base)||base
+}
 const CANYON_CROSSING={
  zone:'THE CHASM',description:'Seven unstable stepping stones span the chaos-lit gulf.',
  art:'./assets/chaos-canyon/rooms/crossing.webp?v=4',liveProfile:'canyon-crossing'
@@ -179,7 +184,7 @@ function feed(text){if(!run)return;run.log.push(text);const e=$('#cc2dFeed');if(
 function ccArenaScale(){return STAGES[run?.stage]?.id==='vorran'?[1,.78,.55,.30][Math.max(0,Math.min(3,Number(run?.vorranShrink)||0))]:1}
 function ccArenaPoint(x,y){const scale=ccArenaScale();return{x:50+(Number(x)-50)*scale,y:52+(Number(y)-52)*scale}}
 function addUnit(id,label,cls,x,y,big=false,meta='',characterId=null){const e=document.createElement('div'),safe=ccSafePoint(id,x,y);e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;if(characterId)e.dataset.unit='p-'+characterId;e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
-function ccSafePoint(id,x,y){const arena=$('#cc2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');if(transit)return{x:Math.max(2,Math.min(98,Number(x)||50)),y:Math.max(2,Math.min(98,Number(y)||50))};const room=CANYON_ROOMS[STAGES[run?.stage]?.id]||CANYON_ROOMS['canyon-mouth'],b=room?.bounds||{},left=Math.max(7,Number(b.left)||7),right=Math.min(93,Number(b.right)||93),top=Math.max(11,Number(b.top)||11),bottom=Math.min(89,Number(b.bottom)||89);return{x:Math.max(left,Math.min(right,Number(x)||50)),y:Math.max(top,Math.min(bottom,Number(y)||50))}}
+function ccSafePoint(id,x,y){const arena=$('#cc2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');if(transit)return{x:Math.max(2,Math.min(98,Number(x)||50)),y:Math.max(2,Math.min(98,Number(y)||50))};const room=canyonRoomConfig(STAGES[run?.stage]?.id),b=room?.bounds||{},left=Math.max(7,Number(b.left)||7),right=Math.min(93,Number(b.right)||93),top=Math.max(11,Number(b.top)||11),bottom=Math.min(89,Number(b.bottom)||89);return{x:Math.max(left,Math.min(right,Number(x)||50)),y:Math.max(top,Math.min(bottom,Number(y)||50))}}
 function move(id,x,y,ms=550){const e=$('[data-cc="'+id+'"]');if(!e)return;const safe=ccSafePoint(id,x,y);e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function ccReflowArena(ms=760){document.querySelectorAll('[data-cc]').forEach(e=>{const x=Number(e.dataset.rawX),y=Number(e.dataset.rawY);if(Number.isFinite(x)&&Number.isFinite(y))move(e.dataset.cc,x,y,ms)})}
 function ccPoint(id){const arena=$('#cc2dArena'),e=$('[data-cc="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
@@ -214,11 +219,11 @@ function ccRouteOffset(point,from,to,slot=0,spread=2){
  return{x:Number(point.x)+(-dy/len)*amount,y:Number(point.y)+(dx/len)*amount}
 }
 function ccPartyPosition(s,i){
- const room=CANYON_ROOMS[s?.id]||CANYON_ROOMS['canyon-mouth'],p=room.route?.partyAnchors?.[i]||room.route?.entryInside||{x:35,y:50};
+ const room=canyonRoomConfig(s?.id),p=room.route?.partyAnchors?.[i]||room.route?.entryInside||{x:35,y:50};
  return Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p.x),y:Number(p.y)}
 }
 function ccEnemyPosition(s,i){
- const room=CANYON_ROOMS[s?.id]||CANYON_ROOMS['canyon-mouth'],p=room.enemies?.[i]||room.enemies?.[room.enemies.length-1]||[68,50];
+ const room=canyonRoomConfig(s?.id),p=room.enemies?.[i]||room.enemies?.[room.enemies.length-1]||[68,50];
  return Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p.x),y:Number(p.y)}
 }
 function ccEnsureFade(){
@@ -247,7 +252,7 @@ function ccVorranCollapseLayer(arena){
  arena.appendChild(layer)
 }
 function stageEnvironment(s){
- const room=CANYON_ROOMS[s.id]||CANYON_ROOMS['canyon-mouth'],arena=$('#cc2dArena'),environment=$('#cc2dEnvironment'),src=room.art;
+ const room=canyonRoomConfig(s.id),arena=$('#cc2dArena'),environment=$('#cc2dEnvironment'),src=room.art;
  arena.className='cb2d-arena cc2d-arena cc2d-unified-arena canyon-live-room stage-'+s.id;
  arena.dataset.chaosRoom=s.id;arena.dataset.bespokeBattlefield='1';
  if(s.id!=='vorran')run.vorranShrink=0;else run.vorranShrink=Math.max(0,Number(run.vorranShrink)||0);
@@ -263,7 +268,7 @@ function ccRoomPoint(room,index,fallback){
 }
 function spawnStage(s){
  stageEnvironment(s);$('#cc2dUnits').innerHTML='';$('#cc2dTelegraphs').innerHTML='';$('#cc2dFx').innerHTML='';
- const chars=party(),room=CANYON_ROOMS[s.id]||CANYON_ROOMS['canyon-mouth'],route=room.route||{},entry=route.entry||{x:4,y:50},inside=route.entryInside||{x:18,y:50},spread=Number(route.spread)||2;
+ const chars=party(),room=canyonRoomConfig(s.id),route=room.route||{},entry=route.entry||{x:4,y:50},inside=route.entryInside||{x:18,y:50},spread=Number(route.spread)||2;
  const arena=$('#cc2dArena');arena?.classList.add('room-entering');
  chars.forEach((c,i)=>{
   const start=ccRouteOffset(entry,entry,inside,i,spread),target=ccPartyPosition(s,i);
@@ -280,7 +285,7 @@ function spawnStage(s){
  setTimeout(()=>arena?.classList.remove('room-entering'),760)
 }
 function ccRegroup(ms=380){
- const s=STAGES[run?.stage],room=CANYON_ROOMS[s?.id]||CANYON_ROOMS['canyon-mouth'];
+ const s=STAGES[run?.stage],room=canyonRoomConfig(s?.id);
  party().forEach((ch,i)=>{if((Number(run?.hp?.[ch.id])||0)<=0)return;const r=role(ch),p=ccRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);move('p'+i,p[0],p[1],ms)})
 }
 function ccRenderId(unitId){
@@ -292,7 +297,7 @@ function ccRenderId(unitId){
 function ccCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(x=>String(x.id)===id.slice(2)):null}
 function ccAttackKind(c){return c?.class==='Hunter'?'arrow':['Mage','Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
 function ccRebornEncounter(s){
- const room=CANYON_ROOMS[s.id]||{},enemies=s.enemies.map((name,i)=>({name,currentPosition:ccEnemyPosition(s,i)}));
+ const room=canyonRoomConfig(s.id)||{},enemies=s.enemies.map((name,i)=>({name,currentPosition:ccEnemyPosition(s,i)}));
  const base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=9?30:s.level===10?32:34,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies,enemyHealth:s.enemyHealth,mechanics:(s.mechanics||[]).map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),phases:(s.phases||[]).map(p=>({...p,arenaBounds:p.arenaBounds?{...p.arenaBounds}:null,arena:p.arena?{...p.arena}:null,addMechanics:(p.addMechanics||[]).map(m=>({...m}))})),environment:{room:s.id,bounds:{...(room.bounds||{})},arena:room.arena?{...room.arena}:null,walkable:Array.isArray(room.walkable)?room.walkable.map(p=>[Number(p[0]),Number(p[1])]):undefined,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}};
  let cfg=window.CellboundEndgame?.stageConfig?.('chaos-canyon',base)||base;
  cfg={...cfg,scaling:{...(cfg.scaling||{})},environment:{...base.environment,...(cfg.environment||{}),bounds:{...base.environment.bounds,...(cfg.environment?.bounds||{})},arena:cfg.environment?.arena||base.environment.arena,walkable:cfg.environment?.walkable||base.environment.walkable,blockers:Array.isArray(cfg.environment?.blockers)?cfg.environment.blockers:base.environment.blockers}};
@@ -701,7 +706,7 @@ function ccRestoreRuntime(attempt){
 }
 async function ccTravelDeeper(currentStage,tok){
  if(tok!==token||!run)return;
- const arena=$('#cc2dArena'),room=CANYON_ROOMS[currentStage?.id]||CANYON_ROOMS['canyon-mouth'],route=room.route||{},path=Array.isArray(route.exitPath)?route.exitPath:[],chars=party(),spread=Number(route.spread)||2;
+ const arena=$('#cc2dArena'),room=canyonRoomConfig(currentStage?.id),route=room.route||{},path=Array.isArray(route.exitPath)?route.exitPath:[],chars=party(),spread=Number(route.spread)||2;
  if(!path.length)return;
  arena?.classList.add('travelling');setStatus('Path clear · moving deeper into Chaos Canyon');
  const pos=Object.fromEntries(chars.map((c,i)=>{const e=$('[data-cc="p'+i+'"]');return[c.id,{x:Number.parseFloat(e?.style.left)||50,y:Number.parseFloat(e?.style.top)||50}]}));
