@@ -10,18 +10,18 @@ const pt=(kind,label,x,y)=>({kind,label,x,y});
 
 const CATALOG=[
  {id:'ashen-vault',name:'Ashen Vault',type:'Dungeon',rooms:[
-  ['broken-gate','The Broken Gate','./assets/ashen-vault/battlefields/broken-gate.avif',[pt('entry','Entrance',21,92),pt('exit','Exit',90,23),pt('party','Party',45,56),pt('enemy','Enemy 1',61,37),pt('enemy','Enemy 2',68,45),pt('enemy','Enemy 3',69,58)]],
-  ['hall-embers','Hall of Embers','./assets/ashen-vault/battlefields/hall-embers.avif',[pt('entry','Entrance',50,94),pt('exit','Exit',50,3),pt('party','Party',50,60),pt('enemy','Enemy 1',50,32),pt('enemy','Enemy 2',39,40),pt('enemy','Enemy 3',61,40)]],
-  ['kael','Ash Warden Kael','./assets/ashen-vault/battlefields/kael.avif',[pt('entry','Entrance',50,95),pt('exit','Exit',50,2),pt('party','Party',50,61),pt('enemy','Kael',50,43)]],
-  ['furnace','Furnace Passage','./assets/ashen-vault/battlefields/furnace.avif',[pt('entry','Entrance',17,18),pt('exit','Exit',89,84),pt('party','Party',38,39),pt('enemy','Enemy 1',61,50),pt('enemy','Enemy 2',69,62)]],
-  ['embermaw','Embermaw','./assets/ashen-vault/battlefields/embermaw.avif',[pt('entry','Entrance',7,51),pt('exit','Exit',93,51),pt('party','Party',42,50),pt('enemy','Embermaw',62,50)]],
-  ['vault-depths','Vault Depths','./assets/ashen-vault/battlefields/vault-depths.avif',[pt('entry','Entrance',50,94),pt('exit','Exit',50,4),pt('party','Party',50,67),pt('enemy','Enemy 1',50,38),pt('enemy','Enemy 2',41,46),pt('enemy','Enemy 3',59,46)]],
-  ['vaultheart','The Vaultheart','./assets/ashen-vault/battlefields/vaultheart.avif',[pt('entry','Entrance',50,95),pt('party','Party',50,70),pt('enemy','Vaultheart',50,40)]]
+  ['broken-gate','The Broken Gate','./assets/ashen-vault/rooms/broken-gate.webp',[pt('entry','Entrance',21,92),pt('exit','Exit',90,23),pt('party','Party',45,56),pt('enemy','Enemy 1',61,37),pt('enemy','Enemy 2',68,45),pt('enemy','Enemy 3',69,58)]],
+  ['hall-embers','Hall of Embers','./assets/ashen-vault/rooms/hall-embers.webp',[pt('entry','Entrance',50,94),pt('exit','Exit',50,3),pt('party','Party',50,60),pt('enemy','Enemy 1',50,32),pt('enemy','Enemy 2',39,40),pt('enemy','Enemy 3',61,40)]],
+  ['kael','Ash Warden Kael','./assets/ashen-vault/rooms/kael.webp',[pt('entry','Entrance',50,95),pt('exit','Exit',50,2),pt('party','Party',50,61),pt('enemy','Kael',50,43)]],
+  ['furnace','Furnace Passage','./assets/ashen-vault/rooms/furnace.webp',[pt('entry','Entrance',17,18),pt('exit','Exit',89,84),pt('party','Party',38,39),pt('enemy','Enemy 1',61,50),pt('enemy','Enemy 2',69,62)]],
+  ['embermaw','Embermaw','./assets/ashen-vault/rooms/embermaw.webp',[pt('entry','Entrance',7,51),pt('exit','Exit',93,51),pt('party','Party',42,50),pt('enemy','Embermaw',62,50)]],
+  ['vault-depths','Vault Depths','./assets/ashen-vault/rooms/vault-depths.webp',[pt('entry','Entrance',50,94),pt('exit','Exit',50,4),pt('party','Party',50,67),pt('enemy','Enemy 1',50,38),pt('enemy','Enemy 2',41,46),pt('enemy','Enemy 3',59,46)]],
+  ['vaultheart','The Vaultheart','./assets/ashen-vault/rooms/vaultheart.webp',[pt('entry','Entrance',50,95),pt('party','Party',50,70),pt('enemy','Vaultheart',50,40)]]
  ]},
  {id:'hollow-sanctum',name:'Hollow Sanctum',type:'Dungeon',rooms:[
-  ['gallery','Gallery of Echoes','./assets/hollow-sanctum/rooms/gallery.webp',[pt('entry','Entrance',50,98),pt('exit','Exit',50,4),pt('party','Party',50,68),pt('enemy','Enemy 1',50,43),pt('enemy','Enemy 2',40,49),pt('enemy','Enemy 3',60,49)]],
-  ['sentinel','Glassjaw Sentinel','./assets/hollow-sanctum/rooms/sentinel.webp',[pt('entry','Entrance',50,98),pt('exit','Exit',50,5),pt('party','Party',50,70),pt('enemy','Sentinel',50,53)]],
-  ['choir','The Bound Choir','./assets/hollow-sanctum/rooms/choir.webp',[pt('entry','Entrance',50,98),pt('party','Party',50,72),pt('enemy','Choir',50,56),pt('add','Add L',35,57),pt('add','Add R',65,57)]]
+  ['gallery','Gallery of Echoes','./assets/hollow-sanctum/rooms/gallery-void-v2.webp',[pt('entry','Entrance',50,98),pt('exit','Exit',50,4),pt('party','Party',50,68),pt('enemy','Enemy 1',50,43),pt('enemy','Enemy 2',40,49),pt('enemy','Enemy 3',60,49)]],
+  ['sentinel','Glassjaw Sentinel','./assets/hollow-sanctum/rooms/sentinel-void-v2.webp',[pt('entry','Entrance',50,98),pt('exit','Exit',50,5),pt('party','Party',50,70),pt('enemy','Sentinel',50,53)]],
+  ['choir','The Bound Choir','./assets/hollow-sanctum/rooms/choir-void-v2.webp',[pt('entry','Entrance',50,98),pt('party','Party',50,72),pt('enemy','Choir',50,56),pt('add','Add L',35,57),pt('add','Add R',65,57)]]
  ]},
  {id:'chaos-canyon',name:'Chaos Canyon',type:'Dungeon',rooms:[
   ['canyon-mouth','Canyon Mouth','./assets/chaos-canyon/rooms/canyon-mouth.webp',[pt('entry','Entrance',50,98),pt('exit','Exit',50,3),pt('party','Party',50,67),pt('enemy','Enemy 1',50,36),pt('enemy','Enemy 2',41,44),pt('enemy','Enemy 3',59,44)]],
@@ -34,7 +34,7 @@ const CATALOG=[
  ]},
  {id:'blackout-station',name:'Blackout Station',type:'Dungeon',rooms:[
   ['grid','Grid Alignment',null,[pt('entry','Entrance',50,92),pt('exit','Generator Hall',50,8),pt('party','Party',50,76)]],
-  ['calder','Dr. Vex Calder','./assets/blackout-station/rooms/vex-calder-room-v2.avif',[pt('entry','Entrance',10,50),pt('party','Party',30,50),pt('enemy','Dr. Calder',62,50),pt('mechanic','Tank',27,27),pt('mechanic','Damage',48,74),pt('mechanic','Healer',73,27)]]
+  ['calder','Dr. Vex Calder','./assets/blackout-station/rooms/vex-calder-room.avif',[pt('entry','Entrance',10,50),pt('party','Party',30,50),pt('enemy','Dr. Calder',62,50),pt('mechanic','Tank',27,27),pt('mechanic','Damage',48,74),pt('mechanic','Healer',73,27)]]
  ]},
  {id:'fractured-ages',name:'The Fractured Ages',type:'Dungeon',rooms:[
   ['high-noon','High Noon','./assets/fractured-ages/rooms/high-noon.webp',[pt('entry','Entrance',12,78),pt('exit','Next fracture',88,18),pt('party','Party',34,65),pt('enemy','Deadeye Mercer',66,38)]],
@@ -44,12 +44,12 @@ const CATALOG=[
   ['funhouse','The Funhouse','./assets/fractured-ages/rooms/funhouse.webp',[pt('entry','Entrance',50,90),pt('party','Party',50,70),pt('enemy','Old Man',50,33),pt('add','Echo L',34,42),pt('add','Echo R',66,42)]]
  ]},
  {id:'the-manor',name:'The Manor',type:'Raid',rooms:[
-  ['entrance-hall','Entrance Hall · Butler','./assets/manor/manor-butler.webp',[pt('entry','Entrance',50,92),pt('exit','Dining split',50,8),pt('party','Raid',34,66),pt('enemy','Butler',62,42)]],
-  ['dining-room','Dining Room · Maid A','./assets/manor/manor-maids.webp',[pt('entry','Entrance',50,92),pt('exit','Rejoin',50,8),pt('party','Party A',34,66),pt('enemy','Maid',64,40)]],
-  ['kitchen','Kitchen · Maid B','./assets/manor/manor-maids.webp',[pt('entry','Entrance',50,92),pt('exit','Rejoin',50,8),pt('party','Party B',34,66),pt('enemy','Maid',64,40)]],
-  ['workshop','Upper Workshop · Engineer','./assets/manor/manor-engineer.webp',[pt('entry','Entrance',50,92),pt('exit','West Bedroom',50,8),pt('party','Raid',36,67),pt('enemy','Engineer',64,40),pt('add','Turret L',55,28),pt('add','Turret R',73,30)]],
+  ['entrance-hall','Entrance Hall · Butler',null,[pt('entry','Entrance',50,92),pt('exit','Dining split',50,8),pt('party','Raid',34,66),pt('enemy','Butler',62,42)]],
+  ['dining-room','Dining Room · Maid A',null,[pt('entry','Entrance',50,92),pt('exit','Rejoin',50,8),pt('party','Party A',34,66),pt('enemy','Maid',64,40)]],
+  ['kitchen','Kitchen · Maid B',null,[pt('entry','Entrance',50,92),pt('exit','Rejoin',50,8),pt('party','Party B',34,66),pt('enemy','Maid',64,40)]],
+  ['workshop','Upper Workshop · Engineer',null,[pt('entry','Entrance',50,92),pt('exit','West Bedroom',50,8),pt('party','Raid',36,67),pt('enemy','Engineer',64,40),pt('add','Turret L',55,28),pt('add','Turret R',73,30)]],
   ['bedroom','West Bedroom',null,[pt('entry','Entrance',50,92),pt('exit','Attic',50,8),pt('party','Raid',50,70),pt('enemy','Swarm',50,38)]],
-  ['attic','The Attic · Master','./assets/manor/manor-master.webp',[pt('entry','Entrance',50,92),pt('party','Raid',38,68),pt('enemy','Master',62,38)]]
+  ['attic','The Attic · Master',null,[pt('entry','Entrance',50,92),pt('party','Raid',38,68),pt('enemy','Master',62,38)]]
  ]}
 ].map(group=>({...group,rooms:group.rooms.map(r=>({id:r[0],name:r[1],art:r[2],markers:r[3]}))}));
 
@@ -101,7 +101,7 @@ function render(){
  const g=group(),r=room(),d=roomDraft(),idx=g.rooms.findIndex(x=>x.id===r.id),status=reviewStatus();
  const contentOptions=CATALOG.map(x=>'<option value="'+x.id+'" '+(x.id===contentId?'selected':'')+'>'+esc(x.type+' · '+x.name)+'</option>').join('');
  const roomOptions=g.rooms.map(x=>'<option value="'+x.id+'" '+(x.id===roomId?'selected':'')+'>'+esc(x.name)+'</option>').join('');
- const art=d.art?'<img src="'+esc(d.art)+'" alt="'+esc(d.name)+'" draggable="false" data-room-art>':'<div class="rqe-missing"><div><b>No dedicated room artwork</b><span>This is a confirmed beta art gap, not an image loading error.</span></div></div>';
+ const art=d.art?'<img src="'+esc(d.art)+'" alt="'+esc(d.name)+'" draggable="false" data-room-art>':'<div class="rqe-missing"><div><b>No dedicated room artwork</b><span>No production room background is currently wired for this scene. Boss/key art is intentionally not substituted.</span></div></div>';
  mount.innerHTML='<section class="rqe-shell">'+
   '<header class="rqe-head"><div><small>OWNER CONTENT QA · BETA BUILD 1</small><h2>Room Editor</h2><p>Inspect every dungeon and raid room without playing through the run. Drag entrances, exits and spawn markers directly on the production artwork. Draft coordinates are stored on this device until they are promoted into the live room configuration.</p></div><div class="rqe-head-actions"><button id="rqeCopyAll">COPY ALL DRAFTS</button><button id="rqeClose">CLOSE</button></div></header>'+
   '<div class="rqe-toolbar"><label><span>CONTENT</span><select id="rqeContent">'+contentOptions+'</select></label><label><span>ROOM / ENCOUNTER</span><select id="rqeRoom">'+roomOptions+'</select></label><button id="rqeGrid">'+(showGrid?'HIDE GRID':'SHOW GRID')+'</button><button id="rqeReset">RESET ROOM</button></div>'+
