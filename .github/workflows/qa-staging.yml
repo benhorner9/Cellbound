@@ -32,6 +32,40 @@ jobs:
       - name: Appearance foundation tests
         run: npm run test:appearance
 
+      - name: Core regression tests
+        run: |
+          node tests/admin-ux.cjs
+          node tests/beta-analytics.cjs
+          node tests/beta-balance.cjs
+          node tests/beta-operations.cjs
+          node tests/beta-ui-polish.cjs
+          node tests/living-combat.authority.cjs
+
+      - name: Install browser QA tools
+        run: |
+          npm install --no-save --package-lock=false playwright@1.51.1
+          npx playwright install --with-deps chromium webkit
+
+      - name: Chromium browser regressions
+        run: |
+          node tests/login-screen.browser.cjs
+          node tests/living-combat.browser.cjs
+          node tests/equipment-fit.browser.cjs
+          node tests/race-identity.browser.cjs
+          node tests/item-visuals-v2.browser.cjs
+          node tests/full-playthrough.browser.cjs
+
+      - name: WebKit browser regressions
+        env:
+          CELLBOUND_TEST_ENGINE: webkit
+        run: |
+          node tests/login-screen.browser.cjs
+          node tests/living-combat.browser.cjs
+          node tests/equipment-fit.browser.cjs
+          node tests/race-identity.browser.cjs
+          node tests/item-visuals-v2.browser.cjs
+          node tests/full-playthrough.browser.cjs
+
       - name: JavaScript syntax sweep
         shell: bash
         run: |
