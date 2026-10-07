@@ -120,59 +120,19 @@ jobs:
           FTP_PORT: ${{ secrets.STAGING_FTP_PORT }}
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import os
-          from ftplib import FTP_TLS, error_perm
-
-          host=os.environ["FTP_SERVER"]
-          user=os.environ["FTP_USERNAME"]
-          password=os.environ["FTP_PASSWORD"]
-          port=int(os.environ.get("FTP_PORT") or 21)
-
-          ftp=FTP_TLS()
-          ftp.connect(host,port,timeout=30)
-          ftp.login(user,password)
-          ftp.prot_p()
-
-          def is_dir(path):
-              current=ftp.pwd()
-              try:
-                  ftp.cwd(path)
-                  ftp.cwd(current)
-                  return True
-              except error_perm:
-                  try: ftp.cwd(current)
-                  except Exception: pass
-                  return False
-
-          def remove_tree(path):
-              try:
-                  names=ftp.nlst(path)
-              except error_perm as exc:
-                  if str(exc).startswith("550"):
-                      return False
-                  raise
-              for name in names:
-                  leaf=name.rstrip("/").split("/")[-1]
-                  if leaf in (".",".."):
-                      continue
-                  target=name if name.startswith("/") else "/" + name
-                  if is_dir(target):
-                      remove_tree(target)
-                  else:
-                      try: ftp.delete(target)
-                      except error_perm as exc:
-                          if not str(exc).startswith("550"): raise
-              try:
-                  ftp.rmd(path)
-              except error_perm as exc:
-                  if not str(exc).startswith("550"): raise
-              return True
-
-          removed=remove_tree("/CB")
-          print("Legacy /CB cleanup:", "removed" if removed else "already absent")
-          ftp.quit()
-          PY
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lftp
+          PORT="${FTP_PORT:-21}"
+          COMMON="set cmd:fail-exit yes; set net:max-retries 2; set net:timeout 20; set ftp:ssl-force yes; set ftp:ssl-protect-data yes; set ssl:verify-certificate no;"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -p "$PORT" "$FTP_SERVER" \
+            -e "$COMMON rm -r /CB; bye" || true
+          if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -p "$PORT" "$FTP_SERVER" \
+            -e "$COMMON cls -1 /CB; bye" >/tmp/legacy-cb.txt 2>/dev/null; then
+            echo "Legacy /CB still exists:"
+            cat /tmp/legacy-cb.txt
+            exit 1
+          fi
+          echo "Legacy /CB is absent. Canonical staging directory remains /cb/."
 
       - name: Post-deploy canonical host diagnostics
         shell: bash
