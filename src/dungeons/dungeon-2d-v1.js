@@ -906,6 +906,11 @@ const ASHEN_ROOMS={
   "blockers": []
  }
 };
+window.CellboundRoomLayouts?.registerRoomConfigs?.('ashen-vault',ASHEN_ROOMS);
+function ashenRoomConfig(id){
+ const base=ASHEN_ROOMS[id]||ASHEN_ROOMS['broken-gate'];
+ return window.CellboundRoomLayouts?.applyRoomConfig?.('ashen-vault',id||'broken-gate',base)||base
+}
 let Game=null,G=null,P=null,run=null,token=0,rebornLoaderPromise=null,requestedRunOptions=null;
 const I=window.CellboundIdentities;
 let tactics={preset:'balanced',aggression:'balanced',interrupts:'important',interruptAssignment:'dps-rotation',cooldowns:'difficult',cc:'priority-elites',bossPlan:'balanced',defensives:'balanced',adds:'dangerous',movement:'balanced',consumables:'danger'};
@@ -1630,7 +1635,7 @@ function preloadAshenBattlefields(){
 }
 function renderDungeonEnvironment(s){
  const arena=$('#cb2dArena'),root=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');if(!arena||!root)return;
- const cfg=ASHEN_ROOMS[s.id]||ASHEN_ROOMS['broken-gate'],life=cfg.life||{};
+ const cfg=ashenRoomConfig(s.id),life=cfg.life||{};
  arena.className='cb2d-arena cbcombat-arena theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
  arena.querySelectorAll('.cb2d-bespoke-foreground-layer,.cb2d-stage-image').forEach(n=>n.remove());
  root.innerHTML='';
@@ -1852,7 +1857,7 @@ async function stageClearTransition(s,nextStage,tok){
  await delay(650);
  banner.remove();arena.classList.remove('stage-cleared')
 }
-function ashenRoute(s){return ASHEN_ROOMS[s?.id]?.route||{}}
+function ashenRoute(s){return ashenRoomConfig(s?.id)?.route||{}}
 function routeOffset(point,from,to,slot=0,spread=2.2){
  const a=from||point,b=to||point,dx=Number(b.x)-Number(a.x),dy=Number(b.y)-Number(a.y),len=Math.hypot(dx,dy)||1;
  const offsets=[0,-1,1,-2,2],amount=(offsets[slot%offsets.length]||0)*spread;
@@ -1864,7 +1869,7 @@ function stagePartyPosition(s,c,i){
  return{x:Number(p.x),y:Number(p.y)}
 }
 function stageEnemyPosition(s,i){
- const anchors=ASHEN_ROOMS[s?.id]?.enemyAnchors||[],p=anchors[i]||anchors[anchors.length-1]||{x:68,y:s?.enemies?.length===1?50:30+i*(40/Math.max(1,(s?.enemies?.length||1)-1))};
+ const anchors=ashenRoomConfig(s?.id)?.enemyAnchors||[],p=anchors[i]||anchors[anchors.length-1]||{x:68,y:s?.enemies?.length===1?50:30+i*(40/Math.max(1,(s?.enemies?.length||1)-1))};
  return{x:Number(p.x),y:Number(p.y)}
 }
 function spawn(s){
@@ -2357,7 +2362,7 @@ function rebornTactics(){
  }
 }
 function rebornEncounter(s){
- const room=ASHEN_ROOMS[s.id]||{};
+ const room=ashenRoomConfig(s.id)||{};
  const recommendedItemLevel=s.level<=3?18:s.level===4?20:22;
  const environment={
    room:room.room||s.id,
