@@ -47,24 +47,44 @@ jobs:
           npx playwright install --with-deps chromium webkit
 
       - name: Chromium browser regressions
+        id: chromium
+        continue-on-error: true
+        shell: bash
         run: |
-          node tests/login-screen.browser.cjs
-          node tests/living-combat.browser.cjs
-          node tests/equipment-fit.browser.cjs
-          node tests/race-identity.browser.cjs
-          node tests/item-visuals-v2.browser.cjs
-          node tests/full-playthrough.browser.cjs
+          failed=0
+          for test in \
+            tests/login-screen.browser.cjs \
+            tests/living-combat.browser.cjs \
+            tests/equipment-fit.browser.cjs \
+            tests/race-identity.browser.cjs \
+            tests/item-visuals-v2.browser.cjs \
+            tests/full-playthrough.browser.cjs
+          do
+            echo "===== Chromium: $test ====="
+            node "$test" || failed=1
+          done
+          exit "$failed"
 
       - name: WebKit browser regressions
+        id: webkit
+        continue-on-error: true
+        shell: bash
         env:
           CELLBOUND_TEST_ENGINE: webkit
         run: |
-          node tests/login-screen.browser.cjs
-          node tests/living-combat.browser.cjs
-          node tests/equipment-fit.browser.cjs
-          node tests/race-identity.browser.cjs
-          node tests/item-visuals-v2.browser.cjs
-          node tests/full-playthrough.browser.cjs
+          failed=0
+          for test in \
+            tests/login-screen.browser.cjs \
+            tests/living-combat.browser.cjs \
+            tests/equipment-fit.browser.cjs \
+            tests/race-identity.browser.cjs \
+            tests/item-visuals-v2.browser.cjs \
+            tests/full-playthrough.browser.cjs
+          do
+            echo "===== WebKit: $test ====="
+            node "$test" || failed=1
+          done
+          exit "$failed"
 
       - name: JavaScript syntax sweep
         shell: bash
@@ -131,6 +151,12 @@ jobs:
           if(failed) process.exit(1);
           console.log('HTML and built-asset integrity passed.');
           NODE
+
+      - name: Browser regression gate
+        if: always() && (steps.chromium.outcome == 'failure' || steps.webkit.outcome == 'failure')
+        run: |
+          echo "One or more browser regression suites failed. See the Chromium/WebKit steps above."
+          exit 1
 
       - name: QA inventory
         if: always()
