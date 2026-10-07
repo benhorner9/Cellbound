@@ -2147,7 +2147,7 @@ function regroup(){
  const index=enemyIndex();
  if(index>=0){settleFormation(index);return}
  const p=party();
- if(run?.externalMode){p.forEach((c,i)=>{const pos=sharedFormationPosition(c,i,p.length);move('p-'+c.id,pos.x,pos.y,500)});return}
+ if(run?.externalMode){const base=p.map((ch,i)=>sharedFormationPosition(ch,i,p.length)),k=run.externalLayoutKey,L=window.CellboundRoomLayouts,points=k&&L?.pointsFor?L.pointsFor(k.content,k.room,'party',base):base;p.forEach((ch,i)=>{const pos=points[i]||base[i];move('p-'+ch.id,Number(pos?.x??pos?.[0])||base[i].x,Number(pos?.y??pos?.[1])||base[i].y,500)});return}
  const melee=p.filter(c=>combatProfile(c)==='melee'),ranged=p.filter(c=>combatProfile(c)==='ranged');
  p.forEach(c=>{
    let x=22,y=50;
@@ -3045,6 +3045,8 @@ function sharedFormationPosition(c,index,total){
 function spawnSharedEncounter(s,result,options={}){
  clearArenaEphemera();$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const initialUnits=new Map((result.events?.find(e=>e.type==='COMBAT_START')?.payload?.units||[]).map(u=>[u.id,u]));
+ const layoutKey=options.layoutContent&&options.layoutRoom?{content:options.layoutContent,room:options.layoutRoom}:null,L=window.CellboundRoomLayouts,activeLayout=layoutKey&&L?.get?.(layoutKey.content,layoutKey.room);
+ run.externalLayoutKey=activeLayout?layoutKey:null;
  const arena=$('#cb2dArena'),env=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');
  if(arena)arena.className='cb2d-arena cbcombat-arena theme-'+esc(options.theme||'manor')+' room-'+esc(options.room||s?.id||'shared')+(['boss','final'].includes(String(s?.kind||''))?' boss-room':'');
  if(env)env.innerHTML='<div class="cb2d-ambience">'+Array.from({length:10},(_,i)=>'<i class="cb2d-ambient ash" style="--x:'+(8+(i*9)%84)+'%;--delay:-'+(i*.41)+'s;--dur:'+(4+(i%4)*.5)+'s;--drift:'+(-12+(i%5)*6)+'px"></i>').join('')+'</div>';
@@ -3055,19 +3057,24 @@ function spawnSharedEncounter(s,result,options={}){
  run.enemyDisplayMax=run.enemyMax.map((max,i)=>Math.max(1,Number(requestedDisplayMax[i])||max));
  run.threat=run.enemyMax.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));run.aggro=run.enemyMax.map(()=>null);run.hudTargets={};run.hudActions={};
  run.combatStartedAt=0;run.lastMeterAt=0;renderCombatMeters();renderRebornHealingMeter();
- party().forEach((c,i)=>{
-   const pos=initialUnits.get('p-'+c.id)?.position||sharedFormationPosition(c,i,party().length);
-   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),pos.x,pos.y,'');
-   mountRebornResourceBar(c);
-   const unit=$('[data-unit="p-'+c.id+'"]');if(unit){unit.dataset.uiSlot=String(i);unit.style.setProperty('--label-shift-x',((i%2?1:-1)*(6+(i%3)*6))+'px');unit.style.setProperty('--status-shift-x',((i%2?1:-1)*(5+(i%3)*5))+'px')}
-   const startHp=Math.max(0,Math.min(100,Number(c?._combatHealthPct??100)));
-   const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=startHp+'%';
+ const basePartyPositions=party().map((ch,i)=>sharedFormationPosition(ch,i,party().length));
+ const layoutPartyPositions=activeLayout&&L?.pointsFor?L.pointsFor(layoutKey.content,layoutKey.room,'party',basePartyPositions):null;
+ run.externalLayoutPartyPositions=layoutPartyPositions||null;
+ party().forEach((ch,i)=>{
+   const layoutPos=layoutPartyPositions?.[i],simPos=initialUnits.get('p-'+ch.id)?.position,pos=layoutPos||simPos||basePartyPositions[i];
+   addUnit('p-'+ch.id,ch.name,'party '+role(ch)+' profile-'+combatProfile(ch)+' '+classKey(ch),Number(pos?.x??pos?.[0])||50,Number(pos?.y??pos?.[1])||50,'');
+   mountRebornResourceBar(ch);
+   const unit=$('[data-unit="p-'+ch.id+'"]');if(unit){unit.dataset.uiSlot=String(i);unit.style.setProperty('--label-shift-x',((i%2?1:-1)*(6+(i%3)*6))+'px');unit.style.setProperty('--status-shift-x',((i%2?1:-1)*(5+(i%3)*5))+'px')}
+   const startHp=Math.max(0,Math.min(100,Number(ch?._combatHealthPct??100)));
+   const bar=$('[data-unit="p-'+ch.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=startHp+'%';
  });
  const sourceEnemies=Array.isArray(s?.enemies)?s.enemies:[];
+ const baseEnemyPositions=sourceEnemies.map((_,i)=>({x:68,y:sourceEnemies.length===1?50:18+i*(64/Math.max(1,sourceEnemies.length-1))}));
+ const layoutEnemyPositions=activeLayout&&L?.pointsFor?L.pointsFor(layoutKey.content,layoutKey.room,'enemy',baseEnemyPositions):null;
  sourceEnemies.forEach((raw,i)=>{
-   const data=typeof raw==='object'&&raw?raw:{name:raw},name=data.name||('Enemy '+(i+1)),meta=baseEnemies[i],boss=['boss','final'].includes(String(s?.kind||''))||String(data.classification||'').includes('boss'),y=sourceEnemies.length===1?50:18+i*(64/Math.max(1,sourceEnemies.length-1));
-   const pos=initialUnits.get('e-'+i)?.position||{x:68,y};
-   addUnit('e-'+i,name,boss?'enemy boss':'enemy',pos.x,pos.y,boss?'big':'',meta?('Lv. '+(meta.level||s?.level||1)+' · '+String(meta.classificationLabel||data.classification||'ENEMY').toUpperCase()):'');
+   const data=typeof raw==='object'&&raw?raw:{name:raw},name=data.name||('Enemy '+(i+1)),meta=baseEnemies[i],boss=['boss','final'].includes(String(s?.kind||''))||String(data.classification||'').includes('boss'),fallback=baseEnemyPositions[i];
+   const pos=layoutEnemyPositions?.[i]||initialUnits.get('e-'+i)?.position||fallback;
+   addUnit('e-'+i,name,boss?'enemy boss':'enemy',Number(pos?.x??pos?.[0])||fallback.x,Number(pos?.y??pos?.[1])||fallback.y,boss?'big':'',meta?('Lv. '+(meta.level||s?.level||1)+' · '+String(meta.classificationLabel||data.classification||'ENEMY').toUpperCase()):'');
  });
  primeCombatHudTargets(sourceEnemies.length?'e-0':null);renderPartyHudState();mountBossHud(s)
 }
