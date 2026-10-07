@@ -1319,7 +1319,7 @@ const combatPortraitRuntime=readSource('combat-portraits-v1.js');
     if(!shell.includes(hook))throw new Error('Beta analytics Admin surface is missing '+hook);
 
   const analytics=readSource('analytics-v1.js');
-  for(const hook of ['character_created','level_reached','view_opened','app_open','analytics_events','existing_at_tracking_start'])
+  for(const hook of ['character_created','level_reached','view_opened','app_open','cellbound_record_analytics_event','existing_at_tracking_start'])
     if(!analytics.includes(hook))throw new Error('Beta analytics runtime is missing '+hook);
 
   const adminAnalytics=readSource('admin-analytics-v1.js');
