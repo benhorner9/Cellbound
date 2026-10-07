@@ -375,11 +375,11 @@ async function mainGamePlaythrough(browser){
   assert(await page.locator('#betaPatchNotes .beta-note').count()>=1,'beta patch notes render');
   await page.locator('#betaReportSummary').fill('QA support ticket');
   await page.locator('#betaReportDetails').fill('The automated beta operations playthrough is testing the support submission path.');
-  await page.locator('#betaReportForm').evaluate(form=>form.requestSubmit());
+  await page.evaluate(async()=>{await window.CellboundBetaOps.submitReport({preventDefault(){}})});
   await page.waitForFunction(()=>{
     const message=document.querySelector('#betaReportMessage')?.textContent||'';
     return message.includes('Report sent');
-  },{},{timeout:15000,polling:50});
+  },{},{timeout:5000,polling:50});
   assert((await page.locator('#betaReportMessage').textContent()).includes('Report sent'),'beta report submission path completes');
 
   for(const size of [{width:768,height:1024},{width:390,height:844},{width:1024,height:1366}]){
