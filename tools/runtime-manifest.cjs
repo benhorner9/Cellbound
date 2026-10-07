@@ -117,6 +117,7 @@ const groups=Object.freeze({
   "combat-portraits-v1.css",
   "combat-portraits-v1.js",
   "combat-identities-v1.js",
+  "combat-data-v1.js",
   "combat-reborn-v1.js",
   "combat-standard-v1.js",
   "combat-viewer-v1.js",
@@ -156,6 +157,7 @@ const files=Object.freeze([
 const sourceOverrides=Object.freeze({
   "combat-hud-standard-v1.js":"src/combat/combat-hud-standard-v1.js",
   "combat-identities-v1.js":"src/combat/combat-identities-v1.js",
+  "combat-data-v1.js":"src/combat/combat-data-v1.js",
   "combat-physical-v4.css":"src/combat/combat-physical-v4.css",
   "combat-physical-v4.js":"src/combat/combat-physical-v4.js",
   "combat-polish-v2.css":"src/combat/combat-polish-v2.css",
