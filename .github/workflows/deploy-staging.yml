@@ -44,6 +44,7 @@ jobs:
           node tests/beta-operations.cjs
           node tests/beta-ui-polish.cjs
           node tests/gameplay-contracts.cjs
+          node tests/dungeon-presentation-integrity.cjs
           node tests/performance-contracts.cjs
           node tests/living-combat.authority.cjs
 
