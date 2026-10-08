@@ -29,7 +29,7 @@ function fresh(type='quest'){
 }
 function clean(){
  const b=runtime()?.cleanBlueprint?.(project)||{version:1,summary:project?.summary||'',level:project?.level||1,steps:project?.steps||[]};
- return{...b}
+ return{...b,title:String(project?.title||'').slice(0,120),content_type:project?.content_type||'quest'}
 }
 function storageBackup(){
  if(!project)return;
@@ -41,7 +41,7 @@ function restoreBackup(){
 }
 function loadRecord(r){
  const b=r.draft_blueprint&&Array.isArray(r.draft_blueprint.steps)?r.draft_blueprint:r.blueprint;
- project={...clone(b),id:r.id,slug:r.slug,title:r.title,content_type:r.content_type,status:r.status,version:r.version};
+ project={...clone(b),id:r.id,slug:r.slug,title:b.title||r.title,content_type:b.content_type||r.content_type,status:r.status,version:r.version};
  selectedId=r.id;stepIndex=0;message='Editing '+r.title;storageBackup();render()
 }
 async function fetchRecords(){
@@ -78,8 +78,9 @@ async function save(publish=false){
   const stamp=new Date().toISOString();
   if(project.id){
    const record=records.find(r=>r.id===project.id);
-   const payload={title,content_type:project.content_type,draft_blueprint:b,updated_by:user.data.user.id,updated_at:stamp};
-   if(publish){payload.blueprint=b;payload.status='published';payload.published_at=stamp;payload.version=(Number(record?.version)||1)+1}
+   const payload={draft_blueprint:b,updated_by:user.data.user.id,updated_at:stamp};
+   if(publish){payload.title=title;payload.content_type=project.content_type;payload.blueprint=b;payload.status='published';payload.published_at=stamp;payload.version=(Number(record?.version)||1)+1}
+   else if(record?.status!=='published'){payload.title=title;payload.content_type=project.content_type}
    const {data,error}=await db().from('cellbound_design_blueprints').update(payload).eq('id',project.id).select().single();
    if(error)throw error;project.status=data.status;project.version=data.version;
   }else{
