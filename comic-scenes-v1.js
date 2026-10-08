@@ -4,7 +4,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 let activeToken=0;
 const BUCKET='comic-scene-art',published=new Map(),catalog=new Map();
-let pendingLoad=null;
+let pendingLoad=null,lastArtLoad=0;
 const slug=v=>String(v||'').normalize('NFKD').toLowerCase().replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function sceneKey(config={}){
  return [config.theme||'zeltira',config.page||'story',config.title||'scene',config.subtitle||config.speaker||''].map(slug).filter(Boolean).join('-').slice(0,180)
@@ -20,9 +20,11 @@ async function reloadArt(){
  const {data,error}=await db.from('comic_scene_panel_art').select('scene_id,panel_index,object_path');
  if(error)throw error;
  published.clear();(data||[]).forEach(row=>published.set(row.scene_id+':'+row.panel_index,row.object_path));
+ lastArtLoad=Date.now();
  return true
 }
 function loadArt(){
+ if(lastArtLoad&&Date.now()-lastArtLoad<30000)return Promise.resolve(true);
  if(!pendingLoad)pendingLoad=reloadArt().catch(error=>{console.warn('Comic panel art unavailable',error);return false}).finally(()=>{pendingLoad=null});
  return pendingLoad
 }
@@ -74,9 +76,11 @@ function revealMarkup(r){
   '</div>';
 }
 async function show(config={}){
+  const token=++activeToken;
   registerScene(config);
   await loadArt();
-  const root=ensureRoot(),token=++activeToken;
+  if(token!==activeToken)return{choiceId:null,skipped:true};
+  const root=ensureRoot();
   document.body.classList.add('cbcomic-open');
   root.hidden=false;
   return new Promise(resolve=>{
