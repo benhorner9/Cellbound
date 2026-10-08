@@ -343,7 +343,7 @@ function bindBuilder(){
  const host=$('#dboWorkbench');if(!host)return;
  host.querySelectorAll('[data-db-field]').forEach(el=>{
   el.addEventListener('input',()=>{collect();renderReview();if(el.dataset.dbField==='title'){const h=host.querySelector('.dbo-builder-top h3');if(h)h.textContent=project.title;}});
-  if(el.dataset.dbField==='step.type'||el.dataset.dbField==='content_type')el.addEventListener('change',()=>{collect();renderBuilder()})
+  if(['step.type','content_type','step.template'].includes(el.dataset.dbField))el.addEventListener('change',()=>{collect();renderBuilder()})
  });
  host.querySelectorAll('[data-db-project]').forEach(btn=>btn.onclick=()=>{if(!canLeave({checkNative:false}))return;collect();const rec=records.find(r=>r.id===btn.dataset.dbProject);if(rec)loadRecord(rec)});
  host.querySelectorAll('[data-db-local]').forEach(btn=>btn.onclick=()=>{if(!canLeave({checkNative:false}))return;collect();openLocalDraft(btn.dataset.dbLocal)});
