@@ -46,6 +46,7 @@ jobs:
           node tests/gameplay-contracts.cjs
           node tests/dungeon-presentation-integrity.cjs
           node tests/story-presentation-integrity.cjs
+          node tests/manor-raid-integrity.cjs
           node tests/performance-contracts.cjs
           node tests/living-combat.authority.cjs
 
