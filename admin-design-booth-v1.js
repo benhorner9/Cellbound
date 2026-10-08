@@ -7,6 +7,7 @@ const owner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.Cellbound
 const db=()=>window.CellboundGame?.getSupabase?.();
 const runtime=()=>window.CellboundDesignedContent;
 const STORE='cellbound-design-booth-workspace-v1';
+const STASH='cellbound-design-booth-project-backups-v2';
 const TOOLS=[
  {id:'build',label:'Adventure Builder',sub:'Quest · dungeon · raid'},
  {id:'drops',label:'Drop Tables',sub:'Boss loot · chances'},
@@ -19,8 +20,20 @@ const TOOLS=[
 ];
 const plugins={comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer'};
 const mountIds={comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount'};
-let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='',dropEditIndex=-1,dropSearch='',dropTier='all',dropSort='tier';
-function announce(s){message=s;const slot=$('#dboMessage');if(slot)slot.textContent=s}
+let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,uploadBusy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='',nativeBaseline='[]',dropEditIndex=-1,dropSearch='',dropTier='all',dropSort='tier',moreOpen=false;
+let workspace={},baseline='',cloudUpdatedAt=null;
+const keyFor=p=>p?.id?'cloud:'+p.id:'local:'+p?.slug;
+const changed=()=>Boolean(project)&&JSON.stringify(project)!==baseline;
+const nativeChanged=()=>nativeLoadedKey!==''&&JSON.stringify(nativeDrops)!==nativeBaseline;
+function announce(s){message=s;document.querySelectorAll('[data-dbo-message]').forEach(slot=>slot.textContent=s)}
+function updateSaveState(){
+ const dirty=changed();
+ document.querySelectorAll('[data-dbo-save-state]').forEach(el=>{el.textContent=dirty?'● Unsaved on this device':'✓ Cloud draft up to date';el.classList.toggle('dirty',dirty)});
+}
+function loadWorkspace(){
+ try{const v=JSON.parse(localStorage.getItem(STASH)||'{}');workspace=v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch{workspace={}}
+}
+function setBaseline(){baseline=JSON.stringify(project);updateSaveState()}
 function newStep(type='room'){
  return{id:'step-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),type,title:type==='comic'?'Story Scene':type==='fight'?'Encounter':type==='minigame'?'Minigame':'New Room',text:'',artPath:'',
   panels:type==='comic'?[{title:'Panel 1',text:'',artPath:''}]:[],enemies:'Enemy',enemyHealth:750,mechanic:'none',
@@ -35,16 +48,46 @@ function clean(){
 }
 function storageBackup(){
  if(!project)return;
- try{localStorage.setItem(STORE,JSON.stringify({project,selectedId,stepIndex,updatedAt:Date.now()}));lastLocal=project.slug}catch(e){console.warn('Design Booth local backup failed',e)}
+ try{
+  const key=keyFor(project);
+  workspace[key]={project:clone(project),stepIndex,baseline,dirty:changed(),cloudUpdatedAt,updatedAt:Date.now()};
+  // Keep the latest 30 projects, without evicting unsaved drafts.
+  const keys=Object.keys(workspace).sort((a,b)=>(workspace[a].updatedAt||0)-(workspace[b].updatedAt||0));
+  for(const old of keys.slice(0,Math.max(0,keys.length-30)))if(!workspace[old].dirty)delete workspace[old];
+  localStorage.setItem(STASH,JSON.stringify(workspace));
+  localStorage.setItem(STORE,JSON.stringify({project,selectedId,stepIndex,updatedAt:Date.now()}));
+  lastLocal=project.slug;updateSaveState()
+ }catch(e){console.warn('Design Booth local backup failed',e)}
 }
 function restoreBackup(){
- try{const v=JSON.parse(localStorage.getItem(STORE)||'null');if(v?.project&&Array.isArray(v.project.steps)){project=v.project;selectedId=v.selectedId||null;stepIndex=Math.min(Number(v.stepIndex)||0,Math.max(0,project.steps.length-1));lastLocal=project.slug;return true}}catch{}
+ loadWorkspace();
+ try{
+  const v=JSON.parse(localStorage.getItem(STORE)||'null');
+  if(v?.project&&Array.isArray(v.project.steps)){
+   const saved=workspace[keyFor(v.project)];
+   project=saved?.project?clone(saved.project):v.project;
+   selectedId=project.id||null;stepIndex=Math.min(Number(saved?.stepIndex??v.stepIndex)||0,Math.max(0,project.steps.length-1));
+   baseline=saved?.baseline||JSON.stringify(project);cloudUpdatedAt=saved?.cloudUpdatedAt||null;
+   lastLocal=project.slug;return true
+  }
+ }catch{}
  return false
 }
-function loadRecord(r){
- const b=r.draft_blueprint&&Array.isArray(r.draft_blueprint.steps)?r.draft_blueprint:r.blueprint;
- project={...clone(b),id:r.id,slug:r.slug,title:b.title||r.title,content_type:b.content_type||r.content_type,status:r.status,version:r.version};
- selectedId=r.id;stepIndex=0;message='Editing '+r.title;storageBackup();render()
+function loadRecord(r,{renderNow=true}={}){
+ if(project)storageBackup();
+ const b=r.draft_blueprint&&Array.isArray(r.draft_blueprint.steps)?r.draft_blueprint:r.blueprint||{};
+ const cloud={...clone(b),id:r.id,slug:r.slug,title:b.title||r.title,content_type:b.content_type||r.content_type,status:r.status,version:r.version};
+ const saved=workspace['cloud:'+r.id];
+ let restore=Boolean(saved?.dirty&&saved.project);
+ if(restore&&saved.cloudUpdatedAt&&saved.cloudUpdatedAt!==r.updated_at){
+  restore=confirm('This project changed in the cloud since your local edits. OK: keep your local edits. Cancel: load the newer cloud copy.');
+ }
+ project=restore?clone(saved.project):cloud;
+ selectedId=r.id;stepIndex=restore?Math.min(saved.stepIndex||0,Math.max(0,project.steps.length-1)):0;
+ baseline=restore?saved.baseline:JSON.stringify(project);
+ cloudUpdatedAt=r.updated_at||null;
+ message=restore?'Recovered unsaved edits from this device. Save Cloud Draft before leaving.':'Opened '+r.title;
+ storageBackup();if(renderNow)render()
 }
 async function fetchRecords(){
  if(!db()||!owner())return;
@@ -78,7 +121,7 @@ function validate(){
  return errors
 }
 async function save(publish=false){
- if(!owner()||busy||!project)return;
+ if(!owner()||busy||uploadBusy||!project)return;
  collect();const problems=validate();
  if(publish&&problems.length){announce('Cannot publish: '+problems[0]+' ('+problems.length+' issues)');render();return}
  busy=true;announce(publish?'Publishing adventure…':'Saving draft to Cellbound…');
@@ -101,14 +144,15 @@ async function save(publish=false){
    if(error)throw error;project.id=data.id;project.status=data.status;project.version=data.version;selectedId=data.id
   }
   await fetchRecords();
-  storageBackup();
+  cloudUpdatedAt=records.find(r=>r.id===project.id)?.updated_at||null;
+  setBaseline();storageBackup();
   if(publish){window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('PUBLISHED · players can now start this '+project.content_type+' in their game tab.')}
   else announce('DRAFT SAVED · published players still see the previous version, if any.');
  }catch(e){announce('Save failed: '+String(e?.message||e))}
  finally{busy=false;render()}
 }
 async function remove(){
- if(!owner()||!project?.id||busy||!confirm('Delete this design from Cellbound? A published adventure will disappear from player lists.'))return;
+ if(!owner()||!project?.id||busy||uploadBusy||!confirm('Delete this design from Cellbound? A published adventure will disappear from player lists.'))return;
  busy=true;
  try{
   const {error}=await db().from('cellbound_design_blueprints').delete().eq('id',project.id);if(error)throw error;
@@ -117,20 +161,21 @@ async function remove(){
  finally{busy=false}
 }
 async function upload(stepId,panelIndex,file){
- if(!file||!owner()||!project)return;
+ if(!file||!owner()||!project||uploadBusy||busy)return;
  if(!['image/webp','image/jpeg','image/png','image/avif'].includes(file.type)){announce('Use WebP, PNG, JPEG or AVIF.');return}
  if(file.size>10*1024*1024){announce('Image must be at most 10 MB.');return}
  const target=project.steps.find(s=>s.id===stepId);
  if(!target)return;
  const ext={'image/webp':'webp','image/png':'png','image/jpeg':'jpg','image/avif':'avif'}[file.type];
  const path=project.slug+'/'+target.id+'/'+(panelIndex===null?'stage':'panel-'+panelIndex)+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;
- announce('Uploading '+file.name+'…');
+ uploadBusy=true;announce('Uploading '+file.name+'…');
  try{
   const {error}=await db().storage.from('cellbound-design-art').upload(path,file,{contentType:file.type,upsert:false,cacheControl:'31536000'});
   if(error)throw error;
   if(panelIndex===null)target.artPath=path;else if(target.panels?.[panelIndex])target.panels[panelIndex].artPath=path;
   storageBackup();announce('Artwork uploaded to the design draft. Publish the adventure to make it playable for everyone.');render()
  }catch(e){announce('Artwork upload failed: '+String(e?.message||e))}
+ finally{uploadBusy=false}
 }
 function collect(){
  if(!['build','drops'].includes(active)||!project)return;
