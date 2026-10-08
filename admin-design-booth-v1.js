@@ -36,12 +36,12 @@ function storageBackup(){
  try{localStorage.setItem(STORE,JSON.stringify({project,selectedId,stepIndex,updatedAt:Date.now()}));lastLocal=project.slug}catch(e){console.warn('Design Booth local backup failed',e)}
 }
 function restoreBackup(){
- try{const v=JSON.parse(localStorage.getItem(STORE)||'null');if(v?.project&&Array.isArray(v.project.steps)){project=v.project;selectedId=v.selectedId||null;stepIndex=Math.min(Number(v.stepIndex)||0,project.steps.length-1);return true}}catch{}
+ try{const v=JSON.parse(localStorage.getItem(STORE)||'null');if(v?.project&&Array.isArray(v.project.steps)){project=v.project;selectedId=v.selectedId||null;stepIndex=Math.min(Number(v.stepIndex)||0,Math.max(0,project.steps.length-1));lastLocal=project.slug;return true}}catch{}
  return false
 }
 function loadRecord(r){
  const b=r.draft_blueprint&&Array.isArray(r.draft_blueprint.steps)?r.draft_blueprint:r.blueprint;
- project={id:r.id,slug:r.slug,title:r.title,content_type:r.content_type,status:r.status,version:r.version,...clone(b)};
+ project={...clone(b),id:r.id,slug:r.slug,title:r.title,content_type:r.content_type,status:r.status,version:r.version};
  selectedId=r.id;stepIndex=0;message='Editing '+r.title;storageBackup();render()
 }
 async function fetchRecords(){
@@ -228,7 +228,7 @@ async function open(){
  opened=true;root.hidden=false;
  if(!project){restoreBackup();if(!project)project=fresh('quest')}
  render();
- try{await fetchRecords();if(project.id){const r=records.find(x=>x.id===project.id);if(r){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
+ try{await fetchRecords();if(project.id){const r=records.find(x=>x.id===project.id);if(r&&!lastLocal){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
  root.scrollIntoView?.({behavior:'smooth',block:'start'})
 }
 function close(){
