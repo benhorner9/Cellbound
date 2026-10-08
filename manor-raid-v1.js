@@ -99,6 +99,8 @@ function snapshot(){
 function isOwner(){return Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'}
 function manorRoomScene(stage,side=0){
  const room=stage==='maids'?(side===0?'dining':'kitchen'):stage;
+ const roomId={butler:'entrance-hall',dining:'dining-room',kitchen:'kitchen',engineer:'workshop',bedroom:'bedroom',housebound:'attic'}[room];
+ const art=window.CellboundRoomLayouts?.artFor?.('the-manor',roomId,'./assets/manor/manor-raid-hero.webp')||'./assets/manor/manor-raid-hero.webp';
  const props={
   butler:'<i class="mr-prop chandelier"></i><i class="mr-prop table"></i><i class="mr-prop door left"></i><i class="mr-prop door right"></i>',
   dining:'<i class="mr-prop chandelier"></i><i class="mr-prop table long"></i><i class="mr-prop chair a"></i><i class="mr-prop chair b"></i>',
@@ -107,7 +109,7 @@ function manorRoomScene(stage,side=0){
   bedroom:'<i class="mr-prop bed"></i><i class="mr-prop wardrobe"></i><i class="mr-prop window"></i><i class="mr-prop rug"></i>',
   housebound:'<i class="mr-prop beam a"></i><i class="mr-prop beam b"></i><i class="mr-prop attic-window"></i><i class="mr-prop trunks"></i>'
  }[room]||'';
- return '<div class="mr-room-scene room-'+room+'" aria-hidden="true"><img src="./assets/manor/manor-raid-hero.webp" alt="" draggable="false"><div class="mr-room-shade"></div><div class="mr-room-floor"></div>'+props+'<div class="mr-room-dust"><i></i><i></i><i></i><i></i><i></i></div></div>'
+ return '<div class="mr-room-scene room-'+room+'" aria-hidden="true"><img src="'+esc(art)+'" alt="" draggable="false"><div class="mr-room-shade"></div><div class="mr-room-floor"></div>'+props+'<div class="mr-room-dust"><i></i><i></i><i></i><i></i><i></i></div></div>'
 }
 
 const STAGE_MIN_MS={butler:30000,maids:30000,engineer:40000,bedroom:12000,housebound:40000};
