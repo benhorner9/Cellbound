@@ -9,6 +9,7 @@ const runtime=()=>window.CellboundDesignedContent;
 const STORE='cellbound-design-booth-workspace-v1';
 const STASH='cellbound-design-booth-project-backups-v2';
 const TOOLS=[
+ {id:'library',label:'Content Creator',sub:'New rooms · bosses · items'},
  {id:'build',label:'Adventure Builder',sub:'Quest · dungeon · raid'},
  {id:'drops',label:'Drop Tables',sub:'Boss loot · chances'},
  {id:'items',label:'Item Catalogue',sub:'All tiers · classes · export'},
@@ -19,6 +20,10 @@ const TOOLS=[
  {id:'templates',label:'Minigame Library',sub:'Reusable mechanics'}
 ];
 const GUIDANCE={
+ "library": {
+  "title": "Create → Save Cloud Draft → Reuse → Publish",
+  "detail": "Create a new room, boss encounter, comic strip, puzzle or balanced equipment item. Cloud drafts are private; published items become selectable in approved boss drop tables. Add scene templates to any Adventure Builder project."
+ },
  "build": {
   "title": "Create → Save Draft → Test → Publish",
   "detail": "Build a quest, dungeon or raid. Save a cloud draft first; only Publish makes the new adventure available to players."
@@ -52,8 +57,8 @@ const GUIDANCE={
   "detail": "Pick an existing template inside an adventure minigame stage. Creating a new mechanic still requires game code and testing."
  }
 };
-const plugins={comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer'};
-const mountIds={comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount'};
+const plugins={library:'CellboundDesignLibrary',comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer'};
+const mountIds={library:'dboLibrary',comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount'};
 let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,uploadBusy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='',nativeBaseline='[]',dropEditIndex=-1,dropSearch='',dropTier='all',dropSort='tier',moreOpen=false;
 let workspace={},baseline='',cloudUpdatedAt=null;
 const keyFor=p=>p?.id?'cloud:'+p.id:'local:'+p?.slug;
@@ -376,7 +381,7 @@ function renderBuilder(){
  '<div class="dbo-stage-list">'+project.steps.map((st,i)=>'<button type="button" data-db-step="'+i+'" class="'+(i===stepIndex?'active':'')+'"><i>'+String(i+1).padStart(2,'0')+'</i><span><b>'+esc(st.title)+'</b><small>'+esc(st.type)+'</small></span></button>').join('')+'</div>'+
  '<div class="dbo-add"><select id="dboAddType"><option value="comic">Comic strip</option><option value="room">Room / transition</option><option value="fight">Fight encounter</option><option value="minigame">Minigame</option></select><button type="button" id="dboAddStep" '+(project.steps.length>=30?'disabled':'')+'>+ ADD STAGE</button></div></aside>'+
  '<main id="dboFields" class="dbo-project-editor"><div class="dbo-form-grid">'+field('Adventure name','title',project.title)+field('Minimum party level','level',project.level,{kind:'number'})+field('Category','content_type',project.content_type,{kind:'select',opts:['quest','dungeon','raid']})+field('Short description','summary',project.summary,{kind:'textarea'})+'</div>'+
- (s?'<div class="dbo-stage-editor-header"><div><small>STAGE '+(stepIndex+1)+' OF '+project.steps.length+'</small><h3>'+esc(s.title)+'</h3></div><div class="dbo-stage-actions"><button data-db-move="-1" '+(stepIndex===0?'disabled':'')+'>↑</button><button data-db-move="1" '+(stepIndex===project.steps.length-1?'disabled':'')+'>↓</button><button id="dboCopyStage" '+(project.steps.length>=30?'disabled':'')+'>DUPLICATE STAGE</button><button data-db-remove-stage>REMOVE</button></div></div>'+stageFields(s):'<div class="dbo-empty">Add a stage to start designing.</div>')+
+ (s?'<div class="dbo-stage-editor-header"><div><small>STAGE '+(stepIndex+1)+' OF '+project.steps.length+'</small><h3>'+esc(s.title)+'</h3></div><div class="dbo-stage-actions"><button data-db-move="-1" '+(stepIndex===0?'disabled':'')+'>↑</button><button data-db-move="1" '+(stepIndex===project.steps.length-1?'disabled':'')+'>↓</button><button id="dboCopyStage" '+(project.steps.length>=30?'disabled':'')+'>DUPLICATE STAGE</button><button id="dboSaveStageTemplate">SAVE AS TEMPLATE</button><button data-db-remove-stage>REMOVE</button></div></div>'+stageFields(s):'<div class="dbo-empty">Add a stage to start designing.</div>')+
  '<div class="dbo-review" id="dboReview" aria-live="polite">'+reviewHTML()+'</div><div class="dbo-footer"><button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboTest" '+(busy?'disabled':'')+'>▶ TEST FROM STAGE</button><button class="primary" id="dboPublish" '+(busy||problems.length?'disabled':'')+'>PUBLISH TO GAME</button>'+(project.id?'<button id="dboDelete">DELETE</button>':'')+'</div><p data-dbo-message role="status">'+esc(message||'Changes back up automatically on this iPad; use Save Cloud Draft to sync across devices.')+'</p></main></div>';
  bindBuilder()
 }
@@ -395,6 +400,9 @@ function bindBuilder(){
   if(!confirm('Create a separate, unpublished copy of this adventure? The original will not change. Save Cloud Draft when you are ready to share your new project.'))return;
   storageBackup();project=copyAsNewDraft(project);selectedId=null;stepIndex=0;cloudUpdatedAt=null;
   setBaseline();storageBackup();announce('Created a new, unpublished copy. The original is unchanged. Save Cloud Draft to share it.');renderBuilder();
+ });
+ host.querySelector('#dboSaveStageTemplate')?.addEventListener('click',()=>{
+  collect();window.CellboundDesignLibrary?.useStage?.(clone(project.steps[stepIndex]));
  });
  host.querySelector('#dboCopyStage')?.addEventListener('click',()=>{
   collect();if(project.steps.length>=30)return;
@@ -554,6 +562,16 @@ function bindDrops(){
  })
 }
 
+function insertTemplate(raw,title=''){
+ if(!owner()||busy||uploadBusy)return false;
+ if(!project){project=fresh('quest');setBaseline()}
+ if(project.steps.length>=30){announce('The adventure can contain up to 30 stages.');return false}
+ if(!raw||!['room','fight','comic','minigame'].includes(raw.type))return false;
+ const stage={...newStep(raw.type),...clone(raw),id:newStep(raw.type).id,title:String(title||raw.title||'New stage').slice(0,100)};
+ project.steps.push(stage);stepIndex=project.steps.length-1;storageBackup();
+ announce('Reusable '+raw.type+' added as Stage '+(stepIndex+1)+'. Save Cloud Draft when ready.');
+ setTab('build');return true
+}
 function renderTemplates(){
  const host=$('#dboTemplates');if(!host)return;
  const rows=runtime()?.templates?.()||[];
@@ -584,11 +602,11 @@ function render(){
  const tab=t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>';
  root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · CREATIVE WORKSPACE</small><h2>Design Booth</h2><p>Build new Cellbound adventures, test ideas, manage rewards and refine existing scenes.</p></div><button id="dboClose" type="button">CLOSE ×</button></header>'+
  '<section class="dbo-quickstart" aria-label="Choose a task"><div><h3>What do you want to do?</h3><p>Choose a job. Adventures require Publish; existing-boss drops take effect when you press Save Boss Drops.</p></div><div class="dbo-quick-actions">'+
- [['build','Create an adventure'],['drops','Edit boss loot'],['items','Find an item'],['comics','Edit comic art'],['rooms','Edit dungeon rooms']].map(([id,label])=>'<button type="button" data-dbo-go="'+id+'" class="'+(active===id?'active':'')+'">'+label+' →</button>').join('')+'</div></section>'+
+ [['library','Create game content'],['build','Build an adventure'],['drops','Edit boss loot'],['items','Find an item'],['comics','Edit comic art'],['rooms','Edit dungeon rooms']].map(([id,label])=>'<button type="button" data-dbo-go="'+id+'" class="'+(active===id?'active':'')+'">'+label+' →</button>').join('')+'</div></section>'+
  '<nav class="dbo-tabs" role="tablist" aria-label="Design Booth tools">'+TOOLS.filter(t=>!advanced.includes(t.id)).map(tab).join('')+'</nav>'+
  '<details class="dbo-more" '+(moreOpen||advanced.includes(active)?'open':'')+'><summary>More tools · Character fit, dungeon planner & minigame templates</summary><nav class="dbo-tabs dbo-tabs-more" role="tablist" aria-label="Advanced tools">'+TOOLS.filter(t=>advanced.includes(t.id)).map(tab).join('')+'</nav></details>'+
  '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Press Publish only when everything is ready. Existing published content stays unchanged until then.</li></ol><p>Local backups are for recovery on this device; only a cloud-saved draft is available on another device.</p></details>'+
- '<aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
+ '<aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboLibrary" hidden></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
  root.querySelectorAll('[data-dbo-tool],[data-dbo-go]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool||btn.dataset.dboGo));
@@ -621,6 +639,6 @@ function init(){
  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')access()});
  access()
 }
-window.CellboundDesignBooth={open,close,setTab,validate,save,current:()=>clone(project||{}),isOwner:owner};
+window.CellboundDesignBooth={open,close,setTab,insertTemplate,validate,save,current:()=>clone(project||{}),isOwner:owner};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()
 })();
