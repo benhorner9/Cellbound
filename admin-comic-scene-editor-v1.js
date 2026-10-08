@@ -111,7 +111,7 @@ function scanBell(src,path,category,c){
   if(b)caption=split(b.body).map(x=>[literal(property(x,'title')),literal(property(x,'text'))].filter(Boolean).join(' — ')).filter(Boolean).join('\n');
  }
  const line=src.slice(0,c.at).split('\n').length;
- const panels=[panel(caption,title,art,0)],subtitle=literal(property(obj,'subtitle'))||'';
+ const panels=[panel(caption,title,art,0)],subtitle=literal(property(obj,'subtitle'))||'Greywake · The missing hour';
  const config={theme:'bell',page,title,subtitle,panels,panelOnly:true,progressive:true};
  return{id:path+':'+(page+'-'+title).toLowerCase().replace(/[^a-z0-9]+/g,'-'),title:page?page+' · '+title:title,category,speaker:'Greywake',path,line,origin:'dedicated comic',note:'The live strip displays a sequence of captions over its illustrated panel.',panels,config}
 }
