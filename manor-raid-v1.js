@@ -986,7 +986,7 @@ async function init(){
  Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,100);return}
  db=Game.getSupabase?.();user=Game.getUser?.();mount=$('#manorRaidMount');if(!db||!user||!mount)return;
  bindView();await fetchHub();clearInterval(hubTimer);hubTimer=setInterval(()=>{if(document.querySelector('#raids.view.active'))fetchHub()},5000);
- window.CellboundManorRaid={refresh:fetchHub,open:openRaid,syncPartyToListing:syncParty,snapshot,startOwnerSoloQa,endOwnerSoloQa,isOwnerSoloQa:()=>ownerSoloQa}
+ window.CellboundManorRaid={refresh:fetchHub,open:openRaid,syncPartyToListing:syncParty,snapshot,startOwnerSoloQa,endOwnerSoloQa,isOwnerSoloQa:()=>ownerSoloQa,roomScene:manorRoomScene}
 }
 init()
 })();
