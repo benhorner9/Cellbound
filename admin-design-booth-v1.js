@@ -68,6 +68,9 @@ function validate(){
    if(raw.length>6)errors.push(label+': maximum six drop rows per boss.');
    if(raw.length!==valid.length)errors.push(label+': choose valid items and drop chances for every loot row.');
    if(valid.some(d=>d.chance<1||d.chance>100))errors.push(label+': drop chance must be between 1% and 100%.');
+   const gear=valid.filter(d=>d.kind==='gear');
+   if(gear.length>2)errors.push(label+': maximum two equipment drops per boss.');
+   if(gear.reduce((sum,d)=>sum+d.chance,0)>100)errors.push(label+': equipment drop chances must total 100% or less.');
   }
  });
  return errors
@@ -175,7 +178,7 @@ function lootDropOptions(kind,selected=''){
 function lootEditor(step){
  const items=Array.isArray(step.drops)?step.drops:[];
  const raid=project?.content_type==='raid';
- return '<section class="dbo-boss-loot"><header><div><small>INDIVIDUAL BOSS REWARDS</small><h4>Boss Drop Table</h4><p>Each row rolls independently when this encounter is defeated. Rewards go directly to the Guild Bank and appear in the end-of-run summary.</p></div><span>'+items.length+' / 6 DROPS</span></header>'+
+ return '<section class="dbo-boss-loot"><header><div><small>INDIVIDUAL BOSS REWARDS</small><h4>Boss Drop Table</h4><p>Each row rolls independently when this encounter is defeated. Configure up to two gear rolls totalling 100% chance. Rewards go directly to the Guild Bank and appear in the end-of-run summary.</p></div><span>'+items.length+' / 6 DROPS</span></header>'+
  (raid?'<p class="dbo-loot-notice">Raid reward delivery is disabled in prototype raids. You may plan drop tables here, but they will not award gear until the multiplayer raid reward system is connected.</p>':'')+
  (items.length?'<div class="dbo-drop-list">'+items.map((drop,i)=>{
   const kind=drop.kind==='material'?'material':'gear';
