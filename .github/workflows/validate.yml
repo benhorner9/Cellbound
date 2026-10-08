@@ -79,6 +79,11 @@ jobs:
           node tests/gameplay-regression.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/gameplay-regression.browser.cjs
 
+      - name: Design Booth browser regression
+        run: |
+          node tests/design-booth.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/design-booth.browser.cjs
+
       - name: Full game browser playthrough
         run: |
           node tests/full-playthrough.browser.cjs
