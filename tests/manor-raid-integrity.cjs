@@ -7,11 +7,11 @@ let failed=false;
 const fail=m=>{console.error('ERROR:',m);failed=true};
 const ok=m=>console.log('OK:',m);
 
-const manorFile='manor-raid-v1.js',manorCssFile='manor-raid-v1.css',viewerFile='src/dungeons/dungeon-2d-v1.js';
-for(const p of [manorFile,manorCssFile,viewerFile])if(!exists(p))fail('Missing '+p);
+const manorFile='manor-raid-v1.js',manorCssFile='manor-raid-v1.css',viewerFile='src/dungeons/dungeon-2d-v1.js',editorFile='admin-room-editor-v1.js';
+for(const p of [manorFile,manorCssFile,viewerFile,editorFile])if(!exists(p))fail('Missing '+p);
 if(failed)process.exit(1);
 
-const manor=read(manorFile),css=read(manorCssFile),viewer=read(viewerFile);
+const manor=read(manorFile),css=read(manorCssFile),viewer=read(viewerFile),editor=read(editorFile);
 
 const requiredAssets=[
  'assets/manor/manor-raid-hero.webp',
@@ -34,6 +34,8 @@ for(const room of ['entrance-hall','dining-room','kitchen','workshop','bedroom',
 if(!manor.includes("layoutContent:'the-manor'"))fail('Manor no longer uses the shared room-layout runtime');
 if(!manor.includes('environmentHtml:manorRoomScene'))fail('Manor shared combat rooms are missing room-specific environment presentation');
 if(!viewer.includes('options.environmentHtml||'))fail('Shared combat viewer no longer accepts external room artwork/environments');
+if(!manor.includes('roomScene:manorRoomScene'))fail('Owner tools cannot preview the live Manor room scene');
+if(!editor.includes('Live Manor runtime scene preview')||!editor.includes('window.CellboundManorRaid.roomScene'))fail('Room Editor is not wired to live Manor scenes');
 
 for(const token of ['ownerSoloQa','startOwnerSoloQa','OWNER SOLO QA · NO CHARGES / NO LOOT','qaPartnerSnapshot','removeOwnerQaControls']){
  if(!manor.includes(token))fail('Owner solo QA contract missing: '+token);
