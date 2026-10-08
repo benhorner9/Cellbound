@@ -24,9 +24,9 @@ function catalogue(){
  for(const item of G?.items||[]){
   add(rows,{id:item.itemId,name:item.name,category:'Equipment',tier:item.tier,rarity:item.rarity,
    className:item.class||((item.classes||[]).join(', ')||'All'),slot:item.slot,itemLevel:item.itemLevel,
-   source:item.raidExclusive?'The Manor (raid)':item.tier>=3?'Heroic / Cellbound+ or higher-tier sources':'Dungeons / item progression',
+   source:item.designedItem?'Design Booth · boss-assigned only':item.raidExclusive?'The Manor (raid)':item.tier>=3?'Heroic / Cellbound+ or higher-tier sources':'Dungeons / item progression',
    dropEligible:Boolean(item.enabled&&item.dropEnabled&&!item.raidExclusive&&Number(item.tier)<=2),
-   status:!item.enabled?'Disabled':item.raidExclusive?'Raid exclusive':item.dropEnabled?'Default drop pool':'Not in standard drop pool',
+   status:item.designedItem?'Boss-assigned only':!item.enabled?'Disabled':item.raidExclusive?'Raid exclusive':item.dropEnabled?'Default drop pool':'Not in standard drop pool',
    notes:item.tierLabel||''});
  }
  for(const [id,m] of Object.entries(P?.MATERIALS||{})){
