@@ -483,12 +483,13 @@ for(const file of files){
   if(resumableDungeonHooks[file])for(const hook of resumableDungeonHooks[file])if(!contents.includes(hook))throw new Error(file+' resumable dungeon runtime is missing '+hook);
   if(file==='manor-raid-v1.js'&&!contents.includes('startAt:readyStartAt()'))throw new Error('The Manor shared viewer must resume from the server encounter clock');
   if(file==='quests-v2.js'&&(!contents.includes('config.seed||')||!contents.includes('wallClockStartAt:Number(config.wallClockStartAt)')))throw new Error('Quest combat must support deterministic resumed dungeon playback');
-  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','world-boss-2d-v1.js','pvp-viewer-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','world-boss-2d-v1.js','pvp-viewer-v1.js','quests-v2.js'].includes(file)){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
       if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
     }
     if(!contents.includes('Date.now()-wallAnchor')&&!contents.includes('Date.now()-playStartedAt'))throw new Error(file+' must use a wall-clock combat timeline');
   }
+  if(file==='onboarding-v1.js'&&!contents.includes('Viewer.playSharedEncounter({'))throw new Error('Chapter 0 must delegate combat playback to the shared wall-clock viewer');
   if(file==='quests-v2.js'){
     if(!contents.includes("Number(lastResult?.durationMs)"))throw new Error('Interactive slice duration must use lastResult');
     if(!contents.includes("_combatTalentTimers:x.talentTimers||{}")||!contents.includes("talentTimers=Object.fromEntries"))throw new Error('Quest sliced talent state carry is missing');
