@@ -147,12 +147,12 @@ async function discover(){
 }
 function combined(s){
  const d=drafts[s.id]||{};
- const copy=clone(s);copy.panels=copy.panels.map((p,i)=>({...p,...(d.panels?.[i]||{})}));copy.review=d.review||'unreviewed';return copy
+ const copy=clone(s);copy.panels=copy.panels.map((p,i)=>{const edited={...p,...(d.panels?.[i]||{})};return{...edited,artwork:window.CellboundComicScenes?.artworkFor?.(s.config||{},i,edited.artwork)||edited.artwork}});copy.review=d.review||'unreviewed';return copy
 }
 function state(p){
  const art=String(p.artwork||'').trim();
  if(!art||broken.has(art))return'missing';
- if(!/^(?:\.\/)?assets\/comics\//.test(art))return'reused';
+ if(!/^(?:\.\/)?assets\/comics\//.test(art)&&!art.includes('/storage/v1/object/public/comic-scene-art/'))return'reused';
  return'ready'
 }
 function gapsIn(s){return s.panels.filter(p=>state(p)!=='ready').length}
@@ -176,11 +176,11 @@ function render(){
  const root=$('#comicSceneEditorMount');if(!root||!opened||!owner())return;
  const all=scenes.map(combined),total=all.reduce((n,s)=>n+s.panels.length,0),missing=all.reduce((n,s)=>n+s.panels.filter(p=>state(p)==='missing').length,0),reused=all.reduce((n,s)=>n+s.panels.filter(p=>state(p)==='reused').length,0),approved=all.filter(s=>s.review==='approved').length;
  const selectedScene=scenes.find(x=>x.id===selected),s=selectedScene&&combined(selectedScene),categories=['all',...new Set(scenes.map(x=>x.category))];
- root.innerHTML='<section class="cse-shell"><header><div><small>OWNER QA · STORY PRESENTATION</small><h2>Comic Scene Editor</h2><p>Review all discovered story scenes without progressing a quest. Changes remain drafts on this iPad until exported and applied to game source.</p></div><div class="cse-actions"><button id="cseExport">EXPORT ALL DRAFTS</button><button id="cseClose">CLOSE</button></div></header>'+
+ root.innerHTML='<section class="cse-shell"><header><div><small>OWNER QA · STORY PRESENTATION</small><h2>Comic Scene Editor</h2><p>Review all discovered story scenes without progressing a quest. Captions save as local drafts. Uploaded artwork publishes directly into the game.</p></div><div class="cse-actions"><button id="cseExport">EXPORT ALL DRAFTS</button><button id="cseClose">CLOSE</button></div></header>'+
  (warning?'<p class="cse-warning">'+esc(warning)+'</p>':'')+
  '<div class="cse-stats"><span><b>'+all.length+'</b> scenes</span><span><b>'+total+'</b> panels</span><span><b>'+missing+'</b> missing art</span><span><b>'+reused+'</b> reused art</span><span><b>'+approved+'</b> approved</span></div>'+
  '<div class="cse-columns"><aside class="cse-left"><div class="cse-filters"><input id="cseSearch" type="search" placeholder="Find a scene…" value="'+esc(filter)+'"><select id="cseGroup">'+categories.map(x=>'<option value="'+esc(x)+'" '+(x===group?'selected':'')+'>'+esc(x==='all'?'All story groups':x)+'</option>').join('')+'</select><label><input type="checkbox" id="cseGaps" '+(gaps?'checked':'')+'> Show artwork gaps only</label></div><div id="cseSceneList">'+listMarkup()+'</div></aside>'+
- '<main class="cse-right">'+(s?'<div class="cse-title"><small>'+esc(s.category)+' · '+esc(s.path)+(s.line?' : '+s.line:'')+'</small><h3>'+esc(s.title)+'</h3><p>'+esc(s.note||'Check every comic panel and its artwork.')+'</p></div><div class="cse-controls"><label>REVIEW<select id="cseReview"><option value="unreviewed" '+(s.review==='unreviewed'?'selected':'')+'>Unreviewed</option><option value="needs-work" '+(s.review==='needs-work'?'selected':'')+'>Needs work</option><option value="approved" '+(s.review==='approved'?'selected':'')+'>Approved</option></select></label><button id="csePreview">▶ PREVIEW STRIP</button><button id="cseSave" class="primary">SAVE DRAFT</button><button id="cseReset">RESET</button></div><div class="cse-panel-grid">'+s.panels.map(panelMarkup).join('')+'</div><footer><button id="cseCopy">COPY THIS SCENE</button><p id="cseMessage">Drafts do not change live story scenes until implemented in the game.</p></footer>':'<p class="cse-empty">No scenes could be loaded.</p>')+'</main></div></section>';
+ '<main class="cse-right">'+(s?'<div class="cse-title"><small>'+esc(s.category)+' · '+esc(s.path)+(s.line?' : '+s.line:'')+'</small><h3>'+esc(s.title)+'</h3><p>'+esc(s.note||'Check every comic panel and its artwork.')+'</p></div><div class="cse-controls"><label>REVIEW<select id="cseReview"><option value="unreviewed" '+(s.review==='unreviewed'?'selected':'')+'>Unreviewed</option><option value="needs-work" '+(s.review==='needs-work'?'selected':'')+'>Needs work</option><option value="approved" '+(s.review==='approved'?'selected':'')+'>Approved</option></select></label><button id="csePreview">▶ PREVIEW STRIP</button><button id="cseSave" class="primary">SAVE DRAFT</button><button id="cseReset">RESET</button></div><div class="cse-panel-grid">'+s.panels.map(panelMarkup).join('')+'</div><footer><button id="cseCopy">COPY THIS SCENE</button><p id="cseMessage">Text drafts stay on this device; artwork uploads publish to all players.</p></footer>':'<p class="cse-empty">No scenes could be loaded.</p>')+'</main></div></section>';
  root.querySelectorAll('[data-cse-image]').forEach(img=>img.onerror=()=>{const art=img.getAttribute('src');if(!broken.has(art)){broken.add(art);render()}else{const badge=img.parentNode.querySelector('em');if(badge){badge.textContent='BROKEN IMAGE';badge.className='missing'}}});
  bind(s);showList()
 }
