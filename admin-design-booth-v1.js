@@ -331,12 +331,13 @@ function renderBuilder(){
 function bindBuilder(){
  const host=$('#dboWorkbench');if(!host)return;
  host.querySelectorAll('[data-db-field]').forEach(el=>{
-  el.addEventListener('input',()=>{collect();if(el.dataset.dbField==='title')announce('Title updated. Save when ready.');});
+  el.addEventListener('input',()=>{collect();renderReview();if(el.dataset.dbField==='title'){const h=host.querySelector('.dbo-builder-top h3');if(h)h.textContent=project.title;}});
   if(el.dataset.dbField==='step.type'||el.dataset.dbField==='content_type')el.addEventListener('change',()=>{collect();renderBuilder()})
  });
- host.querySelectorAll('[data-db-project]').forEach(btn=>btn.onclick=()=>{collect();const rec=records.find(r=>r.id===btn.dataset.dbProject);if(rec)loadRecord(rec)});
+ host.querySelectorAll('[data-db-project]').forEach(btn=>btn.onclick=()=>{if(!canLeave({checkNative:false}))return;collect();const rec=records.find(r=>r.id===btn.dataset.dbProject);if(rec)loadRecord(rec)});
+ host.querySelectorAll('[data-db-local]').forEach(btn=>btn.onclick=()=>{if(!canLeave({checkNative:false}))return;collect();openLocalDraft(btn.dataset.dbLocal)});
  host.querySelectorAll('[data-db-step]').forEach(btn=>btn.onclick=()=>{collect();stepIndex=Number(btn.dataset.dbStep);renderBuilder()});
- for(const type of ['quest','dungeon','raid'])host.querySelector('#dboNew'+type[0].toUpperCase()+type.slice(1))?.addEventListener('click',()=>{if(!confirm('Create a new '+type+'? The current work is backed up locally.'))return;collect();project=fresh(type);selectedId=null;stepIndex=0;storageBackup();renderBuilder()});
+ for(const type of ['quest','dungeon','raid'])host.querySelector('#dboNew'+type[0].toUpperCase()+type.slice(1))?.addEventListener('click',()=>{if(!confirm('Create a new '+type+'? The current work is backed up locally.'))return;collect();storageBackup();project=fresh(type);selectedId=null;stepIndex=0;cloudUpdatedAt=null;setBaseline();storageBackup();renderBuilder()});
  host.querySelector('#dboAddStep')?.addEventListener('click',()=>{collect();project.steps.push(newStep($('#dboAddType').value));stepIndex=project.steps.length-1;storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-move]').forEach(btn=>btn.onclick=()=>{collect();const to=stepIndex+Number(btn.dataset.dbMove);if(to<0||to>=project.steps.length)return;[project.steps[stepIndex],project.steps[to]]=[project.steps[to],project.steps[stepIndex]];stepIndex=to;storageBackup();renderBuilder()});
  host.querySelector('[data-db-remove-stage]')?.addEventListener('click',()=>{if(!confirm('Remove this stage?'))return;collect();project.steps.splice(stepIndex,1);stepIndex=Math.max(0,Math.min(stepIndex,project.steps.length-1));storageBackup();renderBuilder()});
@@ -348,6 +349,7 @@ function bindBuilder(){
  host.querySelector('#dboPublish')?.addEventListener('click',()=>{if(confirm('Publish this '+project.content_type+' to the game for all players on staging?'))save(true)});
  host.querySelector('#dboDelete')?.addEventListener('click',remove);
  host.querySelector('#dboTest')?.addEventListener('click',()=>{collect();const preview={title:project.title,content_type:project.content_type,blueprint:{...clean(),steps:clean().steps.slice(stepIndex)}};runtime()?.play?.('local',preview)});
+ renderReview();
 }
 
 function bossChoices(){
