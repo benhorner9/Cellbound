@@ -44,6 +44,14 @@ function notify(label,title,text){
  clearTimeout(e._timer);e._timer=setTimeout(()=>e.classList.remove('show'),4300)
 }
 function story(title,speaker,lines,onDone,buttonText){
+ const comic=window.CellboundComicScenes;
+ if(comic?.show){
+  comic.show({theme:'zeltira',page:'FOURFOLD LOCK',title,subtitle:speaker,progressive:true,storyOnly:true,
+   panels:lines.map((text,i)=>({kind:i?'dialogue':'location',speaker,title:i?'':title,text})),
+   skipLabel:'SKIP STORY',nextLabel:'NEXT PANEL →',continueLabel:buttonText||'CONTINUE →'
+  }).then(async()=>{if(onDone)await onDone()}).catch(error=>console.warn('Fourfold comic scene error',error));
+  return
+ }
  let root=$('#fourfoldStory');if(!root){root=document.createElement('div');root.id='fourfoldStory';root.className='fourfold-story-backdrop';root.hidden=true;document.body.appendChild(root)}
  let index=0;
  const draw=()=>{
