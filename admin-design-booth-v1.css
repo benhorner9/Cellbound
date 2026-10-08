@@ -8,7 +8,7 @@
 .dbo-shell button:disabled{opacity:.4;cursor:not-allowed}
 .dbo-master-head button,.dbo-builder-top button,.dbo-shell .dbo-footer button,.dbo-shell .dbo-stage-actions button,.dbo-shell .dbo-add button{border-radius:8px;border:1px solid #50616a;background:#1c2b33;color:#e5eff2;padding:12px 13px;font-size:12px;font-weight:850}
 .dbo-master-head>button{flex-shrink:0}
-.dbo-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-bottom:1px solid #31454c;background:#101c23}
+.dbo-tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid #31454c;background:#101c23}
 .dbo-tabs button{min-height:75px;min-width:0;padding:12px 8px;border:0;border-right:1px solid #263b45;border-bottom:3px solid transparent;background:transparent;color:#c5d4dd;text-align:center}
 .dbo-tabs button.active{background:#1f343b;border-bottom-color:#dbb784;color:#fff}
 .dbo-tabs button b{display:block;font-size:12px;line-height:1.25}.dbo-tabs button small{display:block;color:#8ca3b0;font-size:10px;line-height:1.35;margin-top:5px}
@@ -100,3 +100,29 @@
 .dbo-loot-list b{color:#f4f1e6}.dbo-loot-list small{grid-column:2;grid-row:2;color:#9aafa3}.dbo-loot-list strong{grid-column:3;grid-row:1/span 2;color:#d9c39c}
 @media(max-width:950px){.dbo-drop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.dbo-boss-loot{padding:12px}.dbo-drop-grid{grid-template-columns:1fr 1fr}.dbo-boss-loot>header{flex-direction:column}}
+
+/* Centralized Drop Tables workspace */
+.dbo-drops-main{padding:0 24px 28px;max-width:1120px;margin:0 auto}
+.dbo-drops-head{padding:25px 0 16px;border-bottom:1px solid #344952}
+.dbo-drops-head small{color:#d5b27c;font-size:10px;font-weight:900;letter-spacing:.12em}
+.dbo-drops-head h3{font-family:Georgia,serif;font-size:28px;color:#fff1d4;margin:4px 0 8px}
+.dbo-drops-head p{margin:0;color:#adbec8;line-height:1.5;font-size:13px}
+.dbo-drops-picker{display:block;margin:22px 0 14px;max-width:840px}
+.dbo-drops-picker span{display:block;font-size:11px;font-weight:900;letter-spacing:.08em;color:#d4b88d;margin:0 0 7px}
+.dbo-drops-picker select{width:100%;background:#152831;color:#f8f0e1;border:1px solid #9c7654;border-radius:8px;min-height:51px;padding:12px 15px;font:inherit;font-size:16px}
+.dbo-drops-picker optgroup{background:#14252b;color:#d9b888;font-weight:900}
+.dbo-drops-picker option{background:#14252b;color:#faf0dd}
+.dbo-drops-status{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 16px;border-radius:9px;background:#1f2e33;border:1px solid #43545a}
+.dbo-drops-status b{color:#f1dfc0;font-family:Georgia,serif;font-size:17px}
+.dbo-drops-status small{color:#bacac8;letter-spacing:.05em;font-size:10px;font-weight:800}
+.dbo-drops-main .dbo-boss-loot{margin-top:15px}
+.dbo-drops-main .dbo-loot-notice{margin:16px 0 4px;line-height:1.55}
+.dbo-drops-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:18px 0 8px;border-top:1px solid #3a4f51}
+.dbo-drops-footer [role=status]{font-size:12px;color:#cadad4;line-height:1.45;margin:0;flex:1}
+.dbo-drops-footer .dbo-buttons button{padding:12px 16px;min-height:44px;border:1px solid #9f835f;border-radius:8px;color:#f4e3c3;background:#27322e;font-weight:900;font-size:12px}
+.dbo-drops-footer .dbo-buttons button.primary{background:#997044;color:#fff;border-color:#caa76d}
+.dbo-drop-error{width:100%;color:#ffd0bb;font-size:12px}
+.dbo-manage-drops{border:1px solid #c8a16e;background:#302d25;color:#ffe4b9;border-radius:8px;padding:12px 17px;font-weight:900;margin:8px 0 20px}
+@media(max-width:1250px){.dbo-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:850px){.dbo-drops-main{padding:0 14px 22px}.dbo-drops-status{display:block}.dbo-drops-status small{display:block;margin-top:6px}.dbo-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:480px){.dbo-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
