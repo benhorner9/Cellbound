@@ -45,7 +45,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.equal(await page.locator('[data-db-drop="0.chance"]').inputValue(),'42','Loot chance survives stage switching');
   assert.equal(await page.locator('[data-db-drop="0.quantity"]').inputValue(),'3','Boss drop quantity survives stage switching');
   await page.locator('#dboBossPicker').selectOption('native:ashen-vault:ashwarden');
-  assert(await page.locator('#dboDrops').innerText().then(t=>t.includes('Ash Warden Kael')&&t.includes('additional boss drops')),'Existing dungeon boss is available, with clear default-drop policy');
+  assert(await page.locator('#dboDrops').innerText().then(t=>t.includes('Ash Warden Kael')&&t.includes('extra boss drops')&&t.includes('EXISTING GAME REWARDS')),'Existing dungeon boss is available, with clear default-drop policy');
   await page.locator('[data-db-add-drop]').click();
   assert.equal(await page.locator('[data-db-drop-row]').count(),1,'Existing boss supports optional owner drop rows');
   await page.locator('[data-db-remove-drop]').click();
