@@ -97,6 +97,20 @@ async function waitClosed(page,selector){
     const snap=await page.evaluate(()=>CellboundManorRaid.snapshot());
     assert.equal(snap.length,5,'local Manor party snapshot contains the active five');
     assert(snap.every(x=>Number(x.level)>=15),'Manor party snapshot preserves raid-level eligibility');
+    assert(await page.locator('#manorRaidMount [data-mr-owner-qa]').isVisible(),'owner Manor solo-QA entry is visible');
+
+    const claimsBefore=await page.evaluate(()=>JSON.stringify(CellboundGame.getState().raidRewardClaims||{}));
+    await page.evaluate(()=>CellboundManorRaid.startOwnerSoloQa());
+    await page.waitForSelector('#manorRaidOverlay:not([hidden]) .mr-ready-shell [data-raid-ready]',{timeout:7000});
+    assert(await page.locator('#mrOwnerQaControls').isVisible(),'owner Manor QA toolbar is visible');
+    await page.locator('#manorRaidOverlay [data-raid-ready]').click();
+    await page.waitForSelector('#cb2dBackdrop:not([hidden]) [data-combat-view="canonical-v1"]',{timeout:12000});
+    assert(await page.locator('#cb2dBackdrop .mr-room-scene.room-butler').count()===1,'Manor Butler uses the raid room environment scene');
+    assert.equal(await page.evaluate(()=>CellboundManorRaid.isOwnerSoloQa()),true,'Manor owner solo QA stays local and active during combat');
+    await page.locator('#mrOwnerQaControls [data-qa-exit]').click();
+    await page.waitForFunction(()=>!window.CellboundManorRaid.isOwnerSoloQa(),{},{timeout:5000,polling:50});
+    const claimsAfter=await page.evaluate(()=>JSON.stringify(CellboundGame.getState().raidRewardClaims||{}));
+    assert.equal(claimsAfter,claimsBefore,'owner Manor solo QA does not grant raid rewards');
 
     // Social / Party Finder.
     await page.evaluate(()=>CellboundGame.switchView('chat'));
@@ -122,7 +136,7 @@ async function waitClosed(page,selector){
     assert.equal(await page.locator('#nullComplexMount').count(),1,'Null Complex activity mount is present');
 
     assert.deepEqual(errors.filter(x=>!x.includes('Endgame state failed')),[],'gameplay regression emitted no unexpected browser errors');
-    console.log('Gameplay browser regression passed: all five dungeons open/close correctly, Blackout reset + owner Calder skip works, canonical combat registrations are intact, Manor loads, Party Finder targets are complete, Trading Post refreshes, and quest/activity surfaces remain available.');
+    console.log('Gameplay browser regression passed: all five dungeons open/close correctly, Blackout reset + owner Calder skip works, canonical combat registrations are intact, Manor owner solo QA opens through the shared room viewer without granting loot, Party Finder targets are complete, Trading Post refreshes, and quest/activity surfaces remain available.');
   }finally{
     await page.close();
     await browser.close();
