@@ -28,7 +28,7 @@ const nativeChanged=()=>nativeLoadedKey!==''&&JSON.stringify(nativeDrops)!==nati
 function announce(s){message=s;document.querySelectorAll('[data-dbo-message]').forEach(slot=>slot.textContent=s)}
 function updateSaveState(){
  const dirty=changed();
- document.querySelectorAll('[data-dbo-save-state]').forEach(el=>{el.textContent=dirty?'● Unsaved on this device':'✓ Cloud draft up to date';el.classList.toggle('dirty',dirty)});
+ document.querySelectorAll('[data-dbo-save-state]').forEach(el=>{el.textContent=dirty?'● Unsaved on this device':(!project?.id?'○ Not yet saved to cloud':'✓ Cloud draft up to date');el.classList.toggle('dirty',dirty)});
 }
 function loadWorkspace(){
  try{const v=JSON.parse(localStorage.getItem(STASH)||'{}');workspace=v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch{workspace={}}
@@ -142,7 +142,8 @@ async function save(publish=false){
  collect();const problems=validate();
  if(publish&&problems.length){announce('Cannot publish: '+problems[0]+' ('+problems.length+' issues)');render();return}
  busy=true;announce(publish?'Publishing adventure…':'Saving draft to Cellbound…');
- const b=clean(),title=String(project.title||'Untitled').trim();
+ const b=clean(),title=String(project.title||'Untitled').trim(),previousKey=keyFor(project);
+ document.querySelectorAll('#dboWorkbench input,#dboWorkbench select,#dboWorkbench textarea,#dboWorkbench button,#dboDrops input,#dboDrops select,#dboDrops button').forEach(el=>el.disabled=true);
  try{
   const user=await db().auth.getUser();
   if(user.error||!user.data?.user?.id)throw new Error('Sign in using your owner account.');
@@ -161,6 +162,7 @@ async function save(publish=false){
    if(error)throw error;project.id=data.id;project.status=data.status;project.version=data.version;selectedId=data.id
   }
   await fetchRecords();
+  if(previousKey!==keyFor(project))delete workspace[previousKey];
   cloudUpdatedAt=records.find(r=>r.id===project.id)?.updated_at||null;
   setBaseline();storageBackup();
   if(publish){window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('PUBLISHED · players can now start this '+project.content_type+' in their game tab.')}
@@ -173,7 +175,7 @@ async function remove(){
  busy=true;
  try{
   const {error}=await db().from('cellbound_design_blueprints').delete().eq('id',project.id);if(error)throw error;
-  await fetchRecords();project=fresh();selectedId=null;stepIndex=0;cloudUpdatedAt=null;setBaseline();storageBackup();window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('Design deleted.');render()
+  await fetchRecords();delete workspace[keyFor(project)];project=fresh();selectedId=null;stepIndex=0;cloudUpdatedAt=null;setBaseline();storageBackup();window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('Design deleted.');render()
  }catch(e){announce(String(e?.message||e))}
  finally{busy=false}
 }
