@@ -5,6 +5,7 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const C=()=>window.CellboundComicScenes,db=()=>window.CellboundGame?.getSupabase?.();
 const owner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&window.CellboundAdmin?.role==='owner';
 const scenes=new Map(),checked=new Set(),broken=new Set(),reviewed=new Set();
+try{(JSON.parse(localStorage.getItem('cellbound-comic-reviews')||'[]')||[]).forEach(id=>reviewed.add(id))}catch{}
 let opened=false,current='',panel=0,filter='all',term='',file=null,blob='',busy=false,note='';
 function add(group,config,source){
  if(!config?.title)return;
@@ -163,7 +164,7 @@ function bind(){
  document.querySelectorAll('#comicEditorMount [data-panel]').forEach(x=>x.addEventListener('click',()=>{panel=Number(x.dataset.panel);choose(null)}));
  $('#cseFile')?.addEventListener('change',e=>choose(e.target.files?.[0]));
  $('#csePublish')?.addEventListener('click',publish);
- $('#cseReview')?.addEventListener('click',()=>{reviewed.has(current)?reviewed.delete(current):reviewed.add(current);render()});
+ $('#cseReview')?.addEventListener('click',()=>{reviewed.has(current)?reviewed.delete(current):reviewed.add(current);localStorage.setItem('cellbound-comic-reviews',JSON.stringify([...reviewed]));render()});
  $('#csePlay')?.addEventListener('click',()=>{const scene=scenes.get(current);if(scene)C()?.show?.({...scene.config,allowSkip:true,skipLabel:'CLOSE PREVIEW',continueLabel:'CLOSE PREVIEW'})});
 }
 async function open(){
