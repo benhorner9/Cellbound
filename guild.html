@@ -40,6 +40,7 @@
 <link rel="stylesheet" href="./dungeon-generator-v1.css?v=1">
 <link rel="stylesheet" href="./character-fit-viewer-v1.css?v=1">
   <link rel="stylesheet" href="./admin-room-editor-v1.css?v=1">
+  <link rel="stylesheet" href="./admin-comic-editor-v1.css?v=1">
 <link rel="stylesheet" href="./release-v1.css?v=2">
 <link rel="stylesheet" href="./comic-scenes-v1.css?v=5">
 <link rel="stylesheet" href="./onboarding-v1.css?v=21">
@@ -599,6 +600,11 @@
           <p>Inspect every v9 body size and every equipment piece without editing a live character. Compare frames, sexes and races side by side.</p>
           <div class="admin-actions"><button id="openCharacterFitViewer" type="button">OPEN CHARACTER FIT VIEWER<small>Owner only · 36 body combinations · complete item catalogue · fit-point overlay.</small></button></div>
         </article>
+        <article id="comicEditorEntry" class="admin-card admin-comic-editor-entry" hidden>
+          <small>OWNER TOOL · STORY QA</small><h3>Comic Scene Editor</h3>
+          <p>Browse tutorial and quest scenes, inspect each comic panel and upload replacement artwork directly into the game.</p>
+          <div class="admin-actions"><button id="openComicEditor" type="button">OPEN COMIC SCENE EDITOR<small>Owner only · browse strips · flag missing art · upload and publish from iPad.</small></button></div>
+        </article>
         <article id="roomEditorEntry" class="admin-card admin-room-editor-entry" hidden>
           <small>OWNER TOOL · BETA COMPLETION</small><h3>Room Editor & Content QA</h3>
           <p>Inspect dungeon and raid rooms without replaying the run. Drag entrances, exits, party positions, enemies and mechanic anchors directly over the room artwork, then review the first beta-completion audit.</p>
@@ -613,6 +619,7 @@
       <div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div>
       <div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div>
       <div id="roomEditorMount" class="room-editor-mount" hidden></div>
+        <div id="comicEditorMount" class="comic-editor-mount" hidden></div>
     </section>
 
   </main>
@@ -659,7 +666,7 @@
 <script src="./ashen-live-scenes-v1.js?v=6"></script>
 <script src="./dungeon-2d-v1.js?v=62"></script>
 <script src="./combat-3d-v1.js?v=2"></script>
-<script src="./comic-scenes-v1.js?v=5"></script>
+<script src="./comic-scenes-v1.js?v=6"></script>
 <script src="./onboarding-v1.js?v=30"></script>
 <script src="./hollow-sanctum-v1.js?v=50"></script>
 <script src="./chaos-canyon-v1.js?v=25"></script>
@@ -678,6 +685,7 @@
 <script src="./dungeon-generator-v1.js?v=1"></script>
 <script src="./character-fit-viewer-v1.js?v=3"></script>
 <script src="./admin-room-editor-v1.js?v=1"></script>
+<script src="./admin-comic-editor-v1.js?v=1"></script>
 <script src="./mobile-v1.js?v=7"></script>
 <script src="./release-v1.js?v=3"></script>
 <script src="./game-feel-v1.js?v=2"></script>
