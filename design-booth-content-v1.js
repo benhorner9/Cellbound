@@ -26,7 +26,9 @@ function allowedDrop(raw){
 }
 function rollBossLoot(step,{random=Math.random}={}){
  const drops=Array.isArray(step?.drops)?step.drops.slice(0,6):[];
- return drops.map(allowedDrop).filter(Boolean).filter(d=>d.chance>0&&random()*100<d.chance)
+ const valid=drops.map(allowedDrop).filter(Boolean),gear=valid.filter(d=>d.kind==='gear');
+ if(gear.length>2||gear.reduce((sum,d)=>sum+d.chance,0)>100)return[];
+ return valid.filter(d=>d.chance>0&&random()*100<d.chance)
 }
 async function awardBossLoot(step,source,claimed,ledger,{preview=false,raid=false,random=Math.random}={}){
  if(preview||raid||!step||!claimed||!ledger||claimed.has(step.id))return[];
