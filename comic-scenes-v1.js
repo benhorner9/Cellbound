@@ -3,6 +3,35 @@
 const $=s=>document.querySelector(s);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 let activeToken=0;
+const BUCKET='comic-scene-art',published=new Map(),catalog=new Map();
+let loadPromise=null;
+const slug=v=>String(v||'').normalize('NFKD').toLowerCase().replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+function sceneKey(config={}){
+  return [config.theme||'zeltira',config.page||'story',config.title||'scene',config.subtitle||config.speaker||''].map(slug).filter(Boolean).join('-').slice(0,180)
+}
+function registerScene(config={}){
+  const id=sceneKey(config);
+  catalog.set(id,{...config,panels:Array.isArray(config.panels)?config.panels.map(p=>({...p})):[]});
+  return id
+}
+async function reloadArt(){
+  const db=window.CellboundGame?.getSupabase?.();
+  if(!db)return false;
+  const {data,error}=await db.from('comic_scene_panel_art').select('scene_id,panel_index,object_path');
+  if(error)throw error;
+  published.clear();
+  (data||[]).forEach(row=>published.set(row.scene_id+':'+row.panel_index,row.object_path));
+  return true
+}
+function loadArt(){
+  if(!loadPromise)loadPromise=reloadArt().catch(error=>{console.warn('Comic art overrides unavailable',error);return false}).finally(()=>{loadPromise=null});
+  return loadPromise
+}
+function artworkFor(config,index,fallback=''){
+  const path=published.get(sceneKey(config)+':'+index);
+  const db=window.CellboundGame?.getSupabase?.();
+  return path&&db?db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl:fallback
+}
 
 function ensureRoot(){
   let root=$('#cellboundComicScene');
@@ -46,7 +75,9 @@ function revealMarkup(r){
     (r?.text?'<span>'+esc(r.text)+'</span>':'')+
   '</div>';
 }
-function show(config={}){
+async function show(config={}){
+  registerScene(config);
+  await loadArt();
   const root=ensureRoot(),token=++activeToken;
   document.body.classList.add('cbcomic-open');
   root.hidden=false;
@@ -57,7 +88,8 @@ function show(config={}){
       root.hidden=true;root.innerHTML='';document.body.classList.remove('cbcomic-open');
       resolve(result||{choiceId:selected,skipped:false});
     };
-    const panels=Array.isArray(config.panels)&&config.panels.length?config.panels:[{kind:'location',title:config.title,text:config.text}];
+    const sourcePanels=Array.isArray(config.panels)&&config.panels.length?config.panels:[{kind:'location',title:config.title,text:config.text}];
+    const panels=sourcePanels.map((p,i)=>({...p,artwork:artworkFor(config,i,p.artwork)}));
     const choices=Array.isArray(config.choices)?config.choices:[];
     const explicitReveals=Array.isArray(config.reveals)?config.reveals:[];
     const reveals=explicitReveals.length?explicitReveals:(config.progressive?panels.map((p,i)=>({panel:i,eyebrow:p.eyebrow||'',speaker:p.speaker||'',title:p.title||'',text:p.text||'',placement:['bottom-left','top-left','bottom-right'][i%3]})).filter(r=>r.eyebrow||r.speaker||r.title||r.text):[]);
@@ -131,5 +163,5 @@ function show(config={}){
 function close(){
   activeToken++;const root=ensureRoot();root.hidden=true;root.innerHTML='';document.body.classList.remove('cbcomic-open');
 }
-window.CellboundComicScenes={show,close,version:'1.2.1'};
+window.CellboundComicScenes={show,close,sceneKey,registerScene,catalog:()=>[...catalog.values()],loadArt,reloadArt,artworkFor,version:'1.3.0'};
 })();
