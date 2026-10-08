@@ -85,7 +85,9 @@ function scanDialogue(src,path,category,name,c){
  if(name==='nullComic'){const match=String(c.args[3]).match(/NULL_ART\.([a-z]+)/);if(match&&NULL_ART[match[1]])art=['./assets/comics/null-complex/'+NULL_ART[match[1]]+'.webp'];origin='quest comic'}
  if(name==='story')note='Text-only scene in the current game. Needs dedicated comic artwork.';
  const line=src.slice(0,c.at).split('\n').length;
- return{id:path+':'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),title,category,speaker,path,line,origin,note,panels:beats.map((text,i)=>panel(text,title,art.length?art[i%art.length]:'',i))}
+ const panels=beats.map((text,i)=>panel(text,title,art.length?art[i%art.length]:'',i));
+ const config={theme:name==='nullComic'?'null':'zeltira',page:name==='nullComic'?'SIGNAL FROM NOWHERE':path==='fourfold-lock-v1.js'?'FOURFOLD LOCK':isVoyage?'NO WAY BACK':'QUEST',title,subtitle:speaker,panels,progressive:true,storyOnly:true};
+ return{id:path+':'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),title,category,speaker,path,line,origin,note,panels,config}
 }
 function scanBell(src,path,category,c){
  const obj=c.args[0];if(!obj||obj.trim()[0]!=='{')return null;
@@ -99,7 +101,9 @@ function scanBell(src,path,category,c){
   if(b)caption=split(b.body).map(x=>[literal(property(x,'title')),literal(property(x,'text'))].filter(Boolean).join(' — ')).filter(Boolean).join('\n');
  }
  const line=src.slice(0,c.at).split('\n').length;
- return{id:path+':'+(page+'-'+title).toLowerCase().replace(/[^a-z0-9]+/g,'-'),title:page?page+' · '+title:title,category,speaker:'Greywake',path,line,origin:'dedicated comic',note:'The live strip displays a sequence of captions over its illustrated panel.',panels:[panel(caption,title,art,0)]}
+ const panels=[panel(caption,title,art,0)],subtitle=literal(property(obj,'subtitle'))||'';
+ const config={theme:'bell',page,title,subtitle,panels,panelOnly:true,progressive:true};
+ return{id:path+':'+(page+'-'+title).toLowerCase().replace(/[^a-z0-9]+/g,'-'),title:page?page+' · '+title:title,category,speaker:'Greywake',path,line,origin:'dedicated comic',note:'The live strip displays a sequence of captions over its illustrated panel.',panels,config}
 }
 function scanDirect(src,path,category,c){
  const obj=c.args[0];if(!obj||obj.trim()[0]!=='{')return null;
@@ -116,7 +120,9 @@ function scanDirect(src,path,category,c){
  if(reveals){const captions=split(reveals.body).map(p=>literal(property(p,'text'))).filter(Boolean);
   if(captions.length&&panels.length){panels[0].text=[panels[0].text,...captions].filter(Boolean).join('\n')}
  }
- return{id:path+':'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),title,category,speaker:literal(property(obj,'subtitle'))||'',path,line,origin:'direct comic',note:'Some captions and images are dynamically assembled. Verify these in gameplay.',panels}
+ const subtitle=literal(property(obj,'subtitle'))||'';
+ const config={theme:literal(property(obj,'theme'))||'zeltira',page:literal(property(obj,'page'))||'STORY',title,subtitle,panels,progressive:true,storyOnly:true};
+ return{id:path+':'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),title,category,speaker:subtitle,path,line,origin:'direct comic',note:'Some captions and images are dynamically assembled. Verify these in gameplay.',panels,config}
 }
 async function discover(){
  const found=[],cfg=window.CellboundOnboarding?.tutorialComicConfig;
