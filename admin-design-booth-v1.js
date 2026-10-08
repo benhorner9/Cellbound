@@ -67,7 +67,9 @@ function storageBackup(){
  if(!project)return;
  try{
   const key=keyFor(project);
-  workspace[key]={project:clone(project),stepIndex,baseline,dirty:changed(),cloudUpdatedAt,updatedAt:Date.now()};
+  // Do not clutter the project list with untouched new-project placeholders.
+  if(!project.id&&!changed()&&/^Untitled (quest|dungeon|raid)$/.test(String(project.title)))delete workspace[key];
+  else workspace[key]={project:clone(project),stepIndex,baseline,dirty:changed(),cloudUpdatedAt,updatedAt:Date.now()};
   // Keep the latest 30 projects, without evicting unsaved drafts.
   const keys=Object.keys(workspace).sort((a,b)=>(workspace[a].updatedAt||0)-(workspace[b].updatedAt||0));
   for(const old of keys.slice(0,Math.max(0,keys.length-30)))if(!workspace[old].dirty)delete workspace[old];
