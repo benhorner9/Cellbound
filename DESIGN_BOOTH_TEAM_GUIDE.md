@@ -16,6 +16,18 @@ The buttons below **What do you want to do?** are the fastest way to get anywher
 
 **More tools** contains the Character Models fit viewer, Dungeon Planner and reusable Minigame Library. These are secondary tools, not required for routine authoring.
 
+## Create new content and reuse existing work
+
+Use **Create an adventure** to build a completely new **quest, dungeon or raid**. All three support comic-strip stages, room transitions, fights with custom drops, and reusable minigames. This is the current no-code creation workflow.
+
+You can also start from something that works already:
+
+- Open an existing Adventure Builder project and choose **Copy to New Draft**. This creates a separate **unpublished** adventure with new project and stage identifiers, while keeping the story, encounter settings, artwork references and loot settings. The source adventure stays untouched.
+- When you need a similar room, fight, puzzle or comic panel sequence, open that stage and choose **Duplicate Stage**. The duplicate is inserted immediately afterward with a unique ID; edit it separately.
+- Copied content is not automatically cloud-saved or published. Rename it, review any inherited art or boss rewards, then **Save Cloud Draft**, **Test From Stage** and **Publish to Game** as usual.
+
+**Important current boundaries:** the separate Item Catalogue is read-only; it cannot create or equip a new item yet. The Comic Art and Room Layouts tabs edit existing game scenes; new comic-strip stages and room transitions should be built inside an Adventure Builder project. Full standalone item, enemy, room and comic asset creation, shared cloud review, and new mechanic authoring still need additional editor and runtime work.
+
 ## Make a new adventure
 
 1. Choose **Create an adventure**, then **+ QUEST**, **+ DUNGEON** or **+ RAID**. Give it a descriptive name and minimum level.
@@ -68,6 +80,7 @@ Use clear tickets: name the **dungeon / boss / quest**, specify exactly **which 
 
 - [ ] Can locate the five common tasks without help.
 - [ ] Can create and reopen a local-only draft, then save it to the cloud.
+- [ ] Can duplicate a project or stage without changing the existing published content.
 - [ ] Can fix a missing-art issue using the publication checklist.
 - [ ] Can test without accidentally publishing.
 - [ ] Understands the difference between additional existing-boss drops and custom adventure drops.
