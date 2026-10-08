@@ -53,3 +53,11 @@
 .cse-empty{padding:18px}
 @media(max-width:950px){.cse-shell>header{flex-direction:column;padding:19px}.cse-columns{grid-template-columns:1fr}.cse-left{position:static;border-right:0;border-bottom:1px solid #344357}#cseSceneList{max-height:230px}.cse-right{padding:16px}.cse-panel-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr))}}
 @media(max-width:560px){.cse-stats{padding:10px;gap:6px}.cse-stats span{padding:6px;font-size:11px}.cse-shell>header h2{font-size:24px}.cse-panel-grid{grid-template-columns:1fr}.cse-controls button{flex:1}.cse-actions button{flex:1}}
+
+.cse-upload-tools{display:grid;gap:8px;margin-top:2px;padding:11px;border:1px dashed #b79669;border-radius:9px;background:#263747}
+.cse-upload-tools label{font-size:11px;color:#e8c99e;letter-spacing:.06em}
+.cse-upload-tools input[type=file]{display:block;margin-top:8px;width:100%;font-size:14px!important;color:#f2e8d9;background:#162430;padding:10px;border-radius:6px}
+.cse-upload-tools button{border:1px solid #cfb285;background:#bd955d;color:#12202b;border-radius:7px;min-height:44px;font-size:12px;font-weight:900;letter-spacing:.05em}
+.cse-upload-tools button:disabled{opacity:.45;cursor:not-allowed}
+.cse-upload-tools small{font-size:11px;color:#d6dbdd;line-height:1.45;overflow-wrap:anywhere}
+@media(max-width:950px){.cse-upload-tools input[type=file]{font-size:16px!important}}
