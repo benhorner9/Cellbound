@@ -62,6 +62,7 @@ let contentId='ashen-vault';
 let roomId='broken-gate';
 let showGrid=true;
 let dirty=false;
+let artFile=null,artPreview='',artBusy=false,artMessage='';
 let state=load();
 
 function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')||{}}catch{return{}}}
@@ -72,6 +73,7 @@ function room(){return group().rooms.find(x=>x.id===roomId)||group().rooms[0]}
 function roomKey(){return contentId+'::'+roomId}
 function baseRoom(){
  const base=clone(room()),R=window.CellboundRoomLayouts,active=R?.get?.(contentId,roomId),defaults=R?.defaultMarkers?.(contentId,roomId);
+  base.art=R?.artFor?.(contentId,roomId,base.art)||base.art;
  if(Array.isArray(active?.markers)&&active.markers.length)base.markers=clone(active.markers);
  else if(Array.isArray(defaults)&&defaults.length)base.markers=clone(defaults);
  return base
@@ -87,6 +89,7 @@ function storeRoom(draft,status){
 }
 function saveRoom(draft,status){storeRoom(draft,status);render()}
 function resetRoom(){
+ clearArtSelection();
  if(state.rooms){delete state.rooms[roomKey()];persist()}
  window.CellboundRoomLayouts?.clearTest?.(contentId,roomId);
  dirty=false;render()
@@ -118,6 +121,39 @@ async function unpublishRoom(){
  try{await R.unpublish(contentId,roomId);if(state.rooms)delete state.rooms[roomKey()];persist();dirty=false;render();flash('BUILT-IN DEFAULT RESTORED.')}
  catch(error){if(btn)btn.disabled=false;flash(error?.message||'Could not restore built-in layout.')}
 }
+function clearArtSelection(){
+ if(artPreview){URL.revokeObjectURL(artPreview);artPreview=''}
+ artFile=null;artMessage=''
+}
+function chooseArt(file){
+ clearArtSelection();
+ if(file){
+  if(!['image/webp','image/png','image/jpeg','image/avif'].includes(file.type))artMessage='Choose a WebP, JPEG, PNG or AVIF image.';
+  else if(file.size>10*1024*1024)artMessage='Image exceeds the 10 MB limit.';
+  else{artFile=file;artPreview=URL.createObjectURL(file);artMessage=file.name+' selected — preview only until published.'}
+ }
+ render()
+}
+async function publishArtwork(){
+ const R=window.CellboundRoomLayouts;if(artBusy||!artFile||!R?.publishArt||!isOwner())return;
+ const targetContent=contentId,targetRoom=roomId;
+ if(!confirm('Replace the background for '+room().name+' in the actual dungeon for all staging players?'))return;
+ artBusy=true;artMessage='Uploading artwork…';render();
+ try{
+  await R.publishArt(targetContent,targetRoom,artFile);
+  clearArtSelection();artMessage='PUBLISHED · this dungeon room now uses your new background.';
+  if(targetContent===contentId&&targetRoom===roomId)render()
+ }catch(error){artMessage='Upload failed: '+(error?.message||String(error));render()}
+ finally{artBusy=false;render()}
+}
+async function restoreArtwork(){
+ const R=window.CellboundRoomLayouts;
+ if(!isOwner()||artBusy||!R?.restoreArt||!confirm('Restore the built-in background for '+room().name+'?'))return;
+ artBusy=true;render();
+ try{await R.restoreArt(contentId,roomId);clearArtSelection();artMessage='Restored the original room background.'}
+ catch(error){artMessage='Restore failed: '+(error?.message||String(error))}
+ finally{artBusy=false;render()}
+}
 function reviewStatus(){return state.rooms?.[roomKey()]?.review||'unreviewed'}
 function setDirty(){dirty=true;const e=$('#rqeSaveState');if(e){e.textContent='UNSAVED CHANGES';e.className='rqe-dirty'}}
 function markerHTML(m,i){return '<button type="button" class="rqe-marker" data-marker="'+i+'" data-kind="'+esc(m.kind)+'" style="left:'+clamp(m.x)+'%;top:'+clamp(m.y)+'%" aria-label="'+esc(m.label)+'"><span>'+esc(String(i+1))+'</span><em>'+esc(m.label)+'</em></button>'}
@@ -143,20 +179,24 @@ function render(){
  const g=group(),r=room(),d=roomDraft(),idx=g.rooms.findIndex(x=>x.id===r.id),status=reviewStatus(),live=liveLayoutState();
  const contentOptions=CATALOG.map(x=>'<option value="'+x.id+'" '+(x.id===contentId?'selected':'')+'>'+esc(x.type+' · '+x.name)+'</option>').join('');
  const roomOptions=g.rooms.map(x=>'<option value="'+x.id+'" '+(x.id===roomId?'selected':'')+'>'+esc(x.name)+'</option>').join('');
- const runtimePreview=manorPreview(r),hasArt=Boolean(d.art||runtimePreview);
- const art=d.art?'<img src="'+esc(d.art)+'" alt="'+esc(d.name)+'" draggable="false" data-room-art>':runtimePreview||'<div class="rqe-missing"><div><b>No dedicated room artwork</b><span>No production room background is currently wired for this scene. Boss/key art is intentionally not substituted.</span></div></div>';
+ const runtimePreview=manorPreview(r),artwork=artPreview||d.art,hasArt=Boolean(artwork||runtimePreview),publishedArt=window.CellboundRoomLayouts?.publishedArtInfo?.(contentId,roomId);
+ const art=artwork?'<img src="'+esc(artwork)+'" alt="'+esc(d.name)+'" draggable="false" data-room-art>':runtimePreview||'<div class="rqe-missing"><div><b>No dedicated room artwork</b><span>No production room background is currently wired for this scene. Boss/key art is intentionally not substituted.</span></div></div>';
  mount.innerHTML='<section class="rqe-shell">'+
   '<header class="rqe-head"><div><small>OWNER CONTENT QA · BETA BUILD 1</small><h2>Room Editor</h2><p>Drag the live room anchors directly on the production artwork. Save keeps a local draft, Test applies it only to your owner account, and Publish makes it the shared staging layout used when the dungeon is played.</p></div><div class="rqe-head-actions"><button id="rqeCopyAll">COPY ALL DRAFTS</button><button id="rqeClose">CLOSE</button></div></header>'+
   '<div class="rqe-toolbar"><label><span>CONTENT</span><select id="rqeContent">'+contentOptions+'</select></label><label><span>ROOM / ENCOUNTER</span><select id="rqeRoom">'+roomOptions+'</select></label><button id="rqeGrid">'+(showGrid?'HIDE GRID':'SHOW GRID')+'</button><button id="rqeReset">RESET ROOM</button></div>'+
   '<div class="rqe-grid"><main class="rqe-main"><div id="rqeCanvas" class="rqe-canvas-wrap '+(showGrid?'rqe-show-grid ':'')+(hasArt?'':'missing-art')+'">'+art+'<div class="rqe-gridlines"></div><div class="rqe-axis"></div>'+d.markers.map(markerHTML).join('')+'</div>'+
-  '<div class="rqe-room-meta"><div class="rqe-room-copy"><b>'+esc(g.name+' · '+r.name)+'</b><span>'+(d.art?'Production art loaded from '+esc(d.art.replace('./','')):runtimePreview?'Live Manor runtime scene preview · same environment used in combat':'Dedicated room art missing')+'</span>'+legend()+'</div><div class="rqe-room-nav"><button id="rqePrev" '+(idx<=0?'disabled':'')+'>← PREV</button><button id="rqeNext" '+(idx>=g.rooms.length-1?'disabled':'')+'>NEXT →</button></div></div></main>'+
+  '<section class="rqe-art-upload"><header><div><small>ROOM BACKGROUND</small><h3>Replace artwork</h3></div><span>'+(artPreview?'LOCAL PREVIEW':publishedArt?'PUBLISHED ART':'ORIGINAL ART')+'</span></header><p>Upload a 16:9 image. Preview it here before publishing. Your room markers stay in place.</p><label class="rqe-art-file">CHOOSE BACKGROUND IMAGE<input id="rqeArtFile" type="file" accept="image/webp,image/png,image/jpeg,image/avif"></label><small>WebP, PNG, JPEG or AVIF · maximum 10 MB · 16:9 recommended.</small><div class="rqe-art-actions"><button id="rqeArtPublish" '+(!artFile||artBusy?'disabled':'')+'>'+(artBusy?'UPLOADING…':'UPLOAD & PUBLISH BACKGROUND')+'</button>'+(publishedArt?'<button id="rqeArtRestore" '+(artBusy?'disabled':'')+'>RESTORE ORIGINAL</button>':'')+'</div><p id="rqeArtMessage" role="status">'+esc(artMessage||'Uploads change the actual room background for players on staging. This is separate from publishing marker positions.')+'</p></section>'+
+ '<div class="rqe-room-meta"><div class="rqe-room-copy"><b>'+esc(g.name+' · '+r.name)+'</b><span>'+(d.art?'Production art loaded from '+esc(d.art.replace('./','')):runtimePreview?'Live Manor runtime scene preview · same environment used in combat':'Dedicated room art missing')+'</span>'+legend()+'</div><div class="rqe-room-nav"><button id="rqePrev" '+(idx<=0?'disabled':'')+'>← PREV</button><button id="rqeNext" '+(idx>=g.rooms.length-1?'disabled':'')+'>NEXT →</button></div></div></main>'+
   '<aside class="rqe-side"><section class="rqe-inspector"><small>ROOM REVIEW</small><h3>Layout state</h3><label><small>STATUS</small><select id="rqeReview">'+statusOptions(status)+'</select></label><div class="rqe-inspector-grid"><div><b>'+d.markers.filter(x=>x.kind==='party').length+'</b><span>party anchors</span></div><div><b>'+d.markers.filter(x=>x.kind==='enemy'||x.kind==='add').length+'</b><span>hostile anchors</span></div><div><b>'+d.markers.filter(x=>x.kind==='entry').length+'</b><span>entrances</span></div><div><b>'+d.markers.filter(x=>x.kind==='exit').length+'</b><span>exits</span></div></div><div class="rqe-live-state" data-mode="'+live.mode+'"><small>ACTIVE DUNGEON LAYOUT</small><b>'+(live.mode==='test'?'OWNER TEST ACTIVE':live.mode==='published'?'PUBLISHED · VERSION '+Number(live.published?.version||1):'BUILT-IN DEFAULT')+'</b><span>'+(live.mode==='test'?'Only your owner account uses the current test layout.':live.mode==='published'?'All staging players use this published layout.':'No shared room override is published.')+'</span></div><div class="rqe-inspector-actions"><button class="primary" id="rqeSave">SAVE DRAFT</button><button class="test" id="rqeTest">TEST LAYOUT</button><button class="publish" id="rqePublish">PUBLISH LAYOUT</button>'+(live.testing?'<button id="rqeClearTest">STOP TESTING</button>':'')+(live.published?'<button class="danger" id="rqeUnpublish">RESTORE BUILT-IN DEFAULT</button>':'')+'<button id="rqeCopy">COPY ROOM JSON</button></div><div id="rqeSaveState" class="'+(dirty?'rqe-dirty':'rqe-dirty rqe-saved')+'">'+(dirty?'UNSAVED CHANGES':state.rooms?.[roomKey()]?.updatedAt?'DRAFT SAVED ON THIS DEVICE':live.mode==='published'?'VIEWING PUBLISHED LAYOUT':'VIEWING GAME DEFAULTS')+'</div><div class="rqe-json"><small>CURRENT COORDINATES</small><pre id="rqeJson">'+esc(jsonFor(d))+'</pre></div></section>'+auditHTML()+'</aside></div></section>';
  bind(d)
 }
 function bind(draft){
  $('#rqeClose')?.addEventListener('click',close);
- $('#rqeContent')?.addEventListener('change',e=>{contentId=e.target.value;roomId=group().rooms[0].id;dirty=false;render()});
- $('#rqeRoom')?.addEventListener('change',e=>{roomId=e.target.value;dirty=false;render()});
+ $('#rqeArtFile')?.addEventListener('change',e=>chooseArt(e.target.files?.[0]));
+ $('#rqeArtPublish')?.addEventListener('click',publishArtwork);
+ $('#rqeArtRestore')?.addEventListener('click',restoreArtwork);
+ $('#rqeContent')?.addEventListener('change',e=>{clearArtSelection();contentId=e.target.value;roomId=group().rooms[0].id;dirty=false;render()});
+ $('#rqeRoom')?.addEventListener('change',e=>{clearArtSelection();roomId=e.target.value;dirty=false;render()});
  $('#rqeGrid')?.addEventListener('click',()=>{showGrid=!showGrid;render()});
  $('#rqeReset')?.addEventListener('click',()=>{if(confirm('Discard the local draft and return to the current published/default layout?'))resetRoom()});
  $('#rqePrev')?.addEventListener('click',()=>moveRoom(-1));
@@ -196,7 +236,7 @@ function bind(draft){
  $('#rqeReview')?.addEventListener('change',e=>{state.rooms=state.rooms||{};state.rooms[roomKey()]={...(state.rooms[roomKey()]||{}),markers:clone(draft.markers),review:e.target.value};setDirty()})
 }
 function moveRoom(delta){
- const g=group(),i=g.rooms.findIndex(x=>x.id===roomId),n=Math.max(0,Math.min(g.rooms.length-1,i+delta));roomId=g.rooms[n].id;dirty=false;render()
+ const g=group(),i=g.rooms.findIndex(x=>x.id===roomId),n=Math.max(0,Math.min(g.rooms.length-1,i+delta));clearArtSelection();roomId=g.rooms[n].id;dirty=false;render()
 }
 async function copyText(value,message){
  try{await navigator.clipboard.writeText(value);flash(message)}catch{const t=document.createElement('textarea');t.value=value;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();flash(message)}
@@ -209,12 +249,13 @@ function open(){
  if(state.last?.contentId&&CATALOG.some(x=>x.id===state.last.contentId)){contentId=state.last.contentId;const g=group();roomId=g.rooms.some(x=>x.id===state.last.roomId)?state.last.roomId:g.rooms[0].id}
  mount.hidden=false;render();window.CellboundRoomLayouts?.ready?.().then(()=>{if(opened)render()}).catch(()=>{});requestAnimationFrame(()=>mount.scrollIntoView({behavior:'smooth',block:'start'}))
 }
-function close(){opened=false;const mount=$('#roomEditorMount');if(mount){mount.hidden=true;mount.innerHTML=''}}
+function close(){opened=false;clearArtSelection();const mount=$('#roomEditorMount');if(mount){mount.hidden=true;mount.innerHTML=''}}
 function syncAccess(){const entry=$('#roomEditorEntry'),mount=$('#roomEditorMount'),owner=isOwner();if(entry)entry.hidden=!owner;if(!owner&&mount)close()}
 function init(){
  const entry=$('#roomEditorEntry');if(!entry){setTimeout(init,150);return}
  entry.querySelector('#openRoomEditor')?.addEventListener('click',open);
  window.addEventListener('cellbound:admin-status',syncAccess);
+ window.addEventListener('cellbound:room-art-changed',()=>{if(opened&&!artFile)render()});
  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')setTimeout(syncAccess,0)});
  syncAccess()
 }
