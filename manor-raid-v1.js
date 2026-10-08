@@ -44,7 +44,7 @@ const BOSS_BRIEFS={
   tip:'Control the turrets first, then be ready to move at every Nail Storm health breakpoint.'
  },
  bedroom:{
-  eyebrow:'WEST BEDROOM · RAID ASSAULT',title:'The Bedroom',art:null,
+  eyebrow:'WEST BEDROOM · RAID ASSAULT',title:'The Bedroom',art:'./assets/manor/manor-raid-hero.webp',
   tagline:'There is no puzzle here. The room simply floods with bodies.',
   mechanics:[
    ['TWENTY ENEMIES','A full swarm rushes the raid at once.'],
@@ -69,7 +69,7 @@ const SCREECH_COLOURS=[
 ];
 const SCREECH_TIMEOUT_MS=4500;
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null,pendingRewardSession=null;
-let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0,maidOverlayPenaltyKey='';
+let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0,maidOverlayPenaltyKey='',ownerSoloQa=false;
 const handledScreechTokens=new Set();
 const resolvingScreechTokens=new Set();
 const screechPromptTimers=new Map();
@@ -95,6 +95,19 @@ function snapshot(){
    portrait:c.portrait||'',appearance:c.appearance||null,equipment:c.equipment||{},talents:c.talents||{},
    skillLoadouts:c.skillLoadouts||{},buffSkill:c.buffSkill||null,knowledge:c.knowledge||{}
  })));
+}
+function isOwner(){return Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'}
+function manorRoomScene(stage,side=0){
+ const room=stage==='maids'?(side===0?'dining':'kitchen'):stage;
+ const props={
+  butler:'<i class="mr-prop chandelier"></i><i class="mr-prop table"></i><i class="mr-prop door left"></i><i class="mr-prop door right"></i>',
+  dining:'<i class="mr-prop chandelier"></i><i class="mr-prop table long"></i><i class="mr-prop chair a"></i><i class="mr-prop chair b"></i>',
+  kitchen:'<i class="mr-prop stove"></i><i class="mr-prop prep"></i><i class="mr-prop shelves"></i><i class="mr-prop crates"></i>',
+  engineer:'<i class="mr-prop workbench"></i><i class="mr-prop gear a"></i><i class="mr-prop gear b"></i><i class="mr-prop pipe"></i>',
+  bedroom:'<i class="mr-prop bed"></i><i class="mr-prop wardrobe"></i><i class="mr-prop window"></i><i class="mr-prop rug"></i>',
+  housebound:'<i class="mr-prop beam a"></i><i class="mr-prop beam b"></i><i class="mr-prop attic-window"></i><i class="mr-prop trunks"></i>'
+ }[room]||'';
+ return '<div class="mr-room-scene room-'+room+'" aria-hidden="true"><img src="./assets/manor/manor-raid-hero.webp" alt="" draggable="false"><div class="mr-room-shade"></div><div class="mr-room-floor"></div>'+props+'<div class="mr-room-dust"><i></i><i></i><i></i><i></i><i></i></div></div>'
 }
 
 const STAGE_MIN_MS={butler:30000,maids:30000,engineer:40000,bedroom:12000,housebound:40000};
@@ -169,6 +182,9 @@ function stageCombatDuration(stage){
 }
 async function failRaid(reason='The raid was defeated'){
  if(!session||session.status!=='active')return;
+ if(ownerSoloQa){
+  session.status='failed';session.state=session.state||{};session.state.failureReason=reason;session.updated_at=new Date().toISOString();await syncSharedRaidView(true);mountOwnerQaControls();return
+ }
  if(isLeader()){
    const {error}=await db.rpc('fail_manor_raid',{p_session_id:session.id,p_reason:reason});
    if(error){console.warn('Could not resolve Manor wipe',error);return}
@@ -194,6 +210,7 @@ function sharedRecoveryPatch(stage,next){
  }
 }
 function applyLocalRaidFailureShock(){
+ if(ownerSoloQa)return;
  const s=state();if(!s||!session?.id)return;
  s.raidFailureShock=s.raidFailureShock&&typeof s.raidFailureShock==='object'?s.raidFailureShock:{};
  if(s.raidFailureShock[session.id])return;
@@ -270,7 +287,7 @@ function raidRequirementsCard(){
 }
 function renderHub(){
  if(!mount)return;
- if(!unlocked()){
+ if(!unlocked()&&!isOwner()){
    mount.innerHTML='<section class="mr-locked"><div class="mr-door">⚿</div><small>RAID · LOCKED</small><h2>The Manor</h2><p>The Manor cannot be entered yet. Complete <b>No Way Back</b>, recover the Manor Key and finish the raid attunement.</p><button data-mr-quests>OPEN QUEST JOURNAL →</button></section>';
    mount.querySelector('[data-mr-quests]')?.addEventListener('click',()=>Game.switchView?.('quests'));return
  }
@@ -299,7 +316,8 @@ function renderHub(){
  const pendingLoot=pendingRewardSession
    ?'<section class="mr-card mr-current victory mr-pending-loot"><div><small>UNCLAIMED MANOR REWARD</small><h3>Your previous raid group has been released</h3><p>Your two Tier 5 items are still waiting. You can claim them without rejoining the old team.</p></div><div class="mr-current-actions"><button data-mr-pending-loot="'+pendingRewardSession.id+'">COLLECT 2 RAID ITEMS →</button></div></section>'
    :'';
- mount.innerHTML=raidHeader()+encounterStrip()+raidRequirementsCard()+pendingLoot+body+'<section class="mr-card mr-loot-preview"><div><small>RAID REWARD</small><h3>Tier 5 equipment</h3><p>The Manor is the only source of Chapter 1 Tier 5 gear. Every clear awards <b>2 personal items per player</b>.</p></div><span class="mr-t5-frame">T5</span><div><b>ORANGE RAID FRAME</b><span>4 rolled stats · raid set pieces · iLvl up to 50</span></div></section>';
+ const ownerQa=isOwner()?'<section class="mr-card mr-owner-qa"><div><small>OWNER QA · LOCAL TEST</small><h3>Run The Manor solo with a cloned second party</h3><p>This test never spends charges, writes raid progression or grants loot. Use it to inspect every room, Screech, split/rejoin transition, wipe and victory state from one device.</p></div><button data-mr-owner-qa '+(party().length===5?'':'disabled')+'>START OWNER SOLO QA →</button></section>':'';
+ mount.innerHTML=raidHeader()+encounterStrip()+raidRequirementsCard()+ownerQa+pendingLoot+body+'<section class="mr-card mr-loot-preview"><div><small>RAID REWARD</small><h3>Tier 5 equipment</h3><p>The Manor is the only source of Chapter 1 Tier 5 gear. Every clear awards <b>2 personal items per player</b>.</p></div><span class="mr-t5-frame">T5</span><div><b>ORANGE RAID FRAME</b><span>4 rolled stats · raid set pieces · iLvl up to 50</span></div></section>';
  bindHub();
 }
 function partyPanel(m,i){
@@ -323,8 +341,48 @@ function bindHub(){
  mount.querySelector('[data-mr-enter]')?.addEventListener('click',()=>openRaid(session.id));
  mount.querySelector('[data-mr-loot]')?.addEventListener('click',()=>session?.status==='completed'?showVictory(session.id):null);
  mount.querySelector('[data-mr-pending-loot]')?.addEventListener('click',e=>showVictory(e.currentTarget.dataset.mrPendingLoot));
- mount.querySelector('[data-mr-rerun]')?.addEventListener('click',startRaid)
+ mount.querySelector('[data-mr-rerun]')?.addEventListener('click',startRaid);
+ mount.querySelector('[data-mr-owner-qa]')?.addEventListener('click',startOwnerSoloQa)
 }
+function qaPartnerSnapshot(source){
+ return source.map((ch,i)=>({...JSON.parse(JSON.stringify(ch)),id:'owner-qa-b-'+String(ch.id||i),name:String(ch.name||('Adventurer '+(i+1)))+' · QA'}))
+}
+async function startOwnerSoloQa(){
+ if(!isOwner()){alert('Owner access is required for solo raid QA.');return}
+ const own=snapshot();
+ if(own.length!==5){alert('Build an active five before starting Manor owner QA.');return}
+ ownerSoloQa=true;combatCache.clear();
+ const listingId='owner-qa-listing-'+Date.now(),started=new Date().toISOString(),ilvl=Number(Game.partyItemLevel?.())||0;
+ myGroup={id:listingId,leader_id:user?.id,guild_label:'OWNER QA',target_id:'manor',status:'full'};
+ members=[
+  {listing_id:listingId,user_id:user?.id,guild_label:'OWNER PARTY',party_ilvl:ilvl,joined_at:started,party_snapshot:own},
+  {listing_id:listingId,user_id:'owner-qa-partner',guild_label:'CLONED QA PARTY',party_ilvl:ilvl,joined_at:new Date(Date.now()+1).toISOString(),party_snapshot:qaPartnerSnapshot(own)}
+ ];
+ session={id:'owner-qa-session-'+Date.now(),listing_id:listingId,leader_id:user?.id,raid_id:'manor',status:'active',stage:'butler',started_at:started,updated_at:started,state:{ownerQa:true,readyA:false,readyB:false,readyStage:'butler',encounterStartAt:null,stageStartedAt:null,entryHealthA:100,entryHealthB:100,maidPenaltyA:0,maidPenaltyB:0,masterScreechFailures:0,masterScreechTimeouts:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}};
+ sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;resolvingScreechTokens.clear();clearScreechPromptTimers();clearInterval(raidTimer);clearInterval(paintTimer);clearReadyLaunch();
+ await unsubscribeRaidRealtime();
+ await syncSharedRaidView(true);
+ paintTimer=setInterval(tickRaid,100);mountOwnerQaControls()
+}
+function endOwnerSoloQa(){
+ ownerSoloQa=false;combatCache.clear();removeOwnerQaControls();session=null;myGroup=null;members=[];window.CellboundDungeon2D?.closeShared?.(true);
+ const root=$('#manorRaidOverlay');if(root)root.hidden=true;document.body.classList.remove('mr-open');fetchHub()
+}
+function ownerQaNextStage(){
+ if(!ownerSoloQa||!session)return;
+ const next=session.stage==='maids'?'engineer':STAGES[session.stage]?.next;
+ if(next)advance(next)
+}
+function mountOwnerQaControls(){
+ if(!ownerSoloQa||!session)return;
+ let host=$('#mrOwnerQaControls');if(!host){host=document.createElement('aside');host.id='mrOwnerQaControls';host.className='mr-owner-qa-controls';document.body.appendChild(host)}
+ host.innerHTML='<small>OWNER SOLO QA · NO CHARGES / NO LOOT</small><b>'+esc(stageName(session.stage))+'</b><div><button data-qa-next>SKIP TO NEXT ROOM</button>'+(['maids','housebound'].includes(session.stage)?'<button data-qa-screech>OPEN SCREECH</button>':'')+'<button data-qa-wipe>TEST WIPE</button><button data-qa-exit>EXIT QA</button></div>';
+ host.querySelector('[data-qa-next]')?.addEventListener('click',ownerQaNextStage);
+ host.querySelector('[data-qa-screech]')?.addEventListener('click',()=>{const side=myRaidSide(),event=fallbackScreechEvent(side)||screechEvents(session.stage,side)[0];if(event)openScreech({event,fallback:true})});
+ host.querySelector('[data-qa-wipe]')?.addEventListener('click',()=>failRaid('Owner QA wipe test.'));
+ host.querySelector('[data-qa-exit]')?.addEventListener('click',endOwnerSoloQa)
+}
+function removeOwnerQaControls(){const host=$('#mrOwnerQaControls');if(host)host.remove()}
 async function createGroup(){
  try{
    if(!partyReady())throw new Error(partyReadyReason());
@@ -383,6 +441,14 @@ function commanderLabel(side){
 }
 async function setRaidReady(next){
  if(!session?.id)return;
+ if(ownerSoloQa){
+   const state=session.state=session.state||{},ready=Boolean(next);
+   state.readyA=ready;state.readyB=ready;state.readyStage=session.stage;
+   if(ready){
+    const start=serverNow()+850;state.encounterStartAt=new Date(start).toISOString();state.stageStartedAt=new Date(start).toISOString()
+   }else{state.encounterStartAt=null;state.stageStartedAt=null}
+   session.updated_at=new Date().toISOString();renderReadyGate();scheduleReadyLaunch();mountOwnerQaControls();return
+ }
  try{
    const sentAt=Date.now();
    const {data,error}=await db.rpc('manor_set_ready',{p_session_id:session.id,p_ready:Boolean(next)});
@@ -430,6 +496,7 @@ function renderReadyGate(){
  if(ready.startAt){
    if(remaining<=80){scheduleReadyLaunch()}
  }
+ if(ownerSoloQa)mountOwnerQaControls()
 }
 async function subscribeRaidRealtime(id){
  if(!db?.channel)return;
@@ -543,6 +610,7 @@ async function syncSharedRaidView(force=false){
    route:sharedRaidRoute(),currentId:session.stage,theme:'manor',room:'manor-'+session.stage,
    layoutContent:'the-manor',layoutRoom,
    roomLabel:room,ambience:(session.stage==='maids'?'Your five-character party is separated from the other commander. Screech links both rooms.':'The raid fights together as one ten-character group.')+recoveryNote,
+   environmentHtml:manorRoomScene(session.stage,side||0),
    shellClass:'cb2d-manor-raid',arenaClass:'cb2d-manor-arena',
    planTitle:'Both parties fight under the same rules. Coordinate your calls before the house splits you.',
    planCopy:'Combat Reborn controls movement, threat, resources, healing, interrupts, deaths and boss mechanics. Raid-only interactions are layered over the same event stream.',
@@ -550,6 +618,8 @@ async function syncSharedRaidView(force=false){
    onClose:()=>closeRaid(true)
  });
  if(session.stage==='maids')mountMaidLinkOverlay();
+ if(session.stage==='housebound')mountMasterStatusOverlay();
+ if(ownerSoloQa)mountOwnerQaControls();
  play.catch(error=>console.error('Manor shared viewer failed',error));
  scheduleOwnScreechPrompts()
 }
@@ -579,12 +649,13 @@ async function openRaid(id){
 }
 function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
- clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';maidOverlayPenaltyKey='';clearReadyLaunch();resolvingScreechTokens.clear();clearScreechPromptTimers();
+ const wasOwnerQa=ownerSoloQa;
+ clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';maidOverlayPenaltyKey='';clearReadyLaunch();resolvingScreechTokens.clear();clearScreechPromptTimers();removeOwnerQaControls();
  unsubscribeRaidRealtime();
  const host=$('#mrScreechHost');if(host){host.innerHTML='';host.style.setProperty('display','none','important');host.style.setProperty('pointer-events','none','important')}document.documentElement.classList.remove('mr-screech-active');document.body.classList.remove('mr-screech-active');handledScreechTokens.clear();
  if(!fromShared)window.CellboundDungeon2D?.closeShared?.(true);
  const root=$('#manorRaidOverlay');if(root){root.hidden=true;delete root.dataset.readyKey;}
- document.body.classList.remove('mr-open');fetchHub();
+ document.body.classList.remove('mr-open');if(wasOwnerQa){ownerSoloQa=false;session=null;myGroup=null;members=[]}fetchHub();
  setTimeout(()=>{closingRaid=false},0)
 }
 function stageName(id){return id==='maids'?'The Maids':id==='housebound'?'The Master of the Manor':id==='bedroom'?'The Bedroom':id==='victory'?'Raid Complete':STAGES[id]?.name||'The Manor'}
@@ -605,6 +676,23 @@ function screechEvents(stage,side){
  return fallbackMs?[{timestamp:fallbackMs,payload:{interaction:'manor-screech',durationMs:SCREECH_TIMEOUT_MS,synthetic:true}}]:[]
 }
 async function submitScreechOutcome(side,eventMs,outcome){
+ if(ownerSoloQa){
+  const st=session.state=session.state||{},token=screechToken(session.stage,side,eventMs),result=String(outcome||'wrong').toLowerCase();
+  st.screechResolved=st.screechResolved&&typeof st.screechResolved==='object'?st.screechResolved:{};
+  if(st.screechResolved[token])return{state:st};
+  st.screechResolved[token]={side,eventMs,outcome:result,resolvedAt:new Date().toISOString()};
+  const countKey=side===0?'screechCountA':'screechCountB',successKey=side===0?'screechSuccessA':'screechSuccessB';
+  st[countKey]=(Number(st[countKey])||0)+1;if(result==='success')st[successKey]=(Number(st[successKey])||0)+1;
+  if(session.stage==='maids'&&result!=='success'){
+   if(result==='timeout'){st.maidPenaltyA=(Number(st.maidPenaltyA)||0)+1;st.maidPenaltyB=(Number(st.maidPenaltyB)||0)+1}
+   else{const key=side===0?'maidPenaltyB':'maidPenaltyA';st[key]=(Number(st[key])||0)+1}
+  }
+  if(session.stage==='housebound'&&result!=='success'){
+   st.masterScreechFailures=(Number(st.masterScreechFailures)||0)+1;
+   if(result==='timeout')st.masterScreechTimeouts=(Number(st.masterScreechTimeouts)||0)+1
+  }
+  session.updated_at=new Date().toISOString();combatCache.clear();return{state:st}
+ }
  const {data,error}=await db.rpc('manor_screech_result_v2',{p_session_id:session.id,p_side:side,p_event_ms:eventMs,p_outcome:outcome});
  if(error)throw error;
  if(data?.state)session={...session,state:data.state,updated_at:new Date().toISOString()};
@@ -653,6 +741,7 @@ function tickRaid(){
  if(!encounterIsLive()){renderReadyGate();return}
  const e=stageElapsed();
  if(session.stage==='maids')updateMaidLinkOverlay(e);
+ if(session.stage==='housebound')updateMasterStatusOverlay();
  resolveExpiredScreeches(e);
  if(isLeader()){
    if(session.stage==='maids')driveMaids(e);
@@ -753,6 +842,19 @@ function updateMaidLinkOverlay(elapsed=stageElapsed(),force=false){
  if(changed){overlay.classList.remove('penalty-flash');void overlay.offsetWidth;overlay.classList.add('penalty-flash')}
  maidOverlayPenaltyKey=penaltyKey
 }
+function mountMasterStatusOverlay(){
+ if(session?.stage!=='housebound')return;
+ const arena=document.querySelector('#cb2dArena');if(!arena)return;
+ let overlay=arena.querySelector('#mrMasterStatusOverlay');
+ if(!overlay){overlay=document.createElement('section');overlay.id='mrMasterStatusOverlay';overlay.className='mr-master-status-overlay';overlay.setAttribute('aria-live','polite');arena.appendChild(overlay)}
+ updateMasterStatusOverlay()
+}
+function updateMasterStatusOverlay(){
+ if(session?.stage!=='housebound')return;
+ const overlay=document.querySelector('#mrMasterStatusOverlay');if(!overlay)return;
+ const failures=masterPenaltyStacks(),timeouts=Math.max(0,Number(session?.state?.masterScreechTimeouts)||0);
+ overlay.innerHTML='<small>MASTER EMPOWERMENT · RAID-WIDE</small><div><b>SCREECH FAILURES <strong>'+failures+'</strong></b><span>BOSS HP +'+(failures*15)+'%</span><span>DAMAGE +'+(failures*10)+'%</span><span>TIMEOUTS '+timeouts+'</span></div><p>'+(failures?'The Master is stronger because the raid failed Servant\'s Screech.':'No Screech penalties active.')+'</p>'
+}
 function masterPenaltyStacks(){return Math.max(0,Number(session?.state?.masterScreechFailures)||0)}
 async function driveMaids(e){
  const pa=Number(session?.state?.maidPenaltyA)||0,pb=Number(session?.state?.maidPenaltyB)||0;
@@ -785,6 +887,12 @@ async function advance(next){
    const recovery=sharedRecoveryPatch(session.stage,next);
    const mechanicPatch=next==='maids'?{maidPenaltyA:0,maidPenaltyB:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}:next==='housebound'?{masterPenalty:0,masterScreechFailures:0,masterScreechTimeouts:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}:{screechResolved:{}};
    const patch={...mechanicPatch,...recovery};
+   if(ownerSoloQa){
+    combatCache.clear();
+    session.state={...(session.state||{}),...patch,readyA:false,readyB:false,readyStage:next,encounterStartAt:null,stageStartedAt:null};
+    session.stage=next==='victory'?'victory':next;session.status=next==='victory'?'completed':'active';session.updated_at=new Date().toISOString();
+    lastStage='';sharedStageKey='';await syncSharedRaidView(true);mountOwnerQaControls();return
+   }
    const {data,error}=await db.rpc('advance_manor_raid',{p_session_id:session.id,p_expected_stage:session.stage,p_next_stage:next,p_patch:patch});
    if(error)throw error;if(data?.state)session.state=data.state;if(data?.stage)session.stage=data.stage;if(data?.status)session.status=data.status;
    lastStage='';sharedStageKey='';await loadSession(session.id);await syncSharedRaidView(true)
@@ -827,15 +935,20 @@ function openScreech(trigger={}){
 }
 function renderWipeShell(){
  const root=ensureOverlay();applyLocalRaidFailureShock();
- root.innerHTML='<section class="mr-raid-shell mr-wipe-shell"><header class="mr-raid-head"><div><small>THE MANOR · RAID WIPE</small><h2>'+esc(stageName(session.stage))+'</h2></div><button data-mr-close>×</button></header><div class="mr-wipe"><span>☠</span><small>ATTEMPT FAILED · RAID CHARGE SPENT</small><h1>The Manor Claims Another Raid</h1><p>'+esc(session.state?.failureReason||'The ten-character raid was defeated.')+'</p><p>The next attempt starts again from The Butler and uses another raid charge.</p><button data-mr-wipe-close>RETURN TO RAID HUB →</button></div></section>';
+ const qa=ownerSoloQa;
+ root.innerHTML='<section class="mr-raid-shell mr-wipe-shell"><header class="mr-raid-head"><div><small>THE MANOR · RAID WIPE</small><h2>'+esc(stageName(session.stage))+'</h2></div><button data-mr-close>×</button></header><div class="mr-wipe"><span>☠</span><small>'+(qa?'OWNER QA · NO CHARGE SPENT':'ATTEMPT FAILED · RAID CHARGE SPENT')+'</small><h1>The Manor Claims Another Raid</h1><p>'+esc(session.state?.failureReason||'The ten-character raid was defeated.')+'</p><p>'+(qa?'This was a local owner test. No Cell Shock, lockout charge or progression was changed.':'The next attempt starts again from The Butler and uses another raid charge.')+'</p><button data-mr-wipe-close>RETURN TO RAID HUB →</button></div></section>';
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);root.querySelector('[data-mr-wipe-close]')?.addEventListener('click',closeRaid);lastStage='failed'
 }
 function renderVictoryShell(){
- markManorCleared().catch(error=>console.warn('Could not persist Manor clear progression',error));
- if(session?.id)window.CellboundAnalytics?.track?.('raid_completed',{raid_id:'manor',raid_name:'The Manor',session_id:session.id},{key:'raid_completed:'+session.id});
- const root=ensureOverlay(),claimed=Boolean(state()?.raidRewardClaims?.[session.id]);
- root.innerHTML='<section class="mr-raid-shell mr-victory-shell"><header class="mr-raid-head"><div><small>THE MANOR · THE ATTIC</small><h2>Raid Complete</h2></div><button data-mr-close>×</button></header><div class="mr-victory-art"><span>◈</span><small>THE HOUSE FALLS SILENT</small><h1>The Master of the Manor</h1><p>The creature collapses into the attic floorboards. Every door below unlocks at once.</p></div><div class="mr-victory-loot"><small>PERSONAL RAID LOOT</small><h2>2 × Tier 5 Items</h2><p>Orange-framed Chapter 1 raid equipment. Four rolled stats with Tier 5 raid-set progression.</p><button data-mr-claim '+(claimed?'disabled':'')+'>'+(claimed?'REWARDS SECURED':'REVEAL RAID LOOT →')+'</button><div id="mrLootDrops"></div></div></section>';
+ const qa=ownerSoloQa;
+ if(!qa){
+  markManorCleared().catch(error=>console.warn('Could not persist Manor clear progression',error));
+  if(session?.id)window.CellboundAnalytics?.track?.('raid_completed',{raid_id:'manor',raid_name:'The Manor',session_id:session.id},{key:'raid_completed:'+session.id})
+ }
+ const root=ensureOverlay(),claimed=!qa&&Boolean(state()?.raidRewardClaims?.[session.id]);
+ root.innerHTML='<section class="mr-raid-shell mr-victory-shell"><header class="mr-raid-head"><div><small>THE MANOR · THE ATTIC</small><h2>'+(qa?'Owner QA Complete':'Raid Complete')+'</h2></div><button data-mr-close>×</button></header><div class="mr-victory-art"><span>◈</span><small>'+(qa?'OWNER SOLO QA · LOCAL ONLY':'THE HOUSE FALLS SILENT')+'</small><h1>The Master of the Manor</h1><p>'+(qa?'Every Manor stage reached the victory state without changing progression, raid charges or loot.':'The creature collapses into the attic floorboards. Every door below unlocks at once.')+'</p></div><div class="mr-victory-loot"><small>'+(qa?'QA RESULT':'PERSONAL RAID LOOT')+'</small><h2>'+(qa?'Full raid flow verified':'2 × Tier 5 Items')+'</h2><p>'+(qa?'Exit QA and run the real two-player raid when you want the clear and rewards to count.':'Orange-framed Chapter 1 raid equipment. Four rolled stats with Tier 5 raid-set progression.')+'</p>'+(qa?'<button data-mr-qa-finish>RETURN TO RAID HUB →</button>':'<button data-mr-claim '+(claimed?'disabled':'')+'>'+(claimed?'REWARDS SECURED':'REVEAL RAID LOOT →')+'</button><div id="mrLootDrops"></div>')+'</div></section>';
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);
+ root.querySelector('[data-mr-qa-finish]')?.addEventListener('click',closeRaid);
  root.querySelector('[data-mr-claim]')?.addEventListener('click',()=>claimLoot(session.id))
 }
 async function showVictory(id){await loadSession(id);const root=ensureOverlay();root.hidden=false;document.body.classList.add('mr-open');renderVictoryShell()}
