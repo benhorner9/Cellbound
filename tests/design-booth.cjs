@@ -4,6 +4,8 @@ require('./item-catalog.cjs');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
 
+const html=read('guild.html'),master=read('admin-design-booth-v1.js'),runtime=read('design-booth-content-v1.js'),css=read('admin-design-booth-v1.css');
+const manifests=read('tools/runtime-manifest.cjs'),schema=read('supabase/migrations/20261008102000_cellbound_design_booth_blueprints_v1.sql');
 // Future-content studio: reusable cloud templates and safe base-item variants.
 const creator=read('admin-design-library-v1.js');
 const migration=read('supabase/migrations/20261008200000_cellbound_design_templates.sql');
@@ -12,8 +14,7 @@ assert(creator.includes('CellboundDesignLibrary')&&creator.includes('insertIntoA
 assert(creator.includes('baseItemId')&&runtime.includes('function installDesignedItems'),'Equipment is cloned from known balanced items and loaded into the canonical gear registry');
 assert(migration.includes('enable row level security')&&migration.includes('cellbound_is_owner()')&&migration.includes("status='published'"),'New content must enforce owner RLS and player-visible published state');
 
-const html=read('guild.html'),master=read('admin-design-booth-v1.js'),runtime=read('design-booth-content-v1.js'),css=read('admin-design-booth-v1.css');
-const manifests=read('tools/runtime-manifest.cjs'),schema=read('supabase/migrations/20261008102000_cellbound_design_booth_blueprints_v1.sql');
+
 const builtins=read('boss-drop-tables-v1.js'),dropSchema=read('supabase/migrations/20261008141500_cellbound_boss_drop_tables_v1.sql');
 for(const id of ['designBoothEntry','openDesignBooth','designBoothMount','designBoothAdventures-quest','designBoothAdventures-dungeon','designBoothAdventures-raid','designAdventureOverlay'])
  assert(html.includes('id="'+id+'"'),'Unified admin/game must include '+id);
