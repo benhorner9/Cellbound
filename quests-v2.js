@@ -921,7 +921,7 @@ async function runQuest2DFight(config){
           qShowContinuation(end,{won:true,title:config.title,text:config.completeText||'The way forward is clear.',analysis:qAnalysis(result)});
           end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true)}
         }else{
-          Game.applyPartyCellShock?.(25);await Game.persistState?.();
+          if(!config.noLossPenalty){Game.applyPartyCellShock?.(25);await Game.persistState?.();}
           qShowContinuation(end,{won:false,title:config.title,text:'The party was defeated. Recover, review the result and return when ready.',analysis:qAnalysis(result)});
           end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
         }

@@ -676,9 +676,10 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   assert.equal(await page.locator('#adminAnalyticsChannel').inputValue(),'staging','dev analytics defaults to the staging channel');
 
   await page.locator('[data-admin-panel-tab="tools"]').click();
-  await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
-  assert(await page.locator('#dungeonGeneratorEntry').isVisible(),'owner tools appear only inside Tools workspace');
-  await page.locator('#openDungeonGenerator').click();
+  await page.waitForSelector('#designBoothEntry:not([hidden])',{timeout:5000});
+  assert(await page.locator('#designBoothEntry').isVisible(),'owner Design Booth appears inside Tools workspace');
+  await page.locator('#openDesignBooth').click();
+  await page.locator('[data-dbo-tool="generator"]').click();
   await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
 
   const values={

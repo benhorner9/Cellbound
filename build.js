@@ -728,7 +728,7 @@ const UI_BUNDLE_SOURCES=[
   'readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css',
   'roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','bank-v2.css','character-command-v1.css',
   'character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','character-forge-v1.css',
-  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','layout-safety-v1.css'
+  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','layout-safety-v1.css'
 ];
 {
   const bundle=UI_BUNDLE_SOURCES.map(file=>'/* ===== '+file+' ===== */\n'+fs.readFileSync(sourcePath(file),'utf8')).join('\n\n');
@@ -1397,5 +1397,6 @@ require('./tests/beta-analytics.cjs');
 require('./tests/admin-ux.cjs');
 require('./tests/comic-scene-editor.cjs');
 require('./tests/room-art-uploads.cjs');
+require('./tests/design-booth.cjs');
 require('./tests/living-combat.authority.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}
