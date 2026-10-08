@@ -22,6 +22,22 @@ const BOSSES=[
  ['manor:engineer','The Manor','The Engineer'],
  ['manor:housebound','The Manor','The Master of the Manor']
 ].map(([key,dungeon,boss])=>({key,dungeon,boss,raid:key.startsWith('manor:')}));
+const DEFAULT_REWARDS={
+ 'ashen-vault:ashwarden':'Base dungeon: personal equipment chance (Normal 20%, Heroic 25%, CB+ 30%) and Warden reagents.',
+ 'ashen-vault:embermaw':'Base dungeon: personal equipment chance (Normal 25%, Heroic 35%, CB+ 40%) and Embermaw reagents.',
+ 'ashen-vault:vaultheart':'Base dungeon: personal equipment chance (Normal 50%, Heroic 60%, CB+ 70%), profession reagents and a guaranteed completion cache that tops up the run to two gear items.',
+ 'hollow-sanctum:sentinel':'Base dungeon: boss encounter. The original Hollow Sanctum equipment and crafting rewards are issued at the final clear.',
+ 'hollow-sanctum:choir':'Base dungeon: final-clear gear bundle and crafting rewards, including its original first-clear relic.',
+ 'chaos-canyon:sentinel':'Base dungeon: boss encounter. Original equipment and crafting rewards are secured on final dungeon completion.',
+ 'chaos-canyon:warden':'Base dungeon: boss encounter. Original equipment and crafting rewards are secured on final dungeon completion.',
+ 'chaos-canyon:vorran':'Base dungeon: final-clear equipment bundle, crafting materials and Cell Shards.',
+ 'blackout-station:vex-calder':'Base dungeon: final-clear equipment bundle, crafting materials, Cell Shards and a separate 10% chance of a Grid Override Module.',
+ 'fractured-ages:funhouse':'Base dungeon: final-clear equipment bundle and crafting materials.',
+ 'manor:housebound':'Base raid: two Tier 5 items per player on eligible complete claim; these remain protected by the raid server.',
+};
+function defaultLoot(b){
+ return DEFAULT_REWARDS[b.key]||(b.raid?'Base raid: Manor rewards are managed by the protected multiplayer raid claim system.':'Base dungeon: original clear-cache equipment and profession rewards are granted on completion.');
+}
 const keys=new Set(BOSSES.map(b=>b.key)),tables=new Map();let pending=null,lastLoaded=0;
 const Game=()=>window.CellboundGame;
 const db=()=>Game()?.getSupabase?.();
@@ -91,5 +107,5 @@ async function award(key,attemptId,source,options={}){
  Game().save?.();await Game().persistState?.();
  return earned
 }
-window.CellboundBossDropTables={bosses:()=>BOSSES.map(b=>({...b})),refresh,get,save,award,clean};
+window.CellboundBossDropTables={bosses:()=>BOSSES.map(b=>({...b,baseRewards:defaultLoot(b)})),refresh,get,save,award,clean};
 })();
