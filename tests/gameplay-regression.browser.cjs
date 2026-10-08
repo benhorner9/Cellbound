@@ -105,7 +105,8 @@ async function waitClosed(page,selector){
     assert(await page.locator('#mrOwnerQaControls').isVisible(),'owner Manor QA toolbar is visible');
     await page.locator('#manorRaidOverlay [data-raid-ready]').click();
     await page.waitForSelector('#cb2dBackdrop:not([hidden]) [data-combat-view="canonical-v1"]',{timeout:12000});
-    assert(await page.locator('#cb2dBackdrop .mr-room-scene.room-butler').count()===1,'Manor Butler uses the raid room environment scene');
+    await page.waitForSelector('#cb2dBackdrop .mr-room-scene.room-butler',{timeout:5000});
+    assert(await page.locator('#cb2dBackdrop .mr-room-scene.room-butler').isVisible(),'Manor Butler uses the raid room environment scene');
     assert.equal(await page.evaluate(()=>CellboundManorRaid.isOwnerSoloQa()),true,'Manor owner solo QA stays local and active during combat');
     await page.locator('#mrOwnerQaControls [data-qa-exit]').click();
     await page.waitForFunction(()=>!window.CellboundManorRaid.isOwnerSoloQa(),{},{timeout:5000,polling:50});
