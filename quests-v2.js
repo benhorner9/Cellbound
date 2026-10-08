@@ -205,7 +205,16 @@ function questComicArtSet(title,speaker){
  return QUEST_COMIC_ART.zeltira
 }
 function comicPanels(title,speaker,beats){
- const list=Array.isArray(beats)?beats:[beats],art=questComicArtSet(title,speaker);
+ const list=Array.isArray(beats)?beats:[beats];
+ // The opening road quest has its own five-frame comic artwork; don't cycle
+ // dungeon key art and loot thumbnails into these narrative panels.
+ const art=title==='A Road Gone Quiet'?[
+  './assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp',
+  './assets/comics/tutorial-2026/investigating-tracks.webp',
+  './assets/comics/tutorial-2026/arcane-trail.webp',
+  './assets/comics/tutorial-2026/twilight-evacuation.webp',
+  './assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'
+ ]:questComicArtSet(title,speaker);
  return list.map((text,i)=>({
   kind:i===0?'location':'dialogue',
   eyebrow:i===0?'QUEST STORY':'',
