@@ -54,6 +54,11 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.51.1
           npx playwright install --with-deps chromium webkit
 
+      - name: Design Booth browser regression
+        run: |
+          node tests/design-booth.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/design-booth.browser.cjs
+
       - name: Living combat browser regression
         run: |
           node tests/living-combat.browser.cjs
@@ -78,11 +83,6 @@ jobs:
         run: |
           node tests/gameplay-regression.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/gameplay-regression.browser.cjs
-
-      - name: Design Booth browser regression
-        run: |
-          node tests/design-booth.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/design-booth.browser.cjs
 
       - name: Full game browser playthrough
         run: |
