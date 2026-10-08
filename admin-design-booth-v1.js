@@ -34,6 +34,23 @@ function loadWorkspace(){
  try{const v=JSON.parse(localStorage.getItem(STASH)||'{}');workspace=v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch{workspace={}}
 }
 function setBaseline(){baseline=JSON.stringify(project);updateSaveState()}
+function canLeave({checkNative=true}={}){
+ if(busy||uploadBusy||nativeSaving){announce('Finish saving or uploading before switching tools.');return false}
+ if(checkNative&&active==='drops'&&selectedDropBoss.startsWith('native:')&&nativeChanged()){
+  if(!confirm('This boss has unsaved drop changes. OK discards those changes. Cancel keeps you here so you can save.'))return false;
+  nativeDrops=JSON.parse(nativeBaseline);nativeLoadedKey=''
+ }
+ return true
+}
+function openLocalDraft(key){
+ const saved=workspace[key];if(!saved?.project)return;
+ if(project)storageBackup();
+ project=clone(saved.project);selectedId=null;
+ stepIndex=Math.min(saved.stepIndex||0,Math.max(0,project.steps.length-1));
+ baseline=saved.baseline||JSON.stringify(project);cloudUpdatedAt=null;
+ message='Local draft restored. Save Cloud Draft to share it across devices.';
+ storageBackup();renderBuilder()
+}
 function newStep(type='room'){
  return{id:'step-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),type,title:type==='comic'?'Story Scene':type==='fight'?'Encounter':type==='minigame'?'Minigame':'New Room',text:'',artPath:'',
   panels:type==='comic'?[{title:'Panel 1',text:'',artPath:''}]:[],enemies:'Enemy',enemyHealth:750,mechanic:'none',
@@ -156,7 +173,7 @@ async function remove(){
  busy=true;
  try{
   const {error}=await db().from('cellbound_design_blueprints').delete().eq('id',project.id);if(error)throw error;
-  await fetchRecords();project=fresh();selectedId=null;stepIndex=0;storageBackup();window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('Design deleted.');render()
+  await fetchRecords();project=fresh();selectedId=null;stepIndex=0;cloudUpdatedAt=null;setBaseline();storageBackup();window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('Design deleted.');render()
  }catch(e){announce(String(e?.message||e))}
  finally{busy=false}
 }
@@ -360,8 +377,8 @@ function renderDrops(){
   }else if(project)stepIndex=project.steps.findIndex(st=>st.id===target.stepId);
  }
  if(native&&nativeLoadedKey!==target.key){
-  nativeDrops=window.CellboundBossDropTables?.get?.(target.key)||[];
-  nativeLoadedKey=target.key
+  nativeDrops=clone(window.CellboundBossDropTables?.get?.(target.key)||[]);
+  nativeLoadedKey=target.key;nativeBaseline=JSON.stringify(nativeDrops)
  }
  if(!native)nativeLoadedKey='';
  const current=native?{drops:nativeDrops}:project.steps?.[stepIndex];
@@ -456,6 +473,7 @@ function renderTemplates(){
 function toolApi(id){return window[plugins[id]]}
 function setTab(id){
  if(!TOOLS.some(x=>x.id===id))return;
+ if(id!==active&&!canLeave())return;
  if(id!==active&&(active==='build'||active==='drops'))collect();
  for(const [tab,mount] of Object.entries(mountIds)){const el=$('#'+mount);if(el)el.hidden=true;if(tab!==id)toolApi(tab)?.close?.()}
  active=id;
@@ -486,14 +504,15 @@ async function open(){
  try{await Promise.all([fetchRecords(),window.CellboundBossDropTables?.refresh?.(true)]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&!lastLocal){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
  root.scrollIntoView?.({behavior:'smooth',block:'start'})
 }
-function close(){
+function close({force=false}={}){
+ if(!force&&!canLeave())return;
  for(const name of Object.keys(plugins))toolApi(name)?.close?.();
  if(active==='build'||active==='drops')collect();
  opened=false;const root=$('#designBoothMount');if(root){root.hidden=true;root.innerHTML=''}
 }
 function access(){
  const entry=$('#designBoothEntry');if(entry)entry.hidden=!owner();
- if(!owner())close()
+ if(!owner())close({force:true})
 }
 function init(){
  if(initDone)return;initDone=true;
