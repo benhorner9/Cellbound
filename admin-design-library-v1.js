@@ -226,7 +226,7 @@ async function save(publish=false){
   const row=response.data;draft.id=row.id;draft.status=row.status;draft.version=row.version;draft.cloudUpdatedAt=row.updated_at||null;selected=row;baseline=JSON.stringify(draft);clearLocal();
   const {data,error}=await db().from(table).select('id,slug,kind,title,status,version,blueprint,draft_blueprint,updated_at').order('updated_at',{ascending:false});
   if(error)throw error;rows=data||[];
-  message=publish?'PUBLISHED · this content is available to the live game content registry.':'CLOUD DRAFT SAVED · players still see the previously published version.';
+  message=publish?(kind==='item'?'ITEM PUBLISHED · assign it to a specific boss in Drop Tables. It will not enter random dungeon drops.':'TEMPLATE PUBLISHED · add it to an adventure and publish the adventure before players can encounter it.'):'CLOUD DRAFT SAVED · players still see the previously published version.';
   if(publish){await window.CellboundDesignedContent?.refresh?.(true);window.CellboundItemCatalog?.render?.()}
  }catch(e){message='Could not save content: '+String(e.message||e)}
  finally{busy=false;render()}
