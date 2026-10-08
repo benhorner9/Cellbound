@@ -49,7 +49,7 @@ function openRecord(record){
  if(busy)return;
  if(draft&&changed()&&!confirm('Open a different template? Unsaved changes will be lost unless saved to cloud.'))return;
  selected=record;kind=record.kind;
- draft={id:record.id,slug:record.slug,kind,title:record.title,status:record.status,version:record.version,
+ draft={id:record.id,slug:record.slug,kind,title:String(record.draft_blueprint?.title||record.title),status:record.status,version:record.version,
   data:clone(record.draft_blueprint&&Object.keys(record.draft_blueprint).length?record.draft_blueprint:record.blueprint||{})};
  baseline=JSON.stringify(draft);persist();render()
 }
@@ -248,5 +248,5 @@ async function open(){
  if(!loading)await refresh()
 }
 function close(){const host=$('#dboLibrary');if(host)host.hidden=true}
-window.CellboundDesignLibrary={open,close,refresh,useStage,current:()=>clone(draft||{}),validate:validation};
+window.CellboundDesignLibrary={open,close,refresh,useStage,startNew:k=>{if(KINDS.some(x=>x[0]===k))newDraft(k)},current:()=>clone(draft||{}),validate:validation};
 })();
