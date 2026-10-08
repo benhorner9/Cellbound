@@ -128,3 +128,39 @@
 @media(max-width:480px){.dbo-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .dbo-native-default{padding:14px 17px;margin:14px 0;border:1px solid #52675d;border-radius:9px;background:#172a28}.dbo-native-default small{display:block;color:#b1d5c8;font-size:10px;font-weight:900;letter-spacing:.07em}.dbo-native-default p{margin:7px 0 0;color:#dce6dc;font-size:13px;line-height:1.55}
+
+
+/* Boss loot: quick-scanning tier / name / percentage listing, with contextual editing. */
+.dbo-loot-overview{margin:18px 0 14px;border:1px solid #4b625f;border-radius:12px;background:#111e24;overflow:hidden}
+.dbo-loot-overview>header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 18px 12px}
+.dbo-loot-overview>header small{display:block;font-size:10px;font-weight:850;letter-spacing:.12em;color:#c5a67e}
+.dbo-loot-overview h4{font-family:Georgia,serif;font-size:21px;margin:4px 0;color:#f4e4c8}
+.dbo-loot-overview h4 span{font:800 12px system-ui;color:#aebeb6;margin-left:6px}
+.dbo-loot-overview #dboAddLoot{border:1px solid #b99c72;border-radius:8px;background:#3c483a;color:#fff1ce;padding:12px 15px;min-height:44px;font-size:12px;font-weight:850}
+.dbo-loot-controls{display:grid;grid-template-columns:minmax(160px,2.5fr) minmax(110px,1fr) minmax(140px,1.2fr);gap:12px;padding:7px 18px 18px}
+.dbo-loot-controls label{display:block;min-width:0;font-size:10px;letter-spacing:.07em;font-weight:850;color:#b9ccc8}
+.dbo-loot-controls input,.dbo-loot-controls select{display:block;min-height:46px;width:100%;min-width:0;margin-top:6px;border:1px solid #516965;border-radius:8px;background:#09171c;color:#edf7f4;padding:10px 11px;font-size:16px!important}
+.dbo-loot-controls input:focus-visible,.dbo-loot-controls select:focus-visible,.dbo-loot-actions button:focus-visible{outline:2px solid #e4c391;outline-offset:2px}
+.dbo-loot-table-head,.dbo-loot-table-row{display:grid;grid-template-columns:90px minmax(0,1fr) 118px 170px;align-items:center;gap:12px;padding:12px 18px}
+.dbo-loot-table-head{background:#26363a;color:#b9d0c9;font-weight:900;font-size:10px;letter-spacing:.09em}
+.dbo-loot-table-head span:nth-child(3){text-align:center}
+.dbo-loot-table-row{border-top:1px solid #344951;min-height:76px;background:#17262b}
+.dbo-loot-table-row:nth-child(2n+1){background:#192b30}
+.dbo-loot-table-row.editing{box-shadow:inset 4px 0 #d4ae73;background:#253431}
+.dbo-loot-table-row[hidden],.dbo-loot-empty-search[hidden]{display:none!important}
+.dbo-loot-tier{display:inline-block;padding:7px 9px;border-radius:7px;background:#28463e;color:#b9e5bf;font-size:12px;white-space:nowrap}
+.dbo-loot-tier.material{background:#42392b;color:#f2d4a2;font-size:10px}
+.dbo-loot-name{min-width:0;overflow-wrap:anywhere}
+.dbo-loot-name strong{display:block;font-size:14px;color:#f5f2e9;line-height:1.35}
+.dbo-loot-name small{display:block;color:#aec4c2;font-size:11px;margin-top:4px}
+.dbo-loot-prob{text-align:center;font-variant-numeric:tabular-nums}
+.dbo-loot-prob b{font-size:17px;color:#e7ce9e}
+.dbo-loot-actions{display:flex;gap:6px;flex-wrap:wrap}
+.dbo-loot-actions button{border:1px solid #678780;border-radius:7px;background:#273e3f;color:#e8fbf5;padding:9px 11px;min-height:40px;font-size:10px;font-weight:850}
+.dbo-loot-actions [data-db-remove-drop]{border-color:#855d53;color:#f7c4b7;background:#3c292b}
+.dbo-loot-empty-search,.dbo-loot-blank{color:#b6cbc7;padding:17px 18px;font-size:12px;line-height:1.5;margin:0}
+.dbo-loot-hint{display:block;font-size:11px;color:#a6b6b1;padding:12px 18px 16px;line-height:1.5}
+.dbo-loot-edit-panel{margin:0 0 17px!important}
+.dbo-loot-edit-panel>header>button{background:#2b3835;border:1px solid #849180;border-radius:7px;color:#f9eacf;min-height:40px;padding:8px 12px;font-size:11px;font-weight:850}
+@media(max-width:850px){.dbo-loot-table-head,.dbo-loot-table-row{grid-template-columns:72px minmax(0,1fr) 95px 125px;gap:8px;padding:11px}.dbo-loot-actions button{padding:9px 8px}.dbo-loot-controls{gap:9px;padding:8px 12px 15px}}
+@media(max-width:600px){.dbo-loot-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-loot-controls label:first-child{grid-column:1/-1}.dbo-loot-table-head,.dbo-loot-table-row{grid-template-columns:56px minmax(0,1fr) 65px;gap:7px}.dbo-loot-table-head span:last-child{display:none}.dbo-loot-table-row .dbo-loot-actions{grid-column:2/-1;justify-content:flex-end}.dbo-loot-prob b{font-size:15px}.dbo-loot-name strong{font-size:13px}.dbo-loot-overview>header{padding:14px 12px 10px}.dbo-loot-overview h4{font-size:19px}}
