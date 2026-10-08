@@ -760,6 +760,7 @@ async function hsRunFrom(startIndex,tok){
   $('#hs2dRoute').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');
   if(!await fightStage(s,tok,i)){await hsSaveRuntime('failed');return}
   if(['boss','final'].includes(s.combatKind)){
+    await window.CellboundBossDropTables?.award?.('hollow-sanctum:'+s.id,run.endgame?.attemptId||run.seed,'The Hollow Sanctum · '+s.title);
     const expired=window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'hollow-sanctum:'+run.endgame?.attemptId+':'+s.id,state())||[];
     expired.forEach(x=>feed(x+' expired.'));Game.save?.();await Game.persistState?.()
   }

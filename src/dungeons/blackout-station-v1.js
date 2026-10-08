@@ -638,6 +638,7 @@ async function complete(){
  const floor=mode==='normal'?90000:mode==='heroic'?100000:110000,timeMs=Math.max(floor,Date.now()-Number(run.startedAt||Date.now()));
  const metrics={timeMs,deaths:Number(summary.deaths)||0,mechanicsFailed:Number(summary.mechanics?.failed)||0,mistakes:Number(summary.mistakes)||0,missedInterrupts:Number(summary.missedInterrupts)||0,threatLosses:Number(summary.threatLosses)||0,avoidableDamage:Number(summary.avoidableDamage)||0,battleResurrections:Number(summary.battleResurrections)||0};
  const record=await window.CellboundEndgame?.recordRun?.('blackout-station',metrics);run.endgameRecord=record&&!record?.error?record:null;
+ await window.CellboundBossDropTables?.award?.('blackout-station:vex-calder',run.endgame?.attemptId||run.seed,'Blackout Station · Dr. Vex Calder');
  const gains=awardXp(),gearDrops=window.CellboundEndgame?.rollClearLootBundle?.('blackout-station','vex-calder')||[window.CellboundEndgame?.rollClearLoot?.('blackout-station','vex-calder',1)].filter(Boolean),overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE?createGridOverrideModule():null;
  const gold=mode==='normal'?320:mode==='heroic'?420:470+tier*15,renown=mode==='normal'?140:mode==='heroic'?185:205+tier*6,shards=window.CellboundEndgame?.shardReward?.('blackout-station')||10;
  s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;s.blackoutStationCompletions=(Number(s.blackoutStationCompletions)||0)+1;s.activity=Array.isArray(s.activity)?s.activity:[];

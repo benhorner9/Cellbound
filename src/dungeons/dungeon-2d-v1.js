@@ -2274,6 +2274,7 @@ async function resolveStage(s){
  updateRows();
  if(ok){
    const k=learn(s,true),item=loot(s);if(s.bossId){
+     await window.CellboundBossDropTables?.award?.('ashen-vault:'+s.bossId,run.endgame?.attemptId||run.token,'The Ashen Vault · '+s.title);
      state().bossKills[s.bossId]=true;
      const expired=P?.consumeBossCharges?.(party())||[];
      if(expired.length){expired.forEach(x=>log(x+' expired.'));flash('PROFESSION EFFECT EXPIRED',false)}

@@ -108,6 +108,7 @@ const groups=Object.freeze({
   "manor-raid-v1.js",
   "quests-v2.js",
   "design-booth-content-v1.js",
+   "boss-drop-tables-v1.js",
   "admin-design-booth-v1.js",
   "fourfold-lock-v1.js",
   "no-way-back-v1.js",

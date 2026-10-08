@@ -9,6 +9,7 @@ const runtime=()=>window.CellboundDesignedContent;
 const STORE='cellbound-design-booth-workspace-v1';
 const TOOLS=[
  {id:'build',label:'Adventure Builder',sub:'Quest · dungeon · raid'},
+ {id:'drops',label:'Drop Tables',sub:'Boss loot · chances'},
  {id:'comics',label:'Comic Art',sub:'Existing story scenes'},
  {id:'rooms',label:'Room Layouts',sub:'Existing dungeons & raid'},
  {id:'generator',label:'Dungeon Planner',sub:'Legacy advanced generator'},
@@ -17,7 +18,7 @@ const TOOLS=[
 ];
 const plugins={comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer'};
 const mountIds={comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount'};
-let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,message='',lastLocal='',initDone=false;
+let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='';
 function announce(s){message=s;const slot=$('#dboMessage');if(slot)slot.textContent=s}
 function newStep(type='room'){
  return{id:'step-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),type,title:type==='comic'?'Story Scene':type==='fight'?'Encounter':type==='minigame'?'Minigame':'New Room',text:'',artPath:'',
@@ -131,8 +132,8 @@ async function upload(stepId,panelIndex,file){
  }catch(e){announce('Artwork upload failed: '+String(e?.message||e))}
 }
 function collect(){
- if(active!=='build'||!project)return;
- const form=$('#dboFields');if(!form)return;
+ if(!['build','drops'].includes(active)||!project)return;
+ const form=$(active==='drops'?'#dboDrops':'#dboFields');if(!form)return;
  for(const field of form.querySelectorAll('[data-db-field]')){
   const key=field.dataset.dbField,value=field.value;
   if(key==='title'||key==='summary'||key==='content_type'||key==='level'){project[key]=key==='level'?Math.max(1,Math.min(75,Number(value)||1)):value}
@@ -152,8 +153,9 @@ function collect(){
   }
  }
  for(const input of form.querySelectorAll('[data-db-drop]')){
-  const s=project.steps[stepIndex],parts=input.dataset.dbDrop.split('.'),i=Number(parts[0]),prop=parts[1];
-  if(s?.drops?.[i])s.drops[i][prop]=['chance','quantity'].includes(prop)?Number(input.value)||0:input.value
+  const items=active==='drops'&&selectedDropBoss.startsWith('native:')?nativeDrops:project.steps[stepIndex]?.drops;
+  const parts=input.dataset.dbDrop.split('.'),i=Number(parts[0]),prop=parts[1];
+  if(items?.[i])items[i][prop]=['chance','quantity'].includes(prop)?Number(input.value)||0:input.value
  }
  storageBackup()
 }
@@ -175,9 +177,8 @@ function lootDropOptions(kind,selected=''){
  const rows=(kind==='gear'?catalog.gear:catalog.materials);
  return rows.map(it=>'<option value="'+esc(it.key)+'" '+(selected===it.key?'selected':'')+'>'+esc(kind==='gear'?'T'+it.tier+' · '+it.klass+' · '+it.name:it.name+' · '+it.rarity)+'</option>').join('')
 }
-function lootEditor(step){
+function lootEditor(step,{raid=false}={}){
  const items=Array.isArray(step.drops)?step.drops:[];
- const raid=project?.content_type==='raid';
  return '<section class="dbo-boss-loot"><header><div><small>INDIVIDUAL BOSS REWARDS</small><h4>Boss Drop Table</h4><p>Each row rolls independently when this encounter is defeated. Configure up to two gear rolls totalling 100% chance. Rewards go directly to the Guild Bank and appear in the end-of-run summary.</p></div><span>'+items.length+' / 6 DROPS</span></header>'+
  (raid?'<p class="dbo-loot-notice">Raid reward delivery is disabled in prototype raids. You may plan drop tables here, but they will not award gear until the multiplayer raid reward system is connected.</p>':'')+
  (items.length?'<div class="dbo-drop-list">'+items.map((drop,i)=>{
@@ -198,7 +199,7 @@ function stageFields(s){
   extra='<section class="dbo-panel-list"><h4>Comic panels · '+s.panels.length+'/6</h4>'+s.panels.map((p,i)=>'<article class="dbo-comic-panel"><header><b>Panel '+(i+1)+'</b><button type="button" data-db-remove-panel="'+i+'">REMOVE</button></header>'+field('Panel heading','panel.'+i+'.title',p.title)+field('Caption / dialogue','panel.'+i+'.text',p.text,{kind:'textarea'})+imageControl(s,i)+'</article>').join('')+
   '<button type="button" data-db-add-panel '+(s.panels.length>=6?'disabled':'')+'>+ ADD COMIC PANEL</button></section>'
  }
- if(s.type==='fight')extra='<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>'+imageControl(s)+lootEditor(s);
+ if(s.type==='fight')extra='<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>'+imageControl(s)+'<button type="button" class="dbo-manage-drops" id="dboGoToDrops">MANAGE THIS BOSS\'S LOOT →</button>';
  if(s.type==='room')extra=imageControl(s);
  if(s.type==='minigame')extra='<div class="dbo-form-grid">'+field('Template','step.template',s.template,{kind:'select',opts:(runtime()?.templates?.()||[]).map(t=>({value:t.id,label:t.label}))})+field('Puzzle instruction','step.prompt',s.prompt,{kind:'textarea'})+field('Choices (one per line)','step.choices',s.choices.join('\n'),{kind:'textarea'})+field('Correct choice index · starts at 0','step.answer',s.answer,{kind:'number'})+field('Sequence indices · comma-separated','step.sequence',s.sequence.join(','))+'</div>'+imageControl(s);
  return'<div class="dbo-stage-fields">'+field('Stage title','step.title',s.title)+field('Stage type','step.type',s.type,{kind:'select',opts:[{value:'comic',label:'Comic Strip'},{value:'room',label:'Room / Transition'},{value:'fight',label:'Combat Encounter'},{value:'minigame',label:'Minigame'}]})+field('Description / narration','step.text',s.text,{kind:'textarea'})+extra+'</div>'
@@ -230,6 +231,7 @@ function bindBuilder(){
  host.querySelector('[data-db-add-panel]')?.addEventListener('click',()=>{collect();const s=project.steps[stepIndex];if(s.panels.length>=6)return;s.panels.push({title:'Panel '+(s.panels.length+1),text:'',artPath:''});storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-remove-panel]').forEach(btn=>btn.onclick=()=>{collect();const s=project.steps[stepIndex];s.panels.splice(Number(btn.dataset.dbRemovePanel),1);storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-upload]').forEach(el=>el.addEventListener('change',e=>{collect();upload(el.dataset.dbUpload,el.dataset.dbPanel==='stage'?null:Number(el.dataset.dbPanel),e.target.files?.[0])}));
+ host.querySelector('#dboGoToDrops')?.addEventListener('click',()=>{collect();selectedDropBoss=project.id?'project:'+project.id+':'+project.steps[stepIndex].id:'local:'+project.slug+':'+project.steps[stepIndex].id;setTab('drops')});
  host.querySelectorAll('[data-db-drop]').forEach(input=>{
   input.addEventListener('input',()=>collect());
   if(input.dataset.dbDrop.endsWith('.kind'))input.addEventListener('change',()=>{
@@ -256,6 +258,121 @@ function bindBuilder(){
  host.querySelector('#dboDelete')?.addEventListener('click',remove);
  host.querySelector('#dboTest')?.addEventListener('click',()=>{collect();const preview={title:project.title,content_type:project.content_type,blueprint:{...clean(),steps:clean().steps.slice(stepIndex)}};runtime()?.play?.('local',preview)});
 }
+
+function bossChoices(){
+ const all=[],included=new Set();
+ // The current unsaved project takes precedence over the cloud version of that project.
+ function projectBosses(p){
+  const key=p.id?'project:'+p.id:'local:'+p.slug;
+  if(included.has(key))return;included.add(key);
+  (p.steps||[]).forEach((st,i)=>{
+   if(st.type!=='fight')return;
+   all.push({id:key+':'+st.id,title:(p.title||'Unpublished project')+' · '+(st.title||'Unnamed boss'),
+    source:'design',projectId:p.id||null,stepId:st.id,stepIndex:i,type:p.content_type||'quest'})
+  })
+ }
+ if(project)projectBosses(project);
+ for(const r of records){
+  const b=r.draft_blueprint&&Array.isArray(r.draft_blueprint.steps)?r.draft_blueprint:r.blueprint||{};
+  projectBosses({...b,id:r.id,title:b.title||r.title,content_type:r.content_type})
+ }
+ const native=window.CellboundBossDropTables?.bosses?.()||[];
+ native.forEach(b=>all.push({id:'native:'+b.key,title:b.dungeon+' · '+b.boss,source:'native',key:b.key,raid:b.raid}));
+ return all
+}
+function activeLootRows(){
+ return selectedDropBoss.startsWith('native:')?nativeDrops:(project?.steps?.[stepIndex]?.drops||[])
+}
+function validateLootRows(rows){
+ const R=runtime(),clean=R?.cleanBlueprint?.({steps:[{type:'fight',drops:rows}]})?.steps?.[0]?.drops||[];
+ if(rows.length!==clean.length)return 'An item is unavailable or restricted.';
+ if(rows.length>6)return 'A boss can have up to six reward rows.';
+ if(clean.some(x=>x.chance<1||x.chance>100))return 'Use a drop chance between 1% and 100%.';
+ const gear=clean.filter(x=>x.kind==='gear');
+ if(gear.length>2||gear.reduce((sum,x)=>sum+x.chance,0)>100)return 'Maximum two equipment rows, with combined chances no higher than 100%.';
+ return''
+}
+function renderDrops(){
+ const root=$('#dboDrops');if(!root)return;
+ const opts=bossChoices();
+ if(!opts.length){root.innerHTML='<section class="dbo-drops-main"><h3>Drop Tables</h3><p>No bosses found. Add a Fight Encounter in Adventure Builder to start assigning drops.</p></section>';return}
+ if(!opts.some(o=>o.id===selectedDropBoss))selectedDropBoss=opts.find(o=>o.source==='design')?.id||opts[0].id;
+ const target=opts.find(o=>o.id===selectedDropBoss),native=target.source==='native';
+ if(!native&&(project?.id!==target.projectId||project.steps?.[stepIndex]?.id!==target.stepId)){
+  const record=records.find(r=>r.id===target.projectId);
+  if(record){
+   const b=record.draft_blueprint&&Array.isArray(record.draft_blueprint.steps)?record.draft_blueprint:record.blueprint;
+   project={...clone(b),id:record.id,slug:record.slug,title:b.title||record.title,content_type:record.content_type,status:record.status,version:record.version};
+   selectedId=record.id;stepIndex=project.steps.findIndex(st=>st.id===target.stepId);
+  }else if(project)stepIndex=project.steps.findIndex(st=>st.id===target.stepId);
+ }
+ if(native&&nativeLoadedKey!==target.key){
+  nativeDrops=window.CellboundBossDropTables?.get?.(target.key)||[];
+  nativeLoadedKey=target.key
+ }
+ if(!native)nativeLoadedKey='';
+ const current=native?{drops:nativeDrops}:project.steps?.[stepIndex];
+ const groups=[
+  ['Custom Quests, Dungeons & Raids',opts.filter(o=>o.source==='design')],
+  ['Existing Game Dungeons & Raid',opts.filter(o=>o.source==='native')]
+ ];
+ const select=groups.map(([name,rows])=>rows.length?'<optgroup label="'+esc(name)+'">'+rows.map(o=>'<option value="'+esc(o.id)+'" '+(o.id===target.id?'selected':'')+'>'+esc(o.title)+'</option>').join('')+'</optgroup>':'').join('');
+ const bad=validateLootRows(current?.drops||[]);
+ root.innerHTML='<section class="dbo-drops-main"><header class="dbo-drops-head"><small>CELLBOUND · LOOT MANAGEMENT</small><h3>Drop Tables</h3><p>Select any boss, then add or remove the rewards assigned to that encounter. Each drop has its own chance and quantity.</p></header>'+
+ '<label class="dbo-drops-picker"><span>SELECT BOSS</span><select id="dboBossPicker">'+select+'</select></label>'+
+ '<div class="dbo-drops-status"><b>'+esc(target.title)+'</b><small>'+esc(native?'EXISTING GAME BOSS · ADDITIONAL DROP TABLE':target.type.toUpperCase()+' · DESIGN BOOTH PROJECT')+'</small></div>'+
+ (native?'<div class="dbo-native-default"><small>EXISTING GAME REWARDS · NOT OVERRIDDEN</small><p>'+esc((window.CellboundBossDropTables?.bosses?.()||[]).find(b=>b.key===target.key)?.baseRewards||'Original game rewards remain unchanged.')+'</p></div><p class="dbo-loot-notice">This screen manages <b>extra boss drops</b>. Original dungeon drops, rare items, guaranteed completion rewards and Tier 5 raid rewards still follow their existing game rules. '+(target.raid?'Manor raid bonus rewards are in planning mode and will not award to players yet.':'Additional drops are sent to the Bank when this boss is defeated.')+'</p>':
+ '<p class="dbo-loot-notice">This is the full drop table for this designed encounter. Changes save to its project draft; press Publish to make them available in-game.</p>')+
+ lootEditor(current||{drops:[]},{raid:target.raid||target.type==='raid'})+
+ '<div class="dbo-drops-footer"><p role="status" id="dboMessage">'+esc(message||'Choose a boss to edit its loot.')+'</p>'+
+ (bad?'<p class="dbo-drop-error">'+esc(bad)+'</p>':'')+
+ '<div class="dbo-buttons">'+(native?
+ '<button id="dboSaveNative" '+(nativeSaving||bad?'disabled':'')+'>SAVE BOSS DROPS</button>':
+ '<button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboPublish" class="primary" '+(busy||bad||validate().length?'disabled':'')+'>PUBLISH LOOT CHANGES</button>')+'</div></div></section>';
+ bindDrops()
+}
+function bindDrops(){
+ const host=$('#dboDrops');if(!host)return;
+ host.querySelector('#dboBossPicker')?.addEventListener('change',e=>{
+  collect();
+  selectedDropBoss=e.target.value;message='';
+  renderDrops()
+ });
+ host.querySelectorAll('[data-db-drop]').forEach(input=>{
+  input.addEventListener('input',collect);
+  if(input.dataset.dbDrop.endsWith('.kind'))input.addEventListener('change',()=>{
+   collect();
+   const i=Number(input.dataset.dbDrop.split('.')[0]),item=activeLootRows()[i],catalog=runtime()?.lootCatalog?.();
+   if(!item)return;
+   item.key=(item.kind==='gear'?catalog?.gear:catalog?.materials)?.[0]?.key||'';
+   item.quantity=1;storageBackup();renderDrops()
+  })
+ });
+ host.querySelector('[data-db-add-drop]')?.addEventListener('click',()=>{
+  collect();const rows=activeLootRows(),catalog=runtime()?.lootCatalog?.();
+  if(rows.length>=6)return;
+  rows.push({kind:'gear',key:catalog?.gear?.[0]?.key||'',chance:25,quantity:1});
+  storageBackup();renderDrops()
+ });
+ host.querySelectorAll('[data-db-remove-drop]').forEach(btn=>btn.addEventListener('click',()=>{
+  collect();activeLootRows().splice(Number(btn.dataset.dbRemoveDrop),1);
+  storageBackup();renderDrops()
+ }));
+ host.querySelector('#dboSave')?.addEventListener('click',()=>save(false));
+ host.querySelector('#dboPublish')?.addEventListener('click',()=>{
+  if(confirm('Publish these boss loot changes to the game?'))save(true)
+ });
+ host.querySelector('#dboSaveNative')?.addEventListener('click',async()=>{
+  collect();const target=bossChoices().find(o=>o.id===selectedDropBoss);
+  if(!target||nativeSaving)return;
+  const error=validateLootRows(nativeDrops);if(error){announce(error);return}
+  nativeSaving=true;renderDrops();
+  try{await window.CellboundBossDropTables.save(target.key,nativeDrops);announce('Boss drop table saved. These optional drops now apply when '+target.title+' is defeated.')}
+  catch(e){announce('Could not save boss drops: '+String(e?.message||e))}
+  finally{nativeSaving=false;renderDrops()}
+ })
+}
+
 function renderTemplates(){
  const host=$('#dboTemplates');if(!host)return;
  const rows=runtime()?.templates?.()||[];
@@ -264,12 +381,13 @@ function renderTemplates(){
 function toolApi(id){return window[plugins[id]]}
 function setTab(id){
  if(!TOOLS.some(x=>x.id===id))return;
- if(id!==active&&active==='build')collect();
+ if(id!==active&&(active==='build'||active==='drops'))collect();
  for(const [tab,mount] of Object.entries(mountIds)){const el=$('#'+mount);if(el)el.hidden=true;if(tab!==id)toolApi(tab)?.close?.()}
  active=id;
- const panel=$('#dboWorkbench'),library=$('#dboTemplates');if(panel)panel.hidden=id!=='build';if(library)library.hidden=id!=='templates';
+ const panel=$('#dboWorkbench'),library=$('#dboTemplates'),drops=$('#dboDrops');if(panel)panel.hidden=id!=='build';if(library)library.hidden=id!=='templates';if(drops)drops.hidden=id!=='drops';
  document.querySelectorAll('[data-dbo-tool]').forEach(el=>{el.classList.toggle('active',el.dataset.dboTool===id);el.setAttribute('aria-selected',el.dataset.dboTool===id?'true':'false')});
  if(id==='build')renderBuilder();
+ else if(id==='drops')renderDrops();
  else if(id==='templates')renderTemplates();
  else{const mount=$('#'+mountIds[id]);if(mount)mount.hidden=false;toolApi(id)?.open?.()}
 }
@@ -277,7 +395,7 @@ function render(){
  const root=$('#designBoothMount');if(!root||!opened||!owner())return;
  root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · OWNER CREATIVE TOOLS</small><h2>Design Booth</h2><p>Build adventures stage by stage, inspect the existing game, and publish artwork and playable content from one place.</p></div><button id="dboClose" type="button">CLOSE DESIGN BOOTH ×</button></header>'+
  '<nav class="dbo-tabs" role="tablist">'+TOOLS.map(t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>').join('')+'</nav>'+
- '<div id="dboWorkbench"></div><div id="dboTemplates" hidden></div>'+
+ '<div id="dboWorkbench"></div><div id="dboDrops" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
  root.querySelectorAll('[data-dbo-tool]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool));
@@ -289,12 +407,12 @@ async function open(){
  opened=true;root.hidden=false;
  if(!project){restoreBackup();if(!project)project=fresh('quest')}
  render();
- try{await fetchRecords();if(project.id){const r=records.find(x=>x.id===project.id);if(r&&!lastLocal){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
+ try{await Promise.all([fetchRecords(),window.CellboundBossDropTables?.refresh?.(true)]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&!lastLocal){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
  root.scrollIntoView?.({behavior:'smooth',block:'start'})
 }
 function close(){
  for(const name of Object.keys(plugins))toolApi(name)?.close?.();
- if(active==='build')collect();
+ if(active==='build'||active==='drops')collect();
  opened=false;const root=$('#designBoothMount');if(root){root.hidden=true;root.innerHTML=''}
 }
 function access(){

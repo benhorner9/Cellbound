@@ -277,6 +277,7 @@ async function fightStage(s){
  if(!won){await showFailure(s);return}
  const carry=carryCombatState(combatResult);
  if(!carry.ok){await failRecovery(s,carry.reason);return}
+ await window.CellboundBossDropTables?.award?.('fractured-ages:'+s.id,run.endgame?.attemptId||run.endgame?.seed,'Fractured Ages · '+s.boss);
  window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'fractured-ages:'+run.endgame?.attemptId+':'+s.id,state());
  Game.save?.();await Game.persistState?.();
  run.results.push({id:s.id,boss:s.boss,combatResult});
