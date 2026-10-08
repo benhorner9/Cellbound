@@ -35,6 +35,22 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.equal(await page.locator('#characterFitViewerMount').isVisible(),true,'Character fit viewer is a Design Booth tab');
   await page.locator('#dboClose').click();
   assert.equal(await page.locator('#designBoothMount').isVisible(),false,'Design Booth closes cleanly');
+  await page.evaluate(()=>{
+    void CellboundDesignedContent.play('qa-preview',{
+      content_type:'quest',title:'Design Booth QA',blueprint:{level:1,summary:'Room and puzzle regression',steps:[
+        {id:'qa-room',type:'room',title:'Gatehouse',text:'The party enters the chamber.'},
+        {id:'qa-minigame',type:'minigame',template:'choice',title:'Rune Door',prompt:'Pick the safe lever',choices:['Left','Right'],answer:1}
+      ]}
+    });
+  });
+  await page.waitForSelector('#designAdventureOverlay:not([hidden]) .dbo-player-panel');
+  await page.locator('[data-db-advance]').click();
+  await page.waitForSelector('#designAdventureOverlay:not([hidden]) [data-db-pick="1"]');
+  await page.locator('[data-db-pick="1"]').click();
+  await page.locator('[data-db-done]').click();
+  await page.waitForFunction(()=>document.querySelector('#designAdventureOverlay .dbo-player-panel')?.textContent?.includes('Adventure complete'),{},{timeout:5000});
+  await page.locator('[data-db-finish]').click();
+  assert.equal(await page.locator('#designAdventureOverlay').isVisible(),false,'Designed room/minigame run exits cleanly');
   assert.deepEqual(errors,[],'No browser exceptions in owner creative suite');
   console.log(engine===webkit?'WebKit':'Chromium','Design Booth browser regression passed: one entry, six tabs, stage creation, minigames, room/comic/model editors and clean close.');
  }finally{await browser.close()}
