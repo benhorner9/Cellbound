@@ -72,9 +72,11 @@ function questArt(src,title,speaker){
  return sets[type]||[]
 }
 function scanDialogue(src,path,category,name,c){
- const title=literal(c.args[0]);if(!title)return null;
- const speaker=literal(c.args[1])||'',text=array(c.args[2]);
- const beats=text.length?text:fragments(c.args[2]).filter(s=>s.length>7);
+ const isVoyage=path==='no-way-back-v1.js';
+ const title=literal(c.args[isVoyage?1:0]);if(!title)return null;
+ const speaker=literal(c.args[isVoyage?2:1])||'',lines=c.args[isVoyage?3:2];
+ const text=array(lines);
+ const beats=text.length?text:fragments(lines).filter(s=>s.length>7);
  if(!beats.length)beats.push('[Dynamic dialogue — inspect during gameplay]');
  let art=[],note='',origin='scripted dialogue';
  if(name==='showDialogue'){art=questArt(src,title,speaker);note='This quest reuses generic artwork rather than having its own comic panels.';origin='generic comic'}
