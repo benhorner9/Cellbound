@@ -198,3 +198,6 @@
 .dbo-catalog-note{font-size:11px;line-height:1.5;padding:10px 6px;color:#96aba6}
 @media(max-width:1150px){.dbo-catalog-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.dbo-catalog-filters label:first-child{grid-column:1/-1}}
 @media(max-width:650px){.dbo-catalog{padding:0 12px 17px}.dbo-catalog-head{align-items:flex-start;flex-direction:column}.dbo-catalog-head h3{font-size:23px}.dbo-catalog-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-catalog-stats{gap:10px}.dbo-catalog-pager{flex-direction:column;align-items:flex-start}}
+
+.dbo-catalog-shortcut{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:1px dashed #6b785d;background:#1b2928;color:#cedfd4;border-radius:9px;padding:10px 14px;margin:12px 0;font-size:12px}
+.dbo-catalog-shortcut button{border:1px solid #a9936f;background:#364236;color:#f3e4c5;font-size:11px;font-weight:850;min-height:40px;padding:10px 14px;border-radius:7px}
