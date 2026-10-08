@@ -679,6 +679,7 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.waitForSelector('#designBoothEntry:not([hidden])',{timeout:5000});
   assert(await page.locator('#designBoothEntry').isVisible(),'owner Design Booth appears inside Tools workspace');
   await page.locator('#openDesignBooth').click();
+  await page.locator('.dbo-more > summary').click();
   await page.locator('[data-dbo-tool="generator"]').click();
   await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
 
