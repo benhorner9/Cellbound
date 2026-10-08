@@ -84,7 +84,7 @@ function catalogue(){
 function filtered(){
  const words=q.trim().toLowerCase().split(/\s+/).filter(Boolean);
  const matches=catalogue().filter(x=>(category==='all'||x.category===category)&&(tier==='all'||String(x.tier||'none')===tier)&&
- (klass==='all'||x.className.split(',').map(y=>y.trim()).includes(klass)||x.className==='All'&&klass==='all')&&
+ (klass==='all'||x.className==='All'||x.className.split(',').map(y=>y.trim()).includes(klass))&&
  (eligibility==='all'||(eligibility==='yes')===x.dropEligible)&&
  words.every(w=>[x.id,x.name,x.category,x.tier?'tier '+x.tier:'',x.rarity,x.className,x.slot,x.source,x.status,x.profession,x.notes].join(' ').toLowerCase().includes(w)));
  matches.sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):
