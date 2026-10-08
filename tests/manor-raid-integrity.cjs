@@ -35,7 +35,7 @@ if(!manor.includes("layoutContent:'the-manor'"))fail('Manor no longer uses the s
 if(!manor.includes('environmentHtml:manorRoomScene'))fail('Manor shared combat rooms are missing room-specific environment presentation');
 if(!viewer.includes('options.environmentHtml||'))fail('Shared combat viewer no longer accepts external room artwork/environments');
 if(!manor.includes('roomScene:manorRoomScene'))fail('Owner tools cannot preview the live Manor room scene');
-if(!editor.includes('Live Manor runtime scene preview')||!editor.includes('window.CellboundManorRaid.roomScene'))fail('Room Editor is not wired to live Manor scenes');
+if(!editor.includes('Live Manor runtime scene preview')||!editor.includes('CellboundManorRaid?.roomScene'))fail('Room Editor is not wired to live Manor scenes');
 
 for(const token of ['ownerSoloQa','startOwnerSoloQa','OWNER SOLO QA · NO CHARGES / NO LOOT','qaPartnerSnapshot','removeOwnerQaControls']){
  if(!manor.includes(token))fail('Owner solo QA contract missing: '+token);
