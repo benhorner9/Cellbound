@@ -6,6 +6,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
 (async()=>{
  const browser=await engine.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+ page.on('dialog',dialog=>dialog.accept());
  const errors=await mount(page,matureState(),true);
  try{
   await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner'&&window.CellboundDesignBooth&&window.CellboundDesignedContent,{},{timeout:12000});
