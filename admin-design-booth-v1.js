@@ -295,16 +295,37 @@ function stageFields(s){
  if(s.type==='minigame')extra='<div class="dbo-form-grid">'+field('Template','step.template',s.template,{kind:'select',opts:(runtime()?.templates?.()||[]).map(t=>({value:t.id,label:t.label}))})+field('Puzzle instruction','step.prompt',s.prompt,{kind:'textarea'})+field('Choices (one per line)','step.choices',s.choices.join('\n'),{kind:'textarea'})+field('Correct choice index · starts at 0','step.answer',s.answer,{kind:'number'})+field('Sequence indices · comma-separated','step.sequence',s.sequence.join(','))+'</div>'+imageControl(s);
  return'<div class="dbo-stage-fields">'+field('Stage title','step.title',s.title)+field('Stage type','step.type',s.type,{kind:'select',opts:[{value:'comic',label:'Comic Strip'},{value:'room',label:'Room / Transition'},{value:'fight',label:'Combat Encounter'},{value:'minigame',label:'Minigame'}]})+field('Description / narration','step.text',s.text,{kind:'textarea'})+extra+'</div>'
 }
+function reviewHTML(){
+ const issues=validate();
+ return '<h4>'+(issues.length?issues.length+' thing'+(issues.length===1?'':'s')+' to finish before publishing':'Ready to publish')+'</h4>'+
+ (issues.length?'<ol class="dbo-review-list">'+issues.map(issue=>{
+  const match=/^Stage (\d+):/.exec(issue);
+  return '<li>'+(match?'<button type="button" data-db-fix-step="'+(Number(match[1])-1)+'">'+esc(issue)+' →</button>':esc(issue))+'</li>'
+ }).join('')+'</ol>':'<p>All required stages are ready. Test the adventure before publishing it.</p>')+
+ '<small>Save Cloud Draft first to protect your work. Testing does not publish or award loot. Publishing changes what players can access.</small>'
+}
+function renderReview(){
+ const panel=$('#dboReview');if(panel){
+  panel.innerHTML=reviewHTML();
+  panel.querySelectorAll('[data-db-fix-step]').forEach(button=>button.addEventListener('click',()=>{
+   collect();stepIndex=Number(button.dataset.dbFixStep);storageBackup();renderBuilder();
+   $('#dboFields .dbo-stage-editor-header')?.scrollIntoView?.({behavior:'smooth',block:'start'})
+  }))
+ }
+ const btn=$('#dboWorkbench #dboPublish');if(btn)btn.disabled=busy||uploadBusy||validate().length>0;
+ updateSaveState()
+}
 function renderBuilder(){
  const host=$('#dboWorkbench');if(!host||!project)return;
  const s=project.steps[stepIndex]||null,problems=validate(),selected=records.find(r=>r.id===project.id);
- host.innerHTML='<div class="dbo-builder-top"><div><small>DESIGN WORKSPACE · CLOUD DRAFTS</small><h3>'+esc(project.title)+'</h3><p>'+esc(project.status==='published'?'Published v'+project.version+' · edit without changing the version players see until Publish is pressed':'Unpublished draft · only you can see it')+'</p></div><div class="dbo-buttons"><button type="button" id="dboNewQuest">+ QUEST</button><button type="button" id="dboNewDungeon">+ DUNGEON</button><button type="button" id="dboNewRaid">+ RAID</button></div></div>'+
- '<div class="dbo-editor-layout"><aside class="dbo-projects"><h4>PROJECTS <span>'+records.length+'</span></h4><div class="dbo-project-list">'+records.map(r=>'<button type="button" data-db-project="'+esc(r.id)+'" class="'+(r.id===project.id?'active':'')+'"><small>'+esc(r.content_type.toUpperCase())+' · '+esc(r.status)+'</small><b>'+esc(r.title)+'</b></button>').join('')+'</div><h4>ADVENTURE STAGES <span>'+project.steps.length+'/30</span></h4>'+
+ const localDrafts=Object.entries(workspace).filter(([key,row])=>key.startsWith('local:')&&row?.project&&!row.project.id&&Array.isArray(row.project.steps)).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));
+ host.innerHTML='<div class="dbo-builder-top"><div><small>DESIGN WORKSPACE · CLOUD DRAFTS</small><h3>'+esc(project.title)+'</h3><p>'+esc(project.status==='published'?'Published v'+project.version+' · edit without changing the version players see until Publish is pressed':'Unpublished draft · only you can see it')+'</p><span data-dbo-save-state class="dbo-save-state"></span></div><div class="dbo-buttons"><button type="button" id="dboNewQuest">+ QUEST</button><button type="button" id="dboNewDungeon">+ DUNGEON</button><button type="button" id="dboNewRaid">+ RAID</button></div></div>'+
+ '<div class="dbo-editor-layout"><aside class="dbo-projects"><h4>PROJECTS <span>'+(records.length+localDrafts.length)+'</span></h4><div class="dbo-project-list">'+records.map(r=>'<button type="button" data-db-project="'+esc(r.id)+'" class="'+(r.id===project.id?'active':'')+'"><small>'+esc(r.content_type.toUpperCase())+' · '+esc(r.status)+'</small><b>'+esc(r.title)+'</b></button>').join('')+localDrafts.map(([key,row])=>'<button type="button" data-db-local="'+esc(key)+'" class="'+(key===keyFor(project)?'active':'')+'"><small>ON THIS DEVICE · NOT CLOUD SAVED</small><b>'+esc(row.project.title||'Untitled')+'</b></button>').join('')+'</div><h4>ADVENTURE STAGES <span>'+project.steps.length+'/30</span></h4>'+
  '<div class="dbo-stage-list">'+project.steps.map((st,i)=>'<button type="button" data-db-step="'+i+'" class="'+(i===stepIndex?'active':'')+'"><i>'+String(i+1).padStart(2,'0')+'</i><span><b>'+esc(st.title)+'</b><small>'+esc(st.type)+'</small></span></button>').join('')+'</div>'+
  '<div class="dbo-add"><select id="dboAddType"><option value="comic">Comic strip</option><option value="room">Room / transition</option><option value="fight">Fight encounter</option><option value="minigame">Minigame</option></select><button type="button" id="dboAddStep" '+(project.steps.length>=30?'disabled':'')+'>+ ADD STAGE</button></div></aside>'+
  '<main id="dboFields" class="dbo-project-editor"><div class="dbo-form-grid">'+field('Adventure name','title',project.title)+field('Minimum party level','level',project.level,{kind:'number'})+field('Category','content_type',project.content_type,{kind:'select',opts:['quest','dungeon','raid']})+field('Short description','summary',project.summary,{kind:'textarea'})+'</div>'+
  (s?'<div class="dbo-stage-editor-header"><div><small>STAGE '+(stepIndex+1)+' OF '+project.steps.length+'</small><h3>'+esc(s.title)+'</h3></div><div class="dbo-stage-actions"><button data-db-move="-1" '+(stepIndex===0?'disabled':'')+'>↑</button><button data-db-move="1" '+(stepIndex===project.steps.length-1?'disabled':'')+'>↓</button><button data-db-remove-stage>REMOVE</button></div></div>'+stageFields(s):'<div class="dbo-empty">Add a stage to start designing.</div>')+
- '<div class="dbo-review"><h4>Publication check</h4><p>'+(!problems.length?'All required scenes and artwork are ready to publish.':problems.slice(0,6).map(esc).join(' · '))+'</p><small>Configured boss drops roll on victory and are sent immediately to the Guild Bank. Raid prototypes and owner tests award no loot. The existing dungeon reward tables remain unchanged.</small></div><div class="dbo-footer"><button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboTest" '+(busy?'disabled':'')+'>▶ TEST FROM STAGE</button><button class="primary" id="dboPublish" '+(busy||problems.length?'disabled':'')+'>PUBLISH TO GAME</button>'+(project.id?'<button id="dboDelete">DELETE</button>':'')+'</div><p id="dboMessage" role="status">'+esc(message||'Changes back up automatically on this iPad; use Save Cloud Draft to sync across devices.')+'</p></main></div>';
+ '<div class="dbo-review" id="dboReview" aria-live="polite">'+reviewHTML()+'</div><div class="dbo-footer"><button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboTest" '+(busy?'disabled':'')+'>▶ TEST FROM STAGE</button><button class="primary" id="dboPublish" '+(busy||problems.length?'disabled':'')+'>PUBLISH TO GAME</button>'+(project.id?'<button id="dboDelete">DELETE</button>':'')+'</div><p id="dboMessage" role="status">'+esc(message||'Changes back up automatically on this iPad; use Save Cloud Draft to sync across devices.')+'</p></main></div>';
  bindBuilder()
 }
 function bindBuilder(){
