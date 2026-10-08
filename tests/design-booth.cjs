@@ -3,6 +3,15 @@ const assert=require('node:assert/strict');
 require('./item-catalog.cjs');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
+
+// Future-content studio: reusable cloud templates and safe base-item variants.
+const creator=read('admin-design-library-v1.js');
+const migration=read('supabase/migrations/20261008200000_cellbound_design_templates.sql');
+assert(html.includes('admin-design-library-v1.js?v=1')&&master.includes("id:'library'"),'One unified booth must load the reusable Content Creator');
+assert(creator.includes('CellboundDesignLibrary')&&creator.includes('insertIntoAdventure')&&creator.includes('data-lib-upload'),'Room, boss, comic and minigame content must support upload and adventure reuse');
+assert(creator.includes('baseItemId')&&runtime.includes('function installDesignedItems'),'Equipment is cloned from known balanced items and loaded into the canonical gear registry');
+assert(migration.includes('enable row level security')&&migration.includes('cellbound_is_owner()')&&migration.includes("status='published'"),'New content must enforce owner RLS and player-visible published state');
+
 const html=read('guild.html'),master=read('admin-design-booth-v1.js'),runtime=read('design-booth-content-v1.js'),css=read('admin-design-booth-v1.css');
 const manifests=read('tools/runtime-manifest.cjs'),schema=read('supabase/migrations/20261008102000_cellbound_design_booth_blueprints_v1.sql');
 const builtins=read('boss-drop-tables-v1.js'),dropSchema=read('supabase/migrations/20261008141500_cellbound_boss_drop_tables_v1.sql');
@@ -12,7 +21,7 @@ for(const old of ['admin-card admin-generator-entry','admin-card admin-character
  assert(!html.includes(old),'Old separate editor card must not be visible: '+old);
 for(const old of ['dungeonGeneratorMount','characterFitViewerMount','roomEditorMount','comicSceneEditorMount'])
  assert(master.includes('id="'+old+'"'),'Working legacy editor must remain an internal Design Booth tool: '+old);
-for(const name of ['admin-design-booth-v1.js','admin-design-booth-v1.css','design-booth-content-v1.js','boss-drop-tables-v1.js','admin-item-catalog-v1.js'])
+for(const name of ['admin-design-library-v1.js','admin-design-booth-v1.js','admin-design-booth-v1.css','design-booth-content-v1.js','boss-drop-tables-v1.js','admin-item-catalog-v1.js'])
  assert(manifests.includes(name),'Design Booth asset must be built: '+name);
 for(const needle of ['cellbound_design_blueprints','draft_blueprint','cellbound-design-art','only owner','published','enable row level security','cellbound_is_owner'])
  assert(schema.toLowerCase().includes(needle),'Secure design blueprint migration missing: '+needle);
@@ -93,7 +102,7 @@ assert(nativeAPI.bosses().length>=18,'Game bosses must appear in central selecto
  assert(master.includes('id="dboAddLoot"')&&master.includes('data-db-edit-row')&&master.includes('data-db-remove-drop'),'Boss drop table must expose add/edit/remove without opening each item first');
  assert(master.includes("it.label:it.label")&&!master.includes("it.name:it.name"),'Item selectors must use canonical loot catalogue display names');
  assert(css.includes('.dbo-loot-table-row')&&css.includes('.dbo-loot-prob')&&css.includes('@media(max-width:600px)'),'Loot overview must support readable iPad and phone layouts');
- assert(html.includes('admin-design-booth-v1.js?v=4')&&html.includes('admin-design-booth-v1.css?v=4'),'Safari must request updated Design Booth assets');
+ assert(html.includes('admin-design-booth-v1.js?v=5')&&html.includes('admin-design-booth-v1.css?v=5'),'Safari must request updated Design Booth assets');
 
  nativeWindow.CellboundDesignedContent=core;
  await nativeAPI.refresh(true);
