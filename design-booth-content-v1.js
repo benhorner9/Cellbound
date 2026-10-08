@@ -108,7 +108,7 @@ async function play(id,override=null){
  const party=window.CellboundGame?.getPartyCharacters?.()||[];
  if(party.length!==5){alert('Build a five-character party before entering.');return}
  if(party.some(c=>Number(c.level||1)<b.level)){alert('Every character must be at least level '+b.level+'.');return}
- const token=++activeSession;playing=true;document.body.classList.add('dbo-adventure-open');
+ const token=++activeSession;let completed=true;playing=true;document.body.classList.add('dbo-adventure-open');
  try{
   for(let i=0;i<b.steps.length;i++){
    if(token!==activeSession)return;
@@ -116,13 +116,14 @@ async function play(id,override=null){
    if(step.type==='comic'){
     const panels=(step.panels?.length?step.panels:[{title:step.title,text:step.text,artPath:step.artPath}]).map(p=>({kind:'location',title:p.title||step.title,text:p.text||step.text,artwork:safeUrl(artUrl(p.artPath||step.artPath))}));
     const result=await window.CellboundComicScenes?.show?.({eyebrow:String(row.content_type).toUpperCase()+' · '+(i+1)+' / '+b.steps.length,title:step.title,subtitle:row.title,page:'STORY',theme:'zeltira',panels,storyOnly:true,allowSkip:true});
-    if(token!==activeSession||result?.skipped===true)return
+    if(token!==activeSession)return
    }else if(step.type==='fight'){
     const enemies=step.enemies.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean).slice(0,5);
     const encounter={kind:enemies.length===1?'boss':'trash',level:b.level,enemyHealth:step.enemyHealth,mechanics:step.mechanic==='none'?[]:[{name:({'circle':'Ground Burst','line':'Sweeping Attack','interrupt':'Dangerous Cast','adds':'Reinforcements'})[step.mechanic]||'Mechanic',type:step.mechanic==='adds'?'adds':step.mechanic,duration:1600}],mechanicIntervalMs:step.mechanic==='none'?0:3600};
     const markup=roomImg?'<div class="dbo-combat-art"><img src="'+esc(roomImg)+'" alt="" draggable="false"></div>':'';
     const won=await window.CellboundQuests?.runQuest2DFight?.({quest:row.title,title:step.title,location:row.title,ambience:step.text,presentationKind:row.content_type==='quest'?'quest':'dungeon',enemies:enemies.length?enemies:['Enemy'],environmentMarkup:markup,combat,autoContinueOnVictory:true,autoContinueDelayMs:650,completeText:'The way ahead is clear.'});
-    if(token!==activeSession||won!==true){if(token===activeSession)modal({title:'Adventure ended',text:'The encounter was not cleared.'},'', '<button data-db-finish>RETURN</button>');break}
+    if(token!==activeSession)return;
+    if(won!==true){completed=false;break}
    }else if(step.type==='minigame'){
     const puzzle=templates.get(step.template)||templates.get('choice');
     const cleared=await puzzle.play(step);
@@ -137,7 +138,7 @@ async function play(id,override=null){
    }
   }
   if(token===activeSession)await new Promise(resolve=>{
-   const end=modal({title:'Adventure complete',type:row.content_type,text:'You reached the end of '+row.title+'. This design-booth adventure is currently reward-free.'},'<h3>RUN COMPLETE</h3>','<button type="button" class="primary" data-db-finish>RETURN TO GAME →</button>');
+   const end=modal({title:completed?'Adventure complete':'Adventure ended',type:row.content_type,text:completed?'You reached the end of '+row.title+'. This design-booth adventure is currently reward-free.':'Your party did not clear the encounter. Return when you are ready.'},'<h3>'+(completed?'RUN COMPLETE':'RUN FAILED')+'</h3>','<button type="button" class="primary" data-db-finish>RETURN TO GAME →</button>');
    if(!end)return resolve();
    end.querySelector('[data-db-finish]').onclick=resolve
   })
