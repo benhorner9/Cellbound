@@ -18,7 +18,7 @@ const TOOLS=[
 ];
 const plugins={comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer'};
 const mountIds={comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount'};
-let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='';
+let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='',dropEditIndex=-1,dropSearch='',dropTier='all',dropSort='tier';
 function announce(s){message=s;const slot=$('#dboMessage');if(slot)slot.textContent=s}
 function newStep(type='room'){
  return{id:'step-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),type,title:type==='comic'?'Story Scene':type==='fight'?'Encounter':type==='minigame'?'Minigame':'New Room',text:'',artPath:'',
@@ -177,20 +177,48 @@ function lootDropOptions(kind,selected=''){
  const rows=(kind==='gear'?catalog.gear:catalog.materials);
  return rows.map(it=>'<option value="'+esc(it.key)+'" '+(selected===it.key?'selected':'')+'>'+esc(kind==='gear'?'T'+it.tier+' · '+it.klass+' · '+it.name:it.name+' · '+it.rarity)+'</option>').join('')
 }
-function lootEditor(step,{raid=false}={}){
+function describeDrop(drop){
+ const catalog=runtime()?.lootCatalog?.()||{gear:[],materials:[]};
+ const material=drop.kind==='material',entry=(material?catalog.materials:catalog.gear).find(x=>x.key===drop.key);
+ return{tier:material?'MATERIAL':'T'+(entry?.tier||'?'),
+  category:material?'material':'gear',
+  name:entry?.label||drop.key||'Unknown item',
+  detail:material?(entry?.rarity||'Material')+' · Quantity ×'+(Number(drop.quantity)||1):(entry?.klass||'Equipment')+' · '+(entry?.slot||'Gear'),
+  chance:Math.max(0,Math.min(100,Number(drop.chance)||0)),
+  search:[entry?.label,drop.key,entry?.tier&&'tier '+entry.tier,entry?.klass,entry?.slot,entry?.rarity,material?'material':'equipment'].filter(Boolean).join(' ').toLowerCase()}
+}
+function lootOverview(items){
+ const sorted=items.map((item,index)=>({...describeDrop(item),index}));
+ const cmp=(a,b)=>dropSort==='chance'?b.chance-a.chance||a.name.localeCompare(b.name)
+  :dropSort==='name'?a.name.localeCompare(b.name)
+  :a.category.localeCompare(b.category)||a.tier.localeCompare(b.tier,undefined,{numeric:true})||a.name.localeCompare(b.name);
+ sorted.sort(cmp);
+ return'<section class="dbo-loot-overview"><header><div><small>SELECTED BOSS · ASSIGNED LOOT</small><h4>Drop list <span>'+items.length+' / 6</span></h4></div><button type="button" id="dboAddLoot" '+(items.length>=6?'disabled':'')+'>+ ADD ITEM</button></header>'+
+ '<div class="dbo-loot-controls"><label>FIND AN ITEM<input id="dboLootSearch" type="search" autocomplete="off" placeholder="Search by item name, class or slot…" value="'+esc(dropSearch)+'"></label>'+
+ '<label>ITEM TIER<select id="dboLootTierFilter"><option value="all" '+(dropTier==='all'?'selected':'')+'>All tiers</option><option value="T1" '+(dropTier==='T1'?'selected':'')+'>Tier 1</option><option value="T2" '+(dropTier==='T2'?'selected':'')+'>Tier 2</option><option value="MATERIAL" '+(dropTier==='MATERIAL'?'selected':'')+'>Materials</option></select></label>'+
+ '<label>SORT BY<select id="dboLootSort"><option value="tier" '+(dropSort==='tier'?'selected':'')+'>Tier & item</option><option value="name" '+(dropSort==='name'?'selected':'')+'>Item name A–Z</option><option value="chance" '+(dropSort==='chance'?'selected':'')+'>Highest chance</option></select></label></div>'+
+ '<div class="dbo-loot-table" role="table" aria-label="Selected boss drops"><div class="dbo-loot-table-head" role="row"><span role="columnheader">TIER</span><span role="columnheader">ITEM NAME</span><span role="columnheader">DROP CHANCE</span><span role="columnheader">MANAGE</span></div>'+
+ sorted.map(d=>'<div class="dbo-loot-table-row '+(d.index===dropEditIndex?'editing':'')+'" role="row" data-db-loot-row="'+d.index+'" data-db-search="'+esc(d.search)+'" data-db-tier="'+esc(d.tier)+'">'+
+ '<span role="cell"><b class="dbo-loot-tier '+(d.category==='material'?'material':'')+'">'+esc(d.tier)+'</b></span>'+
+ '<span role="cell" class="dbo-loot-name"><strong>'+esc(d.name)+'</strong><small>'+esc(d.detail)+'</small></span>'+
+ '<span role="cell" class="dbo-loot-prob"><b>'+d.chance+'%</b></span>'+
+ '<span role="cell" class="dbo-loot-actions"><button type="button" data-db-edit-row="'+d.index+'" aria-label="Edit '+esc(d.name)+'">EDIT</button><button type="button" data-db-remove-drop="'+d.index+'" aria-label="Remove '+esc(d.name)+'">REMOVE</button></span></div>').join('')+
+ '</div><p class="dbo-loot-empty-search" id="dboLootNoMatches" hidden>No matching items for this boss.</p>'+
+ (!items.length?'<p class="dbo-loot-blank">No extra drops configured for this boss. Select Add Item to create a drop.</p>':'')+
+ '<small class="dbo-loot-hint">Search and filters only change this view — they do not alter drop chances or saved rewards.</small></section>'
+}
+function lootEditor(step,{raid=false,editIndex=-1}={}){
  const items=Array.isArray(step.drops)?step.drops:[];
- return '<section class="dbo-boss-loot"><header><div><small>INDIVIDUAL BOSS REWARDS</small><h4>Boss Drop Table</h4><p>Each row rolls independently when this encounter is defeated. Configure up to two gear rolls totalling 100% chance. Rewards go directly to the Guild Bank and appear in the end-of-run summary.</p></div><span>'+items.length+' / 6 DROPS</span></header>'+
- (raid?'<p class="dbo-loot-notice">Raid reward delivery is disabled in prototype raids. You may plan drop tables here, but they will not award gear until the multiplayer raid reward system is connected.</p>':'')+
- (items.length?'<div class="dbo-drop-list">'+items.map((drop,i)=>{
-  const kind=drop.kind==='material'?'material':'gear';
-  return '<div class="dbo-drop-row" data-db-drop-row="'+i+'"><div class="dbo-drop-row-top"><b>DROP '+(i+1)+'</b><button type="button" data-db-remove-drop="'+i+'">REMOVE</button></div><div class="dbo-drop-grid">'+
-  '<label>REWARD TYPE<select data-db-drop="'+i+'.kind"><option value="gear" '+(kind==='gear'?'selected':'')+'>Equipment</option><option value="material" '+(kind==='material'?'selected':'')+'>Profession reagent</option></select></label>'+
-  '<label>ITEM<select data-db-drop="'+i+'.key">'+lootDropOptions(kind,drop.key)+'</select></label>'+
-  '<label>DROP CHANCE (%)<input type="number" min="1" max="100" step="1" inputmode="numeric" data-db-drop="'+i+'.chance" value="'+esc(drop.chance??25)+'"></label>'+
-  '<label>QUANTITY<input type="number" min="1" max="'+(kind==='gear'?1:5)+'" step="1" inputmode="numeric" data-db-drop="'+i+'.quantity" value="'+esc(kind==='gear'?1:(drop.quantity||1))+'" '+(kind==='gear'?'disabled':'')+'></label></div></div>'
- }).join('')+'</div>':'<div class="dbo-no-drops">No drops configured. This boss currently awards no items.</div>')+
- '<button type="button" data-db-add-drop '+(items.length>=6?'disabled':'')+'>+ ADD BOSS DROP</button>'+
- '<p class="dbo-loot-footnote">Available equipment: approved Tier 1–2 gear. High-tier, raid-exclusive gear and endgame reagents remain restricted. No bonus equipment is automatically granted for completing a custom dungeon.</p></section>'
+ const drop=items[editIndex];if(!drop)return'';
+ const kind=drop.kind==='material'?'material':'gear';
+ return'<section class="dbo-boss-loot dbo-loot-edit-panel"><header><div><small>EDITING DROP '+(editIndex+1)+'</small><h4>'+esc(describeDrop(drop).name)+'</h4><p>Choose the item and set its individual drop chance. Changes appear in the loot list above.</p></div><button type="button" id="dboCloseLootEdit">DONE ×</button></header>'+
+ (raid?'<p class="dbo-loot-notice">Raid prototype rewards are not yet awarded to players.</p>':'')+
+ '<div class="dbo-drop-list"><div class="dbo-drop-row" data-db-drop-row="'+editIndex+'"><div class="dbo-drop-grid">'+
+ '<label>REWARD TYPE<select data-db-drop="'+editIndex+'.kind"><option value="gear" '+(kind==='gear'?'selected':'')+'>Equipment</option><option value="material" '+(kind==='material'?'selected':'')+'>Profession reagent</option></select></label>'+
+ '<label>ITEM<select data-db-drop="'+editIndex+'.key">'+lootDropOptions(kind,drop.key)+'</select></label>'+
+ '<label>DROP CHANCE (%)<input type="number" min="1" max="100" step="1" inputmode="numeric" data-db-drop="'+editIndex+'.chance" value="'+esc(drop.chance??25)+'"></label>'+
+ '<label>QUANTITY<input type="number" min="1" max="'+(kind==='gear'?1:5)+'" step="1" inputmode="numeric" data-db-drop="'+editIndex+'.quantity" value="'+esc(kind==='gear'?1:(drop.quantity||1))+'" '+(kind==='gear'?'disabled':'')+'></label></div></div></div>'+
+ '<p class="dbo-loot-footnote">Equipment is limited to available Tier 1–2 gear. Higher-tier gear and raid-exclusive items are not unlocked by this editor.</p></section>'
 }
 
 function stageFields(s){
@@ -231,7 +259,7 @@ function bindBuilder(){
  host.querySelector('[data-db-add-panel]')?.addEventListener('click',()=>{collect();const s=project.steps[stepIndex];if(s.panels.length>=6)return;s.panels.push({title:'Panel '+(s.panels.length+1),text:'',artPath:''});storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-remove-panel]').forEach(btn=>btn.onclick=()=>{collect();const s=project.steps[stepIndex];s.panels.splice(Number(btn.dataset.dbRemovePanel),1);storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-upload]').forEach(el=>el.addEventListener('change',e=>{collect();upload(el.dataset.dbUpload,el.dataset.dbPanel==='stage'?null:Number(el.dataset.dbPanel),e.target.files?.[0])}));
- host.querySelector('#dboGoToDrops')?.addEventListener('click',()=>{collect();selectedDropBoss=project.id?'project:'+project.id+':'+project.steps[stepIndex].id:'local:'+project.slug+':'+project.steps[stepIndex].id;setTab('drops')});
+ host.querySelector('#dboGoToDrops')?.addEventListener('click',()=>{collect();dropEditIndex=-1;dropSearch='';dropTier='all';selectedDropBoss=project.id?'project:'+project.id+':'+project.steps[stepIndex].id:'local:'+project.slug+':'+project.steps[stepIndex].id;setTab('drops')});
  host.querySelectorAll('[data-db-drop]').forEach(input=>{
   input.addEventListener('input',()=>collect());
   if(input.dataset.dbDrop.endsWith('.kind'))input.addEventListener('change',()=>{
@@ -241,7 +269,7 @@ function bindBuilder(){
    drop.quantity=1;storageBackup();renderBuilder()
   });
  });
- host.querySelector('[data-db-add-drop]')?.addEventListener('click',()=>{
+ host.querySelector('#dboAddLoot')?.addEventListener('click',()=>{
   collect();const s=project.steps[stepIndex],pool=runtime()?.lootCatalog?.();
   if(!s||s.type!=='fight'||(s.drops||[]).length>=6)return;
   s.drops=Array.isArray(s.drops)?s.drops:[];
@@ -323,21 +351,40 @@ function renderDrops(){
  '<div class="dbo-drops-status"><b>'+esc(target.title)+'</b><small>'+esc(native?'EXISTING GAME BOSS · ADDITIONAL DROP TABLE':target.type.toUpperCase()+' · DESIGN BOOTH PROJECT')+'</small></div>'+
  (native?'<div class="dbo-native-default"><small>EXISTING GAME REWARDS · NOT OVERRIDDEN</small><p>'+esc((window.CellboundBossDropTables?.bosses?.()||[]).find(b=>b.key===target.key)?.baseRewards||'Original game rewards remain unchanged.')+'</p></div><p class="dbo-loot-notice">This screen manages <b>extra boss drops</b>. Original dungeon drops, rare items, guaranteed completion rewards and Tier 5 raid rewards still follow their existing game rules. '+(target.raid?'Manor raid bonus rewards are in planning mode and will not award to players yet.':'Additional drops are sent to the Bank when this boss is defeated.')+'</p>':
  '<p class="dbo-loot-notice">This is the full drop table for this designed encounter. Changes save to its project draft; press Publish to make them available in-game.</p>')+
- lootEditor(current||{drops:[]},{raid:target.raid||target.type==='raid'})+
+ lootOverview(current?.drops||[])+lootEditor(current||{drops:[]},{raid:target.raid||target.type==='raid',editIndex:dropEditIndex})+
  '<div class="dbo-drops-footer"><p role="status" id="dboMessage">'+esc(message||'Choose a boss to edit its loot.')+'</p>'+
  (bad?'<p class="dbo-drop-error">'+esc(bad)+'</p>':'')+
  '<div class="dbo-buttons">'+(native?
  '<button id="dboSaveNative" '+(nativeSaving||bad?'disabled':'')+'>SAVE BOSS DROPS</button>':
  '<button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboPublish" class="primary" '+(busy||bad||validate().length?'disabled':'')+'>PUBLISH LOOT CHANGES</button>')+'</div></div></section>';
- bindDrops()
+ bindDrops();applyLootFilters()
 }
+function applyLootFilters(){
+ const host=$('#dboDrops');if(!host)return;
+ const term=dropSearch.trim().toLowerCase();let shown=0;
+ host.querySelectorAll('[data-db-loot-row]').forEach(row=>{
+  const matches=(!term||String(row.dataset.dbSearch||'').includes(term))&&(dropTier==='all'||row.dataset.dbTier===dropTier);
+  row.hidden=!matches;if(matches)shown++
+ });
+ const noMatches=host.querySelector('#dboLootNoMatches');
+ if(noMatches)noMatches.hidden=shown>0||activeLootRows().length===0;
+}
+
 function bindDrops(){
  const host=$('#dboDrops');if(!host)return;
  host.querySelector('#dboBossPicker')?.addEventListener('change',e=>{
   collect();
-  selectedDropBoss=e.target.value;message='';
+  selectedDropBoss=e.target.value;message='';dropEditIndex=-1;dropSearch='';dropTier='all';
   renderDrops()
  });
+ host.querySelector('#dboLootSearch')?.addEventListener('input',event=>{dropSearch=event.target.value;applyLootFilters()});
+ host.querySelector('#dboLootTierFilter')?.addEventListener('change',event=>{dropTier=event.target.value;applyLootFilters()});
+ host.querySelector('#dboLootSort')?.addEventListener('change',event=>{collect();dropSort=event.target.value;renderDrops()});
+ host.querySelectorAll('[data-db-edit-row]').forEach(btn=>btn.addEventListener('click',()=>{
+  collect();dropEditIndex=Number(btn.dataset.dbEditRow);renderDrops();
+  host.querySelector('[data-db-drop="'+dropEditIndex+'.key"]')?.focus()
+ }));
+ host.querySelector('#dboCloseLootEdit')?.addEventListener('click',()=>{collect();dropEditIndex=-1;renderDrops()});
  host.querySelectorAll('[data-db-drop]').forEach(input=>{
   input.addEventListener('input',collect);
   if(input.dataset.dbDrop.endsWith('.kind'))input.addEventListener('change',()=>{
@@ -352,10 +399,11 @@ function bindDrops(){
   collect();const rows=activeLootRows(),catalog=runtime()?.lootCatalog?.();
   if(rows.length>=6)return;
   rows.push({kind:'gear',key:catalog?.gear?.[0]?.key||'',chance:25,quantity:1});
-  storageBackup();renderDrops()
+  dropEditIndex=rows.length-1;dropSearch='';dropTier='all';storageBackup();renderDrops()
  });
  host.querySelectorAll('[data-db-remove-drop]').forEach(btn=>btn.addEventListener('click',()=>{
-  collect();activeLootRows().splice(Number(btn.dataset.dbRemoveDrop),1);
+  collect();const removed=Number(btn.dataset.dbRemoveDrop);activeLootRows().splice(removed,1);
+  if(dropEditIndex===removed)dropEditIndex=-1;else if(dropEditIndex>removed)dropEditIndex--;
   storageBackup();renderDrops()
  }));
  host.querySelector('#dboSave')?.addEventListener('click',()=>save(false));
