@@ -1150,7 +1150,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
   for(const hook of [
     'chaos-canyon-v1.js',
-    'blackout-station-v1.js',
+    'blackout-station-v2.js',
     'fractured-ages-v1.js',
     'id="chaosCanyonMount"',
     'id="blackoutStationMount"',
