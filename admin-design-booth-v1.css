@@ -233,3 +233,35 @@
 .dbo-tool-guide b{color:#f0d8ae;font-weight:850;white-space:normal}
 .dbo-tool-guide span{flex:1;min-width:210px;color:#ceddd3}
 @media(max-width:720px){.dbo-tool-guide{padding:13px 14px;gap:5px;display:block}.dbo-tool-guide b,.dbo-tool-guide span{display:block}}
+
+
+/* Studio creator: clear, touch-friendly drafting and publish flow. */
+.dbo-library-shell{margin:16px 0 0}
+.dbo-library-header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 22px;background:#14252c;border:1px solid #354b52;border-radius:12px 12px 0 0}
+.dbo-library-header small,.dbo-library-state small{font-size:10px;letter-spacing:.12em;font-weight:900;color:#dfbc86}
+.dbo-library-header h3,.dbo-library-state h3{font-family:Georgia,serif;color:#f4ede3;font-size:25px;margin:4px 0 7px}
+.dbo-library-header p{margin:0;color:#bac9cb;line-height:1.5}
+.dbo-library-header button,.dbo-library-actions button,.dbo-library-panel button,#dboLibraryAddPanel{border:1px solid #58656b;background:#1c3037;color:#ebf2ef;border-radius:8px;padding:11px 12px;font:inherit;font-weight:800;font-size:12px}
+.dbo-library-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:14px;background:#0f1a21;border:1px solid #354b52;border-top:0}
+.dbo-library-actions button{min-height:50px;text-align:left}
+.dbo-library-actions button:hover{border-color:#d5a970;background:#244149}
+.dbo-library-shell>.dbo-editor-layout{margin-top:0;border-radius:0 0 12px 12px;border:1px solid #354b52;border-top:0}
+.dbo-library-shell .dbo-projects{min-width:0}
+.dbo-library-state{padding-bottom:16px;border-bottom:1px solid #35474d;margin-bottom:18px}
+#dboLibraryDirty{display:inline-block;color:#b7cdcf;font-weight:800;font-size:12px}
+.dbo-library-panel{border:1px solid #42575d;border-radius:9px;padding:14px;margin:14px 0;background:#10222b}
+.dbo-library-panel header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.dbo-library-art{margin:12px 0}
+.dbo-library-art img{max-height:240px;object-fit:contain;max-width:100%}
+#dboLibraryFields .dbo-form-grid{margin-bottom:14px}
+#dboLibraryFields>h4{margin:20px 0 10px}
+#dboLibraryFields>p{color:#becacf;line-height:1.6}
+#dboLibraryMessage{margin:14px 0 0;color:#d5c7aa;line-height:1.5}
+.dbo-library-shell button:focus-visible{outline:3px solid #e5b568;outline-offset:3px}
+@media(max-width:860px){
+ .dbo-library-header{align-items:flex-start;flex-wrap:wrap;padding:14px}
+ .dbo-library-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dbo-library-shell>.dbo-editor-layout{display:block}
+ .dbo-library-shell>.dbo-editor-layout>.dbo-projects{width:100%;max-width:none}
+}
+@media(max-width:440px){.dbo-library-actions{grid-template-columns:1fr}.dbo-library-header h3{font-size:23px}}
