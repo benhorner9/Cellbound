@@ -53,7 +53,7 @@ for(const token of ['ATTEMPT FAILED · RAID CHARGE SPENT','The next attempt star
  if(!manor.includes(token))fail('Raid wipe/reward contract missing: '+token);
 }
 
-for(const cls of ['.mr-room-scene','.room-dining','.room-kitchen','.room-engineer','.room-bedroom','.room-housebound','.mr-owner-qa-controls','.mr-master-status-overlay']){
+for(const cls of ['.mr-room-scene','.mr-owner-qa-controls','.mr-master-status-overlay']){
  if(!css.includes(cls))fail('Manor presentation CSS missing: '+cls);
 }
 const sceneStart=manor.indexOf('function manorRoomScene');
@@ -61,6 +61,13 @@ const sceneEnd=manor.indexOf('\n}',sceneStart);
 const scene=sceneStart>=0?manor.slice(sceneStart,sceneEnd+2):'';
 if(!scene.includes('manor-raid-hero.webp'))fail('Manor room scene must use the raid environment artwork');
 if(/manor-(butler|maids|engineer|master)\.webp/.test(scene))fail('Boss portraits must not be substituted as room background art');
+if(!scene.includes("CellboundRoomLayouts?.artFor?.('the-manor',roomId,fallback)"))fail('Each Manor room must load its owner-published painting');
+if(/mr-room-(?:shade|floor)|mr-prop|mr-room-dust/.test(scene))fail('Legacy furniture and dark overlays must not be rendered above the new Manor art');
+if(!manor.includes('await window.CellboundRoomLayouts?.ready?.()'))fail('Manor must load room art metadata before the encounter begins');
+if(/\.mr-prop|\.mr-room-floor|\.mr-room-shade|\.mr-room-dust/.test(css))fail('Unused Manor legacy overlay CSS must not remain');
+if(!/\.mr-room-scene>img\{[^}]*object-fit:cover;[^}]*filter:none;opacity:1;/.test(css))fail('Manor paintings must render unobscured at their original brightness');
+if(/\.mr-room-scene>img\{inset:-8%;width:116%;height:116%\}/.test(css))fail('Mobile combat art must not be stretched or zoomed by the old rule');
+
 
 if(failed)process.exit(1);
 ok('Manor raid integrity passed: owner solo QA, shared room presentation, split-link visibility, Screech penalties, wipe rules and Tier 5 reward contracts are release-gated.');
