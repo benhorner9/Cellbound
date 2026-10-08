@@ -194,7 +194,7 @@ async function upload(stepId,panelIndex,file){
   if(panelIndex===null)target.artPath=path;else if(target.panels?.[panelIndex])target.panels[panelIndex].artPath=path;
   storageBackup();announce('Artwork uploaded to the design draft. Publish the adventure to make it playable for everyone.');render()
  }catch(e){announce('Artwork upload failed: '+String(e?.message||e))}
- finally{uploadBusy=false}
+ finally{uploadBusy=false;if(opened&&active==='build')renderBuilder()}
 }
 function collect(){
  if(!['build','drops'].includes(active)||!project)return;
@@ -270,7 +270,7 @@ function lootOverview(items){
  '<span role="cell" class="dbo-loot-actions"><button type="button" data-db-edit-row="'+d.index+'" aria-label="Edit '+esc(d.name)+'">EDIT</button><button type="button" data-db-remove-drop="'+d.index+'" aria-label="Remove '+esc(d.name)+'">REMOVE</button></span></div>').join('')+
  '</div><p class="dbo-loot-empty-search" id="dboLootNoMatches" hidden>No matching items for this boss.</p>'+
  (!items.length?'<p class="dbo-loot-blank">No extra drops configured for this boss. Select Add Item to create a drop.</p>':'')+
- '<small class="dbo-loot-hint">Search and filters only change this view — they do not alter drop chances or saved rewards.</small></section>'
+ '<small class="dbo-loot-hint">Each row rolls independently after the boss is defeated. Search and filters only change the view, not your saved rewards.</small></section>'
 }
 function lootEditor(step,{raid=false,editIndex=-1}={}){
  const items=Array.isArray(step.drops)?step.drops:[];
@@ -416,14 +416,14 @@ function renderDrops(){
  root.innerHTML='<section class="dbo-drops-main"><header class="dbo-drops-head"><small>CELLBOUND · LOOT MANAGEMENT</small><h3>Drop Tables</h3><p>Select any boss, then add or remove the rewards assigned to that encounter. Each drop has its own chance and quantity.</p></header>'+
  '<label class="dbo-drops-picker"><span>SELECT BOSS</span><select id="dboBossPicker">'+select+'</select></label>'+
  '<div class="dbo-catalog-shortcut"><span>Need to check which items exist, their tier or class?</span><button type="button" id="dboGoToItemCatalog">BROWSE ITEM CATALOGUE →</button></div>'+
- '<div class="dbo-drops-status"><b>'+esc(target.title)+'</b><small>'+esc(native?'EXISTING GAME BOSS · ADDITIONAL DROP TABLE':target.type.toUpperCase()+' · DESIGN BOOTH PROJECT')+'</small></div>'+
+ '<div class="dbo-drops-status"><b>'+esc(target.title)+'</b><small>'+esc(native?(nativeChanged()?'UNSAVED EDITS · SAVE BOSS DROPS':'EXISTING GAME BOSS · ADDITIONAL DROP TABLE'):target.type.toUpperCase()+' · DESIGN BOOTH PROJECT')+'</small></div>'+
  (native?'<div class="dbo-native-default"><small>EXISTING GAME REWARDS · NOT OVERRIDDEN</small><p>'+esc((window.CellboundBossDropTables?.bosses?.()||[]).find(b=>b.key===target.key)?.baseRewards||'Original game rewards remain unchanged.')+'</p></div><p class="dbo-loot-notice">This screen manages <b>extra boss drops</b>. Original dungeon drops, rare items, guaranteed completion rewards and Tier 5 raid rewards still follow their existing game rules. '+(target.raid?'Manor raid bonus rewards are in planning mode and will not award to players yet.':'Additional drops are sent to the Bank when this boss is defeated.')+'</p>':
  '<p class="dbo-loot-notice">This is the full drop table for this designed encounter. Changes save to its project draft; press Publish to make them available in-game.</p>')+
  lootOverview(current?.drops||[])+lootEditor(current||{drops:[]},{raid:target.raid||target.type==='raid',editIndex:dropEditIndex})+
  '<div class="dbo-drops-footer"><p role="status" data-dbo-message>'+esc(message||'Choose a boss to edit its loot.')+'</p>'+
  (bad?'<p class="dbo-drop-error">'+esc(bad)+'</p>':'')+
  '<div class="dbo-buttons">'+(native?
- '<button id="dboSaveNative" '+(nativeSaving||bad?'disabled':'')+'>SAVE BOSS DROPS</button>':
+ '<button id="dboSaveNative" class="primary" '+(nativeSaving||bad||!nativeChanged()?'disabled':'')+'>SAVE BOSS DROPS</button><button id="dboDiscardNative" '+(!nativeChanged()||nativeSaving?'disabled':'')+'>DISCARD EDITS</button>':
  '<button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboPublish" class="primary" '+(busy||bad||validate().length?'disabled':'')+'>PUBLISH LOOT CHANGES</button>')+'</div></div></section>';
  bindDrops();applyLootFilters()
 }
@@ -480,6 +480,7 @@ function bindDrops(){
  host.querySelector('#dboPublish')?.addEventListener('click',()=>{
   if(confirm('Publish these boss loot changes to the game?'))save(true)
  });
+ host.querySelector('#dboDiscardNative')?.addEventListener('click',()=>{if(!confirm('Discard the unsaved changes for this boss?'))return;nativeDrops=JSON.parse(nativeBaseline);dropEditIndex=-1;announce('Edits discarded. Saved boss rewards were not changed.');renderDrops()});
  host.querySelector('#dboSaveNative')?.addEventListener('click',async()=>{
   collect();const target=bossChoices().find(o=>o.id===selectedDropBoss);
   if(!target||nativeSaving)return;
@@ -536,7 +537,7 @@ async function open(){
  opened=true;root.hidden=false;
  if(!project){restoreBackup();if(!project){project=fresh('quest');setBaseline()}}
  render();
- try{await Promise.all([fetchRecords(),window.CellboundBossDropTables?.refresh?.(true)]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&!lastLocal){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
+ try{await Promise.all([fetchRecords(),window.CellboundBossDropTables?.refresh?.(true)]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&(!lastLocal||r.updated_at!==cloudUpdatedAt)){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
  root.scrollIntoView?.({behavior:'smooth',block:'start'})
 }
 function close({force=false}={}){
