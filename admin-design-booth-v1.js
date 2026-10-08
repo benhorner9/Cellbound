@@ -372,8 +372,8 @@ function renderDrops(){
   const record=records.find(r=>r.id===target.projectId);
   if(record){
    const b=record.draft_blueprint&&Array.isArray(record.draft_blueprint.steps)?record.draft_blueprint:record.blueprint;
-   project={...clone(b),id:record.id,slug:record.slug,title:b.title||record.title,content_type:record.content_type,status:record.status,version:record.version};
-   selectedId=record.id;stepIndex=project.steps.findIndex(st=>st.id===target.stepId);
+   loadRecord(record,{renderNow:false});
+   stepIndex=project.steps.findIndex(st=>st.id===target.stepId);storageBackup();
   }else if(project)stepIndex=project.steps.findIndex(st=>st.id===target.stepId);
  }
  if(native&&nativeLoadedKey!==target.key){
@@ -418,6 +418,7 @@ function bindDrops(){
  host.querySelector('#dboGoToItemCatalog')?.addEventListener('click',()=>{collect();setTab('items')});
  host.querySelector('#dboBossPicker')?.addEventListener('change',e=>{
   collect();
+  if(e.target.value!==selectedDropBoss&&!canLeave()){e.target.value=selectedDropBoss;return}
   selectedDropBoss=e.target.value;message='';dropEditIndex=-1;dropSearch='';dropTier='all';
   renderDrops()
  });
@@ -459,7 +460,7 @@ function bindDrops(){
   if(!target||nativeSaving)return;
   const error=validateLootRows(nativeDrops);if(error){announce(error);return}
   nativeSaving=true;renderDrops();
-  try{await window.CellboundBossDropTables.save(target.key,nativeDrops);announce('Boss drop table saved. These optional drops now apply when '+target.title+' is defeated.')}
+  try{await window.CellboundBossDropTables.save(target.key,nativeDrops);nativeBaseline=JSON.stringify(nativeDrops);announce('Boss drop table saved. These optional drops now apply when '+target.title+' is defeated.')}
   catch(e){announce('Could not save boss drops: '+String(e?.message||e))}
   finally{nativeSaving=false;renderDrops()}
  })
@@ -499,7 +500,7 @@ async function open(){
  if(!owner())return;
  const root=$('#designBoothMount');if(!root)return;
  opened=true;root.hidden=false;
- if(!project){restoreBackup();if(!project)project=fresh('quest')}
+ if(!project){restoreBackup();if(!project){project=fresh('quest');setBaseline()}}
  render();
  try{await Promise.all([fetchRecords(),window.CellboundBossDropTables?.refresh?.(true)]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&!lastLocal){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
  root.scrollIntoView?.({behavior:'smooth',block:'start'})
