@@ -4,11 +4,13 @@
 
 ## Start with a task
 
-The buttons below **What do you want to do?** are the fastest way to get anywhere:
+The buttons below **What do you want to do?** are the fastest way to get anywhere. **Create game content** opens the new Content Creator, the permanent library for reusable gameplay ingredients:
 
 | You want to… | Open |
 | --- | --- |
-| Build a quest, dungeon or raid | **Create an adventure** |
+| Make a new room, boss/encounter, comic scene or puzzle | **Create game content** |
+| Make a balanced, loot-eligible equipment variant | **Create game content → Equipment item** |
+| Build a quest, dungeon or raid | **Build an adventure** |
 | Add or change boss rewards | **Edit boss loot** |
 | Find an item's tier, class, ID or source | **Find an item** |
 | Replace existing comic panels | **Edit comic art** |
@@ -18,7 +20,7 @@ The buttons below **What do you want to do?** are the fastest way to get anywher
 
 ## Create new content and reuse existing work
 
-Use **Create an adventure** to build a completely new **quest, dungeon or raid**. All three support comic-strip stages, room transitions, fights with custom drops, and reusable minigames. This is the current no-code creation workflow.
+Use **Build an adventure** to build a completely new **quest, dungeon or raid**. All three support comic-strip stages, room transitions, fights with custom drops, and reusable minigames. This is the current no-code creation workflow.
 
 You can also start from something that works already:
 
@@ -26,7 +28,19 @@ You can also start from something that works already:
 - When you need a similar room, fight, puzzle or comic panel sequence, open that stage and choose **Duplicate Stage**. The duplicate is inserted immediately afterward with a unique ID; edit it separately.
 - Copied content is not automatically cloud-saved or published. Rename it, review any inherited art or boss rewards, then **Save Cloud Draft**, **Test From Stage** and **Publish to Game** as usual.
 
-**Important current boundaries:** the separate Item Catalogue is read-only; it cannot create or equip a new item yet. The Comic Art and Room Layouts tabs edit existing game scenes; new comic-strip stages and room transitions should be built inside an Adventure Builder project. Full standalone item, enemy, room and comic asset creation, shared cloud review, and new mechanic authoring still need additional editor and runtime work.
+**Important current boundaries:** the separate Item Catalogue is read-only; it cannot create or equip a new item yet. The **Comic Art** and **Room Layouts** tabs still edit existing built-in scenes; create new reusable scenes under **Content Creator**, and insert them into an adventure. The Content Creator currently does not splice new rooms into the hard-coded original dungeons or create entirely new equipment appearances. Staff roles, approvals, rollback, fully original item appearance/stat authoring, and extensible new combat mechanics still need dedicated work.
+
+## Use the Content Creator (reusable content library)
+
+1. Select **Create game content** from the Design Booth front page.
+2. Choose **+ Room / transition**, **+ Boss or encounter**, **+ Comic scene**, **+ Puzzle / minigame**, or **+ Equipment item**.
+3. Give it a useful name and fill in the editor. Upload background or comic-panel art where required. A boss uses the game's shared combat engine and approved mechanics; items select an existing Tier 1 or Tier 2 base gear item for safe combat values.
+4. **Save Cloud Draft** to keep the work on the server. This does **not** publish anything. Reopen it later from the Content Library sidebar.
+5. For scenes, select **Add to Adventure** to insert a new independent stage into the current quest, dungeon or raid. In Adventure Builder, use **Save as Template** on an existing stage to start a reusable library entry. Changes to the copied stage do not affect its template.
+6. Select **Publish Content** when the content is complete. Published new T1–T2 equipment variants appear in the normal shared gear registry and may become available to eligible designed or existing-boss loot tables. Assign actual drop chances in **Drop Tables**.
+7. **Published template** does not mean it automatically appears as a new dungeon. Build and publish the adventure with its stages, rewards and art separately.
+
+Content templates are cloud-backed and owner-restricted, and a published template retains the last published version while you edit its draft. A published template cannot be deleted using the booth, to protect existing item IDs. Regular players see only published records.
 
 ## Make a new adventure
 
@@ -81,6 +95,8 @@ Use clear tickets: name the **dungeon / boss / quest**, specify exactly **which 
 - [ ] Can locate the five common tasks without help.
 - [ ] Can create and reopen a local-only draft, then save it to the cloud.
 - [ ] Can duplicate a project or stage without changing the existing published content.
+- [ ] Can create a reusable boss/room/comic template, save it to cloud and insert it into an adventure.
+- [ ] Can publish a balanced Tier 1–2 gear variant and select it in a valid boss drop table.
 - [ ] Can fix a missing-art issue using the publication checklist.
 - [ ] Can test without accidentally publishing.
 - [ ] Understands the difference between additional existing-boss drops and custom adventure drops.
