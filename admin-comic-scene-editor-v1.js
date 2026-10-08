@@ -83,10 +83,20 @@ function scanDialogue(src,path,category,name,c){
  let art=[],note='',origin='scripted dialogue';
  if(name==='showDialogue'){art=questArt(src,title,speaker);note='This quest reuses generic artwork rather than having its own comic panels.';origin='generic comic'}
  if(name==='nullComic'){const match=String(c.args[3]).match(/NULL_ART\.([a-z]+)/);if(match&&NULL_ART[match[1]])art=['./assets/comics/null-complex/'+NULL_ART[match[1]]+'.webp'];origin='quest comic'}
- if(name==='story')note='Text-only scene in the current game. Needs dedicated comic artwork.';
+ if(name==='story'){
+  origin='reused comic';note='Comic panels exist, but artwork is reused from bosses and dungeons.';
+  if(isVoyage){
+   const key=((literal(c.args[0])||'')+' '+title).toLowerCase();
+   const silas='./assets/bosses/no-way-back-silas-vane-v3.jpg',manor='./assets/manor/manor-raid-hero.webp',hounds='./assets/bosses/no-way-back-three-hounds-v3.jpg',master='./assets/manor/manor-master.webp';
+   art=/hounds|chase|iron gate/.test(key)?[hounds,manor]:/master|after the fight|understand/.test(key)?[silas,master,manor]:/manor island|homecoming/.test(key)?[manor,silas]:[silas,manor];
+  }else{
+   const oldMan='./assets/bosses/fractured-ages-old-man.webp',hero='./assets/dungeons/fractured-ages.webp',highNoon='./assets/fractured-ages/rooms/high-noon.webp',funhouse='./assets/fractured-ages/rooms/funhouse.webp';
+   art=title.toLowerCase().includes('journey through the ages')?[oldMan,highNoon,funhouse]:[oldMan,hero,funhouse];
+  }
+ }
  const line=src.slice(0,c.at).split('\n').length;
- const panels=beats.map((text,i)=>panel(text,title,art.length?art[i%art.length]:'',i));
- const config={theme:name==='nullComic'?'null':'zeltira',page:name==='nullComic'?'SIGNAL FROM NOWHERE':path==='fourfold-lock-v1.js'?'FOURFOLD LOCK':isVoyage?'NO WAY BACK':'QUEST',title,subtitle:speaker,panels,progressive:true,storyOnly:true};
+ const panels=name==='story'?art.map((image,i)=>panel(beats.filter((_,j)=>j%art.length===i).join('\n'),title,image,i)):beats.map((text,i)=>panel(text,title,art.length?art[i%art.length]:'',i));
+ const config={theme:name==='nullComic'?'null':name==='story'?(isVoyage?'manor':'fourfold'):'zeltira',page:name==='nullComic'?'SIGNAL FROM NOWHERE':path==='fourfold-lock-v1.js'?'THE FOURFOLD LOCK':isVoyage?'NO WAY BACK':'QUEST',title,subtitle:speaker,panels,progressive:true,storyOnly:true,panelOnly:name==='story'};
  return{id:path+':'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),title,category,speaker,path,line,origin,note,panels,config}
 }
 function scanBell(src,path,category,c){
