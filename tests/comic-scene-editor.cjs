@@ -30,7 +30,9 @@ vm.runInNewContext(code,{window,document,localStorage,fetch,console,setTimeout()
  assert(found.find(x=>x.title==='The Signal').panels[0].artwork.endsWith('voss-signal.webp'),'Null story artwork not resolved');
  assert(found.find(x=>x.title==='A Sailor With A Story').panels[0].text.startsWith('You ever hear'),'No Way Back arguments mapped incorrectly');
  assert(found.some(x=>x.category==='The Thirteenth Bell'&&x.panels[0].artwork.includes('sealed_letter')),'Missing dedicated Bell artwork');
- assert(found.some(x=>x.category==='The Fourfold Lock'&&x.panels.some(p=>!p.artwork)),'Text-only quests must appear as gaps');
+ assert(found.some(x=>x.category==='The Fourfold Lock'&&x.panels.length===3&&x.panels.every(p=>p.artwork)),'Fourfold live comic panels must match the encounter art');
+ assert(found.some(x=>x.category==='No Way Back'&&x.panels.length>=2),'Manor attunement comics must have live art panels');
+ assert(code.includes('comic_scene_panel_art')&&code.includes("'comic-scene-art'")&&code.includes('data-upload-file'),'Editor must publish uploaded artwork through owner-gated storage');
  window.CellboundAdmin.role='moderator';
  assert.equal(ui.isOwner(),false,'Editor must be owner-only');
  console.log('Comic scene editor: story catalog, artwork lookup and owner gate passed ('+found.length+' scenes).')
