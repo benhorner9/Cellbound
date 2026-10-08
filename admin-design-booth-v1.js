@@ -9,6 +9,7 @@ const runtime=()=>window.CellboundDesignedContent;
 const STORE='cellbound-design-booth-workspace-v1';
 const TOOLS=[
  {id:'build',label:'Adventure Builder',sub:'Quest · dungeon · raid'},
+ {id:'drops',label:'Drop Tables',sub:'Boss loot · chances'},
  {id:'comics',label:'Comic Art',sub:'Existing story scenes'},
  {id:'rooms',label:'Room Layouts',sub:'Existing dungeons & raid'},
  {id:'generator',label:'Dungeon Planner',sub:'Legacy advanced generator'},
@@ -17,7 +18,7 @@ const TOOLS=[
 ];
 const plugins={comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer'};
 const mountIds={comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount'};
-let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,message='',lastLocal='',initDone=false;
+let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false;
 function announce(s){message=s;const slot=$('#dboMessage');if(slot)slot.textContent=s}
 function newStep(type='room'){
  return{id:'step-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),type,title:type==='comic'?'Story Scene':type==='fight'?'Encounter':type==='minigame'?'Minigame':'New Room',text:'',artPath:'',
@@ -131,8 +132,8 @@ async function upload(stepId,panelIndex,file){
  }catch(e){announce('Artwork upload failed: '+String(e?.message||e))}
 }
 function collect(){
- if(active!=='build'||!project)return;
- const form=$('#dboFields');if(!form)return;
+ if(!['build','drops'].includes(active)||!project)return;
+ const form=$(active==='drops'?'#dboDrops':'#dboFields');if(!form)return;
  for(const field of form.querySelectorAll('[data-db-field]')){
   const key=field.dataset.dbField,value=field.value;
   if(key==='title'||key==='summary'||key==='content_type'||key==='level'){project[key]=key==='level'?Math.max(1,Math.min(75,Number(value)||1)):value}
@@ -175,9 +176,8 @@ function lootDropOptions(kind,selected=''){
  const rows=(kind==='gear'?catalog.gear:catalog.materials);
  return rows.map(it=>'<option value="'+esc(it.key)+'" '+(selected===it.key?'selected':'')+'>'+esc(kind==='gear'?'T'+it.tier+' · '+it.klass+' · '+it.name:it.name+' · '+it.rarity)+'</option>').join('')
 }
-function lootEditor(step){
+function lootEditor(step,{raid=false}={}){
  const items=Array.isArray(step.drops)?step.drops:[];
- const raid=project?.content_type==='raid';
  return '<section class="dbo-boss-loot"><header><div><small>INDIVIDUAL BOSS REWARDS</small><h4>Boss Drop Table</h4><p>Each row rolls independently when this encounter is defeated. Configure up to two gear rolls totalling 100% chance. Rewards go directly to the Guild Bank and appear in the end-of-run summary.</p></div><span>'+items.length+' / 6 DROPS</span></header>'+
  (raid?'<p class="dbo-loot-notice">Raid reward delivery is disabled in prototype raids. You may plan drop tables here, but they will not award gear until the multiplayer raid reward system is connected.</p>':'')+
  (items.length?'<div class="dbo-drop-list">'+items.map((drop,i)=>{
@@ -198,7 +198,7 @@ function stageFields(s){
   extra='<section class="dbo-panel-list"><h4>Comic panels · '+s.panels.length+'/6</h4>'+s.panels.map((p,i)=>'<article class="dbo-comic-panel"><header><b>Panel '+(i+1)+'</b><button type="button" data-db-remove-panel="'+i+'">REMOVE</button></header>'+field('Panel heading','panel.'+i+'.title',p.title)+field('Caption / dialogue','panel.'+i+'.text',p.text,{kind:'textarea'})+imageControl(s,i)+'</article>').join('')+
   '<button type="button" data-db-add-panel '+(s.panels.length>=6?'disabled':'')+'>+ ADD COMIC PANEL</button></section>'
  }
- if(s.type==='fight')extra='<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>'+imageControl(s)+lootEditor(s);
+ if(s.type==='fight')extra='<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>'+imageControl(s)+'<button type="button" class="dbo-manage-drops" id="dboGoToDrops">MANAGE THIS BOSS\'S LOOT →</button>';
  if(s.type==='room')extra=imageControl(s);
  if(s.type==='minigame')extra='<div class="dbo-form-grid">'+field('Template','step.template',s.template,{kind:'select',opts:(runtime()?.templates?.()||[]).map(t=>({value:t.id,label:t.label}))})+field('Puzzle instruction','step.prompt',s.prompt,{kind:'textarea'})+field('Choices (one per line)','step.choices',s.choices.join('\n'),{kind:'textarea'})+field('Correct choice index · starts at 0','step.answer',s.answer,{kind:'number'})+field('Sequence indices · comma-separated','step.sequence',s.sequence.join(','))+'</div>'+imageControl(s);
  return'<div class="dbo-stage-fields">'+field('Stage title','step.title',s.title)+field('Stage type','step.type',s.type,{kind:'select',opts:[{value:'comic',label:'Comic Strip'},{value:'room',label:'Room / Transition'},{value:'fight',label:'Combat Encounter'},{value:'minigame',label:'Minigame'}]})+field('Description / narration','step.text',s.text,{kind:'textarea'})+extra+'</div>'
@@ -230,6 +230,7 @@ function bindBuilder(){
  host.querySelector('[data-db-add-panel]')?.addEventListener('click',()=>{collect();const s=project.steps[stepIndex];if(s.panels.length>=6)return;s.panels.push({title:'Panel '+(s.panels.length+1),text:'',artPath:''});storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-remove-panel]').forEach(btn=>btn.onclick=()=>{collect();const s=project.steps[stepIndex];s.panels.splice(Number(btn.dataset.dbRemovePanel),1);storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-upload]').forEach(el=>el.addEventListener('change',e=>{collect();upload(el.dataset.dbUpload,el.dataset.dbPanel==='stage'?null:Number(el.dataset.dbPanel),e.target.files?.[0])}));
+ host.querySelector('#dboGoToDrops')?.addEventListener('click',()=>{collect();selectedDropBoss=project.id?'project:'+project.id+':'+project.steps[stepIndex].id:'local:'+project.slug+':'+project.steps[stepIndex].id;setTab('drops')});
  host.querySelectorAll('[data-db-drop]').forEach(input=>{
   input.addEventListener('input',()=>collect());
   if(input.dataset.dbDrop.endsWith('.kind'))input.addEventListener('change',()=>{
@@ -264,12 +265,13 @@ function renderTemplates(){
 function toolApi(id){return window[plugins[id]]}
 function setTab(id){
  if(!TOOLS.some(x=>x.id===id))return;
- if(id!==active&&active==='build')collect();
+ if(id!==active&&(active==='build'||active==='drops'))collect();
  for(const [tab,mount] of Object.entries(mountIds)){const el=$('#'+mount);if(el)el.hidden=true;if(tab!==id)toolApi(tab)?.close?.()}
  active=id;
- const panel=$('#dboWorkbench'),library=$('#dboTemplates');if(panel)panel.hidden=id!=='build';if(library)library.hidden=id!=='templates';
+ const panel=$('#dboWorkbench'),library=$('#dboTemplates'),drops=$('#dboDrops');if(panel)panel.hidden=id!=='build';if(library)library.hidden=id!=='templates';if(drops)drops.hidden=id!=='drops';
  document.querySelectorAll('[data-dbo-tool]').forEach(el=>{el.classList.toggle('active',el.dataset.dboTool===id);el.setAttribute('aria-selected',el.dataset.dboTool===id?'true':'false')});
  if(id==='build')renderBuilder();
+ else if(id==='drops')renderDrops();
  else if(id==='templates')renderTemplates();
  else{const mount=$('#'+mountIds[id]);if(mount)mount.hidden=false;toolApi(id)?.open?.()}
 }
@@ -277,7 +279,7 @@ function render(){
  const root=$('#designBoothMount');if(!root||!opened||!owner())return;
  root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · OWNER CREATIVE TOOLS</small><h2>Design Booth</h2><p>Build adventures stage by stage, inspect the existing game, and publish artwork and playable content from one place.</p></div><button id="dboClose" type="button">CLOSE DESIGN BOOTH ×</button></header>'+
  '<nav class="dbo-tabs" role="tablist">'+TOOLS.map(t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>').join('')+'</nav>'+
- '<div id="dboWorkbench"></div><div id="dboTemplates" hidden></div>'+
+ '<div id="dboWorkbench"></div><div id="dboDrops" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
  root.querySelectorAll('[data-dbo-tool]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool));
@@ -294,7 +296,7 @@ async function open(){
 }
 function close(){
  for(const name of Object.keys(plugins))toolApi(name)?.close?.();
- if(active==='build')collect();
+ if(active==='build'||active==='drops')collect();
  opened=false;const root=$('#designBoothMount');if(root){root.hidden=true;root.innerHTML=''}
 }
 function access(){
