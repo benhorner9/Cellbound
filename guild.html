@@ -391,6 +391,7 @@
 
     <section id="raids" class="view">
       <div id="manorRaidMount"></div>
+      <div id="designBoothAdventures-raid" class="dbo-public-area" hidden></div>
     </section>
 
     <section id="endgame" class="view">
@@ -417,10 +418,13 @@
         <main id="questJournalDetail" class="panel quest-journal-detail"></main>
         <aside id="questJournalSide" class="panel quest-journal-side"></aside>
       </div>
+      <div id="designBoothAdventures-quest" class="dbo-public-area" hidden></div>
     </section>
 
     <section id="content" class="view">
       <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>Dungeons</h2><p>Choose a dungeon to see its route, bosses, requirements and rewards.</p></div><div class="content-status"><span>Available</span><b id="dungeonBrowserStatus">Checking unlocks…</b></div></div>
+
+      <div id="designBoothAdventures-dungeon" class="dbo-public-area" hidden></div>
 
       <div id="dungeonBrowser" class="dungeon-episode-list">
         <details class="dungeon-episode" data-dungeon-episode="1" open>
@@ -634,25 +638,10 @@
           </div>
           <p id="adminBetaOpsMessage" class="admin-beta-ops-message" hidden></p>
         </article>
-        <article id="dungeonGeneratorEntry" class="admin-card admin-generator-entry" data-admin-panel="tools" hidden>
-          <small>OWNER TOOL</small><h3>Dungeon Generator</h3>
-          <p>Build a complete dungeon brief, Combat Reborn scene config and art manifest from one guided form. Shared combat rules are attached automatically.</p>
-          <div class="admin-actions"><button id="openDungeonGenerator" type="button">OPEN DUNGEON GENERATOR<small>Owner only · drafts stay on this device until you choose to use the generated package.</small></button></div>
-        </article>
-        <article id="characterFitViewerEntry" class="admin-card admin-character-fit-entry" data-admin-panel="tools" hidden>
-          <small>OWNER TOOL</small><h3>Character Fit Viewer</h3>
-          <p>Inspect every v9 body size and every equipment piece without editing a live character. Compare frames, sexes and races side by side.</p>
-          <div class="admin-actions"><button id="openCharacterFitViewer" type="button">OPEN CHARACTER FIT VIEWER<small>Owner only · 36 body combinations · complete item catalogue · fit-point overlay.</small></button></div>
-        </article>
-        <article id="roomEditorEntry" class="admin-card admin-room-editor-entry" data-admin-panel="tools" hidden>
-          <small>OWNER TOOL · BETA COMPLETION</small><h3>Room Editor & Content QA</h3>
-          <p>Inspect dungeon and raid rooms without replaying the run. Drag entrances, exits, party positions, enemies and mechanic anchors directly over the room artwork, then review the first beta-completion audit.</p>
-          <div class="admin-actions"><button id="openRoomEditor" type="button">OPEN ROOM EDITOR<small>Owner only · iPad drag controls · per-room draft coordinates · beta audit findings.</small></button></div>
-        </article>
-        <article id="comicSceneEditorEntry" class="admin-card admin-comic-scene-entry" data-admin-panel="tools" hidden>
-          <small>OWNER TOOL · COMIC QA</small><h3>Comic Scene Editor</h3>
-          <p>Inspect tutorial and quest dialogue, review each comic panel and flag missing or reused artwork. Make caption and artwork drafts without replaying quests.</p>
-          <div class="admin-actions"><button id="openComicSceneEditor" type="button">OPEN COMIC SCENE EDITOR<small>Owner only · art coverage · panel editor · iPad preview.</small></button></div>
+        <article id="designBoothEntry" class="admin-card admin-design-booth-entry" data-admin-panel="tools" hidden>
+          <small>OWNER CREATIVE SUITE</small><h3>Cellbound Design Booth</h3>
+          <p>One place to create quests, dungeons and raid blueprints, design comic strips, upload encounter artwork, edit room layouts and prepare minigame stages. Save drafts, test scenes and publish playable adventures.</p>
+          <div class="admin-actions"><button id="openDesignBooth" type="button">OPEN DESIGN BOOTH<small>Owner only · stage-by-stage builder · comic / room / character tools · iPad artwork uploads.</small></button></div>
         </article>
         <aside class="admin-card" data-admin-panel="overview">
           <small>ADMIN SAFETY</small><h3>Private Developer Tools</h3>
@@ -660,14 +649,18 @@
           <p>Auto-clear is intended for development and encounter testing. Disable it when you want to test the normal Cell Shock and recovery loop.</p>
         </aside>
       </div>
-      <div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div>
-      <div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div>
-      <div id="roomEditorMount" class="room-editor-mount" hidden></div>
-      <div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div>
+      <div style="display:none!important" hidden aria-hidden="true">
+        <div id="dungeonGeneratorEntry"><button id="openDungeonGenerator" type="button"></button></div>
+        <div id="characterFitViewerEntry"><button id="openCharacterFitViewer" type="button"></button></div>
+        <div id="roomEditorEntry"><button id="openRoomEditor" type="button"></button></div>
+        <div id="comicSceneEditorEntry"><button id="openComicSceneEditor" type="button"></button></div>
+      </div>
+      <div id="designBoothMount" class="design-booth-mount" hidden></div>
     </section>
 
   </main>
 </div>
+<div id="designAdventureOverlay" hidden></div>
 
 <div id="characterModal" class="modal-backdrop" hidden><section class="character-modal"><button class="modal-close" data-close aria-label="Close character">×</button><div id="characterDetail"></div></section></div>
 <div id="bankModal" class="modal-backdrop" hidden><section class="character-modal bank-modal"><button class="modal-close" data-bank-close>×</button><div id="bankDetail"></div></section></div>
