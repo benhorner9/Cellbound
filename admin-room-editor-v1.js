@@ -54,8 +54,7 @@ const CATALOG=[
 ].map(group=>({...group,rooms:group.rooms.map(r=>({id:r[0],name:r[1],art:r[2],markers:r[3]}))}));
 
 const AUDIT=[
- {level:'work',title:'The Manor room coverage',copy:'Raid room artwork is handled in Step 4. The room editor deliberately does not substitute boss portraits for proper raid-room backgrounds.'},
- {level:'review',title:'Final beta UI cleanup',copy:'Global UI/combat style cleanup remains part of the hard Beta Gate after dungeon and story presentation are locked.'}
+ {level:'review',title:'Final beta UI cleanup',copy:'Global UI/combat style cleanup remains part of the hard Beta Gate after dungeon, story and Manor presentation are locked.'}
 ]
 
 let opened=false;
@@ -126,16 +125,30 @@ function legend(){return '<div class="rqe-legend">'+[['entry','#1d8a63','Entranc
 function auditHTML(){return '<div class="rqe-audit"><div class="rqe-audit-head"><div><small>BETA COMPLETION AUDIT</small><h3>Known work from first scan</h3></div><span>'+AUDIT.length+' findings</span></div><div class="rqe-audit-list">'+AUDIT.map(a=>'<article class="rqe-audit-item" data-level="'+a.level+'"><header><b>'+esc(a.title)+'</b><em>'+({blocker:'BLOCKER',work:'NEEDS WORK',review:'REVIEW'})[a.level]+'</em></header><p>'+esc(a.copy)+'</p></article>').join('')+'</div></div>'}
 function statusOptions(v){return [['unreviewed','Unreviewed'],['complete','Complete'],['needs-work','Needs work'],['blocker','Blocker']].map(x=>'<option value="'+x[0]+'" '+(v===x[0]?'selected':'')+'>'+x[1]+'</option>').join('')}
 function jsonFor(draft){return JSON.stringify({content:contentId,room:roomId,markers:draft.markers},null,2)}
+function manorPreview(room){
+ if(contentId!=='the-manor'||typeof window.CellboundManorRaid?.roomScene!=='function')return null;
+ const map={
+  'entrance-hall':['butler',0],
+  'dining-room':['maids',0],
+  'kitchen':['maids',1],
+  'workshop':['engineer',0],
+  'bedroom':['bedroom',0],
+  'attic':['housebound',0]
+ };
+ const cfg=map[room?.id];if(!cfg)return null;
+ return '<div class="rqe-manor-runtime" data-room-art>'+window.CellboundManorRaid.roomScene(cfg[0],cfg[1])+'</div>'
+}
 function render(){
  const mount=$('#roomEditorMount');if(!mount||!opened||!isOwner())return;
  const g=group(),r=room(),d=roomDraft(),idx=g.rooms.findIndex(x=>x.id===r.id),status=reviewStatus(),live=liveLayoutState();
  const contentOptions=CATALOG.map(x=>'<option value="'+x.id+'" '+(x.id===contentId?'selected':'')+'>'+esc(x.type+' · '+x.name)+'</option>').join('');
  const roomOptions=g.rooms.map(x=>'<option value="'+x.id+'" '+(x.id===roomId?'selected':'')+'>'+esc(x.name)+'</option>').join('');
- const art=d.art?'<img src="'+esc(d.art)+'" alt="'+esc(d.name)+'" draggable="false" data-room-art>':'<div class="rqe-missing"><div><b>No dedicated room artwork</b><span>No production room background is currently wired for this scene. Boss/key art is intentionally not substituted.</span></div></div>';
+ const runtimePreview=manorPreview(r),hasArt=Boolean(d.art||runtimePreview);
+ const art=d.art?'<img src="'+esc(d.art)+'" alt="'+esc(d.name)+'" draggable="false" data-room-art>':runtimePreview||'<div class="rqe-missing"><div><b>No dedicated room artwork</b><span>No production room background is currently wired for this scene. Boss/key art is intentionally not substituted.</span></div></div>';
  mount.innerHTML='<section class="rqe-shell">'+
   '<header class="rqe-head"><div><small>OWNER CONTENT QA · BETA BUILD 1</small><h2>Room Editor</h2><p>Drag the live room anchors directly on the production artwork. Save keeps a local draft, Test applies it only to your owner account, and Publish makes it the shared staging layout used when the dungeon is played.</p></div><div class="rqe-head-actions"><button id="rqeCopyAll">COPY ALL DRAFTS</button><button id="rqeClose">CLOSE</button></div></header>'+
   '<div class="rqe-toolbar"><label><span>CONTENT</span><select id="rqeContent">'+contentOptions+'</select></label><label><span>ROOM / ENCOUNTER</span><select id="rqeRoom">'+roomOptions+'</select></label><button id="rqeGrid">'+(showGrid?'HIDE GRID':'SHOW GRID')+'</button><button id="rqeReset">RESET ROOM</button></div>'+
-  '<div class="rqe-grid"><main class="rqe-main"><div id="rqeCanvas" class="rqe-canvas-wrap '+(showGrid?'rqe-show-grid ':'')+(d.art?'':'missing-art')+'">'+art+'<div class="rqe-gridlines"></div><div class="rqe-axis"></div>'+d.markers.map(markerHTML).join('')+'</div>'+
+  '<div class="rqe-grid"><main class="rqe-main"><div id="rqeCanvas" class="rqe-canvas-wrap '+(showGrid?'rqe-show-grid ':'')+(hasArt?'':'missing-art')+'">'+art+'<div class="rqe-gridlines"></div><div class="rqe-axis"></div>'+d.markers.map(markerHTML).join('')+'</div>'+
   '<div class="rqe-room-meta"><div class="rqe-room-copy"><b>'+esc(g.name+' · '+r.name)+'</b><span>'+(d.art?'Production art loaded from '+esc(d.art.replace('./','')):'Dedicated room art missing')+'</span>'+legend()+'</div><div class="rqe-room-nav"><button id="rqePrev" '+(idx<=0?'disabled':'')+'>← PREV</button><button id="rqeNext" '+(idx>=g.rooms.length-1?'disabled':'')+'>NEXT →</button></div></div></main>'+
   '<aside class="rqe-side"><section class="rqe-inspector"><small>ROOM REVIEW</small><h3>Layout state</h3><label><small>STATUS</small><select id="rqeReview">'+statusOptions(status)+'</select></label><div class="rqe-inspector-grid"><div><b>'+d.markers.filter(x=>x.kind==='party').length+'</b><span>party anchors</span></div><div><b>'+d.markers.filter(x=>x.kind==='enemy'||x.kind==='add').length+'</b><span>hostile anchors</span></div><div><b>'+d.markers.filter(x=>x.kind==='entry').length+'</b><span>entrances</span></div><div><b>'+d.markers.filter(x=>x.kind==='exit').length+'</b><span>exits</span></div></div><div class="rqe-live-state" data-mode="'+live.mode+'"><small>ACTIVE DUNGEON LAYOUT</small><b>'+(live.mode==='test'?'OWNER TEST ACTIVE':live.mode==='published'?'PUBLISHED · VERSION '+Number(live.published?.version||1):'BUILT-IN DEFAULT')+'</b><span>'+(live.mode==='test'?'Only your owner account uses the current test layout.':live.mode==='published'?'All staging players use this published layout.':'No shared room override is published.')+'</span></div><div class="rqe-inspector-actions"><button class="primary" id="rqeSave">SAVE DRAFT</button><button class="test" id="rqeTest">TEST LAYOUT</button><button class="publish" id="rqePublish">PUBLISH LAYOUT</button>'+(live.testing?'<button id="rqeClearTest">STOP TESTING</button>':'')+(live.published?'<button class="danger" id="rqeUnpublish">RESTORE BUILT-IN DEFAULT</button>':'')+'<button id="rqeCopy">COPY ROOM JSON</button></div><div id="rqeSaveState" class="'+(dirty?'rqe-dirty':'rqe-dirty rqe-saved')+'">'+(dirty?'UNSAVED CHANGES':state.rooms?.[roomKey()]?.updatedAt?'DRAFT SAVED ON THIS DEVICE':live.mode==='published'?'VIEWING PUBLISHED LAYOUT':'VIEWING GAME DEFAULTS')+'</div><div class="rqe-json"><small>CURRENT COORDINATES</small><pre id="rqeJson">'+esc(jsonFor(d))+'</pre></div></section>'+auditHTML()+'</aside></div></section>';
  bind(d)
