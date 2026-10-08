@@ -62,7 +62,7 @@ let contentId='ashen-vault';
 let roomId='broken-gate';
 let showGrid=true;
 let dirty=false;
-let artFile=null,artPreview='',artBusy=false,artMessage='';
+let artFile=null,artPreview='',artBusy=false,artMessage='',activeDraft=null;
 let state=load();
 
 function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')||{}}catch{return{}}}
@@ -132,12 +132,22 @@ function chooseArt(file){
   else if(file.size>10*1024*1024)artMessage='Image exceeds the 10 MB limit.';
   else{artFile=file;artPreview=URL.createObjectURL(file);artMessage=file.name+' selected — preview only until published.'}
  }
- render()
+ const btn=$('#rqeArtPublish');if(btn)btn.disabled=!artFile||artBusy;
+ const status=$('#rqeArtMessage');if(status)status.textContent=artMessage||'No file selected.';
+ const label=$('.rqe-art-upload header span');if(label)label.textContent=artPreview?'LOCAL PREVIEW':'ORIGINAL ART';
+ if(artPreview){
+  const canvas=$('#rqeCanvas');
+  let img=canvas?.querySelector(':scope > img[data-room-art]');
+  if(!img&&canvas){img=document.createElement('img');img.dataset.roomArt='1';img.alt='Selected room artwork';img.draggable=false;canvas.prepend(img)}
+  if(img)img.src=artPreview;
+  const manor=canvas?.querySelector('.rqe-manor-runtime');if(manor)manor.hidden=true;
+ }
 }
 async function publishArtwork(){
  const R=window.CellboundRoomLayouts;if(artBusy||!artFile||!R?.publishArt||!isOwner())return;
  const targetContent=contentId,targetRoom=roomId;
  if(!confirm('Replace the background for '+room().name+' in the actual dungeon for all staging players?'))return;
+ if(activeDraft)storeRoom(activeDraft,$('#rqeReview')?.value);
  artBusy=true;artMessage='Uploading artwork…';render();
  try{
   await R.publishArt(targetContent,targetRoom,artFile);
@@ -177,7 +187,8 @@ function manorPreview(room){
 function render(){
  const mount=$('#roomEditorMount');if(!mount||!opened||!isOwner())return;
  const g=group(),r=room(),d=roomDraft(),idx=g.rooms.findIndex(x=>x.id===r.id),status=reviewStatus(),live=liveLayoutState();
- const contentOptions=CATALOG.map(x=>'<option value="'+x.id+'" '+(x.id===contentId?'selected':'')+'>'+esc(x.type+' · '+x.name)+'</option>').join('');
+ activeDraft=d;
+  const contentOptions=CATALOG.map(x=>'<option value="'+x.id+'" '+(x.id===contentId?'selected':'')+'>'+esc(x.type+' · '+x.name)+'</option>').join('');
  const roomOptions=g.rooms.map(x=>'<option value="'+x.id+'" '+(x.id===roomId?'selected':'')+'>'+esc(x.name)+'</option>').join('');
  const runtimePreview=manorPreview(r),artwork=artPreview||d.art,hasArt=Boolean(artwork||runtimePreview),publishedArt=window.CellboundRoomLayouts?.publishedArtInfo?.(contentId,roomId);
  const art=runtimePreview&&!artPreview?runtimePreview:artwork?'<img src="'+esc(artwork)+'" alt="'+esc(d.name)+'" draggable="false" data-room-art>':runtimePreview||'<div class="rqe-missing"><div><b>No dedicated room artwork</b><span>No production room background is currently wired for this scene. Boss/key art is intentionally not substituted.</span></div></div>';
@@ -249,7 +260,7 @@ function open(){
  if(state.last?.contentId&&CATALOG.some(x=>x.id===state.last.contentId)){contentId=state.last.contentId;const g=group();roomId=g.rooms.some(x=>x.id===state.last.roomId)?state.last.roomId:g.rooms[0].id}
  mount.hidden=false;render();window.CellboundRoomLayouts?.ready?.().then(()=>{if(opened)render()}).catch(()=>{});requestAnimationFrame(()=>mount.scrollIntoView({behavior:'smooth',block:'start'}))
 }
-function close(){opened=false;clearArtSelection();const mount=$('#roomEditorMount');if(mount){mount.hidden=true;mount.innerHTML=''}}
+function close(){opened=false;activeDraft=null;clearArtSelection();const mount=$('#roomEditorMount');if(mount){mount.hidden=true;mount.innerHTML=''}}
 function syncAccess(){const entry=$('#roomEditorEntry'),mount=$('#roomEditorMount'),owner=isOwner();if(entry)entry.hidden=!owner;if(!owner&&mount)close()}
 function init(){
  const entry=$('#roomEditorEntry');if(!entry){setTimeout(init,150);return}
