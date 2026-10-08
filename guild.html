@@ -40,6 +40,7 @@
 <link rel="stylesheet" href="./dungeon-generator-v1.css?v=1">
 <link rel="stylesheet" href="./character-fit-viewer-v1.css?v=1">
   <link rel="stylesheet" href="./admin-room-editor-v1.css?v=1">
+  <link rel="stylesheet" href="./admin-comic-scene-editor-v1.css?v=1">
 <link rel="stylesheet" href="./release-v1.css?v=2">
 <link rel="stylesheet" href="./comic-scenes-v1.css?v=5">
 <link rel="stylesheet" href="./onboarding-v1.css?v=21">
@@ -604,6 +605,11 @@
           <p>Inspect dungeon and raid rooms without replaying the run. Drag entrances, exits, party positions, enemies and mechanic anchors directly over the room artwork, then review the first beta-completion audit.</p>
           <div class="admin-actions"><button id="openRoomEditor" type="button">OPEN ROOM EDITOR<small>Owner only · iPad drag controls · per-room draft coordinates · beta audit findings.</small></button></div>
         </article>
+        <article id="comicSceneEditorEntry" class="admin-card admin-comic-scene-entry" hidden>
+          <small>OWNER TOOL · COMIC QA</small><h3>Comic Scene Editor</h3>
+          <p>Browse tutorial, quest and campaign story scenes. Flag missing or reused artwork, preview comic strips and keep caption/art drafts without replaying quests.</p>
+          <div class="admin-actions"><button id="openComicSceneEditor" type="button">OPEN COMIC SCENE EDITOR<small>Owner only · artwork checks · panel review · iPad-friendly previews.</small></button></div>
+        </article>
         <aside class="admin-card">
           <small>ADMIN SAFETY</small><h3>Private Developer Tools</h3>
           <p class="admin-warning">This tab is authorised by Supabase, not by a visible email check in the browser. Even if someone tampers with the page, the admin actions still fail unless the signed-in account is authorised server-side.</p>
@@ -613,6 +619,7 @@
       <div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div>
       <div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div>
       <div id="roomEditorMount" class="room-editor-mount" hidden></div>
+        <div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div>
     </section>
 
   </main>
@@ -678,6 +685,7 @@
 <script src="./dungeon-generator-v1.js?v=1"></script>
 <script src="./character-fit-viewer-v1.js?v=3"></script>
 <script src="./admin-room-editor-v1.js?v=1"></script>
+  <script src="./admin-comic-scene-editor-v1.js?v=1"></script>
 <script src="./mobile-v1.js?v=7"></script>
 <script src="./release-v1.js?v=3"></script>
 <script src="./game-feel-v1.js?v=2"></script>
