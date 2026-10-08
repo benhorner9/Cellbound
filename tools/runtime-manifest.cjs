@@ -109,6 +109,7 @@ const groups=Object.freeze({
   "quests-v2.js",
   "design-booth-content-v1.js",
    "boss-drop-tables-v1.js",
+  "admin-design-library-v1.js",
   "admin-design-booth-v1.js",
    "admin-item-catalog-v1.js",
   "fourfold-lock-v1.js",
