@@ -503,6 +503,8 @@ function setTab(id){
  active=id;
  const panel=$('#dboWorkbench'),library=$('#dboTemplates'),drops=$('#dboDrops'),catalog=$('#dboCatalog');if(panel)panel.hidden=id!=='build';if(library)library.hidden=id!=='templates';if(drops)drops.hidden=id!=='drops';if(catalog)catalog.hidden=id!=='items';
  document.querySelectorAll('[data-dbo-tool]').forEach(el=>{el.classList.toggle('active',el.dataset.dboTool===id);el.setAttribute('aria-selected',el.dataset.dboTool===id?'true':'false')});
+ document.querySelectorAll('[data-dbo-go]').forEach(el=>el.classList.toggle('active',el.dataset.dboGo===id));
+ if(['generator','models','templates'].includes(id)){const more=$('.dbo-more');if(more)more.open=true;moreOpen=true}
  if(id==='build')renderBuilder();
  else if(id==='drops')renderDrops();
  else if(id==='items')window.CellboundItemCatalog?.render?.();
@@ -511,12 +513,19 @@ function setTab(id){
 }
 function render(){
  const root=$('#designBoothMount');if(!root||!opened||!owner())return;
- root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · OWNER CREATIVE TOOLS</small><h2>Design Booth</h2><p>Build adventures stage by stage, inspect the existing game, and publish artwork and playable content from one place.</p></div><button id="dboClose" type="button">CLOSE DESIGN BOOTH ×</button></header>'+
- '<nav class="dbo-tabs" role="tablist">'+TOOLS.map(t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>').join('')+'</nav>'+
+ const advanced=['generator','models','templates'];
+ const tab=t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>';
+ root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · CREATIVE WORKSPACE</small><h2>Design Booth</h2><p>One place to create adventures, update boss rewards, and edit Cellbound artwork.</p></div><button id="dboClose" type="button">CLOSE ×</button></header>'+
+ '<section class="dbo-quickstart" aria-label="Choose a task"><div><h3>What do you want to do?</h3><p>Pick a job below. Nothing goes live until you deliberately save and publish.</p></div><div class="dbo-quick-actions">'+
+ [['build','Create an adventure'],['drops','Edit boss loot'],['items','Find an item'],['comics','Edit comic art'],['rooms','Edit dungeon rooms']].map(([id,label])=>'<button type="button" data-dbo-go="'+id+'" class="'+(active===id?'active':'')+'">'+label+' →</button>').join('')+'</div></section>'+
+ '<nav class="dbo-tabs" role="tablist" aria-label="Design Booth tools">'+TOOLS.filter(t=>!advanced.includes(t.id)).map(tab).join('')+'</nav>'+
+ '<details class="dbo-more" '+(moreOpen||advanced.includes(active)?'open':'')+'><summary>More tools · Character fit, dungeon planner & minigame templates</summary><nav class="dbo-tabs dbo-tabs-more" role="tablist" aria-label="Advanced tools">'+TOOLS.filter(t=>advanced.includes(t.id)).map(tab).join('')+'</nav></details>'+
+ '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Press Publish only when everything is ready. Existing published content stays unchanged until then.</li></ol><p>Local backups are for recovery on this device; only a cloud-saved draft is available on another device.</p></details>'+
  '<div id="dboWorkbench"></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
- root.querySelectorAll('[data-dbo-tool]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool));
+ root.querySelectorAll('[data-dbo-tool],[data-dbo-go]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool||btn.dataset.dboGo));
+ root.querySelector('.dbo-more')?.addEventListener('toggle',e=>{moreOpen=e.target.open});
  setTab(active)
 }
 async function open(){
