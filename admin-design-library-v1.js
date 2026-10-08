@@ -182,7 +182,8 @@ function bind(){
 }
 function insertIntoAdventure(){
  if(kind==='item')return;
- const errors=validation();if(errors.length){message='Complete this template before using it: '+errors[0];render();return}
+ // Adding to a private adventure draft is safe even when artwork or puzzle details are unfinished.
+ // Adventure Builder validates every stage before the adventure can be published.
  if(!window.CellboundDesignBooth?.insertTemplate){message='Adventure Builder is unavailable.';render();return}
  if(window.CellboundDesignBooth.insertTemplate(clone(draft.data),draft.title)){
   message='Added to the Adventure Builder as a new stage. Save its cloud draft to keep the change.';
