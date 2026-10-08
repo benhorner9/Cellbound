@@ -67,6 +67,15 @@ function calls(src,name){
 }
 function panel(text,title,art,index){return{kind:index?'dialogue':'location',title:index?'':title,text:String(text||''),artwork:art||'',wide:false}}
 function questArt(src,title,speaker){
+ // Match the live quest's story-specific artwork catalogue first. The old
+ // inspector only scanned generic art sets, showing false gaps for published art.
+ const dedicatedAt=src.indexOf('const QUEST_COMIC_STORY_ART=');
+ const dedicatedOpen=src.indexOf('{',dedicatedAt);
+ const dedicated=dedicatedAt<0?null:bracket(src,dedicatedOpen);
+ if(dedicated){
+  const line=split(dedicated.body).find(p=>p.startsWith("'"+title+"':")||p.startsWith('"'+title+'":'));
+  if(line){const images=array(line.slice(line.indexOf(':')+1));if(images.length)return images}
+ }
  const from=src.indexOf('const QUEST_COMIC_ART='),open=src.indexOf('{',from),b=from<0?null:bracket(src,open),sets={};
  if(b)for(const k of ['ashen','hollow','zeltira','trial'])sets[k]=array(property(b.body,k));
  const val=(title+' '+speaker).toLowerCase(),type=/trial|mentor/.test(val)?'trial':/vault|forge|ash|elara/.test(val)?'ashen':/seal|hollow|fragment|tessa|jory|bram|letter|bearer|pressure/.test(val)?'hollow':'zeltira';
@@ -81,7 +90,7 @@ function scanDialogue(src,path,category,name,c){
  const beats=text.length?text:fragments(lines).filter(s=>s.length>7);
  if(!beats.length)beats.push('[Dynamic dialogue — inspect during gameplay]');
  let art=[],note='',origin='scripted dialogue';
- if(name==='showDialogue'){art=questArt(src,title,speaker);note='This quest reuses generic artwork rather than having its own comic panels.';origin='generic comic'}
+ if(name==='showDialogue'){art=questArt(src,title,speaker);const dedicated=src.includes("'"+title+"':[");note=dedicated?'Dedicated illustrated comic sequence.':'This quest reuses generic artwork rather than having its own comic panels.';origin=dedicated?'dedicated comic':'generic comic'}
  if(name==='nullComic'){const match=String(c.args[3]).match(/NULL_ART\.([a-z]+)/);if(match&&NULL_ART[match[1]])art=['./assets/comics/null-complex/'+NULL_ART[match[1]]+'.webp'];origin='quest comic'}
  if(name==='story'){
   origin='reused comic';note='Comic panels exist, but artwork is reused from bosses and dungeons.';
