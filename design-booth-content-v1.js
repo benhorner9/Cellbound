@@ -182,7 +182,7 @@ async function play(id,override=null){
     const enemies=step.enemies.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean).slice(0,5);
     const encounter={kind:enemies.length===1?'boss':'trash',level:b.level,enemyHealth:step.enemyHealth,mechanics:step.mechanic==='none'?[]:[{name:({'circle':'Ground Burst','line':'Sweeping Attack','interrupt':'Dangerous Cast','adds':'Reinforcements'})[step.mechanic]||'Mechanic',type:step.mechanic==='adds'?'adds':step.mechanic,duration:1600}],mechanicIntervalMs:step.mechanic==='none'?0:3600};
     const markup=roomImg?'<div class="dbo-combat-art"><img src="'+esc(roomImg)+'" alt="" draggable="false"></div>':'';
-    const won=await window.CellboundQuests?.runQuest2DFight?.({quest:row.title,title:step.title,location:row.title,ambience:step.text,presentationKind:row.content_type==='quest'?'quest':'dungeon',enemies:enemies.length?enemies:['Enemy'],environmentMarkup:markup,combat,noLossPenalty:true,autoContinueOnVictory:true,autoContinueDelayMs:650,completeText:'The way ahead is clear.'});
+    const won=await window.CellboundQuests?.runQuest2DFight?.({quest:row.title,title:step.title,location:row.title,ambience:step.text,presentationKind:row.content_type==='quest'?'quest':'dungeon',enemies:enemies.length?enemies:['Enemy'],environmentMarkup:markup,combat:encounter,noLossPenalty:true,autoContinueOnVictory:true,autoContinueDelayMs:650,completeText:'The way ahead is clear.'});
     if(token!==activeSession)return;
     if(won!==true){completed=false;break}
     if(Array.isArray(step.drops)&&step.drops.length){
