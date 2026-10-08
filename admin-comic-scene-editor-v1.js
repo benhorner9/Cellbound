@@ -74,7 +74,8 @@ function questArt(src,title,speaker){
 }
 function scanDialogue(src,path,category,name,c){
  const isVoyage=path==='no-way-back-v1.js';
- const title=literal(c.args[isVoyage?1:0]);if(!title)return null;
+ const rawTitle=c.args[isVoyage?1:0];
+ const title=literal(rawTitle)||(rawTitle?.trim()==='t.title'?'Class Trial · Character-specific':null);if(!title)return null;
  const speaker=literal(c.args[isVoyage?2:1])||'',lines=c.args[isVoyage?3:2];
  const text=array(lines);
  const beats=text.length?text:fragments(lines).filter(s=>s.length>7);
