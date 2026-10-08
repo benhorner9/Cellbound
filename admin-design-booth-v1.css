@@ -126,3 +126,5 @@
 @media(max-width:1250px){.dbo-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:850px){.dbo-drops-main{padding:0 14px 22px}.dbo-drops-status{display:block}.dbo-drops-status small{display:block;margin-top:6px}.dbo-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:480px){.dbo-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.dbo-native-default{padding:14px 17px;margin:14px 0;border:1px solid #52675d;border-radius:9px;background:#172a28}.dbo-native-default small{display:block;color:#b1d5c8;font-size:10px;font-weight:900;letter-spacing:.07em}.dbo-native-default p{margin:7px 0 0;color:#dce6dc;font-size:13px;line-height:1.55}
