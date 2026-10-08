@@ -74,8 +74,16 @@ async function sourceScenes(filename,fn,group,kind){
    const lines=stringArray(a[kind==='voyage'?3:2]);
    if(!title||!lines.length)continue;
    const page=kind==='quest'?'QUEST':kind==='voyage'?'NO WAY BACK':'FOURFOLD LOCK';
-   const artwork=kind==='quest'?'./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp':'';
-   add(group,{theme:'zeltira',page,title,subtitle:speaker,panels:lines.map((text,i)=>({kind:i?'dialogue':'location',speaker,text,title:i?'':title,artwork})),progressive:true,storyOnly:true},filename)
+   const key=(title+' '+speaker).toLowerCase();
+   const groupKey=/trial|mentor/.test(key)?'trial':/vault|forge|ash|elara/.test(key)?'ashen':/seal|hollow|fragment|tessa|jory|bram|letter|bearer|pressure/.test(key)?'hollow':'zeltira';
+   const sets={
+    trial:['./assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','./assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp'],
+    ashen:['./assets/dungeons/ashen-vault.webp','./assets/bosses/ashen-vault-vaultheart.webp','./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'],
+    hollow:['./assets/dungeons/hollow-sanctum.webp','./assets/bosses/hollow-sanctum-bound-choir.webp','./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp'],
+    zeltira:['./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/comics/tutorial/the_quartermaster_s_choice.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp','./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp']
+   };
+   const artworks=kind==='quest'?sets[groupKey]:[];
+   add(group,{theme:'zeltira',page,title,subtitle:speaker,panels:lines.map((text,i)=>({kind:i?'dialogue':'location',speaker,text,title:i?'':title,artwork:artworks.length?artworks[i%artworks.length]:''})),progressive:true,storyOnly:true},filename)
   }
  }catch(error){console.warn('Comic scene inventory',error);note='Could not index '+filename}
 }
