@@ -73,3 +73,30 @@
 .dbo-combat-art{position:absolute;inset:0;overflow:hidden}.dbo-combat-art img{width:100%;height:100%;object-fit:cover}
 @media(max-width:1100px){.dbo-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}.dbo-editor-layout{grid-template-columns:210px minmax(0,1fr)}}
 @media(max-width:720px){.dbo-master-head,.dbo-builder-top{flex-direction:column;align-items:flex-start;padding:15px}.dbo-editor-layout{grid-template-columns:1fr}.dbo-projects{border-right:0;border-bottom:1px solid #34434c}.dbo-project-list{max-height:120px}.dbo-stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-project-editor{padding:13px}.dbo-form-grid{grid-template-columns:1fr}.dbo-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-tabs button{min-height:62px}.dbo-player-body{padding:13px}.dbo-master-head h2{font-size:26px}}
+
+
+/* Individual boss drop table: readable on iPad and keyboard accessible. */
+.dbo-boss-loot{margin:20px 0;padding:17px;border:1px solid #755a3e;border-radius:12px;background:linear-gradient(145deg,#1d2528,#182022)}
+.dbo-boss-loot>header{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}
+.dbo-boss-loot header small{display:block;letter-spacing:.12em;color:#d2af7d;font-weight:900;font-size:10px}
+.dbo-boss-loot h4{font-family:Georgia,serif;font-size:21px;font-weight:700;color:#f4e4c8;margin:3px 0 6px}
+.dbo-boss-loot header p,.dbo-loot-footnote{color:#bccbc8;line-height:1.5;font-size:12px;margin:0}
+.dbo-boss-loot>header>span{color:#d7b88c;white-space:nowrap;font-weight:800;font-size:11px}
+.dbo-drop-list{display:grid;gap:10px}
+.dbo-drop-row{padding:13px;border:1px solid #445957;border-radius:10px;background:#122026}
+.dbo-drop-row-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;color:#edcf9a;font-size:12px}
+.dbo-drop-row-top button{border:1px solid #8a6058;border-radius:6px;padding:7px 10px;background:#272a2c;color:#f0b1a5;font-weight:800;font-size:11px}
+.dbo-drop-grid{display:grid;grid-template-columns:1fr 2.2fr 1fr 1fr;gap:10px;align-items:end}
+.dbo-drop-grid label{font-size:10px;color:#bfc9c7;font-weight:800;letter-spacing:.06em}
+.dbo-drop-grid select,.dbo-drop-grid input{width:100%;margin-top:6px;min-width:0;min-height:43px;padding:9px 7px;border:1px solid #4c645e;border-radius:7px;background:#0b171a;color:#eff6ec;font-size:16px!important}
+.dbo-drop-grid input:disabled{opacity:.45}
+.dbo-boss-loot>[data-db-add-drop]{margin:12px 0 10px;padding:10px 14px;border:1px solid #be9466;border-radius:7px;color:#ffdfac;background:#32322b;font-weight:900;font-size:12px}
+.dbo-no-drops{border:1px dashed #576057;padding:15px;border-radius:8px;color:#aebbb3;font-size:12px}
+.dbo-loot-notice{border-left:3px solid #bd9764;padding:9px 12px;background:#332a22;color:#f5d5ad;font-size:12px}
+.dbo-loot-footnote{margin-top:8px}
+.dbo-loot-list{display:grid;gap:8px;margin-top:10px}
+.dbo-loot-list>div{display:grid;grid-template-columns:30px 1fr auto;gap:3px 8px;align-items:center;padding:10px;border:1px solid #56624f;border-radius:7px;background:#152522}
+.dbo-loot-list>div>span{grid-row:span 2;color:#d8ad78;font-size:20px}
+.dbo-loot-list b{color:#f4f1e6}.dbo-loot-list small{grid-column:2;grid-row:2;color:#9aafa3}.dbo-loot-list strong{grid-column:3;grid-row:1/span 2;color:#d9c39c}
+@media(max-width:950px){.dbo-drop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.dbo-boss-loot{padding:12px}.dbo-drop-grid{grid-template-columns:1fr 1fr}.dbo-boss-loot>header{flex-direction:column}}

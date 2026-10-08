@@ -38,9 +38,33 @@ vm.runInNewContext(runtime,{window,document,console,localStorage,setTimeout,Date
  assert.equal(empty.level,75);assert.equal(empty.steps[0].enemyHealth,50000);
  assert.equal(empty.steps[0].mechanic,'interrupt');
  assert.equal(core.artUrl('hello.webp'),'https://example.test/storage/hello.webp');
+ // Individual boss loot is resolved from the shipped catalogue, not arbitrary draft item JSON.
+ const gear={itemId:'test-sword-t1',name:'Test Sword',tier:1,enabled:true,dropEnabled:true,raidExclusive:false,slot:'Weapon',class:'Warrior'};
+ const t5={itemId:'test-t5',name:'Forbidden Raid Item',tier:5,enabled:true,dropEnabled:false,raidExclusive:true};
+ window.CellboundGear={items:[gear,t5],byId:id=>id==='test-sword-t1'?gear:null,rollItemAffixes:base=>({...base,rollId:'affix-1'})};
+ window.CellboundProfessions={MATERIALS:{hollowroot:{name:'Hollowroot',rarity:'Common'},'ancient-soul':{name:'Ancient Soul',rarity:'Epic',endgame:true}}};
+ const catalog=core.lootCatalog();
+ assert.equal(catalog.gear.length,1,'No T5 or raid-exclusive gear can be authored as a boss drop');
+ assert.equal(catalog.materials.length,1,'Endgame crafting materials cannot be configured');
+ const good=core.cleanBlueprint({level:5,steps:[{id:'butler',type:'fight',title:'The Butler',drops:[
+  {kind:'gear',key:'test-sword-t1',chance:30,quantity:999},
+  {kind:'material',key:'hollowroot',chance:100,quantity:3},
+  {kind:'gear',key:'test-t5',chance:100,quantity:1},
+  {kind:'material',key:'ancient-soul',chance:100,quantity:1}
+ ]}]});
+ assert.equal(good.steps[0].drops.length,2,'Existing approved items survive publish sanitisation; forbidden ones are dropped');
+ assert.equal(good.steps[0].drops[0].quantity,1,'Gear quantity is exactly one');
+ const rolls=core.rollBossLoot(good.steps[0],{random:()=>0});
+ assert.equal(rolls.length,2,'Boss defeat independently rolls item and material rewards');
+ assert.equal(core.rollBossLoot(good.steps[0],{random:()=>0.5}).length,1,'Individual percentage chances are respected');
+ assert.equal(core.rollBossLoot({drops:[{kind:'gear',key:'test-sword-t1',chance:100},{kind:'gear',key:'test-sword-t1',chance:100}]},{random:()=>0}).length,0,'A boss cannot grant an excessive combined gear drop chance');
+ assert(runtime.includes('Game.addBankItem(item)')&&runtime.includes('Game.addMaterial(drop.key,drop.quantity)')&&runtime.includes('await Game.persistState?.()'),'Victory awards must enter canonical Bank and cloud save paths');
+ assert(runtime.includes('preview:Boolean(override),raid:row.content_type'), 'Owner previews and prototype raids must never award loot');
+ assert(master.includes('data-db-add-drop')&&master.includes('data-db-remove-drop')&&master.includes('data-db-drop'), 'Per-boss drop table editor must allow rows, item selection, drop rates and quantities');
+
  await core.refresh(true);
  const next=core.templates().length;
  core.registerMinigame({id:'sigil-grid',label:'Sigil Grid',description:'Extensible puzzle',play:async()=>true});
  assert.equal(core.templates().length,next+1,'GPT-added minigame templates are independently registrable');
- console.log('Design Booth regression passed: one master entry, old tools embedded, quest/dungeon/raid mounts, secure publishing schema, art storage, reusable minigame registry and blueprint caps.');
+ console.log('Design Booth regression passed: one master entry, old tools embedded, quest/dungeon/raid mounts, secure publishing schema, art storage, reusable minigame registry, boss-specific drop rolls, restricted reward catalogue and blueprint caps.');
 })().catch(e=>{console.error(e);process.exitCode=1});

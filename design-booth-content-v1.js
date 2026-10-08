@@ -8,6 +8,66 @@ const db=()=>window.CellboundGame?.getSupabase?.();
 const isOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&window.CellboundAdmin?.role==='owner';
 const artUrl=path=>path&&db()?.storage?.from('cellbound-design-art').getPublicUrl(path)?.data?.publicUrl||'';
 const safeUrl=url=>/^https:\/\//i.test(String(url||''))?String(url):'';
+/* Boss loot is chosen from existing early-tier gear and profession reagents.
+   No arbitrary item JSON, Tier 5 raid equipment or endgame-only materials. */
+function lootCatalog(){
+ const G=window.CellboundGear,P=window.CellboundProfessions;
+ const gear=(G?.items||[]).filter(x=>x?.enabled&&x.dropEnabled&&x.tier<=2&&!x.raidExclusive).map(x=>({kind:'gear',key:String(x.itemId),label:String(x.name),tier:x.tier,slot:x.slot,klass:x.class}));
+ const materials=Object.entries(P?.MATERIALS||{}).filter(([,m])=>m&&!m.endgame).map(([key,m])=>({kind:'material',key,label:m.name,rarity:m.rarity}));
+ return{gear,materials}
+}
+function allowedDrop(raw){
+ if(!raw||!['gear','material'].includes(raw.kind))return null;
+ const catalog=lootCatalog(),source=(raw.kind==='gear'?catalog.gear:catalog.materials).find(x=>x.key===String(raw.key||''));
+ if(!source)return null;
+ const chance=Math.max(0,Math.min(100,Math.round(Number(raw.chance)||0)));
+ const quantity=raw.kind==='gear'?1:Math.max(1,Math.min(5,Math.round(Number(raw.quantity)||1)));
+ return{kind:raw.kind,key:source.key,chance,quantity}
+}
+function rollBossLoot(step,{random=Math.random}={}){
+ const drops=Array.isArray(step?.drops)?step.drops.slice(0,6):[];
+ const valid=drops.map(allowedDrop).filter(Boolean),gear=valid.filter(d=>d.kind==='gear');
+ if(gear.length>2||gear.reduce((sum,d)=>sum+d.chance,0)>100)return[];
+ return valid.filter(d=>d.chance>0&&random()*100<d.chance)
+}
+async function awardBossLoot(step,source,claimed,ledger,{preview=false,raid=false,random=Math.random}={}){
+ if(preview||raid||!step||!claimed||!ledger||claimed.has(step.id))return[];
+ // Mark the encounter before any async save, preventing double claims on repeated callbacks.
+ claimed.add(step.id);
+ const G=window.CellboundGear,Game=window.CellboundGame;
+ if(!Game?.ready||!Game.addBankItem||!Game.addMaterial)return[];
+ const awarded=[];
+ for(const drop of rollBossLoot(step,{random})){
+  if(drop.kind==='gear'){
+   const base=G?.byId?.(drop.key);
+   if(!base?.dropEnabled||!base?.enabled||base.tier>2||base.raidExclusive)continue;
+   const item=G.rollItemAffixes({...base,source});
+   Game.addBankItem(item);awarded.push({kind:'gear',name:item.name,quantity:1,tier:item.tier,source})
+  }else{
+   const info=window.CellboundProfessions?.MATERIALS?.[drop.key];
+   if(!info||info.endgame)continue;
+   Game.addMaterial(drop.key,drop.quantity);awarded.push({kind:'material',name:info.name,quantity:drop.quantity,source})
+  }
+ }
+ ledger.push(...awarded);
+ if(awarded.length){
+  const state=Game.getState?.();
+  if(state){state.activity=Array.isArray(state.activity)?state.activity:[];state.activity.push(source+' · Boss loot: '+awarded.map(x=>x.name+(x.quantity>1?' ×'+x.quantity:'')).join(', ')+'.')}
+  Game.save?.();await Game.persistState?.();Game.renderAll?.()
+ }
+ return awarded
+}
+function bossLootNotice(step,awarded){
+ return new Promise(resolve=>{
+  const description=awarded.length
+   ?'<div class="dbo-loot-list">'+awarded.map(item=>'<div><span>'+esc(item.kind==='gear'?'◆':'◇')+'</span><b>'+esc(item.name)+'</b><small>'+esc(item.kind==='gear'?'Equipment · Guild Bank':'Reagents · Materials')+'</small><strong>×'+item.quantity+'</strong></div>').join('')+'</div>'
+   :'<p>Nothing dropped from this encounter.</p>';
+  const root=modal({title:step.title,type:'Boss defeated',text:awarded.length?'The following rewards were added to your Guild Bank and materials.':'This boss has no reward roll this time.'},description,'<button type="button" class="primary" data-db-loot-next>CONTINUE →</button>');
+  if(!root)return resolve();
+  root.querySelector('[data-db-loot-next]').onclick=resolve
+ })
+}
+
 function registerMinigame(template){
  if(!template||!/^[a-z0-9-]{3,64}$/.test(template.id)||typeof template.play!=='function')throw new Error('A minigame needs an ID and a playable handler.');
  if(templates.has(template.id))throw new Error('Duplicate minigame template '+template.id);
@@ -77,7 +137,8 @@ function cleanBlueprint(x){
    enemies:String(s.enemies||'Enemy').slice(0,280),enemyHealth:Math.max(30,Math.min(50000,Number(s.enemyHealth)||750)),
    mechanic:['none','circle','line','interrupt','adds'].includes(s.mechanic)?s.mechanic:'none',template:String(s.template||'choice').slice(0,64),
    prompt:String(s.prompt||'').slice(0,300),choices:choicesFor(s),answer:Math.max(0,Number(s.answer)||0),
-   sequence:(Array.isArray(s.sequence)?s.sequence:[0,1,2]).slice(0,8).map(n=>Math.max(0,Number(n)||0))
+   sequence:(Array.isArray(s.sequence)?s.sequence:[0,1,2]).slice(0,8).map(n=>Math.max(0,Number(n)||0)),
+   drops:s.type==='fight'?(Array.isArray(s.drops)?s.drops:[]).slice(0,6).map(allowedDrop).filter(Boolean):[]
   }))}
 }
 async function refresh(force=false){
@@ -96,7 +157,7 @@ function mountCards(type){
  const rows=[...published.values()].filter(x=>x.content_type===type);
  host.hidden=!rows.length;
  if(!rows.length){host.innerHTML='';return}
- host.innerHTML='<div class="dbo-public-head"><small>DESIGN BOOTH ADVENTURES</small><h3>New '+(type==='quest'?'Quests':type==='dungeon'?'Dungeons':'Raids')+'</h3><p>Created with the Cellbound Design Booth. No gear, currency or quest progression rewards are granted by custom content yet.</p></div><div class="dbo-public-grid">'+rows.map(r=>'<article><small>'+esc(type.toUpperCase())+' · '+cleanBlueprint(r.blueprint).steps.length+' STAGES</small><h4>'+esc(r.title)+'</h4><p>'+esc(cleanBlueprint(r.blueprint).summary)+'</p><button type="button" data-db-play="'+esc(r.id)+'">PLAY ADVENTURE →</button></article>').join('')+'</div>';
+ host.innerHTML='<div class="dbo-public-head"><small>DESIGN BOOTH ADVENTURES</small><h3>New '+(type==='quest'?'Quests':type==='dungeon'?'Dungeons':'Raids')+'</h3><p>Created with the Cellbound Design Booth. Boss-specific gear and reagent drops are available in quests and dungeons. Raid prototypes and owner previews remain reward-free.</p></div><div class="dbo-public-grid">'+rows.map(r=>'<article><small>'+esc(type.toUpperCase())+' · '+cleanBlueprint(r.blueprint).steps.length+' STAGES</small><h4>'+esc(r.title)+'</h4><p>'+esc(cleanBlueprint(r.blueprint).summary)+'</p><button type="button" data-db-play="'+esc(r.id)+'">PLAY ADVENTURE →</button></article>').join('')+'</div>';
  host.querySelectorAll('[data-db-play]').forEach(btn=>btn.onclick=()=>play(btn.dataset.dbPlay))
 }
 function renderCards(){mountCards('quest');mountCards('dungeon');mountCards('raid')}
@@ -108,7 +169,7 @@ async function play(id,override=null){
  const party=window.CellboundGame?.getPartyCharacters?.()||[];
  if(party.length!==5){alert('Build a five-character party before entering.');return}
  if(party.some(c=>Number(c.level||1)<b.level)){alert('Every character must be at least level '+b.level+'.');return}
- const token=++activeSession;let completed=true;playing=true;document.body.classList.add('dbo-adventure-open');
+ const token=++activeSession,claimed=new Set(),earned=[];let completed=true;playing=true;document.body.classList.add('dbo-adventure-open');
  try{
   for(let i=0;i<b.steps.length;i++){
    if(token!==activeSession)return;
@@ -124,6 +185,11 @@ async function play(id,override=null){
     const won=await window.CellboundQuests?.runQuest2DFight?.({quest:row.title,title:step.title,location:row.title,ambience:step.text,presentationKind:row.content_type==='quest'?'quest':'dungeon',enemies:enemies.length?enemies:['Enemy'],environmentMarkup:markup,combat,noLossPenalty:true,autoContinueOnVictory:true,autoContinueDelayMs:650,completeText:'The way ahead is clear.'});
     if(token!==activeSession)return;
     if(won!==true){completed=false;break}
+    if(Array.isArray(step.drops)&&step.drops.length){
+     const rewards=await awardBossLoot(step,row.title+' · '+step.title,claimed,earned,{preview:Boolean(override),raid:row.content_type==='raid'});
+     if(token!==activeSession)return;
+     if(!override&&row.content_type!=='raid'){await bossLootNotice(step,rewards);if(token!==activeSession)return}
+    }
    }else if(step.type==='minigame'){
     const puzzle=templates.get(step.template)||templates.get('choice');
     const cleared=await puzzle.play(step);
@@ -138,7 +204,8 @@ async function play(id,override=null){
    }
   }
   if(token===activeSession)await new Promise(resolve=>{
-   const end=modal({title:completed?'Adventure complete':'Adventure ended',type:row.content_type,text:completed?'You reached the end of '+row.title+'. This design-booth adventure is currently reward-free.':'Your party did not clear the encounter. Return when you are ready.'},'<h3>'+(completed?'RUN COMPLETE':'RUN FAILED')+'</h3>','<button type="button" class="primary" data-db-finish>RETURN TO GAME →</button>');
+   const items=earned.map(item=>'<li>'+esc(item.name)+' ×'+item.quantity+' · '+esc(item.source)+'</li>').join('');
+   const end=modal({title:completed?'Adventure complete':'Adventure ended',type:row.content_type,text:completed?'You reached the end of '+row.title+'.':'Your party did not clear the encounter. Return when you are ready.'},'<h3>'+(completed?'RUN COMPLETE':'RUN FAILED')+'</h3><p>'+(earned.length?'Boss loot already secured to your guild:':'No boss loot acquired this run.')+'</p>'+(items?'<ul>'+items+'</ul>':''),' <button type="button" class="primary" data-db-finish>RETURN TO GAME →</button>');
    if(!end)return resolve();
    end.querySelector('[data-db-finish]').onclick=resolve
   })
@@ -151,6 +218,6 @@ function bind(){
  const boot=async()=>{for(let i=0;i<80&&!window.CellboundGame?.ready;i++)await new Promise(r=>setTimeout(r,150));await refresh();renderCards()};
  boot()
 }
-window.CellboundDesignedContent={refresh,renderCards,play,stop,cleanBlueprint,artUrl,registerMinigame,templates:()=>[...templates.values()].map(({id,label,description})=>({id,label,description}))};
+window.CellboundDesignedContent={refresh,renderCards,play,stop,cleanBlueprint,artUrl,lootCatalog,rollBossLoot,registerMinigame,templates:()=>[...templates.values()].map(({id,label,description})=>({id,label,description}))};
 bind()
 })();
