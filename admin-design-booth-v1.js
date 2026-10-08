@@ -126,7 +126,12 @@ function validate(){
   if(s.type==='comic'&&s.panels.some(p=>!p.artPath))errors.push(label+': comic artwork missing.');
   if((s.type==='room'||s.type==='fight')&&!s.artPath)errors.push(label+': room or battle background missing.');
   if(s.type==='fight'&&!s.enemies.trim())errors.push(label+': add enemy names.');
-  if(s.type==='minigame'&&!runtime()?.templates().some(t=>t.id===s.template))errors.push(label+': unregistered minigame template '+s.template);
+  if(s.type==='minigame'){
+   if(!runtime()?.templates?.().some(t=>t.id===s.template))errors.push(label+': choose a supported minigame.');
+   if(!Array.isArray(s.choices)||s.choices.length<2)errors.push(label+': enter at least two choices, one per line.');
+   if(s.template==='choice'&&(!Number.isInteger(s.answer)||s.answer<0||s.answer>=(s.choices?.length||0)))errors.push(label+': select a correct answer within the available choices.');
+   if(s.template==='sequence'&&(!s.sequence?.length||s.sequence.some(i=>!Number.isInteger(i)||i<0||i>=(s.choices?.length||0))))errors.push(label+': correct order must refer to the choices you listed.');
+  }
   if(s.type==='fight'){
    const raw=project.steps[i]?.drops||[],valid=s.drops||[];
    if(raw.length>6)errors.push(label+': maximum six drop rows per boss.');
@@ -208,6 +213,8 @@ function collect(){
    const s=project.steps[stepIndex];if(!s)continue;
    const sub=key.slice(5);
    if(sub==='choices')s.choices=value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,5);
+    else if(sub==='answerFriendly')s.answer=Number(value)-1;
+    else if(sub==='sequenceFriendly')s.sequence=value.split(/[,\s]+/).filter(Boolean).map(v=>Number(v)-1).slice(0,8);
    else if(sub==='sequence')s.sequence=value.split(',').map(Number).filter(Number.isFinite).map(x=>Math.round(x)).slice(0,8);
    else if(['enemyHealth','answer'].includes(sub))s[sub]=Number(value)||0;
    else s[sub]=value;
@@ -296,7 +303,7 @@ function stageFields(s){
  }
  if(s.type==='fight')extra='<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>'+imageControl(s)+'<button type="button" class="dbo-manage-drops" id="dboGoToDrops">MANAGE THIS BOSS\'S LOOT →</button>';
  if(s.type==='room')extra=imageControl(s);
- if(s.type==='minigame')extra='<div class="dbo-form-grid">'+field('Template','step.template',s.template,{kind:'select',opts:(runtime()?.templates?.()||[]).map(t=>({value:t.id,label:t.label}))})+field('Puzzle instruction','step.prompt',s.prompt,{kind:'textarea'})+field('Choices (one per line)','step.choices',s.choices.join('\n'),{kind:'textarea'})+field('Correct choice index · starts at 0','step.answer',s.answer,{kind:'number'})+field('Sequence indices · comma-separated','step.sequence',s.sequence.join(','))+'</div>'+imageControl(s);
+ if(s.type==='minigame')extra='<div class="dbo-form-grid">'+field('Template','step.template',s.template,{kind:'select',opts:(runtime()?.templates?.()||[]).map(t=>({value:t.id,label:t.label}))})+field('Puzzle instruction','step.prompt',s.prompt,{kind:'textarea'})+field('Choices (one per line)','step.choices',s.choices.join('\n'),{kind:'textarea'})+(s.template==='choice'?field('Which answer is correct? (1 = first choice)','step.answerFriendly',(Number(s.answer)||0)+1,{kind:'number'}):field('Correct order (example: 1, 3, 2)','step.sequenceFriendly',s.sequence.map(i=>Number(i)+1).join(', ')))+'</div>'+imageControl(s);
  return'<div class="dbo-stage-fields">'+field('Stage title','step.title',s.title)+field('Stage type','step.type',s.type,{kind:'select',opts:[{value:'comic',label:'Comic Strip'},{value:'room',label:'Room / Transition'},{value:'fight',label:'Combat Encounter'},{value:'minigame',label:'Minigame'}]})+field('Description / narration','step.text',s.text,{kind:'textarea'})+extra+'</div>'
 }
 function reviewHTML(){
