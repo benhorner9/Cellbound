@@ -1397,5 +1397,6 @@ require('./tests/beta-analytics.cjs');
 require('./tests/admin-ux.cjs');
 require('./tests/comic-scene-editor.cjs');
 require('./tests/room-art-uploads.cjs');
+require('./tests/design-booth.cjs');
 require('./tests/living-combat.authority.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}
