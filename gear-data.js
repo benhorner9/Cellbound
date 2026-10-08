@@ -368,7 +368,7 @@ CLASS_ORDER.forEach((klass,classIndex)=>{[1,2,3,4,5].forEach(tier=>{SLOT_ORDER.f
 const byId=id=>items.find(x=>x.itemId===id)||null;
 const byName=name=>items.find(x=>x.name===name)||null;
 const starterSet=klass=>CORE_SLOT_ORDER.map(slot=>items.find(x=>x.class===klass&&x.tier===1&&x.slot===slot));
-const poolForTier=tier=>items.filter(x=>x.tier===tier&&x.enabled&&x.dropEnabled);
+const poolForTier=tier=>items.filter(x=>x.tier===tier&&x.enabled&&x.dropEnabled&&!x.designedItem);
 const rand=(min,max)=>min+Math.floor(Math.random()*(max-min+1));
 function statRange(key,tier){
   const t=Math.max(1,Math.min(5,Number(tier)||1));
