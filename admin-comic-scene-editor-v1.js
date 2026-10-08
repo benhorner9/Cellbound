@@ -170,7 +170,7 @@ function statusLabel(s){return s==='missing'?'NO ART':s==='reused'?'REUSED ART':
 function panelMarkup(p,i){
  const st=state(p);
  return'<article class="cse-panel"><div class="cse-art">'+(p.artwork?'<img data-cse-image src="'+esc(p.artwork)+'" alt="Comic panel '+(i+1)+'" loading="lazy">':'<div class="cse-no-art">NO ARTWORK</div>')+'<span>PANEL '+(i+1)+'</span><em class="'+st+'">'+statusLabel(st)+'</em></div>'+
- '<div class="cse-fields"><label>ARTWORK PATH<input data-art="'+i+'" value="'+esc(p.artwork||'')+'" placeholder="./assets/comics/…"></label><label>CAPTION TITLE<input data-title="'+i+'" value="'+esc(p.title||'')+'"></label><label>STORY TEXT<textarea data-text="'+i+'" rows="3">'+esc(p.text||'')+'</textarea></label></div></article>'
+ '<div class="cse-fields"><label>ARTWORK PATH<input data-art="'+i+'" value="'+esc(p.artwork||'')+'" placeholder="./assets/comics/…"></label><label>CAPTION TITLE<input data-title="'+i+'" value="'+esc(p.title||'')+'"></label><label>STORY TEXT<textarea data-text="'+i+'" rows="3">'+esc(p.text||'')+'</textarea></label><div class="cse-upload-tools"><label>UPLOAD ARTWORK<input data-upload-file="'+i+'" type="file" accept="image/webp,image/jpeg,image/png,image/avif"></label><button type="button" data-upload-publish="'+i+'" disabled>UPLOAD &amp; PUBLISH</button><small data-upload-status="'+i+'">Choose a WebP, JPEG, PNG or AVIF image (maximum 8 MB).</small></div></div></article>'
 }
 function render(){
  const root=$('#comicSceneEditorMount');if(!root||!opened||!owner())return;
@@ -199,6 +199,46 @@ function save(){
 async function copy(str){
  try{await navigator.clipboard.writeText(str);message('Copied to clipboard.')}catch{const t=document.createElement('textarea');t.value=str;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();message('Copied to clipboard.')}
 }
+function bindArtUploads(scene){
+ const pending=new Map(),client=window.CellboundGame?.getSupabase?.();
+ const root=$('#comicSceneEditorMount');
+ const status=(index,text)=>{const item=root?.querySelector('[data-upload-status="'+index+'"]');if(item)item.textContent=text};
+ root?.querySelectorAll('[data-upload-file]').forEach(input=>input.addEventListener('change',()=>{
+  const index=Number(input.dataset.uploadFile),selectedFile=input.files?.[0];
+  const button=root.querySelector('[data-upload-publish="'+index+'"]');
+  if(button)button.disabled=true;
+  pending.delete(index);
+  if(!selectedFile)return;
+  if(!['image/webp','image/jpeg','image/png','image/avif'].includes(selectedFile.type)){status(index,'Unsupported format. Use WebP, JPEG, PNG or AVIF.');return}
+  if(selectedFile.size>8*1024*1024){status(index,'Image is too large. Maximum file size is 8 MB.');return}
+  pending.set(index,selectedFile);if(button)button.disabled=false;
+  status(index,'Selected '+selectedFile.name+'. Press Publish to replace this panel in the game.');
+  const art=input.closest('.cse-panel')?.querySelector('.cse-art');
+  if(art){
+   let img=art.querySelector('img');
+   if(!img){img=document.createElement('img');img.alt='Selected artwork preview';art.prepend(img)}
+   const url=URL.createObjectURL(selectedFile);img.src=url;
+   img.addEventListener('load',()=>URL.revokeObjectURL(url),{once:true})
+  }
+ }));
+ root?.querySelectorAll('[data-upload-publish]').forEach(button=>button.addEventListener('click',async()=>{
+  const index=Number(button.dataset.uploadPublish),chosen=pending.get(index),comic=window.CellboundComicScenes;
+  if(!owner()||!chosen||!client||!comic?.sceneKey||!scene.config){status(index,'Scene is not linked to a live comic yet.');return}
+  button.disabled=true;button.textContent='UPLOADING…';status(index,'Publishing comic artwork…');
+  try{
+   const user=await client.auth.getUser();
+   if(user.error||!user.data?.user?.id)throw Error('Sign in as the owner to publish.');
+   const sceneId=comic.sceneKey(scene.config),ext=({'image/webp':'webp','image/jpeg':'jpg','image/png':'png','image/avif':'avif'})[chosen.type];
+   const path=sceneId+'/'+index+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,10)+'.'+ext;
+   const stored=await client.storage.from('comic-scene-art').upload(path,chosen,{contentType:chosen.type,cacheControl:'31536000',upsert:false});
+   if(stored.error)throw stored.error;
+   const saved=await client.from('comic_scene_panel_art').upsert({scene_id:sceneId,panel_index:index,object_path:path,updated_by:user.data.user.id,updated_at:new Date().toISOString()},{onConflict:'scene_id,panel_index'});
+   if(saved.error)throw saved.error;
+   await comic.reloadArt();
+   pending.delete(index);render();message('Artwork published. Players will see it the next time this story opens.');
+  }catch(error){status(index,'Upload failed: '+(error?.message||String(error)));button.disabled=false;button.textContent='UPLOAD & PUBLISH'}
+ }))
+}
 function bind(s){
  $('#cseClose').onclick=close;
  $('#cseExport').onclick=()=>copy(JSON.stringify({version:1,scenes:drafts},null,2));
@@ -215,7 +255,7 @@ function bind(s){
   if(!draft||!renderer?.show){message('Comic renderer unavailable.');return}
   loading=true;
   try{await renderer.show({...(s.config||{}),eyebrow:'OWNER PREVIEW · NO PROGRESS SAVED',
-   title:draft.title,subtitle:draft.speaker,panels:draft.panels,choices:[],reveals:[],
+   title:s.config?.title||draft.title,subtitle:s.config?.subtitle||draft.speaker,panels:draft.panels,choices:[],reveals:[],
    progressive:true,storyOnly:true,allowSkip:true,skipLabel:'CLOSE',nextLabel:'NEXT →',continueLabel:'CLOSE PREVIEW →'})}
   finally{loading=false}
  }
@@ -224,7 +264,7 @@ async function open(){
  if(!owner()||loading)return;
  const root=$('#comicSceneEditorMount');if(!root)return;
  opened=true;root.hidden=false;loading=true;root.textContent='Scanning story scenes…';
- try{await discover()}catch(e){warning=String(e)}
+ try{await window.CellboundComicScenes?.loadArt?.();await discover()}catch(e){warning=String(e)}
  loading=false;if(!opened)return;render();requestAnimationFrame(()=>root.scrollIntoView({behavior:'smooth',block:'start'}))
 }
 function close(){opened=false;const root=$('#comicSceneEditorMount');if(root){root.hidden=true;root.innerHTML=''}}
