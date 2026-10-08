@@ -74,6 +74,11 @@ jobs:
           node tests/item-visuals-v2.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/item-visuals-v2.browser.cjs
 
+      - name: Manor owner QA gameplay regression
+        run: |
+          node tests/gameplay-regression.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/gameplay-regression.browser.cjs
+
       - name: Full game browser playthrough
         run: |
           node tests/full-playthrough.browser.cjs
