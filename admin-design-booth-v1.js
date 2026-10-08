@@ -175,7 +175,7 @@ function imageControl(s,panel=null){
 function lootDropOptions(kind,selected=''){
  const catalog=runtime()?.lootCatalog?.()||{gear:[],materials:[]};
  const rows=(kind==='gear'?catalog.gear:catalog.materials);
- return rows.map(it=>'<option value="'+esc(it.key)+'" '+(selected===it.key?'selected':'')+'>'+esc(kind==='gear'?'T'+it.tier+' · '+it.klass+' · '+it.name:it.name+' · '+it.rarity)+'</option>').join('')
+ return rows.map(it=>'<option value="'+esc(it.key)+'" '+(selected===it.key?'selected':'')+'>'+esc(kind==='gear'?'T'+it.tier+' · '+it.klass+' · '+it.label:it.label+' · '+it.rarity)+'</option>').join('')
 }
 function describeDrop(drop){
  const catalog=runtime()?.lootCatalog?.()||{gear:[],materials:[]};
