@@ -1,5 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict');
+require('./item-catalog.cjs');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const html=read('guild.html'),master=read('admin-design-booth-v1.js'),runtime=read('design-booth-content-v1.js'),css=read('admin-design-booth-v1.css');
@@ -11,13 +12,14 @@ for(const old of ['admin-card admin-generator-entry','admin-card admin-character
  assert(!html.includes(old),'Old separate editor card must not be visible: '+old);
 for(const old of ['dungeonGeneratorMount','characterFitViewerMount','roomEditorMount','comicSceneEditorMount'])
  assert(master.includes('id="'+old+'"'),'Working legacy editor must remain an internal Design Booth tool: '+old);
-for(const name of ['admin-design-booth-v1.js','admin-design-booth-v1.css','design-booth-content-v1.js','boss-drop-tables-v1.js'])
+for(const name of ['admin-design-booth-v1.js','admin-design-booth-v1.css','design-booth-content-v1.js','boss-drop-tables-v1.js','admin-item-catalog-v1.js'])
  assert(manifests.includes(name),'Design Booth asset must be built: '+name);
 for(const needle of ['cellbound_design_blueprints','draft_blueprint','cellbound-design-art','only owner','published','enable row level security','cellbound_is_owner'])
  assert(schema.toLowerCase().includes(needle),'Secure design blueprint migration missing: '+needle);
 for(const needle of ['cellbound_boss_drop_tables','cellbound_is_owner','enable row level security','for select','for insert','for update','for delete'])
  assert(dropSchema.toLowerCase().includes(needle),'Shared boss drop-table schema must be owner-protected: '+needle);
 assert(html.includes('boss-drop-tables-v1.js'),'Shared native boss loot runtime must be loaded');
+assert(html.includes('admin-item-catalog-v1.js')&&master.includes("id:'items'")&&master.includes('id="dboCatalog"'),'Owner admin must include the full item index panel');
 assert(master.includes("id:'drops'")&&master.includes('dboBossPicker')&&master.includes('function renderDrops'),'A standalone seventh Drop Tables tab must expose one selector for all bosses');
 assert(!master.includes("+'</div>'+imageControl(s)+lootEditor(s);"),'Embedded boss drop editor must be retired');
 assert(builtins.includes('function award(')&&builtins.includes('bossBonusDropClaims'),'Existing game boss loot hooks must avoid replay dupes');
@@ -91,7 +93,7 @@ assert(nativeAPI.bosses().length>=18,'Game bosses must appear in central selecto
  assert(master.includes('id="dboAddLoot"')&&master.includes('data-db-edit-row')&&master.includes('data-db-remove-drop'),'Boss drop table must expose add/edit/remove without opening each item first');
  assert(master.includes("it.label:it.label")&&!master.includes("it.name:it.name"),'Item selectors must use canonical loot catalogue display names');
  assert(css.includes('.dbo-loot-table-row')&&css.includes('.dbo-loot-prob')&&css.includes('@media(max-width:600px)'),'Loot overview must support readable iPad and phone layouts');
- assert(html.includes('admin-design-booth-v1.js?v=2')&&html.includes('admin-design-booth-v1.css?v=2'),'Safari must request updated Design Booth assets');
+ assert(html.includes('admin-design-booth-v1.js?v=3')&&html.includes('admin-design-booth-v1.css?v=3'),'Safari must request updated Design Booth assets');
 
  nativeWindow.CellboundDesignedContent=core;
  await nativeAPI.refresh(true);
@@ -105,5 +107,5 @@ assert(nativeAPI.bosses().length>=18,'Game bosses must appear in central selecto
  const next=core.templates().length;
  core.registerMinigame({id:'sigil-grid',label:'Sigil Grid',description:'Extensible puzzle',play:async()=>true});
  assert.equal(core.templates().length,next+1,'GPT-added minigame templates are independently registrable');
- console.log('Design Booth regression passed: one master entry, old tools embedded, quest/dungeon/raid mounts, secure publishing schema, art storage, reusable minigame registry, a central seven-tab boss loot editor, legacy boss registry/RLS, restricted drops and blueprint caps.');
+ console.log('Design Booth regression passed: one master entry, old tools embedded, quest/dungeon/raid mounts, secure publishing schema, art storage, reusable minigame registry, a central eight-tab boss loot editor and item catalogue, legacy boss registry/RLS, restricted drops and blueprint caps.');
 })().catch(e=>{console.error(e);process.exitCode=1});

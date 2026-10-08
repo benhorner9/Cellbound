@@ -10,6 +10,7 @@ const STORE='cellbound-design-booth-workspace-v1';
 const TOOLS=[
  {id:'build',label:'Adventure Builder',sub:'Quest · dungeon · raid'},
  {id:'drops',label:'Drop Tables',sub:'Boss loot · chances'},
+ {id:'items',label:'Item Catalogue',sub:'All tiers · classes · export'},
  {id:'comics',label:'Comic Art',sub:'Existing story scenes'},
  {id:'rooms',label:'Room Layouts',sub:'Existing dungeons & raid'},
  {id:'generator',label:'Dungeon Planner',sub:'Legacy advanced generator'},
@@ -327,6 +328,7 @@ function renderDrops(){
  const bad=validateLootRows(current?.drops||[]);
  root.innerHTML='<section class="dbo-drops-main"><header class="dbo-drops-head"><small>CELLBOUND · LOOT MANAGEMENT</small><h3>Drop Tables</h3><p>Select any boss, then add or remove the rewards assigned to that encounter. Each drop has its own chance and quantity.</p></header>'+
  '<label class="dbo-drops-picker"><span>SELECT BOSS</span><select id="dboBossPicker">'+select+'</select></label>'+
+ '<div class="dbo-catalog-shortcut"><span>Need to check which items exist, their tier or class?</span><button type="button" id="dboGoToItemCatalog">BROWSE ITEM CATALOGUE →</button></div>'+
  '<div class="dbo-drops-status"><b>'+esc(target.title)+'</b><small>'+esc(native?'EXISTING GAME BOSS · ADDITIONAL DROP TABLE':target.type.toUpperCase()+' · DESIGN BOOTH PROJECT')+'</small></div>'+
  (native?'<div class="dbo-native-default"><small>EXISTING GAME REWARDS · NOT OVERRIDDEN</small><p>'+esc((window.CellboundBossDropTables?.bosses?.()||[]).find(b=>b.key===target.key)?.baseRewards||'Original game rewards remain unchanged.')+'</p></div><p class="dbo-loot-notice">This screen manages <b>extra boss drops</b>. Original dungeon drops, rare items, guaranteed completion rewards and Tier 5 raid rewards still follow their existing game rules. '+(target.raid?'Manor raid bonus rewards are in planning mode and will not award to players yet.':'Additional drops are sent to the Bank when this boss is defeated.')+'</p>':
  '<p class="dbo-loot-notice">This is the full drop table for this designed encounter. Changes save to its project draft; press Publish to make them available in-game.</p>')+
@@ -351,6 +353,7 @@ function applyLootFilters(){
 
 function bindDrops(){
  const host=$('#dboDrops');if(!host)return;
+ host.querySelector('#dboGoToItemCatalog')?.addEventListener('click',()=>{collect();setTab('items')});
  host.querySelector('#dboBossPicker')?.addEventListener('change',e=>{
   collect();
   selectedDropBoss=e.target.value;message='';dropEditIndex=-1;dropSearch='';dropTier='all';
@@ -411,10 +414,11 @@ function setTab(id){
  if(id!==active&&(active==='build'||active==='drops'))collect();
  for(const [tab,mount] of Object.entries(mountIds)){const el=$('#'+mount);if(el)el.hidden=true;if(tab!==id)toolApi(tab)?.close?.()}
  active=id;
- const panel=$('#dboWorkbench'),library=$('#dboTemplates'),drops=$('#dboDrops');if(panel)panel.hidden=id!=='build';if(library)library.hidden=id!=='templates';if(drops)drops.hidden=id!=='drops';
+ const panel=$('#dboWorkbench'),library=$('#dboTemplates'),drops=$('#dboDrops'),catalog=$('#dboCatalog');if(panel)panel.hidden=id!=='build';if(library)library.hidden=id!=='templates';if(drops)drops.hidden=id!=='drops';if(catalog)catalog.hidden=id!=='items';
  document.querySelectorAll('[data-dbo-tool]').forEach(el=>{el.classList.toggle('active',el.dataset.dboTool===id);el.setAttribute('aria-selected',el.dataset.dboTool===id?'true':'false')});
  if(id==='build')renderBuilder();
  else if(id==='drops')renderDrops();
+ else if(id==='items')window.CellboundItemCatalog?.render?.();
  else if(id==='templates')renderTemplates();
  else{const mount=$('#'+mountIds[id]);if(mount)mount.hidden=false;toolApi(id)?.open?.()}
 }
@@ -422,7 +426,7 @@ function render(){
  const root=$('#designBoothMount');if(!root||!opened||!owner())return;
  root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · OWNER CREATIVE TOOLS</small><h2>Design Booth</h2><p>Build adventures stage by stage, inspect the existing game, and publish artwork and playable content from one place.</p></div><button id="dboClose" type="button">CLOSE DESIGN BOOTH ×</button></header>'+
  '<nav class="dbo-tabs" role="tablist">'+TOOLS.map(t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>').join('')+'</nav>'+
- '<div id="dboWorkbench"></div><div id="dboDrops" hidden></div><div id="dboTemplates" hidden></div>'+
+ '<div id="dboWorkbench"></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
  root.querySelectorAll('[data-dbo-tool]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool));
