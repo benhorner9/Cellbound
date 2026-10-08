@@ -51,7 +51,7 @@
 .dbo-review{border:1px solid #475b50;border-radius:11px;padding:12px 14px;background:#1b2927;margin:19px 0}
 .dbo-review h4{margin:0;font-size:13px;color:#d4b889}.dbo-review p{color:#ceddd8;font-size:12px;line-height:1.5;margin:6px 0}
 .dbo-footer .primary,.dbo-public-grid button,.dbo-player-panel button.primary{background:#3a6c52!important;border-color:#7aa488!important;color:#f0fff7!important}
-#dboMessage{font-size:12px;color:#c7b384;line-height:1.5}
+[data-dbo-message]{font-size:12px;color:#c7b384;line-height:1.5}
 .dbo-template-library{padding:24px}.dbo-template-library h3{font-family:Georgia,serif;font-size:24px}.dbo-template-library p{line-height:1.5;color:#bdccd3}
 .dbo-public-head{margin:28px 0 14px}.dbo-public-head h3{font-family:Georgia,serif;margin:4px 0}.dbo-public-head p{max-width:800px;color:#97a8ae}
 .dbo-public-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:15px 0 25px}
@@ -201,3 +201,29 @@
 
 .dbo-catalog-shortcut{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:1px dashed #6b785d;background:#1b2928;color:#cedfd4;border-radius:9px;padding:10px 14px;margin:12px 0;font-size:12px}
 .dbo-catalog-shortcut button{border:1px solid #a9936f;background:#364236;color:#f3e4c5;font-size:11px;font-weight:850;min-height:40px;padding:10px 14px;border-radius:7px}
+
+/* Task-first Design Booth workflow. Keep the core tools easy to find on iPad. */
+.dbo-quickstart{display:grid;grid-template-columns:minmax(180px,.9fr) minmax(0,2.5fr);align-items:center;gap:18px;padding:18px 22px;border-bottom:1px solid #38514f;background:#172624}
+.dbo-quickstart h3{margin:0 0 5px;font:700 19px Georgia,serif;color:#f4e9d6}
+.dbo-quickstart p{margin:0;color:#b9cec5;font-size:12px;line-height:1.5}
+.dbo-quick-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.dbo-quick-actions button{min-height:52px;text-align:left;padding:10px 11px;border:1px solid #647b6f;border-radius:9px;background:#223932;color:#f0f8ed;font-weight:750;font-size:12px}
+.dbo-quick-actions button.active,.dbo-quick-actions button:focus-visible{border-color:#dfba79;background:#405044;outline:2px solid transparent}
+.dbo-tabs:not(.dbo-tabs-more){grid-template-columns:repeat(5,minmax(0,1fr))}
+.dbo-tabs-more{grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #374a4b}
+.dbo-more,.dbo-help{background:#142128;color:#d3ddd8;border-bottom:1px solid #34464b}
+.dbo-more>summary,.dbo-help>summary{cursor:pointer;min-height:46px;padding:13px 21px;font-size:12px;font-weight:800;color:#e4d1b1;touch-action:manipulation}
+.dbo-more>summary:focus-visible,.dbo-help>summary:focus-visible,.dbo-quick-actions button:focus-visible{outline:2px solid #ebc38f;outline-offset:-2px}
+.dbo-help{background:#111d23}.dbo-help>summary{font-size:12px;color:#bad4d2}
+.dbo-help ol{margin:0 20px 8px;padding:0 12px 0 18px;display:grid;gap:8px;font-size:13px;line-height:1.6}
+.dbo-help p{margin:0;padding:0 21px 15px;color:#a5bfbb;font-size:12px;line-height:1.5}
+.dbo-save-state{display:inline-block;margin-top:10px;padding:6px 10px;border:1px solid #537e65;border-radius:7px;color:#b7e5c3;font-size:11px;font-weight:800}
+.dbo-save-state.dirty{border-color:#b89869;color:#ffe0ac}
+.dbo-review-list{margin:10px 0 12px;padding-left:19px;display:grid;gap:8px;font-size:12px}
+.dbo-review-list li{padding-left:2px;line-height:1.45;color:#ecd7b1}
+.dbo-review-list button{padding:8px 10px;text-align:left;min-height:40px;width:100%;border:1px solid #5e746b;border-radius:7px;background:#203932;color:#f5e0b7;font-size:12px}
+.dbo-review-list button:hover,.dbo-review-list button:focus-visible{border-color:#e7b976;outline-offset:2px}
+.dbo-project-list button small{line-height:1.4}
+@media(max-width:1100px){.dbo-quickstart{grid-template-columns:1fr}.dbo-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.dbo-quickstart{padding:14px}.dbo-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-quick-actions button{min-height:48px}.dbo-tabs:not(.dbo-tabs-more){grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-tabs-more{grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-more>summary,.dbo-help>summary{padding:13px 14px}.dbo-review-list{padding-left:17px}}
+@media(prefers-reduced-motion:reduce){.dbo-shell *{scroll-behavior:auto!important}}
