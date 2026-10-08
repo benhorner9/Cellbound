@@ -30,3 +30,7 @@
 .rqe-json{margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px}.rqe-json pre{white-space:pre-wrap;word-break:break-word;max-height:170px;overflow:auto;background:#070b0d;border-radius:8px;padding:9px;font-size:9px;color:#a9c5d1}
 @media(max-width:1050px){.rqe-grid{grid-template-columns:1fr}.rqe-side{border-left:0;border-top:1px solid rgba(255,255,255,.09)}.rqe-audit{max-height:none}.rqe-toolbar{grid-template-columns:1fr 1fr}.rqe-head{flex-direction:column}.rqe-head-actions{justify-content:flex-start}}
 @media(max-width:700px){.rqe-toolbar{grid-template-columns:1fr}.rqe-main{padding:10px}.rqe-grid{min-height:0}.rqe-marker{min-width:30px;height:30px}.rqe-head{padding:16px}.rqe-room-meta{flex-direction:column}.rqe-room-nav{width:100%}.rqe-room-nav button{flex:1}}
+
+.rqe-manor-runtime{position:absolute;inset:0;overflow:hidden;background:#080b0c}
+.rqe-manor-runtime .mr-room-scene{position:absolute!important;inset:0!important}
+.rqe-manor-runtime .mr-room-scene>img{pointer-events:none}
