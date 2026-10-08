@@ -738,6 +738,7 @@ async function ccRunFrom(startIndex,tok){
   $('#cc2dTitle').textContent=s.title;$('#cc2dRoute').innerHTML=ccRouteMarkup(s.id,false);
   if(!await fightStage(s,tok,i)){await ccSaveRuntime('failed');return}
   if(['boss','final'].includes(s.combatKind)){
+    await window.CellboundBossDropTables?.award?.('chaos-canyon:'+s.id,run.endgame?.attemptId||run.seed,'Chaos Canyon · '+s.title);
     const expired=window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'chaos-canyon:'+run.endgame?.attemptId+':'+s.id,state())||[];
     expired.forEach(x=>feed(x+' expired.'));Game.save?.();await Game.persistState?.()
   }
