@@ -13,6 +13,7 @@ const SOURCES=[
 const TUTORIAL=['arrival','west-wall','gear','hollows','loot','shock','craft','contract','departure'];
 const NULL_ART={signal:'voss-signal',entry:'facility-entry',splice:'first-aberrant',orin:'orin-recording',zero:'subject-zero',teleporter:'teleporter',overseer:'overseer-awakens',prototype:'prototype-07',escape:'escape',sting:'subject-zero-awake'};
 let scenes=[],selected='',filter='',group='all',gaps=false,opened=false,loading=false,warning='';
+const broken=new Set();
 let drafts={};try{drafts=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}
 const owner=()=>window.CellboundAdmin?.isAdmin===true&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
 function quotedEnd(s,i){const q=s[i++];while(i<s.length){if(s[i]==='\\'){i+=2;continue}if(s[i++]===q)break}return i}
@@ -60,7 +61,7 @@ function calls(src,name){
   from=at+key.length;
   if(/[\w$]/.test(src[at-1]||'')||/function\s+$/.test(src.slice(Math.max(0,at-18),at))||(name==='story'&&src[at-1]==='.'))continue;
   const b=bracket(src,at+name.length);if(!b)continue;
-  all.push({at,args:split(b.body)});from=b.end
+  all.push({at,args:split(b.body)})
  }
  return all
 }
@@ -83,7 +84,7 @@ function scanDialogue(src,path,category,name,c){
  if(name==='nullComic'){const match=String(c.args[3]).match(/NULL_ART\.([a-z]+)/);if(match&&NULL_ART[match[1]])art=['./assets/comics/null-complex/'+NULL_ART[match[1]]+'.webp'];origin='quest comic'}
  if(name==='story')note='Text-only scene in the current game. Needs dedicated comic artwork.';
  const line=src.slice(0,c.at).split('\n').length;
- return{id:path+':'+line,title,category,speaker,path,line,origin,note,panels:beats.map((text,i)=>panel(text,title,art.length?art[i%art.length]:'',i))}
+ return{id:path+':'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),title,category,speaker,path,line,origin,note,panels:beats.map((text,i)=>panel(text,title,art.length?art[i%art.length]:'',i))}
 }
 function scanBell(src,path,category,c){
  const obj=c.args[0];if(!obj||obj.trim()[0]!=='{')return null;
@@ -97,16 +98,24 @@ function scanBell(src,path,category,c){
   if(b)caption=split(b.body).map(x=>[literal(property(x,'title')),literal(property(x,'text'))].filter(Boolean).join(' — ')).filter(Boolean).join('\n');
  }
  const line=src.slice(0,c.at).split('\n').length;
- return{id:path+':'+line,title:page?page+' · '+title:title,category,speaker:'Greywake',path,line,origin:'dedicated comic',note:'The live strip displays a sequence of captions over its illustrated panel.',panels:[panel(caption,title,art,0)]}
+ return{id:path+':'+(page+'-'+title).toLowerCase().replace(/[^a-z0-9]+/g,'-'),title:page?page+' · '+title:title,category,speaker:'Greywake',path,line,origin:'dedicated comic',note:'The live strip displays a sequence of captions over its illustrated panel.',panels:[panel(caption,title,art,0)]}
 }
 function scanDirect(src,path,category,c){
  const obj=c.args[0];if(!obj||obj.trim()[0]!=='{')return null;
  const title=literal(property(obj,'title'));if(!title)return null;
  const line=src.slice(0,c.at).split('\n').length,raw=property(obj,'panels');
  const b=raw&&raw[0]==='['?bracket(raw,0):null;
- let panels=b?split(b.body).map((p,i)=>({kind:literal(property(p,'kind'))||'location',artwork:literal(property(p,'artwork'))||'',title:literal(property(p,'title'))||'',text:literal(property(p,'text'))||'',speaker:literal(property(p,'speaker'))||'',wide:true})):[];
+ let panels=b?split(b.body).map((p,i)=>{
+  const ref=property(p,'artwork'),key=ref.match(/NULL_ART\.([a-z]+)/);
+  const art=literal(ref)||(key&&NULL_ART[key[1]]?'./assets/comics/null-complex/'+NULL_ART[key[1]]+'.webp':'');
+  return{kind:literal(property(p,'kind'))||'location',artwork:art,title:literal(property(p,'title'))||'',text:literal(property(p,'text'))||'',speaker:literal(property(p,'speaker'))||'',wide:true}
+ }):[];
  if(!panels.length)panels=[panel('Dynamic scene: inspect this text in gameplay.',title,'',0)];
- return{id:path+':'+line,title,category,speaker:literal(property(obj,'subtitle'))||'',path,line,origin:'direct comic',note:'Some captions and images are dynamically assembled. Verify these in gameplay.',panels}
+ const rawReveals=property(obj,'reveals'),reveals=rawReveals&&rawReveals[0]==='['?bracket(rawReveals,0):null;
+ if(reveals){const captions=split(reveals.body).map(p=>literal(property(p,'text'))).filter(Boolean);
+  if(captions.length&&panels.length){panels[0].text=[panels[0].text,...captions].filter(Boolean).join('\n')}
+ }
+ return{id:path+':'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),title,category,speaker:literal(property(obj,'subtitle'))||'',path,line,origin:'direct comic',note:'Some captions and images are dynamically assembled. Verify these in gameplay.',panels}
 }
 async function discover(){
  const found=[],cfg=window.CellboundOnboarding?.tutorialComicConfig;
@@ -135,7 +144,7 @@ function combined(s){
 }
 function state(p){
  const art=String(p.artwork||'').trim();
- if(!art)return'missing';
+ if(!art||broken.has(art))return'missing';
  if(!/^(?:\.\/)?assets\/comics\//.test(art))return'reused';
  return'ready'
 }
@@ -165,7 +174,7 @@ function render(){
  '<div class="cse-stats"><span><b>'+all.length+'</b> scenes</span><span><b>'+total+'</b> panels</span><span><b>'+missing+'</b> missing art</span><span><b>'+reused+'</b> reused art</span><span><b>'+approved+'</b> approved</span></div>'+
  '<div class="cse-columns"><aside class="cse-left"><div class="cse-filters"><input id="cseSearch" type="search" placeholder="Find a scene…" value="'+esc(filter)+'"><select id="cseGroup">'+categories.map(x=>'<option value="'+esc(x)+'" '+(x===group?'selected':'')+'>'+esc(x==='all'?'All story groups':x)+'</option>').join('')+'</select><label><input type="checkbox" id="cseGaps" '+(gaps?'checked':'')+'> Show artwork gaps only</label></div><div id="cseSceneList">'+listMarkup()+'</div></aside>'+
  '<main class="cse-right">'+(s?'<div class="cse-title"><small>'+esc(s.category)+' · '+esc(s.path)+(s.line?' : '+s.line:'')+'</small><h3>'+esc(s.title)+'</h3><p>'+esc(s.note||'Check every comic panel and its artwork.')+'</p></div><div class="cse-controls"><label>REVIEW<select id="cseReview"><option value="unreviewed" '+(s.review==='unreviewed'?'selected':'')+'>Unreviewed</option><option value="needs-work" '+(s.review==='needs-work'?'selected':'')+'>Needs work</option><option value="approved" '+(s.review==='approved'?'selected':'')+'>Approved</option></select></label><button id="csePreview">▶ PREVIEW STRIP</button><button id="cseSave" class="primary">SAVE DRAFT</button><button id="cseReset">RESET</button></div><div class="cse-panel-grid">'+s.panels.map(panelMarkup).join('')+'</div><footer><button id="cseCopy">COPY THIS SCENE</button><p id="cseMessage">Drafts do not change live story scenes until implemented in the game.</p></footer>':'<p class="cse-empty">No scenes could be loaded.</p>')+'</main></div></section>';
- root.querySelectorAll('[data-cse-image]').forEach(img=>img.onerror=()=>{const badge=img.parentNode.querySelector('em');if(badge){badge.textContent='BROKEN IMAGE';badge.className='missing'}});
+ root.querySelectorAll('[data-cse-image]').forEach(img=>img.onerror=()=>{const art=img.getAttribute('src');if(!broken.has(art)){broken.add(art);render()}else{const badge=img.parentNode.querySelector('em');if(badge){badge.textContent='BROKEN IMAGE';badge.className='missing'}}});
  bind(s);showList()
 }
 function edited(){
