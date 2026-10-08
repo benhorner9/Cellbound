@@ -99,6 +99,15 @@ function chrome(label,title,body,cls=''){
 }
 function bindClose(){root?.querySelector('[data-nwb-close]')?.addEventListener('click',close)}
 function story(label,title,speaker,lines,onDone,button='CONTINUE →'){
+ const comic=window.CellboundComicScenes;
+ if(comic?.show){
+  const r=ensureRoot();r.hidden=true;document.body.classList.remove('nwb-open');
+  comic.show({theme:'zeltira',page:'NO WAY BACK',title,subtitle:speaker,progressive:true,storyOnly:true,
+   panels:lines.map((text,i)=>({kind:i?'dialogue':'location',speaker,title:i?'':title,text})),
+   skipLabel:'SKIP STORY',nextLabel:'NEXT PANEL →',continueLabel:button
+  }).then(async()=>{if(onDone)await onDone();else close()}).catch(error=>console.warn('No Way Back comic scene error',error));
+  return
+ }
   const r=ensureRoot();let i=0;
   const draw=()=>{
     const last=i===lines.length-1;
