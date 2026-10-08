@@ -447,9 +447,13 @@ async function setRaidReady(next){
    const state=session.state=session.state||{},ready=Boolean(next);
    state.readyA=ready;state.readyB=ready;state.readyStage=session.stage;
    if(ready){
-    const start=serverNow()+850;state.encounterStartAt=new Date(start).toISOString();state.stageStartedAt=new Date(start).toISOString()
+    // Owner QA has no remote commander to synchronise with. Start immediately
+    // instead of relying on a timer that WebKit may suspend behind the gate.
+    const start=serverNow()-100;state.encounterStartAt=new Date(start).toISOString();state.stageStartedAt=new Date(start).toISOString()
    }else{state.encounterStartAt=null;state.stageStartedAt=null}
-   session.updated_at=new Date().toISOString();renderReadyGate();scheduleReadyLaunch();mountOwnerQaControls();return
+   session.updated_at=new Date().toISOString();
+   if(ready)await syncSharedRaidView(true);else renderReadyGate();
+   mountOwnerQaControls();return
  }
  try{
    const sentAt=Date.now();
