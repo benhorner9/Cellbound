@@ -22,7 +22,7 @@ function announce(s){message=s;const slot=$('#dboMessage');if(slot)slot.textCont
 function newStep(type='room'){
  return{id:'step-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),type,title:type==='comic'?'Story Scene':type==='fight'?'Encounter':type==='minigame'?'Minigame':'New Room',text:'',artPath:'',
   panels:type==='comic'?[{title:'Panel 1',text:'',artPath:''}]:[],enemies:'Enemy',enemyHealth:750,mechanic:'none',
-  template:'choice',prompt:'',choices:['Left','Centre','Right'],answer:0,sequence:[0,1,2]}
+  template:'choice',prompt:'',choices:['Left','Centre','Right'],answer:0,sequence:[0,1,2],drops:[]}
 }
 function fresh(type='quest'){
  return{title:'Untitled '+type,slug:type+'-'+Date.now().toString(36),content_type:type,level:1,summary:'',steps:[newStep('comic'),newStep('fight')],status:'draft',id:null,version:1}
@@ -63,6 +63,12 @@ function validate(){
   if((s.type==='room'||s.type==='fight')&&!s.artPath)errors.push(label+': room or battle background missing.');
   if(s.type==='fight'&&!s.enemies.trim())errors.push(label+': add enemy names.');
   if(s.type==='minigame'&&!runtime()?.templates().some(t=>t.id===s.template))errors.push(label+': unregistered minigame template '+s.template);
+  if(s.type==='fight'){
+   const raw=project.steps[i]?.drops||[],valid=s.drops||[];
+   if(raw.length>6)errors.push(label+': maximum six drop rows per boss.');
+   if(raw.length!==valid.length)errors.push(label+': choose valid items and drop chances for every loot row.');
+   if(valid.some(d=>d.chance<1||d.chance>100))errors.push(label+': drop chance must be between 1% and 100%.');
+  }
  });
  return errors
 }
@@ -134,10 +140,17 @@ function collect(){
    else if(sub==='sequence')s.sequence=value.split(',').map(Number).filter(Number.isFinite).map(x=>Math.round(x)).slice(0,8);
    else if(['enemyHealth','answer'].includes(sub))s[sub]=Number(value)||0;
    else s[sub]=value;
+  }else if(key.startsWith('drop.')){
+   const s=project.steps[stepIndex],parts=key.split('.'),i=Number(parts[1]),prop=parts[2];
+   if(s?.drops?.[i])s.drops[i][prop]=['chance','quantity'].includes(prop)?Number(value)||0:value
   }else if(key.startsWith('panel.')){
    const s=project.steps[stepIndex],parts=key.split('.'),i=Number(parts[1]),attr=parts[2];
    if(s?.panels?.[i])s.panels[i][attr]=value
   }
+ }
+ for(const input of form.querySelectorAll('[data-db-drop]')){
+  const s=project.steps[stepIndex],parts=input.dataset.dbDrop.split('.'),i=Number(parts[0]),prop=parts[1];
+  if(s?.drops?.[i])s.drops[i][prop]=['chance','quantity'].includes(prop)?Number(input.value)||0:input.value
  }
  storageBackup()
 }
@@ -153,13 +166,36 @@ function imageControl(s,panel=null){
  return'<div class="dbo-image-control">'+(src?'<img src="'+esc(src)+'" alt="Uploaded artwork">':'<div class="dbo-art-missing">Artwork not uploaded</div>')+
  '<label>UPLOAD ARTWORK<input type="file" accept="image/webp,image/png,image/jpeg,image/avif" data-db-upload="'+esc(s.id)+'" data-db-panel="'+index+'"></label><small>16:9 recommended · 10 MB max. Uploaded image stays in draft until publishing.</small></div>'
 }
+
+function lootDropOptions(kind,selected=''){
+ const catalog=runtime()?.lootCatalog?.()||{gear:[],materials:[]};
+ const rows=(kind==='gear'?catalog.gear:catalog.materials);
+ return rows.map(it=>'<option value="'+esc(it.key)+'" '+(selected===it.key?'selected':'')+'>'+esc(kind==='gear'?'T'+it.tier+' · '+it.klass+' · '+it.name:it.name+' · '+it.rarity)+'</option>').join('')
+}
+function lootEditor(step){
+ const items=Array.isArray(step.drops)?step.drops:[];
+ const raid=project?.content_type==='raid';
+ return '<section class="dbo-boss-loot"><header><div><small>INDIVIDUAL BOSS REWARDS</small><h4>Boss Drop Table</h4><p>Each row rolls independently when this encounter is defeated. Rewards go directly to the Guild Bank and appear in the end-of-run summary.</p></div><span>'+items.length+' / 6 DROPS</span></header>'+
+ (raid?'<p class="dbo-loot-notice">Raid reward delivery is disabled in prototype raids. You may plan drop tables here, but they will not award gear until the multiplayer raid reward system is connected.</p>':'')+
+ (items.length?'<div class="dbo-drop-list">'+items.map((drop,i)=>{
+  const kind=drop.kind==='material'?'material':'gear';
+  return '<div class="dbo-drop-row" data-db-drop-row="'+i+'"><div class="dbo-drop-row-top"><b>DROP '+(i+1)+'</b><button type="button" data-db-remove-drop="'+i+'">REMOVE</button></div><div class="dbo-drop-grid">'+
+  '<label>REWARD TYPE<select data-db-drop="'+i+'.kind"><option value="gear" '+(kind==='gear'?'selected':'')+'>Equipment</option><option value="material" '+(kind==='material'?'selected':'')+'>Profession reagent</option></select></label>'+
+  '<label>ITEM<select data-db-drop="'+i+'.key">'+lootDropOptions(kind,drop.key)+'</select></label>'+
+  '<label>DROP CHANCE (%)<input type="number" min="1" max="100" step="1" inputmode="numeric" data-db-drop="'+i+'.chance" value="'+esc(drop.chance??25)+'"></label>'+
+  '<label>QUANTITY<input type="number" min="1" max="'+(kind==='gear'?1:5)+'" step="1" inputmode="numeric" data-db-drop="'+i+'.quantity" value="'+esc(kind==='gear'?1:(drop.quantity||1))+'" '+(kind==='gear'?'disabled':'')+'></label></div></div>'
+ }).join('')+'</div>':'<div class="dbo-no-drops">No drops configured. This boss currently awards no items.</div>')+
+ '<button type="button" data-db-add-drop '+(items.length>=6?'disabled':'')+'>+ ADD BOSS DROP</button>'+
+ '<p class="dbo-loot-footnote">Available equipment: approved Tier 1–2 gear. High-tier, raid-exclusive gear and endgame reagents remain restricted. No bonus equipment is automatically granted for completing a custom dungeon.</p></section>'
+}
+
 function stageFields(s){
  let extra='';
  if(s.type==='comic'){
   extra='<section class="dbo-panel-list"><h4>Comic panels · '+s.panels.length+'/6</h4>'+s.panels.map((p,i)=>'<article class="dbo-comic-panel"><header><b>Panel '+(i+1)+'</b><button type="button" data-db-remove-panel="'+i+'">REMOVE</button></header>'+field('Panel heading','panel.'+i+'.title',p.title)+field('Caption / dialogue','panel.'+i+'.text',p.text,{kind:'textarea'})+imageControl(s,i)+'</article>').join('')+
   '<button type="button" data-db-add-panel '+(s.panels.length>=6?'disabled':'')+'>+ ADD COMIC PANEL</button></section>'
  }
- if(s.type==='fight')extra='<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>'+imageControl(s);
+ if(s.type==='fight')extra='<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>'+imageControl(s)+lootEditor(s);
  if(s.type==='room')extra=imageControl(s);
  if(s.type==='minigame')extra='<div class="dbo-form-grid">'+field('Template','step.template',s.template,{kind:'select',opts:(runtime()?.templates?.()||[]).map(t=>({value:t.id,label:t.label}))})+field('Puzzle instruction','step.prompt',s.prompt,{kind:'textarea'})+field('Choices (one per line)','step.choices',s.choices.join('\n'),{kind:'textarea'})+field('Correct choice index · starts at 0','step.answer',s.answer,{kind:'number'})+field('Sequence indices · comma-separated','step.sequence',s.sequence.join(','))+'</div>'+imageControl(s);
  return'<div class="dbo-stage-fields">'+field('Stage title','step.title',s.title)+field('Stage type','step.type',s.type,{kind:'select',opts:[{value:'comic',label:'Comic Strip'},{value:'room',label:'Room / Transition'},{value:'fight',label:'Combat Encounter'},{value:'minigame',label:'Minigame'}]})+field('Description / narration','step.text',s.text,{kind:'textarea'})+extra+'</div>'
@@ -173,7 +209,7 @@ function renderBuilder(){
  '<div class="dbo-add"><select id="dboAddType"><option value="comic">Comic strip</option><option value="room">Room / transition</option><option value="fight">Fight encounter</option><option value="minigame">Minigame</option></select><button type="button" id="dboAddStep" '+(project.steps.length>=30?'disabled':'')+'>+ ADD STAGE</button></div></aside>'+
  '<main id="dboFields" class="dbo-project-editor"><div class="dbo-form-grid">'+field('Adventure name','title',project.title)+field('Minimum party level','level',project.level,{kind:'number'})+field('Category','content_type',project.content_type,{kind:'select',opts:['quest','dungeon','raid']})+field('Short description','summary',project.summary,{kind:'textarea'})+'</div>'+
  (s?'<div class="dbo-stage-editor-header"><div><small>STAGE '+(stepIndex+1)+' OF '+project.steps.length+'</small><h3>'+esc(s.title)+'</h3></div><div class="dbo-stage-actions"><button data-db-move="-1" '+(stepIndex===0?'disabled':'')+'>↑</button><button data-db-move="1" '+(stepIndex===project.steps.length-1?'disabled':'')+'>↓</button><button data-db-remove-stage>REMOVE</button></div></div>'+stageFields(s):'<div class="dbo-empty">Add a stage to start designing.</div>')+
- '<div class="dbo-review"><h4>Publication check</h4><p>'+(!problems.length?'All required scenes and artwork are ready to publish.':problems.slice(0,6).map(esc).join(' · '))+'</p><small>Published adventures run as standalone reward-free content; existing campaign progress and loot tables are unaffected.</small></div><div class="dbo-footer"><button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboTest" '+(busy?'disabled':'')+'>▶ TEST FROM STAGE</button><button class="primary" id="dboPublish" '+(busy||problems.length?'disabled':'')+'>PUBLISH TO GAME</button>'+(project.id?'<button id="dboDelete">DELETE</button>':'')+'</div><p id="dboMessage" role="status">'+esc(message||'Changes back up automatically on this iPad; use Save Cloud Draft to sync across devices.')+'</p></main></div>';
+ '<div class="dbo-review"><h4>Publication check</h4><p>'+(!problems.length?'All required scenes and artwork are ready to publish.':problems.slice(0,6).map(esc).join(' · '))+'</p><small>Configured boss drops roll on victory and are sent immediately to the Guild Bank. Raid prototypes and owner tests award no loot. The existing dungeon reward tables remain unchanged.</small></div><div class="dbo-footer"><button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboTest" '+(busy?'disabled':'')+'>▶ TEST FROM STAGE</button><button class="primary" id="dboPublish" '+(busy||problems.length?'disabled':'')+'>PUBLISH TO GAME</button>'+(project.id?'<button id="dboDelete">DELETE</button>':'')+'</div><p id="dboMessage" role="status">'+esc(message||'Changes back up automatically on this iPad; use Save Cloud Draft to sync across devices.')+'</p></main></div>';
  bindBuilder()
 }
 function bindBuilder(){
@@ -191,6 +227,27 @@ function bindBuilder(){
  host.querySelector('[data-db-add-panel]')?.addEventListener('click',()=>{collect();const s=project.steps[stepIndex];if(s.panels.length>=6)return;s.panels.push({title:'Panel '+(s.panels.length+1),text:'',artPath:''});storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-remove-panel]').forEach(btn=>btn.onclick=()=>{collect();const s=project.steps[stepIndex];s.panels.splice(Number(btn.dataset.dbRemovePanel),1);storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-upload]').forEach(el=>el.addEventListener('change',e=>{collect();upload(el.dataset.dbUpload,el.dataset.dbPanel==='stage'?null:Number(el.dataset.dbPanel),e.target.files?.[0])}));
+ host.querySelectorAll('[data-db-drop]').forEach(input=>{
+  input.addEventListener('input',()=>collect());
+  if(input.dataset.dbDrop.endsWith('.kind'))input.addEventListener('change',()=>{
+   collect();const s=project.steps[stepIndex],i=Number(input.dataset.dbDrop.split('.')[0]),drop=s.drops[i];
+   const pool=runtime()?.lootCatalog?.()||{gear:[],materials:[]};
+   drop.key=(drop.kind==='gear'?pool.gear:pool.materials)[0]?.key||'';
+   drop.quantity=1;storageBackup();renderBuilder()
+  });
+ });
+ host.querySelector('[data-db-add-drop]')?.addEventListener('click',()=>{
+  collect();const s=project.steps[stepIndex],pool=runtime()?.lootCatalog?.();
+  if(!s||s.type!=='fight'||(s.drops||[]).length>=6)return;
+  s.drops=Array.isArray(s.drops)?s.drops:[];
+  s.drops.push({kind:'gear',key:pool?.gear?.[0]?.key||'',chance:25,quantity:1});
+  storageBackup();renderBuilder()
+ });
+ host.querySelectorAll('[data-db-remove-drop]').forEach(btn=>btn.addEventListener('click',()=>{
+  collect();const s=project.steps[stepIndex];if(!s)return;
+  s.drops.splice(Number(btn.dataset.dbRemoveDrop),1);storageBackup();renderBuilder()
+ }));
+
  host.querySelector('#dboSave')?.addEventListener('click',()=>save(false));
  host.querySelector('#dboPublish')?.addEventListener('click',()=>{if(confirm('Publish this '+project.content_type+' to the game for all players on staging?'))save(true)});
  host.querySelector('#dboDelete')?.addEventListener('click',remove);
