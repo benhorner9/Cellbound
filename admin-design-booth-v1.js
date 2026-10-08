@@ -18,6 +18,40 @@ const TOOLS=[
  {id:'models',label:'Character Models',sub:'Equipment fit & visual QA'},
  {id:'templates',label:'Minigame Library',sub:'Reusable mechanics'}
 ];
+const GUIDANCE={
+ "build": {
+  "title": "Create → Save Draft → Test → Publish",
+  "detail": "Build a quest, dungeon or raid. Save a cloud draft first; only Publish makes the new adventure available to players."
+ },
+ "drops": {
+  "title": "Choose boss → Edit items → Save",
+  "detail": "Existing game bosses: Save Boss Drops applies extra rewards straight away. Custom adventure bosses: Save Cloud Draft, then Publish Loot Changes. Existing dungeon rewards are not overwritten."
+ },
+ "items": {
+  "title": "Search → Check item → Export if needed",
+  "detail": "Read-only catalogue. Find an item’s ID, tier, class and source, or export CSV. Viewing items does not change gear or loot."
+ },
+ "comics": {
+  "title": "Find scene → Review → Replace artwork",
+  "detail": "Comic artwork: Upload & Publish changes player-visible images immediately. Story text: Save Draft is LOCAL ONLY; export it for a developer to apply. Do not assume captions are published."
+ },
+ "rooms": {
+  "title": "Choose room → Adjust → Test → Publish",
+  "detail": "Save Draft stays on your device. Test Layout affects only your owner session. Publish Layout changes staging for players; background artwork has its OWN Publish button."
+ },
+ "generator": {
+  "title": "Plan content → Review before using",
+  "detail": "Advanced planning tool. Confirm where output is saved and test any generated content before considering a release."
+ },
+ "models": {
+  "title": "Choose model → Inspect equipment fit",
+  "detail": "Visual inspection tool. This does not create or publish new character assets."
+ },
+ "templates": {
+  "title": "Browse reusable puzzles",
+  "detail": "Pick an existing template inside an adventure minigame stage. Creating a new mechanic still requires game code and testing."
+ }
+};
 const plugins={comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer'};
 const mountIds={comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount'};
 let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,uploadBusy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='',nativeBaseline='[]',dropEditIndex=-1,dropSearch='',dropTier='all',dropSort='tier',moreOpen=false;
@@ -513,6 +547,8 @@ function setTab(id){
  if(id!==active&&(active==='build'||active==='drops'))collect();
  for(const [tab,mount] of Object.entries(mountIds)){const el=$('#'+mount);if(el)el.hidden=true;if(tab!==id)toolApi(tab)?.close?.()}
  active=id;
+ const info=GUIDANCE[id],infoBox=$('#dboToolGuide');
+ if(infoBox&&info){infoBox.querySelector('b').textContent=info.title;infoBox.querySelector('span').textContent=info.detail}
  const panel=$('#dboWorkbench'),library=$('#dboTemplates'),drops=$('#dboDrops'),catalog=$('#dboCatalog');if(panel)panel.hidden=id!=='build';if(library)library.hidden=id!=='templates';if(drops)drops.hidden=id!=='drops';if(catalog)catalog.hidden=id!=='items';
  document.querySelectorAll('[data-dbo-tool]').forEach(el=>{el.classList.toggle('active',el.dataset.dboTool===id);el.setAttribute('aria-selected',el.dataset.dboTool===id?'true':'false')});
  document.querySelectorAll('[data-dbo-go]').forEach(el=>el.classList.toggle('active',el.dataset.dboGo===id));
@@ -533,7 +569,7 @@ function render(){
  '<nav class="dbo-tabs" role="tablist" aria-label="Design Booth tools">'+TOOLS.filter(t=>!advanced.includes(t.id)).map(tab).join('')+'</nav>'+
  '<details class="dbo-more" '+(moreOpen||advanced.includes(active)?'open':'')+'><summary>More tools · Character fit, dungeon planner & minigame templates</summary><nav class="dbo-tabs dbo-tabs-more" role="tablist" aria-label="Advanced tools">'+TOOLS.filter(t=>advanced.includes(t.id)).map(tab).join('')+'</nav></details>'+
  '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Press Publish only when everything is ready. Existing published content stays unchanged until then.</li></ol><p>Local backups are for recovery on this device; only a cloud-saved draft is available on another device.</p></details>'+
- '<div id="dboWorkbench"></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
+ '<aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
  root.querySelectorAll('[data-dbo-tool],[data-dbo-go]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool||btn.dataset.dboGo));
