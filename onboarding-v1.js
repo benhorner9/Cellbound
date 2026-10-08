@@ -251,6 +251,82 @@ const TUTORIAL_COMIC_ART={
   contract:['dawn_briefing_on_the_ash_road.webp','wardens_at_the_twilight_city_gate.webp','dawn_departure_from_zeltira_citadel.webp'],
   departure:['dawn_departure_from_zeltira_citadel.webp','dawn_briefing_on_the_ash_road.webp','wardens_at_the_twilight_city_gate.webp']
 };
+// Three readable story beats per scene. Art paths are assigned separately so
+// writers and illustrators can revise one frame without altering progression.
+const TUTORIAL_STORY_COPY={
+ arrival:{
+  line:'Five on a new charter? Then your timing is terrible. Come and see what woke up.',
+  frames:[
+   ['No quiet night in Zeltira','The outer gate stays open as wardens hurry people away from the western streets.'],
+   ['Elara has a job for you','The Cell Well flashed twice. No one has been able to explain the second pulse.'],
+   ['Something answered','A stone buried beneath the west wall glows for the first time in generations.']
+  ]
+ },
+ 'west-wall':{
+  line:'Look carefully. I need a reason to send people below my city, not a rumour.',
+  frames:[
+   ['The street is empty','A drained patrol lantern lies beside the old wall. Its oil has not burned.'],
+   ['Roots flee the crack','Pale roots have pushed through fresh stone, bending away from whatever lies below.'],
+   ['The ward points down','A carved line flickers toward the sealed steps into the Zeltiran Hollows.']
+  ]
+ },
+ gear:{
+  line:'Same Item Level. Different rolls. Which one keeps your front line standing?',
+  frames:[
+   ['The Quartermaster’s counter','Two weapons are waiting, close enough in quality to fool a hurried buyer.'],
+   ['Power is not the whole story','The bonus stats tell a different story. Read them before choosing.'],
+   ['Five people. Five jobs.','The right item depends on who carries it, not just the number engraved on it.']
+  ]
+ },
+ hollows:{
+  line:'You lead. They fight. Watch what your orders do when the room fights back.',
+  frames:[
+   ['The descent opens','Elara holds the Pathfinder ward as your five head into the root-covered stone.'],
+   ['First comes control','The Rootlings will test your opening order. Your Tank needs room to take threat.'],
+   ['Then comes judgement','The Gallery will test interrupts. The Warden below will test movement and survival.']
+  ]
+ },
+ loot:{
+  line:'Bring the relic home. Then decide who should actually wear it.',
+  frames:[
+   ['The Warden falls silent','A relic lies tangled in the roots, still carrying a trace of Cell light.'],
+   ['Look past the name','Two copies of the same item may carry different stats. Read the roll.'],
+   ['The Bank belongs to the guild','Nothing has equipped itself. Choose the adventurer who gains most from the drop.']
+  ]
+ },
+ shock:{
+  line:'The training ward caught this defeat. Outside these walls, recovery costs time.',
+  frames:[
+   ['The ward pulls the five clear','A failed run ends before permanent harm, but not every consequence disappears.'],
+   ['The Cell mark bears the strain','Each wipe adds shock. At one hundred per cent, that adventurer must recover.'],
+   ['A guild learns to regroup','Wait out the recovery, prepare better, or rotate an available character into the party.']
+  ]
+ },
+ craft:{
+  line:'See these scraps? They are the start of your next advantage.',
+  frames:[
+   ['Nothing from the Hollows is wasted','Recovered Cell fragments and iron reach the Craft Row workbench.'],
+   ['Every adventurer learns one trade','The Craftmaster shows how profession recipes turn materials into useful preparations.'],
+   ['Make something worth carrying','An enhancement, flask or potion can change the next fight, but it will not last forever.']
+  ]
+ },
+ contract:{
+  line:'Three carts gone missing. Same road. Same night. The ash is what worries me.',
+  frames:[
+   ['An east-gate report at dawn','Elara unrolls three missing-cart reports before the city is fully awake.'],
+   ['Ash where it should not be','Furnace dust lies in the ruts. The nearest forge has been cold for eighteen years.'],
+   ['A real contract','Follow the road, find the missing cargo and discover why the old forge has stirred.']
+  ]
+ },
+ departure:{
+  line:'The ward stays here. The charter and the choices are yours now.',
+  frames:[
+   ['The eastern gates open','Morning light falls over a city that has already given your new guild a story.'],
+   ['The five fall into formation','Each adventurer has a job, equipment and a reason to trust the others.'],
+   ['Beyond the training road','The trail leads toward missing carts, a sealed forge and whatever waits past it.']
+  ]
+ }
+};
 function tutorialComicConfig(id){
   const roster=state()?.roster||[],lead=roster[0],leadName=lead?.name||'your charter';
   const scenes={
@@ -391,8 +467,13 @@ function tutorialComicConfig(id){
     }
   };
   const scene=scenes[id];if(!scene)return null;
-  const art=TUTORIAL_COMIC_ART[id]||[];
-  scene.panels=scene.panels.map((panel,i)=>({...panel,artwork:'./assets/comics/tutorial/'+(art[i]||art[0])}));
+  const art=TUTORIAL_COMIC_ART[id]||[],script=TUTORIAL_STORY_COPY[id];
+  if(script?.line)scene.line=script.line;
+  scene.panels=scene.panels.map((panel,i)=>({
+    ...panel,artwork:'./assets/comics/tutorial/'+(art[i]||art[0]),
+    title:script?.frames?.[i]?.[0]||panel.title,
+    text:script?.frames?.[i]?.[1]||panel.text
+  }));
   scene.storyOnly=true;scene.progressive=true;scene.nextLabel='NEXT PANEL →';scene.continueLabel='CONTINUE →';
   return scene;
 }
