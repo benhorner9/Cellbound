@@ -34,6 +34,26 @@ The buttons below **What do you want to do?** are the fastest way to get anywher
 4. For bosses created in **Adventure Builder**, select **Save Cloud Draft** and then **Publish Loot Changes**. These are changes to an adventure blueprint, not the separate native-boss table.
 5. If an item is missing or disallowed, check **Item Catalogue**. It indexes more items than the boss-drop picker permits; higher-tier, restricted and raid-exclusive gear are deliberately unavailable in this editor.
 
+## Working with comic artwork and captions
+
+1. Choose **Edit comic art** and search for the scene or filter for missing artwork.
+2. Select a panel, choose an image, and check the preview.
+3. **Upload & Publish** changes the scene's artwork for players immediately; verify it in the game after the upload finishes.
+4. **Save Draft** for panel headings and story text only saves a **local draft on this device**. Use **Export All Drafts** and give the export to a developer for the text/source update. Do not tell someone that changing comic text has been published.
+5. Use **Preview Strip** before marking the scene reviewed.
+
+## Working with room layouts
+
+1. Choose **Edit dungeon rooms**, then select a dungeon/raid and room.
+2. Move entrance, exit, party and enemy markers on the room artwork.
+3. **Save Draft** keeps your marker layout on this device; **Test Layout** applies it only to the owner's current game session.
+4. **Publish Layout** makes the marker positions available to staging players. A separate **Upload & Publish Background** action updates room art; don't confuse the two.
+5. Always enter the dungeon on staging and check positioning, collision, combat and the transition to the next room.
+
+## Before handing a task to someone else
+
+Use clear tickets: name the **dungeon / boss / quest**, specify exactly **which screen or stage**, provide the **required asset** or a link, and state whether they should **draft, test or publish**. Every completed task should record what changed, what was tested and whether it is live. Do not grant shared owner access as a shortcut.
+
 ## Safeguards and troubleshooting
 
 - **Unsaved on this device** means the cloud has not been updated. Save before switching devices, clearing Safari data or sharing work.
