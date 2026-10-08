@@ -67,6 +67,7 @@ jobs:
             tests/equipment-fit.browser.cjs \
             tests/race-identity.browser.cjs \
             tests/item-visuals-v2.browser.cjs \
+            tests/design-booth.browser.cjs \
             tests/gameplay-regression.browser.cjs \
             tests/ui-performance.browser.cjs \
             tests/full-playthrough.browser.cjs
@@ -90,6 +91,7 @@ jobs:
             tests/equipment-fit.browser.cjs \
             tests/race-identity.browser.cjs \
             tests/item-visuals-v2.browser.cjs \
+            tests/design-booth.browser.cjs \
             tests/gameplay-regression.browser.cjs \
             tests/ui-performance.browser.cjs \
             tests/full-playthrough.browser.cjs
