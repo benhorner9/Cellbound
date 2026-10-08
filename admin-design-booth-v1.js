@@ -260,27 +260,6 @@ function bindBuilder(){
  host.querySelectorAll('[data-db-remove-panel]').forEach(btn=>btn.onclick=()=>{collect();const s=project.steps[stepIndex];s.panels.splice(Number(btn.dataset.dbRemovePanel),1);storageBackup();renderBuilder()});
  host.querySelectorAll('[data-db-upload]').forEach(el=>el.addEventListener('change',e=>{collect();upload(el.dataset.dbUpload,el.dataset.dbPanel==='stage'?null:Number(el.dataset.dbPanel),e.target.files?.[0])}));
  host.querySelector('#dboGoToDrops')?.addEventListener('click',()=>{collect();dropEditIndex=-1;dropSearch='';dropTier='all';selectedDropBoss=project.id?'project:'+project.id+':'+project.steps[stepIndex].id:'local:'+project.slug+':'+project.steps[stepIndex].id;setTab('drops')});
- host.querySelectorAll('[data-db-drop]').forEach(input=>{
-  input.addEventListener('input',()=>collect());
-  if(input.dataset.dbDrop.endsWith('.kind'))input.addEventListener('change',()=>{
-   collect();const s=project.steps[stepIndex],i=Number(input.dataset.dbDrop.split('.')[0]),drop=s.drops[i];
-   const pool=runtime()?.lootCatalog?.()||{gear:[],materials:[]};
-   drop.key=(drop.kind==='gear'?pool.gear:pool.materials)[0]?.key||'';
-   drop.quantity=1;storageBackup();renderBuilder()
-  });
- });
- host.querySelector('#dboAddLoot')?.addEventListener('click',()=>{
-  collect();const s=project.steps[stepIndex],pool=runtime()?.lootCatalog?.();
-  if(!s||s.type!=='fight'||(s.drops||[]).length>=6)return;
-  s.drops=Array.isArray(s.drops)?s.drops:[];
-  s.drops.push({kind:'gear',key:pool?.gear?.[0]?.key||'',chance:25,quantity:1});
-  storageBackup();renderBuilder()
- });
- host.querySelectorAll('[data-db-remove-drop]').forEach(btn=>btn.addEventListener('click',()=>{
-  collect();const s=project.steps[stepIndex];if(!s)return;
-  s.drops.splice(Number(btn.dataset.dbRemoveDrop),1);storageBackup();renderBuilder()
- }));
-
  host.querySelector('#dboSave')?.addEventListener('click',()=>save(false));
  host.querySelector('#dboPublish')?.addEventListener('click',()=>{if(confirm('Publish this '+project.content_type+' to the game for all players on staging?'))save(true)});
  host.querySelector('#dboDelete')?.addEventListener('click',remove);
@@ -395,7 +374,7 @@ function bindDrops(){
    item.quantity=1;storageBackup();renderDrops()
   })
  });
- host.querySelector('[data-db-add-drop]')?.addEventListener('click',()=>{
+ host.querySelector('#dboAddLoot')?.addEventListener('click',()=>{
   collect();const rows=activeLootRows(),catalog=runtime()?.lootCatalog?.();
   if(rows.length>=6)return;
   rows.push({kind:'gear',key:catalog?.gear?.[0]?.key||'',chance:25,quantity:1});
