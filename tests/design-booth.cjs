@@ -4,16 +4,25 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const html=read('guild.html'),master=read('admin-design-booth-v1.js'),runtime=read('design-booth-content-v1.js'),css=read('admin-design-booth-v1.css');
 const manifests=read('tools/runtime-manifest.cjs'),schema=read('supabase/migrations/20261008102000_cellbound_design_booth_blueprints_v1.sql');
+const builtins=read('boss-drop-tables-v1.js'),dropSchema=read('supabase/migrations/20261008141500_cellbound_boss_drop_tables_v1.sql');
 for(const id of ['designBoothEntry','openDesignBooth','designBoothMount','designBoothAdventures-quest','designBoothAdventures-dungeon','designBoothAdventures-raid','designAdventureOverlay'])
  assert(html.includes('id="'+id+'"'),'Unified admin/game must include '+id);
 for(const old of ['admin-card admin-generator-entry','admin-card admin-character-fit-entry','admin-card admin-room-editor-entry','admin-card admin-comic-scene-entry'])
  assert(!html.includes(old),'Old separate editor card must not be visible: '+old);
 for(const old of ['dungeonGeneratorMount','characterFitViewerMount','roomEditorMount','comicSceneEditorMount'])
  assert(master.includes('id="'+old+'"'),'Working legacy editor must remain an internal Design Booth tool: '+old);
-for(const name of ['admin-design-booth-v1.js','admin-design-booth-v1.css','design-booth-content-v1.js'])
+for(const name of ['admin-design-booth-v1.js','admin-design-booth-v1.css','design-booth-content-v1.js','boss-drop-tables-v1.js'])
  assert(manifests.includes(name),'Design Booth asset must be built: '+name);
 for(const needle of ['cellbound_design_blueprints','draft_blueprint','cellbound-design-art','only owner','published','enable row level security','cellbound_is_owner'])
  assert(schema.toLowerCase().includes(needle),'Secure design blueprint migration missing: '+needle);
+for(const needle of ['cellbound_boss_drop_tables','cellbound_is_owner','enable row level security','for select','for insert','for update','for delete'])
+ assert(dropSchema.toLowerCase().includes(needle),'Shared boss drop-table schema must be owner-protected: '+needle);
+assert(html.includes('boss-drop-tables-v1.js'),'Shared native boss loot runtime must be loaded');
+assert(master.includes("id:'drops'")&&master.includes('dboBossPicker')&&master.includes('function renderDrops'),'A standalone seventh Drop Tables tab must expose one selector for all bosses');
+assert(!master.includes("+'</div>'+imageControl(s)+lootEditor(s);"),'Embedded boss drop editor must be retired');
+assert(builtins.includes('function award(')&&builtins.includes('bossBonusDropClaims'),'Existing game boss loot hooks must avoid replay dupes');
+for(const path of ['src/dungeons/dungeon-2d-v1.js','src/dungeons/hollow-sanctum-v1.js','src/dungeons/chaos-canyon-v1.js','src/dungeons/fractured-ages-v1.js','src/dungeons/blackout-station-v1.js'])
+ assert(read(path).includes('CellboundBossDropTables?.award?.'),'Every supported legacy dungeon must award configured boss loot on victory: '+path);
 for(const name of ['quest','dungeon','raid','panel','minigame','save','publish','step','artPath'])
  assert(master.includes(name),'Design Booth builder missing '+name);
 for(const name of ['CellboundComicScenes','CellboundQuests','runQuest2DFight','registerMinigame','cellbound_design_blueprints'])
@@ -31,6 +40,23 @@ const window={CellboundGame:{ready:true,getSupabase:()=>db},CellboundAdmin:{isAd
 const document={querySelector:()=>null,body:{classList:{add(){},remove(){}}}};
 const localStorage={getItem:()=>null,setItem(){}};
 vm.runInNewContext(runtime,{window,document,console,localStorage,setTimeout,Date,alert:()=>{},Promise,CustomEvent:class{}},{filename:'design-booth-content-v1.js'});
+const nativeEvents={};
+const nativeState={bank:[],materials:{},activity:[],bossBonusDropClaims:{}};
+const nativeDB={
+ from(table){assert.equal(table,'cellbound_boss_drop_tables');return {
+  select:()=>({order:async()=>({data:[{boss_key:'ashen-vault:ashwarden',drops:[{kind:'material',key:'hollowroot',chance:100,quantity:2}]}],error:null})}),
+  upsert:async()=>({error:null})
+ }},
+ auth:{getUser:async()=>({data:{user:{id:'owner-test'}},error:null})}
+};
+const nativeWindow={CellboundGame:{
+ ready:true,getSupabase:()=>nativeDB,getState:()=>nativeState,
+ addMaterial:(key,qty)=>{nativeState.materials[key]=(nativeState.materials[key]||0)+qty},
+ addBankItem:it=>nativeState.bank.push(it),save(){},persistState:async()=>true
+},CellboundAdmin:{isAdmin:true,role:'owner'},CellboundDesignedContent:null,CellboundGear:{byId:()=>null},CellboundProfessions:{MATERIALS:{hollowroot:{name:'Hollowroot'}}}};
+vm.runInNewContext(builtins,{window:nativeWindow,console,Date,Math,Error,Set,Map,Object,Number,String,Array,Promise},{filename:'boss-drop-tables-v1.js'});
+const nativeAPI=nativeWindow.CellboundBossDropTables;
+assert(nativeAPI.bosses().length>=18,'Game bosses must appear in central selector');
 (async()=>{
  const core=window.CellboundDesignedContent;
  assert.deepEqual(Array.from(core.templates().map(t=>t.id)),['choice','sequence']);
@@ -62,9 +88,17 @@ vm.runInNewContext(runtime,{window,document,console,localStorage,setTimeout,Date
  assert(runtime.includes('preview:Boolean(override),raid:row.content_type'), 'Owner previews and prototype raids must never award loot');
  assert(master.includes('data-db-add-drop')&&master.includes('data-db-remove-drop')&&master.includes('data-db-drop'), 'Per-boss drop table editor must allow rows, item selection, drop rates and quantities');
 
- await core.refresh(true);
+ nativeWindow.CellboundDesignedContent=core;
+ await nativeAPI.refresh(true);
+ const awards=await nativeAPI.award('ashen-vault:ashwarden','attempt-1','Ash Warden Kael');
+ assert.equal(awards.length,1,'First successful boss kill awards configured loot');
+ assert.equal(nativeState.materials.hollowroot,2,'Configured materials land immediately in Guild inventory');
+ assert.equal((await nativeAPI.award('ashen-vault:ashwarden','attempt-1','Ash Warden Kael')).length,0,'A resumed attempt cannot claim the same boss twice');
+ assert.equal(nativeState.materials.hollowroot,2,'Resumed boss cannot duplicate materials');
+ assert.equal((await nativeAPI.award('manor:butler','qa','The Butler')).length,0,'Prototype raid bosses do not award item rewards');
+  await core.refresh(true);
  const next=core.templates().length;
  core.registerMinigame({id:'sigil-grid',label:'Sigil Grid',description:'Extensible puzzle',play:async()=>true});
  assert.equal(core.templates().length,next+1,'GPT-added minigame templates are independently registrable');
- console.log('Design Booth regression passed: one master entry, old tools embedded, quest/dungeon/raid mounts, secure publishing schema, art storage, reusable minigame registry, boss-specific drop rolls, restricted reward catalogue and blueprint caps.');
+ console.log('Design Booth regression passed: one master entry, old tools embedded, quest/dungeon/raid mounts, secure publishing schema, art storage, reusable minigame registry, a central seven-tab boss loot editor, legacy boss registry/RLS, restricted drops and blueprint caps.');
 })().catch(e=>{console.error(e);process.exitCode=1});
