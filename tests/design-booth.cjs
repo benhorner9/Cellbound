@@ -86,7 +86,12 @@ assert(nativeAPI.bosses().length>=18,'Game bosses must appear in central selecto
  assert.equal(core.rollBossLoot({drops:[{kind:'gear',key:'test-sword-t1',chance:100},{kind:'gear',key:'test-sword-t1',chance:100}]},{random:()=>0}).length,0,'A boss cannot grant an excessive combined gear drop chance');
  assert(runtime.includes('Game.addBankItem(item)')&&runtime.includes('Game.addMaterial(drop.key,drop.quantity)')&&runtime.includes('await Game.persistState?.()'),'Victory awards must enter canonical Bank and cloud save paths');
  assert(runtime.includes('preview:Boolean(override),raid:row.content_type'), 'Owner previews and prototype raids must never award loot');
- assert(master.includes('data-db-add-drop')&&master.includes('data-db-remove-drop')&&master.includes('data-db-drop'), 'Per-boss drop table editor must allow rows, item selection, drop rates and quantities');
+ assert(master.includes('id="dboLootSearch"')&&master.includes('id="dboLootTierFilter"')&&master.includes('id="dboLootSort"'),'Boss drop overview must support item name search, tier filtering and sorting');
+ assert(master.includes('ITEM NAME')&&master.includes('DROP CHANCE')&&master.includes('function describeDrop'),'Boss drop table must show each tier, full item name and percentage');
+ assert(master.includes('id="dboAddLoot"')&&master.includes('data-db-edit-row')&&master.includes('data-db-remove-drop'),'Boss drop table must expose add/edit/remove without opening each item first');
+ assert(master.includes("it.label:it.label")&&!master.includes("it.name:it.name"),'Item selectors must use canonical loot catalogue display names');
+ assert(css.includes('.dbo-loot-table-row')&&css.includes('.dbo-loot-prob')&&css.includes('@media(max-width:600px)'),'Loot overview must support readable iPad and phone layouts');
+ assert(html.includes('admin-design-booth-v1.js?v=2')&&html.includes('admin-design-booth-v1.css?v=2'),'Safari must request updated Design Booth assets');
 
  nativeWindow.CellboundDesignedContent=core;
  await nativeAPI.refresh(true);
