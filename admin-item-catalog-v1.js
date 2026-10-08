@@ -101,7 +101,7 @@ function render(){
  const categories=[...new Set(all.map(x=>x.category))].sort((a,b)=>(groupOrder[a]??9)-(groupOrder[b]??9));
  const classes=[...new Set(all.filter(x=>x.category==='Equipment').map(x=>x.className))].sort();
  const option=(value,label,current)=>'<option value="'+escapeOption(value)+'" '+(value===current?'selected':'')+'>'+escapeOption(label)+'</option>';
- el.innerHTML='<section class="dbo-catalog"><header class="dbo-catalog-head"><div><small>OWNER · GAME CONTENT INDEX</small><h3>Item Catalogue</h3><p>Live index of registered gear, reagents, crafted items, unique rewards and collectibles. Includes all five gear tiers — the boss loot picker intentionally supports fewer.</p></div><button id="dboExportCatalog" type="button">EXPORT CSV ↓</button></header>'+
+ el.innerHTML='<section class="dbo-catalog"><header class="dbo-catalog-head"><div><small>OWNER · GAME CONTENT INDEX</small><h3>Item Catalogue</h3><p>Live index of registered gear, reagents, crafted items, unique rewards and collectibles. Includes all five gear tiers — the boss loot picker intentionally supports fewer.</p></div><div class="dbo-buttons"><button id="dboCreateItem" type="button">+ CREATE EQUIPMENT</button><button id="dboExportCatalog" type="button">EXPORT CSV ↓</button></div></header>'+
  '<div class="dbo-catalog-stats"><strong>'+all.length.toLocaleString()+' <span>catalogue entries</span></strong><strong>'+available.length.toLocaleString()+' <span>matching</span></strong><small>Generated from current game registries · no editing of item stats or loot odds</small></div>'+
  '<div class="dbo-catalog-filters"><label>SEARCH ITEMS<input id="dboCatalogSearch" type="search" placeholder="Item, ID, class, boss, source…" autocomplete="off" value="'+esc(q)+'"></label>'+
  '<label>CATEGORY<select id="dboCatalogCategory">'+option('all','All categories',category)+categories.map(x=>option(x,x,category)).join('')+'</select></label>'+
@@ -133,6 +133,7 @@ function render(){
  el.querySelector('#dboCatalogPrev')?.addEventListener('click',()=>{page--;render()});
  el.querySelector('#dboCatalogNext')?.addEventListener('click',()=>{page++;render()});
  el.querySelector('#dboExportCatalog')?.addEventListener('click',()=>exportCsv());
+ el.querySelector('#dboCreateItem')?.addEventListener('click',()=>{window.CellboundDesignBooth?.setTab?.('library');window.CellboundDesignLibrary?.startNew?.('item')});
 }
 function csvText(rows=filtered()){
  const cols=[['id','Item ID'],['name','Item Name'],['category','Category'],['tier','Tier'],['className','Class'],['slot','Slot'],
