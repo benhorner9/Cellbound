@@ -745,7 +745,9 @@ function tickRaid(){
  if(session.stage==='maids')updateMaidLinkOverlay(e);
  if(session.stage==='housebound')updateMasterStatusOverlay();
  resolveExpiredScreeches(e);
- if(isLeader()){
+ // Owner-only room inspection must not automatically wipe or advance a raid.
+ // The owner toolbar controls skip/wipe; normal two-player raids retain all wipe rules.
+ if(isLeader()&&!ownerSoloQa){
    if(session.stage==='maids')driveMaids(e);
    else driveStage(e)
  }
