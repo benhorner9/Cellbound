@@ -5,6 +5,7 @@ create table if not exists public.cellbound_design_blueprints(
  title text not null check(length(title) between 1 and 120),
  status text not null default 'draft' check(status in('draft','published')),
  blueprint jsonb not null default '{}'::jsonb check(jsonb_typeof(blueprint)='object' and pg_column_size(blueprint)<=131072),
+ draft_blueprint jsonb not null default '{}'::jsonb check(jsonb_typeof(draft_blueprint)='object' and pg_column_size(draft_blueprint)<=131072),
  version integer not null default 1 check(version between 1 and 1000000),
  created_by uuid not null default auth.uid() references auth.users(id),
  updated_by uuid not null default auth.uid() references auth.users(id),
