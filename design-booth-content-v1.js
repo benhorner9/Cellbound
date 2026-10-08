@@ -141,6 +141,24 @@ function cleanBlueprint(x){
    drops:s.type==='fight'?(Array.isArray(s.drops)?s.drops:[]).slice(0,6).map(allowedDrop).filter(Boolean):[]
   }))}
 }
+function installDesignedItems(templates){
+ const G=window.CellboundGear;if(!G?.items)return;
+ // Only published, T1-T2 variants of known balanced items enter the game.
+ // Never accept arbitrary stat, rarity, economy or combat metadata from a blueprint.
+ for(let i=G.items.length-1;i>=0;i--)if(G.items[i]?.designedItem)G.items.splice(i,1);
+ const originals=G.items.slice(),used=new Set(originals.map(x=>String(x.name||'').toLowerCase()));
+ for(const row of templates||[]){
+  if(row.kind!=='item'||!row.slug||!/^studio-item-[a-z0-9-]+$/.test(row.slug))continue;
+  const data=row.blueprint&&typeof row.blueprint==='object'?row.blueprint:{};
+  const base=originals.find(x=>x.itemId===data.baseItemId&&x.enabled&&x.dropEnabled&&x.tier<=2&&!x.raidExclusive);
+  const name=String(row.title||'').trim().slice(0,120);
+  if(!base||name.length<3||used.has(name.toLowerCase()))continue;
+  used.add(name.toLowerCase());
+  G.items.push({...base,itemId:'design-'+row.slug,baseItemId:base.itemId,appearanceId:base.appearanceId||base.itemId,
+   name,designedItem:true,designedSlug:row.slug,description:String(data.description||'').slice(0,500),
+   source:'Design Booth',enabled:true,dropEnabled:true,raidExclusive:false});
+ }
+}
 async function refresh(force=false){
  if(loading)return loading;
  if(!db()||!window.CellboundGame?.ready)return false;
@@ -148,7 +166,14 @@ async function refresh(force=false){
  loading=(async()=>{
   const {data,error}=await db().from('cellbound_design_blueprints').select('id,slug,title,content_type,blueprint,version,published_at').eq('status','published').order('updated_at',{ascending:false});
   if(error)throw error;
-  published.clear();(data||[]).forEach(row=>published.set(row.id,row));lastRefresh=Date.now();return true
+  published.clear();(data||[]).forEach(row=>published.set(row.id,row));
+  // A failed optional template lookup must never hide normal adventures.
+  try{
+   const {data:assets,error:assetError}=await db().from('cellbound_design_templates').select('slug,kind,title,blueprint').eq('status','published');
+   if(assetError)throw assetError;
+   installDesignedItems(assets||[]);
+  }catch(e){console.warn('Designed item refresh unavailable:',e)}
+  lastRefresh=Date.now();return true
  })().finally(()=>{loading=null});
  try{return await loading}catch(error){console.warn('Published Design Booth adventures unavailable:',error);return false}
 }
