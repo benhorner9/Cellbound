@@ -9,7 +9,7 @@ const owner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.Cellbound
 const db=()=>window.CellboundGame?.getSupabase?.();
 const table='cellbound_design_templates',KEY='cellbound-design-library-draft-v1';
 const KINDS=[['room','Room / transition'],['fight','Boss or encounter'],['comic','Comic scene'],['minigame','Puzzle / minigame'],['item','Equipment item']];
-let rows=[],kind='room',selected=null,draft=null,baseline='',busy=false,message='',loading=false;
+let rows=[],kind='room',selected=null,draft=null,baseline='',busy=false,message='',loading=false,listFilter='all';
 const typeName=k=>KINDS.find(x=>x[0]===k)?.[1]||k;
 const changed=()=>draft&&JSON.stringify(draft)!==baseline;
 const slug=()=>Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
@@ -50,7 +50,7 @@ function openRecord(record){
  if(draft&&changed()&&!confirm('Open a different template? Unsaved changes will be lost unless saved to cloud.'))return;
  selected=record;kind=record.kind;
  draft={id:record.id,slug:record.slug,kind,title:String(record.draft_blueprint?.title||record.title),status:record.status,version:record.version,
-  data:clone(record.draft_blueprint&&Object.keys(record.draft_blueprint).length?record.draft_blueprint:record.blueprint||{})};
+  data:clone(record.draft_blueprint&&Object.keys(record.draft_blueprint).length?record.draft_blueprint:record.blueprint||{}),cloudUpdatedAt:record.updated_at||null};
  baseline=JSON.stringify(draft);persist();render()
 }
 async function refresh(){
@@ -58,7 +58,15 @@ async function refresh(){
  loading=true;
  try{
   const {data,error}=await db().from(table).select('id,slug,kind,title,status,version,blueprint,draft_blueprint,updated_at').order('updated_at',{ascending:false});
-  if(error)throw error;rows=data||[];return true;
+  if(error)throw error;rows=data||[];
+  if(draft?.id){
+   const match=rows.find(x=>x.id===draft.id);
+   if(match){
+    if(!selected&&changed()&&match.updated_at&&match.updated_at!==draft.cloudUpdatedAt)message='Recovered unsaved device edits. Review changes before overwriting cloud content.';
+    selected=match;
+   }
+  }
+  return true;
  }catch(e){message='Template cloud library unavailable: '+String(e.message||e);return false}
  finally{loading=false;render()}
 }
@@ -115,7 +123,7 @@ function collect(){
 function validation(){
  if(!draft)return['Select or create a template.'];
  const issues=[],d=draft.data,t=draft.title.trim();
- if(t.length<3||t.length>120)issues.push('Give it a name of 3–120 characters.');
+ if(t.length<3||t.length>120||/^Untitled (Room|Boss|Comic|Puzzle|Item)$/.test(t))issues.push('Give it a descriptive name of 3–120 characters.');
  if(kind==='item'){
   const base=gearOptions().some(x=>x[0]===d.baseItemId);
   if(!base)issues.push('Choose a valid balanced T1–T2 equipment template.');
@@ -141,8 +149,8 @@ function render(){
  const issues=validation(),asset=selected?.status==='published';
  host.innerHTML='<section class="dbo-library-shell"><header class="dbo-library-header"><div><small>NEW CONTENT · REUSABLE LIBRARY</small><h3>Content Creator</h3><p>Create once, reuse across new quests, dungeons and raids. Saving a draft never changes what players see.</p></div><button id="dboLibraryRefresh" type="button">REFRESH CLOUD ↻</button></header>'+
  '<div class="dbo-library-actions">'+KINDS.map(([id,name])=>'<button type="button" data-lib-new="'+id+'">+ '+esc(name)+'</button>').join('')+'</div>'+
- '<div class="dbo-editor-layout"><aside class="dbo-projects"><h4>CONTENT LIBRARY <span>'+rows.length+'</span></h4><label class="dbo-field"><span>Filter content</span><select id="dboLibraryFilter"><option value="all">All types</option>'+KINDS.map(([id,name])=>'<option value="'+id+'">'+esc(name)+'</option>').join('')+'</select></label>'+
- '<div class="dbo-project-list">'+rows.map(row=>'<button type="button" data-lib-select="'+esc(row.id)+'" class="'+(row.id===selected?.id?'active':'')+'"><small>'+esc(typeName(row.kind).toUpperCase())+' · '+esc(row.status)+'</small><b>'+esc(row.title)+'</b></button>').join('')+'</div></aside>'+
+ '<div class="dbo-editor-layout"><aside class="dbo-projects"><h4>CONTENT LIBRARY <span>'+rows.length+'</span></h4><label class="dbo-field"><span>Filter content</span><select id="dboLibraryFilter"><option value="all" '+(listFilter==='all'?'selected':'')+'>All types</option>'+KINDS.map(([id,name])=>'<option value="'+id+'" '+(listFilter===id?'selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label>'+
+ '<div class="dbo-project-list">'+rows.filter(row=>listFilter==='all'||listFilter===row.kind).map(row=>'<button type="button" data-lib-select="'+esc(row.id)+'" class="'+(row.id===selected?.id?'active':'')+'"><small>'+esc(typeName(row.kind).toUpperCase())+' · '+esc(row.status)+'</small><b>'+esc(row.title)+'</b></button>').join('')+'</div></aside>'+
  '<main class="dbo-project-editor"><div class="dbo-library-state"><small>'+esc(typeName(kind).toUpperCase())+' · '+(asset?'PUBLISHED · draft changes will not affect players':'UNPUBLISHED')+'</small><h3>'+esc(draft.title)+'</h3><span id="dboLibraryDirty"></span></div>'+
  '<section id="dboLibraryFields">'+editorFields()+'</section>'+
  '<section class="dbo-review"><h4>'+(issues.length?issues.length+' thing'+(issues.length===1?'':'s')+' to finish':'Ready to publish')+'</h4>'+(issues.length?'<ol>'+issues.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'<p>All required fields are ready. Add it to an adventure to test the gameplay.</p>')+'</section>'+
@@ -157,7 +165,7 @@ function bind(){
  root.querySelectorAll('[data-lib-new]').forEach(btn=>btn.onclick=()=>newDraft(btn.dataset.libNew));
  root.querySelectorAll('[data-lib-select]').forEach(btn=>btn.onclick=()=>{const row=rows.find(x=>x.id===btn.dataset.libSelect);if(row)openRecord(row)});
  root.querySelector('#dboLibraryRefresh')?.addEventListener('click',refresh);
- root.querySelector('#dboLibraryFilter')?.addEventListener('change',e=>root.querySelectorAll('[data-lib-select]').forEach(btn=>{const row=rows.find(x=>x.id===btn.dataset.libSelect);btn.hidden=e.target.value!=='all'&&row?.kind!==e.target.value}));
+ root.querySelector('#dboLibraryFilter')?.addEventListener('change',e=>{listFilter=e.target.value;render()});
  root.querySelectorAll('[data-lib-field]').forEach(el=>{
   el.addEventListener('input',()=>{collect();const title=root.querySelector('.dbo-library-state h3');if(title)title.textContent=draft.title;const b=root.querySelector('#dboLibraryPublish');if(b)b.disabled=busy||validation().length>0});
   if(['baseItemId','template'].includes(el.dataset.libField))el.addEventListener('change',()=>{collect();render()});
@@ -214,7 +222,7 @@ async function save(publish=false){
    response=await db().from(table).insert(payload).select().single();
   }
   if(response.error||!response.data?.id)throw new Error(response.error?.message||'Cloud did not confirm the save.');
-  const row=response.data;draft.id=row.id;draft.status=row.status;draft.version=row.version;selected=row;baseline=JSON.stringify(draft);clearLocal();
+  const row=response.data;draft.id=row.id;draft.status=row.status;draft.version=row.version;draft.cloudUpdatedAt=row.updated_at||null;selected=row;baseline=JSON.stringify(draft);clearLocal();
   const {data,error}=await db().from(table).select('id,slug,kind,title,status,version,blueprint,draft_blueprint,updated_at').order('updated_at',{ascending:false});
   if(error)throw error;rows=data||[];
   message=publish?'PUBLISHED · this content is available to the live game content registry.':'CLOUD DRAFT SAVED · players still see the previously published version.';
