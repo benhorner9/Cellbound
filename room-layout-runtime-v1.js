@@ -7,6 +7,8 @@ const clamp=v=>Math.max(0,Math.min(100,Number(v)||0));
 const key=(content,room)=>String(content||'').toLowerCase()+'::'+String(room||'').toLowerCase();
 const published=new Map();
 const defaults=new Map();
+const publishedArt=new Map();
+const ART_BUCKET='cellbound-room-art';
 let db=null,loaded=false,loading=null;
 
 function isOwner(){
@@ -50,10 +52,57 @@ function shiftRoutePoint(basePoint,target){
  const b=normalizePoint(basePoint),dx=target.x-b.x,dy=target.y-b.y;
  return sameShape(basePoint,shiftPoint(basePoint,dx,dy))
 }
+
+function artFor(content,room,fallback=''){
+ const item=publishedArt.get(key(content,room)),client=db||window.CellboundGame?.getSupabase?.();
+ return item?.object_path&&client?.storage?client.storage.from(ART_BUCKET).getPublicUrl(item.object_path).data.publicUrl:fallback
+}
+function publishedArtInfo(content,room){return clone(publishedArt.get(key(content,room))||null)}
+async function refreshArt(){
+ const game=window.CellboundGame;if(!game?.ready)return false;
+ db=game.getSupabase?.();if(!db)return false;
+ const {data,error}=await db.from('cellbound_room_art').select('content_id,room_id,object_path,updated_at');
+ if(error)throw error;
+ publishedArt.clear();(data||[]).forEach(x=>publishedArt.set(key(x.content_id,x.room_id),x));
+ window.dispatchEvent(new CustomEvent('cellbound:room-art-changed',{detail:{mode:'refreshed'}}));
+ return true
+}
+async function publishArt(content,room,file){
+ if(!isOwner())throw new Error('Owner access required.');
+ if(!file||!['image/webp','image/jpeg','image/png','image/avif'].includes(file.type))throw new Error('Choose a WebP, JPEG, PNG or AVIF image.');
+ if(file.size>10*1024*1024)throw new Error('Artwork must be 10 MB or smaller.');
+ if(!/^[a-z0-9-]{1,90}$/.test(content)||!/^[a-z0-9-]{1,90}$/.test(room))throw new Error('Invalid room.');
+ await ready();
+ if(!db)throw new Error('Room art service unavailable.');
+ const {data:auth,error:authError}=await db.auth.getUser();
+ if(authError||!auth?.user?.id)throw new Error('Owner session required.');
+ const ext={'image/webp':'webp','image/jpeg':'jpg','image/png':'png','image/avif':'avif'}[file.type];
+ const path=content+'/'+room+'/'+Date.now()+'-'+Math.random().toString(36).slice(2,11)+'.'+ext;
+ const stored=await db.storage.from(ART_BUCKET).upload(path,file,{contentType:file.type,cacheControl:'31536000',upsert:false});
+ if(stored.error)throw stored.error;
+ const row={content_id:content,room_id:room,object_path:path,updated_by:auth.user.id,updated_at:new Date().toISOString()};
+ const saved=await db.from('cellbound_room_art').upsert(row,{onConflict:'content_id,room_id'});
+ if(saved.error)throw saved.error;
+ publishedArt.set(key(content,room),row);
+ window.dispatchEvent(new CustomEvent('cellbound:room-art-changed',{detail:{content,room,mode:'published'}}));
+ return{...row,url:artFor(content,room)};
+}
+async function restoreArt(content,room){
+ if(!isOwner())throw new Error('Owner access required.');
+ await ready();if(!db)throw new Error('Room art service unavailable.');
+ const {error}=await db.from('cellbound_room_art').delete().eq('content_id',content).eq('room_id',room);
+ if(error)throw error;
+ publishedArt.delete(key(content,room));
+ window.dispatchEvent(new CustomEvent('cellbound:room-art-changed',{detail:{content,room,mode:'default'}}));
+ return true
+}
+
 function applyRoomConfig(content,room,base){
  if(!base)return base;
- const layout=get(content,room);if(!layout)return base;
+ const layout=get(content,room),resolvedArt=artFor(content,room,base.art);
+ if(!layout)return resolvedArt===base.art?base:{...base,art:resolvedArt};
  const out=clone(base),entry=markersFor(content,room,'entry',layout)[0],exit=markersFor(content,room,'exit',layout)[0];
+ out.art=resolvedArt;
  out.route=out.route||{};
  if(entry){
    const oldEntry=out.route.entry?normalizePoint(out.route.entry):entry;
@@ -122,6 +171,7 @@ async function refresh(){
  if(error)throw error;
  published.clear();
  (data||[]).forEach(row=>published.set(key(row.content_id,row.room_id),{layout:cleanLayout(row.layout),version:Number(row.version)||1,published_at:row.published_at}));
+ try{await refreshArt()}catch(error){console.warn('Published room artwork unavailable',error)}
  loaded=true;return true
 }
 async function ready(){
@@ -158,7 +208,7 @@ function namedMechanics(content,room){
  return Object.fromEntries(list.map(m=>[String(m.label||'').trim().toLowerCase(),{x:m.x,y:m.y,label:m.label}]))
 }
 window.CellboundRoomLayouts={
- ready,refresh,get,publishedInfo,defaultMarkers,registerDefaults,registerRoomConfigs,markersFromConfig,
+ ready,refresh,get,publishedInfo,defaultMarkers,artFor,publishedArtInfo,refreshArt,publishArt,restoreArt,registerDefaults,registerRoomConfigs,markersFromConfig,
  markersFor,pointsFor:translatedPoints,applyRoomConfig,namedMechanics,
  setTest,clearTest,isTesting,publish,unpublish,isOwner
 };

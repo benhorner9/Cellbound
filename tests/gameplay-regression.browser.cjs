@@ -104,7 +104,20 @@ async function waitClosed(page,selector){
     await page.waitForSelector('#manorRaidOverlay:not([hidden]) .mr-ready-shell [data-raid-ready]',{timeout:7000});
     assert(await page.locator('#mrOwnerQaControls').isVisible(),'owner Manor QA toolbar is visible');
     await page.locator('#manorRaidOverlay [data-raid-ready]').click();
-    await page.waitForSelector('#cb2dBackdrop:not([hidden]) .mr-room-scene.room-butler',{timeout:30000});
+    try{await page.waitForSelector('#cb2dBackdrop:not([hidden]) .mr-room-scene.room-butler',{timeout:30000});}catch(error){
+      const diagnostic=await page.evaluate(()=>({
+        stage:window.CellboundManorRaid?.isOwnerSoloQa?.(),
+        overlay:document.querySelector('#manorRaidOverlay')?.textContent?.slice(0,600),
+        viewerExists:!!document.querySelector('#cb2dBackdrop'),
+        viewerHidden:document.querySelector('#cb2dBackdrop')?.hidden,
+        viewerText:document.querySelector('#cb2dBackdrop')?.textContent?.slice(0,650),
+        viewerHtml:document.querySelector('#cb2dEnvironment')?.innerHTML?.slice(0,450),
+        readyButton:!!document.querySelector('#manorRaidOverlay [data-raid-ready]')
+      }));
+      console.error('MANOR OWNER QA DIAGNOSTIC:',JSON.stringify(diagnostic));
+      console.error('MANOR BROWSER ERRORS:',JSON.stringify(errors.slice(-20)));
+      throw error
+    }
     assert.equal(await page.evaluate(()=>CellboundManorRaid.isOwnerSoloQa()),true,'Manor owner solo QA stays local and active during combat');
     await page.locator('#mrOwnerQaControls [data-qa-exit]').click();
     await page.waitForFunction(()=>!window.CellboundManorRaid.isOwnerSoloQa(),{},{timeout:5000,polling:50});

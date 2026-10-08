@@ -2680,7 +2680,7 @@ async function playLiveRebornSession(result,tok){
    const final=finalResult||session.snapshot?.()||activeResult;
    if(final){
     final.stageId=stageMeta.stageId;final.stageTitle=stageMeta.stageTitle;final.startHp=stageMeta.startHp;
-    activeResult=final;run.rebornResult=final;
+    activeResult=final;if(run&&tok===token)run.rebornResult=final;
     try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}
    }
    if(run){run.combatActive=false;run.rebornPlayback=null;run.rebornLiveSession=null}
@@ -2705,6 +2705,7 @@ async function playLiveRebornSession(result,tok){
  })
 }
 async function playRebornTimeline(result,tok,{replayMode=false}={}){
+ if(tok!==token||!run)return'cancelled';
  if(!replayMode&&run?.rebornLiveSession)return playLiveRebornSession(result,tok);
  let activeResult=result,events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
  run.combatActive=true;run.rebornResult=result;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer(replayMode);

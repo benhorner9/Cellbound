@@ -34,3 +34,17 @@
 .rqe-manor-runtime{position:absolute;inset:0;overflow:hidden;background:#080b0c}
 .rqe-manor-runtime .mr-room-scene{position:absolute!important;inset:0!important}
 .rqe-manor-runtime .mr-room-scene>img{pointer-events:none}
+
+.rqe-art-upload{margin-top:14px;border:1px solid rgba(198,161,109,.5);border-radius:12px;padding:15px;background:linear-gradient(130deg,#222d2b,#101a1e)}
+.rqe-art-upload header{display:flex;gap:12px;justify-content:space-between;align-items:center}
+.rqe-art-upload h3{margin:4px 0;font-size:19px}
+.rqe-art-upload header span{font-size:10px;color:#f0cda1;font-weight:900;letter-spacing:.07em}
+.rqe-art-upload p{font-size:12px;line-height:1.5;color:#bfccd2}
+.rqe-art-file{display:block;border:1px dashed #c39c65;border-radius:9px;padding:10px;color:#f3d2a0;font-size:11px;font-weight:800;letter-spacing:.06em}
+.rqe-art-file input{display:block;width:100%;margin-top:8px;min-height:44px;font-size:16px!important;color:#e8f0f3;background:#132126;border-radius:6px;padding:9px;touch-action:manipulation}
+.rqe-art-upload>small{display:block;margin-top:8px;font-size:11px;color:#a7bdc7}
+.rqe-art-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rqe-art-actions button{flex:1;min-width:120px;min-height:44px;border-radius:8px;border:1px solid #51745c;background:#275d45;color:#e9fff2;font-weight:900;font-size:11px;letter-spacing:.04em;touch-action:manipulation}
+.rqe-art-actions button:last-child:not(:first-child){background:#503330;border-color:#794d47;color:#ffe8df}
+.rqe-art-actions button:disabled{opacity:.44;cursor:not-allowed}
+#rqeArtMessage{margin-bottom:0;overflow-wrap:anywhere}
