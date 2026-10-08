@@ -25,7 +25,7 @@ for(const key of keys){
   artworkPaths.push(art);
  }
 }
-const road=quests.match(/const art=title==='A Road Gone Quiet'\?\[([\s\S]*?)\]:questComicArtSet\(title,speaker\)/);
+const road=quests.match(/'A Road Gone Quiet':\[([\s\S]*?)\]/);
 assert(road,'A Road Gone Quiet must have dedicated quest art');
 const roadArt=[...road[1].matchAll(/'([^']+\.webp)'/g)].map(x=>x[1]);
 assert.equal(roadArt.length,5,'Road quest must retain five illustrated panels');

@@ -197,7 +197,42 @@ const QUEST_COMIC_ART={
  zeltira:['./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp','./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/comics/tutorial/the_quartermaster_s_choice.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'],
  trial:['./assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','./assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp']
 };
+const QUEST_COMIC_STORY_ART={
+ 'A Road Gone Quiet':[
+  './assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp',
+  './assets/comics/tutorial-2026/investigating-tracks.webp',
+  './assets/comics/tutorial-2026/arcane-trail.webp',
+  './assets/comics/tutorial-2026/twilight-evacuation.webp',
+  './assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'
+ ],
+ 'The Old Forge Key':[
+  './assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp',
+  './assets/comics/main-quests-2026/forge-seal.svg',
+  './assets/comics/main-quests-2026/forge-keepers.svg',
+  './assets/comics/tutorial-2026/sunset-briefing.webp',
+  './assets/comics/tutorial-2026/twilight-siege.webp',
+  './assets/comics/main-quests-2026/forge-decision.svg'
+ ],
+ 'The Letter in Glass':[
+  './assets/comics/tutorial-2026/investigating-tracks.webp',
+  './assets/comics/main-quests-2026/glass-buried.svg',
+  './assets/comics/tutorial-2026/arcane-relic.webp',
+  './assets/comics/main-quests-2026/glass-whisper.svg',
+  './assets/comics/tutorial-2026/wardstone-twilight.webp',
+  './assets/comics/main-quests-2026/glass-warning.svg'
+ ],
+ 'Something That Should Be Dead':[
+  './assets/comics/tutorial-2026/wardstone-twilight.webp',
+  './assets/comics/main-quests-2026/dead-glass.svg',
+  './assets/comics/tutorial-2026/lost-crystal-vault.webp',
+  './assets/comics/main-quests-2026/glass-recognition.svg',
+  './assets/comics/tutorial-2026/arcane-relic.webp',
+  './assets/comics/tutorial-2026/lost-crystal-vault.webp'
+ ]
+};
 function questComicArtSet(title,speaker){
+ const dedicated=QUEST_COMIC_STORY_ART[String(title||'')];
+ if(dedicated?.length)return dedicated;
  const key=(String(title||'')+' '+String(speaker||'')).toLowerCase();
  if(/trial|mentor/.test(key))return QUEST_COMIC_ART.trial;
  if(/vault|forge|ash|elara/.test(key))return QUEST_COMIC_ART.ashen;
@@ -205,16 +240,7 @@ function questComicArtSet(title,speaker){
  return QUEST_COMIC_ART.zeltira
 }
 function comicPanels(title,speaker,beats){
- const list=Array.isArray(beats)?beats:[beats];
- // The opening road quest has its own five-frame comic artwork; don't cycle
- // dungeon key art and loot thumbnails into these narrative panels.
- const art=title==='A Road Gone Quiet'?[
-  './assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp',
-  './assets/comics/tutorial-2026/investigating-tracks.webp',
-  './assets/comics/tutorial-2026/arcane-trail.webp',
-  './assets/comics/tutorial-2026/twilight-evacuation.webp',
-  './assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'
- ]:questComicArtSet(title,speaker);
+ const list=Array.isArray(beats)?beats:[beats],art=questComicArtSet(title,speaker);
  return list.map((text,i)=>({
   kind:i===0?'location':'dialogue',
   eyebrow:i===0?'QUEST STORY':'',
