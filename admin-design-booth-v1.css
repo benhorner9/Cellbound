@@ -1,0 +1,75 @@
+.dbo-shell{margin:20px 0 36px;background:#0b1116;color:#e4edf2;border:1px solid #354248;border-radius:17px;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.28);font:inherit}
+.dbo-shell *{box-sizing:border-box}
+.dbo-master-head{display:flex;gap:24px;justify-content:space-between;align-items:center;padding:24px;background:linear-gradient(130deg,#1b2e35,#101a21 66%,#25362e);border-bottom:1px solid #48504d}
+.dbo-master-head small,.dbo-builder-top small,.dbo-stage-editor-header small,.dbo-public-head small,.dbo-template-library small{display:block;font-weight:900;letter-spacing:.13em;font-size:10px;color:#c49e70}
+.dbo-master-head h2{margin:3px 0 6px;font-family:Georgia,serif;font-size:30px;letter-spacing:-.03em;color:#f4eee4}
+.dbo-master-head p{margin:0;color:#b5c3cb;max-width:760px;line-height:1.55}
+.dbo-shell button{cursor:pointer;touch-action:manipulation;font:inherit}
+.dbo-shell button:disabled{opacity:.4;cursor:not-allowed}
+.dbo-master-head button,.dbo-builder-top button,.dbo-shell .dbo-footer button,.dbo-shell .dbo-stage-actions button,.dbo-shell .dbo-add button{border-radius:8px;border:1px solid #50616a;background:#1c2b33;color:#e5eff2;padding:12px 13px;font-size:12px;font-weight:850}
+.dbo-master-head>button{flex-shrink:0}
+.dbo-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-bottom:1px solid #31454c;background:#101c23}
+.dbo-tabs button{min-height:75px;min-width:0;padding:12px 8px;border:0;border-right:1px solid #263b45;border-bottom:3px solid transparent;background:transparent;color:#c5d4dd;text-align:center}
+.dbo-tabs button.active{background:#1f343b;border-bottom-color:#dbb784;color:#fff}
+.dbo-tabs button b{display:block;font-size:12px;line-height:1.25}.dbo-tabs button small{display:block;color:#8ca3b0;font-size:10px;line-height:1.35;margin-top:5px}
+.dbo-builder-top{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px;border-bottom:1px solid #293b43;background:#10181e}
+.dbo-builder-top h3{margin:4px 0 3px;font-family:Georgia,serif;font-size:22px}.dbo-builder-top p{margin:0;color:#9aadb7;font-size:12px;line-height:1.45}
+.dbo-buttons,.dbo-footer,.dbo-stage-actions{display:flex;gap:8px;flex-wrap:wrap}
+.dbo-editor-layout{display:grid;grid-template-columns:minmax(190px,265px) minmax(0,1fr);align-items:stretch;min-height:600px}
+.dbo-projects{border-right:1px solid #34434c;background:#0e181f;padding:16px}
+.dbo-projects h4{font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#b9a283;display:flex;justify-content:space-between;margin:6px 0 12px}
+.dbo-project-list,.dbo-stage-list{display:grid;gap:6px;margin-bottom:21px}
+.dbo-project-list{max-height:210px;overflow:auto}
+.dbo-project-list button,.dbo-stage-list button{width:100%;display:flex;gap:9px;align-items:center;text-align:left;padding:11px 10px;background:#14242d;border:1px solid #293d48;color:#dce6eb;border-radius:8px}
+.dbo-project-list button{display:block}.dbo-project-list button.active,.dbo-stage-list button.active{border-color:#d6ac78;background:#25363a}
+.dbo-project-list small,.dbo-stage-list small{display:block;color:#8b9da9;font-size:10px;margin-bottom:4px}
+.dbo-project-list b,.dbo-stage-list b{display:block;font-size:12px;font-weight:800}
+.dbo-stage-list i{font-size:11px;font-style:normal;color:#d6ac78}
+.dbo-stage-list span{min-width:0}
+.dbo-add{display:grid;gap:7px}
+.dbo-add select,.dbo-field input,.dbo-field textarea,.dbo-field select{display:block;width:100%;min-width:0;background:#0d171d;border:1px solid #39505b;border-radius:8px;padding:11px;color:#f1f7f8;font:inherit;font-size:16px!important}
+.dbo-add select{min-height:42px}
+.dbo-project-editor{min-width:0;padding:22px 22px 30px}
+.dbo-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dbo-field{display:block;min-width:0;margin-bottom:14px}
+.dbo-field>span{display:block;margin-bottom:6px;color:#bac9cd;font-size:11px;font-weight:800;letter-spacing:.06em}
+.dbo-field textarea{min-height:95px;resize:vertical}
+.dbo-stage-editor-header{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid #30434a;border-bottom:1px solid #30434a;padding:17px 0;margin:12px 0 18px}
+.dbo-stage-editor-header h3{font-family:Georgia,serif;font-size:21px;margin:3px 0}
+.dbo-stage-actions button{min-width:38px}
+.dbo-stage-actions button:last-child{color:#f2b3ac;border-color:#89524b}
+.dbo-image-control{margin:13px 0 19px;border:1px solid #324b52;border-radius:10px;padding:12px;background:#121f26}
+.dbo-image-control img{display:block;width:100%;max-height:330px;aspect-ratio:16/9;object-fit:cover;border-radius:8px}
+.dbo-art-missing{display:grid;place-items:center;min-height:105px;background:repeating-linear-gradient(-45deg,#172630,#172630 12px,#111d26 12px,#111d26 24px);border-radius:8px;color:#99afbb;font-size:12px}
+.dbo-image-control label{display:block;margin:10px 0 8px;color:#e8cb9b;font-weight:800;font-size:11px}
+.dbo-image-control input{display:block;margin-top:8px;width:100%;min-height:44px;padding:9px;background:#101c22;border:1px solid #3e5b64;border-radius:8px;font-size:16px!important;color:#edf7fa}
+.dbo-image-control small,.dbo-review small{font-size:11px;color:#a0b3bc}
+.dbo-panel-list{border-top:1px solid #31444b;margin-top:15px;padding-top:13px}
+.dbo-panel-list h4{font-size:14px}.dbo-comic-panel{margin:12px 0;padding:15px;background:#14232a;border:1px solid #31454c;border-radius:10px}
+.dbo-comic-panel header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.dbo-comic-panel button,.dbo-panel-list>button{border:1px solid #64716a;background:#24373a;border-radius:8px;padding:9px 12px;color:#e5f0ec;font-weight:800}
+.dbo-review{border:1px solid #475b50;border-radius:11px;padding:12px 14px;background:#1b2927;margin:19px 0}
+.dbo-review h4{margin:0;font-size:13px;color:#d4b889}.dbo-review p{color:#ceddd8;font-size:12px;line-height:1.5;margin:6px 0}
+.dbo-footer .primary,.dbo-public-grid button,.dbo-player-panel button.primary{background:#3a6c52!important;border-color:#7aa488!important;color:#f0fff7!important}
+#dboMessage{font-size:12px;color:#c7b384;line-height:1.5}
+.dbo-template-library{padding:24px}.dbo-template-library h3{font-family:Georgia,serif;font-size:24px}.dbo-template-library p{line-height:1.5;color:#bdccd3}
+.dbo-public-head{margin:28px 0 14px}.dbo-public-head h3{font-family:Georgia,serif;margin:4px 0}.dbo-public-head p{max-width:800px;color:#97a8ae}
+.dbo-public-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:15px 0 25px}
+.dbo-public-grid article{border:1px solid #45545b;border-radius:11px;background:linear-gradient(140deg,#18292c,#101920);padding:17px;color:#f0eeea}
+.dbo-public-grid h4{margin:6px 0 8px;font-family:Georgia,serif;font-size:18px}
+.dbo-public-grid p{color:#b6c6cc;font-size:12px;line-height:1.5}
+.dbo-public-grid small{font-size:10px;letter-spacing:.08em;color:#c3a47d}
+.dbo-public-grid button{margin-top:5px;padding:10px 15px;border-radius:8px;font-weight:850;border:1px solid #577665;font-size:11px}
+#designAdventureOverlay:not([hidden]){position:fixed;inset:0;z-index:2147483600;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:max(14px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));overflow:auto}
+.dbo-player-panel{width:min(960px,100%);background:#0e1920;border:1px solid #6e765e;border-radius:12px;color:#edf4f3;overflow:hidden;box-shadow:0 25px 90px #000}
+.dbo-player-panel header{display:flex;align-items:center;gap:9px;justify-content:space-between;background:#1c3033;padding:13px 18px}
+.dbo-player-panel header small{font-size:10px;font-weight:800;color:#e1bc83}.dbo-player-panel header b{font-family:Georgia,serif;flex:1}.dbo-player-panel header button{border:1px solid #7a685b;background:transparent;color:#f1e9df;border-radius:7px;padding:9px}
+.dbo-player-panel>img{display:block;width:100%;max-height:55vh;aspect-ratio:16/9;object-fit:cover}
+.dbo-player-body{padding:18px 24px;font-size:14px}.dbo-player-body p{color:#cad4d5;line-height:1.65}
+.dbo-player-panel footer{padding:10px 20px 20px;display:flex;justify-content:flex-end}
+.dbo-player-panel footer button,.dbo-picks button{padding:12px 18px;border-radius:7px;border:1px solid #607477;color:#f2f8f5;background:#26454a;font-weight:800}
+.dbo-picks{display:flex;gap:9px;flex-wrap:wrap}.dbo-picks button{flex:1;min-width:90px}
+.dbo-feedback{min-height:20px}.dbo-progress,.dbo-stage-count{color:#d3b68a}
+.dbo-combat-art{position:absolute;inset:0;overflow:hidden}.dbo-combat-art img{width:100%;height:100%;object-fit:cover}
+@media(max-width:1100px){.dbo-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}.dbo-editor-layout{grid-template-columns:210px minmax(0,1fr)}}
+@media(max-width:720px){.dbo-master-head,.dbo-builder-top{flex-direction:column;align-items:flex-start;padding:15px}.dbo-editor-layout{grid-template-columns:1fr}.dbo-projects{border-right:0;border-bottom:1px solid #34434c}.dbo-project-list{max-height:120px}.dbo-stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-project-editor{padding:13px}.dbo-form-grid{grid-template-columns:1fr}.dbo-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.dbo-tabs button{min-height:62px}.dbo-player-body{padding:13px}.dbo-master-head h2{font-size:26px}}
