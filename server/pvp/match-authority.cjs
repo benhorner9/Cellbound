@@ -36,16 +36,17 @@ function createAuthority({engine,clock=Date.now,acceptanceMs=15000,reconnectMs=3
  const publicState=m=>({
   id:m.id,mode:m.mode,size:m.size,status:m.status,createdAt:m.createdAt,
   readyDeadline:m.readyDeadline,startedAt:m.startedAt,finishedAt:m.finishedAt,
-  reason:m.reason,winner:m.winner,revision:m.revision,
+  reason:m.reason,winner:m.winner,revision:m.revision,mapId:m.map?.id||null,
   players:m.players.map(p=>({userId:p.userId,team:p.team,ready:p.ready,connected:p.connected})),
   // Informational only. A client can never submit this as an authoritative result.
   snapshot:m.session?.snapshot()||null
  });
- function createMatch({id,mode,size,players,seed,maximumDurationMs=120000}={}){
+ function createMatch({id,mode,size,players,seed,map=null,maximumDurationMs=120000}={}){
   assert(validId(id)&&!matches.has(id),'Unique server-generated match id required');
   assert(MODES.has(mode),'Invalid PvP match mode');
   assert(Number.isInteger(size)&&(mode==='arena'?[2,3,5].includes(size):size===5),'Invalid squad format');
   assert(typeof seed==='string'&&seed.length>=12&&seed.length<=150,'Server-generated match seed required');
+  if(map){assert(typeof map==='object'&&typeof map.id==='string'&&map.mode===mode&&map.layout&&typeof map.layout==='object'&&!Array.isArray(map.layout),'Verified PvP map for this mode required')}
   assert(Array.isArray(players)&&players.length===2,'First online milestone requires two authenticated commanders');
   assert(Number.isSafeInteger(maximumDurationMs)&&maximumDurationMs>=10000&&maximumDurationMs<=360000,'Invalid match duration');
   const seenIds=new Set(),seenUnits=new Set();
@@ -65,7 +66,7 @@ function createAuthority({engine,clock=Date.now,acceptanceMs=15000,reconnectMs=3
    return{userId:p.userId,team:p.team,roster,ready:false,connected:true,lastSeq:0,lastOrderAt:-Infinity,disconnectedAt:null}
   });
   const t=time();
-  const m={id,mode,size,players:chosen,seed,maximumDurationMs,status:'ready',createdAt:t,
+  const m={id,mode,size,players:chosen,seed,map:map?json(map):null,maximumDurationMs,status:'ready',createdAt:t,
    readyDeadline:t+acceptanceMs,startedAt:null,finishedAt:null,reason:null,winner:null,revision:1,session:null};
   matches.set(id,m);return publicState(m)
  }
@@ -79,7 +80,7 @@ function createAuthority({engine,clock=Date.now,acceptanceMs=15000,reconnectMs=3
    const [blue,red]=m.players;
    // All simulation state comes from the same engine used by dungeons and raids.
    m.session=engine.createPvpSession({
-    pvp:{mode:m.mode,size:m.size,blue:json(blue.roster),red:json(red.roster)},
+    pvp:{mode:m.mode,size:m.size,blue:json(blue.roster),red:json(red.roster),...(m.map?{map:json(m.map)}:{})},
     encounter:{id:'online-'+m.id,environment:{blockers:[]}},
     seed:m.seed,maxDurationMs:m.maximumDurationMs
    },{zone:'online-pvp'});
