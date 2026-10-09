@@ -182,6 +182,8 @@ function bindModal(node){
 }
 function open(){
  if(!owner())return false;
+ const host=$('#combatUILayoutMount');
+ if(host){host.hidden=false;host.innerHTML='<div class="cbe-reopen"><h3>Combat UI Layout Editor</h3><p>Drag and resize the complete combat window. Drafts and applied layouts are private to this device.</p><button type="button" id="cbeReopenEditor">OPEN VISUAL EDITOR</button></div>';$('#cbeReopenEditor',host)?.addEventListener('click',()=>open())}
  state=load();opened=true;
  const node=modal();node.hidden=false;
  $('#cbeMode').innerHTML=opt(MODES,mode);$('#cbeProfile').innerHTML=opt(Object.fromEntries(Object.keys(PROFILES).map(k=>[k,k[0].toUpperCase()+k.slice(1)])),profile);
