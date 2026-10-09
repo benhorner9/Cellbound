@@ -101,7 +101,7 @@ function domainCard(d){
  '<button type="button" data-gdh-plan="'+esc(d.id)+'">DESIGN SYSTEM →</button>')+'</article>'
 }
 function stats(){
- const x=report();return '<div class="gdh-stats"><div><b>'+x.available+'/'+x.total+'</b><span>editor modules loaded</span></div><div><b>'+x.knownRooms+'</b><span>mapped dungeon/raid rooms</span></div><div><b>'+x.bossCount+'</b><span>boss reward entries</span></div><div><b>'+x.itemCount+'</b><span>catalogued items</span></div></div>'+
+ const x=report();return '<div class="gdh-stats"><div><b>'+x.available+'/'+x.total+'</b><span>Booth tools loaded</span></div><div><b>'+x.knownRooms+'</b><span>mapped dungeon/raid rooms</span></div><div><b>'+x.bossCount+'</b><span>boss reward entries</span></div><div><b>'+x.itemCount+'</b><span>catalogued items</span></div></div>'+
  (x.unavailable.length?'<p class="gdh-warning">Some editor modules are unavailable: '+esc(x.unavailable.map(a=>a.label).join(', '))+'. Open the game again if an asset failed to load.</p>':'')+
  '<p class="gdh-muted">Counts are read from the currently loaded game registries. They do not measure content quality, finished quests or release readiness.</p>'
 }
@@ -138,7 +138,7 @@ function readiness(){
 }
 function render(){
  const host=$(ROOT);if(!host||!active||!owner())return;load();const x=report();
- host.innerHTML='<section class="gdh-shell"><header class="gdh-head"><div><small>DESIGN BOOTH · FULL GAME BUILD</small><h2>Game Build Hub</h2><p>Every editor, system plan and QA handoff in one owner workspace. Start with a workflow or search for what you need.</p></div><div>'+badge('editing',x.available+' editable modules')+badge('planned',(AREAS.length-x.total)+' systems to expand')+'</div></header>'+
+ host.innerHTML='<section class="gdh-shell"><header class="gdh-head"><div><small>DESIGN BOOTH · FULL GAME BUILD</small><h2>Game Build Hub</h2><p>Every editor, system plan and QA handoff in one owner workspace. Start with a workflow or search for what you need.</p></div><div>'+badge('editing',x.available+' Booth tools loaded')+badge('planned',(AREAS.length-x.total)+' systems to expand')+'</div></header>'+
  '<div class="gdh-content">'+stats()+workflowMarkup()+coverage()+editor()+readiness()+'<p class="gdh-message" id="gdhNote" role="status">'+esc(note)+'</p></div></section>';
  bind(host)
 }
@@ -190,7 +190,7 @@ function bind(host){
  $('#gdhAdd',host).onclick=()=>{saveInputs(host);persist();newBrief('world')};
  $$('[data-gdh-field]',host).forEach(el=>{el.onchange=()=>{saveInputs(host);persist()};el.oninput=()=>{saveInputs(host)}})
  $$('[data-gdh-save]',host).forEach(el=>el.onclick=()=>{saveInputs(host);if(persist())announce('Game system design saved on this device. No game changes published.')});
- $$('[data-gdh-copy]',host).forEach(el=>el.onclick=()=>{saveInputs(host);const b=selectedBrief();if(!b||briefs.length>=MAX_BRIEFS)return;const n=empty(b.area);Object.assign(n,copy(b),{id:n.id,title:(b.title+' (copy)').slice(0,120),status:'Idea',updatedAt:new Date().toISOString()});briefs.push(n);selected=n.id;persist();render()});
+ $$('[data-gdh-copy]',host).forEach(el=>el.onclick=()=>{saveInputs(host);const b=selectedBrief();if(!b||briefs.length>=MAX_BRIEFS)return;const n=empty(b.area),newId=n.id;Object.assign(n,copy(b),{id:newId,title:(b.title+' (copy)').slice(0,120),status:'Idea',updatedAt:new Date().toISOString()});briefs.push(n);selected=n.id;persist();render()});
  $$('[data-gdh-delete]',host).forEach(el=>el.onclick=()=>{if(!confirm('Delete this local game system brief?'))return;briefs=briefs.filter(x=>x.id!==selected);selected=briefs[0]?.id||'';persist();render()});
  $('#gdhExport',host).onclick=exportPlan;
  $('#gdhImport',host).onclick=()=>$('#gdhImportFile',host).click();
