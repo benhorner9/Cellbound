@@ -54,7 +54,7 @@ function snapshot(state){
   mode:state.mode,winner:state.winner,score:state.score,
   storm:state.mode==='arena'?{radius:state.storm.radius,phase:state.storm.phase}:null,
   flags:state.mode==='capture-the-flag'?state.flags:null,
-  hill:state.mode==='king-of-the-hill'?{...HILLS[state.hill.index],index:state.hill.index,nextRotationMs:Math.max(0,state.hill.nextRotation-state.lastAt)}:null
+  hill:state.mode==='king-of-the-hill'?{...state.map.hills[state.hill.index],index:state.hill.index,nextRotationMs:Math.max(0,state.hill.nextRotation-state.lastAt)}:null
  })
 }
 function emit(frame,type,payload){frame.emit(type,payload)}
@@ -103,8 +103,10 @@ function tickRespawns(state,frame){
  const wait=state.config.respawnMs;
  frame.units.forEach(unit=>{
   if(unit.alive||!Number.isFinite(unit.pvpDeathAt)||frame.now-unit.pvpDeathAt<wait)return;
-  frame.respawn(unit,BASES[unit.team]);
-  emit(frame,'PVP_RESPAWN',{target:unit.id,team:unit.team,position:{...BASES[unit.team]}})
+  const index=Math.max(0,frame.units.filter(u=>u.team===unit.team).findIndex(u=>u.id===unit.id));
+  const spawn=state.map.spawns[unit.team]?.[index]||state.map.flags[unit.team];
+  frame.respawn(unit,spawn);
+  emit(frame,'PVP_RESPAWN',{target:unit.id,team:unit.team,position:{...spawn}})
  })
 }
 function tickFlags(state,frame){
