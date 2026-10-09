@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const root=path.join(__dirname,'..'),sandbox={window:{},console};vm.createContext(sandbox);
-for(const filename of ['src/combat/combat-data-v1.js','src/combat/pvp-ruleset-v1.js','src/combat/combat-reborn-v1.js','src/combat/combat-standard-v1.js'])
+for(const filename of ['src/combat/combat-data-v1.js','src/combat/pvp-ruleset-v1.js','src/combat/pvp-objectives-v1.js','src/combat/combat-reborn-v1.js','src/combat/combat-standard-v1.js'])
  vm.runInContext(fs.readFileSync(path.join(root,filename),'utf8'),sandbox,{filename});
 const core=sandbox.window.CellboundCombatReborn,standard=sandbox.window.CellboundCombatStandard;
 assert.equal(standard.audit().pvpPrototypeReady,true);
