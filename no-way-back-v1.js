@@ -104,7 +104,38 @@ const NWB_STORY_ART={
  manor:'./assets/manor/manor-raid-hero.webp',
  master:'./assets/manor/manor-master.webp'
 };
+const NWB_COMIC_STORY_ART={
+ 'A Sailor With A Story':[
+  './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
+  './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
+  './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
+  './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
+  './assets/comics/no-way-back-2026/manor-island-landing.svg'
+ ],
+ 'More Than A Crew':[
+  './assets/comics/no-way-back-2026/boat-weathered-hull.svg',
+  './assets/comics/no-way-back-2026/boat-weathered-hull.svg',
+  './assets/comics/no-way-back-2026/boat-missing-chart.svg',
+  './assets/comics/no-way-back-2026/boat-missing-chart.svg',
+  './assets/comics/no-way-back-2026/return-damaged-sail.svg'
+ ],
+ 'Washed Back To Harbour':[
+  './assets/comics/no-way-back-2026/return-stormwreck.svg',
+  './assets/comics/no-way-back-2026/boat-missing-chart.svg',
+  './assets/comics/no-way-back-2026/return-damaged-sail.svg',
+  './assets/comics/no-way-back-2026/boat-weathered-hull.svg'
+ ],
+ 'Homecoming':[
+  './assets/comics/no-way-back-2026/manor-island-landing.svg',
+  './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
+  './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
+  './assets/comics/no-way-back-2026/silas-manor-master.svg',
+  './assets/comics/no-way-back-2026/silas-manor-master.svg'
+ ]
+};
 function nwbStoryArt(label,title){
+ const dedicated=NWB_COMIC_STORY_ART[String(title||'')];
+ if(dedicated?.length)return dedicated;
  const key=(String(label||'')+' '+String(title||'')).toLowerCase();
  if(/hounds|chase|iron gate/.test(key))return[NWB_STORY_ART.hounds,NWB_STORY_ART.manor];
  if(/master|after the fight|understand/.test(key))return[NWB_STORY_ART.silas,NWB_STORY_ART.master,NWB_STORY_ART.manor];

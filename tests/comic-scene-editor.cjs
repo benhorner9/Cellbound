@@ -50,6 +50,12 @@ vm.runInNewContext(code,{window,document,localStorage,fetch,console,setTimeout()
   assert.equal(scene.panels.length,count,'Panel count does not match live story: '+title);
   assert(scene.panels.every(p=>p.artwork.startsWith('./assets/comics/story-composites-2026/')&&p.artwork.endsWith('.svg')),'Art inspector is still using generic art: '+title);
  }
+ for(const [title,count] of Object.entries({'A Sailor With A Story':5,'More Than A Crew':5,'Washed Back To Harbour':4,'Homecoming':5})){
+  const scene=found.find(x=>x.title===title);
+  assert(scene,'Missing No Way Back story in owner editor: '+title);
+  assert.equal(scene.panels.length,count,'Owner editor disagrees with gameplay dialogue: '+title);
+  assert(scene.panels.every(p=>p.artwork.startsWith('./assets/comics/no-way-back-2026/')&&p.artwork.endsWith('.svg')),'No Way Back scene not wired to original illustrated assets: '+title);
+ }
  assert(code.includes('comic_scene_panel_art')&&code.includes("'comic-scene-art'")&&code.includes('data-upload-file'),'Editor must publish uploaded artwork through owner-gated storage');
  window.CellboundAdmin.role='moderator';
  assert.equal(ui.isOwner(),false,'Editor must be owner-only');
