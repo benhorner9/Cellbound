@@ -9,6 +9,7 @@ const runtime=()=>window.CellboundDesignedContent;
 const STORE='cellbound-design-booth-workspace-v1';
 const STASH='cellbound-design-booth-project-backups-v2';
 const TOOLS=[
+ {id:'director',label:'Game Build Hub',sub:'Full game planning · QA · workflows'},
  {id:'library',label:'Content Creator',sub:'New rooms · bosses · items'},
  {id:'build',label:'Adventure Builder',sub:'Quest · dungeon · raid'},
  {id:'drops',label:'Drop Tables',sub:'Boss loot · chances'},
@@ -22,6 +23,7 @@ const TOOLS=[
  {id:'templates',label:'Minigame Library',sub:'Reusable mechanics'}
 ];
 const GUIDANCE={
+ "director": {"title":"Choose a system → Open editor or write brief → Test and review","detail":"A one-stop overview of supported editors, build workflows and unfinished engine features. Publishing stays inside the individual approved editor; local design briefs never change player gameplay."},
  "library": {
   "title": "Create → Save Cloud Draft → Reuse → Publish",
   "detail": "Create a new room, boss encounter, comic strip, puzzle or balanced equipment item. Cloud drafts are private; published items become selectable in approved boss drop tables. Add scene templates to any Adventure Builder project."
@@ -64,8 +66,8 @@ const GUIDANCE={
   "detail": "Pick an existing template inside an adventure minigame stage. Creating a new mechanic still requires game code and testing."
  }
 };
-const plugins={library:'CellboundDesignLibrary',comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer','pvp-maps':'CellboundPvPMapEditor','combat-ui':'CellboundCombatUILayoutEditor'};
-const mountIds={library:'dboLibrary',comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount','pvp-maps':'pvpMapEditorMount','combat-ui':'combatUILayoutMount'};
+const plugins={director:'CellboundGameBuildHub',library:'CellboundDesignLibrary',comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer','pvp-maps':'CellboundPvPMapEditor','combat-ui':'CellboundCombatUILayoutEditor'};
+const mountIds={director:'dboDirectorMount',library:'dboLibrary',comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount','pvp-maps':'pvpMapEditorMount','combat-ui':'combatUILayoutMount'};
 let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,uploadBusy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='',nativeBaseline='[]',dropEditIndex=-1,dropSearch='',dropTier='all',dropSort='tier',moreOpen=false;
 let workspace={},baseline='',cloudUpdatedAt=null;
 const keyFor=p=>p?.id?'cloud:'+p.id:'local:'+p?.slug;
@@ -608,13 +610,13 @@ function render(){
  const root=$('#designBoothMount');if(!root||!opened||!owner())return;
  const advanced=['generator','models','templates'];
  const tab=t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>';
- root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · CREATIVE WORKSPACE</small><h2>Design Booth</h2><p>Build new Cellbound adventures, test ideas, manage rewards and refine existing scenes.</p></div><button id="dboClose" type="button">CLOSE ×</button></header>'+
+ root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · CREATIVE WORKSPACE</small><h2>Design Booth</h2><p>Build new Cellbound adventures, plan game systems, test ideas, manage rewards and refine existing scenes.</p></div><button id="dboClose" type="button">CLOSE ×</button></header>'+
  '<section class="dbo-quickstart" aria-label="Choose a task"><div><h3>What do you want to do?</h3><p>Choose a job. Adventures require Publish; existing-boss drops take effect when you press Save Boss Drops.</p></div><div class="dbo-quick-actions">'+
- [['library','Create game content'],['build','Build an adventure'],['drops','Edit boss loot'],['items','Find an item'],['comics','Edit comic art'],['rooms','Edit dungeon rooms'],['pvp-maps','Design PvP maps'],['combat-ui','Edit combat UI']].map(([id,label])=>'<button type="button" data-dbo-go="'+id+'" class="'+(active===id?'active':'')+'">'+label+' →</button>').join('')+'</div></section>'+
+ [['director','Full game build hub'],['library','Create game content'],['build','Build an adventure'],['drops','Edit boss loot'],['items','Find an item'],['comics','Edit comic art'],['rooms','Edit dungeon rooms'],['pvp-maps','Design PvP maps'],['combat-ui','Edit combat UI']].map(([id,label])=>'<button type="button" data-dbo-go="'+id+'" class="'+(active===id?'active':'')+'">'+label+' →</button>').join('')+'</div></section>'+
  '<nav class="dbo-tabs" role="tablist" aria-label="Design Booth tools">'+TOOLS.filter(t=>!advanced.includes(t.id)).map(tab).join('')+'</nav>'+
  '<details class="dbo-more" '+(moreOpen||advanced.includes(active)?'open':'')+'><summary>More tools · Character fit, dungeon planner & minigame templates</summary><nav class="dbo-tabs dbo-tabs-more" role="tablist" aria-label="Advanced tools">'+TOOLS.filter(t=>advanced.includes(t.id)).map(tab).join('')+'</nav></details>'+
  '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Press Publish only when everything is ready. Existing published content stays unchanged until then.</li></ol><p>Local backups are for recovery on this device; only a cloud-saved draft is available on another device.</p></details>'+
- '<aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboLibrary" hidden></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
+ '<aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboDirectorMount" hidden></div><div id="dboLibrary" hidden></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="pvpMapEditorMount" class="pvp-map-editor-mount" hidden></div><div id="combatUILayoutMount" class="combat-ui-layout-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
  root.querySelectorAll('[data-dbo-tool],[data-dbo-go]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool||btn.dataset.dboGo));
