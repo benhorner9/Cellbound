@@ -40,6 +40,7 @@
 <link rel="stylesheet" href="./dungeon-generator-v1.css?v=1">
 <link rel="stylesheet" href="./character-fit-viewer-v1.css?v=1">
   <link rel="stylesheet" href="./admin-room-editor-v1.css?v=1">
+<link rel="stylesheet" href="./admin-combat-ui-editor-v1.css?v=1">
 <link rel="stylesheet" href="./release-v1.css?v=2">
 <link rel="stylesheet" href="./comic-scenes-v1.css?v=5">
 <link rel="stylesheet" href="./onboarding-v1.css?v=21">
@@ -604,6 +605,11 @@
           <p>Inspect dungeon and raid rooms without replaying the run. Drag entrances, exits, party positions, enemies and mechanic anchors directly over the room artwork, then review the first beta-completion audit.</p>
           <div class="admin-actions"><button id="openRoomEditor" type="button">OPEN ROOM EDITOR<small>Owner only · iPad drag controls · per-room draft coordinates · beta audit findings.</small></button></div>
         </article>
+        <article id="combatUILayoutEntry" class="admin-card cbe-entry" hidden>
+          <small>OWNER TOOL · DESIGN BOOTH</small><h3>Combat UI Layout Editor</h3>
+          <p>Move and resize the complete Combat Reborn and PvP interface on an interactive preview. Save separate iPad, desktop and phone layouts, then apply them on this device for real encounters.</p>
+          <div class="admin-actions"><button id="openCombatUILayoutEditor" class="cbe-launch" type="button">OPEN COMBAT UI EDITOR<small>Owner only · touch and Apple Pencil · drafts, undo, resize, JSON export · device-only application.</small></button></div>
+        </article>
         <aside class="admin-card">
           <small>ADMIN SAFETY</small><h3>Private Developer Tools</h3>
           <p class="admin-warning">This tab is authorised by Supabase, not by a visible email check in the browser. Even if someone tampers with the page, the admin actions still fail unless the signed-in account is authorised server-side.</p>
@@ -678,6 +684,7 @@
 <script src="./dungeon-generator-v1.js?v=1"></script>
 <script src="./character-fit-viewer-v1.js?v=3"></script>
 <script src="./admin-room-editor-v1.js?v=1"></script>
+<script src="./admin-combat-ui-editor-v1.js?v=1"></script>
 <script src="./mobile-v1.js?v=7"></script>
 <script src="./release-v1.js?v=3"></script>
 <script src="./game-feel-v1.js?v=2"></script>

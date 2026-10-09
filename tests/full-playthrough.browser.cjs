@@ -616,6 +616,36 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
   await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner',{},{timeout:10000,polling:50});
   await page.evaluate(()=>CellboundGame.switchView('admin'));
+  await page.waitForSelector('#combatUILayoutEntry:not([hidden])',{timeout:5000});
+  await page.locator('#openCombatUILayoutEditor').click();
+  await page.waitForSelector('#cbeOverlay:not([hidden]) .cbe-panel[data-slot="battlefield"]',{timeout:5000});
+  assert.equal(await page.locator('#cbeMode option').count(),4,'combat UI editor has PvE, Arena, CTF and Hill modes');
+  await page.locator('#cbeMode').selectOption('ctf');
+  assert(await page.locator('.cbe-panel[data-slot="red"]').count(),'CTF layout has a red team roster');
+  await page.locator('#cbeMode').selectOption('pve');
+  await page.locator('.cbe-panel[data-slot="battlefield"]').click();
+  await page.locator('#cbeFields input[data-field="x"]').fill('4');
+  await page.locator('#cbeFields input[data-field="x"]').dispatchEvent('change');
+  await page.locator('#cbeSave').click();
+  await page.locator('#cbePublish').click();
+  const applied=await page.evaluate(()=>{
+    const key='cellbound-owner-combat-ui-layout-v1-'+CellboundGame.getUser().id;
+    const value=JSON.parse(localStorage.getItem(key)||'{}');
+    return value.applied?.pve?.tablet?.slots?.battlefield?.x
+  });
+  assert.equal(applied,4,'owner can save and apply a tablet Combat Reborn battlefield position');
+  const live=await page.evaluate(()=>{
+    const host=document.createElement('div');
+    host.innerHTML='<section class="cb2d-shell"><header class="cb2d-head">Heading</header><div class="cb2d-route">Route</div><div class="cb2d-layout"><main><div class="cb2d-arena"></div><div class="cb2d-controls"></div><div class="cb2d-feed"></div></main><aside><div class="cb2d-cast"></div><div class="cb2d-combat-meters"></div><div class="cb2d-actions"></div><div class="cb2d-party"></div><div class="cb2d-plan"></div></aside></div></section>';
+    document.body.appendChild(host);
+    CellboundCombatUILayoutEditor.refreshLive();
+    const shell=host.querySelector('.cb2d-shell');
+    const answer={live:shell.classList.contains('cbe-live'),left:host.querySelector('.cb2d-arena').style.left};
+    host.remove();return answer
+  });
+  assert.deepEqual(live,{live:true,left:'4%'},'applied owner layout repositions the actual shared combat viewer DOM');
+  await page.locator('#cbeClose').click();
+
   await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
   await page.waitForFunction(()=>Boolean(window.CellboundAdminBetaOps),{},{timeout:5000,polling:50});
   assert(await page.locator('#adminBetaReportQueue').isVisible(),'owner can access the beta report triage queue');
