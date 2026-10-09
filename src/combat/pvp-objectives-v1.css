@@ -27,3 +27,20 @@
 .cbpvp-feed{padding:10px 16px;border-top:1px solid #ffffff27;font-size:.79rem;color:#d6d4cd}
 @media(max-width:750px){.cbcombat-pvp-shell .cbcombat-pvp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cbcombat-pvp-shell .cbcombat-battle-panel{grid-column:1/-1;grid-row:1}.cbcombat-pvp-shell .cbcombat-pvp-team{grid-row:2;padding:10px}.cbpvp-stage{min-height:360px}.cbpvp-combatant{width:48px}.cbpvp-combatant-name{font-size:.57rem}.cbpvp-objective-bar>span:last-child{flex-basis:100%;text-align:center}}
 @media(prefers-reduced-motion:reduce){.cbpvp-combatant,.cbpvp-storm-ring,.cbpvp-hill-ring,.cbpvp-combatant-hp i{transition:none!important}}
+
+/* iPad-friendly private owner QA controls, without opening the public PvP queue. */
+.cbpvp-qa{margin-top:16px;max-width:100%;overflow:visible}
+.cbpvp-qa header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.cbpvp-qa-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0}
+.cbpvp-qa-toolbar label{display:flex;align-items:center;gap:8px;font-size:.82rem;color:#d7dce5}
+.cbpvp-qa-toolbar select,.cbpvp-qa-toolbar button{min-height:44px;padding:8px 12px;border-radius:8px;border:1px solid rgba(185,207,221,.36);font:inherit;background:#1a2734;color:#f0ecdf;touch-action:manipulation}
+.cbpvp-qa-toolbar button{cursor:pointer;font-weight:750;background:linear-gradient(145deg,#2a404f,#1c2937)}
+.cbpvp-qa-toolbar button:active{transform:translateY(1px)}
+.cbpvp-qa-toolbar button:focus-visible,.cbpvp-qa-toolbar select:focus-visible{outline:3px solid #91d9f9;outline-offset:2px}
+.cbpvp-qa-toolbar strong{font-size:.71rem;letter-spacing:.13em;color:#d5e3ed}
+.cbpvp-qa-toolbar [hidden]{display:none!important}
+.cbpvp-qa [data-pvp-qa-status]{margin:8px 0;color:#dcd9cb}
+.cbpvp-qa [data-pvp-qa-viewer]{position:relative;min-width:0}
+.cbpvp-qa [data-pvp-qa-viewer].cbcombat-inline{width:100%;display:block;z-index:auto}
+.cbpvp-qa .cbcombat-pvp-shell{min-height:initial;margin-top:12px}
+@media(max-width:750px){.cbpvp-qa-toolbar label{flex:1 1 140px}.cbpvp-qa-toolbar label select{min-width:0;flex:1}.cbpvp-qa-toolbar button{flex:1 1 100px}.cbpvp-qa .cbcombat-pvp-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
