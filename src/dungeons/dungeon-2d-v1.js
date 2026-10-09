@@ -1573,7 +1573,10 @@ function applyUnitPosition(e,x,y,instant=false){
  }
 }
 function addUnit(id,label,cls,x,y,size,meta=''){
- const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cb2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e);applyUnitPosition(e,x,y,true)
+ // PvE and PvP construct the same canonical CB2D character DOM.
+ const e=window.CellboundCombatViewer?.createCombatUnit?.(id,label,cls+' '+(size||''),meta);
+ if(!e)throw new Error('Canonical CB2D unit renderer is unavailable');
+ $('#cb2dUnits').appendChild(e);applyUnitPosition(e,x,y,true)
 }
 function move(id,x,y,ms){
  const e=$('[data-unit="'+id+'"]');if(!e)return;
