@@ -228,6 +228,44 @@ const QUEST_COMIC_STORY_ART={
   './assets/comics/main-quests-2026/glass-recognition.svg',
   './assets/comics/tutorial-2026/arcane-relic.webp',
   './assets/comics/tutorial-2026/lost-crystal-vault.webp'
+ ],
+ 'The Bearer':[
+  './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
+  './assets/comics/main-quests-2026/echoes-violet-shard.webp',
+  './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
+  './assets/comics/main-quests-2026/heroes-against-arcane-storm.webp',
+  './assets/comics/main-quests-2026/ghostly-violet-wardens.webp',
+  './assets/comics/main-quests-2026/arcane-passage-revealed.webp'
+ ],
+ 'The Fragment Remembers':[
+  './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
+  './assets/comics/main-quests-2026/echoes-violet-shard.webp',
+  './assets/comics/main-quests-2026/echoes-violet-shard.webp',
+  './assets/comics/main-quests-2026/ghostly-violet-wardens.webp',
+  './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
+  './assets/comics/main-quests-2026/arcane-passage-revealed.webp',
+  './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
+  './assets/comics/main-quests-2026/cartographers-council.webp'
+ ],
+ 'A Different Kind of Pressure':[
+  './assets/comics/main-quests-2026/heroes-against-arcane-storm.webp',
+  './assets/comics/main-quests-2026/shattered-crystal-ritual.webp',
+  './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
+  './assets/comics/main-quests-2026/heroes-against-arcane-storm.webp',
+  './assets/comics/main-quests-2026/shattered-crystal-ritual.webp',
+  './assets/comics/main-quests-2026/adventurers-beyond-violet-portal.webp'
+ ],
+ 'The Old Surveyor':[
+  './assets/comics/main-quests-2026/cartographers-council.webp',
+  './assets/comics/main-quests-2026/cartographers-council.webp',
+  './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
+  './assets/comics/main-quests-2026/ghostly-violet-wardens.webp',
+  './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
+  './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
+  './assets/comics/main-quests-2026/arcane-passage-revealed.webp',
+  './assets/comics/main-quests-2026/into-molten-citadel.webp',
+  './assets/comics/main-quests-2026/adventurers-beyond-violet-portal.webp',
+  './assets/comics/main-quests-2026/cartographers-council.webp'
  ]
 };
 function questComicArtSet(title,speaker){
