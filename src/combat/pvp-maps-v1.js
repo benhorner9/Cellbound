@@ -79,9 +79,11 @@ function list(mode='',{includeDrafts=false}={}){
  const rows=new Map(builtins.map(x=>[x.id,clone(x)]));
  for(const [id,m] of published)rows.set(id,clone(m));
  if(includeDrafts&&isOwner())for(const [id,m] of drafts)if(!rows.has(id))rows.set(id,clone(m));
+ if(isOwner())for(const [id,m] of Object.entries(testStore())){try{rows.set(id,clean(m))}catch{}}
  return [...rows.values()].filter(x=>!mode||x.mode===mode).sort((a,b)=>a.title.localeCompare(b.title))
 }
 function draft(id){return isOwner()?clone(drafts.get(id)||null):null}
+function isPublished(id){return published.has(id)}
 function artUrl(map){
  if(!map)return'';
  const path=String(map.artPath||'');
@@ -147,5 +149,5 @@ async function uploadArt(map,file){
  if(error)throw error;
  m.artPath=path;return m
 }
-window.CellboundPvPMaps=Object.freeze({MODES,HILL_IDS,builtins:()=>clone(builtins),clean,validate,get,list,draft,refresh,artUrl,isTesting,setTest,clearTest,saveDraft,publish,unpublish,uploadArt});
+window.CellboundPvPMaps=Object.freeze({MODES,HILL_IDS,builtins:()=>clone(builtins),clean,validate,get,list,draft,isPublished,refresh,artUrl,isTesting,setTest,clearTest,saveDraft,publish,unpublish,uploadArt});
 })();
