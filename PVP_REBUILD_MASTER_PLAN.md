@@ -177,3 +177,19 @@ Admin panel should show live queues, match rooms, online players, stuck matches,
 - Decide whether premade groups/guild-vs-guild queue needs a later milestone; not necessary to launch first real rated 1-commander-vs-1-commander squad matches.
 
 **Definition of done:** A real player queues against another real player, commands a selected squad throughout a battle, watches the same Combat Reborn viewer as PvE, sees a truthful result, gains/loses rating and earns the right currency, with an auditable global season and no disconnected parallel combat engine.
+
+
+---
+
+## Implementation progress — 9 October 2026
+
+**Block 1: IN PROGRESS (foundation landed, PvP not yet migrated).**
+
+Completed in source:
+- Canonical `combat-reborn-v1.js` exports `createSession(options)`, which retains encounter state between 100ms simulation ticks; existing synchronous `simulate()` now uses precisely the same internal tick pathway.
+- Sessions expose `advance(ticks)` (with deltas of real Combat Reborn events), `snapshot()`, `changeTactics(changes)`, `result()`, and `runToCompletion()`.
+- `combat-standard-v1.js` exposes a corresponding gateway and reports `sessionReady` and `sessionApi` through its audit.
+- A dedicated `tests/combat-session.contract.cjs` is included in the main build; it verifies deterministic compatibility across encounter outcomes, no dropped/duplicated event streams, accepted tactics event, and rejection of bad/late commands.
+- The 113 existing Combat Reborn internal self-tests passed, and three deterministic legacy-vs-new-result comparisons were identical when the first session refactor was committed.
+
+**Still required to finish Block 1:** Port symmetric real-player blue/red teams into Combat Reborn (current session is the existing PvE party-vs-enemy model), then migrate PvP objectives and map logic as mode modules; define server-owned match state. There remains a separate `pvp-combat-v1.js` simulator and `pvp-viewer-v1.js` at this stage, and they are **not** yet powered by the new shared session API. Do not advertise PvP as unified, live or matchmade until these tasks are finished. The normal-player PvP lock is unchanged.
