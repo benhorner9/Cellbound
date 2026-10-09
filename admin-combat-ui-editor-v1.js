@@ -247,6 +247,9 @@ function refreshLive(){
 }
 function applyShell(shell){
  if(!owner())return;
+ // Briefings and end screens share the shell class; edit only an active combat viewer.
+ if(shell.classList.contains('cb2d-shell')&&!$('.cb2d-layout .cb2d-arena',shell))return;
+ if(shell.classList.contains('pvp2d-shell')&&!$('.pvp2d-layout .pvp2d-arena',shell))return;
  const m=liveMode(shell),p=activeProfile(),raw=state.applied[m]?.[p];
  if(!raw)return;
  if(shell.classList.contains('cbe-live')&&shell.dataset.cbeProfile===p&&shell.dataset.cbeMode===m)return;
