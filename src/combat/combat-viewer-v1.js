@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.2.0';
+const VERSION='1.2.1';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -29,7 +29,7 @@ const pvpBackgrounds=Object.freeze({
 function pvpMarkup(options={}){
  const mode=['arena','capture-the-flag','king-of-the-hill'].includes(options.mode)?options.mode:'arena';
  const scene='<div class="cb2d-arena cbcombat-arena cbpvp-stage" data-combat-arena="canonical" data-pvp-unit-stage data-pvp-mode="'+mode+'" aria-label="Live illustrated PvP battlefield">'+
-  '<div class="cb2d-floor"></div><div class="cb2d-environment cbpvp-environment"><img src="'+pvpBackgrounds[mode]+'" alt="" draggable="false" decoding="async"></div>'+
+  '<div class="cb2d-floor"></div><div class="cb2d-environment cbpvp-environment"><img src="'+esc(/^https:\/\//.test(String(options.mapArt||''))||/^\.\/assets\/[a-z0-9/_-]+\.webp$/i.test(String(options.mapArt||''))?options.mapArt:pvpBackgrounds[mode])+'" alt="" draggable="false" decoding="async"></div>'+
   '<div class="cbpvp-map-overlay" aria-hidden="true"></div><div class="cbpvp-units" data-pvp-units></div></div>';
  const base=shellMarkup({
   profile:'pve',header:options.header||'OWNER PRACTICE · NO REWARDS',title:options.title||'PvP',
@@ -93,7 +93,7 @@ function renderPvpFrame(root,result,options={}){
    if(mode==='arena'&&data.storm){
     const ring=storm||document.createElement('div');if(!storm){ring.dataset.pvpStorm='';ring.className='cbpvp-storm-ring';overlays.appendChild(ring)}
     const diameter=Math.max(0,Math.min(100,Number(data.storm.radius||0)*2));
-    ring.style.width=diameter+'%';ring.style.height=diameter+'%'
+    ring.style.width=diameter+'%';ring.style.height=diameter+'%';ring.style.left=Math.max(0,Math.min(100,Number(data.storm.centre?.x)||50))+'%';ring.style.top=Math.max(0,Math.min(100,Number(data.storm.centre?.y)||50))+'%'
    }else storm?.remove();
    const hill=overlays.querySelector('[data-pvp-hill]');
    if(mode==='king-of-the-hill'&&data.hill){
