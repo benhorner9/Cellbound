@@ -282,6 +282,12 @@ const QUEST_COMIC_STORY_ART={
   './assets/comics/main-quests-2026/heroes-before-cosmic-gateway.webp',
   './assets/comics/main-quests-2026/heroes-before-cosmic-gateway.webp',
   './assets/comics/main-quests-2026/adventurers-before-arcane-abyss.webp'
+ ],
+ 'Bram’s Professional Opinion':[
+  './assets/comics/story-composites-2026/bram-hollow-report.svg',
+  './assets/comics/story-composites-2026/bram-underground-warning.svg',
+  './assets/comics/story-composites-2026/bram-hollow-report.svg',
+  './assets/comics/story-composites-2026/bram-underground-warning.svg'
  ]
 };
 function questComicArtSet(title,speaker){

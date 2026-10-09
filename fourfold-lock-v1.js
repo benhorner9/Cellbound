@@ -49,12 +49,21 @@ const FOURFOLD_STORY_ART={
  highNoon:'./assets/fractured-ages/rooms/high-noon.webp',
  firstKingdom:'./assets/fractured-ages/rooms/first-kingdom.webp',
  silentFrontier:'./assets/fractured-ages/rooms/silent-frontier.webp',
- funhouse:'./assets/fractured-ages/rooms/funhouse.webp'
+ funhouse:'./assets/fractured-ages/rooms/funhouse.webp',
+ box:[
+  './assets/comics/story-composites-2026/fourfold-stranger.svg',
+  './assets/comics/story-composites-2026/fourfold-locked-coffer.svg',
+  './assets/comics/story-composites-2026/fourfold-four-keyholes.svg'
+ ],
+ journey:[
+  './assets/comics/story-composites-2026/fourfold-fractured-timeline.svg',
+  './assets/comics/story-composites-2026/fourfold-worlds-through-time.svg',
+  './assets/comics/story-composites-2026/fourfold-future-reveal.svg'
+ ]
 };
 function fourfoldStoryArt(title){
  const key=String(title||'').toLowerCase();
- if(key.includes('journey through the ages'))return[FOURFOLD_STORY_ART.oldMan,FOURFOLD_STORY_ART.highNoon,FOURFOLD_STORY_ART.funhouse];
- return[FOURFOLD_STORY_ART.oldMan,FOURFOLD_STORY_ART.hero,FOURFOLD_STORY_ART.funhouse]
+ return key.includes('journey through the ages')?FOURFOLD_STORY_ART.journey:FOURFOLD_STORY_ART.box;
 }
 function legacyStory(title,speaker,lines,onDone,buttonText){
  let root=$('#fourfoldStory');if(!root){root=document.createElement('div');root.id='fourfoldStory';root.className='fourfold-story-backdrop';root.hidden=true;document.body.appendChild(root)}

@@ -44,6 +44,12 @@ vm.runInNewContext(code,{window,document,localStorage,fetch,console,setTimeout()
   assert.equal(scene.panels.length,count,'Panel count must match real gameplay: '+title);
   assert(scene.panels.every(p=>p.artwork.startsWith('./assets/comics/main-quests-2026/')&&p.artwork.endsWith('.webp')),'New story art absent from editor: '+title);
  }
+ for(const [title,count] of Object.entries({'Bram’s Professional Opinion':4,'An Unremarkable Box':3,'A Journey Through the Ages':3})){
+  const scene=found.find(x=>x.title===title);
+  assert(scene,'Missing next illustrated story: '+title);
+  assert.equal(scene.panels.length,count,'Panel count does not match live story: '+title);
+  assert(scene.panels.every(p=>p.artwork.startsWith('./assets/comics/story-composites-2026/')&&p.artwork.endsWith('.svg')),'Art inspector is still using generic art: '+title);
+ }
  assert(code.includes('comic_scene_panel_art')&&code.includes("'comic-scene-art'")&&code.includes('data-upload-file'),'Editor must publish uploaded artwork through owner-gated storage');
  window.CellboundAdmin.role='moderator';
  assert.equal(ui.isOwner(),false,'Editor must be owner-only');
