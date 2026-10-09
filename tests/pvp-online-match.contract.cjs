@@ -50,9 +50,11 @@ assert(auth.sweep().some(v=>v.id==='test-room-002'&&v.reason==='ready-timeout'))
 assert.equal(auth.status({matchId:'test-room-002'}).status,'cancelled');
 
 time+=100;
-const match=auth.createMatch(spec('test-room-003'));
+const match=auth.createMatch({...spec('test-room-003'),map:{id:'crucible-arena',mode:'arena',layout:{storm:{x:62,y:43}}}});
 assert.equal(auth.accept({matchId:'test-room-003',userId:alice}).status,'ready');
 assert.equal(auth.accept({matchId:'test-room-003',userId:bob}).status,'active');
+assert.equal(auth.view({matchId:'test-room-003',userId:alice}).mapId,'crucible-arena','Match must identify its approved Design Booth map');
+assert.equal(auth.view({matchId:'test-room-003',userId:alice}).snapshot.pvp.objectives.storm.centre.x,62,'Canonical live Arena must use its server-approved map geometry');
 let finished;
 for(let i=0;i<150&&!finished?.finished;i++)finished=auth.advance({matchId:'test-room-003',deltaMs:100});
 assert(finished?.finished,'canonical real PvP engine determines combat completion');
