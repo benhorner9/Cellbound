@@ -1,0 +1,70 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const {createAuthority}=require('../server/pvp/match-authority.cjs');
+const root=path.join(__dirname,'..'),sandbox={window:{},console};
+vm.createContext(sandbox);
+for(const file of ['src/combat/combat-data-v1.js','src/combat/pvp-ruleset-v1.js','src/combat/pvp-objectives-v1.js','src/combat/combat-reborn-v1.js','src/combat/combat-standard-v1.js'])
+ vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox,{filename:file});
+const engine=sandbox.window.CellboundCombatStandard;
+const alice='11111111-1111-4111-8111-111111111111',bob='22222222-2222-4222-8222-222222222222',intruder='33333333-3333-4333-8333-333333333333';
+const roles=[['Warrior','Protection'],['Priest','Holy'],['Mage','Arcane'],['Rogue','Assassination'],['Hunter','Marksman']];
+const squad=(team,n)=>roles.slice(0,n).map(([klass,spec],i)=>({id:team+'-'+i,name:team+' '+klass,class:klass,spec,level:15,power:18}));
+let time=100000;
+const auth=createAuthority({engine,clock:()=>time,acceptanceMs:15000,reconnectMs:30000,orderCooldownMs:3000});
+const spec=(id,mode='arena',size=2)=>({id,mode,size,seed:'server-secret-seed-'+id,maximumDurationMs:10000,
+ players:[{userId:alice,team:'blue',sealedRoster:squad('blue',size)},{userId:bob,team:'red',sealedRoster:squad('red',size)}]});
+let room=auth.createMatch(spec('test-room-001'));
+assert.equal(room.status,'ready');
+assert.deepEqual(room.players.map(x=>x.team),['blue','red']);
+assert.throws(()=>auth.view({matchId:'test-room-001',userId:intruder}),/not a participant/);
+assert.throws(()=>auth.command({matchId:'test-room-001',userId:alice,sequence:1,category:'target',value:'attack-healer'}),/not active/);
+assert.equal(auth.accept({matchId:'test-room-001',userId:alice}).status,'ready');
+assert.throws(()=>auth.accept({matchId:'test-room-001',userId:intruder}),/not a participant/);
+assert.equal(auth.accept({matchId:'test-room-001',userId:bob}).status,'active');
+assert.equal(auth.view({matchId:'test-room-001',userId:bob}).snapshot.pvp.mode,'arena');
+assert.equal(auth.view({matchId:'test-room-001',userId:alice}).snapshot.finalState.players.length,4);
+assert.equal(auth.command({matchId:'test-room-001',userId:alice,sequence:1,category:'target',value:'attack-healer'}).ok,true);
+assert.throws(()=>auth.command({matchId:'test-room-001',userId:alice,sequence:1,category:'target',value:'attack-tank'}),/Non-monotonic/);
+assert.throws(()=>auth.command({matchId:'test-room-001',userId:alice,sequence:2,category:'position',value:'spread'}),/cooldown/i);
+const step=auth.advance({matchId:'test-room-001',deltaMs:200});
+assert(step.events.some(e=>e.type==='PVP_COMMAND'),'real Combat Reborn command events must be emitted from server tick');
+assert.throws(()=>auth.advance({matchId:'test-room-001',deltaMs:100000}),/Server tick/);
+assert.throws(()=>auth.command({matchId:'test-room-001',userId:intruder,sequence:1,category:'position',value:'spread'}),/not a participant/);
+auth.connection({matchId:'test-room-001',userId:alice,connected:false});
+assert.throws(()=>auth.command({matchId:'test-room-001',userId:alice,sequence:2,category:'target',value:'attack-dps'}),/disconnected/);
+time+=20000;
+auth.connection({matchId:'test-room-001',userId:alice,connected:true});
+assert.equal(auth.view({matchId:'test-room-001',userId:alice}).players[0].connected,true);
+auth.connection({matchId:'test-room-001',userId:alice,connected:false});
+time+=30001;
+assert(auth.sweep().some(v=>v.id==='test-room-001'&&v.status==='abandoned'));
+assert.equal(auth.status({matchId:'test-room-001'}).winner,'red');
+assert.throws(()=>auth.advance({matchId:'test-room-001',deltaMs:100}),/inactive/);
+assert.throws(()=>auth.connection({matchId:'test-room-001',userId:alice,connected:true}),/no longer/);
+
+room=auth.createMatch(spec('test-room-002','capture-the-flag',5));
+assert.equal(room.size,5);
+time+=16000;
+assert(auth.sweep().some(v=>v.id==='test-room-002'&&v.reason==='ready-timeout'));
+assert.equal(auth.status({matchId:'test-room-002'}).status,'cancelled');
+
+time+=100;
+const match=auth.createMatch(spec('test-room-003'));
+assert.equal(auth.accept({matchId:'test-room-003',userId:alice}).status,'ready');
+assert.equal(auth.accept({matchId:'test-room-003',userId:bob}).status,'active');
+let finished;
+for(let i=0;i<150&&!finished?.finished;i++)finished=auth.advance({matchId:'test-room-003',deltaMs:100});
+assert(finished?.finished,'canonical real PvP engine determines combat completion');
+assert.equal(auth.status({matchId:'test-room-003'}).status,'completed');
+assert(['blue','red','draw'].includes(auth.status({matchId:'test-room-003'}).winner));
+assert.throws(()=>auth.command({matchId:'test-room-003',userId:alice,sequence:1,category:'position',value:'spread'}),/not active/);
+
+assert.throws(()=>auth.createMatch({...spec('test-room-004'),players:[{userId:alice,team:'blue',sealedRoster:squad('blue',2)},{userId:alice,team:'red',sealedRoster:squad('red',2)}]}),/Distinct authenticated/);
+assert.throws(()=>auth.createMatch({...spec('test-room-005'),players:[{userId:alice,team:'blue',sealedRoster:squad('blue',2)},{userId:bob,team:'red',sealedRoster:squad('blue',2)}]}),/unique/);
+assert.throws(()=>auth.createMatch({...spec('test-room-006'),players:[{userId:'bot',team:'blue',sealedRoster:squad('blue',2)},{userId:bob,team:'red',sealedRoster:squad('red',2)}]}),/Distinct authenticated/);
+assert.throws(()=>auth.createMatch(spec('test-room-007','king-of-the-hill',2)),/Invalid squad format/);
+const implementation=fs.readFileSync(path.join(root,'server/pvp/match-authority.cjs'),'utf8');
+for(const unsafe of ['localStorage','game.save','warMarks+=','arenaSeals+=','service_role','createClient('])
+ assert(!implementation.includes(unsafe),'server-only protocol must not mint browser rewards or embed keys: '+unsafe);
+console.log('PvP server match contract passed: authenticated two-account teams, canonical engine, ready handshake, ordered commands, cooldowns, reconnect expiry, timeout, authoritative outcome, no client reward path.');
