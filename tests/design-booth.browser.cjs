@@ -23,6 +23,26 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.equal(await page.locator('[data-dbo-go]').count(),9,'New editors see the full game build hub among starter tasks');
   assert(await page.locator('#dboToolGuide').innerText().then(t=>t.includes('Save Draft')&&t.includes('Publish')),'Builder explains its draft and publish actions before editing');
   assert.equal(await page.locator('.dbo-more').count(),1,'Advanced tools are grouped separately');
+  // A unified combat shell must dock live text and cast OUTSIDE illustrated
+  // art, with the existing real global chat accessible during encounters.
+  const combatDock=await page.evaluate(()=>{
+   const host=document.createElement('div');document.body.appendChild(host);
+   const shell=CellboundCombatViewer.mount(host,{
+    arenaMarkup:'<div class="cb2d-arena"><div class="cb2d-caption"><span>EVENT</span><b>Combat live</b></div><div class="cb2d-cast"><small>ENEMY CAST</small><div>Testing</div><div class="cb2d-castbar"></div></div></div>',
+    battleTopbarMarkup:'<div class="cbcombat-battle-topbar"><div class="cb2d-room-tag">Room</div></div>'
+   });
+   const art=shell.querySelector('.cbcombat-arena-wrap'),caption=shell.querySelector('.cb2d-caption'),cast=shell.querySelector('.cb2d-cast'),chat=shell.querySelector('[data-combat-chat]');
+   const out={captionOutside:!art.contains(caption)&&!!caption.closest('.cbcombat-battle-topbar'),
+    castOutside:!art.contains(cast)&&cast.parentElement===shell.querySelector('.cbcombat-battle-panel'),
+    worldSelected:chat.querySelector('[data-combat-chat-channel="world"]').getAttribute('aria-pressed')==='true',
+    form:!!chat.querySelector('[data-combat-chat-form]'),aspect:getComputedStyle(art).aspectRatio};
+   host.remove();return out
+  });
+  assert.equal(combatDock.captionOutside,true,'Combat status is outside the artwork');
+  assert.equal(combatDock.castOutside,true,'Enemy cast bar is below the artwork');
+  assert.equal(combatDock.worldSelected,true,'Global chat is the default combat channel');
+  assert.equal(combatDock.form,true,'Combat contains a real chat composer');
+  assert.equal(combatDock.aspect,'16 / 9','Canonical combat art retains its native 16:9 aspect');
   // Canonical Combat UI editor is a real owner-only Design Booth tool.
   await page.locator('[data-dbo-tool="combat-ui"]').click();
   await page.waitForSelector('#cbeOverlay:not([hidden]) .cbe-panel[data-slot="battlefield"]',{timeout:5000});
