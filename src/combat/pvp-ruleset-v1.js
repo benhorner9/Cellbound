@@ -3,7 +3,7 @@
 // Cellbound PvP rules contract — no independent combat simulator.
 // The authoritative Combat Reborn match coordinator owns execution and rewards.
 const VERSION='1.0.0';
-const FORMATS=Object.freeze({arena:[2,3,5],battleground:[5,10,20]});
+const FORMATS=Object.freeze({arena:Object.freeze([2,3,5]),battleground:Object.freeze([5,10,20])});
 const TARGET=Object.freeze(['balanced','attack-healer','attack-tank','attack-dps','focus-flag-carrier','focus-low-health','protect-healer']);
 const POSITION=Object.freeze(['balanced','spread','group-up','fall-back','push-forward','hold-position','regroup']);
 const OBJECTIVE=Object.freeze({
