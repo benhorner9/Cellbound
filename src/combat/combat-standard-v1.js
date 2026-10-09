@@ -52,6 +52,13 @@ function createLiveSession(options={},meta={}){
   if(!session||typeof session.advance!=='function'||typeof session.command!=='function')throw new Error('Combat Reborn returned an invalid live session');
   return instrumentLiveSession(session,meta)
 }
+// Development-only symmetric Arena session. Ratings and rewards MUST be server-authoritative.
+function createPvpSession(options={},meta={}){
+ if(!options?.pvp||options.pvp.mode!=='arena'||!window.CellboundPvPRuleset)throw new Error('PvP Arena rules contract is unavailable');
+ const session=createLiveSession(options,{...meta,profile:'pvp'});
+ if(typeof session.pvpCommand!=='function')throw new Error('Combat Reborn failed to create a PvP session');
+ return session
+}
 function assertServerPayload(payload,zone='server-combat'){
   if(!payload||payload.combatModel!==MODEL){
     throw new Error(zone+' did not return the required Combat Reborn combat model');
@@ -69,13 +76,14 @@ function audit(){
     contract:CONTRACT_VERSION,
     engineReady:!!window.CellboundCombatReborn?.simulate,
     liveReady:!!window.CellboundCombatReborn?.createLiveSession,
+    pvpPrototypeReady:!!window.CellboundCombatReborn?.createLiveSession&&!!window.CellboundPvPRuleset,
     engineVersion:engineVersion(),
     zones:[...zones.values()]
   }
 }
 
 window.CellboundCombatStandard={
-  MODEL,CONTRACT_VERSION,core,simulate,createLiveSession,assertServerPayload,register,audit,dispatchCombatEvents,
+  MODEL,CONTRACT_VERSION,core,simulate,createLiveSession,createPvpSession,assertServerPayload,register,audit,dispatchCombatEvents,
   UI:{
     shell:'shared CB2D combat shell',
     vitals:'HP above class resource',
