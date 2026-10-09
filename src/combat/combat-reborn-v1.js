@@ -2150,7 +2150,7 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
 }
 
 function doHeal(ctx,healer,target,amount,ability,opts={}){
- if(!healer?.alive||!target?.alive)return 0;
+ if(!healer?.alive||!target?.alive||(ctx.pvp&&healer.team!==target.team))return 0;
  const before=target.health,max=target.maxHealth;
  const healingScale=Math.max(.1,1+statusBonus(healer,'outgoingHealing'))*Math.max(.1,1+statusBonus(target,'incomingHealing'));
  const triage=healthRatio(target)<=.4?1+Math.max(0,Number(healer?.professionProcs?.triageHealPct)||0)/100:1;
@@ -2194,7 +2194,7 @@ function killUnit(ctx,target,source,ability){
 }
 
 function reviveUnit(ctx,healer,target,ability,{healthPct=35,resourcePct=20,combat=true}={}){
- if(!healer?.alive||!target||target.alive)return false;
+ if(!healer?.alive||!target||target.alive||(ctx.pvp&&healer.team!==target.team))return false;
  if(combat&&!canBattleRezTarget(ctx,target)){
   emit(ctx,'ABILITY_FINISH',{source:healer.id,target:target.id,ability,result:'party-wiped',position:copy(healer.position),payload:{kind:'battle-rez',reason:'raid-party-wiped'}});
   return false
@@ -2488,7 +2488,7 @@ function finishAbility(ctx,u,a,target){
    const reach=talentRank(u,'Ancestral Reach'),mastery=talentRank(u,'Chain Mastery'),used=new Set([target.id]);
    const jumps=Math.min(4,(Number(a.chainBounces)||3)+(reach>=2?1:0)),bounceRange=(Number(a.chainRange)||16)+reach*3,falloff=Math.min(.91,(Number(a.chainFalloff)||.72)+mastery*.07+reach*.02);
    for(let i=0;i<jumps;i++){
-    const next=livingPlayers(ctx).filter(p=>!used.has(p.id)&&hasLineOfSight(ctx,current,p)&&dist(current.position,p.position)<=bounceRange)
+    const next=(ctx.pvp?ctx.pvp[u.team].filter(p=>p.alive):livingPlayers(ctx)).filter(p=>!used.has(p.id)&&hasLineOfSight(ctx,current,p)&&dist(current.position,p.position)<=bounceRange)
      .sort((x,y)=>healthRatio(x)-healthRatio(y)||dist(current.position,x.position)-dist(current.position,y.position))[0];
     if(!next)break;
     amount*=falloff;used.add(next.id);
@@ -2497,7 +2497,7 @@ function finishAbility(ctx,u,a,target){
    }
    talentAfterGroupHeal(ctx,u,a,total)
   }else if(a.kind==='group-heal'){
-   let total=0;livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>{total+=doHeal(ctx,u,p,base*talentHealingScale(ctx,u,a,p),a.name)});talentAfterGroupHeal(ctx,u,a,total)
+   let total=0;(ctx.pvp?ctx.pvp[u.team].filter(p=>p.alive):livingPlayers(ctx)).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>{total+=doHeal(ctx,u,p,base*talentHealingScale(ctx,u,a,p),a.name)});talentAfterGroupHeal(ctx,u,a,total)
   }else{
    const effective=doHeal(ctx,u,target,base*talentHealingScale(ctx,u,a,target),a.name);talentAfterHeal(ctx,u,a,target,effective)
   }
