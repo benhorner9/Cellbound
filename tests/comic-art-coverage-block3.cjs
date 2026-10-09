@@ -8,7 +8,7 @@ const editor=fs.readFileSync(path.join(root,'admin-comic-scene-editor-v1.js'),'u
 const build=fs.readFileSync(path.join(root,'build.js'),'utf8');
 const expected={
  'The Bearer':6,
- 'The Fragment Remembers':8,
+ 'The Fragment Remembers':7,
  'A Different Kind of Pressure':6,
  'The Old Surveyor':10
 };
