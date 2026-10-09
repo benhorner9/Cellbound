@@ -417,3 +417,45 @@ body.bs2d-open{
     padding:6px 0;
   }
 }
+
+
+/*
+ * Illustrated combat scene fit — the PvE room paintings and PvP arenas use
+ * a 16:9 art canvas. Never stretch a fixed-height viewport around that canvas.
+ * This last-loaded safeguard also beats the legacy phone 46dvh rule and the
+ * per-dungeon 390–560px minimum heights. Owner Design Booth inline dimensions
+ * still take precedence when a custom device layout is explicitly applied.
+ */
+.cb2d-arena,
+.hs2d-arena.hollow-live-room,
+.cc2d-arena.canyon-live-room,
+.pvp2d-arena{
+  box-sizing:border-box;
+  width:100%;
+  aspect-ratio:16 / 9!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  align-self:start!important;
+  overflow:hidden;
+}
+/* PvP previously imposed a 470px grid row (430px on tablets). */
+.pvp2d-layout{min-height:0!important}
+
+/*
+ * On wide screens, the viewport-locked shell used to stretch the arena into a
+ * flexible 1fr row, overriding its natural aspect ratio. Keep the image-sized
+ * scene, and scroll the central column if the screen is too short. Party vitals
+ * remain in their separately scrolling right column.
+ */
+@media (min-width:1051px) and (min-height:650px){
+  body.cb2d-open .cb2d-layout>main,
+  body.hs2d-open .cb2d-layout>main,
+  body.cc2d-open .cb2d-layout>main,
+  body.bs2d-open .cb2d-layout>main{
+    grid-template-rows:auto auto minmax(72px,96px)!important;
+    align-content:start;
+    overflow-y:auto!important;
+    overscroll-behavior-y:contain;
+  }
+}
