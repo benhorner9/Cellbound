@@ -19,10 +19,34 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   }
   await page.locator('#openDesignBooth').click();
   await page.waitForSelector('#designBoothMount:not([hidden]) .dbo-shell',{timeout:6000});
-  assert.equal(await page.locator('[data-dbo-tool]').count(),10,'Master booth includes PvP Maps and all existing content tools');
-  assert.equal(await page.locator('[data-dbo-go]').count(),7,'New editors see PvP Maps among starter tasks');
+  assert.equal(await page.locator('[data-dbo-tool]').count(),11,'Master booth includes Combat UI and all existing content tools');
+  assert.equal(await page.locator('[data-dbo-go]').count(),8,'New editors see Combat UI and PvP Maps among starter tasks');
   assert(await page.locator('#dboToolGuide').innerText().then(t=>t.includes('Save Draft')&&t.includes('Publish')),'Builder explains its draft and publish actions before editing');
   assert.equal(await page.locator('.dbo-more').count(),1,'Advanced tools are grouped separately');
+  // Canonical Combat UI editor is a real owner-only Design Booth tool.
+  await page.locator('[data-dbo-tool="combat-ui"]').click();
+  await page.waitForSelector('#cbeOverlay:not([hidden]) .cbe-panel[data-slot="battlefield"]',{timeout:5000});
+  assert.equal(await page.locator('#cbeMode option').count(),4,'Combat UI supports PvE and three PvP modes');
+  await page.locator('#cbeMode').selectOption('ctf');
+  assert((await page.locator('#cbeOverlay .cbe-panel[data-slot="meters"] .cbe-panel-head').textContent()).includes('Red roster'),'CTF layout targets the shared PvP red roster');
+  await page.locator('#cbeMode').selectOption('pve');
+  await page.locator('.cbe-panel[data-slot="battlefield"]').click();
+  await page.locator('[data-field="x"]').fill('4');
+  await page.locator('[data-field="x"]').press('Tab');
+  await page.locator('#cbeSave').click();
+  await page.locator('#cbePublish').click();
+  const liveLayout=await page.evaluate(()=>{
+    const host=document.createElement('div');document.body.appendChild(host);
+    const shell=CellboundCombatViewer.mount(host,{profile:'pve',title:'Canonical editor QA',arenaMarkup:'<div class="cb2d-arena" data-combat-arena="canonical"></div>'});
+    CellboundCombatUILayoutEditor.refreshLive();
+    const result={applied:shell.classList.contains('cbe-live'),left:shell.querySelector('.cbcombat-arena-wrap').style.left,controls:!!shell.querySelector('.cbcombat-command-panel')};
+    host.remove();return result
+  });
+  assert.deepEqual(liveLayout,{applied:true,left:'4%',controls:true},'Applied owner layout repositions the canonical combat window, not the retired viewer');
+  await page.locator('#cbeRevert').click();
+  await page.locator('#cbeClose').click();
+  assert.equal(await page.locator('#cbeOverlay').isVisible(),false,'Combat UI editor closes without hiding the Design Booth');
+  assert(await page.locator('#cbeReopenEditor').isVisible(),'Combat UI can be reopened from its booth tab');
   await page.locator('[data-dbo-tool="items"]').click();
   assert(await page.locator('#dboToolGuide').innerText().then(t=>t.includes('Read-only catalogue')),'Catalogue clearly identifies read-only actions');
   await page.waitForSelector('#dboCatalog:not([hidden]) .dbo-catalog-table');
@@ -193,6 +217,6 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await page.locator('[data-db-finish]').click();
   assert.equal(await page.locator('#designAdventureOverlay').isVisible(),false,'Designed room/minigame run exits cleanly');
   assert.deepEqual(errors,[],'No browser exceptions in owner creative suite');
-  console.log(engine===webkit?'WebKit':'Chromium','Design Booth browser regression passed: one entry, ten tabs with PvP map authoring, searchable item catalogue with CSV export, tier/name/drop-chance boss tables, item filtering, editing and native rewards, newcomer shortcuts, publication checklist, grouped advanced tools, minigames, room/comic/model editors and clean close.');
+  console.log(engine===webkit?'WebKit':'Chromium','Design Booth browser regression passed: one entry, eleven tabs with Combat UI editing and PvP map authoring, searchable item catalogue with CSV export, tier/name/drop-chance boss tables, item filtering, editing and native rewards, newcomer shortcuts, publication checklist, grouped advanced tools, minigames, room/comic/model editors and clean close.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
