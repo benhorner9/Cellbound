@@ -112,6 +112,7 @@ const groups=Object.freeze({
    "boss-drop-tables-v1.js",
   "admin-design-library-v1.js",
   "admin-design-booth-v1.js",
+  "admin-game-build-hub-v1.js",
   "admin-combat-ui-editor-v1.js",
   "admin-pvp-map-editor-v1.js",
    "admin-item-catalog-v1.js",
