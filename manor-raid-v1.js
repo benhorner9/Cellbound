@@ -603,7 +603,12 @@ async function syncSharedRaidView(force=false){
    ?(entryHealthForSide(side)<100?' Your party was recovered after the previous room and enters at 50% health.':'')
    :((entryHealthForSide(0)<100||entryHealthForSide(1)<100)?' One five-character party was recovered after the previous room and enters at 50% health.':'');
  // Resolve the owner-published background before constructing the room scene.
- try{await window.CellboundRoomLayouts?.ready?.()}catch(error){console.warn('Manor room artwork could not be refreshed',error)}
+ // Owner QA must not wait for the remote art service: the raid already carries
+ // local room artwork, and a slow connection could leave the owner behind the ready gate.
+ // Normal two-player raids still wait for published room layouts as before.
+ if(!ownerSoloQa){
+  try{await window.CellboundRoomLayouts?.ready?.()}catch(error){console.warn('Manor room artwork could not be refreshed',error)}
+ }
  const play=viewer.playSharedEncounter({
    party:pack.party,encounter:pack.encounter,result:pack.result,zone:'manor-raid',
    enemyDisplayMax:null,
