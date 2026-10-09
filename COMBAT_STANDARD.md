@@ -628,3 +628,22 @@ audio playback remains a subscriber to the existing sound hooks.
 Verification: `npm run build` runs the engine and formation regressions. Run
 `node tests/living-combat.browser.cjs` with Playwright installed for presentation
 state/portrait/impact/accessibility checks. The PR validation workflow runs both.
+
+
+---
+
+## Interactive Combat Session Contract (PvP Foundation, October 2026)
+
+The **same canonical Combat Reborn engine** now supports both normal synchronous `simulate(options)` and incremental `createSession(options)`, available through `window.CellboundCombatStandard.createSession(options, meta)`. This foundation **does not yet mean PvP is running on Combat Reborn**.
+
+Sessions keep combat RNG, casts, cooldowns, scheduled mechanics, positions, statuses and the event stream between authoritative 100ms ticks:
+
+- `session.advance(ticks)`: advance 1–10000 steps; receive `{completed,outcome,elapsedMs,events}`, containing only events not already read by `advance`.
+- `session.snapshot()`: defensive copy of a minimal current state and tactics.
+- `session.changeTactics({movementDiscipline:'safety'})`: updates a validated field at a tick boundary and emits `TACTIC_CHANGED`. Only the existing shared-engine PvE tactics fields are supported at this stage. PvP target/formation/objective commands still require new canonical-engine behavior.
+- `session.result()`: null while running, then the canonical combat result.
+- `session.runToCompletion()`: finish via the same tick pipeline and produce the legacy synchronous output.
+
+All dungeon/raid/quest callers may continue to use `simulate()` unchanged. The new session API is a **simulation primitive, not multiplayer authority or a safe network API**. A trusted server process must own live PvP sessions, validate orders, apply rate limiting and settle results. No client-simulated match can grant rank or currency.
+
+`tests/combat-session.contract.cjs` is required by `build.js` to protect this shared contract.
