@@ -3790,7 +3790,17 @@ function createLiveSession(options={}){
    accumulator-=TICK;steps++;
    outcome=advanceCombatTick(ctx);
    if(outcome)break;
-   if(ctx.time>maxDuration){if(ctx.pvp){ctx.pvp.winner='draw';emit(ctx,'PVP_MATCH_END',{result:'draw',payload:{mode:'arena',winner:'draw',reason:'time-limit'}});outcome='draw'}else{emit(ctx,'ENRAGE',{result:'timeout'});outcome='defeat'}break}
+   if(ctx.time>maxDuration){
+    if(ctx.pvp){
+     const score=team=>{const live=ctx.pvp[team].filter(u=>u.alive);return{alive:live.length,hp:live.reduce((n,u)=>n+healthRatio(u),0)}};
+     const blue=score('blue'),red=score('red');
+     const winner=blue.alive!==red.alive?(blue.alive>red.alive?'blue':'red'):Math.abs(blue.hp-red.hp)<.001?'draw':blue.hp>red.hp?'blue':'red';
+     ctx.pvp.winner=winner;
+     emit(ctx,'PVP_MATCH_END',{result:winner,payload:{mode:'arena',winner,reason:'time-limit',blue,red}});
+     outcome=winner==='blue'?'victory':winner==='red'?'defeat':'draw'
+    }else{emit(ctx,'ENRAGE',{result:'timeout'});outcome='defeat'}
+    break
+   }
   }
   let result=null;
   if(outcome)result=finishCombatContext(ctx,outcome);
@@ -3818,7 +3828,8 @@ function createLiveSession(options={}){
   if(!checked?.ok)return{ok:false,reason:checked?.reason||'invalid-command'};
   if(ctx.time<ctx.pvp.commandReadyAt[team])return{ok:false,reason:'cooldown',remainingMs:ctx.pvp.commandReadyAt[team]-ctx.time};
   const order=ctx.pvp.orders[team];order[category]=value;
-  const troops=ctx.pvp[team].filter(u=>u.alive),n=Math.max(1,troops.length),front=team==='blue'?1:-1,homeX=team==='blue'?20:80;
+  const troops=ctx.pvp[team].filter(u=>u.alive);if(!troops.length)return{ok:false,reason:'squad-defeated'};
+  const n=Math.max(1,troops.length),front=team==='blue'?1:-1,homeX=team==='blue'?20:80;
   const centre={x:troops.reduce((a,u)=>a+u.position.x,0)/n||homeX,y:troops.reduce((a,u)=>a+u.position.y,0)/n||50};
   if(category==='position'&&value!=='balanced'&&value!=='hold-position'){
    troops.forEach((u,i)=>{
