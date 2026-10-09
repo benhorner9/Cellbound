@@ -1387,6 +1387,8 @@ if(process.env.GITHUB_BASE_REF==='staging'||process.env.CELLBOUND_CHANNEL==='sta
   console.log('Staging navigation guard passed: Guild Command remains directly playable.');
 }
 
+if(!readSource('guild.html').includes('pvp-ruleset-v1.js?v=1')||!files.includes('pvp-ruleset-v1.js'))throw new Error('PvP shared ruleset must be included and loaded from the runtime manifest');
+
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
@@ -1399,4 +1401,5 @@ require('./tests/comic-scene-editor.cjs');
 require('./tests/room-art-uploads.cjs');
 require('./tests/design-booth.cjs');
 require('./tests/living-combat.authority.cjs');
+require('./tests/pvp-ruleset.contract.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}
