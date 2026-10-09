@@ -26,20 +26,20 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   });
 
   await page.goto('https://cellbound.test/index.html',{waitUntil:'networkidle'});
-  assert.equal((await page.locator('.coming-soon-kicker').textContent()).trim(),'CELLBOUND');
-  assert.equal((await page.locator('.coming-soon-card h1').textContent()).trim(),'Coming Soon');
-  assert((await page.locator('.coming-soon-card').innerText()).includes('The gates of Zeltira are being prepared.'),'public gate explains the current release state');
-  assert.equal((await page.locator('.coming-soon-note').textContent()).trim(),'Founding Season');
-  assert(await page.locator('.coming-soon-world img').evaluate(img=>img.complete&&img.naturalWidth>0),'Coming Soon world artwork loads');
+  // The public site is now a preview landing page, rather than the old Coming Soon card.
+  assert((await page.locator('.hero-content h1').innerText()).includes('Choose your five.'),'site shows current Cellbound hero');
+  assert((await page.locator('.hero-status').innerText()).includes('Pre-alpha'),'public site states its current development status');
+  assert((await page.locator('.nav-note').innerText()).includes('Not playable publicly yet.'),'public access remains clearly closed');
+  assert(await page.locator('.hero-art img').evaluate(img=>img.complete&&img.naturalWidth>0),'public hero artwork loads');
 
-  const panel=await page.locator('.coming-soon-card').boundingBox();
-  assert(panel&&panel.x>=0&&panel.x+panel.width<=1024,'desktop Coming Soon card stays in viewport');
+  const panel=await page.locator('.hero-content').boundingBox();
+  assert(panel&&panel.x>=0&&panel.x+panel.width<=1024,'desktop hero content stays in viewport');
 
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(100);
-  const mobilePanel=await page.locator('.coming-soon-card').boundingBox();
-  assert(mobilePanel&&mobilePanel.x>=0&&mobilePanel.x+mobilePanel.width<=390,'mobile Coming Soon card stays in viewport');
-  assert(await page.locator('.coming-soon-card h1').isVisible(),'mobile Coming Soon title remains visible');
+  const mobilePanel=await page.locator('.hero-content').boundingBox();
+  assert(mobilePanel&&mobilePanel.x>=0&&mobilePanel.x+mobilePanel.width<=390,'mobile hero content stays in viewport');
+  assert(await page.locator('.hero-content h1').isVisible(),'mobile hero heading remains visible');
 
   await page.screenshot({path:'/tmp/cellbound-login-screen.png',fullPage:true});
   const authPage=page;
@@ -58,5 +58,5 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.deepEqual(authErrors,[],'auth email redirect harness emitted no browser errors');
   assert.deepEqual(errors,[]);
   await browser.close();
-  console.log('Cellbound public/auth regression passed: holding-page layout plus verification and password-reset return URLs.');
+  console.log('Cellbound public/auth regression passed: current landing page layout plus verification and password-reset return URLs.');
 })().catch(e=>{console.error(e);process.exit(1)});
