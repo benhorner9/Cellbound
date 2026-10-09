@@ -1206,7 +1206,7 @@ function setAggro(ctx,e,target,reason='threat'){
  }
 }
 function addThreat(ctx,e,u,amount,reason='damage'){
- if(!e?.alive||!u?.alive)return;
+ if(ctx.pvp||!e?.alive||!u?.alive)return;
  e.threat[u.id]=(Number(e.threat[u.id])||0)+Math.max(0,amount);
  emit(ctx,'THREAT_GENERATED',{source:u.id,target:e.id,amount,result:reason,payload:{total:e.threat[u.id]}});
  setAggro(ctx,e,topThreatTarget(ctx,e),reason);
