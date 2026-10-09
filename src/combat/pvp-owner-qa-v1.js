@@ -9,18 +9,18 @@ const activeParty=()=>game()?.getPartyCharacters?.()||[];
 let pvpPractice=null;
 function stopPractice(){
  if(!pvpPractice)return;
- clearInterval(pvpPractice.timer);pvpPractice.timer=null;pvpPractice=null
+ clearInterval(pvpPractice.timer);pvpPractice.timer=null;pvpPractice=null;window.CellboundCombatPortraits?.registerCharacters?.([])
 }
 function practiceRosters(size){
  const defs=[['Warrior','Protection'],['Priest','Holy'],['Mage','Arcane'],['Rogue','Assassination'],['Hunter','Marksman']];
  const mine=availableRoster(),party=activeParty(),selected=[...party,...mine.filter(c=>!party.some(p=>p.id===c.id))];
  const blue=Array.from({length:size},(_,i)=>{
   const c=selected[i],d=defs[i%defs.length];
-  return{id:'practice-blue-'+i,name:c?.name||d[0]+' '+(i+1),class:c?.class||d[0],spec:c?.spec||d[1],level:Math.max(1,Number(c?.level)||12),power:Math.max(10,Number(c?.power)||14)}
+  return{id:'practice-blue-'+i,name:c?.name||d[0]+' '+(i+1),class:c?.class||d[0],spec:c?.spec||d[1],level:Math.max(1,Number(c?.level)||12),power:Math.max(10,Number(c?.power)||14),race:c?.race||'Veyren',appearance:c?.appearance||null,equipment:c?.equipment||{},pvpEquipment:c?.pvpEquipment||null}
  });
  const red=Array.from({length:size},(_,i)=>{
   const d=defs[(i+1)%defs.length];
-  return{id:'practice-red-'+i,name:'Rival '+d[0]+' '+(i+1),class:d[0],spec:d[1],level:blue[i].level,power:blue[i].power}
+  return{id:'practice-red-'+i,name:'Rival '+d[0]+' '+(i+1),class:d[0],spec:d[1],level:blue[i].level,power:blue[i].power,race:['Stoneborn','Veyren','Aelari','Thornkin','Emberkin'][i%5],appearance:{gender:i%2,skinTone:i%6},equipment:{}}
  });
  return{blue,red}
 }
@@ -61,8 +61,10 @@ function setupPractice(){
   try{
    const squad=practiceRosters(n),session=engine.createPvpSession({pvp:{mode:gameMode,size:n,...squad},encounter:{id:'owner-pvp-practice',environment:{blockers:[]}},seed:'owner-practice-'+gameMode+'-'+n,maxDurationMs:120000},{zone:'owner-pvp-qa'});
    root.replaceChildren();
-   const shell=viewer.mount(root,{profile:'pvp',title:gameMode==='arena'?n+'v'+n+' Arena':gameMode==='capture-the-flag'?'Capture the Flag':'King of the Hill',header:'OWNER PRACTICE · NO REWARDS',inline:true});
-   viewer.renderPvpFrame(shell,session.snapshot());
+   // The PvE Combat Portraits adapter owns models in both game modes.
+   window.CellboundCombatPortraits?.registerCharacters?.([...squad.blue,...squad.red]);
+   const shell=viewer.mount(root,{profile:'pvp',mode:gameMode,partySize:n,title:gameMode==='arena'?n+'v'+n+' Arena':gameMode==='capture-the-flag'?'Capture the Flag':'King of the Hill',header:'OWNER PRACTICE · NO REWARDS',inline:true});
+   viewer.renderPvpFrame(shell,session.snapshot(),{events:session.snapshot().events});
    const controls=host.querySelector('[data-pvp-qa-orders]');controls.hidden=false;
    controls.querySelectorAll('[data-qa-ctf]').forEach(el=>el.hidden=gameMode!=='capture-the-flag');
    controls.querySelectorAll('[data-qa-hill]').forEach(el=>el.hidden=gameMode!=='king-of-the-hill');
@@ -72,7 +74,7 @@ function setupPractice(){
     if(!root.isConnected||window.CellboundAdmin?.role!=='owner'){stopPractice();return}
     try{
      const step=session.advance(200);
-     viewer.renderPvpFrame(shell,session.snapshot());
+     viewer.renderPvpFrame(shell,session.snapshot(),{events:step.events});
      if(step.finished){clearInterval(practice.timer);practice.timer=null;
       status.textContent='Practice '+(step.result?.pvp?.winner||'draw').toUpperCase()+' · '+Math.round(session.timeMs/1000)+'s · no results saved.';
       controls.hidden=true
