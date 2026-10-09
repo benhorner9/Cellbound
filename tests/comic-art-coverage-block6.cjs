@@ -8,7 +8,7 @@ const booth=fs.readFileSync(path.join(root,'admin-comic-scene-editor-v1.js'),'ut
 const build=fs.readFileSync(path.join(root,'build.js'),'utf8');
 const expected={'A Sailor With A Story':5,'More Than A Crew':5,'Washed Back To Harbour':4,'Homecoming':5};
 const assets=new Set();
-assert(quest.includes('const dedicated=NWB_COMIC_STORY_ART[String(title||\'')];'),'Gameplay must resolve dedicated story art first');
+assert(quest.includes("const dedicated=NWB_COMIC_STORY_ART[String(title||'')];"),'Gameplay must resolve dedicated story art first');
 assert(booth.includes("const catalogueStart=src.indexOf('const NWB_COMIC_STORY_ART=');"),'Comic editor must read the gameplay art catalogue');
 for(const [title,count] of Object.entries(expected)){
  const token="'"+title+"':[";
