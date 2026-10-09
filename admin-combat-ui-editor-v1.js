@@ -230,7 +230,7 @@ function applyShell(shell){
 function scan(){
  scheduled=false;
  if(!owner()||!Object.keys(state.applied).length)return;
- $('.cbcombat-shell[data-combat-view="canonical-v1"]').forEach(applyShell)
+ document.querySelectorAll('.cbcombat-shell[data-combat-view="canonical-v1"]').forEach(applyShell)
 }
 function scheduleScan(){if(scheduled)return;scheduled=true;requestAnimationFrame(scan)}
 function init(){
