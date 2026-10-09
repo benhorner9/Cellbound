@@ -382,7 +382,7 @@ function buyGear(tier,slot){
 }
 
 window.CellboundPvP={version:'1.4.0',get enabled(){return pvpEnabled()},render,arenaUnlocked,getRank:()=>pvpEnabled()?bgRank(ensureState()):null,getState:()=>pvpEnabled()?ensureState():null};
-window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render()});
+window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render();else stopPractice()});
 window.addEventListener('cellbound:admin-status',()=>{if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()});
 let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);
 })();
