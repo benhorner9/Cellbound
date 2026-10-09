@@ -4,6 +4,6 @@
   "private": true,
   "scripts": {
     "build": "node build.js",
-    "test:appearance": "node tests/appearance-foundation.cjs && node tests/appearance-catalogue.cjs && node tests/illustrated-items.cjs && node tests/equipment-fit-matrix.cjs && node tests/comic-art-coverage-block1.cjs && node tests/comic-art-coverage-block2.cjs && node tests/comic-art-coverage-block3.cjs && node tests/comic-art-coverage-block4.cjs && node tests/comic-art-coverage-block5.cjs"
+    "test:appearance": "node tests/appearance-foundation.cjs && node tests/appearance-catalogue.cjs && node tests/illustrated-items.cjs && node tests/equipment-fit-matrix.cjs && node tests/comic-art-coverage-block1.cjs && node tests/comic-art-coverage-block2.cjs && node tests/comic-art-coverage-block3.cjs && node tests/comic-art-coverage-block4.cjs && node tests/comic-art-coverage-block5.cjs && node tests/comic-art-coverage-block6.cjs"
   }
 }
