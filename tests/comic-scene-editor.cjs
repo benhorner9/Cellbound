@@ -38,6 +38,12 @@ vm.runInNewContext(code,{window,document,localStorage,fetch,console,setTimeout()
   assert.equal(scene.panels.length,count,'Comic Scene Editor does not match the live dialogue: '+title);
   assert(scene.panels.every(p=>p.artwork.startsWith('./assets/comics/main-quests-2026/')&&p.artwork.endsWith('.webp')),'Owner panel artwork does not match new images: '+title);
  }
+ for(const [title,count] of Object.entries({'The Door That Breathed':7,'The Seal Opens':7})){
+  const scene=found.find(x=>x.title===title);
+  assert(scene,'Missing story in Comic Scene Editor: '+title);
+  assert.equal(scene.panels.length,count,'Panel count must match real gameplay: '+title);
+  assert(scene.panels.every(p=>p.artwork.startsWith('./assets/comics/main-quests-2026/')&&p.artwork.endsWith('.webp')),'New story art absent from editor: '+title);
+ }
  assert(code.includes('comic_scene_panel_art')&&code.includes("'comic-scene-art'")&&code.includes('data-upload-file'),'Editor must publish uploaded artwork through owner-gated storage');
  window.CellboundAdmin.role='moderator';
  assert.equal(ui.isOwner(),false,'Editor must be owner-only');
