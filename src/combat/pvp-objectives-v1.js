@@ -2,7 +2,7 @@
 'use strict';
 // Objective state only. Damage, movement, combat ticks and match settlement belong to Combat Reborn.
 // No client rewards, matchmaking, timers, or independently simulated combat.
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const MODES=['arena','capture-the-flag','king-of-the-hill'];
 const TEAMS=['blue','red'];
 const BASES=Object.freeze({blue:Object.freeze({x:16,y:50}),red:Object.freeze({x:84,y:50})});
@@ -11,8 +11,22 @@ const dist=(a,b)=>Math.hypot((a?.x||0)-(b?.x||0),(a?.y||0)-(b?.y||0));
 const opposite=t=>t==='blue'?'red':'blue';
 const integer=(value,fallback,min,max)=>{const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,Math.round(n))):fallback};
 const clone=o=>JSON.parse(JSON.stringify(o));
+function positions(config={}){
+ const raw=config.map||{};
+ const safe=(p,f)=>({x:Number.isFinite(Number(p?.x))?Math.max(2,Math.min(98,Number(p.x))):f.x,y:Number.isFinite(Number(p?.y))?Math.max(2,Math.min(98,Number(p.y))):f.y});
+ const spawn={blue:[],red:[]};
+ for(const team of TEAMS){
+  const fallback=BASES[team],src=raw.spawns?.[team];
+  spawn[team]=Array.from({length:5},(_,i)=>safe(src?.[i],fallback));
+ }
+ const flags={blue:safe(raw.flags?.blue,BASES.blue),red:safe(raw.flags?.red,BASES.red)};
+ const hills=HILLS.map(def=>({id:def.id,...safe(raw.hills?.find?.(h=>h?.id===def.id),def)}));
+ const lanes={left:safe(raw.lanes?.left,{x:50,y:26}),mid:safe(raw.lanes?.mid,{x:50,y:50}),right:safe(raw.lanes?.right,{x:50,y:74})};
+ return{spawns:spawn,flags,hills,storm:safe(raw.storm,{x:50,y:50}),lanes}
+}
 function create(mode,config={}){
  if(!MODES.includes(mode))throw new Error('Unsupported PvP objective mode');
+ const map=positions(config);
  const c={
   stormStartMs:integer(config.stormStartMs,30000,1000,180000),
   stormStepMs:integer(config.stormStepMs,6000,1000,30000),
@@ -28,9 +42,9 @@ function create(mode,config={}){
   respawnMs:integer(config.respawnMs,6000,1000,30000)
  };
  return{
-  mode,config:c,winner:null,score:{blue:0,red:0},lastAt:0,
+  mode,config:c,map,winner:null,score:{blue:0,red:0},lastAt:0,
   storm:{radius:c.stormRadiusStart,nextShrink:c.stormStartMs,nextDamage:c.stormStartMs+1000,phase:0},
-  flags:{blue:{holder:null,droppedAt:null,position:{...BASES.blue}},red:{holder:null,droppedAt:null,position:{...BASES.red}}},
+  flags:{blue:{holder:null,droppedAt:null,position:{...map.flags.blue}},red:{holder:null,droppedAt:null,position:{...map.flags.red}}},
   hill:{index:0,nextRotation:c.hillRotationMs,nextScore:1000},
   nextMove:{blue:0,red:0}
  }
@@ -56,10 +70,10 @@ function routeUnit(frame,state,team,target,reason){
  if(state.mode==='capture-the-flag'){
   const ourFlag=state.flags[team],enemyFlag=state.flags[opposite(team)];
   mover=members.find(u=>enemyFlag.holder===u.id)||mover;
-  if(order==='defend-base')target=BASES[team];
+  if(order==='defend-base')target=state.map.flags[team];
   if(order==='recover-flag'||order==='intercept-carrier'){
    const thief=frame.units.find(u=>u.id===ourFlag.holder&&u.alive);
-   target=thief?.position||(ourFlag.droppedAt!==null?ourFlag.position:BASES[team])
+   target=thief?.position||(ourFlag.droppedAt!==null?ourFlag.position:state.map.flags[team])
   }
   if(order==='escort-carrier'&&enemyFlag.holder&&enemyFlag.holder!==mover.id){
    const carrier=members.find(u=>u.id===enemyFlag.holder);
@@ -72,12 +86,12 @@ function tickArena(state,frame){
  const s=state.storm,c=state.config;
  while(frame.now>=s.nextShrink&&s.radius>c.stormRadiusMin){
   s.phase++;s.radius=Math.max(c.stormRadiusMin,s.radius-7);s.nextShrink+=c.stormStepMs;
-  emit(frame,'PVP_STORM_SHRINK',{phase:s.phase,radius:s.radius,centre:{x:50,y:50}})
+  emit(frame,'PVP_STORM_SHRINK',{phase:s.phase,radius:s.radius,centre:{...state.map.storm}})
  }
  while(frame.now>=s.nextDamage){
   s.nextDamage+=c.stormDamageIntervalMs;
   for(const unit of frame.units){
-   if(unit.alive&&dist(unit.position,{x:50,y:50})>s.radius){
+   if(unit.alive&&dist(unit.position,state.map.storm)>s.radius){
     frame.damage(unit,c.stormDamagePct);
     emit(frame,'PVP_STORM_HIT',{target:unit.id,team:unit.team,radius:s.radius})
    }
@@ -105,14 +119,14 @@ function tickFlags(state,frame){
    }else flag.position={...carrier.position};
   }
   if(flag.droppedAt!==null&&frame.now-flag.droppedAt>=c.flagReturnMs){
-   flag.droppedAt=null;flag.position={...BASES[team]};
+   flag.droppedAt=null;flag.position={...state.map.flags[team]};
    emit(frame,'PVP_FLAG_RETURNED',{team,reason:'timeout'})
   }
  }
  for(const team of TEAMS){
   const own=f[team],enemy=f[opposite(team)],members=frame.units.filter(u=>u.team===team&&u.alive);
   if(own.droppedAt!==null&&members.some(u=>dist(u.position,own.position)<=5)){
-   own.droppedAt=null;own.position={...BASES[team]};
+   own.droppedAt=null;own.position={...state.map.flags[team]};
    emit(frame,'PVP_FLAG_RETURNED',{team,reason:'recovered'})
   }
   if(!enemy.holder&&members.length){
@@ -123,8 +137,8 @@ function tickFlags(state,frame){
    }
   }
   const carrier=members.find(u=>enemy.holder===u.id);
-  if(carrier&&!own.holder&&own.droppedAt===null&&dist(carrier.position,BASES[team])<=6){
-   state.score[team]++;enemy.holder=null;enemy.droppedAt=null;enemy.position={...BASES[opposite(team)]};
+  if(carrier&&!own.holder&&own.droppedAt===null&&dist(carrier.position,state.map.flags[team])<=6){
+   state.score[team]++;enemy.holder=null;enemy.droppedAt=null;enemy.position={...state.map.flags[opposite(team)]};
    emit(frame,'PVP_FLAG_CAPTURED',{team,score:{...state.score},carrierId:carrier.id});
    if(state.score[team]>=c.flagCaptureTarget)state.winner=team
   }
@@ -132,13 +146,13 @@ function tickFlags(state,frame){
  for(const team of TEAMS){
   const order=frame.orders?.[team]?.objective||'take-flag',enemy=f[opposite(team)];
   const carrier=frame.units.find(u=>u.id===enemy.holder);
-  const target=carrier?.team===team?BASES[team]:BASES[opposite(team)];
-  if(order==='defend-base')routeUnit(frame,state,team,BASES[team],'defence');
-  else if(order==='recover-flag'||order==='intercept-carrier'){const thief=frame.units.find(u=>u.id===state.flags[team].holder&&u.alive);routeUnit(frame,state,team,thief?.position||(state.flags[team].droppedAt!==null?state.flags[team].position:BASES[team]),'recovery')}
+  const target=carrier?.team===team?state.map.flags[team]:state.map.flags[opposite(team)];
+  if(order==='defend-base')routeUnit(frame,state,team,state.map.flags[team],'defence');
+  else if(order==='recover-flag'||order==='intercept-carrier'){const thief=frame.units.find(u=>u.id===state.flags[team].holder&&u.alive);routeUnit(frame,state,team,thief?.position||(state.flags[team].droppedAt!==null?state.flags[team].position:state.map.flags[team]),'recovery')}
   else if(['route-left','route-mid','route-right'].includes(order)&&!carrier){
-   const lane=order==='route-left'?26:order==='route-right'?74:50;
+   const waypointName=order==='route-left'?'left':order==='route-right'?'right':'mid',lane=state.map.lanes[waypointName];
    const scout=frame.units.find(u=>u.team===team&&u.alive&&(u.role==='dps'))||frame.units.find(u=>u.team===team&&u.alive);
-   const waypoint=scout&&Math.abs(scout.position.x-50)>6?{x:50,y:lane}:target;
+   const waypoint=scout&&Math.abs(scout.position.x-50)>6?lane:target;
    routeUnit(frame,state,team,waypoint,'route')
   }else routeUnit(frame,state,team,target,'flag')
  }
@@ -146,10 +160,10 @@ function tickFlags(state,frame){
 function tickHill(state,frame){
  const hill=state.hill,c=state.config;
  while(frame.now>=hill.nextRotation){
-  hill.index=(hill.index+1)%HILLS.length;hill.nextRotation+=c.hillRotationMs;
-  emit(frame,'PVP_HILL_ROTATED',{hill:{...HILLS[hill.index],index:hill.index}})
+  hill.index=(hill.index+1)%state.map.hills.length;hill.nextRotation+=c.hillRotationMs;
+  emit(frame,'PVP_HILL_ROTATED',{hill:{...state.map.hills[hill.index],index:hill.index}})
  }
- const point=HILLS[hill.index];
+ const point=state.map.hills[hill.index];
  while(frame.now>=hill.nextScore){
   hill.nextScore+=1000;
   const counts=Object.fromEntries(TEAMS.map(team=>[team,frame.units.filter(u=>u.alive&&u.team===team&&dist(u.position,point)<=c.hillRadius).length]));
@@ -164,7 +178,7 @@ function tickHill(state,frame){
   const order=frame.orders?.[team]?.objective||'capture-hill';
   if(order==='defend-approach')continue;
   const early=order==='rotate-early'&&hill.nextRotation-frame.now<=Math.min(5000,c.hillRotationMs/3);
-  routeUnit(frame,state,team,early?HILLS[(hill.index+1)%HILLS.length]:point,early?'early rotation':'hill')
+  routeUnit(frame,state,team,early?state.map.hills[(hill.index+1)%state.map.hills.length]:point,early?'early rotation':'hill')
  }
 }
 function tick(state,frame){
