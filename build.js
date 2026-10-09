@@ -1431,4 +1431,5 @@ require('./tests/pvp-ruleset.contract.cjs');
 require('./tests/pvp-arena.integration.cjs');
 require('./tests/pvp-objectives.integration.cjs');
 require('./tests/pvp-online-match.contract.cjs');
+require('./tests/pvp-map-studio.contract.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}
