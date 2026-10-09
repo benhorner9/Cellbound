@@ -3632,7 +3632,14 @@ function createCombatContext(options={}){
  const encounter=copy(options.encounter||{});
  if(pvpInput){encounter.kind='arena';encounter.enemies=[];encounter.mechanics=[]}
  encounter.mechanics=normaliseMechanics(encounter);
- const roster=pvpInput?[...pvpInput.blue,...pvpInput.red].map((c,i)=>({...c,_combatPosition:{x:i<pvpInput.size?20:80,y:50+((i%pvpInput.size)-(pvpInput.size-1)/2)*10}})):(options.party||[]);
+ const pvpMap=pvpInput?.map?.layout||null;
+ const roster=pvpInput?[...pvpInput.blue,...pvpInput.red].map((c,i)=>{
+  const side=i<pvpInput.size?'blue':'red',slot=i%pvpInput.size;
+  const assigned=pvpMap?.spawns?.[side]?.[slot];
+  const fallback={x:side==='blue'?20:80,y:50+(slot-(pvpInput.size-1)/2)*10};
+  const safe=p=>p&&Number.isFinite(Number(p.x))&&Number.isFinite(Number(p.y))?{x:clamp(Number(p.x),2,98),y:clamp(Number(p.y),2,98)}:fallback;
+  return{...c,_combatPosition:safe(assigned)}
+ }):(options.party||[]);
  const seed=options.seed||[encounter.id||'encounter',Date.now(),roster.map(x=>x.id).join('-')].join(':');
  const players=roster.map((ch,i)=>normalisePlayer(ch,i,options.professionZone)),enemies=normaliseEnemies(encounter),units={};
  [...players,...enemies].forEach(u=>units[u.id]=u);enemies.forEach(e=>players.forEach(p=>e.threat[p.id]=0));
@@ -3647,10 +3654,13 @@ function createCombatContext(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
+ if(pvpMap&&Array.isArray(pvpMap.blockers)){
+  environment.blockers=pvpMap.blockers.slice(0,20).map(b=>({shape:'rect',x:clamp(Number(b.x)||50,2,98),y:clamp(Number(b.y)||50,2,98),w:clamp(Number(b.width)||8,2,35),h:clamp(Number(b.height)||8,2,35),blocksMovement:b.blocksMovement!==false,blocksLos:b.blocksLos!==false}))
+ }
  const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,commandCooldowns:{},commandPower:clamp(Number(options.commandPower??COMMAND_POWER_START),0,COMMAND_POWER_MAX),commandPowerMax:COMMAND_POWER_MAX,nextCommandPowerRegenAt:COMMAND_POWER_REGEN_MS,nextCommandPowerRewardAt:0,finished:false,outcome:null,onEvent:options.onEvent||null};
  if(pvpInput){
   players.forEach((u,i)=>{u.team=i<pvpInput.size?'blue':'red'});
-  const mode=pvpInput.mode,objective=window.CellboundPvPObjectives.create(mode,pvpInput.objectiveConfig||{});
+  const mode=pvpInput.mode,objective=window.CellboundPvPObjectives.create(mode,{...pvpInput.objectiveConfig,...(pvpMap?{map:pvpMap}:{})});
   const defaultOrder=mode==='capture-the-flag'?'take-flag':mode==='king-of-the-hill'?'capture-hill':null;
   ctx.pvp={mode,size:pvpInput.size,blue:players.slice(0,pvpInput.size),red:players.slice(pvpInput.size),winner:null,objective,orders:{blue:{target:'balanced',position:'balanced',objective:defaultOrder},red:{target:'balanced',position:'balanced',objective:defaultOrder}},commandReadyAt:{blue:0,red:0}};
  }
