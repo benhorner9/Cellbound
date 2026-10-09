@@ -4116,3 +4116,237 @@ body.tb-open{
     min-height:0!important;
   }
 }
+
+
+/* COMBAT CENTRE 2026-10-09: art is the only thing inside its 16:9 frame.
+   Encounter status and enemy casts are HUD rows; real Social chat occupies
+   the remaining central column in dungeons, quests, raids and PvP. */
+.cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:6px!important;
+  min-height:0!important;
+  max-height:none!important;
+  height:100%!important;
+  align-self:stretch!important;
+  justify-content:flex-start!important;
+  overflow:hidden!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-topbar{
+  flex:0 0 auto!important;
+  min-height:30px!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-auto-rows:auto!important;
+  gap:4px 8px!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-topbar>.cb2d-caption{
+  position:static!important;
+  inset:auto!important;
+  z-index:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  width:auto!important;
+  height:auto!important;
+  min-height:0!important;
+  max-width:100%!important;
+  margin:0!important;
+  padding:0 2px!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+  font-size:9px!important;
+  pointer-events:none!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-topbar>.cb2d-caption :is(span,b){
+  position:static!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  font-size:9px!important;
+  line-height:1.3!important;
+  white-space:nowrap!important;
+  text-overflow:ellipsis!important;
+  overflow:hidden!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-topbar>.cb2d-caption{
+  grid-column:1 / -1!important;
+  grid-row:auto!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-arena-wrap{
+  flex:0 0 auto!important;
+  overflow:hidden!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel>.cb2d-cast{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  z-index:1!important;
+  box-sizing:border-box!important;
+  flex:0 0 auto!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:40px!important;
+  max-width:none!important;
+  display:grid!important;
+  grid-template-columns:74px minmax(105px,.7fr) minmax(0,1fr)!important;
+  gap:5px 10px!important;
+  align-items:center!important;
+  margin:0!important;
+  padding:7px 10px!important;
+  transform:none!important;
+  border:1px solid rgba(226,153,89,.22)!important;
+  border-radius:6px!important;
+  background:#100e0d!important;
+  pointer-events:none!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel>.cb2d-cast>small{
+  margin:0!important;
+  font-size:9px!important;
+  letter-spacing:.06em!important;
+  color:#daac74!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel>.cb2d-cast>div:not(.cb2d-castbar){
+  display:flex!important;
+  min-width:0!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:5px!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel>.cb2d-cast .cb2d-castbar{
+  width:100%!important;
+  height:6px!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-chat{
+  box-sizing:border-box;
+  flex:1 1 auto;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:100px;
+  width:100%;
+  overflow:hidden;
+  border:1px solid rgba(126,156,174,.28);
+  border-radius:7px;
+  background:linear-gradient(180deg,#07141b,#071016);
+  color:#cbd9dc;
+  font:12px/1.4 system-ui,sans-serif;
+}
+.cbcombat-chat-tabs{
+  flex:0 0 auto;
+  display:flex;
+  gap:3px;
+  align-items:center;
+  min-height:33px;
+  padding:4px 7px;
+  border-bottom:1px solid rgba(132,167,189,.14);
+}
+.cbcombat-chat-tabs button{
+  min-height:26px;
+  padding:4px 10px;
+  border:1px solid transparent;
+  border-radius:5px;
+  background:transparent;
+  color:#9ab0bc;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.03em;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.cbcombat-chat-tabs button[aria-pressed="true"]{
+  border-color:#b89b5e;
+  background:#191b1a;
+  color:#f0c97b;
+}
+.cbcombat-chat-live{margin-left:auto;color:#7ea8a0;font-size:9px;font-weight:750;white-space:nowrap}
+.cbcombat-chat-messages{
+  flex:1 1 auto;
+  min-height:38px;
+  overflow:auto;
+  padding:6px 10px;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+.cbcombat-chat-line{
+  display:flex;
+  gap:8px;
+  align-items:baseline;
+  margin:0 0 3px;
+  color:#d4dfe0;
+  overflow-wrap:anywhere;
+}
+.cbcombat-chat-time{flex:0 0 auto;color:#84939b;font-size:10px}
+.cbcombat-chat-speaker{flex:0 0 auto;color:#ddb777;font-size:11px}
+.cbcombat-chat-speaker[data-badge="owner"]{color:#e8c378}
+.cbcombat-chat-speaker[data-badge="mod"]{color:#7ad7bd}
+.cbcombat-chat-speaker[data-badge="player_mod"]{color:#a5addc}
+.cbcombat-chat-line>span{min-width:0}
+.cbcombat-chat-info{margin:6px 0;color:#9fb2b8;font-size:11px}
+.cbcombat-chat-form{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  gap:6px;
+  align-items:center;
+  flex:0 0 auto;
+  padding:6px 8px;
+  border-top:1px solid rgba(132,167,189,.14);
+}
+.cbcombat-chat-channel-name{
+  min-width:64px;
+  color:#e9be73;
+  font-size:9px;
+  font-weight:900;
+  text-align:center;
+}
+.cbcombat-chat-form input{
+  width:100%;
+  min-width:0;
+  min-height:32px;
+  padding:7px 10px;
+  border:1px solid #2c4b57;
+  border-radius:5px;
+  background:#091b23;
+  color:#f3f6ef;
+  font:12px system-ui,sans-serif;
+}
+.cbcombat-chat-form button{
+  min-height:32px;
+  padding:6px 11px;
+  border:1px solid #9f814c;
+  border-radius:5px;
+  background:#392c19;
+  color:#f7d998;
+  font-size:10px;
+  font-weight:900;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.cbcombat-chat-form button:disabled{opacity:.55;cursor:wait}
+.cbcombat-chat-error{flex:0 0 auto;margin:0;padding:3px 9px;color:#ffb8a4;font-size:10px}
+.cbcombat-chat-error[hidden]{display:none!important}
+@media(max-width:849px){
+ .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel{
+   height:auto!important;
+   min-height:0!important;
+   overflow:visible!important;
+ }
+ .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-chat{min-height:185px}
+}
+@media(max-width:600px){
+ .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel>.cb2d-cast{
+   grid-template-columns:65px minmax(0,1fr)!important;
+ }
+ .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel>.cb2d-cast .cb2d-castbar{grid-column:1 / -1}
+ .cbcombat-chat-live{display:none}
+ .cbcombat-chat-tabs button{padding:4px 6px;font-size:9px}
+ .cbcombat-chat-channel-name{min-width:44px;font-size:8px}
+}
