@@ -49,7 +49,7 @@ function createLiveSession(options={},meta={}){
   const engine=core();
   if(typeof engine.createLiveSession!=='function')throw new Error('Combat Reborn live-session API is unavailable');
   const session=engine.createLiveSession(meta?.zone?{...options,professionZone:meta.zone}:options);
-  if(!session||typeof session.advance!=='function'||typeof session.command!=='function')throw new Error('Combat Reborn returned an invalid live session');
+  if(!session||typeof session.advance!=='function'||(typeof session.command!=='function'&&typeof session.pvpCommand!=='function'))throw new Error('Combat Reborn returned an invalid live session');
   return instrumentLiveSession(session,meta)
 }
 // Development-only symmetric Arena session. Ratings and rewards MUST be server-authoritative.
