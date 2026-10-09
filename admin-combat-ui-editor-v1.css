@@ -52,7 +52,7 @@
 .cbe-live.cb2d-shell .cb2d-layout .cb2d-arena{min-height:0!important}
 .cbe-live.cb2d-shell .cb2d-layout .cb2d-combat-meters{overflow:auto}
 .cbe-live.cb2d-shell .cb2d-layout .cb2d-feed,.cbe-live.cb2d-shell .cb2d-layout .cb2d-party{overflow:auto}
-.cbe-live.pvp2d-shell{position:relative!important;width:100%!important;min-height:var(--cbe-height,650px)!important;height:var(--cbe-height,650px)!important;overflow:hidden!important}
+.cbe-live.pvp2d-shell{position:relative!important;width:min(var(--cbe-width,1200px),97vw)!important;max-width:97vw!important;margin-inline:auto!important;min-height:var(--cbe-height,650px)!important;height:var(--cbe-height,650px)!important;overflow:hidden!important}
 .cbe-live.pvp2d-shell>.pvp2d-layout,.cbe-live.pvp2d-shell>.pvp2d-lower{display:contents!important}
 .cbe-live.pvp2d-shell .pvp2d-arena{min-height:0!important}
 .cbe-live.pvp2d-shell .pvp2d-lower>section{min-height:0!important;height:auto!important;max-height:none!important}
