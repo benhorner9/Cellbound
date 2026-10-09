@@ -108,3 +108,19 @@ The owner **Design Booth → PvP Maps** tab is wired into staging source:
 **Safety boundary:** This is owner staging practice and design authoring only. PvP public queue remains locked; no ranking, PvP currency, account rewards or online multiplayer settlement is enabled by maps. The server coordinator must load trusted published map data rather than accepting an arbitrary map from a player.
 
 **Next map-editor refinements after owner playtesting:** dedicated PvP paintings, obstacle/hazard visual polish, per-bracket Arena spawn preview and later multi-commander 10v10/20v20 extensions.
+
+## Block 3 update — real-account matchmaking persistence (9 October 2026)
+
+**Server/database foundation:**
+- Added seven persistent tables: queue entries, matches, participants, sealed rosters, commands, events and combat snapshots. RLS is enabled on every table.
+- Authenticated players may insert only their own queue identity, mode and squad size, read/cancel their own waiting entry and inspect only their own matches/events/snapshots. Neither public clients nor opponents can read private sealed roster data or write results and rewards.
+- The atomic queue-pairing function uses row locks with SKIP LOCKED, requires two distinct real user accounts, and excludes anyone already assigned to an active/forming match. Execution is restricted to service_role; anonymous and authenticated clients have no pairing privilege.
+- The trusted worker contract at server/pvp/matchmaking-coordinator.cjs requires server-verified rosters for both accounts and a trusted map before it prepares a lobby; an invalid roster/map cancels the lobby before combat begins.
+- The database migration has been applied in the connected Cellbound Supabase project. A hardening migration restricts queue INSERT columns and allows built-in map slugs without requiring an owner-published override row.
+- The new CI contract tests/pvp-persistent-matchmaking.contract.cjs guards queue permissions, real-user pairing, roster safety and fail-closed preparation.
+
+**Database verification:** All seven new PvP multiplayer tables have RLS enabled. The pairing RPC is callable by service_role, not authenticated or anon. The real queue was empty on verification; the matching RPC returned null instead of inventing an opponent. Only user_id, mode and squad_size are client-insertable.
+
+**Still required to play real online PvP:** The matchmaking HTTP API and beta tester access gate; a trusted, durable Combat Reborn match tick worker; ready/command endpoints; Realtime participant snapshots and reconnect; iPad two-account end-to-end tests; one-time rewards. The present owner Practice Room remains local only.
+
+**Next priority:** Finish Block 3 with a protected real-account queue and live match service, initially one 5v5 CTF with two separate authenticated player accounts. Public PvP stays locked and no account rewards or ratings are affected.
