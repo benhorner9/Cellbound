@@ -146,7 +146,14 @@ function combatFor(stage,side=null){
  const p=stage==='maids'?engineParty(side):engineParty(null),enc=stage==='maids'?maidEncounter(side):{...manorEncounter(stage),lockWipedRaidParties:true};
  if(!p.length||!enc)return null;
  try{
-   const result=E.simulate({party:p,encounter:enc,seed:seedKey,maxDurationMs:180000},{zone:'manor-raid'});
+   const request={party:p,encounter:enc,seed:seedKey,maxDurationMs:180000};
+   // Owner-only room QA must not synchronously pre-simulate an entire 10-unit raid
+   // before the shared viewer appears. The viewer creates and advances its own
+   // canonical Combat Reborn live session; a starting snapshot is all it needs.
+   // Preserve the historical full simulation for actual two-commander raids.
+   const result=ownerSoloQa&&typeof E.createLiveSession==='function'
+    ?E.createLiveSession(request,{zone:'manor-raid'}).snapshot()
+    :E.simulate(request,{zone:'manor-raid'});
    const pack={result,party:p,encounter:enc};combatCache.set(key,pack);return pack
  }catch(error){console.warn('Manor shared combat simulation failed',stage,error);return null}
 }
