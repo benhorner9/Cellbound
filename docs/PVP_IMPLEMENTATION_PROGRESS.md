@@ -1,7 +1,7 @@
 # Cellbound PvP build status
 **Updated:** 9 October 2026  
 **Development branch:** `staging`  
-**State:** Block 1 underway. PvP remains locked.
+**State:** Unified combat and owner QA deployed; server-only two-account contract underway. Public PvP remains locked.
 
 ## Current development architecture
 
@@ -29,7 +29,7 @@ The retired `pvp-combat-v1.js` and `pvp-viewer-v1.js` are explicitly forbidden b
 
 ## Safety and access
 
-`pvp-v1.js` retains the regular-player lock. **No real matchmaking, Arena payout, BG payout or deployed match has been enabled by this block.** New scripts may be present in staging source without the staging FTP site automatically reflecting them: staging deployment uses an explicit GitHub Actions workflow_dispatch action.
+`pvp-v1.js` retains the regular-player lock. **No real matchmaking, Arena payout, BG payout or deployed match has been enabled by this block.** New scripts may be present in staging source without the staging FTP site automatically reflecting them: staging deployment is automated by GitHub Actions on pushes to staging, after all QA gates succeed.
 
 The master gameplay design is in `PVP_REBUILD_MASTER_PLAN.md` on `main`. This staging status is the branch-specific implementation record.
 
@@ -63,7 +63,7 @@ Completed in the staging source on top of **the same Combat Reborn live engine a
 - **Owner practice room:** when `CellboundAdmin.role === 'owner'`, the locked Crucible screen displays a **development-only** practice launcher for Arena 2v2/3v3/5v5 or 5v5 CTF/KOTH with an inline viewer and blue-squad tactical buttons. It uses fixed local practice opponents. **No results, ranks, shock, saved character progression, rewards or currencies are changed.** The public PvP lock remains `pvpEnabled=()=>false`.
 - **Build/test:** `tests/pvp-objectives.integration.cjs` checks storm damage, a complete flag capture, drop/return, uncontested KOTH scoring, rotation, BG respawns, 5v5 combat, deterministic results, no friendly fire/cross-team healing and 113 PvE engine self-tests. The staging build now requires this test alongside the Arena and PvP ruleset regression suites. Cache URLs were bumped for the modified core viewer and PvP screen.
 
-**Test evidence:** three PvP test suites passed in the connected source-level test harness, and a mock canonical-viewer render successfully displayed KOTH mode/score. The complete GitHub Actions build and an iPad/WebKit UI playthrough have **not** been run in this turn. The staging FTP deploy workflow remains `workflow_dispatch` only; pushes to `staging` do not automatically make the practice room visible on `cb.athleticsmanagergame.com`.
+**Test evidence:** three PvP test suites passed in the connected source-level test harness, and a mock canonical-viewer render successfully displayed KOTH mode/score. The complete GitHub Actions build and an iPad/WebKit UI playthrough have **not** been run in this turn. Staging pushes trigger the GitHub Actions QA/deploy workflow automatically. Public PvP remains locked independently of staging deployment.
 
 ### Still open before PvP can become public
 
@@ -74,3 +74,21 @@ Completed in the staging source on top of **the same Combat Reborn live engine a
 5. Full staged automated deployment validation and end-to-end browser regression across other game screens.
 
 The **owner practice room is only a development tool**, not real PvP. Do not activate the old client-side reward code to make it playable.
+
+
+## Update — unified illustrated CB2D PvP visual and server contract (9 October 2026)
+
+**Visual integration shipped to staging:** The owner-only Crucible Practice Room now mounts the same PvE canonical combat shell, uses the same `.cb2d-unit` character factory as dungeon/raid combat, upgrades those units with the existing Combat Portraits renderer (including appearance/equipment) and routes actual Combat Reborn event deltas to the existing `CellboundCombatFX` living presentation layer. CTF, KOTH and Arena keep their mode-specific score and objective overlays. Temporary PvP maps reuse existing illustrated Cellbound room artwork; **dedicated battleground artwork is still to be created**. Regression checks now exercise this on Chromium and WebKit. The full staging browser QA and deploy succeeded for this block.
+
+**Initial server-only match contract:** `server/pvp/match-authority.cjs` is intentionally NOT a browser runtime asset. It composes the existing `CellboundCombatStandard.createPvpSession()` engine and models the two-account lifecycle: assigned server-sealed squads; blue/red authorization; both players ready; per-account command ownership; monotonically numbered and rate-limited commands; server-only ticks; disconnected participant grace/reconnect; ready/connection timeout; immutable completed/abandoned state. `tests/pvp-online-match.contract.cjs` is included in the build. There is no generated opponent in this match contract, no ranked service, no client-side reward minting, and no duplicate simulator.
+
+**Critical distinction:** This is a standalone server **logic foundation**, not an online service. It does not yet persist matches, run a worker, provide authenticated HTTP/Realtime endpoints, match actual online accounts, settle results, or produce PvP rewards. The coordinator must authenticate player identity on each operation, fetch sealed rosters from trusted records, atomically persist state, run the simulation in a trusted environment, deliver event snapshots to both players, and withstand worker restarts before any online PvP mode is opened.
+
+**Next required tasks in priority order:**
+1. Database schema, transactional pairing/roster locking, RLS and per-account visibility.
+2. Authenticated match-service/worker hosting Combat Reborn, durable deterministic state, command sequence validation and secure snapshot stream.
+3. Two real player accounts end-to-end on iPad; reconnect and latency testing.
+4. One-time authoritative BG result settlement and War Marks, then ranked Elo/season service.
+5. Dedicated PvP map art and richer objective/targeting polish, followed by 10v10/20v20 multi-commander scaling.
+
+**The public Crucible is still locked.** Owner practice changes nothing persistent.
