@@ -588,6 +588,7 @@ function removeStatus(ctx,target,id,reason='expired'){
 }
 function applyStatus(ctx,source,target,status={}){
  if(!target?.alive)return null;
+ if(ctx.pvp&&status.kind==='buff'&&source?.team&&target?.team&&source.team!==target.team)return null;
  const id=status.id||String(status.name||'status').toLowerCase().replace(/[^a-z0-9]+/g,'-'),duration=Math.max(0,Number(status.duration)||0);
  const current=target.statuses[id],st={id,name:status.name||id,kind:status.kind==='debuff'?'debuff':'buff',source:source?.id||status.source||null,stacks:clamp((current?.stacks||0)+(Number(status.stacks)||1),1,99),duration,expiresAt:ctx.time+duration,effect:copy(status.effect||{}),cc:status.cc||null,breakOnDamage:!!status.breakOnDamage,persistAcrossEncounters:!!status.persistAcrossEncounters};
  target.statuses[id]=st;
