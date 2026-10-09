@@ -103,7 +103,7 @@ assert(nativeAPI.bosses().length>=18,'Game bosses must appear in central selecto
  assert(master.includes('id="dboAddLoot"')&&master.includes('data-db-edit-row')&&master.includes('data-db-remove-drop'),'Boss drop table must expose add/edit/remove without opening each item first');
  assert(master.includes("it.label:it.label")&&!master.includes("it.name:it.name"),'Item selectors must use canonical loot catalogue display names');
  assert(css.includes('.dbo-loot-table-row')&&css.includes('.dbo-loot-prob')&&css.includes('@media(max-width:600px)'),'Loot overview must support readable iPad and phone layouts');
- assert(html.includes('admin-design-booth-v1.js?v=6')&&html.includes('admin-design-booth-v1.css?v=5'),'Safari must request updated Design Booth assets');
+ assert(html.includes('admin-design-booth-v1.js?v=7')&&html.includes('admin-design-booth-v1.css?v=6')&&html.includes('admin-combat-ui-editor-v1.js?v=1'),'Safari must request updated Design Booth assets');
 
  nativeWindow.CellboundDesignedContent=core;
  await nativeAPI.refresh(true);
