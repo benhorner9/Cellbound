@@ -54,7 +54,7 @@ function createLiveSession(options={},meta={}){
 }
 // Development-only symmetric Arena session. Ratings and rewards MUST be server-authoritative.
 function createPvpSession(options={},meta={}){
- if(!options?.pvp||options.pvp.mode!=='arena'||!window.CellboundPvPRuleset)throw new Error('PvP Arena rules contract is unavailable');
+ if(!options?.pvp||!window.CellboundPvPRuleset?.MODES.includes(options.pvp.mode)||!window.CellboundPvPObjectives)throw new Error('PvP game mode rules contract is unavailable');
  const session=createLiveSession(options,{...meta,profile:'pvp'});
  if(typeof session.pvpCommand!=='function')throw new Error('Combat Reborn failed to create a PvP session');
  return session
@@ -76,7 +76,7 @@ function audit(){
     contract:CONTRACT_VERSION,
     engineReady:!!window.CellboundCombatReborn?.simulate,
     liveReady:!!window.CellboundCombatReborn?.createLiveSession,
-    pvpPrototypeReady:!!window.CellboundCombatReborn?.createLiveSession&&!!window.CellboundPvPRuleset,
+    pvpPrototypeReady:!!window.CellboundCombatReborn?.createLiveSession&&!!window.CellboundPvPRuleset&&!!window.CellboundPvPObjectives,
     engineVersion:engineVersion(),
     zones:[...zones.values()]
   }
