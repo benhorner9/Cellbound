@@ -68,7 +68,8 @@ function modal(){
  '<button id="cbeSave" type="button">Save draft</button><button id="cbePublish" data-accent type="button">Apply to this device</button><button id="cbeClose" class="cbe-close" type="button">Close ✕</button></div>'+
  '<div class="cbe-workspace"><section class="cbe-center"><div class="cbe-info"><span><strong>Touch a panel</strong> to select and drag. Pull its gold corner to resize.</span><span id="cbeInfo"></span></div><div class="cbe-stage"><div class="cbe-canvas" id="cbeCanvas"></div></div></section>'+
  '<aside class="cbe-aside"><h3 id="cbeSelectedName">Battlefield</h3><p>Positions and sizes are percentages of the entire combat window.</p><div class="cbe-fields" id="cbeFields"></div>'+
- '<div class="cbe-inline"><button id="cbeVisible" type="button">Hide panel</button><button id="cbeResetPanel" type="button">Reset panel</button></div><hr>'+
+ '<div class="cbe-inline"><button id="cbeVisible" type="button">Hide panel</button><button id="cbeResetPanel" type="button">Reset panel</button></div>'+ 
+ '<div class="cbe-inline"><button id="cbeFitScene" type="button">Fit battlefield to artwork (16:9)</button></div><hr>'+
  '<h3>Whole window</h3><div class="cbe-fields"><label>Width (px)<input id="cbeWidth" type="number" min="320" max="1800" step="20"></label><label>Height (px)<input id="cbeHeight" type="number" min="420" max="1500" step="20"></label></div>'+
  '<div class="cbe-inline"><button id="cbeGrid" type="button">Grid: On</button><button id="cbeReset" type="button">Reset layout</button></div><hr>'+
  '<h3>Save and share</h3><p>Drafts and applied layouts stay on this device. Export JSON to back them up or move them to another device. Applying is not a global release.</p>'+
@@ -79,7 +80,7 @@ function modal(){
 }
 function renderCanvas(){
  const canvas=$('#cbeCanvas');if(!canvas)return;
- const layout=getDraft(),size=PROFILES[profile];
+ const layout=getDraft(),size=[layout.width,layout.height];
  canvas.style.width='min(100%,'+size[0]+'px)';
  canvas.style.aspectRatio=size[0]+' / '+size[1];
  canvas.dataset.grid=grid?'1':'0';
@@ -145,6 +146,16 @@ function bindPanel(el){
 }
 function changeMode(next){mode=next;selected='battlefield';undo=[];redo=[];renderCanvas()}
 function changeProfile(next){profile=next;selected='battlefield';undo=[];redo=[];renderCanvas()}
+function fitBattlefieldToArt(){
+ // Fit the illustrated scene *inside* its currently assigned UI region.
+ // No neighbouring panel is moved or overwritten, and Undo restores the slot.
+ remember();selected='battlefield';
+ const layout=getDraft(),slot=layout.slots.battlefield;
+ const targetHeight=slot.w*layout.width*9/(16*layout.height);
+ if(targetHeight<=slot.h)slot.h=Math.max(4,Math.round(targetHeight*10)/10);
+ else slot.w=Math.max(4,Math.round(slot.h*layout.height*16/(9*layout.width)*10)/10);
+ renderCanvas();status('Battlefield fitted to 16:9 artwork — save or apply to test')
+}
 function bindModal(node){
  $('#cbeMode',node).addEventListener('change',e=>changeMode(e.target.value));
  $('#cbeProfile',node).addEventListener('change',e=>changeProfile(e.target.value));
@@ -159,6 +170,7 @@ function bindModal(node){
  };
  $('#cbeVisible',node).onclick=()=>{remember();getDraft().slots[selected].hidden=!getDraft().slots[selected].hidden;renderCanvas()};
  $('#cbeResetPanel',node).onclick=()=>{remember();getDraft().slots[selected]=defaultSlot(mode,profile,selected);renderCanvas()};
+ $('#cbeFitScene',node).onclick=fitBattlefieldToArt;
  $('#cbeGrid',node).onclick=()=>{grid=!grid;renderCanvas()};
  $('#cbeReset',node).onclick=()=>{if(!confirm('Reset every panel in this draft?'))return;remember();state.drafts[mode][profile]=defaultLayout(mode,profile);renderCanvas()};
  ['width','height'].forEach(dim=>$('#cbe'+dim[0].toUpperCase()+dim.slice(1),node).addEventListener('change',e=>{remember();getDraft()[dim]=clamp(e.target.value,dim==='width'?320:420,dim==='width'?1800:1500);renderCanvas()}));
