@@ -124,6 +124,36 @@ async function waitClosed(page,selector){
     const claimsAfter=await page.evaluate(()=>JSON.stringify(CellboundGame.getState().raidRewardClaims||{}));
     assert.equal(claimsAfter,claimsBefore,'owner Manor solo QA does not grant raid rewards');
 
+    // Owner PvP is deliberately unranked, but must render using the ACTUAL PvE
+    // Combat Reborn character models/CB2D stage and living-combat FX, not tokens.
+    await page.evaluate(()=>CellboundGame.switchView('pvp'));
+    await page.waitForSelector('#pvpMount [data-pvp-qa-start]',{timeout:8000});
+    await page.locator('#pvpMount [data-pvp-qa-start]').click();
+    await page.waitForSelector('#pvpMount [data-pvp-unit-stage].cb2d-arena .cb2d-unit[data-team="blue"]',{timeout:12000});
+    await page.waitForSelector('#pvpMount [data-pvp-unit-stage] .cb2d-unit.cb-combat-full-model .cb-combat-portrait',{timeout:12000});
+    assert.equal(await page.locator('#pvpMount [data-pvp-unit-stage] .cb2d-unit').count(),4,'2v2 PvP spawns four canonical CB2D character units');
+    const pvpVisual=await page.evaluate(()=>{
+      const scene=document.querySelector('#pvpMount [data-pvp-unit-stage]');
+      const shell=scene?.closest('.cbcombat-shell');
+      const art=scene?.querySelector('.cbpvp-environment img');
+      return{
+        profile:shell?.dataset?.combatProfile,
+        fx:scene?.classList?.contains('cbl-scene'),
+        art:art?.getAttribute('src'),
+        units:scene?.querySelectorAll('.cb2d-unit.cb-combat-full-model').length,
+        teams:[...scene?.querySelectorAll('.cb2d-unit[data-team]')||[]].map(x=>x.dataset.team),
+        oldMarkers:scene?.querySelectorAll('.cbpvp-combatant-symbol').length
+      };
+    });
+    assert.equal(pvpVisual.profile,'pvp','owner PvP uses canonical combat shell with PvP mode');
+    assert.equal(pvpVisual.fx,true,'owner PvP mounts PvE living combat FX');
+    assert(pvpVisual.art?.includes('/rooms/'),'PvP uses illustrated map artwork, not a debug grid');
+    assert.equal(pvpVisual.units,4,'both squads use the same character model/portrait runtime as PvE');
+    assert(pvpVisual.teams.includes('blue')&&pvpVisual.teams.includes('red'),'opposing squads remain distinct');
+    assert.equal(pvpVisual.oldMarkers,0,'letter-based standalone PvP markers have been retired');
+    await page.locator('#pvpMount [data-pvp-qa-stop]').click();
+    await page.waitForFunction(()=>!document.querySelector('#pvpMount [data-pvp-unit-stage]'),{},{timeout:5000});
+
     // Social / Party Finder.
     await page.evaluate(()=>CellboundGame.switchView('chat'));
     await page.evaluate(()=>CellboundSocial.refreshAll());
