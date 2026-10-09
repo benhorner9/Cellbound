@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.2.1';
+const VERSION='1.3.0';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -145,6 +145,12 @@ function shellMarkup(options={}){
  const showClose=options.showClose!==false;
  const closeLabel=esc(options.closeLabel||'Close combat');
  const commandGrouped=options.commandGrouped===true?' data-cbstd-grouped="1"':'';
+ const combatChat='<section class="cbcombat-chat" data-combat-chat aria-label="In-game chat">'+
+  '<div class="cbcombat-chat-tabs" role="group" aria-label="Chat channel"><button type="button" data-combat-chat-channel="world" aria-pressed="true">GLOBAL</button><button type="button" data-combat-chat-channel="trade" aria-pressed="false">TRADE</button><button type="button" data-combat-chat-channel="party" aria-pressed="false">PARTY FINDER</button><span class="cbcombat-chat-live">SOCIAL · LIVE</span></div>'+
+  '<div class="cbcombat-chat-messages" data-combat-chat-messages role="log" aria-live="off"><p class="cbcombat-chat-info">Loading global chat…</p></div>'+
+  '<form class="cbcombat-chat-form" data-combat-chat-form><label class="cbcombat-chat-channel-name" data-combat-chat-label>GLOBAL</label><input type="text" maxlength="300" autocomplete="off" data-combat-chat-input aria-label="Chat message" placeholder="Message global chat…" required><button type="submit" data-combat-chat-send>SEND ↗</button></form>'+
+  '<p class="cbcombat-chat-error" data-combat-chat-error role="status" hidden></p>'+
+  '</section>';
  return '<section class="cbcombat-shell cbcombat-standard-hud" data-combat-view="canonical-v1" data-combat-profile="pve" data-combat-theme="'+esc(theme)+'" data-party-size="'+partySize+'">'+
   '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2'+idAttr(options.titleId)+'>'+esc(title)+'</h2></div>'+
    '<div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span>'+
@@ -154,7 +160,7 @@ function shellMarkup(options={}){
   '<div class="cbcombat-route"'+idAttr(options.routeId)+'>'+route+'</div>'+
   '<div class="cbcombat-grid">'+
    '<div class="cbcombat-left-column"><section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+esc(partyLabel)+'</small><div class="cbcombat-party-rows" data-combat-party-rows'+idAttr(options.partyRowsId)+'>'+partyMarkup+'</div><div class="cbcombat-pet-rows" data-combat-pets'+idAttr(options.petsId)+' '+(petsMarkup?'':'hidden')+'>'+petsMarkup+'</div></div></section></div>'+
-   '<main class="cbcombat-panel cbcombat-battle-panel">'+battleTopbar+'<div class="cbcombat-arena-wrap '+esc(battleClass)+'" data-combat-theme="'+esc(theme)+'">'+arenaMarkup+castMarkup+'</div></main>'+
+   '<main class="cbcombat-panel cbcombat-battle-panel">'+battleTopbar+'<div class="cbcombat-arena-wrap '+esc(battleClass)+'" data-combat-theme="'+esc(theme)+'">'+arenaMarkup+'</div>'+castMarkup+combatChat+'</main>'+
    '<aside class="cbcombat-right-column"><section class="cbcombat-panel cbcombat-meters-panel">'+metersMarkup+'</section>'+
     '<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel"'+commandGrouped+'>'+commandsMarkup+'</section>'+rightExtra+'</aside>'+
   '</div>'+
@@ -165,8 +171,16 @@ function normalise(shell){
  if(!shell)return shell;
  const arena=shell.querySelector('.cbcombat-arena-wrap > .cb2d-arena,.cbcombat-arena-wrap > [data-combat-arena]');
  if(arena){arena.classList.add('cbcombat-arena');arena.dataset.combatArena='canonical'}
- const cast=shell.querySelector('.cbcombat-arena-wrap > .cb2d-cast');
- if(cast)cast.classList.add('cbcombat-cast');
+ // Legacy encounters render the cast bar and combat status inside their
+ // battlefield DOM. Move both into the HUD, keeping the same IDs and nodes
+ // so live combat updates still reach them without touching the art.
+ const battle=shell.querySelector('.cbcombat-battle-panel');
+ const cast=shell.querySelector('.cbcombat-arena-wrap > .cb2d-cast')||arena?.querySelector(':scope > .cb2d-cast');
+ if(cast&&battle){cast.classList.add('cbcombat-cast');shell.querySelector('.cbcombat-chat')?.before(cast)}
+ const caption=arena?.querySelector(':scope > .cb2d-caption');
+ const topbar=shell.querySelector('.cbcombat-battle-topbar');
+ if(caption){if(topbar)topbar.appendChild(caption);else if(battle)battle.prepend(caption)}
+
  const meters=shell.querySelector('.cbcombat-meters-panel > .cb2d-combat-meters');
  if(meters)meters.classList.add('cbcombat-meter-stack');
  shell.querySelectorAll('[data-combat-party-rows] > .cb2d-party-row').forEach(row=>{
@@ -227,6 +241,7 @@ function mount(root,options={}){
  root.innerHTML=shellMarkup(options);
  const shell=normalise(root.querySelector(':scope > .cbcombat-shell')||root.querySelector('.cbcombat-shell'));
  window.CellboundCombatHUDStandard?.upgrade?.(shell);
+ window.CellboundSocial?.mountCombatChat?.(shell);
  return shell
 }
 
