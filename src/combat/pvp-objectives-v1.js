@@ -56,7 +56,11 @@ function routeUnit(frame,state,team,target,reason){
  if(state.mode==='capture-the-flag'){
   const ourFlag=state.flags[team],enemyFlag=state.flags[opposite(team)];
   mover=members.find(u=>enemyFlag.holder===u.id)||mover;
-  if(order==='defend-base'||order==='recover-flag')target=ourFlag.holder?BASES[opposite(team)]:ourFlag.droppedAt?ourFlag.position:BASES[team];
+  if(order==='defend-base')target=BASES[team];
+  if(order==='recover-flag'||order==='intercept-carrier'){
+   const thief=frame.units.find(u=>u.id===ourFlag.holder&&u.alive);
+   target=thief?.position||(ourFlag.droppedAt!==null?ourFlag.position:BASES[team])
+  }
   if(order==='escort-carrier'&&enemyFlag.holder&&enemyFlag.holder!==mover.id){
    const carrier=members.find(u=>u.id===enemyFlag.holder);
    if(carrier){mover=members.find(u=>u.id!==carrier.id)||carrier;target=carrier.position}
@@ -129,8 +133,14 @@ function tickFlags(state,frame){
   const order=frame.orders?.[team]?.objective||'take-flag',enemy=f[opposite(team)];
   const carrier=frame.units.find(u=>u.id===enemy.holder);
   const target=carrier?.team===team?BASES[team]:BASES[opposite(team)];
-  if(order!=='defend-base'&&order!=='recover-flag')routeUnit(frame,state,team,target,'flag');
-  else routeUnit(frame,state,team,BASES[team],'defence')
+  if(order==='defend-base')routeUnit(frame,state,team,BASES[team],'defence');
+  else if(order==='recover-flag'||order==='intercept-carrier'){const thief=frame.units.find(u=>u.id===state.flags[team].holder&&u.alive);routeUnit(frame,state,team,thief?.position||(state.flags[team].droppedAt!==null?state.flags[team].position:BASES[team]),'recovery')}
+  else if(['route-left','route-mid','route-right'].includes(order)&&!carrier){
+   const lane=order==='route-left'?26:order==='route-right'?74:50;
+   const scout=frame.units.find(u=>u.team===team&&u.alive&&(u.role==='dps'))||frame.units.find(u=>u.team===team&&u.alive);
+   const waypoint=scout&&Math.abs(scout.position.x-50)>6?{x:50,y:lane}:target;
+   routeUnit(frame,state,team,waypoint,'route')
+  }else routeUnit(frame,state,team,target,'flag')
  }
 }
 function tickHill(state,frame){
@@ -153,7 +163,8 @@ function tickHill(state,frame){
  for(const team of TEAMS){
   const order=frame.orders?.[team]?.objective||'capture-hill';
   if(order==='defend-approach')continue;
-  routeUnit(frame,state,team,point,'hill')
+  const early=order==='rotate-early'&&hill.nextRotation-frame.now<=Math.min(5000,c.hillRotationMs/3);
+  routeUnit(frame,state,team,early?HILLS[(hill.index+1)%HILLS.length]:point,early?'early rotation':'hill')
  }
 }
 function tick(state,frame){
