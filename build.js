@@ -1395,7 +1395,9 @@ if(!readSource('guild.html').includes('pvp-ruleset-v1.js?v=1')||!files.includes(
  for(const hook of ['pvp-objectives-v1.js?v=1','pvp-objectives-v1.css?v=1','pvp-ruleset-v1.js?v=1'])if(!html.includes(hook))throw new Error('PvP objective UI/runtime asset is not loaded: '+hook);
  if(!viewer.includes('function renderPvpFrame(')||!viewer.includes("pvp:'canonical-v1'"))throw new Error('PvP must use canonical combat viewer');
  if(!engine.includes('function tickPvpObjectives(ctx)')||!engine.includes('const pvpCommand=(team,category,value)=>'))throw new Error('PvP objectives or shared Combat Reborn command gate missing');
- if(!pvp.includes('const pvpEnabled=()=>false;')||!pvp.includes("window.CellboundAdmin?.role==='owner'"))throw new Error('Public PvP lock or owner-only QA gate missing');
+ if(!pvp.includes('const pvpEnabled=()=>false;')||!pvp.includes("window.CellboundPvPOwnerQA?.render?.(mount)"))throw new Error('Public PvP lock or isolated owner QA hook missing');
+ const qa=readSource('pvp-owner-qa-v1.js');
+ if(!files.includes('pvp-owner-qa-v1.js')||!html.includes('pvp-owner-qa-v1.js?v=1')||!qa.includes("window.CellboundAdmin?.role!==\'owner\'")||!qa.includes("window.CellboundPvPOwnerQA="))throw new Error('Owner sandbox module is missing or not role gated');
  console.log('Shared PvP objective/owner QA build contracts passed.');
 }
 console.log('Cellbound build complete.');
