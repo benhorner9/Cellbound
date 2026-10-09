@@ -52,7 +52,7 @@ function create(mode,config={}){
 function snapshot(state){
  return clone({
   mode:state.mode,winner:state.winner,score:state.score,
-  storm:state.mode==='arena'?{radius:state.storm.radius,phase:state.storm.phase}:null,
+  storm:state.mode==='arena'?{radius:state.storm.radius,phase:state.storm.phase,centre:{...state.map.storm}}:null,
   flags:state.mode==='capture-the-flag'?state.flags:null,
   hill:state.mode==='king-of-the-hill'?{...state.map.hills[state.hill.index],index:state.hill.index,nextRotationMs:Math.max(0,state.hill.nextRotation-state.lastAt)}:null
  })
