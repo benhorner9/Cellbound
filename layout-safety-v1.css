@@ -4071,3 +4071,48 @@ body.tb-open{
     padding:18px 0 28px!important
   }
 }
+
+
+/*
+ * 2026-10-09 — Illustrated combat artwork native 16:9 viewport.
+ *
+ * The canonical viewer formerly stretched its combat image into an arbitrary
+ * grid row height (and object-fit:cover would then crop the painting).
+ * Size the actual arena from its width and aspect ratio instead, leaving the
+ * command/party UI to occupy their own independently sized panels.
+ * A saved owner layout remains fully adjustable and is not overridden here.
+ */
+.cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel{
+  height:max-content!important;
+  min-height:0!important;
+  max-height:none!important;
+  align-self:start!important;
+  grid-template-rows:auto auto!important;
+  align-content:start!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live) .cbcombat-arena-wrap{
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:16 / 9!important;
+  align-self:start!important;
+  overflow:hidden!important;
+}
+.cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live) .cbcombat-arena-wrap>[data-combat-arena="canonical"]{
+  position:absolute!important;
+  inset:0!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  aspect-ratio:16 / 9!important;
+}
+/* Preserve the full painting on narrow screens instead of the legacy 440px
+   battlefield minimum, which resulted in unused bands around the scene. */
+@media(max-width:849px){
+  .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel{
+    min-height:0!important;
+  }
+}
