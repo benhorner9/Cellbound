@@ -92,3 +92,19 @@ The **owner practice room is only a development tool**, not real PvP. Do not act
 5. Dedicated PvP map art and richer objective/targeting polish, followed by 10v10/20v20 multi-commander scaling.
 
 **The public Crucible is still locked.** Owner practice changes nothing persistent.
+
+
+## Update — Design Booth PvP Map Studio (9 October 2026)
+
+The owner **Design Booth → PvP Maps** tab is wired into staging source:
+- Choose an existing Arena / Capture the Flag / King of the Hill map, or create a new named map for one of those modes.
+- Upload or replace an illustrated overhead background (WebP/PNG/JPEG/AVIF up to 10 MB), using the existing secure Design Booth art bucket.
+- Drag, tap or numerically edit **five blue and five red spawn positions**, CTF flags, CTF lane waypoints, five rotating KOTH hills, Arena Cellstorm centre and rectangular collision/LOS cover.
+- Save **owner-only cloud drafts** separately from published records. Test a draft without changing shared records. Publish to staging only after map validation, or unpublish/restore built-in locations.
+- Built-in map defaults remain fallbacks. Published map geometry is applied to both PvP team spawns in Combat Reborn and the canonical CTF/KOTH/Cellstorm objective rules; uploaded artwork is shown in the canonical CB2D owner practice viewer.
+- Database schema: `public.cellbound_pvp_map_drafts` (owner read/write RLS) and `public.cellbound_pvp_maps` (authenticated read, owner write). The additive migration was executed on the connected Cellbound Supabase project and is idempotent if run again from the repo.
+- Build contracts: `tests/pvp-map-studio.contract.cjs` verifies real engine/objective positions and private draft lifecycle. `tests/design-booth.browser.cjs` exercises the editor in Chromium and WebKit.
+
+**Safety boundary:** This is owner staging practice and design authoring only. PvP public queue remains locked; no ranking, PvP currency, account rewards or online multiplayer settlement is enabled by maps. The server coordinator must load trusted published map data rather than accepting an arbitrary map from a player.
+
+**Next map-editor refinements after owner playtesting:** dedicated PvP paintings, obstacle/hazard visual polish, per-bracket Arena spawn preview and later multi-commander 10v10/20v20 extensions.
