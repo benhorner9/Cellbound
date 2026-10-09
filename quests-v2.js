@@ -244,7 +244,6 @@ const QUEST_COMIC_STORY_ART={
   './assets/comics/main-quests-2026/ghostly-violet-wardens.webp',
   './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
   './assets/comics/main-quests-2026/arcane-passage-revealed.webp',
-  './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
   './assets/comics/main-quests-2026/cartographers-council.webp'
  ],
  'A Different Kind of Pressure':[
