@@ -209,7 +209,7 @@
 .dbo-quick-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .dbo-quick-actions button{min-height:52px;text-align:left;padding:10px 11px;border:1px solid #647b6f;border-radius:9px;background:#223932;color:#f0f8ed;font-weight:750;font-size:12px}
 .dbo-quick-actions button.active,.dbo-quick-actions button:focus-visible{border-color:#dfba79;background:#405044;outline:2px solid transparent}
-.dbo-tabs:not(.dbo-tabs-more){grid-template-columns:repeat(5,minmax(0,1fr))}
+.dbo-tabs:not(.dbo-tabs-more){grid-template-columns:repeat(8,minmax(0,1fr))}
 .dbo-tabs-more{grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #374a4b}
 .dbo-more,.dbo-help{background:#142128;color:#d3ddd8;border-bottom:1px solid #34464b}
 .dbo-more>summary,.dbo-help>summary{cursor:pointer;min-height:46px;padding:13px 21px;font-size:12px;font-weight:800;color:#e4d1b1;touch-action:manipulation}
@@ -265,3 +265,7 @@
  .dbo-library-shell>.dbo-editor-layout>.dbo-projects{width:100%;max-width:none}
 }
 @media(max-width:440px){.dbo-library-actions{grid-template-columns:1fr}.dbo-library-header h3{font-size:23px}}
+
+/* PvP Maps is now a primary booth tool; keep touch targets legible on iPad. */
+@media(max-width:1250px){.dbo-tabs:not(.dbo-tabs-more){grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:720px){.dbo-tabs:not(.dbo-tabs-more){grid-template-columns:repeat(2,minmax(0,1fr))}}
