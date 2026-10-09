@@ -105,8 +105,14 @@ function scanDialogue(src,path,category,name,c){
    const silas='./assets/bosses/no-way-back-silas-vane-v3.jpg',manor='./assets/manor/manor-raid-hero.webp',hounds='./assets/bosses/no-way-back-three-hounds-v3.jpg',master='./assets/manor/manor-master.webp';
    art=/hounds|chase|iron gate/.test(key)?[hounds,manor]:/master|after the fight|understand/.test(key)?[silas,master,manor]:/manor island|homecoming/.test(key)?[manor,silas]:[silas,manor];
   }else{
-   const oldMan='./assets/bosses/fractured-ages-old-man.webp',hero='./assets/dungeons/fractured-ages.webp',highNoon='./assets/fractured-ages/rooms/high-noon.webp',funhouse='./assets/fractured-ages/rooms/funhouse.webp';
-   art=title.toLowerCase().includes('journey through the ages')?[oldMan,highNoon,funhouse]:[oldMan,hero,funhouse];
+   // Resolve the same authored story-art lists as fourfoldStoryArt(), rather
+   // than inventing unrelated boss/dungeon imagery for the editor preview.
+   const start=src.indexOf('const FOURFOLD_STORY_ART='),open=src.indexOf('{',start);
+   const def=start<0?null:bracket(src,open);
+   const artKey=title.toLowerCase().includes('journey through the ages')?'journey':'box';
+   art=def?array(property(def.body,artKey)):[];
+   origin='dedicated comic';
+   note='The live Fourfold comic uses its illustrated story panels.';
   }
  }
  const line=src.slice(0,c.at).split('\n').length;
