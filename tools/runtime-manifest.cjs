@@ -37,7 +37,6 @@ const groups=Object.freeze({
   "admin-room-editor-v1.css",
   "admin-comic-scene-editor-v1.css",
   "admin-design-booth-v1.css",
-  "admin-combat-ui-editor-v1.css",
   "admin-pvp-map-editor-v1.css",
   "beta-ops-v1.css",
   "admin-beta-ops-v1.css",
