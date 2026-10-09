@@ -41,6 +41,11 @@ for(const token of ['ownerSoloQa','startOwnerSoloQa','OWNER SOLO QA · NO CHARGE
  if(!manor.includes(token))fail('Owner solo QA contract missing: '+token);
 }
 if(!manor.includes('if(ownerSoloQa)return;'))fail('Owner QA must not apply real wipe Cell Shock');
+if(!manor.includes("ownerSoloQa&&typeof E.createLiveSession==='function'"))fail('Owner QA must start from live Combat Reborn snapshot, not synchronous raid presimulation');
+if(!manor.includes("E.createLiveSession(request,{zone:'manor-raid'}).snapshot()"))fail('Owner QA must provide initial combat snapshot to shared viewer');
+if(!manor.includes(":E.simulate(request,{zone:'manor-raid'})"))fail('Actual two-commander Manor raids must preserve full combat simulation');
+if(!viewer.includes('run.rebornLiveSession=C.createLiveSession('))fail('Shared CB2D viewer must create the canonical live session');
+
 if(!manor.includes("if(!qa){\n  markManorCleared"))fail('Owner QA victory must not write real Manor progression');
 if(!manor.includes("qa?'QA RESULT':'PERSONAL RAID LOOT'"))fail('Owner QA victory must not expose real loot claim UI');
 
