@@ -611,7 +611,7 @@ function bodyRadius(u){
  if(u.role==='enemy')return 1.15;
  return 1.3
 }
-function unitTeam(u){return u?.role==='enemy'||u?.kind==='boss'?'enemy':'party'}
+function unitTeam(u){if(u?.team==='blue'||u?.team==='red')return u.team;return u?.role==='enemy'||u?.kind==='boss'?'enemy':'party'}
 function physicalPosition(ctx,u){
  if(!u?.position)return{x:50,y:50};
  const start=Number(u.moveStartedAt)||0,end=Number(u.movingUntil)||0;
@@ -1127,6 +1127,7 @@ function passiveResources(ctx){
 
 function deadPlayers(ctx){return ctx.players.filter(p=>!p.alive)}
 function combatPressure(ctx){
+ if(ctx.pvp){const allies=livingPlayers(ctx);return clamp(allies.reduce((n,u)=>n+(1-healthRatio(u)),0)/Math.max(1,allies.length),0,1)}
  const live=livingPlayers(ctx),dead=ctx.players.length-live.length;
  const missing=live.length?live.reduce((n,p)=>n+(1-healthRatio(p)),0)/live.length:1;
  const loose=livingEnemies(ctx).filter(e=>{const t=topThreatTarget(ctx,e);return t&&t.role!=='tank'}).length;
@@ -2067,6 +2068,7 @@ function tickMonkStagger(ctx){
 
 function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(!source?.alive||!target?.alive)return 0;
+ if(ctx.pvp&&source.team===target.team)return 0;
  if(ctx?.encounter?.focusSelectedDamageOnly&&source.role!=='enemy'&&target.role==='enemy'&&!target.focusSelected)return 0;
  let final=Math.max(0,amount);
  if(target.role!=='enemy'){
@@ -2083,7 +2085,7 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
    talentTrigger(ctx,target,'Last Stand',target,{healing:heal,duration:6000})
   }
   if(final>=target.health){
-   const priest=livingPlayers(ctx).find(p=>p.class==='Priest'&&talentRank(p,'Guardian Spirit')>0&&talentReady(ctx,p,'guardian-spirit-talent'));
+   const priest=(ctx.pvp?ctx.pvp[target.team]:livingPlayers(ctx)).find(p=>p.alive&&p.class==='Priest'&&talentRank(p,'Guardian Spirit')>0&&talentReady(ctx,p,'guardian-spirit-talent'));
    if(priest){
     talentSetCooldown(ctx,priest,'guardian-spirit-talent',90000);final=Math.max(0,target.health-1);
     talentTrigger(ctx,priest,'Guardian Spirit',target,{preventedLethal:true});
@@ -2093,7 +2095,7 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
     applyStatus(ctx,target,target,{id:'unbroken',name:'Unbroken',kind:'buff',duration:4000,effect:{incomingDamageReduction:.40}});
     talentTrigger(ctx,target,'Unbroken',target,{preventedLethal:true,duration:4000})
    }else if(target.class==='Priest'&&talentRank(target,'Spirit of Redemption')&&!target.talentFlags.spiritRedemption){
-    target.talentFlags.spiritRedemption=true;const allies=livingPlayers(ctx).filter(p=>p.id!==target.id);
+    target.talentFlags.spiritRedemption=true;const allies=(ctx.pvp?ctx.pvp[target.team]:livingPlayers(ctx)).filter(p=>p.alive&&p.id!==target.id);
     const burst=Math.max(1,Math.round(target.maxHealth*.18));
     allies.forEach(p=>doHeal(ctx,target,p,burst,'Spirit of Redemption'));
     talentTrigger(ctx,target,'Spirit of Redemption',target,{targets:allies.length,healing:burst})
@@ -2112,7 +2114,11 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
  emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.blocked?'blocked':opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,blocked:!!opts.blocked,damageType:opts.damageType||'physical',mistakeToken:recentMistakeToken(ctx,target)}});
  if(source.role!=='enemy'){
   const st=ctx.stats.players[source.id];st.damage+=dealt;st.abilityDamage[ability]=(st.abilityDamage[ability]||0)+dealt;
-  addThreat(ctx,target,source,dealt*threatMultiplier(source,opts.ability||{}),'damage');
+  if(ctx.pvp){
+   const taken=ctx.stats.players[target.id];
+   if(taken){taken.damageTaken+=dealt;if(opts.avoidable)taken.avoidableDamage+=dealt}
+   if(dealt>0){target.recentDamageTaken.push({at:ctx.time,amount:dealt});target.recentDamageTaken=target.recentDamageTaken.filter(x=>x.at>=ctx.time-5000)}
+  }else addThreat(ctx,target,source,dealt*threatMultiplier(source,opts.ability||{}),'damage');
  }else{
   const st=ctx.stats.players[target.id];if(st){st.damageTaken+=dealt;if(opts.avoidable)st.avoidableDamage+=dealt}
   if(dealt>0){
@@ -2161,12 +2167,18 @@ function doHeal(ctx,healer,target,amount,ability,opts={}){
  }
 
  emit(ctx,'HEAL_RECEIVED',{source:healer.id,target:target.id,ability,amount:effective,result:over?'overheal':'heal',position:copy(target.position),payload:{overhealing:over,targetHp:target.health,targetMax:max,targetHpPct:pct(target.health,max),visualSource:opts.visualSource||null,chainBounce:Number(opts.chainBounce)||0}});
- livingEnemies(ctx).forEach(e=>addThreat(ctx,e,healer,effective*.5,'healing'));
+ if(!ctx.pvp)livingEnemies(ctx).forEach(e=>addThreat(ctx,e,healer,effective*.5,'healing'));
  return effective;
 }
 function killUnit(ctx,target,source,ability){
  if(!target.alive)return;
  target.alive=false;target.health=0;target.currentCast=null;
+ if(ctx.pvp){
+  const stats=ctx.stats.players[target.id];if(stats)stats.deaths++;
+  ctx.stats.deaths++;
+  emit(ctx,'PLAYER_DEFEATED',{source:source?.id||null,target:target.id,ability,result:'dead',position:copy(target.position),payload:{pvp:true,team:target.team}});
+  return
+ }
  if(target.role==='enemy'){
   ctx.mechanicBag=[];
   if((target.isAdd||target.classification==='elite')&&ctx.time>=Number(ctx.nextCommandPowerRewardAt||0)){
@@ -2262,6 +2274,7 @@ function maybeApplyCrowdControl(ctx){
 }
 
 function pickDamageTarget(ctx,u){
+ if(ctx.pvp){const rule=window.CellboundPvPRuleset,order=ctx.pvp.orders[u.team]?.target||'balanced';return rule?.selectTarget(order,u,livingEnemies(ctx),(a,b)=>hasLineOfSight(ctx,a,b))||null}
  const commanded=ctx.commandFocusId&&Number(ctx.commandFocusUntil)>ctx.time?getUnit(ctx,ctx.commandFocusId):null;
  if(commanded?.alive)return commanded;
  if(ctx.commandFocusId&&Number(ctx.commandFocusUntil)<=ctx.time){ctx.commandFocusId=null;ctx.commandFocusUntil=0}
@@ -2530,6 +2543,7 @@ function tickCooldowns(ctx){
  ctx.enemies.forEach(e=>Object.keys(e.cooldowns).forEach(k=>e.cooldowns[k]=Math.max(0,e.cooldowns[k]-TICK)));
 }
 function tankNeedsTaunt(ctx,tank){
+ if(ctx.pvp)return null;
  return livingEnemies(ctx).find(e=>{
   const t=topThreatTarget(ctx,e);return t&&t.id!==tank.id;
  });
@@ -3605,10 +3619,20 @@ function buildSummary(ctx,outcome){
  };
 }
 function createCombatContext(options={}){
+ const pvpInput=options.pvp||null,pvpRules=window.CellboundPvPRuleset;
+ if(pvpInput){
+  if(pvpInput.mode!=='arena'||!pvpRules)throw new Error('PvP Arena rules unavailable');
+  const count=Number(pvpInput.size),blue=pvpInput.blue,red=pvpInput.red;
+  if(!pvpRules.FORMATS.arena.includes(count)||!Array.isArray(blue)||!Array.isArray(red)||blue.length!==count||red.length!==count)throw new Error('PvP requires two full Arena squads');
+  if([...blue,...red].some(c=>!c||typeof c.id!=='string'||!c.id||!c.class||!c.spec))throw new Error('Invalid PvP participant');
+  if(new Set([...blue,...red].map(c=>c.id)).size!==count*2)throw new Error('PvP participant IDs must be unique')
+ }
  const encounter=copy(options.encounter||{});
+ if(pvpInput){encounter.kind='arena';encounter.enemies=[];encounter.mechanics=[]}
  encounter.mechanics=normaliseMechanics(encounter);
- const seed=options.seed||[encounter.id||'encounter',Date.now(),(options.party||[]).map(x=>x.id).join('-')].join(':');
- const players=(options.party||[]).map((ch,i)=>normalisePlayer(ch,i,options.professionZone)),enemies=normaliseEnemies(encounter),units={};
+ const roster=pvpInput?[...pvpInput.blue,...pvpInput.red].map((c,i)=>({...c,_combatPosition:{x:i<pvpInput.size?20:80,y:50+((i%pvpInput.size)-(pvpInput.size-1)/2)*10}})):(options.party||[]);
+ const seed=options.seed||[encounter.id||'encounter',Date.now(),roster.map(x=>x.id).join('-')].join(':');
+ const players=roster.map((ch,i)=>normalisePlayer(ch,i,options.professionZone)),enemies=normaliseEnemies(encounter),units={};
  [...players,...enemies].forEach(u=>units[u.id]=u);enemies.forEach(e=>players.forEach(p=>e.threat[p.id]=0));
  const tactics={
   interruptPriority:options.tactics?.interruptPriority||options.tactics?.interrupts||'standard',
@@ -3622,10 +3646,14 @@ function createCombatContext(options={}){
  };
  const environment=copy(encounter.environment||{blockers:[]});
  const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,commandCooldowns:{},commandPower:clamp(Number(options.commandPower??COMMAND_POWER_START),0,COMMAND_POWER_MAX),commandPowerMax:COMMAND_POWER_MAX,nextCommandPowerRegenAt:COMMAND_POWER_REGEN_MS,nextCommandPowerRewardAt:0,finished:false,outcome:null,onEvent:options.onEvent||null};
+ if(pvpInput){
+  players.forEach((u,i)=>{u.team=i<pvpInput.size?'blue':'red'});
+  ctx.pvp={mode:'arena',size:pvpInput.size,blue:players.slice(0,pvpInput.size),red:players.slice(pvpInput.size),winner:null,orders:{blue:{target:'balanced',position:'balanced'},red:{target:'balanced',position:'balanced'}},commandReadyAt:{blue:0,red:0}};
+ }
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  settlePhysicalSpace(ctx,[...players,...enemies]);
- emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,physicalSpace:ctx.physicalSpace,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,combatBehaviour:u.combatBehaviour||null,attackRange:u.attackRange,damageType:u.damageType,bodyRadius:bodyRadius(u)})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel,bodyRadius:bodyRadius(e)}))}});
+ emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,physicalSpace:ctx.physicalSpace,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,combatBehaviour:u.combatBehaviour||null,attackRange:u.attackRange,damageType:u.damageType,bodyRadius:bodyRadius(u),team:u.team||null})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel,bodyRadius:bodyRadius(e)}))}});
  players.forEach(u=>{
   Object.values(u.statuses||{}).forEach(st=>{
    if(Number(st.expiresAt)>0){
@@ -3636,9 +3664,9 @@ function createCombatContext(options={}){
   emitResourceState(ctx,u,'initial');
   if(u.class==='Rogue')emitComboPointState(ctx,u,'initial')
  });
- players.filter(u=>u.class==='Warlock'&&u.spec==='Demonology'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'felguard',name:'Felguard'}));
- players.filter(u=>u.class==='Hunter'&&u.spec==='Beast Mastery'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'hunter-beast',name:'Hunting Beast'}));
- players.filter(u=>u.class==='Death Knight'&&u.spec==='Unholy'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'ghoul',name:'Ghoul'}));
+ players.filter(u=>!ctx.pvp&&u.class==='Warlock'&&u.spec==='Demonology'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'felguard',name:'Felguard'}));
+ players.filter(u=>!ctx.pvp&&u.class==='Hunter'&&u.spec==='Beast Mastery'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'hunter-beast',name:'Hunting Beast'}));
+ players.filter(u=>!ctx.pvp&&u.class==='Death Knight'&&u.spec==='Unholy'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'ghoul',name:'Ghoul'}));
  {
   const boss=enemies.find(e=>e.kind==='boss');
   if(boss){
@@ -3663,6 +3691,13 @@ function createCombatContext(options={}){
  return ctx
 }
 function evaluateCombatOutcome(ctx){
+ if(ctx.pvp){
+  const blue=ctx.pvp.blue.some(u=>u.alive),red=ctx.pvp.red.some(u=>u.alive);
+  if(blue&&red)return null;
+  const winner=blue?'blue':red?'red':'draw';ctx.pvp.winner=winner;
+  emit(ctx,'PVP_MATCH_END',{result:winner,payload:{mode:ctx.pvp.mode,winner}});
+  return winner==='blue'?'victory':winner==='red'?'defeat':'draw'
+ }
  if(ctx.encounter.suppressAutoVictory){
   if(!livingPlayers(ctx).length)return'defeat';
   return null
@@ -3700,6 +3735,19 @@ function tickCommandPower(ctx){
 }
 function advanceCombatTick(ctx){
  if(!ctx||ctx.finished)return ctx?.outcome||null;
+ if(ctx.pvp){
+  processQueue(ctx);
+  const end=evaluateCombatOutcome(ctx);if(end)return end;
+  tickCooldowns(ctx);passiveResources(ctx);tickMonkStagger(ctx);
+  const all=ctx.players,originalEnemies=ctx.enemies;
+  try{
+   for(const side of ['blue','red']){
+    ctx.players=ctx.pvp[side];ctx.enemies=ctx.pvp[side==='blue'?'red':'blue'];
+    ctx.players.forEach(u=>playerAI(ctx,u))
+   }
+  }finally{ctx.players=all;ctx.enemies=originalEnemies}
+  ctx.time+=TICK;return null
+ }
  processQueue(ctx);tickCommandPower(ctx);
  const outcome=evaluateCombatOutcome(ctx);
  if(outcome)return outcome;
@@ -3712,7 +3760,7 @@ function advanceCombatTick(ctx){
 function buildCombatResult(ctx,outcome=ctx?.outcome||'ongoing',includeReplay=true){
  const summary=buildSummary(ctx,outcome);
  return{
-  version:VERSION,seed:ctx.seed,outcome,durationMs:ctx.time,events:copy(ctx.events),summary,
+  version:VERSION,seed:ctx.seed,outcome,durationMs:ctx.time,events:copy(ctx.events),summary,...(ctx.pvp?{pvp:{mode:ctx.pvp.mode,size:ctx.pvp.size,winner:ctx.pvp.winner,orders:copy(ctx.pvp.orders)}}:{}),
   finalState:{players:copy(ctx.players),enemies:copy(ctx.enemies)},
   continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,mechanicBag:copy(ctx.mechanicBag||[]),lastMechanicKey:ctx.lastMechanicKey||null,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
   replay:includeReplay?{version:VERSION,seed:ctx.seed,encounter:copy(ctx.encounter),events:copy(ctx.events),summary:copy(summary)}:null
@@ -3742,7 +3790,7 @@ function createLiveSession(options={}){
    accumulator-=TICK;steps++;
    outcome=advanceCombatTick(ctx);
    if(outcome)break;
-   if(ctx.time>maxDuration){emit(ctx,'ENRAGE',{result:'timeout'});outcome='defeat';break}
+   if(ctx.time>maxDuration){if(ctx.pvp){ctx.pvp.winner='draw';emit(ctx,'PVP_MATCH_END',{result:'draw',payload:{mode:'arena',winner:'draw',reason:'time-limit'}});outcome='draw'}else{emit(ctx,'ENRAGE',{result:'timeout'});outcome='defeat'}break}
   }
   let result=null;
   if(outcome)result=finishCombatContext(ctx,outcome);
@@ -3755,11 +3803,38 @@ function createLiveSession(options={}){
   return{type:key,available:sharedRemainingMs<=0&&commandRemainingMs<=0&&affordable&&contextReady,contextReady,affordable,cost,power,powerMax:ctx.commandPowerMax||COMMAND_POWER_MAX,remainingMs:Math.max(sharedRemainingMs,commandRemainingMs),sharedRemainingMs,commandRemainingMs,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs}
  };
  const command=(type,payload={})=>{
+  if(ctx.pvp)return{ok:false,reason:'use-pvp-command',events:[]};
   if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[],state:commandState(type)};
   const before=ctx.events.length;
   applyPartyCommand(ctx,{id:payload.id||('live-'+ctx.time+'-'+type),type,targetId:payload.targetId||null,durationMs:payload.durationMs||0});
   const emitted=ctx.events.slice(before).map(copy),commandEvent=emitted.find(e=>e.type==='PARTY_COMMAND');
   return{ok:!!commandEvent&&!['cooldown','unknown','no-cast','no-target','no-power'].includes(commandEvent.result),reason:commandEvent?.result||'unknown',event:commandEvent||null,events:emitted,timeMs:ctx.time,state:commandState(type),power:powerState()}
+ };
+ const pvpCommand=(team,category,value)=>{
+  if(!ctx.pvp)return{ok:false,reason:'not-pvp'};
+  if(ctx.finished||stopped)return{ok:false,reason:'finished'};
+  if(team!=='blue'&&team!=='red')return{ok:false,reason:'invalid-team'};
+  const checked=window.CellboundPvPRuleset?.validateCommand(ctx.pvp.mode,{category,value});
+  if(!checked?.ok)return{ok:false,reason:checked?.reason||'invalid-command'};
+  if(ctx.time<ctx.pvp.commandReadyAt[team])return{ok:false,reason:'cooldown',remainingMs:ctx.pvp.commandReadyAt[team]-ctx.time};
+  const order=ctx.pvp.orders[team];order[category]=value;
+  const troops=ctx.pvp[team].filter(u=>u.alive),n=Math.max(1,troops.length),front=team==='blue'?1:-1,homeX=team==='blue'?20:80;
+  const centre={x:troops.reduce((a,u)=>a+u.position.x,0)/n||homeX,y:troops.reduce((a,u)=>a+u.position.y,0)/n||50};
+  if(category==='position'&&value!=='balanced'&&value!=='hold-position'){
+   troops.forEach((u,i)=>{
+    const angle=i*Math.PI*2/n;let point={x:centre.x,y:centre.y};
+    if(value==='spread')point={x:centre.x+Math.cos(angle)*13,y:centre.y+Math.sin(angle)*13};
+    if(value==='group-up'||value==='regroup')point={x:centre.x+Math.cos(angle)*2.6,y:centre.y+Math.sin(angle)*2.6};
+    if(value==='fall-back')point={x:homeX+Math.cos(angle)*3.5,y:50+Math.sin(angle)*6};
+    if(value==='push-forward')point={x:50+front*13+Math.cos(angle)*3.5,y:50+Math.sin(angle)*7};
+    moveTo(ctx,u,openPosition(ctx,point,1.5),450,'pvp '+value)
+   })
+  }
+  if(category==='objective'&&value==='pressure-healer')order.target='attack-healer';
+  if(category==='objective'&&value==='peel-healer')order.target='protect-healer';
+  ctx.pvp.commandReadyAt[team]=ctx.time+1500;
+  const event=emit(ctx,'PVP_COMMAND',{source:'commander-'+team,result:'accepted',payload:{team,category,value,label:checked.label,orders:copy(order)}});
+  return{ok:true,team,category,value,timeMs:ctx.time,event:copy(event)}
  };
  const heal=(targetId,amount,opts={})=>{
   if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
@@ -3822,6 +3897,9 @@ function createLiveSession(options={}){
  };
  const snapshot=()=>buildCombatResult(ctx,ctx.finished?(ctx.outcome||'defeat'):'ongoing',false);
  const stop=(outcome='defeat')=>{stopped=true;return ctx.finished?buildCombatResult(ctx,ctx.outcome):finishCombatContext(ctx,outcome)};
+ if(ctx.pvp)return{version:VERSION,seed:ctx.seed,advance,pvpCommand,drainEvents,snapshot,stop,
+  get timeMs(){return ctx.time},get finished(){return ctx.finished},get outcome(){return ctx.outcome},
+  debug:()=>({timeMs:ctx.time,players:copy(ctx.players),orders:copy(ctx.pvp.orders)})};
  return{
   version:VERSION,seed:ctx.seed,advance,command,commandState,commandPowerState:powerState,heal,focus,reviveEnemy,spawnEnemy,addMechanics,setMechanicInterval,signal,drainEvents,snapshot,stop,
   get timeMs(){return ctx.time},get finished(){return ctx.finished},get outcome(){return ctx.outcome},
