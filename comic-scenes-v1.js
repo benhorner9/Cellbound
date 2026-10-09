@@ -27,7 +27,7 @@ function scenePartyMarkup(){
 }
 function panelMarkup(panel,index,suppressCaption=false){
   const p=panel||{},kind=String(p.kind||'location').replace(/[^a-z0-9_-]/gi,'');
-  const art=p.artwork?'<img src="'+esc(p.artwork)+'" alt="">':'';
+  const art=p.artwork?'<img src="'+esc(p.artwork)+'" alt="'+esc(p.artAlt||p.title||'Illustrated story scene')+'" decoding="async" loading="eager">':'';
   const speaker=p.speaker?'<div class="cbcomic-panel-speaker">'+esc(p.speaker)+'</div>':'';
   const caption=!suppressCaption&&(p.eyebrow||p.title||p.text)?'<div class="cbcomic-panel-caption">'+(p.eyebrow?'<small>'+esc(p.eyebrow)+'</small>':'')+(p.title?'<b>'+esc(p.title)+'</b>':'')+(p.text?'<span>'+esc(p.text)+'</span>':'')+'</div>':'';
   const sigil=p.icon?'<i class="cbcomic-panel-icon">'+esc(p.icon)+'</i>':'';
@@ -79,6 +79,14 @@ function show(config={}){
       dialogue+
     '</section>';
 
+    // A missing illustration must not show the browser's broken-image glyph.
+    // Keep the panel visible so the story remains navigable while art is reviewed.
+    root.querySelectorAll('.cbcomic-panel img').forEach(img=>{
+      img.addEventListener('error',()=>{
+        img.closest('.cbcomic-panel')?.classList.add('art-unavailable');
+        img.remove();
+      },{once:true});
+    });
     const continueBtn=root.querySelector('[data-comic-continue]');
     const choicesWrap=root.querySelector('#cbcomicChoices');
     const updateProgressiveControls=()=>{
@@ -104,6 +112,8 @@ function show(config={}){
         const node=document.createElement('div');
         node.innerHTML=revealMarkup(r);
         const box=node.firstElementChild;
+        // Replace a previous line on this frame instead of piling up dialogue.
+        panel.querySelectorAll('.cbcomic-reveal-caption').forEach(previous=>previous.remove());
         if(box)panel.appendChild(box);
       }
       updateProgressiveControls();
@@ -125,11 +135,11 @@ function show(config={}){
       if(reply){reply.hidden=false;reply.innerHTML='<small>'+esc(choice.replySpeaker||config.speaker||'')+'</small><p>'+esc(choice.reply||config.defaultReply||'')+'</p>'}
       if(continueBtn){continueBtn.disabled=false;continueBtn.focus()}
     }));
-    updateProgressiveControls();
+    if(progressive)revealNext();else updateProgressiveControls();
   });
 }
 function close(){
   activeToken++;const root=ensureRoot();root.hidden=true;root.innerHTML='';document.body.classList.remove('cbcomic-open');
 }
-window.CellboundComicScenes={show,close,version:'1.2.1'};
+window.CellboundComicScenes={show,close,version:'1.3.0'};
 })();

@@ -32,7 +32,7 @@ const SLOTS=[
 ];
 const ROLE_LABEL={tank:'Tank',healer:'Healer',dps:'Damage'};
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
-let draft=[],activeSlot=0,builderStep='race',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
+let draft=[],activeSlot=0,builderStep='race',tutorialComicBusy=false;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
@@ -121,14 +121,14 @@ function chrome(body,stage){
     'zeltira-arrival':['WRONG NIGHT TO ARRIVE','Meet Warden Elara at Zeltira’s gate.'],
     'first-expedition':['READ THE RESONANCE','Inspect the west wall and make a field deduction.'],
     'gear':['MAKE THE LOADOUT CALL','Choose gear for the job, not just the number.'],
-    'dungeon-briefing':['YOUR FIRST DESCENT','Set three commands, then watch them play out in live combat.'],
-    'dungeon-running':['COMMAND THE HOLLOWS','Choose the approach. Combat Reborn handles the fight.'],
+    'dungeon-briefing':['YOUR FIRST DESCENT','Give one order for each room; learn from the shared combat replay.'],
+    'dungeon-running':['LEAD THE FIVE','Choose an order, watch the fight and read your results.'],
     'loot-review':['DECIDE WHAT THE DROP MEANS','Read, compare and assign the reward.'],
     'recovery-lesson':['FAILURE HAS A COST','Learn how Cell Shock changes the next decision.'],
     'profession-choice':['TURN LOOT INTO PREPARATION','Give one adventurer a profession.'],
     'craft':['MAKE SOMETHING USEFUL','Spend recovered reagents on your first craft.'],
     'profession-use':['PREPARE THE NEXT RUN','Use the thing you just made.'],
-    'quest-lesson':['THE TRAINING WARD COMES OFF','Accept your first real contract.'],
+    'quest-lesson':['THE TRAINING WARD COMES OFF','Read your first contract and leave training behind.'],
     'departure':['CHAPTER 0 COMPLETE','Leave Zeltira with a guild that is actually yours.']
   };
   const at=order[stage]??0,obj=objectives[stage]||['FIRST EXPEDITION','Follow the trail beneath Zeltira.'];
@@ -240,6 +240,93 @@ async function createParty(){
 function partySummary(){
   return state().roster.map(c=>'<div class="z-party-member">'+portraitHTML(c,'sm')+'<span><b>'+esc(c.name)+'</b><small>'+raceById(c.race).icon+' '+esc(c.race)+' · '+esc(c.class)+' '+esc(c.spec)+'</small></span></div>').join('');
 }
+const TUTORIAL_COMIC_ART={
+  arrival:['wardens_at_the_twilight_city_gate.webp','dawn_briefing_on_the_ash_road.webp','moonlit_ruins_and_the_glowing_wardstone.webp'],
+  'west-wall':['moonlit_ruins_and_the_glowing_wardstone.webp','warden_s_descent_into_the_ruins.webp','arcane_overload_a_warden_s_lesson.webp'],
+  gear:['the_quartermaster_s_choice.webp','the_warden_and_the_arcane_diadem.webp','arcane_forge_beneath_the_twilight_citadel.webp'],
+  hollows:['warden_s_descent_into_the_ruins.webp','moonlit_ruins_and_the_glowing_wardstone.webp','arcane_overload_a_warden_s_lesson.webp'],
+  loot:['the_warden_and_the_arcane_diadem.webp','the_quartermaster_s_choice.webp','arcane_forge_beneath_the_twilight_citadel.webp'],
+  shock:['arcane_overload_a_warden_s_lesson.webp','moonlit_ruins_and_the_glowing_wardstone.webp','the_warden_and_the_arcane_diadem.webp'],
+  craft:['arcane_forge_beneath_the_twilight_citadel.webp','the_quartermaster_s_choice.webp','the_warden_and_the_arcane_diadem.webp'],
+  contract:['dawn_briefing_on_the_ash_road.webp','wardens_at_the_twilight_city_gate.webp','dawn_departure_from_zeltira_citadel.webp'],
+  departure:['dawn_departure_from_zeltira_citadel.webp','dawn_briefing_on_the_ash_road.webp','wardens_at_the_twilight_city_gate.webp']
+};
+// Three readable story beats per scene. Art paths are assigned separately so
+// writers and illustrators can revise one frame without altering progression.
+const TUTORIAL_STORY_COPY={
+ arrival:{
+  line:'Five on a new charter? Then your timing is terrible. Come and see what woke up.',
+  frames:[
+   ['No quiet night in Zeltira','The outer gate stays open as wardens hurry people away from the western streets.'],
+   ['Elara has a job for you','The Cell Well flashed twice. No one has been able to explain the second pulse.'],
+   ['Something answered','A stone buried beneath the west wall glows for the first time in generations.']
+  ]
+ },
+ 'west-wall':{
+  line:'Look carefully. I need a reason to send people below my city, not a rumour.',
+  frames:[
+   ['The street is empty','A drained patrol lantern lies beside the old wall. Its oil has not burned.'],
+   ['Roots flee the crack','Pale roots have pushed through fresh stone, bending away from whatever lies below.'],
+   ['The ward points down','A carved line flickers toward the sealed steps into the Zeltiran Hollows.']
+  ]
+ },
+ gear:{
+  line:'Same Item Level. Different rolls. Which one keeps your front line standing?',
+  frames:[
+   ['The Quartermaster’s counter','Two weapons are waiting, close enough in quality to fool a hurried buyer.'],
+   ['Power is not the whole story','The bonus stats tell a different story. Read them before choosing.'],
+   ['Five people. Five jobs.','The right item depends on who carries it, not just the number engraved on it.']
+  ]
+ },
+ hollows:{
+  line:'You lead. They fight. Watch what your orders do when the room fights back.',
+  frames:[
+   ['The descent opens','Elara holds the Pathfinder ward as your five head into the root-covered stone.'],
+   ['First comes control','The Rootlings will test your opening order. Your Tank needs room to take threat.'],
+   ['Then comes judgement','The Gallery will test interrupts. The Warden below will test movement and survival.']
+  ]
+ },
+ loot:{
+  line:'Bring the relic home. Then decide who should actually wear it.',
+  frames:[
+   ['The Warden falls silent','A relic lies tangled in the roots, still carrying a trace of Cell light.'],
+   ['Look past the name','Two copies of the same item may carry different stats. Read the roll.'],
+   ['The Bank belongs to the guild','Nothing has equipped itself. Choose the adventurer who gains most from the drop.']
+  ]
+ },
+ shock:{
+  line:'The training ward caught this defeat. Outside these walls, recovery costs time.',
+  frames:[
+   ['The ward pulls the five clear','A failed run ends before permanent harm, but not every consequence disappears.'],
+   ['The Cell mark bears the strain','Each wipe adds shock. At one hundred per cent, that adventurer must recover.'],
+   ['A guild learns to regroup','Wait out the recovery, prepare better, or rotate an available character into the party.']
+  ]
+ },
+ craft:{
+  line:'See these scraps? They are the start of your next advantage.',
+  frames:[
+   ['Nothing from the Hollows is wasted','Recovered Cell fragments and iron reach the Craft Row workbench.'],
+   ['Every adventurer learns one trade','The Craftmaster shows how profession recipes turn materials into useful preparations.'],
+   ['Make something worth carrying','An enhancement, flask or potion can change the next fight, but it will not last forever.']
+  ]
+ },
+ contract:{
+  line:'Three carts gone missing. Same road. Same night. The ash is what worries me.',
+  frames:[
+   ['An east-gate report at dawn','Elara unrolls three missing-cart reports before the city is fully awake.'],
+   ['Ash where it should not be','Furnace dust lies in the ruts. The nearest forge has been cold for eighteen years.'],
+   ['A real contract','Follow the road, find the missing cargo and discover why the old forge has stirred.']
+  ]
+ },
+ departure:{
+  line:'The ward stays here. The charter and the choices are yours now.',
+  frames:[
+   ['The eastern gates open','Morning light falls over a city that has already given your new guild a story.'],
+   ['The five fall into formation','Each adventurer has a job, equipment and a reason to trust the others.'],
+   ['Beyond the training road','The trail leads toward missing carts, a sealed forge and whatever waits past it.']
+  ]
+ }
+};
 function tutorialComicConfig(id){
   const roster=state()?.roster||[],lead=roster[0],leadName=lead?.name||'your charter';
   const scenes={
@@ -379,7 +466,16 @@ function tutorialComicConfig(id){
       ]
     }
   };
-  return scenes[id]||null
+  const scene=scenes[id];if(!scene)return null;
+  const art=TUTORIAL_COMIC_ART[id]||[],script=TUTORIAL_STORY_COPY[id];
+  if(script?.line)scene.line=script.line;
+  scene.panels=scene.panels.map((panel,i)=>({
+    ...panel,artwork:'./assets/comics/tutorial/'+(art[i]||art[0]),
+    title:script?.frames?.[i]?.[0]||panel.title,
+    text:script?.frames?.[i]?.[1]||panel.text
+  }));
+  scene.storyOnly=true;scene.progressive=true;scene.nextLabel='NEXT PANEL →';scene.continueLabel='CONTINUE →';
+  return scene;
 }
 function comicSeen(id){
   const s=state();return Boolean(s?.onboarding?.comicSeen?.[id])
@@ -400,7 +496,7 @@ function maybeTutorialComic(id){
 }
 async function previewTutorialComics(){
   const C=window.CellboundComicScenes;if(!C?.show)return false;
-  const ids=['arrival','west-wall','gear','hollows','loot','contract','departure'];
+  const ids=['arrival','west-wall','gear','hollows','loot','shock','craft','contract','departure'];
   for(const id of ids){const cfg=tutorialComicConfig(id);if(cfg)await C.show({...cfg,eyebrow:'DEV PREVIEW · '+cfg.eyebrow})}
   return true
 }
@@ -449,7 +545,7 @@ function renderFirstExpedition(){
   const cards=clues.map(x=>'<button class="resonance-clue '+(seen.has(x.id)?'seen':'')+'" data-resonance-clue="'+x.id+'"><i>'+x.icon+'</i><span><small>'+(seen.has(x.id)?'INSPECTED':'UNKNOWN')+'</small><b>'+x.title+'</b><p>'+(seen.has(x.id)?x.text:'Inspect this part of the scene.')+'</p></span></button>').join('');
   const ready=seen.size===clues.length;
   const deduction=ready?'<section class="resonance-deduction"><small>FIELD DEDUCTION</small><h3>What connects the three signs?</h3><button data-resonance-answer="wrong">The west wall is simply failing from age.</button><button data-resonance-answer="correct">Something below Zeltira is drawing Cell energy and the wardstone is pointing toward the Hollows.</button><button data-resonance-answer="wrong">The patrol deliberately disabled the wardstone.</button><p id="resonanceHint">Elara asked for evidence, not a guess.</p></section>':'<section class="resonance-deduction locked"><small>FIELD DEDUCTION</small><h3>Inspect all three signs first.</h3><p>Nothing here is dramatic on its own. The pattern matters.</p></section>';
-  const body='<div class="first-expedition-layout"><main><div class="resonance-scene"><div class="resonance-scene-head"><small>WEST WALL · AFTER SUNSET</small><h2>The First Resonance</h2><p>The street has been cleared. The Cell Well is quiet now, but the old stone beneath your feet is not.</p></div><div class="resonance-clue-grid">'+cards+'</div>'+deduction+'</div></main><aside class="z-guide"><small>WARDEN ELARA VEY</small><h2>Read the scene before you move.</h2><p class="guide-quote">“Do not tell me what you think is down there. Tell me what the stone is doing.”</p><div class="resonance-progress"><span>Evidence found</span><b>'+seen.size+' / '+clues.length+'</b><div><i style="width:'+(seen.size/clues.length*100)+'%"></i></div></div><p>Cellbound is a management game, but your decisions come from what the world shows you. This is the first one.</p></aside></div>';
+  const body='<div class="first-expedition-layout"><main><div class="resonance-scene"><div class="resonance-scene-head"><small>WEST WALL · AFTER SUNSET</small><h2>The First Resonance</h2><p>The street has been cleared. The Cell Well is quiet now, but the old stone beneath your feet is not.</p></div><div class="resonance-clue-grid">'+cards+'</div>'+deduction+'</div></main><aside class="z-guide"><small>WARDEN ELARA VEY</small><h2>Read the scene before you move.</h2><p class="guide-quote">“Do not tell me what you think is down there. Tell me what the stone is doing.”</p><div class="resonance-progress"><span>Evidence found</span><b>'+seen.size+' / '+clues.length+'</b><div><i style="width:'+(seen.size/clues.length*100)+'%"></i></div></div><p>Read the clues first. Your decisions guide the party in combat and on the road.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'first-expedition');
   $$('[data-resonance-clue]').forEach(b=>b.onclick=()=>{
     const set=new Set(Array.isArray(s.onboarding.firstExpeditionClues)?s.onboarding.firstExpeditionClues:[]);
@@ -497,9 +593,9 @@ function renderDungeonBriefing(){
   if(maybeTutorialComic('hollows'))return;
   const roster=state().roster||[],tank=roster.find(c=>tdRole(c)==='tank'),healer=roster.find(c=>tdRole(c)==='healer');
   const body='<div class="tutorial-descent-brief">'+
-    '<main class="tutorial-descent-hero"><div class="tutorial-descent-art"><img src="./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp" alt=""><div></div><span>THE ZELTIRAN HOLLOWS</span><h2>The wardstone is pointing down.</h2><p>Your first descent is a real fight. Choose the party’s focus, read the mechanics and carry the result forward.</p></div>'+
+    '<main class="tutorial-descent-hero"><div class="tutorial-descent-art"><img src="./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp" alt=""><div></div><span>THE ZELTIRAN HOLLOWS</span><h2>The wardstone is pointing down.</h2><p>This is your first real fight in Cellbound. Set one team order per room, then watch the same combat view used by dungeons and quests.</p></div>'+
     '<div class="tutorial-route-v4"><article><i>01</i><span><small>THREAT</small><b>Rootling Nest</b><p>Call the opening pull and watch who owns the enemies.</p></span></article><article><i>02</i><span><small>INTERRUPTS</small><b>Collapsed Gallery</b><p>A dangerous cast forces you to decide what deserves attention.</p></span></article><article><i>03</i><span><small>MOVEMENT</small><b>Hollow Warden</b><p>Read real telegraphs while the party fights the boss.</p></span></article></div></main>'+
-    '<aside class="tutorial-command-brief"><small>WARDEN ELARA · FIELD BRIEF</small><h2>You give the order. Then you watch what it costs.</h2><p class="guide-quote">“A guild master does not swing five weapons. You make the call that decides where those weapons are when it matters.”</p>'+
+    '<aside class="tutorial-command-brief"><small>WARDEN ELARA · FIELD BRIEF</small><h2>You lead the party. The fight shows what your order changed.</h2><p class="guide-quote">“A guild master does not swing five weapons. You make the call that decides where those weapons are when it matters.”</p>'+
     '<div class="tutorial-party-check"><div><span>TANK</span><b>'+esc(tank?.name||'Your Tank')+'</b></div><div><span>HEALER</span><b>'+esc(healer?.name||'Your Healer')+'</b></div><div><span>DAMAGE</span><b>'+Math.max(0,roster.filter(c=>tdRole(c)==='dps').length)+' ready</b></div></div>'+
     '<div class="tutorial-live-contract"><strong>LIVE COMBAT</strong><span>Real positions · threat · class resources · casts · interrupts · healing · telegraphs · damage meters</span></div>'+
     '<button id="enterTutorialDungeon" class="on-primary">OPEN THE DESCENT →</button></aside></div>';
@@ -507,59 +603,6 @@ function renderDungeonBriefing(){
   $('#enterTutorialDungeon')?.addEventListener('click',async()=>{await setStage('dungeon-running',{tutorialEncounterIndex:0,tutorialCombatReports:{},tutorialCommandChoices:{}});});
 }
 function tdRole(c){return Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'}
-function tdProfile(c){
-  const r=tdRole(c);
-  if(r==='tank')return'tank';
-  if(r==='healer')return'healer';
-  if(['Rogue','Warrior','Paladin','Death Knight','Demon Hunter'].includes(c.class))return'melee';
-  return'ranged';
-}
-const ZELTIRA_ROOMS=[
-  {
-    id:'rootling-nest',room:'rootling-nest',label:'Rootling Nest',
-    ambience:'Wet roots twist through a shallow cave floor.',
-    props:[
-      ['root',8,24,-8,1.05],['root',10,76,7,.95],['mushroom',18,19,0,.9],['mushroom',20,82,0,.75],
-      ['fallen-log',83,20,-12,.9],['stone',86,78,8,.8],['nest',73,50,0,1]
-    ]
-  },
-  {
-    id:'collapsed-gallery',room:'collapsed-gallery',label:'Collapsed Gallery',
-    ambience:'Old Zeltiran stonework has been swallowed by the hollow.',
-    props:[
-      ['ruin-pillar',9,20,-7,.9],['ruin-pillar',10,80,8,.82],['root',18,13,16,.85],['root',20,88,-14,.8],
-      ['broken-wall',86,50,0,1],['mushroom',76,18,0,.7],['mushroom',78,82,0,.8],['puddle',60,78,0,.9]
-    ]
-  },
-  {
-    id:'hollow-warden',room:'warden-chamber',label:'Warden Chamber',
-    ambience:'A root-bound shrine waits beneath the oldest stone.',
-    props:[
-      ['shrine-ring',66,50,0,1.1],['shrine-stone',87,50,0,1],['root',10,22,-12,1],['root',10,78,12,1],
-      ['glow-fungus',80,18,0,.8],['glow-fungus',80,82,0,.8],['standing-stone',16,16,-8,.8],['standing-stone',16,84,8,.8]
-    ]
-  }
-];
-function tutorialClassKey(c){return 'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
-function unitMarkup(c,i){
-  const r=tdRole(c),profile=tdProfile(c);
-  const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
-  let pos=[20,50];
-  if(profile==='tank')pos=[34,50];
-  else if(profile==='melee')pos=[27,42+melee.indexOf(c)*16];
-  else if(profile==='ranged')pos=[21,30+ranged.indexOf(c)*40];
-  else pos=[15,64];
-  const resource=tdInitialResource(c),resourcePct=Math.max(0,Math.min(100,resource.value/resource.max*100));
-  return '<div class="cb2d-unit td-unit party '+r+' profile-'+profile+' '+tutorialClassKey(c)+'" data-unit="p-'+esc(c.id)+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'<small class="cb2d-unit-meta td-unit-meta">Lv. '+Math.max(1,Number(c.level)||1)+'</small></span><em class="cb2d-unit-hp"><b style="width:100%"></b></em><small class="cbr-resource '+tdResourceClass(resource.name)+'" data-resource="'+esc(resource.name)+'" title="'+esc(resource.name)+'"><i style="width:'+resourcePct+'%"></i></small></div>';
-}
-function tdInitialResource(c){
-  const d=window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100};
-  return{name:d.name||'Power',max:Math.max(1,Number(d.max)||100),value:Number(d.start??d.max??100)}
-}
-function tdResourceClass(name){return'resource-'+String(name||'power').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
-function tdSideRows(){
-  return state().roster.map(c=>{const r=tdInitialResource(c),pct=Math.max(0,Math.min(100,r.value/r.max*100));return'<div class="cb2d-party-row td-party-row"><i class="cb2d-dot '+tutorialClassKey(c)+'"></i><span class="td-side-copy" data-td-side="'+c.id+'"><b>'+esc(c.name)+'</b><small>'+tdRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-td-side-hp="'+c.id+'" style="width:100%"></i></em><em class="td-side-resource '+tdResourceClass(r.name)+'" data-td-side-resource="'+c.id+'" title="'+esc(r.name)+'"><i style="width:'+pct+'%"></i></em></span><strong data-td-side-text="'+c.id+'">100 HP</strong></div>'}).join('')
-}
 function tutorialRebornEncounters(){
   return[
     {
@@ -750,10 +793,10 @@ function renderDungeonRunning(){
       ['HEALING',Math.round(report.healing).toLocaleString()]
     ];
     const lesson=report.outcome!=='victory'
-      ?'The ward saved the roster. Change the command and watch how the same room behaves differently.'
+      ?'The ward brought everyone out safely. Choose a different order and try again — no equipment is lost during training.'
       :report.commandHit
-        ?'That was the read Elara was looking for. The result should make the lesson visible rather than merely telling you the answer.'
-        :'You cleared it, but not with the safest call. That is useful too: a messy plan can work here, but harder fights will punish it.';
+        ?'Good call. Compare the fight with the meters to see how your team kept control.'
+        :'You won, but the safer order would have reduced the risk. Keep that in mind in tougher encounters.';
     content='<section class="tutorial-after-action '+grade.tone+'"><div class="tutorial-report-head"><div><small>AFTER ACTION</small><h2>'+esc(grade.title)+'</h2><p>'+esc(grade.copy)+'</p></div><strong class="'+(report.commandHit?'hit':'miss')+'">'+(report.commandHit?'★ COMMAND READ':'◇ RISKY CALL')+'</strong></div>'+
       '<div class="tutorial-report-command"><span>YOUR ORDER</span><b>'+esc(order?.title||'Unknown order')+'</b><p>'+esc(lesson)+'</p></div>'+
       '<div class="tutorial-report-metrics">'+metrics.map(x=>'<article><span>'+x[0]+'</span><b>'+x[1]+'</b></article>').join('')+'</div>'+
@@ -766,7 +809,7 @@ function renderDungeonRunning(){
     content='<section class="tutorial-command-board"><div class="tutorial-command-head"><div><small>ROOM '+(index+1)+' OF '+encounters.length+' · '+esc(encounter.lesson)+'</small><h2>'+esc(encounter.name)+'</h2><p>'+esc(encounter.brief)+'</p></div><div class="tutorial-command-score"><span>ROOMS CLEARED</span><b>'+cleared+' / '+encounters.length+'</b><em>'+stars+' ★ command reads</em></div></div>'+
       '<div class="tutorial-command-watch"><i>◎</i><span><small>WATCH THIS IN THE LIVE VIEWER</small><b>'+esc(encounter.watch)+'</b></span></div>'+
       '<div class="tutorial-command-grid">'+encounter.orders.map(o=>'<button class="'+(selected?.id===o.id?'active':'')+'" data-tutorial-command="'+esc(o.id)+'"><i>'+o.icon+'</i><span><b>'+esc(o.title)+'</b><small>'+esc(o.copy)+'</small></span><em>'+(selected?.id===o.id?'ORDER SET':'SET ORDER')+'</em></button>').join('')+'</div>'+
-      '<div class="tutorial-command-footer"><div><span>ENGINE</span><b>COMBAT REBORN · SHARED DUNGEON VIEWER</b><small>Nothing is staged after you press Enter. The result is simulated first and the real event stream is played back.</small></div><button id="launchTutorialReborn" class="on-primary" '+(selected?'':'disabled')+'>ENTER LIVE COMBAT →</button></div><p id="tutorialCombatHint">'+(selected?'Order locked. Enter when ready.':'Choose an order before entering the room.')+'</p></section>';
+      '<div class="tutorial-command-footer"><div><span>ENGINE</span><b>COMBAT REBORN · SHARED DUNGEON VIEWER</b><small>The shared combat engine resolves your order. Watch positioning, casts, health and movement in the same viewer used for other adventures.</small></div><button id="launchTutorialReborn" class="on-primary" '+(selected?'':'disabled')+'>ENTER LIVE COMBAT →</button></div><p id="tutorialCombatHint">'+(selected?'Order locked. Enter when ready.':'Choose an order before entering the room.')+'</p></section>';
   }
   const body='<div class="tutorial-reborn-hub">'+route+'<div class="tutorial-reborn-stage">'+content+'</div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
@@ -782,270 +825,6 @@ function renderDungeonRunning(){
     s.onboarding.tutorialEncounterIndex=index+1;Game.save();await Game.persistState?.();renderDungeonRunning()
   });
 }
-function tdLesson(title,text,options,correct,success){
-  return new Promise(resolve=>{
-    const root=$('#tdLesson');if(!root){resolve();return}
-    root.hidden=false;
-    const draw=(note='')=>{
-      root.innerHTML='<section><small>COMMAND DECISION</small><h3>'+esc(title)+'</h3><p>'+esc(text)+'</p><div>'+options.map((o,i)=>'<button data-td-answer="'+i+'">'+esc(o)+'</button>').join('')+'</div><em class="'+(note?'show':'')+'">'+esc(note||'Choose the response you would give your party.')+'</em></section>';
-      root.querySelectorAll('[data-td-answer]').forEach(b=>b.onclick=()=>{
-        const i=Number(b.dataset.tdAnswer);
-        if(i!==correct){draw('Not quite. Think about each role’s job in this moment.');return}
-        root.innerHTML='<section class="correct"><small>GOOD CALL</small><h3>'+esc(title)+'</h3><p>'+esc(success)+'</p></section>';
-        setTimeout(()=>{root.hidden=true;resolve()},700);
-      });
-    };
-    draw();
-  });
-}
-function tdPoint(selector){
-  const arena=$('#tdArena'),el=$(selector);if(!arena||!el)return null;
-  const a=arena.getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left-a.left+r.width/2,y:r.top-a.top+r.height/2};
-}
-function tdFloat(selector,text,kind){
-  const arena=$('#tdArena'),p=tdPoint(selector);if(!arena||!p)return;
-  const e=document.createElement('span');e.className='td-number '+(kind||'damage');e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),750);
-}
-function tdFeed(text){
-  const e=$('#tdFeed');if(e)e.innerHTML=esc(text)+'<br>'+e.innerHTML.split('<br>').slice(0,3).join('<br>');
-}
-function tdAction(role,text){
-  const id=role==='tank'?'tdTankAction':role==='healer'?'tdHealAction':'tdDpsAction';const e=$('#'+id);if(e)e.textContent=text;
-}
-function tdMove(selector,x,y,ms=360){
-  const e=$(selector);if(!e)return;const sx=Math.max(8,Math.min(92,Number(x)||50)),sy=Math.max(12,Math.min(88,Number(y)||50));e.style.transitionDuration=ms+'ms';requestAnimationFrame(()=>{e.style.left=sx+'%';e.style.top=sy+'%'});
-}
-function tdRegroup(){
-  const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
-  state().roster.forEach(c=>{
-    const p=tdProfile(c);let x=28,y=50;
-    if(p==='tank'){x=39;y=50}
-    else if(p==='melee'){x=31;y=42+melee.indexOf(c)*16}
-    else if(p==='ranged'){x=24;y=31+ranged.indexOf(c)*38}
-    else{x=18;y=64}
-    tdMove('[data-td-party="'+c.id+'"]',x,y,520)
-  })
-}
-function tdThreatLine(enemyIndex,tank){
-  const arena=$('#tdArena'),a=tdPoint('[data-td-enemy="'+enemyIndex+'"]'),b=tdPoint('[data-td-party="'+tank.id+'"]');if(!arena||!a||!b)return;
-  const old=arena.querySelector('[data-td-threat="'+enemyIndex+'"]');if(old)old.remove();
-  const line=document.createElement('i'),dx=b.x-a.x,dy=b.y-a.y;
-  line.className='td-threat-line';line.dataset.tdThreat=enemyIndex;line.style.left=a.x+'px';line.style.top=a.y+'px';line.style.width=Math.hypot(dx,dy)+'px';line.style.transform='rotate('+(Math.atan2(dy,dx)*180/Math.PI)+'deg)';arena.appendChild(line);setTimeout(()=>line.remove(),900)
-}
-
-function renderTdEnvironment(index){
-  const arena=$('#tdArena'),root=$('#tdEnvironment'),tag=$('#tdRoomTag'),cfg=ZELTIRA_ROOMS[index]||ZELTIRA_ROOMS[0];
-  if(!arena||!root)return;
-  [...arena.classList].filter(name=>name.startsWith('room-')).forEach(name=>arena.classList.remove(name));
-  arena.classList.add('cb2d-arena','td-arena','theme-hollows','room-'+cfg.room);
-  arena.classList.toggle('boss-room',index===2);
-  arena.dataset.cbvfxTheme='hollow';
-  window.CellboundCombatFX?.mount?.(arena);
-  root.innerHTML='';
-  cfg.props.forEach((p,i)=>{
-    const e=document.createElement('span');e.className='td-prop prop-'+p[0];e.style.left=p[1]+'%';e.style.top=p[2]+'%';
-    e.style.setProperty('--rot',(p[3]||0)+'deg');e.style.setProperty('--scale',String(p[4]||1));e.dataset.prop=i;root.appendChild(e)
-  });
-  const ambience=document.createElement('div');ambience.className='td-ambience';
-  for(let i=0;i<11;i++){
-    const e=document.createElement('i');e.className='td-mote '+(i%4===0?'spore':'dust');e.style.setProperty('--x',(8+((i*19)%84))+'%');
-    e.style.setProperty('--delay',(-((i*.61)%5))+'s');e.style.setProperty('--dur',(4.4+(i%4)*.7)+'s');e.style.setProperty('--drift',(-14+(i%6)*6)+'px');ambience.appendChild(e)
-  }
-  root.appendChild(ambience);
-  if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>'
-}
-
-function spawnTdEnemies(encounter){
-  const root=$('#tdEnemies');if(!root)return;
-  const names=encounter.mobs||[],baseLevel=Math.max(1,Number(encounter.level)||1),types=encounter.enemyTypes||[];
-  root.innerHTML=names.map((n,i)=>{
-    const y=names.length===1?50:36+i*(28/Math.max(1,names.length-1)),type=String(types[i]||((encounter.boss||encounter.combatKind==='boss')?'boss':'trash')).toLowerCase();
-    const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS',add:'ADD'},meta='Lv. '+baseLevel+' · '+(labels[type]||type.toUpperCase()),isBoss=type==='boss';
-    return '<div class="cb2d-unit td-unit enemy '+(isBoss?'boss':'')+'" data-unit="e-'+i+'" data-td-enemy="'+i+'" data-hp="'+(Number(encounter.enemyHealth)|| (isBoss?260:95))+'" data-max="'+(Number(encounter.enemyHealth)|| (isBoss?260:95))+'" style="left:72%;top:'+y+'%"><i></i><span>'+esc(n)+'<small class="cb2d-unit-meta td-unit-meta">'+esc(meta)+'</small></span><em class="cb2d-unit-hp"><b style="width:100%"></b></em></div>';
-  }).join('');
-}
-function setTdHp(index,hp){
-  const e=$('[data-td-enemy="'+index+'"]');if(!e)return;
-  const max=Number(e.dataset.max)||100,next=Math.max(0,hp);e.dataset.hp=next;
-  const bar=e.querySelector('em b');if(bar)bar.style.width=(next/max*100)+'%';
-  if(next<=0)e.classList.add('dead');
-}
-
-function tdSelectorFor(unitId){
-  const id=String(unitId||'');
-  if(id.startsWith('p-'))return '[data-td-party="'+id.slice(2)+'"]';
-  if(/^e-\d+$/.test(id))return '[data-td-enemy="'+Number(id.slice(2))+'"]';
-  return null;
-}
-function tdEventCharacter(unitId){
-  const id=String(unitId||'');return id.startsWith('p-')?state().roster.find(c=>String(c.id)===id.slice(2)):null;
-}
-function tdEnemyName(index){return $('[data-td-enemy="'+index+'"] span')?.textContent||'Enemy'}
-function tdSetPartyHpByEvent(c,pct){
-  const value=Math.max(0,Math.min(100,Number(pct)||0)),el=$('[data-td-party="'+c.id+'"]'),bar=el?.querySelector('em b');if(bar)bar.style.width=value+'%';
-  if(el)el.classList.toggle('dead',value<=0);
-  const side=$('[data-td-side-hp="'+c.id+'"]'),txt=$('[data-td-side-text="'+c.id+'"]');if(side)side.style.width=value+'%';if(txt)txt.textContent=Math.round(value)+' HP'
-}
-function tdStatusTargets(id){
-  const c=tdEventCharacter(id),sel=tdSelectorFor(id),unit=sel?$(sel):null,out=[];if(unit)out.push(unit);
-  const side=c?$('[data-td-side="'+c.id+'"]'):null;if(side)out.push({el:side,mirror:true});
-  return out
-}
-function tdRenderMeters(){
-  if(!tutorialCombatStats)return;const chars=state().roster,elapsed=Math.max(1,Number(tutorialCombatStats.elapsed||0)/1000);
-  const render=(map,rootId,totalId,label)=>{const rows=chars.map(c=>({c,value:Number(map?.[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...rows.map(x=>x.value)),total=rows.reduce((n,x)=>n+x.value,0),root=$(rootId),tot=$(totalId);if(tot)tot.textContent=Math.round(total).toLocaleString()+' total';if(root)root.innerHTML=rows.map(({c,value},i)=>'<div class="cb2d-meter-row '+tutorialClassKey(c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+'</b><span>'+Math.round(value).toLocaleString()+' · '+Math.round(value/elapsed)+' '+label+'</span></div><em><i style="width:'+(value/max*100)+'%"></i></em></div>').join('')};
-  render(tutorialCombatStats.damage,'#tdDamageMeter','#tdDamageTotal','DPS');render(tutorialCombatStats.healing,'#tdHealingMeter','#tdHealingTotal','HPS');
-  const threat=chars.map(c=>({c,value:Number(tutorialCombatStats.threat?.[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...threat.map(x=>x.value)),root=$('#tdThreatMeter'),label=$('#tdThreatTarget');if(label)label.textContent=tutorialCombatStats.currentEnemy||'—';if(root)root.innerHTML=threat.some(x=>x.value>0)?threat.map(({c,value},i)=>'<div class="cb2d-meter-row '+tutorialClassKey(c)+(String(c.id)===String(tutorialCombatStats.aggro)?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+(String(c.id)===String(tutorialCombatStats.aggro)?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+(value/max*100)+'%"></i></em></div>').join(''):'<div class="cb2d-meter-empty">Threat appears when combat begins.</div>'
-}
-function tdGlobalCastStart(name,duration){
-  const panel=$('#tdCastPanel'),n=$('#tdCastName'),time=$('#tdCastTime'),fill=$('#tdCastFill'),ms=Math.max(300,Number(duration)||1500);if(panel)panel.hidden=false;if(n)n.textContent=name||'Enemy Cast';if(time)time.textContent=(ms/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+ms+'ms linear';fill.style.width='100%'}))}
-}
-function tdGlobalCastClear(label='—'){
-  const n=$('#tdCastName'),time=$('#tdCastTime'),fill=$('#tdCastFill');if(n)n.textContent=label;if(time)time.textContent='—';if(fill){fill.style.transition='none';fill.style.width='0%'}
-}
-function tdResourceVisual(e){
-  const sel=tdSelectorFor(e.source),u=sel?$(sel):null,c=tdEventCharacter(e.source);if(!u||!u.classList.contains('party'))return;
-  let bar=u.querySelector('.cbr-resource');
-  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i>';u.appendChild(bar)}
-  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0)),key=tdResourceClass(name),pct=value/max*100;
-  if(bar.dataset.resource!==name){[...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(key);bar.dataset.resource=name;bar.title=name}
-  const fill=bar.querySelector('i');if(fill)fill.style.width=pct+'%';
-  const side=c?$('[data-td-side-resource="'+c.id+'"]'):null;if(side){[...side.classList].filter(x=>x.startsWith('resource-')).forEach(x=>side.classList.remove(x));side.classList.add(key);side.title=name;const sf=side.querySelector('i');if(sf)sf.style.width=pct+'%'}
-}
-function tdCastBar(name,duration){
-  const enemy=$('[data-td-enemy="0"]');tdGlobalCastStart(name,duration);if(!enemy)return null;
-  enemy.querySelector('.td-training-cast')?.remove();
-  const bar=document.createElement('strong');bar.className='td-training-cast';bar.innerHTML='<span>'+esc(name||'ENEMY CAST')+'</span><i></i>';enemy.appendChild(bar);
-  const fill=bar.querySelector('i');if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+Math.max(1,duration)+'ms linear';fill.style.width='100%'}))}
-  return bar
-}
-function tdMechanicTelegraph(e){
-  const type=e.payload?.mechanicType,source=tdSelectorFor(e.source),target=tdSelectorFor(e.payload?.targetId||e.target);
-  if(type==='cone'){
-    const arena=$('#tdArena'),a=tdPoint(source),b=tdPoint(target);if(!arena||!a||!b)return null;
-    const angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI,cone=document.createElement('div');cone.className='td-training-cone';cone.style.left=a.x+'px';cone.style.top=a.y+'px';cone.style.transform='translateY(-50%) rotate('+angle+'deg)';cone.innerHTML='<span>'+esc(e.ability||'FRONTAL')+'</span>';arena.appendChild(cone);return cone
-  }
-  if(type==='interrupt')return tdCastBar(e.ability,Number(e.payload?.duration)||1600);
-  return null
-}
-function tdRenderCombatEvent(e,telegraphs){
-  if(tutorialCombatStats)tutorialCombatStats.elapsed=Math.max(Number(tutorialCombatStats.elapsed)||0,Number(e.timestamp)||0);
-  const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
-  try{window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tdArena'),resolve:id=>{const sel=tdSelectorFor(id);return sel?$(sel):null},speed:1})}catch(error){console.warn('First Expedition living combat visual skipped',e?.type,error)}
-  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:1}))return}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
-  switch(e.type){
-    case'COMBAT_START':tdFeed('The pull begins.');break;
-    case'MOVEMENT_START':
-      break;
-    case'ABILITY_START':
-      if(srcChar){const r=tdRole(srcChar);tdAction(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'))}
-      break;
-    case'DAMAGE_DEALT':
-      if(targetSel){
-        const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdFloat(targetSel,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');
-        if(targetChar)tdSetPartyHpByEvent(targetChar,p);
-        else{const idx=Number(String(e.target||'').slice(2));if(Number.isInteger(idx))setTdHp(idx,(Number(e.payload?.targetHp)||0))}
-      }
-      if(srcChar&&tutorialCombatStats){tutorialCombatStats.damage[srcChar.id]=(Number(tutorialCombatStats.damage[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
-      break;
-    case'HEAL_RECEIVED':
-      if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
-      if(srcChar&&tutorialCombatStats){tutorialCombatStats.healing[srcChar.id]=(Number(tutorialCombatStats.healing[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
-      break;
-    case'THREAT_GENERATED':
-      if(srcChar&&tutorialCombatStats){tutorialCombatStats.threat[srcChar.id]=Number(e.payload?.total)||0;tdRenderMeters()}break;
-    case'UNIQUE_EFFECT_TRIGGER':if(srcChar){tdFeed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');if(srcSel)tdFloat(srcSel,e.ability||'UNIQUE','heal')}break;
-    case'PLAYER_MISTAKE':if(srcChar)tdFeed(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
-    case'PLAYER_REVIVED':
-      if(targetChar&&targetSel){tdSetPartyHpByEvent(targetChar,Number(e.payload?.targetHpPct)||35);$(targetSel)?.classList?.remove?.('dead');tdFloat(targetSel,'BATTLE REZ','heal');tdFeed(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');tdResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
-      break;
-    case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':tdResourceVisual(e);break;
-    case'AGGRO_CHANGED':
-      if(tutorialCombatStats){
-        tutorialCombatStats.aggro=targetChar?.id||null;
-        if(e.payload?.threat&&typeof e.payload.threat==='object')Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=tdEventCharacter(id);if(ch)tutorialCombatStats.threat[ch.id]=Number(v)||0});
-        tdRenderMeters()
-      }
-      if(/^e-\d+$/.test(String(e.source||''))&&targetChar){tdThreatLine(Number(String(e.source).slice(2)),targetChar);if(tdRole(targetChar)==='tank')tdAction('tank',targetChar.name+' holds threat')}
-      break;
-    case'MECHANIC_TELEGRAPH':{
-      const tg=tdMechanicTelegraph(e);telegraphs[e.payload?.token||e.timestamp]=tg;tdFeed((e.ability||'Mechanic')+' is telegraphed.');break;
-    }
-    case'MECHANIC_RESOLVE':{
-      const k=e.payload?.token,el=telegraphs[k];if(el){el.classList?.add?.('impact');setTimeout(()=>el.remove?.(),350);delete telegraphs[k]}break;
-    }
-    case'CAST_START':
-      tdGlobalCastStart(e.ability||'Enemy Cast',Number(e.payload?.duration)||1500);
-      if(e.payload?.interruptible)tdFeed((e.ability||'Dangerous cast')+' begins and can be interrupted.');break;
-    case'CAST_FINISH':tdGlobalCastClear('CAST COMPLETE');break;
-    case'INTERRUPT':
-      if(e.result==='success'){
-        const bar=$('.td-training-cast');if(bar){bar.classList.add('interrupted');const s=bar.querySelector('span');if(s)s.textContent='INTERRUPTED';setTimeout(()=>bar.remove(),500)}
-        tdGlobalCastClear('INTERRUPTED');
-        if(srcChar)tdAction('dps',srcChar.name+' interrupts '+(e.payload?.interruptedAbility||'the cast'));
-        tdFeed((e.payload?.interruptedAbility||'Dangerous cast')+' is interrupted.');
-      }
-      break;
-    case'PLAYER_DEFEATED':
-      if(targetChar){tdSetPartyHpByEvent(targetChar,0);tdFeed(targetChar.name+' is defeated.')}break;
-    case'ENEMY_DEFEATED':
-      if(/^e-\d+$/.test(String(e.target||''))){const idx=Number(String(e.target).slice(2));setTdHp(idx,0);tdFeed(tdEnemyName(idx)+' is defeated.')}break;
-    case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'Encounter phase',e.payload?.healthPct);tdFeed((e.ability||'The encounter changes')+'.');break;
-    case'COMBAT_END':tdGlobalCastClear();tdFeed(e.result==='victory'?'Encounter clear.':'The Pathfinder ward pulls the party clear.');break;
-  }
-}
-async function tdPlayCombat(result,my){
-  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0)),telegraphs={};
-  if(!events.length)return result?.outcome==='victory';
-  return await new Promise(resolve=>{
-    let index=0,simTime=0,wallAnchor=Date.now(),finished=false,raf=0;
-    const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
-    const frame=()=>{
-      if(finished)return;
-      if(my!==tutorialToken){finish(false);return}
-      simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor));
-      const frameStarted=performance.now();let handled=0;
-      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
-        const event=events[index++];handled++;
-        try{tdRenderCombatEvent(event,telegraphs)}
-        catch(error){console.warn('First Expedition combat visual recovered',event?.type,event?.ability,error)}
-      }
-      if(index>=events.length){finish(result?.outcome==='victory');return}
-      raf=requestAnimationFrame(frame)
-    };
-    raf=requestAnimationFrame(frame)
-  })
-}
-async function fightTdPack(encounter,my){
-  spawnTdEnemies(encounter);await sleep(350);
-  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
-  const roster=state().roster;
-  roster.forEach(c=>tdSetPartyHpByEvent(c,100));
-  const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
-  if(tutorialCombatStats){tutorialCombatStats.threat=Object.fromEntries(roster.map(c=>[c.id,0]));tutorialCombatStats.aggro=null;tutorialCombatStats.currentEnemy=encounter.name;tdRenderMeters()}
-  const result=C.simulate({
-    party:combatParty,
-    encounter:{
-      id:encounter.id,title:encounter.name,kind:encounter.combatKind||(encounter.boss?'boss':'trash'),
-      level:encounter.level||1,enemyTypes:encounter.enemyTypes||null,enemies:[...encounter.mobs],enemyHealth:encounter.enemyHealth,
-      mechanics:encounter.mechanics||[]
-    },
-    tactics:{interruptPriority:'high',addPriority:'immediate',defensiveUsage:'aggressive',pullStyle:'safe',movementDiscipline:'safety'},
-    seed:['zeltira-first-expedition',my,encounter.id].join(':')
-  },{zone:'zeltira-first-expedition'});
-  const won=await tdPlayCombat(result,my);
-  if(!won){
-    tdFeed('The Pathfinder ward pulls the five back from the brink. Elara resets the approach.');
-    return false
-  }
-  tdRegroup();tdAction('tank','Leading the party onward');tdAction('healer','Following at safe range');tdAction('dps','Returning to travel formation');
-  await sleep(650);return true
-}
-
-async function runTutorialDungeon(){
-  const index=Math.max(0,Math.min(tutorialRebornEncounters().length-1,Number(onboarding().tutorialEncounterIndex)||0));
-  return launchTutorialRebornEncounter(index)
-}
 function tutorialLootItem(){
   const s=state(),id=s?.onboarding?.tutorialLootBankId;
   return (s?.bank||[]).find(x=>x.id===id)||null;
@@ -1053,7 +832,7 @@ function tutorialLootItem(){
 function renderLootReview(){
   if(maybeTutorialComic('loot'))return;
   const s=state(),item=tutorialLootItem();
-  if(!item){s.onboarding.stage='quest-lesson';s.onboarding.coreTrainingComplete=true;Game.save();render();return}
+  if(!item){s.onboarding.stage='recovery-lesson';s.onboarding.coreTrainingComplete=true;Game.save();render();return}
   const eligible=s.roster.filter(ch=>item.class===ch.class||item.classes==='all'||item.classes?.includes?.(ch.class));
   const stats=(G.statLines?.(item)||[]).map(x=>x.text).join(' · ')||'No bonus stats';
   const body='<div class="loot-school"><main><small>ZELTIRA · GUILD BANK</small><h2>The boss dropped an item. It does not equip itself.</h2><p>Drops are secured in the Guild Bank first. Read the roll, choose who benefits, then assign the item.</p><article class="tutorial-loot-card">'+G.artHTML(item,104)+'<div><small>'+esc(item.rarity||'GEAR')+' · '+esc(item.slot)+' · ITEM LEVEL '+(item.itemLevel||0)+'</small><h3>'+esc(item.name)+'</h3><div class="tutorial-loot-stats">'+(G.statLines?.(item)||[]).map(x=>'<span>'+esc(x.text)+'</span>').join('')+'</div><p>Dropped by the Hollow Warden · currently stored in the Guild Bank</p></div></article><div class="gear-school-rule"><b>Dungeon rolls are not fixed</b><span>If this same item drops again, its bonus stat can be different. A bad roll can be replaced later even when the Item Level is unchanged.</span></div></main><aside class="z-guide"><small>ASSIGN THE DROP</small><h2>Who should wear it?</h2><p>This item is restricted by class. The labels below compare its rolled stat against each compatible character’s current spec.</p><div class="tutorial-loot-characters">'+eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return '<button data-tutorial-loot-char="'+ch.id+'"><span>'+esc(ch.portrait)+'</span><div><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+'</small><em class="'+esc(fit?.tone||'')+'">'+esc(fit?.label||'COMPATIBLE')+'</em></div></button>'}).join('')+'</div><p class="tutorial-roll-summary">'+esc(stats)+'</p></aside></div>';
@@ -1108,6 +887,13 @@ async function learnTutorialProfession(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),name=s.onboarding.professionName;
   if(!c||!P.PROFESSIONS[name])return;
   c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];c.professions[0]={name,level:1,xp:0};
+  const recipe=P.PROFESSIONS[name].recipes?.[0];
+  if(recipe&&!s.onboarding.trainingReagentsGranted){
+    for(const [key,quantity] of Object.entries(recipe.inputs||{})){
+      s.materials[key]=Math.max(Number(s.materials[key])||0,Number(quantity)||0);
+    }
+    s.onboarding.trainingReagentsGranted=true;
+  }
   s.onboarding.stage='craft';s.activity.push(c.name+' learned '+name+' in Zeltira.');
   Game.save();await Game.persistState();render();
 }
@@ -1121,7 +907,7 @@ function renderCraft(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=c?.professions?.[0],def=P.PROFESSIONS[prof?.name],recipe=def?.recipes?.[0];
   if(!c||!recipe){s.onboarding.stage='profession-choice';Game.save();render();return}
   const can=Object.entries(recipe.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q);
-  const body='<div class="craft-tutorial"><aside class="craft-character"><small>APPRENTICE</small><span class="craft-avatar">'+esc(c.portrait)+'</span><h2>'+esc(c.name)+'</h2><p>'+def.icon+' '+esc(prof.name)+' · Skill 1</p><div class="skill-preview"><i style="width:0%"></i></div><small>CRAFTING EARNS PROFESSION XP</small></aside><main><small>ZELTIRA · CRAFT ROW</small><h2>Craft your first preparation item.</h2><p>The reagents from your dungeon are enough for a level 1 recipe. The result is tradeable and useful, but it will not last forever.</p><article class="tutorial-recipe"><div class="recipe-title"><strong>'+def.icon+'</strong><div><small>SKILL 1 RECIPE</small><h3>'+esc(recipe.name)+'</h3><p>'+esc(prof.name)+'</p></div></div><div class="recipe-inputs">'+recipeInputs(recipe)+'</div><div class="craft-output">'+(recipe.output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(recipe.output.key,52,'tutorial-output-art'):'')+'<span>CREATES</span><b>'+esc(recipe.output.name)+' ×'+(recipe.output.quantity||1)+'</b></div><button id="craftTutorialItem" class="on-primary" '+(can?'':'disabled')+'>CRAFT '+esc(recipe.output.name).toUpperCase()+' →</button></article></main></div>';
+  const body='<div class="craft-tutorial"><aside class="craft-character"><small>APPRENTICE</small><span class="craft-avatar">'+esc(c.portrait)+'</span><h2>'+esc(c.name)+'</h2><p>'+def.icon+' '+esc(prof.name)+' · Skill 1</p><div class="skill-preview"><i style="width:0%"></i></div><small>CRAFTING EARNS PROFESSION XP</small></aside><main><small>ZELTIRA · CRAFT ROW</small><h2>Craft your first preparation item.</h2><p>The craftmaster has topped up your recovered reagents for your first level 1 recipe. The result is tradeable and useful, but it will not last forever.</p><article class="tutorial-recipe"><div class="recipe-title"><strong>'+def.icon+'</strong><div><small>SKILL 1 RECIPE</small><h3>'+esc(recipe.name)+'</h3><p>'+esc(prof.name)+'</p></div></div><div class="recipe-inputs">'+recipeInputs(recipe)+'</div><div class="craft-output">'+(recipe.output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(recipe.output.key,52,'tutorial-output-art'):'')+'<span>CREATES</span><b>'+esc(recipe.output.name)+' ×'+(recipe.output.quantity||1)+'</b></div><button id="craftTutorialItem" class="on-primary" '+(can?'':'disabled')+'>CRAFT '+esc(recipe.output.name).toUpperCase()+' →</button></article></main></div>';
   ensureRoot().innerHTML=chrome(body,'craft');
   $('#craftTutorialItem')?.addEventListener('click',craftTutorialItem);
 }
