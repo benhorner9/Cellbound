@@ -86,8 +86,14 @@ function scanDialogue(src,path,category,name,c){
  const rawTitle=c.args[isVoyage?1:0];
  const title=literal(rawTitle)||(rawTitle?.trim()==='t.title'?'Class Trial · Character-specific':null);if(!title)return null;
  const speaker=literal(c.args[isVoyage?2:1])||'',lines=c.args[isVoyage?3:2];
- const text=array(lines);
- const beats=text.length?text:fragments(lines).filter(s=>s.length>7);
+ const text=array(lines),rawLines=String(lines||'').trim();
+ // Keep dynamic dialogue such as characterName + '. Good. Hold it.' as one
+ // authored panel. The former string-only scan dropped these live story beats.
+ const bracketed=rawLines.startsWith('[')?bracket(rawLines,0):null;
+ const scripted=name==='showDialogue'&&bracketed
+  ?split(bracketed.body).map(raw=>literal(raw)||fragments(raw).join(' ')||'[Dynamic quest dialogue]')
+  :null;
+ const beats=scripted?.length?scripted:text.length?text:fragments(lines).filter(s=>s.length>7);
  if(!beats.length)beats.push('[Dynamic dialogue — inspect during gameplay]');
  let art=[],note='',origin='scripted dialogue';
  if(name==='showDialogue'){art=questArt(src,title,speaker);const dedicated=src.includes("'"+title+"':[");note=dedicated?'Dedicated illustrated comic sequence.':'This quest reuses generic artwork rather than having its own comic panels.';origin=dedicated?'dedicated comic':'generic comic'}
