@@ -247,7 +247,7 @@ function setupPractice(){
   try{
    const squad=practiceRosters(n),session=engine.createPvpSession({pvp:{mode:gameMode,size:n,...squad},encounter:{id:'owner-pvp-practice',environment:{blockers:[]}},seed:'owner-practice-'+gameMode+'-'+n,maxDurationMs:120000},{zone:'owner-pvp-qa'});
    root.replaceChildren();
-   const shell=viewer.mount(root,{profile:'pvp',title:gameMode==='arena'?n+'v'+n+' Arena':gameMode==='capture-the-flag'?'Capture the Flag':'King of the Hill',header:'OWNER PRACTICE · NO REWARDS'});
+   const shell=viewer.mount(root,{profile:'pvp',title:gameMode==='arena'?n+'v'+n+' Arena':gameMode==='capture-the-flag'?'Capture the Flag':'King of the Hill',header:'OWNER PRACTICE · NO REWARDS',inline:true});
    viewer.renderPvpFrame(shell,session.snapshot());
    const controls=host.querySelector('[data-pvp-qa-orders]');controls.hidden=false;
    controls.querySelectorAll('[data-qa-ctf]').forEach(el=>el.hidden=gameMode!=='capture-the-flag');
