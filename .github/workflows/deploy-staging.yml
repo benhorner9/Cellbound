@@ -11,11 +11,15 @@ permissions:
 
 concurrency:
   group: cellbound-staging-release-v3
-  cancel-in-progress: true
+  # Do not cancel a running FTPS transfer when another staging commit arrives.
+  # Keep the newest pending release queued until the active upload/smoke test finishes.
+  cancel-in-progress: false
 
 jobs:
   qa:
     name: Build and static QA
+    # Manual dispatch on any other branch must never publish to the dev host.
+    if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -188,6 +192,7 @@ jobs:
 
   deploy:
     name: Deploy QA-approved staging build
+    if: github.ref == 'refs/heads/staging'
     needs: qa
     runs-on: ubuntu-latest
     timeout-minutes: 12
@@ -242,6 +247,20 @@ jobs:
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
           grep -F "$GITHUB_SHA" dist/build-meta.json
           echo "Verified deploy package for $GITHUB_SHA"
+
+      - name: Verify staging-only deployment credentials
+        shell: bash
+        env:
+          STAGING_FTP_SERVER: ${{ secrets.STAGING_FTP_SERVER }}
+          STAGING_FTP_USERNAME: ${{ secrets.STAGING_FTP_USERNAME }}
+          STAGING_FTP_PASSWORD: ${{ secrets.STAGING_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/staging'
+          test -n "$STAGING_FTP_SERVER"
+          test -n "$STAGING_FTP_USERNAME"
+          test -n "$STAGING_FTP_PASSWORD"
+          echo 'Approved staging credentials are configured; public-site credentials are not used.'
 
       - name: Deploy staging build
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
