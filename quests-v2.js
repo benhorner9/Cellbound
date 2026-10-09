@@ -264,6 +264,24 @@ const QUEST_COMIC_STORY_ART={
   './assets/comics/main-quests-2026/into-molten-citadel.webp',
   './assets/comics/main-quests-2026/adventurers-beyond-violet-portal.webp',
   './assets/comics/main-quests-2026/cartographers-council.webp'
+ ],
+ 'The Door That Breathed':[
+  './assets/comics/main-quests-2026/adventurers-before-breathing-gate.webp',
+  './assets/comics/main-quests-2026/breathing-gate-awakens.webp',
+  './assets/comics/main-quests-2026/awakening-arcane-seal.webp',
+  './assets/comics/main-quests-2026/awakening-arcane-seal.webp',
+  './assets/comics/main-quests-2026/arcane-gate-awakening.webp',
+  './assets/comics/main-quests-2026/breathing-gate-awakens.webp',
+  './assets/comics/main-quests-2026/adventurers-before-arcane-abyss.webp'
+ ],
+ 'The Seal Opens':[
+  './assets/comics/main-quests-2026/breathing-gate-awakens.webp',
+  './assets/comics/main-quests-2026/adventurers-before-breathing-gate.webp',
+  './assets/comics/main-quests-2026/awakening-arcane-seal.webp',
+  './assets/comics/main-quests-2026/arcane-gate-awakening.webp',
+  './assets/comics/main-quests-2026/heroes-before-cosmic-gateway.webp',
+  './assets/comics/main-quests-2026/heroes-before-cosmic-gateway.webp',
+  './assets/comics/main-quests-2026/adventurers-before-arcane-abyss.webp'
  ]
 };
 function questComicArtSet(title,speaker){
