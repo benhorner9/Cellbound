@@ -63,6 +63,7 @@ function render(){
  if(!draft){host.innerHTML='<p>Loading PvP Maps…</p>';return}
  const m=draft,points=markerList(m),chosen=getMarker(m,selectedMarker);if(chosen)selectedMarker=chosen.key;
  const list=api().list('',{includeDrafts:true}),issues=api().validate(m);
+ for(const [id,map] of Object.entries(localDrafts))if(!list.some(x=>x.id===id))try{list.push(api().clean(map))}catch{}
  const activeTest=api().isTesting(m.id);
  const art=artImage(m),mapOptions=list.map(row=>'<option value="'+esc(row.id)+'"'+(row.id===selected?' selected':'')+'>'+esc(row.title)+' · '+esc(row.mode)+'</option>').join('');
  const markerPicker=points.map(p=>'<option value="'+esc(p.key)+'"'+(p.key===selectedMarker?' selected':'')+'>'+esc(p.label)+'</option>').join('');
@@ -117,7 +118,7 @@ function bind(){
  });
  $('#pmeSave')?.addEventListener('click',()=>action(async()=>{await api().saveDraft(draft);baseline=JSON.stringify(api().clean(draft));persist();return'Cloud draft saved. Other owner devices can access it.'}));
  $('#pmeTest')?.addEventListener('click',()=>{
-  try{api().clean(draft);api().setTest(draft);persist();note('OWNER TEST ON · Open PvP → Crucible Practice Room and select '+draft.title+'. You will see these positions and artwork.') }
+  try{api().clean(draft);api().setTest(draft);persist();render();note('OWNER TEST ON · Open PvP → Crucible Practice Room and select '+draft.title+'. You will see these positions and artwork.') }
   catch(e){note(e.message)}
  });
  $('#pmeClearTest')?.addEventListener('click',()=>{api().clearTest(draft.id);render();note('Owner map test ended.')});
