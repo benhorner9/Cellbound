@@ -1389,6 +1389,15 @@ if(process.env.GITHUB_BASE_REF==='staging'||process.env.CELLBOUND_CHANNEL==='sta
 
 if(!readSource('guild.html').includes('pvp-ruleset-v1.js?v=1')||!files.includes('pvp-ruleset-v1.js'))throw new Error('PvP shared ruleset must be included and loaded from the runtime manifest');
 
+{
+ const html=readSource('guild.html'),viewer=readSource('combat-viewer-v1.js'),engine=readSource('combat-reborn-v1.js'),pvp=readSource('pvp-v1.js');
+ for(const file of ['pvp-objectives-v1.js','pvp-objectives-v1.css'])if(!files.includes(file))throw new Error('Missing PvP objective runtime asset: '+file);
+ for(const hook of ['pvp-objectives-v1.js?v=1','pvp-objectives-v1.css?v=1','pvp-ruleset-v1.js?v=1'])if(!html.includes(hook))throw new Error('PvP objective UI/runtime asset is not loaded: '+hook);
+ if(!viewer.includes('function renderPvpFrame(')||!viewer.includes("pvp:'canonical-v1'"))throw new Error('PvP must use canonical combat viewer');
+ if(!engine.includes('function tickPvpObjectives(ctx)')||!engine.includes('const pvpCommand=(team,category,value)=>'))throw new Error('PvP objectives or shared Combat Reborn command gate missing');
+ if(!pvp.includes('const pvpEnabled=()=>false;')||!pvp.includes("window.CellboundAdmin?.role==='owner'"))throw new Error('Public PvP lock or owner-only QA gate missing');
+ console.log('Shared PvP objective/owner QA build contracts passed.');
+}
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
@@ -1403,4 +1412,5 @@ require('./tests/design-booth.cjs');
 require('./tests/living-combat.authority.cjs');
 require('./tests/pvp-ruleset.contract.cjs');
 require('./tests/pvp-arena.integration.cjs');
+require('./tests/pvp-objectives.integration.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}
