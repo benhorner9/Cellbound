@@ -256,7 +256,6 @@ const QUEST_COMIC_STORY_ART={
  ],
  'The Old Surveyor':[
   './assets/comics/main-quests-2026/cartographers-council.webp',
-  './assets/comics/main-quests-2026/cartographers-council.webp',
   './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
   './assets/comics/main-quests-2026/ghostly-violet-wardens.webp',
   './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
