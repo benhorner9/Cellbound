@@ -41,7 +41,7 @@ function play(size){
 for(const size of [2,3,5])assert.equal(play(size),play(size),'same seed and commands produce same '+size+'v'+size+' result');
 assert.throws(()=>standard.createPvpSession({pvp:{mode:'arena',size:2,blue:roster('blue',1),red:roster('red',2)}}),/full Arena squads/);
 assert.throws(()=>standard.createPvpSession({pvp:{mode:'arena',size:2,blue:roster('blue',2),red:roster('blue',2)}}),/unique/);
-assert.throws(()=>standard.createPvpSession({pvp:{mode:'capture-the-flag',size:5,blue:roster('blue',5),red:roster('red',5)}}),/rules/);
+assert.throws(()=>standard.createPvpSession({pvp:{mode:'invalid-mode',size:5,blue:roster('blue',5),red:roster('red',5)}}),/rules/);
 const ordinary=standard.createLiveSession({party:[{id:'a',name:'Tank',class:'Warrior',spec:'Protection',level:8,power:15}],encounter:{id:'pve',enemies:['Dummy'],enemyHealth:900},seed:'pve'});
 assert.equal(typeof ordinary.command,'function');
 assert.equal(typeof ordinary.pvpCommand,'undefined');
