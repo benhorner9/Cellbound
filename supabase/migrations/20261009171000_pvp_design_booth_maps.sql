@@ -25,21 +25,29 @@ revoke all on public.cellbound_pvp_maps from anon,authenticated;
 revoke all on public.cellbound_pvp_map_drafts from anon,authenticated;
 grant select,insert,update,delete on public.cellbound_pvp_maps to authenticated;
 grant select,insert,update,delete on public.cellbound_pvp_map_drafts to authenticated;
+drop policy if exists "Players read published PvP maps" on public.cellbound_pvp_maps;
 create policy "Players read published PvP maps" on public.cellbound_pvp_maps for select to authenticated using (true);
+drop policy if exists "Owner publishes PvP maps" on public.cellbound_pvp_maps;
 create policy "Owner publishes PvP maps" on public.cellbound_pvp_maps for insert to authenticated
  with check((select public.cellbound_is_owner()) and updated_by=(select auth.uid()));
+drop policy if exists "Owner updates published PvP maps" on public.cellbound_pvp_maps;
 create policy "Owner updates published PvP maps" on public.cellbound_pvp_maps for update to authenticated
  using((select public.cellbound_is_owner()))
  with check((select public.cellbound_is_owner()) and updated_by=(select auth.uid()));
+drop policy if exists "Owner restores built-in PvP maps" on public.cellbound_pvp_maps;
 create policy "Owner restores built-in PvP maps" on public.cellbound_pvp_maps for delete to authenticated
  using((select public.cellbound_is_owner()));
+drop policy if exists "Owner reads PvP map drafts" on public.cellbound_pvp_map_drafts;
 create policy "Owner reads PvP map drafts" on public.cellbound_pvp_map_drafts for select to authenticated
  using((select public.cellbound_is_owner()));
+drop policy if exists "Owner creates PvP map drafts" on public.cellbound_pvp_map_drafts;
 create policy "Owner creates PvP map drafts" on public.cellbound_pvp_map_drafts for insert to authenticated
  with check((select public.cellbound_is_owner()) and updated_by=(select auth.uid()));
+drop policy if exists "Owner updates PvP map drafts" on public.cellbound_pvp_map_drafts;
 create policy "Owner updates PvP map drafts" on public.cellbound_pvp_map_drafts for update to authenticated
  using((select public.cellbound_is_owner()))
  with check((select public.cellbound_is_owner()) and updated_by=(select auth.uid()));
+drop policy if exists "Owner deletes PvP map drafts" on public.cellbound_pvp_map_drafts;
 create policy "Owner deletes PvP map drafts" on public.cellbound_pvp_map_drafts for delete to authenticated
  using((select public.cellbound_is_owner()));
 create index if not exists cellbound_pvp_maps_mode_idx on public.cellbound_pvp_maps(mode,published_at desc);
