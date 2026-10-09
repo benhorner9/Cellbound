@@ -3928,7 +3928,7 @@ function buildSummary(ctx,outcome){
   mechanics:copy(ctx.stats.mechanics),mistakes:copy(ctx.stats.mistakes),battleResurrections:ctx.stats.battleResurrections,phases:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,players
  };
 }
-function simulate(options={}){
+function createSession(options={}){
  const encounter=copy(options.encounter||{});
  encounter.mechanics=normaliseMechanics(encounter);
  const seed=options.seed||[encounter.id||'encounter',Date.now(),(options.party||[]).map(x=>x.id).join('-')].join(':');
@@ -3986,41 +3986,82 @@ function simulate(options={}){
  scheduleNextMechanic(ctx);scheduleUnstableGround(ctx);
 
  const requestedMax=Number(options.maxDurationMs),sliceMode=Number.isFinite(requestedMax)&&requestedMax>0&&requestedMax<MAX_COMBAT_MS,maxDuration=sliceMode?Math.max(TICK,Math.round(requestedMax)):MAX_COMBAT_MS;
- let outcome='defeat';
- while(ctx.time<=maxDuration){
+ let outcome='defeat',complete=false,finalResult=null,eventCursor=0;
+ // Combat Reborn's tick pipeline is shared by synchronous PvE and future live combat.
+ // Keeping the encounter context alive permits real commands BETWEEN authoritative ticks.
+ function finish(){
+  if(complete)return;
+  if(ctx.time>maxDuration){
+   if(sliceMode&&livingPlayers(ctx).length&&livingEnemies(ctx).length)outcome='ongoing';
+   else if(!sliceMode)emit(ctx,'ENRAGE',{result:'timeout'});
+  }
+  activePets(ctx).slice().forEach(p=>dismissPet(ctx,p,'combat-end'));
+  ctx.finished=true;ctx.queue.length=0;
+  players.filter(u=>u.alive).forEach(u=>emitResourceState(ctx,u,'final'));
+  emit(ctx,'COMBAT_END',{result:outcome,payload:{durationMs:ctx.time}});
+  ctx.stats.endedAt=ctx.time;
+  const summary=buildSummary(ctx,outcome);
+  finalResult={
+   version:VERSION,seed,outcome,durationMs:ctx.time,events:ctx.events,summary,
+   finalState:{players:copy(players),enemies:copy(enemies)},
+   continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
+   replay:{version:VERSION,seed,encounter:copy(encounter),events:copy(ctx.events),summary:copy(summary)}
+  };
+  complete=true
+ }
+ function step(){
+  if(complete)return;
+  if(ctx.time>maxDuration){finish();return}
   processQueue(ctx);
   const resolvePct=Math.max(0,Math.min(.95,Number(ctx.encounter.resolveAtBossHealthPct)||0));
   if(resolvePct>0){
    const boss=ctx.enemies.find(e=>e.kind==='boss'&&e.alive),remainingRivals=ctx.enemies.filter(e=>e.alive&&!e.isAdd&&e!==boss);
    if(boss&&healthRatio(boss)<=resolvePct&&!remainingRivals.length){
     emit(ctx,'ENCOUNTER_RESOLVED',{source:boss.id,ability:ctx.encounter.resolveLabel||'Encounter Resolution',result:'escaped',position:copy(boss.position),payload:{bossHealthPct:pct(boss.health,boss.maxHealth),thresholdPct:Math.round(resolvePct*100)}});
-    outcome='victory';break
+    outcome='victory';finish();return
    }
   }
-  if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
-  if(!livingPlayers(ctx).length){outcome='defeat';break}
+  if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';finish();return}
+  if(!livingPlayers(ctx).length){outcome='defeat';finish();return}
   checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);tickMonkStagger(ctx);tickPets(ctx);
   players.forEach(u=>playerAI(ctx,u));
   enemies.forEach(e=>{if(e.alive&&ctx.time>=e.nextAttack)enemyBasicAttack(ctx,e)});
   ctx.time+=TICK;
+  if(ctx.time>maxDuration)finish()
  }
- if(ctx.time>maxDuration){
-  if(sliceMode&&livingPlayers(ctx).length&&livingEnemies(ctx).length)outcome='ongoing';
-  else if(!sliceMode)emit(ctx,'ENRAGE',{result:'timeout'});
+ function advance(ticks=1){
+  if(!Number.isSafeInteger(ticks)||ticks<1||ticks>10000)throw new Error('Combat Reborn advance requires 1–10000 integer ticks');
+  for(let i=0;i<ticks&&!complete;i++)step();
+  const events=copy(ctx.events.slice(eventCursor));
+  eventCursor=ctx.events.length;
+  return{completed:complete,outcome:complete?outcome:'ongoing',elapsedMs:ctx.time,events}
  }
- activePets(ctx).slice().forEach(p=>dismissPet(ctx,p,'combat-end'));
- ctx.finished=true;ctx.queue.length=0;
- players.filter(u=>u.alive).forEach(u=>emitResourceState(ctx,u,'final'));
- emit(ctx,'COMBAT_END',{result:outcome,payload:{durationMs:ctx.time}});
- ctx.stats.endedAt=ctx.time;
- const summary=buildSummary(ctx,outcome);
- return{
-  version:VERSION,seed,outcome,durationMs:ctx.time,events:ctx.events,summary,
-  finalState:{players:copy(players),enemies:copy(enemies)},
-  continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
-  replay:{version:VERSION,seed,encounter:copy(encounter),events:copy(ctx.events),summary:copy(summary)}
- };
+ const tacticFields=new Set(['interruptPriority','addPriority','defensiveUsage','pullStyle','movementDiscipline','cooldownUse','interruptAssignment','crowdControl']);
+ function changeTactics(changes={}){
+  if(complete)throw new Error('Cannot change tactics after combat has ended');
+  if(!changes||typeof changes!=='object'||Array.isArray(changes))throw new Error('Tactics command must be an object');
+  const keys=Object.keys(changes);
+  if(!keys.length||keys.length>tacticFields.size)throw new Error('Tactics command must update at least one supported field');
+  const updated={};
+  for(const key of keys){
+   const value=changes[key];
+   if(!tacticFields.has(key)||typeof value!=='string'||!/^[a-z][a-z0-9-]{0,39}$/.test(value))throw new Error('Invalid combat tactic: '+key);
+   updated[key]=value
+  }
+  Object.assign(ctx.tactics,updated);
+  emit(ctx,'TACTIC_CHANGED',{result:'accepted',payload:{changes:copy(updated),tactics:copy(ctx.tactics)}});
+  return{accepted:true,elapsedMs:ctx.time,tactics:copy(ctx.tactics)}
+ }
+ function snapshot(){
+  return{elapsedMs:ctx.time,completed:complete,outcome:complete?outcome:'ongoing',tactics:copy(ctx.tactics),
+   players:players.map(u=>({id:u.id,role:u.role,health:u.health,maxHealth:u.maxHealth,alive:u.alive,position:copy(u.position)})),
+   enemies:enemies.map(u=>({id:u.id,health:u.health,maxHealth:u.maxHealth,alive:u.alive,position:copy(u.position)}))}
+ }
+ function runToCompletion(){while(!complete)step();return finalResult}
+ return Object.freeze({advance,changeTactics,snapshot,runToCompletion,result:()=>finalResult})
 }
+function simulate(options={}){return createSession(options).runToCompletion()}
+
 
 function replay(replayData,onEvent,opts={}){
  const data=replayData?.events?replayData:null;if(!data)return Promise.reject(new Error('Invalid replay data'));
@@ -4894,7 +4935,7 @@ function runSelfTests(){
 }
 
 window.CellboundCombatReborn={
- VERSION,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,replay,debugSnapshot,
+ VERSION,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,createSession,replay,debugSnapshot,
  skills:{classSkillPool,unlockedSkillPool,defaultSkillLoadout},
  talents:{rules:TALENT_RULES,skillRequirements:TALENT_SKILL_REQUIREMENTS,rank:characterTalentRank},
  tests:{run:runSelfTests},utils:{hashSeed,rngFrom,levelHealthScale,levelOutputScale,levelMatchMultiplier}
