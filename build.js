@@ -1392,7 +1392,7 @@ if(!readSource('guild.html').includes('pvp-ruleset-v1.js?v=1')||!files.includes(
 {
  const html=readSource('guild.html'),viewer=readSource('combat-viewer-v1.js'),engine=readSource('combat-reborn-v1.js'),pvp=readSource('pvp-v1.js');
  for(const file of ['pvp-objectives-v1.js','pvp-objectives-v1.css'])if(!files.includes(file))throw new Error('Missing PvP objective runtime asset: '+file);
- for(const hook of ['pvp-objectives-v1.js?v=1','pvp-ruleset-v1.js?v=1','pvp-objectives-v1.css?v=2'])if(!html.includes(hook))throw new Error('PvP objective UI/runtime asset is not loaded: '+hook);
+ for(const hook of ['pvp-objectives-v1.js?v=2','pvp-ruleset-v1.js?v=1','pvp-objectives-v1.css?v=2'])if(!html.includes(hook))throw new Error('PvP objective UI/runtime asset is not loaded: '+hook);
  if(!viewer.includes('function renderPvpFrame(')||!viewer.includes("pvp:'canonical-v1'"))throw new Error('PvP must use canonical combat viewer');
  if(!viewer.includes('function createCombatUnit(')||!viewer.includes('cb2d-arena cbcombat-arena cbpvp-stage')||!viewer.includes('FX.combatEvent(event,{arena:stage,speed:1})'))throw new Error('PvP must share the real PvE CB2D unit, scene and living combat visual renderer');
  if(viewer.includes('cbpvp-combatant-symbol'))throw new Error('PvP letter markers cannot return as the battle renderer');
@@ -1404,7 +1404,15 @@ if(!readSource('guild.html').includes('pvp-ruleset-v1.js?v=1')||!files.includes(
  if(!engine.includes('function tickPvpObjectives(ctx)')||!engine.includes('const pvpCommand=(team,category,value)=>'))throw new Error('PvP objectives or shared Combat Reborn command gate missing');
  if(!pvp.includes('const pvpEnabled=()=>false;')||!pvp.includes("window.CellboundPvPOwnerQA?.render?.(mount)"))throw new Error('Public PvP lock or isolated owner QA hook missing');
  const qa=readSource('pvp-owner-qa-v1.js');
- if(!files.includes('pvp-owner-qa-v1.js')||!html.includes('pvp-owner-qa-v1.js?v=2')||!qa.includes("window.CellboundAdmin?.role!==\'owner\'")||!qa.includes("window.CellboundPvPOwnerQA="))throw new Error('Owner sandbox module is missing or not role gated');
+ const mapRuntime=readSource('pvp-maps-v1.js'),booth=readSource('admin-design-booth-v1.js'),editor=readSource('admin-pvp-map-editor-v1.js');
+ for(const asset of ['pvp-maps-v1.js?v=1','admin-pvp-map-editor-v1.js?v=1','admin-pvp-map-editor-v1.css?v=1'])if(!html.includes(asset))throw new Error('PvP Design Booth asset is not loaded: '+asset);
+ if(!files.includes('pvp-maps-v1.js')||!files.includes('admin-pvp-map-editor-v1.js')||!files.includes('admin-pvp-map-editor-v1.css'))throw new Error('PvP map assets not in the build manifest');
+ if(!booth.includes("id:'pvp-maps'")||!booth.includes('pvpMapEditorMount'))throw new Error('PvP Maps missing from Design Booth navigation');
+ if(!editor.includes('pmeCanvas')||!editor.includes('pmePublish')||!editor.includes('pmeTest'))throw new Error('PvP Map Studio edit/test/publish controls absent');
+ if(!mapRuntime.includes("cellbound_pvp_maps")||!mapRuntime.includes("cellbound_pvp_map_drafts")||!mapRuntime.includes('function setTest('))throw new Error('PvP map cloud and owner preview runtime absent');
+ if(!engine.includes('pvpMap=pvpInput?.map?.layout'))throw new Error('PvP maps must drive Combat Reborn initial spawn and collision');
+ if(!files.includes('pvp-objectives-v1.js'))throw new Error('Shared map objective runtime unavailable');
+ if(!files.includes('pvp-owner-qa-v1.js')||!html.includes('pvp-owner-qa-v1.js?v=3')||!qa.includes("window.CellboundAdmin?.role!==\'owner\'")||!qa.includes("window.CellboundPvPOwnerQA="))throw new Error('Owner sandbox module is missing or not role gated');
  console.log('Shared PvP objective/owner QA build contracts passed.');
 }
 console.log('Cellbound build complete.');
