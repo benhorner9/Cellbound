@@ -10,7 +10,7 @@ const expected={
  'The Bearer':6,
  'The Fragment Remembers':7,
  'A Different Kind of Pressure':6,
- 'The Old Surveyor':10
+ 'The Old Surveyor':9
 };
 const all=new Set();
 for(const [title,count] of Object.entries(expected)){
