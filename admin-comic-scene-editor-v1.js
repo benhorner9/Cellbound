@@ -101,9 +101,20 @@ function scanDialogue(src,path,category,name,c){
  if(name==='story'){
   origin='reused comic';note='Comic panels exist, but artwork is reused from bosses and dungeons.';
   if(isVoyage){
+   // The owner inspector must read the SAME scene-specific art data as gameplay.
+   const catalogueStart=src.indexOf('const NWB_COMIC_STORY_ART=');
+   const catalogueOpen=src.indexOf('{',catalogueStart);
+   const catalogue=catalogueStart<0?null:bracket(src,catalogueOpen);
+   const dedicated=catalogue&&split(catalogue.body).find(x=>x.startsWith("'"+title+"':")||x.startsWith('"'+title+'":'));
+   if(dedicated){
+    art=array(dedicated.slice(dedicated.indexOf(':')+1));
+    note='Dedicated illustrated No Way Back comic sequence.';
+    origin='dedicated comic';
+   }else{
    const key=((literal(c.args[0])||'')+' '+title).toLowerCase();
    const silas='./assets/bosses/no-way-back-silas-vane-v3.jpg',manor='./assets/manor/manor-raid-hero.webp',hounds='./assets/bosses/no-way-back-three-hounds-v3.jpg',master='./assets/manor/manor-master.webp';
    art=/hounds|chase|iron gate/.test(key)?[hounds,manor]:/master|after the fight|understand/.test(key)?[silas,master,manor]:/manor island|homecoming/.test(key)?[manor,silas]:[silas,manor];
+   }
   }else{
    // Resolve the same authored story-art lists as fourfoldStoryArt(), rather
    // than inventing unrelated boss/dungeon imagery for the editor preview.
