@@ -73,7 +73,7 @@ function createMatchmakingCoordinator({serviceDb,loadVerifiedRoster,loadPublishe
    // Metadata only. Never send the raw server roster or hidden match seed
    // over publicly subscribable snapshots.
    unwrap(await serviceDb.from('cellbound_pvp_matches').update({
-    map_id:map.id,map_snapshot:clone(map.layout),status:'ready'
+    map_id:map.id,map_snapshot:clone(map.layout),status:'ready',ready_deadline:new Date(Date.now()+15000).toISOString()
    }).eq('id',matchId).eq('status','forming').select('id').single(),'Prepare lobby');
    return{matchId,mode:match.mode,size:match.squad_size,mapId:map.id,teams:squads.map(s=>({userId:s.userId,team:s.team}))}
   }catch(error){
