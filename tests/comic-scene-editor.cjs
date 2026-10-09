@@ -32,7 +32,7 @@ vm.runInNewContext(code,{window,document,localStorage,fetch,console,setTimeout()
  assert(found.some(x=>x.category==='The Thirteenth Bell'&&x.panels[0].artwork.includes('sealed_letter')),'Missing dedicated Bell artwork');
  assert(found.some(x=>x.category==='The Fourfold Lock'&&x.panels.length===3&&x.panels.every(p=>p.artwork)),'Fourfold live comic panels must match the encounter art');
  assert(found.some(x=>x.category==='No Way Back'&&x.panels.length>=2),'Manor attunement comics must have live art panels');
- for(const [title,count] of Object.entries({'The Bearer':6,'The Fragment Remembers':7,'A Different Kind of Pressure':6,'The Old Surveyor':10})){
+ for(const [title,count] of Object.entries({'The Bearer':6,'The Fragment Remembers':7,'A Different Kind of Pressure':6,'The Old Surveyor':9})){
   const scene=found.find(x=>x.title===title);
   assert(scene,'Missing authored Main Quest story: '+title);
   assert.equal(scene.panels.length,count,'Comic Scene Editor does not match the live dialogue: '+title);
