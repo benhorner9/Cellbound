@@ -115,6 +115,7 @@ function createAuthority({engine,clock=Date.now,acceptanceMs=15000,reconnectMs=3
  function connection({matchId,userId,connected}={}){
   const m=roomFor(matchId),p=userFor(m,userId);
   assert(m.status==='active'||m.status==='ready','Match no longer permits reconnection');
+  assert(typeof connected==='boolean','Connection state must be boolean');
   const t=time();
   if(!connected){if(p.connected){p.connected=false;p.disconnectedAt=t;m.revision++}}
   else{
@@ -126,6 +127,7 @@ function createAuthority({engine,clock=Date.now,acceptanceMs=15000,reconnectMs=3
  function sweep(){
   const t=time(),changed=[];
   for(const m of matches.values()){
+   const previous=m.status;
    if(m.status==='ready'&&t>m.readyDeadline){m.status='cancelled';m.reason='ready-timeout'}
    else if(m.status==='active'){
     const gone=m.players.filter(p=>!p.connected&&p.disconnectedAt!==null&&t-p.disconnectedAt>reconnectMs);
@@ -135,7 +137,7 @@ function createAuthority({engine,clock=Date.now,acceptanceMs=15000,reconnectMs=3
      m.finishedAt=t
     }
    }
-   if(m.status==='cancelled'||m.status==='abandoned'){m.revision++;changed.push({id:m.id,status:m.status,reason:m.reason})}
+   if(m.status!==previous){m.revision++;changed.push({id:m.id,status:m.status,reason:m.reason})}
   }
   return changed
  }
