@@ -199,7 +199,7 @@ function mount(root,options={}){
  root.removeAttribute('aria-hidden');
  root.removeAttribute('hidden');
  root.hidden=false;
- root.classList.add('cbcombat-backdrop');
+ if(options.inline){root.classList.remove('cbcombat-backdrop');root.classList.add('cbcombat-inline')}else{root.classList.remove('cbcombat-inline');root.classList.add('cbcombat-backdrop')}
  root.innerHTML=shellMarkup(options);
  const shell=normalise(root.querySelector(':scope > .cbcombat-shell')||root.querySelector('.cbcombat-shell'));
  window.CellboundCombatHUDStandard?.upgrade?.(shell);
