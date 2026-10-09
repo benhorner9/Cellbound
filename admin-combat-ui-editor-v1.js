@@ -222,7 +222,7 @@ function syncAccess(){
  const entry=$('#combatUILayoutEntry');if(entry)entry.hidden=!owner();
  if(!owner())close()
 }
-function activeProfile(){return window.innerWidth<=600?'mobile':window.innerWidth<=1100?'tablet':'desktop'}
+function activeProfile(){const touch=window.matchMedia?.('(pointer:coarse)')?.matches||false;return window.innerWidth<=600?'mobile':(window.innerWidth<=1100||(touch&&window.innerWidth<=1500))?'tablet':'desktop'}
 function liveMode(shell){
  if(shell.classList.contains('cb2d-shell'))return'pve';
  const label=$('.pvp2d-head',shell)?.textContent.toLowerCase()||'';
