@@ -3865,14 +3865,15 @@ function createLiveSession(options={}){
   const troops=ctx.pvp[team].filter(u=>u.alive);if(!troops.length)return{ok:false,reason:'squad-defeated'};
   const n=Math.max(1,troops.length),front=team==='blue'?1:-1,homeX=team==='blue'?20:80;
   const centre={x:troops.reduce((a,u)=>a+u.position.x,0)/n||homeX,y:troops.reduce((a,u)=>a+u.position.y,0)/n||50};
-  if(category==='position'&&value!=='balanced'&&value!=='hold-position'){
+  const positionValue=category==='position'?value:category==='objective'&&ctx.pvp.mode==='arena'?({kite:'fall-back',push:'push-forward',regroup:'regroup'}[value]||null):null;
+  if(positionValue&&positionValue!=='balanced'&&positionValue!=='hold-position'){
    troops.forEach((u,i)=>{
     const angle=i*Math.PI*2/n;let point={x:centre.x,y:centre.y};
-    if(value==='spread')point={x:centre.x+Math.cos(angle)*13,y:centre.y+Math.sin(angle)*13};
-    if(value==='group-up'||value==='regroup')point={x:centre.x+Math.cos(angle)*2.6,y:centre.y+Math.sin(angle)*2.6};
-    if(value==='fall-back')point={x:homeX+Math.cos(angle)*3.5,y:50+Math.sin(angle)*6};
-    if(value==='push-forward')point={x:50+front*13+Math.cos(angle)*3.5,y:50+Math.sin(angle)*7};
-    moveTo(ctx,u,openPosition(ctx,point,1.5),450,'pvp '+value)
+    if(positionValue==='spread')point={x:centre.x+Math.cos(angle)*13,y:centre.y+Math.sin(angle)*13};
+    if(positionValue==='group-up'||positionValue==='regroup')point={x:centre.x+Math.cos(angle)*2.6,y:centre.y+Math.sin(angle)*2.6};
+    if(positionValue==='fall-back')point={x:homeX+Math.cos(angle)*3.5,y:50+Math.sin(angle)*6};
+    if(positionValue==='push-forward')point={x:50+front*13+Math.cos(angle)*3.5,y:50+Math.sin(angle)*7};
+    moveTo(ctx,u,openPosition(ctx,point,1.5),450,'pvp '+positionValue)
    })
   }
   if(category==='objective'&&value==='pressure-healer')order.target='attack-healer';
