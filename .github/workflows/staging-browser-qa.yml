@@ -1,0 +1,72 @@
+name: Cellbound Staging Browser QA
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# These checks are intentionally separate from FTPS deployment. A failed
+# browser regression must be visible, but must not block a dev test build.
+concurrency:
+  group: cellbound-staging-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Full ${{ matrix.engine }} browser QA (non-blocking)
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - name: Check out exact pushed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build testable game
+        run: npm run build
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --package-lock=false playwright@1.51.1
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: cellbound-${{ runner.os }}-playwright-1.51.1-${{ matrix.engine }}
+
+      - name: Install browser and system dependencies
+        run: npx playwright install --with-deps ${{ matrix.engine }}
+
+      - name: Run complete ${{ matrix.engine }} browser regressions
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+        run: npm run test:browser
+
+      - name: Save browser QA captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cellbound-staging-browser-${{ matrix.engine }}
+          path: |
+            /tmp/cellbound-living-combat.png
+            /tmp/cellbound-equipment-fit-*.png
+            /tmp/cellbound-race-identity-v2-*.png
+            /tmp/cellbound-item-visuals-v2-*.png
+            /tmp/cellbound-full-playthrough.png
+            /tmp/cellbound-login-screen.png
+            /tmp/cellbound-creator-*.png
+          if-no-files-found: ignore
