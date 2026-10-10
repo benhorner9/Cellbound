@@ -5,10 +5,16 @@ const js=read('combat-cinematic-v1.js'),css=read('combat-cinematic-v1.css');
 const dungeon=read('dungeon-2d-v1.js'),html=read('guild.html');
 assert.doesNotThrow(()=>new Function(js),'cinematic script must parse');
 assert(manifest.files.includes('combat-cinematic-v1.js')&&manifest.files.includes('combat-cinematic-v1.css'));
-assert(html.includes('combat-cinematic-v1.js?v=1')&&html.includes('combat-cinematic-v1.css?v=1'));
+assert(html.includes('combat-cinematic-v1.js?v=2')&&html.includes('combat-cinematic-v1.css?v=2'));
 assert(dungeon.includes('CellboundCinematicAshen?.mount?.(arena'),'only existing Ashen renderer mounts the atmosphere');
 assert(js.includes('cellbound:combat-visual'),'cinematic reacts to real shared-engine visuals');
 assert(js.includes('MAX_BURSTS=7')&&js.includes("prefers-reduced-motion: reduce"),'bound animation load and honour reduced motion');
 assert(css.includes('pointer-events:none!important')&&css.includes('z-index:5!important'),'atmosphere cannot steal taps or obscure actor/telegraph layers');
 for(const forbidden of ['CellboundCombatReborn.simulate','Game.addBankItem','Game.addMaterial','persistState','awardBossLoot'])assert(!js.includes(forbidden),'presentation cannot award or simulate: '+forbidden);
 console.log('Ashen cinematic runtime contract: scope, stacking, accessibility, event authority and no reward mutations verified.');
+
+assert(js.includes('window.CellboundCinematicGlobal'),'all-combat cinematic controller must be registered');
+assert(js.includes('MAX_GLOBAL_BURSTS=6'),'cross-game effects are capped');
+assert(js.includes('FX.mount=function'),'all-combat uses the existing shared mount');
+for(const profile of ['hollow','chaos','blackout','fractured','manor','pvp','quest','twelve','world','null','shared'])assert(js.includes(profile+':{accent:'),'distinct cinematic treatment: '+profile);
+assert(css.includes('z-index:2!important')&&css.includes('data-cinematic="global-v1"'),'global treatment must be behind combat telegraphs');
