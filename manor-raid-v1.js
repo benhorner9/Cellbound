@@ -69,7 +69,7 @@ const SCREECH_COLOURS=[
 ];
 const SCREECH_TIMEOUT_MS=4500;
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null,pendingRewardSession=null;
-let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0,maidOverlayPenaltyKey='',ownerSoloQa=false;
+let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0,maidOverlayPenaltyKey='',ownerSoloQa=false,raidOpening=false;
 const handledScreechTokens=new Set();
 const resolvingScreechTokens=new Set();
 const screechPromptTimers=new Map();
@@ -250,34 +250,49 @@ async function syncParty(listingId){
  const {error}=await db.rpc('sync_party_finder_party',{p_listing_id:listingId,p_party_snapshot:snapshot(),p_party_ilvl:Number(Game.partyItemLevel?.())||0});
  if(error)throw error;
 }
+function manorRaidViewBusy(){
+ // Lobby polling is separate from active raid-session polling. Never allow a
+ // lobby refresh to replace an in-progress two-player or owner QA session.
+ return Boolean(ownerSoloQa||raidOpening||raidTimer!==null||paintTimer!==null);
+}
 async function fetchHub(){
- // Owner QA is a local synthetic two-party session. A hub poll must never
- // replace its session/members with the unrelated server-backed party list.
- if(ownerSoloQa)return;
- if(!db||!user)return;
+ if(manorRaidViewBusy()||!db||!user)return;
  try{
-   const {data:l}=await db.rpc('manor_lockout_status');lockout=l||null;
+   // Stage the refreshed lobby in local variables. A request which started just
+   // BEFORE opening a raid must not overwrite the raid after its awaits finish.
+   const {data:l,error:le}=await db.rpc('manor_lockout_status');if(le)throw le;
    const {data:g,error:ge}=await db.from('party_finder_listings').select('*').eq('content_type','raid').eq('target_id','manor').in('status',['open','full']).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(30);
-   if(ge)throw ge;groups=g||[];
-   members=[];
-   if(groups.length){
-     const {data:m,error:me}=await db.from('party_finder_members').select('listing_id,user_id,guild_label,party_ilvl,joined_at,party_snapshot').in('listing_id',groups.map(x=>x.id)).order('joined_at',{ascending:true});
-     if(me)throw me;members=m||[];
+   if(ge)throw ge;
+   const nextGroups=g||[];
+   let nextMembers=[];
+   if(nextGroups.length){
+     const {data:m,error:me}=await db.from('party_finder_members').select('listing_id,user_id,guild_label,party_ilvl,joined_at,party_snapshot').in('listing_id',nextGroups.map(x=>x.id)).order('joined_at',{ascending:true});
+     if(me)throw me;
+     nextMembers=m||[];
    }
-   const mine=myMembership();myGroup=mine?groups.find(g=>g.id===mine.listing_id)||null:null;session=null;pendingRewardSession=null;
-   if(myGroup){
-     const {data:s}=await db.from('raid_sessions').select('*').eq('listing_id',myGroup.id).order('started_at',{ascending:false}).limit(1);
-     session=s?.[0]||null;
-     if(myGroup&&(!Array.isArray(mine?.party_snapshot)||mine.party_snapshot.length!==5)&&partyReady())syncParty(myGroup.id).catch(()=>{});
+   const mine=nextMembers.find(m=>m.user_id===user.id);
+   const nextMyGroup=mine?nextGroups.find(g=>g.id===mine.listing_id)||null:null;
+   let nextSession=null;
+   if(nextMyGroup){
+     const {data:s,error:se}=await db.from('raid_sessions').select('*').eq('listing_id',nextMyGroup.id).order('started_at',{ascending:false}).limit(1);
+     if(se)throw se;
+     nextSession=s?.[0]||null;
    }
    const {data:completed,error:completedError}=await db.from('raid_sessions').select('*').eq('raid_id','manor').eq('status','completed').order('completed_at',{ascending:false}).limit(12);
    if(completedError)throw completedError;
+   if(manorRaidViewBusy())return;
+   // Commit the snapshot together so the combat renderer cannot observe a
+   // transient empty session while the lobby queries are loading.
+   lockout=l||null;groups=nextGroups;members=nextMembers;myGroup=nextMyGroup;session=nextSession;pendingRewardSession=null;
+   if(nextMyGroup&&(!Array.isArray(mine?.party_snapshot)||mine.party_snapshot.length!==5)&&partyReady())syncParty(nextMyGroup.id).catch(()=>{});
    if((completed||[]).length)await markManorCleared();
+   if(manorRaidViewBusy())return;
    const localClaims=state()?.raidRewardClaims&&typeof state().raidRewardClaims==='object'?state().raidRewardClaims:{};
    pendingRewardSession=(completed||[]).find(s=>!localClaims[s.id])||null;
    renderHub();
- }catch(e){renderError(e)}
+ }catch(e){if(!manorRaidViewBusy())renderError(e)}
 }
+
 function renderError(e){
  if(!mount)return;mount.innerHTML='<section class="mr-card mr-error"><small>THE MANOR</small><h3>Raid service unavailable</h3><p>'+esc(e?.message||'Could not load the raid service.')+'</p><button data-mr-refresh>TRY AGAIN</button></section>';
  mount.querySelector('[data-mr-refresh]')?.addEventListener('click',fetchHub)
@@ -656,14 +671,17 @@ async function loadSession(id){
  members=m||members;
 }
 async function openRaid(id){
- try{await loadSession(id)}catch(e){alert(e.message);return}
- sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;resolvingScreechTokens.clear();clearScreechPromptTimers();
- clearInterval(raidTimer);clearInterval(paintTimer);clearReadyLaunch();
- await subscribeRaidRealtime(id);
- await syncSharedRaidView(true);
- raidTimer=setInterval(()=>pollRaidSession(id),2500);
- paintTimer=setInterval(tickRaid,100);
- tickRaid()
+ raidOpening=true;
+ try{
+  try{await loadSession(id)}catch(e){alert(e.message);return}
+  sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;resolvingScreechTokens.clear();clearScreechPromptTimers();
+  clearInterval(raidTimer);clearInterval(paintTimer);clearReadyLaunch();
+  await subscribeRaidRealtime(id);
+  await syncSharedRaidView(true);
+  raidTimer=setInterval(()=>pollRaidSession(id),2500);
+  paintTimer=setInterval(tickRaid,100);
+  tickRaid()
+ }finally{raidOpening=false}
 }
 function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
