@@ -19,7 +19,7 @@ The migration refuses to run unless the operator explicitly sets `cellbound.boot
 | Existing boss drops | Owner-only RLS, but Save immediately upserted player-visible drops. | Save submits a private draft. The reviewed version alone reaches `cellbound_boss_drop_tables`; caches are not updated on submission. |
 | Comic artwork | Owner-only append uploads and direct `comic_scene_panel_art` upsert. | Upload submits a mapping for review. Published mapping changes only in the transaction. |
 | Comic captions | Device-only drafts/export; no real text publication. | Linked scene captions now cloud-save and publish to `cellbound_comic_text`, read by the existing comic renderer. Source-only scenes without a runtime scene ID still require export/developer review. Draft artwork-path edits remain preview-only; uploading artwork is a separate reviewed mapping. |
-| Dungeon/Manor room positions | Local drafts; owner-test session overrides; owner RPC directly published cloud layouts. | Cloud Save Draft and cross-device loading, revision checks, shared review/history. Existing local previews and drag controls retained. |
+| Dungeon/Manor room positions | Local drafts; owner-test session overrides; owner RPC directly published cloud layouts. | Cloud autosave and cross-device loading, account-scoped immediate recovery, revision checks, shared review/history. In-flight saves preserve newer edits and retain their original room target. Existing local previews and drag controls retained. |
 | Room backgrounds | Separate cloud art mapping, direct publishing/removal. | Reviewed publication and owner-only recoverable archive/restore; built-in artwork files remain untouched. |
 | PvP maps | Separate private cloud draft table and public map table; owner preview; direct publish/delete. | Draft import, common review/history, no public-map cache mutation during submission. Map-to-combat integration preserved. |
 | Combat UI editor | Device-local layout profiles; owner-only application on this device. | Remains local and owner-only. No global publication was invented for a personal layout tool. Cloud profile portability is unfinished. |
@@ -69,14 +69,15 @@ A publication is atomic per content resource. A room background and its marker l
 - Existing core, appearance and build checks run locally.
 - Existing full Chromium browser suite run locally, including iPad portrait/landscape viewport checks.
 - New browser regression exercises contributor access outside the game admin panel, scoped navigation, confirmed saves, stale/offline recovery, review comparison, submission and viewer controls.
-- WebKit binaries downloaded, but local installation of required system libraries was blocked by the execution environment. GitHub's existing Chromium/WebKit matrix is the remaining automated browser gate.
+- GitHub Actions run 38059042172 passed the complete Chromium and WebKit suites, core/build checks and final release gate at commit `4b621e1b1996e19b96c393329be5854bec314e49`. Local WebKit system libraries were unavailable, so WebKit evidence comes from GitHub Ubuntu.
+- Additional room recovery regression covers account isolation, immediate local recovery, edits during a save, navigation during a save and offline failures.
 - No production writes, migration deployment, staging merge or deployment occurred during this work. No exact deployed-commit success is claimed.
 
 ## Remaining acceptance work before release
 
 1. Provision isolated staging Supabase, copy the complete required schema and published content/art references, and establish a staging owner account without modifying production. Database branch cost requires confirmation through the Supabase connector.
 2. Apply the guarded migration there, run Supabase security advisors, and exercise the real PostgREST RPC using separate owner/admin/editor/viewer accounts. Local PostgreSQL tests do not verify hosted API schema exposure or Storage policies.
-3. Complete specialist contributor entry/permissions, private draft-art storage, account-scoped recovery for legacy editors, and consistent autosaving across those editors. Adventure/template autosaving is implemented; room/caption/PvP saves remain explicit.
+3. Complete specialist contributor entry/permissions, private draft-art storage, account-scoped recovery for legacy editors, and consistent autosaving across those editors. Adventure/template/room autosaving is implemented; caption/PvP saves remain explicit.
 4. Add a guided visual version comparison/preview to replace the technical field comparison for nontechnical reviewers. Current field history is readable and escaped but is still technical.
 5. Complete safe rebase/merge UX after conflicts. Current conflict handling refuses overwrite and keeps recovery content; it does not automatically merge two people's edits.
 6. Validate physical 13-inch iPad Safari: touch marker capture, resizing, scrolling, keyboard focus, file uploads, browser background/termination, reconnect, and second-device recovery.
