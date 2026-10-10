@@ -28,7 +28,7 @@ const mapClient={
  }}},
  auth:{getUser:async()=>({data:{user:{id:own}},error:null})}
 };
-const win={CellboundAdmin:{isAdmin:true,role:'owner'},CellboundGame:{ready:true,getSupabase:()=>mapClient},dispatchEvent(){}};
+const win={CellboundBoothWorkflow:{list:async()=>[],save:async(kind,key,payload)=>{drafts.set(key,clone(payload));return{revision:1}},transition:async(action,kind,key)=>{assert.equal(action,'submit');assert(drafts.has(key));return{state:'review'}}},CellboundAdmin:{isAdmin:true,role:'owner'},CellboundGame:{ready:true,getSupabase:()=>mapClient},dispatchEvent(){}};
 const localStorage={getItem:key=>store[key]||null,setItem:(key,value)=>{store[key]=value}};
 const ctx={window:win,console,localStorage,CustomEvent:class{constructor(){}},Date,setTimeout,clearTimeout,performance:{now:()=>clock}};
 vm.createContext(ctx);
@@ -68,9 +68,9 @@ assert.equal(initial.layout.flags.blue.x,16);
  assert.equal(published.size,0,'Cloud drafts must not be published to players');
  assert.equal(drafts.size,1);
  await maps.publish(saved);
- assert.equal(maps.isTesting(edited.id),false,'Publish should clear temporary owner overrides');
- assert.equal(maps.get(edited.id).layout.flags.blue.x,22,'Published map should drive future practice sessions');
- assert.equal(published.size,1);
+ assert.equal(maps.isTesting(edited.id),true,'Submitting preserves private preview until explicitly stopped');
+ assert.equal(maps.get(edited.id).layout.flags.blue.x,16,'Submitting must not change the published map');
+ assert.equal(published.size,0);
  const bad=clone(edited);bad.layout.flags.red={x:27,y:46};
  assert(maps.validate(bad).some(x=>x.includes('farther apart')),'Prevent degenerate overlapping flag positions');
  await assert.rejects(maps.publish(bad),/farther apart/);
@@ -86,7 +86,7 @@ assert.equal(initial.layout.flags.blue.x,16);
  const arena=maps.get('crucible-arena');arena.layout.storm={x:58,y:58};
  const duel=combat.createPvpSession({pvp:{mode:'arena',size:2,blue:roster('blue').slice(0,2),red:roster('red').slice(0,2),map:arena},encounter:{id:'owner-arena'},seed:'arena-studio',maxDurationMs:30000},{zone:'owner-studio-test'});
  assert.equal(duel.snapshot().pvp.objectives.storm.centre.x,58,'Storm must use edited centre');
- await maps.unpublish(edited.id);
+ await assert.rejects(maps.unpublish(edited.id),/built-in default|version history/);
  assert.equal(maps.get(edited.id).layout.flags.blue.x,16,'Unpublish restores original built-in positions');
  win.CellboundAdmin.role='moderator';
  assert.throws(()=>maps.setTest(edited),/Owner only/);

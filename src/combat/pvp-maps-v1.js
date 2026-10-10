@@ -101,7 +101,7 @@ function refresh(force=false){
   for(const row of data||[]){try{const m=clean({...row,artPath:row.art_path});published.set(m.id,m)}catch(e){console.warn('Skipped invalid PvP map',row.id,e.message)}}
   drafts.clear();
   if(isOwner()){
-   const res=await db().from('cellbound_pvp_map_drafts').select('id,mode,title,layout,art_path');
+   const res={data:(await window.CellboundBoothWorkflow.list('pvp-map')).map(r=>r.payload)};
    if(res.error)throw res.error;
    for(const row of res.data||[]){try{const m=clean({...row,artPath:row.art_path});drafts.set(m.id,m)}catch(e){console.warn('Skipped invalid PvP draft',row.id,e.message)}}
   }
@@ -118,27 +118,22 @@ async function currentUser(){
 async function saveDraft(map){
  const m=clean(map),uid=await currentUser();
  const payload={id:m.id,mode:m.mode,title:m.title,layout:m.layout,art_path:m.artPath||null,updated_by:uid,updated_at:new Date().toISOString()};
- const {error}=await db().from('cellbound_pvp_map_drafts').upsert(payload,{onConflict:'id'});
- if(error)throw error;drafts.set(m.id,m);return clone(m)
+ await window.CellboundBoothWorkflow.save('pvp-map',m.id,payload);
+ drafts.set(m.id,m);return clone(m)
 }
 async function publish(map){
  const m=clean(map),errors=validate(m);if(errors.length)throw Error(errors[0]);
  const uid=await currentUser();
  await saveDraft(m);
- const current=published.get(m.id);
- const payload={id:m.id,mode:m.mode,title:m.title,layout:m.layout,art_path:m.artPath||null,updated_by:uid,version:Number(current?.version||0)+1,published_at:new Date().toISOString()};
- const {error}=await db().from('cellbound_pvp_maps').upsert(payload,{onConflict:'id'});
- if(error)throw error;
- published.set(m.id,m);clearTest(m.id);
- window.dispatchEvent?.(new CustomEvent('cellbound:pvp-map-changed',{detail:{id:m.id,mode:m.mode}}));
+ await window.CellboundBoothWorkflow.transition('submit','pvp-map',m.id);
  return clone(m)
 }
 async function unpublish(id){
  await currentUser();
  if(!published.has(id))throw Error('This map is using its built-in default.');
- const {error}=await db().from('cellbound_pvp_maps').delete().eq('id',id);
- if(error)throw error;published.delete(id);clearTest(id);
- return true
+ await window.CellboundBoothWorkflow.get('pvp-map',id);
+ await window.CellboundBoothWorkflow.transition('archive','pvp-map',id);
+ published.delete(id);clearTest(id);return true;
 }
 async function uploadArt(map,file){
  const m=clean(map);await currentUser();

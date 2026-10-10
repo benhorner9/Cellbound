@@ -71,9 +71,7 @@ async function save(key,drops){
  if(checked.some(x=>x.chance<1||x.chance>100))throw Error('Drop percentages must be 1–100%.');
  const {data:{user},error:authError}=await db().auth.getUser();
  if(authError||!user?.id)throw Error('Please sign in as the Cellbound owner.');
- const {error}=await db().from('cellbound_boss_drop_tables').upsert({boss_key:key,drops:checked,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:'boss_key'});
- if(error)throw error;
- tables.set(key,clean(checked));lastLoaded=Date.now();
+ await window.CellboundBoothWorkflow.submit('boss-drops',key,{boss_key:key,drops:checked});
  return checked
 }
 async function award(key,attemptId,source,options={}){

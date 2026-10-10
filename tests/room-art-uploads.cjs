@@ -41,6 +41,7 @@ const client={
  auth:{getUser:async()=>({data:{user:{id:'owner-test-uuid'}},error:null})}
 };
 const window={
+ CellboundBoothWorkflow:{get:async()=>({}),transition:async(action,kind)=>{assert.equal(action,'archive');assert.equal(kind,'room-art');map.delete('ashen-vault::kael');return{revision:2}},submit:async(kind,key,payload)=>{assert.equal(kind,'room-art');assert.equal(key,'ashen-vault/kael');assert(payload.object_path);return{revision:1,state:'review'}}},
  CellboundAdmin:{isAdmin:true,role:'owner'},
  CellboundGame:{ready:true,getSupabase:()=>client},
  dispatchEvent(){}
@@ -60,8 +61,9 @@ vm.runInNewContext(runtime,sandbox,{filename:'room-layout-runtime-v1.js'});
  await R.publishArt('ashen-vault','kael',{type:'image/webp',size:1000,name:'new.webp'});
  assert.equal(uploads,1);
  assert(R.artFor('ashen-vault','kael','default').includes('cellbound-room-art'));
+ assert(R.artFor('ashen-vault','kael','default').includes('replacement.webp'),'Submitting art leaves the published image unchanged');
  await R.restoreArt('ashen-vault','kael');
- assert.equal(R.artFor('ashen-vault','kael','default'),'default','Restore must remove published artwork mapping');
+ assert.equal(R.artFor('ashen-vault','kael','default'),'default','Restore archives the override through the versioned workflow');
  window.CellboundAdmin.role='moderator';
  await assert.rejects(R.publishArt('ashen-vault','kael',{type:'image/webp',size:1000}),/Owner/);
  console.log('Room art upload regression passed: owner auth, upload, runtime replacement, restore and six content integrations.');

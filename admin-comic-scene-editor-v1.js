@@ -212,17 +212,17 @@ function statusLabel(s){return s==='missing'?'NO ART':s==='reused'?'REUSED ART':
 function panelMarkup(p,i){
  const st=state(p);
  return'<article class="cse-panel"><div class="cse-art">'+(p.artwork?'<img data-cse-image src="'+esc(p.artwork)+'" alt="Comic panel '+(i+1)+'" loading="lazy">':'<div class="cse-no-art">NO ARTWORK</div>')+'<span>PANEL '+(i+1)+'</span><em class="'+st+'">'+statusLabel(st)+'</em></div>'+
- '<div class="cse-fields"><label>ARTWORK PATH<input data-art="'+i+'" value="'+esc(p.artwork||'')+'" placeholder="./assets/comics/…"></label><label>CAPTION TITLE<input data-title="'+i+'" value="'+esc(p.title||'')+'"></label><label>STORY TEXT<textarea data-text="'+i+'" rows="3">'+esc(p.text||'')+'</textarea></label><div class="cse-upload-tools"><label>UPLOAD ARTWORK<input data-upload-file="'+i+'" type="file" accept="image/webp,image/jpeg,image/png,image/avif"></label><button type="button" data-upload-publish="'+i+'" disabled>UPLOAD &amp; PUBLISH</button><small data-upload-status="'+i+'">Choose a WebP, JPEG, PNG or AVIF image (maximum 8 MB).</small></div></div></article>'
+ '<div class="cse-fields"><label>ARTWORK PATH<input data-art="'+i+'" value="'+esc(p.artwork||'')+'" placeholder="./assets/comics/…"></label><label>CAPTION TITLE<input data-title="'+i+'" value="'+esc(p.title||'')+'"></label><label>STORY TEXT<textarea data-text="'+i+'" rows="3">'+esc(p.text||'')+'</textarea></label><div class="cse-upload-tools"><label>UPLOAD ARTWORK<input data-upload-file="'+i+'" type="file" accept="image/webp,image/jpeg,image/png,image/avif"></label><button type="button" data-upload-publish="'+i+'" disabled>UPLOAD &amp; SUBMIT</button><small data-upload-status="'+i+'">Choose a WebP, JPEG, PNG or AVIF image (maximum 8 MB).</small></div></div></article>'
 }
 function render(){
  const root=$('#comicSceneEditorMount');if(!root||!opened||!owner())return;
  const all=scenes.map(combined),total=all.reduce((n,s)=>n+s.panels.length,0),missing=all.reduce((n,s)=>n+s.panels.filter(p=>state(p)==='missing').length,0),reused=all.reduce((n,s)=>n+s.panels.filter(p=>state(p)==='reused').length,0),approved=all.filter(s=>s.review==='approved').length;
  const selectedScene=scenes.find(x=>x.id===selected),s=selectedScene&&combined(selectedScene),categories=['all',...new Set(scenes.map(x=>x.category))];
- root.innerHTML='<section class="cse-shell"><header><div><small>OWNER QA · STORY PRESENTATION</small><h2>Comic Scene Editor</h2><p>Review all discovered story scenes without progressing a quest. Captions save as local drafts. Uploaded artwork publishes directly into the game.</p></div><div class="cse-actions"><button id="cseExport">EXPORT ALL DRAFTS</button><button id="cseClose">CLOSE</button></div></header>'+
+ root.innerHTML='<section class="cse-shell"><header><div><small>OWNER QA · STORY PRESENTATION</small><h2>Comic Scene Editor</h2><p>Review all discovered story scenes without progressing a quest. Captions save to cloud and can be submitted for review. Uploaded artwork goes through Review & Publishing.</p></div><div class="cse-actions"><button id="cseExport">EXPORT ALL DRAFTS</button><button id="cseClose">CLOSE</button></div></header>'+
  (warning?'<p class="cse-warning">'+esc(warning)+'</p>':'')+
  '<div class="cse-stats"><span><b>'+all.length+'</b> scenes</span><span><b>'+total+'</b> panels</span><span><b>'+missing+'</b> missing art</span><span><b>'+reused+'</b> reused art</span><span><b>'+approved+'</b> approved</span></div>'+
  '<div class="cse-columns"><aside class="cse-left"><div class="cse-filters"><input id="cseSearch" type="search" placeholder="Find a scene…" value="'+esc(filter)+'"><select id="cseGroup">'+categories.map(x=>'<option value="'+esc(x)+'" '+(x===group?'selected':'')+'>'+esc(x==='all'?'All story groups':x)+'</option>').join('')+'</select><label><input type="checkbox" id="cseGaps" '+(gaps?'checked':'')+'> Show artwork gaps only</label></div><div id="cseSceneList">'+listMarkup()+'</div></aside>'+
- '<main class="cse-right">'+(s?'<div class="cse-title"><small>'+esc(s.category)+' · '+esc(s.path)+(s.line?' : '+s.line:'')+'</small><h3>'+esc(s.title)+'</h3><p>'+esc(s.note||'Check every comic panel and its artwork.')+'</p></div><div class="cse-controls"><label>REVIEW<select id="cseReview"><option value="unreviewed" '+(s.review==='unreviewed'?'selected':'')+'>Unreviewed</option><option value="needs-work" '+(s.review==='needs-work'?'selected':'')+'>Needs work</option><option value="approved" '+(s.review==='approved'?'selected':'')+'>Approved</option></select></label><button id="csePreview">▶ PREVIEW STRIP</button><button id="cseSave" class="primary">SAVE DRAFT</button><button id="cseReset">RESET</button></div><div class="cse-panel-grid">'+s.panels.map(panelMarkup).join('')+'</div><footer><button id="cseCopy">COPY THIS SCENE</button><p id="cseMessage">Text drafts stay on this device; artwork uploads publish to all players.</p></footer>':'<p class="cse-empty">No scenes could be loaded.</p>')+'</main></div></section>';
+ '<main class="cse-right">'+(s?'<div class="cse-title"><small>'+esc(s.category)+' · '+esc(s.path)+(s.line?' : '+s.line:'')+'</small><h3>'+esc(s.title)+'</h3><p>'+esc(s.note||'Check every comic panel and its artwork.')+'</p></div><div class="cse-controls"><label>REVIEW<select id="cseReview"><option value="unreviewed" '+(s.review==='unreviewed'?'selected':'')+'>Unreviewed</option><option value="needs-work" '+(s.review==='needs-work'?'selected':'')+'>Needs work</option><option value="approved" '+(s.review==='approved'?'selected':'')+'>Approved</option></select></label><button id="csePreview">▶ PREVIEW STRIP</button><button id="cseSave" class="primary">SAVE CLOUD DRAFT</button><button id="cseSubmit">SUBMIT CAPTIONS</button><button id="cseReset">RESET</button></div><div class="cse-panel-grid">'+s.panels.map(panelMarkup).join('')+'</div><footer><button id="cseCopy">COPY THIS SCENE</button><p id="cseMessage">Cloud captions resume across devices; artwork uploads require review and publication.</p></footer>':'<p class="cse-empty">No scenes could be loaded.</p>')+'</main></div></section>';
  root.querySelectorAll('[data-cse-image]').forEach(img=>img.onerror=()=>{const art=img.getAttribute('src');if(!broken.has(art)){broken.add(art);render()}else{const badge=img.parentNode.querySelector('em');if(badge){badge.textContent='BROKEN IMAGE';badge.className='missing'}}});
  bind(s);showList()
 }
@@ -233,10 +233,16 @@ function edited(){
  s.review=$('#cseReview')?.value||'unreviewed';return s
 }
 function message(value){const m=$('#cseMessage');if(m)m.textContent=value}
-function save(){
+async function save(submit=false){
  const s=edited();if(!s)return;
- drafts[s.id]={review:s.review,panels:s.panels.map(p=>({artwork:p.artwork,title:p.title,text:p.text})),updatedAt:new Date().toISOString()};
- try{localStorage.setItem(KEY,JSON.stringify(drafts));render();message('Saved locally. Export drafts to update the source files.')}catch{message('Could not save locally; copy this scene to keep your edits.')}
+ drafts[s.id]={workflow_revision:drafts[s.id]?.workflow_revision||0,review:s.review,panels:s.panels.map(p=>({artwork:p.artwork,title:p.title,text:p.text})),updatedAt:new Date().toISOString()};
+ try{
+  localStorage.setItem(KEY,JSON.stringify(drafts));
+  if(!s.config)throw Error('This source-only scene has no runtime ID. Export this draft for developer review.');
+  const key=window.CellboundComicScenes.sceneKey(s.config),payload={scene_id:key,panels:s.panels.map(p=>({title:p.title,text:p.text}))};
+  const result=await window.CellboundBoothWorkflow[submit?'submit':'save']('comic-text',key,payload,drafts[s.id].workflow_revision||0);
+  drafts[s.id].workflow_revision=result.revision;localStorage.setItem(KEY,JSON.stringify(drafts));render();message(submit?'SUBMITTED · approve and publish in Review & Publishing.':'CLOUD CAPTIONS SAVED. Artwork paths are local previews; use Upload & Submit for artwork.');
+ }catch(e){message('Local copy retained. '+e.message)}
 }
 async function copy(str){
  try{await navigator.clipboard.writeText(str);message('Copied to clipboard.')}catch{const t=document.createElement('textarea');t.value=str;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();message('Copied to clipboard.')}
@@ -274,11 +280,9 @@ function bindArtUploads(scene){
    const path=sceneId+'/'+index+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,10)+'.'+ext;
    const stored=await client.storage.from('comic-scene-art').upload(path,chosen,{contentType:chosen.type,cacheControl:'31536000',upsert:false});
    if(stored.error)throw stored.error;
-   const saved=await client.from('comic_scene_panel_art').upsert({scene_id:sceneId,panel_index:index,object_path:path,updated_by:user.data.user.id,updated_at:new Date().toISOString()},{onConflict:'scene_id,panel_index'});
-   if(saved.error)throw saved.error;
-   await comic.reloadArt();
-   pending.delete(index);render();message('Artwork published. Players will see it the next time this story opens.');
-  }catch(error){status(index,'Upload failed: '+(error?.message||String(error)));button.disabled=false;button.textContent='UPLOAD & PUBLISH'}
+   await window.CellboundBoothWorkflow.submit('comic-art',sceneId+'/'+index,{scene_id:sceneId,panel_index:index,object_path:path});
+   pending.delete(index);render();message('Artwork submitted for review. Approve and publish in Review & Publishing.');
+  }catch(error){status(index,'Upload failed: '+(error?.message||String(error)));button.disabled=false;button.textContent='UPLOAD & SUBMIT'}
  }))
 }
 function bind(s){
@@ -288,7 +292,8 @@ function bind(s){
  $('#cseGroup').onchange=e=>{group=e.target.value;showList()};
  $('#cseGaps').onchange=e=>{gaps=e.target.checked;showList()};
  if(!s)return;
- $('#cseSave').onclick=save;
+ $('#cseSave').onclick=()=>save(false);
+ $('#cseSubmit').onclick=()=>save(true);
  $('#cseReset').onclick=()=>{if(!confirm('Discard drafts for this scene?'))return;delete drafts[selected];localStorage.setItem(KEY,JSON.stringify(drafts));render()};
  $('#cseCopy').onclick=()=>{const value=edited();if(value)copy(JSON.stringify(value,null,2))};
  $('#csePreview').onclick=async()=>{
@@ -298,7 +303,7 @@ function bind(s){
   loading=true;
   try{await renderer.show({...(s.config||{}),eyebrow:'OWNER PREVIEW · NO PROGRESS SAVED',
    title:s.config?.title||draft.title,subtitle:s.config?.subtitle||draft.speaker,panels:draft.panels,choices:[],reveals:[],
-   progressive:true,storyOnly:true,allowSkip:true,skipLabel:'CLOSE',nextLabel:'NEXT →',continueLabel:'CLOSE PREVIEW →'})}
+   boothPreview:true,progressive:true,storyOnly:true,allowSkip:true,skipLabel:'CLOSE',nextLabel:'NEXT →',continueLabel:'CLOSE PREVIEW →'})}
   finally{loading=false}
  }
 }
@@ -306,7 +311,7 @@ async function open(){
  if(!owner()||loading)return;
  const root=$('#comicSceneEditorMount');if(!root)return;
  opened=true;root.hidden=false;loading=true;root.textContent='Scanning story scenes…';
- try{await window.CellboundComicScenes?.loadArt?.();await discover()}catch(e){warning=String(e)}
+ try{await window.CellboundComicScenes?.loadArt?.();await discover();for(const row of await window.CellboundBoothWorkflow.list('comic-text')){const scene=scenes.find(s=>s.config&&window.CellboundComicScenes.sceneKey(s.config)===row.key);if(scene&&!drafts[scene.id])drafts[scene.id]={panels:scene.panels.map((p,i)=>({...p,...(row.payload.panels[i]||{})})),workflow_revision:row.revision}}}catch(e){warning=String(e)}
  loading=false;if(!opened)return;render();requestAnimationFrame(()=>root.scrollIntoView({behavior:'smooth',block:'start'}))
 }
 function close(){opened=false;const root=$('#comicSceneEditorMount');if(root){root.hidden=true;root.innerHTML=''}}

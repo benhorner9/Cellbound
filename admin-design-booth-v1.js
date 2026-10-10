@@ -3,11 +3,14 @@
 const $=s=>document.querySelector(s);
 const esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clone=x=>JSON.parse(JSON.stringify(x));
-const owner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
+const gameOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
+const owner=()=>gameOwner()||Boolean(window.CellboundBoothWorkflow?.can('adventure')||window.CellboundBoothWorkflow?.can('template'));
+const toolAllowed=id=>gameOwner()||(id==='build'&&W()?.can('adventure'))||(id==='library'&&W()?.can('template'));
+const W=()=>window.CellboundBoothWorkflow;
 const db=()=>window.CellboundGame?.getSupabase?.();
 const runtime=()=>window.CellboundDesignedContent;
-const STORE='cellbound-design-booth-workspace-v1';
-const STASH='cellbound-design-booth-project-backups-v2';
+let STORE='cellbound-design-booth-workspace-v1';
+let STASH='cellbound-design-booth-project-backups-v2';
 const TOOLS=[
  {id:'director',label:'Game Build Hub',sub:'Full game planning · QA · workflows'},
  {id:'library',label:'Content Creator',sub:'New rooms · bosses · items'},
@@ -29,12 +32,12 @@ const GUIDANCE={
   "detail": "Create a new room, boss encounter, comic strip, puzzle or balanced equipment item. Cloud drafts are private; published items become selectable in approved boss drop tables. Add scene templates to any Adventure Builder project."
  },
  "build": {
-  "title": "Create → Save Draft → Test → Publish",
+  "title": "Create → Save Draft → Preview → Review → Publish",
   "detail": "Build a quest, dungeon or raid. Save a cloud draft first; only Publish makes the new adventure available to players."
  },
  "drops": {
   "title": "Choose boss → Edit items → Save",
-  "detail": "Existing game bosses: Save Boss Drops applies extra rewards straight away. Custom adventure bosses: Save Cloud Draft, then Publish Loot Changes. Existing dungeon rewards are not overwritten."
+  "detail": "Existing game bosses: Save Boss Drops submits extra rewards for review. Custom adventure bosses: Save Cloud Draft, then Publish Loot Changes. Existing dungeon rewards are not overwritten."
  },
  "items": {
   "title": "Search → Check item → Export if needed",
@@ -42,11 +45,11 @@ const GUIDANCE={
  },
  "comics": {
   "title": "Find scene → Review → Replace artwork",
-  "detail": "Comic artwork: Upload & Publish changes player-visible images immediately. Story text: Save Draft is LOCAL ONLY; export it for a developer to apply. Do not assume captions are published."
+  "detail": "Artwork and linked story captions use cloud drafts and review. Save Draft keeps changes private; Submit queues them for approval. Source-only scenes still require an exported developer review."
  },
  "rooms": {
   "title": "Choose room → Adjust → Test → Publish",
-  "detail": "Save Draft stays on your device. Test Layout affects only your owner session. Publish Layout changes staging for players; background artwork has its OWN Publish button."
+  "detail": "Save Draft stores marker positions in the cloud. Test Layout affects only your session. Layout and background changes must each be submitted, approved and published."
  },
  "pvp-maps": {
   "title": "Choose PvP map → Drag markers → Test → Publish",
@@ -109,7 +112,7 @@ function copyAsNewDraft(source){
  const original=clone(source),type=original.content_type||'quest';
  const root=String(original.title||'Untitled '+type).replace(/^Copy of /,'');
  return {...original,id:null,slug:type+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),
-  title:('Copy of '+root).slice(0,120),status:'draft',version:1,
+  title:('Copy of '+root).slice(0,120),status:'draft',version:1,workflow_revision:0,
   steps:(original.steps||[]).map(stage=>({...stage,id:newStep(stage.type).id}))};
 }
 function fresh(type='quest'){
@@ -151,7 +154,7 @@ function restoreBackup(){
 function loadRecord(r,{renderNow=true}={}){
  if(project)storageBackup();
  const b=r.draft_blueprint&&Array.isArray(r.draft_blueprint.steps)?r.draft_blueprint:r.blueprint||{};
- const cloud={...clone(b),id:r.id,slug:r.slug,title:b.title||r.title,content_type:b.content_type||r.content_type,status:r.status,version:r.version};
+ const cloud={...clone(b),id:r.id,slug:r.slug,title:b.title||r.title,content_type:b.content_type||r.content_type,status:r.status,version:r.version,workflow_revision:r.workflow_revision};
  const saved=workspace['cloud:'+r.id];
  let restore=Boolean(saved?.dirty&&saved.project);
  if(restore&&saved.cloudUpdatedAt&&saved.cloudUpdatedAt!==r.updated_at){
@@ -160,14 +163,13 @@ function loadRecord(r,{renderNow=true}={}){
  project=restore?clone(saved.project):cloud;
  selectedId=r.id;stepIndex=restore?Math.min(saved.stepIndex||0,Math.max(0,project.steps.length-1)):0;
  baseline=restore?saved.baseline:JSON.stringify(project);
- cloudUpdatedAt=r.updated_at||null;
+ cloudUpdatedAt=restore?saved.cloudUpdatedAt:r.updated_at||null;
  message=restore?'Recovered unsaved edits from this device. Save Cloud Draft before leaving.':'Opened '+r.title;
  storageBackup();if(renderNow)render()
 }
 async function fetchRecords(){
  if(!db()||!owner())return;
- const {data,error}=await db().from('cellbound_design_blueprints').select('id,slug,title,content_type,status,version,blueprint,draft_blueprint,updated_at').order('updated_at',{ascending:false});
- if(error)throw error;records=data||[]
+ records=await W().records('adventure')
 }
 function validate(){
  if(!project)return['Create or select a design.'];
@@ -200,48 +202,30 @@ function validate(){
  });
  return errors
 }
-async function save(publish=false){
+let lastInput=0,autosaveBlocked=false;
+async function save(publish=false,{autosave=false}={}){
  if(!owner()||busy||uploadBusy||!project)return;
- collect();const problems=validate();
+ collect();const snapshot=clone(project);const problems=validate();
  if(publish&&problems.length){announce('Cannot publish: '+problems[0]+' ('+problems.length+' issues)');render();return}
  busy=true;announce(publish?'Publishing adventure…':'Saving draft to Cellbound…');
  const b=clean(),title=String(project.title||'Untitled').trim(),previousKey=keyFor(project);
- document.querySelectorAll('#dboWorkbench input,#dboWorkbench select,#dboWorkbench textarea,#dboWorkbench button,#dboDrops input,#dboDrops select,#dboDrops button').forEach(el=>el.disabled=true);
+ if(!autosave)document.querySelectorAll('#dboWorkbench input,#dboWorkbench select,#dboWorkbench textarea,#dboWorkbench button,#dboDrops input,#dboDrops select,#dboDrops button').forEach(el=>el.disabled=true);
  try{
   const user=await db().auth.getUser();
   if(user.error||!user.data?.user?.id)throw new Error('Sign in using your owner account.');
-  const stamp=new Date().toISOString();
-  if(project.id){
-   const record=records.find(r=>r.id===project.id);
-   const payload={draft_blueprint:b,updated_by:user.data.user.id,updated_at:stamp};
-   if(publish){payload.title=title;payload.content_type=project.content_type;payload.blueprint=b;payload.status='published';payload.published_at=stamp;payload.version=(Number(record?.version)||1)+1}
-   else if(record?.status!=='published'){payload.title=title;payload.content_type=project.content_type}
-   const {data,error}=await db().from('cellbound_design_blueprints').update(payload).eq('id',project.id).select().single();
-   if(error)throw error;project.status=data.status;project.version=data.version;
-  }else{
-   const payload={slug:project.slug,title,content_type:project.content_type,draft_blueprint:b,blueprint:publish?b:{},status:publish?'published':'draft',created_by:user.data.user.id,updated_by:user.data.user.id};
-   if(publish)payload.published_at=stamp;
-   const {data,error}=await db().from('cellbound_design_blueprints').insert(payload).select().single();
-   if(error)throw error;project.id=data.id;project.status=data.status;project.version=data.version;selectedId=data.id
-  }
+  const data=await W().saveLegacy('adventure',{slug:project.slug,title,content_type:project.content_type,blueprint:b},publish,project.workflow_revision||0);
+  project.id=data.id;project.status=data.status;project.version=data.version;project.workflow_revision=data.workflow_revision;selectedId=data.id;
   await fetchRecords();
   if(previousKey!==keyFor(project))delete workspace[previousKey];
   cloudUpdatedAt=records.find(r=>r.id===project.id)?.updated_at||null;
-  setBaseline();storageBackup();
-  if(publish){window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('PUBLISHED · players can now start this '+project.content_type+' in their game tab.')}
+  baseline=JSON.stringify({...snapshot,id:project.id,status:project.status,version:project.version,workflow_revision:project.workflow_revision});storageBackup();autosaveBlocked=false;
+  if(publish){window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('SUBMITTED FOR REVIEW · open Review & Publishing to compare, approve and publish this revision.')}
   else announce('DRAFT SAVED · published players still see the previous version, if any.');
- }catch(e){announce('Save failed: '+String(e?.message||e))}
- finally{busy=false;render()}
+ }catch(e){autosaveBlocked=true;announce('Save failed: '+String(e?.message||e))}
+ finally{busy=false;if(!autosave)render();else updateSaveState()}
 }
-async function remove(){
- if(!owner()||!project?.id||busy||uploadBusy||!confirm('Delete this design from Cellbound? A published adventure will disappear from player lists.'))return;
- busy=true;
- try{
-  const {error}=await db().from('cellbound_design_blueprints').delete().eq('id',project.id);if(error)throw error;
-  await fetchRecords();delete workspace[keyFor(project)];project=fresh();selectedId=null;stepIndex=0;cloudUpdatedAt=null;setBaseline();storageBackup();window.dispatchEvent(new CustomEvent('cellbound:design-published'));announce('Design deleted.');render()
- }catch(e){announce(String(e?.message||e))}
- finally{busy=false}
-}
+function remove(){announce('Open Review & Publishing to archive content or restore a previous version. All published versions are retained.')}
+
 async function upload(stepId,panelIndex,file){
  if(!file||!owner()||!project||uploadBusy||busy)return;
  if(!['image/webp','image/jpeg','image/png','image/avif'].includes(file.type)){announce('Use WebP, PNG, JPEG or AVIF.');return}
@@ -380,19 +364,20 @@ function renderReview(){
   }))
  }
  const btn=$('#dboWorkbench #dboPublish');if(btn)btn.disabled=busy||uploadBusy||validate().length>0;
- updateSaveState()
+ updateSaveState();
+ if(!gameOwner()&&!W()?.can('adventure','edit'))document.querySelectorAll('#dboWorkbench input,#dboWorkbench textarea,#dboWorkbench select,#dboWorkbench button:not([data-db-project]):not([data-db-step]):not(#dboTest)').forEach(el=>el.disabled=true)
 }
 function renderBuilder(){
  const host=$('#dboWorkbench');if(!host||!project)return;
  const s=project.steps[stepIndex]||null,problems=validate(),selected=records.find(r=>r.id===project.id);
  const localDrafts=Object.entries(workspace).filter(([key,row])=>key.startsWith('local:')&&row?.project&&!row.project.id&&Array.isArray(row.project.steps)).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));
- host.innerHTML='<div class="dbo-builder-top"><div><small>DESIGN WORKSPACE · CLOUD DRAFTS</small><h3>'+esc(project.title)+'</h3><p>'+esc(project.status==='published'?'Published v'+project.version+' · edit without changing the version players see until Publish is pressed':'Unpublished draft · only you can see it')+'</p><span data-dbo-save-state class="dbo-save-state"></span></div><div class="dbo-buttons"><button type="button" id="dboNewQuest">+ QUEST</button><button type="button" id="dboNewDungeon">+ DUNGEON</button><button type="button" id="dboNewRaid">+ RAID</button><button type="button" id="dboCopyAdventure">COPY TO NEW DRAFT</button></div></div>'+
+ host.innerHTML='<div class="dbo-builder-top"><div><small>DESIGN WORKSPACE · CLOUD DRAFTS</small><h3>'+esc(project.title)+'</h3><p>'+esc(project.status==='published'?'Published v'+project.version+' · edit without changing the version players see until Publish is pressed':'Unpublished draft · visible to authorised contributors')+'</p><span data-dbo-save-state class="dbo-save-state"></span></div><div class="dbo-buttons"><button type="button" id="dboNewQuest">+ QUEST</button><button type="button" id="dboNewDungeon">+ DUNGEON</button><button type="button" id="dboNewRaid">+ RAID</button><button type="button" id="dboCopyAdventure">COPY TO NEW DRAFT</button></div></div>'+
  '<div class="dbo-editor-layout"><aside class="dbo-projects"><h4>PROJECTS <span>'+(records.length+localDrafts.length)+'</span></h4><div class="dbo-project-list">'+records.map(r=>'<button type="button" data-db-project="'+esc(r.id)+'" class="'+(r.id===project.id?'active':'')+'"><small>'+esc(r.content_type.toUpperCase())+' · '+esc(r.status)+'</small><b>'+esc(r.title)+'</b></button>').join('')+localDrafts.map(([key,row])=>'<button type="button" data-db-local="'+esc(key)+'" class="'+(key===keyFor(project)?'active':'')+'"><small>ON THIS DEVICE · NOT CLOUD SAVED</small><b>'+esc(row.project.title||'Untitled')+'</b></button>').join('')+'</div><h4>ADVENTURE STAGES <span>'+project.steps.length+'/30</span></h4>'+
  '<div class="dbo-stage-list">'+project.steps.map((st,i)=>'<button type="button" data-db-step="'+i+'" class="'+(i===stepIndex?'active':'')+'"><i>'+String(i+1).padStart(2,'0')+'</i><span><b>'+esc(st.title)+'</b><small>'+esc(st.type)+'</small></span></button>').join('')+'</div>'+
  '<div class="dbo-add"><select id="dboAddType"><option value="comic">Comic strip</option><option value="room">Room / transition</option><option value="fight">Fight encounter</option><option value="minigame">Minigame</option></select><button type="button" id="dboAddStep" '+(project.steps.length>=30?'disabled':'')+'>+ ADD STAGE</button></div></aside>'+
  '<main id="dboFields" class="dbo-project-editor"><div class="dbo-form-grid">'+field('Adventure name','title',project.title)+field('Minimum party level','level',project.level,{kind:'number'})+field('Category','content_type',project.content_type,{kind:'select',opts:['quest','dungeon','raid']})+field('Short description','summary',project.summary,{kind:'textarea'})+'</div>'+
  (s?'<div class="dbo-stage-editor-header"><div><small>STAGE '+(stepIndex+1)+' OF '+project.steps.length+'</small><h3>'+esc(s.title)+'</h3></div><div class="dbo-stage-actions"><button data-db-move="-1" '+(stepIndex===0?'disabled':'')+'>↑</button><button data-db-move="1" '+(stepIndex===project.steps.length-1?'disabled':'')+'>↓</button><button id="dboCopyStage" '+(project.steps.length>=30?'disabled':'')+'>DUPLICATE STAGE</button><button id="dboSaveStageTemplate">SAVE AS TEMPLATE</button><button data-db-remove-stage>REMOVE</button></div></div>'+stageFields(s):'<div class="dbo-empty">Add a stage to start designing.</div>')+
- '<div class="dbo-review" id="dboReview" aria-live="polite">'+reviewHTML()+'</div><div class="dbo-footer"><button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboTest" '+(busy?'disabled':'')+'>▶ TEST FROM STAGE</button><button class="primary" id="dboPublish" '+(busy||problems.length?'disabled':'')+'>PUBLISH TO GAME</button>'+(project.id?'<button id="dboDelete">DELETE</button>':'')+'</div><p data-dbo-message role="status">'+esc(message||'Changes back up automatically on this iPad; use Save Cloud Draft to sync across devices.')+'</p></main></div>';
+ '<div class="dbo-review" id="dboReview" aria-live="polite">'+reviewHTML()+'</div><div class="dbo-footer"><button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboTest" '+(busy?'disabled':'')+'>▶ TEST FROM STAGE</button><button class="primary" id="dboPublish" '+(busy||problems.length?'disabled':'')+'>SUBMIT FOR REVIEW</button>'+'</div><p data-dbo-message role="status">'+esc(message||'Changes back up automatically on this iPad; use Save Cloud Draft to sync across devices.')+'</p></main></div>';
  bindBuilder()
 }
 function bindBuilder(){
@@ -428,7 +413,7 @@ function bindBuilder(){
  host.querySelectorAll('[data-db-upload]').forEach(el=>el.addEventListener('change',e=>{collect();upload(el.dataset.dbUpload,el.dataset.dbPanel==='stage'?null:Number(el.dataset.dbPanel),e.target.files?.[0])}));
  host.querySelector('#dboGoToDrops')?.addEventListener('click',()=>{collect();dropEditIndex=-1;dropSearch='';dropTier='all';selectedDropBoss=project.id?'project:'+project.id+':'+project.steps[stepIndex].id:'local:'+project.slug+':'+project.steps[stepIndex].id;setTab('drops')});
  host.querySelector('#dboSave')?.addEventListener('click',()=>save(false));
- host.querySelector('#dboPublish')?.addEventListener('click',()=>{if(confirm('Publish this '+project.content_type+' to the game for all players on staging?'))save(true)});
+ host.querySelector('#dboPublish')?.addEventListener('click',()=>{if(confirm('Submit this '+project.content_type+' for review? Players will continue seeing the published version.'))save(true)});
  host.querySelector('#dboDelete')?.addEventListener('click',remove);
  host.querySelector('#dboTest')?.addEventListener('click',()=>{collect();const preview={title:project.title,content_type:project.content_type,blueprint:{...clean(),steps:clean().steps.slice(stepIndex)}};runtime()?.play?.('local',preview)});
  renderReview();
@@ -504,7 +489,7 @@ function renderDrops(){
  (bad?'<p class="dbo-drop-error">'+esc(bad)+'</p>':'')+
  '<div class="dbo-buttons">'+(native?
  '<button id="dboSaveNative" class="primary" '+(nativeSaving||bad||!nativeChanged()?'disabled':'')+'>SAVE BOSS DROPS</button><button id="dboDiscardNative" '+(!nativeChanged()||nativeSaving?'disabled':'')+'>DISCARD EDITS</button>':
- '<button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboPublish" class="primary" '+(busy||bad||validate().length?'disabled':'')+'>PUBLISH LOOT CHANGES</button>')+'</div></div></section>';
+ '<button id="dboSave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button id="dboPublish" class="primary" '+(busy||bad||validate().length?'disabled':'')+'>SUBMIT LOOT FOR REVIEW</button>')+'</div></div></section>';
  bindDrops();applyLootFilters()
 }
 function applyLootFilters(){
@@ -558,7 +543,7 @@ function bindDrops(){
  }));
  host.querySelector('#dboSave')?.addEventListener('click',()=>save(false));
  host.querySelector('#dboPublish')?.addEventListener('click',()=>{
-  if(confirm('Publish these boss loot changes to the game?'))save(true)
+  if(confirm('Submit these boss loot changes for review?'))save(true)
  });
  host.querySelector('#dboDiscardNative')?.addEventListener('click',()=>{if(!confirm('Discard the unsaved changes for this boss?'))return;nativeDrops=JSON.parse(nativeBaseline);dropEditIndex=-1;announce('Edits discarded. Saved boss rewards were not changed.');renderDrops()});
  host.querySelector('#dboSaveNative')?.addEventListener('click',async()=>{
@@ -566,7 +551,7 @@ function bindDrops(){
   if(!target||nativeSaving)return;
   const error=validateLootRows(nativeDrops);if(error){announce(error);return}
   nativeSaving=true;renderDrops();
-  try{await window.CellboundBossDropTables.save(target.key,nativeDrops);nativeBaseline=JSON.stringify(nativeDrops);announce('Boss drop table saved. These optional drops now apply when '+target.title+' is defeated.')}
+  try{await window.CellboundBossDropTables.save(target.key,nativeDrops);nativeBaseline=JSON.stringify(nativeDrops);announce('Boss drop draft submitted. Approve and publish it in Review & Publishing.')}
   catch(e){announce('Could not save boss drops: '+String(e?.message||e))}
   finally{nativeSaving=false;renderDrops()}
  })
@@ -589,6 +574,7 @@ function renderTemplates(){
 }
 function toolApi(id){return window[plugins[id]]}
 function setTab(id){
+ if(!toolAllowed(id))return;
  if(!TOOLS.some(x=>x.id===id))return;
  if(id!==active&&!canLeave())return;
  if(id!==active&&(active==='build'||active==='drops'))collect();
@@ -611,14 +597,15 @@ function render(){
  const advanced=['generator','models','templates'];
  const tab=t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>';
  root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · CREATIVE WORKSPACE</small><h2>Design Booth</h2><p>Build new Cellbound adventures, plan game systems, test ideas, manage rewards and refine existing scenes.</p></div><button id="dboClose" type="button">CLOSE ×</button></header>'+
- '<section class="dbo-quickstart" aria-label="Choose a task"><div><h3>What do you want to do?</h3><p>Choose a job. Adventures require Publish; existing-boss drops take effect when you press Save Boss Drops.</p></div><div class="dbo-quick-actions">'+
- [['director','Full game build hub'],['library','Create game content'],['build','Build an adventure'],['drops','Edit boss loot'],['items','Find an item'],['comics','Edit comic art'],['rooms','Edit dungeon rooms'],['pvp-maps','Design PvP maps'],['combat-ui','Edit combat UI']].map(([id,label])=>'<button type="button" data-dbo-go="'+id+'" class="'+(active===id?'active':'')+'">'+label+' →</button>').join('')+'</div></section>'+
- '<nav class="dbo-tabs" role="tablist" aria-label="Design Booth tools">'+TOOLS.filter(t=>!advanced.includes(t.id)).map(tab).join('')+'</nav>'+
- '<details class="dbo-more" '+(moreOpen||advanced.includes(active)?'open':'')+'><summary>More tools · Character fit, dungeon planner & minigame templates</summary><nav class="dbo-tabs dbo-tabs-more" role="tablist" aria-label="Advanced tools">'+TOOLS.filter(t=>advanced.includes(t.id)).map(tab).join('')+'</nav></details>'+
- '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Press Publish only when everything is ready. Existing published content stays unchanged until then.</li></ol><p>Local backups are for recovery on this device; only a cloud-saved draft is available on another device.</p></details>'+
- '<aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboDirectorMount" hidden></div><div id="dboLibrary" hidden></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
+ '<section class="dbo-quickstart" aria-label="Choose a task"><div><h3>What do you want to do?</h3><p>Choose a job. Changes stay private until approved and published in Review & Publishing.</p></div><div class="dbo-quick-actions">'+
+ [['director','Full game build hub'],['library','Create game content'],['build','Build an adventure'],['drops','Edit boss loot'],['items','Find an item'],['comics','Edit comic art'],['rooms','Edit dungeon rooms'],['pvp-maps','Design PvP maps'],['combat-ui','Edit combat UI']].filter(([id])=>toolAllowed(id)).map(([id,label])=>'<button type="button" data-dbo-go="'+id+'" class="'+(active===id?'active':'')+'">'+label+' →</button>').join('')+'</div></section>'+
+ '<nav class="dbo-tabs" role="tablist" aria-label="Design Booth tools">'+TOOLS.filter(t=>toolAllowed(t.id)&&!advanced.includes(t.id)).map(tab).join('')+'</nav>'+
+ '<details class="dbo-more" '+(moreOpen||advanced.includes(active)?'open':'')+'><summary>More tools · Character fit, dungeon planner & minigame templates</summary><nav class="dbo-tabs dbo-tabs-more" role="tablist" aria-label="Advanced tools">'+TOOLS.filter(t=>toolAllowed(t.id)&&advanced.includes(t.id)).map(tab).join('')+'</nav></details>'+
+ '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Submit for Review when ready. Review & Publishing lets authorised reviewers approve the revision, then publish it. Existing published content stays unchanged until then.</li></ol><p>Local backups are for recovery on this device; only a cloud-saved draft is available on another device.</p></details>'+
+ '<details class="booth-workflow-panel"><summary>Review & Publishing · History · Permissions</summary><div id="dboWorkflow"></div></details><aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboDirectorMount" hidden></div><div id="dboLibrary" hidden></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="pvpMapEditorMount" class="pvp-map-editor-mount" hidden></div><div id="combatUILayoutMount" class="combat-ui-layout-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
+ root.querySelector('.booth-workflow-panel').addEventListener('toggle',e=>{if(e.target.open)W().panel()});
  root.querySelectorAll('[data-dbo-tool],[data-dbo-go]').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.dboTool||btn.dataset.dboGo));
  root.querySelector('.dbo-more')?.addEventListener('toggle',e=>{moreOpen=e.target.open});
  setTab(active)
@@ -626,17 +613,22 @@ function render(){
 async function open(){
  if(!owner())return;
  const root=$('#designBoothMount');if(!root)return;
+ await W().connect();
+ const account=W().user();
+ const nextStore='cellbound-design-booth-workspace-v1:'+account;
+ if(STORE!==nextStore){project=null;workspace={};STORE=nextStore;STASH='cellbound-design-booth-project-backups-v2:'+account}
+ if(!toolAllowed(active))active=W().can('adventure')?'build':'library';
  opened=true;root.hidden=false;
  if(!project){restoreBackup();if(!project){project=fresh('quest');setBaseline()}}
  render();
- try{await Promise.all([fetchRecords(),window.CellboundBossDropTables?.refresh?.(true)]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&(!lastLocal||r.updated_at!==cloudUpdatedAt)){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
+ try{await Promise.all([W().can('adventure')?fetchRecords():Promise.resolve(),gameOwner()?window.CellboundBossDropTables?.refresh?.(true):Promise.resolve()]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&(!lastLocal||r.updated_at!==cloudUpdatedAt)){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
  root.scrollIntoView?.({behavior:'smooth',block:'start'})
 }
 function close({force=false}={}){
  if(!force&&!canLeave())return;
  for(const name of Object.keys(plugins))toolApi(name)?.close?.();
  if(active==='build'||active==='drops')collect();
- opened=false;const root=$('#designBoothMount');if(root){root.hidden=true;root.innerHTML=''}
+ opened=false;const overlay=$('#boothContributorOverlay');if(overlay)overlay.hidden=true;const root=$('#designBoothMount');if(root){root.hidden=true;root.innerHTML=''}
 }
 function access(){
  const entry=$('#designBoothEntry');if(entry)entry.hidden=!owner();
@@ -645,6 +637,10 @@ function access(){
 function init(){
  if(initDone)return;initDone=true;
  const entry=$('#designBoothEntry');entry?.querySelector('#openDesignBooth')?.addEventListener('click',open);
+ document.addEventListener('input',e=>{if(e.target.closest?.('#dboWorkbench,#dboDrops'))lastInput=Date.now()});
+ window.addEventListener('beforeunload',e=>{if(opened){collect();storageBackup()}if(changed()){e.preventDefault();e.returnValue=''}});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden&&opened){collect();storageBackup()}});
+ setInterval(()=>{if(opened&&W()?.can('adventure','edit')&&active==='build'&&changed()&&!busy&&!uploadBusy&&!autosaveBlocked&&Date.now()-lastInput>2000)save(false,{autosave:true})},5000);
  window.addEventListener('cellbound:admin-status',access);
  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')access()});
  access()

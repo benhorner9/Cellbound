@@ -56,7 +56,7 @@ vm.runInNewContext(code,{window,document,localStorage,fetch,console,setTimeout()
   assert.equal(scene.panels.length,count,'Owner editor disagrees with gameplay dialogue: '+title);
   assert(scene.panels.every(p=>p.artwork.startsWith('./assets/comics/no-way-back-2026/')&&p.artwork.endsWith('.svg')),'No Way Back scene not wired to original illustrated assets: '+title);
  }
- assert(code.includes('comic_scene_panel_art')&&code.includes("'comic-scene-art'")&&code.includes('data-upload-file'),'Editor must publish uploaded artwork through owner-gated storage');
+ assert(code.includes("CellboundBoothWorkflow.submit('comic-art'")&&code.includes("'comic-scene-art'")&&code.includes('data-upload-file'),'Editor must submit uploaded artwork through the secure review workflow');
  window.CellboundAdmin.role='moderator';
  assert.equal(ui.isOwner(),false,'Editor must be owner-only');
  console.log('Comic scene editor: story catalog, artwork lookup and owner gate passed ('+found.length+' scenes).')

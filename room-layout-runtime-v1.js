@@ -81,20 +81,15 @@ async function publishArt(content,room,file){
  const stored=await db.storage.from(ART_BUCKET).upload(path,file,{contentType:file.type,cacheControl:'31536000',upsert:false});
  if(stored.error)throw stored.error;
  const row={content_id:content,room_id:room,object_path:path,updated_by:auth.user.id,updated_at:new Date().toISOString()};
- const saved=await db.from('cellbound_room_art').upsert(row,{onConflict:'content_id,room_id'});
- if(saved.error)throw saved.error;
- publishedArt.set(key(content,room),row);
- window.dispatchEvent(new CustomEvent('cellbound:room-art-changed',{detail:{content,room,mode:'published'}}));
- return{...row,url:artFor(content,room)};
+ await window.CellboundBoothWorkflow.submit('room-art',content+'/'+room,row);
+ return {...row,submitted:true};
 }
 async function restoreArt(content,room){
  if(!isOwner())throw new Error('Owner access required.');
  await ready();if(!db)throw new Error('Room art service unavailable.');
- const {error}=await db.from('cellbound_room_art').delete().eq('content_id',content).eq('room_id',room);
- if(error)throw error;
- publishedArt.delete(key(content,room));
- window.dispatchEvent(new CustomEvent('cellbound:room-art-changed',{detail:{content,room,mode:'default'}}));
- return true
+ await window.CellboundBoothWorkflow.get('room-art',content+'/'+room);
+ await window.CellboundBoothWorkflow.transition('archive','room-art',content+'/'+room);
+ await refreshArt();return true;
 }
 
 function applyRoomConfig(content,room,base){
@@ -182,26 +177,19 @@ async function ready(){
  })();
  return loading
 }
-async function publish(content,room,layout){
+async function publish(content,room,layout,expectedRevision){
  if(!isOwner())throw new Error('Owner access required');
  await ready();if(!db)throw new Error('Room layout service unavailable');
  const clean=cleanLayout(layout);
- const {data,error}=await db.rpc('cellbound_owner_publish_room_layout',{p_content_id:content,p_room_id:room,p_layout:clean});
- if(error)throw error;
- const row=typeof data==='object'&&data?data:{};
- published.set(key(content,room),{layout:cleanLayout(row.layout||clean),version:Number(row.version)||1,published_at:row.published_at||new Date().toISOString()});
- clearTest(content,room);
- window.dispatchEvent(new CustomEvent('cellbound:room-layout-changed',{detail:{content,room,mode:'published'}}));
- return clone(published.get(key(content,room)))
+ const result=await window.CellboundBoothWorkflow.submit('room-layout',content+'/'+room,{content_id:content,room_id:room,layout:clean},expectedRevision);
+ return {submitted:true,revision:result.revision};
 }
 async function unpublish(content,room){
  if(!isOwner())throw new Error('Owner access required');
  await ready();if(!db)throw new Error('Room layout service unavailable');
- const {data,error}=await db.rpc('cellbound_owner_unpublish_room_layout',{p_content_id:content,p_room_id:room});
- if(error)throw error;
- published.delete(key(content,room));clearTest(content,room);
- window.dispatchEvent(new CustomEvent('cellbound:room-layout-changed',{detail:{content,room,mode:'default'}}));
- return Boolean(data)
+ await window.CellboundBoothWorkflow.get('room-layout',content+'/'+room);
+ await window.CellboundBoothWorkflow.transition('archive','room-layout',content+'/'+room);
+ published.delete(key(content,room));clearTest(content,room);return true;
 }
 function namedMechanics(content,room){
  const list=markersFor(content,room,'mechanic');

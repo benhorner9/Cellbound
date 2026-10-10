@@ -404,3 +404,14 @@ body .cbcombat-shell.cbe-live .cbcombat-route{overflow:hidden!important}
 @media(max-width:1000px){.gdh-domains{grid-template-columns:repeat(2,minmax(0,1fr))}.gdh-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.gdh-content{padding:8px}.gdh-section,.gdh-workflow{padding:12px}.gdh-domains,.gdh-audit-columns,.gdh-author-grid{grid-template-columns:1fr}.gdh-editor{grid-template-columns:1fr}.gdh-editor label{grid-column:1/-1}.gdh-section-head{align-items:flex-start}.gdh-steps li{grid-template-columns:30px 1fr;gap:7px}.gdh-steps button{grid-column:2;justify-self:start}.gdh-head h2{font-size:25px}}
 @media(max-width:470px){.gdh-domains{grid-template-columns:1fr}.gdh-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.gdh-stats b{font-size:21px}.gdh-brief-list{max-height:200px}}
+/* Shared publishing review uses touch-sized controls and contained comparison scrolling. */
+.booth-workflow-panel{margin:12px 0;padding:16px;border:1px solid #53627a;border-radius:12px;background:#111b2c;color:#eef3ff}
+.booth-workflow-panel summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700}
+.booth-review{padding:16px 0;border-top:1px solid #53627a;display:grid;gap:10px}
+.booth-review small{display:block;overflow-wrap:anywhere}
+.booth-review button,.booth-workflow-panel button{min-height:44px;margin:4px;padding:8px 14px;touch-action:manipulation}
+.booth-workflow-panel pre{max-height:360px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;overscroll-behavior:contain}
+.booth-workflow-panel label{display:block;margin:12px 0}.booth-workflow-panel input,.booth-workflow-panel select{font-size:16px;max-width:100%;min-height:44px}
+#boothContributorEntry{position:fixed;left:16px;bottom:20px;z-index:200;min-height:48px;padding:12px 20px}
+#boothContributorOverlay{position:fixed;inset:0;z-index:12000;overflow:auto;overscroll-behavior:contain;background:#101722;padding:16px}
+#boothContributorOverlay[hidden],#boothContributorEntry[hidden]{display:none}

@@ -56,6 +56,13 @@ const touchFix=`\n<style id="cellbound-ios-touch-fix">html,body{touch-action:man
 for(const file of files){
   const src=sourcePath(file),dest=path.join(out,file);
   let contents=fs.readFileSync(src,'utf8');
+  if(['auth.js','guild-v4.js'].includes(file)&&process.env.CELLBOUND_STAGING_SUPABASE_URL){
+    const url=process.env.CELLBOUND_STAGING_SUPABASE_URL,key=process.env.CELLBOUND_STAGING_SUPABASE_KEY||'';
+    require('./tools/verify-booth-staging.cjs').validate(url,key);
+    contents=contents.replace(/const SUPABASE_URL='[^']*';/, 'const SUPABASE_URL='+JSON.stringify(url)+';')
+      .replace(/const SUPABASE_PUBLISHABLE_KEY='[^']*';/, 'const SUPABASE_PUBLISHABLE_KEY='+JSON.stringify(key)+';');
+  }
+
   if(file.endsWith('.js')){
     try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}
     const singletonCollectionCall=/(^|[^$])\$\([^\n;)]*\)\.(?:forEach|map|filter|some|every|reduce)\(/m;
@@ -1409,7 +1416,7 @@ if(!readSource('guild.html').includes('pvp-ruleset-v1.js?v=1')||!files.includes(
  if(!files.includes('pvp-maps-v1.js')||!files.includes('admin-pvp-map-editor-v1.js')||!files.includes('admin-pvp-map-editor-v1.css'))throw new Error('PvP map assets not in the build manifest');
  if(!booth.includes("id:'pvp-maps'")||!booth.includes('pvpMapEditorMount'))throw new Error('PvP Maps missing from Design Booth navigation');
  if(!editor.includes('pmeCanvas')||!editor.includes('pmePublish')||!editor.includes('pmeTest'))throw new Error('PvP Map Studio edit/test/publish controls absent');
- if(!mapRuntime.includes("cellbound_pvp_maps")||!mapRuntime.includes("cellbound_pvp_map_drafts")||!mapRuntime.includes('function setTest('))throw new Error('PvP map cloud and owner preview runtime absent');
+ if(!mapRuntime.includes("cellbound_pvp_maps")||!mapRuntime.includes("CellboundBoothWorkflow.list('pvp-map')")||!mapRuntime.includes('function setTest('))throw new Error('PvP map cloud and owner preview runtime absent');
  if(!engine.includes('pvpMap=pvpInput?.map?.layout'))throw new Error('PvP maps must drive Combat Reborn initial spawn and collision');
  if(!files.includes('pvp-objectives-v1.js'))throw new Error('Shared map objective runtime unavailable');
  if(!files.includes('pvp-owner-qa-v1.js')||!html.includes('pvp-owner-qa-v1.js?v=3')||!qa.includes("window.CellboundAdmin?.role!==\'owner\'")||!qa.includes("window.CellboundPvPOwnerQA="))throw new Error('Owner sandbox module is missing or not role gated');

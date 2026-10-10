@@ -107,6 +107,7 @@ async function mount(page,seedState=null,owner=false,options={}){
       },
       from:query,
       rpc:async(name,args={})=>{
+        if(name==='cellbound_booth'){if(args.p_action==='access')return{data:{role:owner?'owner':'none',scopes:owner?['adventure','template','room-layout','room-art','comic-art','comic-text','pvp-map','boss-drops']:[],can_publish:owner},error:null};if(args.p_action==='list'||args.p_action==='members')return{data:[],error:null};return{data:null,error:{message:'Workflow test fixture does not implement this mutation'}}}
         if(name==='cellbound_social_identity')return{data:{staff_member:owner,chat_badge:owner?'owner':'player',player_mod_discount_eligible:false},error:null};
         if(name==='cellbound_admin_status')return{data:owner?{is_admin:true,role:'owner',auto_clear_cell_shock:false}:{is_admin:false,role:null,auto_clear_cell_shock:false},error:null};
         if(name==='cellbound_release_status')return{data:null,error:null};
