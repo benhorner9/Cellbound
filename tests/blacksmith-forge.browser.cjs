@@ -43,7 +43,7 @@ const root=path.resolve(__dirname,'..');
  assert.equal(await page.evaluate(()=>window.mockState.consumables[0].quantity),1,'one work order delivers one item');
  assert.equal(await page.evaluate(()=>window.mockState.roster[0].professions[0].projectsCompleted),1,'one completed project');
  assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject),null,'project cleared after claim');
- assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),3,'materials consumed once');
+ assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),4,'masterwork consumes two inputs and reclaims exactly one, per existing rules');
  assert.deepEqual(errors,[],'no browser errors');
  console.log('Blacksmith forge economy integration passed: reserve, 3 saved actions, refund, timed quality reward and one output.');
  }finally{await browser.close()}
