@@ -413,5 +413,5 @@ body .cbcombat-shell.cbe-live .cbcombat-route{overflow:hidden!important}
 .booth-workflow-panel pre{max-height:360px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;overscroll-behavior:contain}
 .booth-workflow-panel label{display:block;margin:12px 0}.booth-workflow-panel input,.booth-workflow-panel select{font-size:16px;max-width:100%;min-height:44px}
 #boothContributorEntry{position:fixed;left:16px;bottom:20px;z-index:200;min-height:48px;padding:12px 20px}
-#boothContributorOverlay{position:fixed;inset:0;z-index:12000;overflow:auto;overscroll-behavior:contain;background:#101722;padding:16px}
+#boothContributorOverlay{position:fixed;inset:0;z-index:1000;overflow:auto;overscroll-behavior:contain;background:#101722;padding:16px}
 #boothContributorOverlay[hidden],#boothContributorEntry[hidden]{display:none}

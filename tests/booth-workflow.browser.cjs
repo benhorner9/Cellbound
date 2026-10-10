@@ -32,6 +32,9 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
   await page.locator('#boothContributorEntry').click();
   assert(await page.locator('#boothContributorOverlay').isVisible(),'Contributor opens Booth without entering game admin');
   assert.equal(await page.locator('[data-dbo-tool]').count(),2,'Only scoped editors are offered');
+  await page.evaluate(()=>{window.boothPreviewResult=CellboundComicScenes.show({title:'Contributor preview',boothPreview:true,panels:[{title:'Preview panel',text:'Private preview'}],storyOnly:true})});
+  await page.locator('#cellboundComicScene [data-comic-continue]').click();
+  assert(await page.locator('#cellboundComicScene').isHidden(),'Contributor can interact with the existing preview above the editor overlay');
   const result=await page.evaluate(async()=>{
    const w=CellboundBoothWorkflow,p={slug:'ui-test',title:'UI Test',content_type:'quest',blueprint:{steps:[]}};
    const saved=await w.save('adventure','ui-test',p,0);

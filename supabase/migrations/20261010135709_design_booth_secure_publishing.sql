@@ -251,10 +251,14 @@ do $$ declare f record; begin
  end loop;
 end $$;
 
-create function public.cellbound_booth_can_upload()
+create function booth_private.can_upload()
 returns boolean language sql security definer set search_path='' as $$
  select booth_private.allowed('adventure','edit') or booth_private.allowed('template','edit')
 $$;
+revoke all on function booth_private.can_upload() from public,anon,authenticated;
+grant execute on function booth_private.can_upload() to authenticated;
+create function public.cellbound_booth_can_upload()
+returns boolean language sql security invoker set search_path='' as $$ select booth_private.can_upload() $$;
 revoke all on function public.cellbound_booth_can_upload() from public,anon;
 grant execute on function public.cellbound_booth_can_upload() to authenticated;
 create policy "Contributors append design artwork" on storage.objects for insert to authenticated
