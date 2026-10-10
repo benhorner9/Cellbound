@@ -327,7 +327,7 @@ async function saveRuntime(dungeonId,runtimeState){
 }
 
 function isVerifiedRunRecord(record){
- return Boolean(record&&typeof record==='object'&&!record.error&&record.valid!==false);
+ return Boolean(record&&typeof record==='object'&&!record.error&&record.valid===true);
 }
 function reportUnverifiedClear(dungeonId,record){
  const detail=String(record?.reason||record?.error?.message||'No confirmation returned').slice(0,180);
