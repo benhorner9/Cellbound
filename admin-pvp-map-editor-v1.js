@@ -9,8 +9,31 @@ const localKey=()=>LOCAL+':'+String(window.CellboundGame?.getUser?.()?.id||'sign
 let opened=false,selected='crucible-arena',draft=null,baseline='',busy=false,message='',selectedMarker='spawn-blue-0',grid=true,initialized=false;
 const getLocal=()=>{try{return JSON.parse(localStorage.getItem(localKey())||(window.CellboundAdmin?.role==='owner'?localStorage.getItem(LOCAL):null)||'{}')||{}}catch{return{}}};
 let localDrafts={},account='';
-const persist=()=>{if(!draft)return;localDrafts[draft.id]=clone(draft);try{localStorage.setItem(localKey(),JSON.stringify(localDrafts))}catch{}};
+const autosaves=new Map(),saving=new Set(),retry=new Set();
+const persist=()=>{if(!draft)return;localDrafts[draft.id]=clone(draft);try{localStorage.setItem(localKey(),JSON.stringify(localDrafts))}catch{note('Device recovery storage is full. Export or save before closing.');return}if(dirty())scheduleSave(draft.id)};
 const dirty=()=>Boolean(draft)&&JSON.stringify(draft)!==baseline;
+function scheduleSave(id){
+ if(!window.CellboundBoothWorkflow?.can('pvp-map','edit'))return;
+ clearTimeout(autosaves.get(id));const store=localDrafts,key=localKey();
+ autosaves.set(id,setTimeout(()=>autosave(id,store,key),2000));
+}
+async function autosave(id,store,key){
+ if(store!==localDrafts||key!==localKey()||!store[id])return;
+ if(saving.has(id)||busy){scheduleSave(id);return}
+ const snapshot=clone(store[id]);
+ saving.add(id);autosaves.delete(id);
+ try{
+  const saved=await api().saveDraft(snapshot);
+  if(store!==localDrafts||key!==localKey())return;
+  const current=store[id];if(!current)return;
+  retry.delete(id);
+  const unchanged=JSON.stringify(current)===JSON.stringify(snapshot);
+  current.workflow_revision=saved.workflow_revision;
+  if(draft?.id===id){draft.workflow_revision=saved.workflow_revision;if(unchanged)baseline=JSON.stringify(api().clean(draft));note(unchanged?'CLOUD DRAFT SAVED · available on another device.':'New changes waiting to save.');}
+  localStorage.setItem(key,JSON.stringify(store));if(!unchanged)scheduleSave(id);
+ }catch(e){if(key===localKey()){retry.add(id);if(draft?.id===id)note('Not saved to cloud. Device recovery retained: '+e.message)}}
+ finally{saving.delete(id)}
+}
 function note(txt){message=txt;const label=$('#pmeMessage');if(label)label.textContent=txt}
 function markerList(m){
  if(!m)return[];
@@ -161,6 +184,8 @@ function changeBlocker(which,value){
  b[which]=Math.max(2,Math.min(35,Number(value)||8));persist();render()
 }
 async function action(fn){
+ if(saving.has(draft?.id)){note('Cloud save in progress. Please wait before submitting.');return}
+ clearTimeout(autosaves.get(draft?.id));autosaves.delete(draft?.id);
  if(busy)return;busy=true;const host=$('#pvpMapEditorMount');host?.querySelectorAll('button').forEach(b=>b.disabled=true);
  try{message=await fn();render()}
  catch(e){message='Action failed: '+String(e?.message||e);render()}
@@ -168,7 +193,7 @@ async function action(fn){
 }
 async function open(){
  if(!owner())return;
- if(account!==localKey()){account=localKey();localDrafts=getLocal();draft=null;baseline=''}
+ if(account!==localKey()){account=localKey();localDrafts=getLocal();draft=null;baseline='';retry.clear()}
  const host=$('#pvpMapEditorMount');if(!host)return;opened=true;host.hidden=false;
  if(!draft)choose(selected,{force:true});
  render();
@@ -178,5 +203,6 @@ async function open(){
  }catch(e){note('Cloud maps unavailable. Local drafts are still editable: '+e.message)}
 }
 function close(){opened=false;const host=$('#pvpMapEditorMount');if(host){host.hidden=true;host.innerHTML=''}}
+window.addEventListener('online',()=>{for(const id of retry)scheduleSave(id)});
 window.CellboundPvPMapEditor=Object.freeze({open,close,canLeave,render,current:()=>clone(draft||{}),markerList,setMarker});
 })();

@@ -4,6 +4,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>JSON.parse(JSON.stringify(v));
 let KEY='cellbound-comic-scene-editor-drafts-v1';
+const accountKey=()=> 'cellbound-comic-scene-editor-drafts-v1:'+String(window.CellboundGame?.getUser?.()?.id||'signed-out');
 const SOURCES=[
  ['quests-v2.js','Main Quests',['showDialogue','nullComic','comic.show','window.CellboundComicScenes.show']],
  ['thirteenth-bell-v1.js','The Thirteenth Bell',['bellComic']],
@@ -15,6 +16,7 @@ const NULL_ART={signal:'voss-signal',entry:'facility-entry',splice:'first-aberra
 let scenes=[],selected='',filter='',group='all',gaps=false,opened=false,loading=false,warning='';
 const broken=new Set();
 let drafts={};
+const autosaves=new Map(),saving=new Set();
 const owner=()=>window.CellboundAdmin?.isAdmin===true&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'||Boolean(window.CellboundBoothWorkflow?.can('comic-text')||window.CellboundBoothWorkflow?.can('comic-art'));
 function quotedEnd(s,i){const q=s[i++];while(i<s.length){if(s[i]==='\\'){i+=2;continue}if(s[i++]===q)break}return i}
 function bracket(s,i){
@@ -238,14 +240,35 @@ function edited(){
 function message(value){const m=$('#cseMessage');if(m)m.textContent=value}
 async function save(submit=false){
  const s=edited();if(!s)return;
- drafts[s.id]={workflow_revision:drafts[s.id]?.workflow_revision||0,review:s.review,panels:s.panels.map(p=>({artwork:p.artwork,title:p.title,text:p.text})),updatedAt:new Date().toISOString()};
+ if(!backup(s))return;
+ return saveScene(s,submit,drafts,KEY);
+}
+function backup(s){
+ drafts[s.id]={workflow_revision:drafts[s.id]?.workflow_revision||0,review:s.review,panels:s.panels.map(p=>({artwork:p.artwork,title:p.title,text:p.text})),updatedAt:new Date().toISOString(),cloudSaved:false};
+ try{localStorage.setItem(KEY,JSON.stringify(drafts));return true}catch{message('Device recovery storage is full. Copy the scene before closing.');return false}
+}
+function scheduleSave(s){
+ if(!window.CellboundBoothWorkflow?.can('comic-text','edit')||!s.config)return;
+ clearTimeout(autosaves.get(s.id));const store=drafts,key=KEY;
+ autosaves.set(s.id,setTimeout(()=>saveScene(s,false,store,key),2000));
+}
+async function saveScene(s,submit,store,storageKey){
+ if(store!==drafts||storageKey!==KEY||storageKey!==accountKey()||!store[s.id])return;
+ if(saving.has(s.id)){if(!submit)scheduleSave(s);else message('Cloud save in progress. Wait before submitting.');return}
+ clearTimeout(autosaves.get(s.id));autosaves.delete(s.id);
+ const snapshot=clone(store[s.id]);saving.add(s.id);
  try{
-  localStorage.setItem(KEY,JSON.stringify(drafts));
   if(!s.config)throw Error('This source-only scene has no runtime ID. Export this draft for developer review.');
-  const key=window.CellboundComicScenes.sceneKey(s.config),payload={scene_id:key,panels:s.panels.map(p=>({title:p.title,text:p.text}))};
-  const result=await window.CellboundBoothWorkflow[submit?'submit':'save']('comic-text',key,payload,drafts[s.id].workflow_revision||0);
-  drafts[s.id].workflow_revision=result.revision;localStorage.setItem(KEY,JSON.stringify(drafts));render();message(submit?'SUBMITTED · approve and publish in Review & Publishing.':'CLOUD CAPTIONS SAVED. Artwork paths are local previews; use Upload & Submit for artwork.');
- }catch(e){message('Local copy retained. '+e.message)}
+  const key=window.CellboundComicScenes.sceneKey(s.config),payload={scene_id:key,panels:snapshot.panels.map(p=>({title:p.title,text:p.text}))};
+  const result=await window.CellboundBoothWorkflow[submit?'submit':'save']('comic-text',key,payload,snapshot.workflow_revision||0);
+  if(store!==drafts||storageKey!==KEY||storageKey!==accountKey()||!store[s.id])return;
+  const current=store[s.id];current.workflow_revision=result.revision;
+  current.cloudSaved=JSON.stringify(current.panels)===JSON.stringify(snapshot.panels);
+  localStorage.setItem(storageKey,JSON.stringify(store));
+  if(selected===s.id)message(current.cloudSaved?(submit?'SUBMITTED · approve and publish in Review & Publishing.':'CLOUD CAPTIONS SAVED · artwork paths remain previews until uploaded and published.'):'New edits waiting to save.');
+  if(!current.cloudSaved)scheduleSave(s);
+ }catch(e){if(selected===s.id&&storageKey===KEY)message('Local copy retained. '+e.message)}
+ finally{saving.delete(s.id)}
 }
 async function copy(str){
  try{await navigator.clipboard.writeText(str);message('Copied to clipboard.')}catch{const t=document.createElement('textarea');t.value=str;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();message('Copied to clipboard.')}
@@ -295,9 +318,10 @@ function bind(s){
  $('#cseGroup').onchange=e=>{group=e.target.value;showList()};
  $('#cseGaps').onchange=e=>{gaps=e.target.checked;showList()};
  if(!s)return;
+ $('#comicSceneEditorMount').querySelectorAll('[data-title],[data-text],[data-art],#cseReview').forEach(input=>input.addEventListener('input',()=>{const value=edited();if(value&&backup(value)){message('Saved on this device · waiting for cloud save.');scheduleSave(value)}}));
  $('#cseSave').onclick=()=>save(false);
  $('#cseSubmit').onclick=()=>save(true);
- $('#cseReset').onclick=()=>{if(!confirm('Discard drafts for this scene?'))return;delete drafts[selected];localStorage.setItem(KEY,JSON.stringify(drafts));render()};
+ $('#cseReset').onclick=()=>{if(saving.has(selected)){message('Wait for the current save before resetting.');return}if(!confirm('Discard drafts for this scene?'))return;clearTimeout(autosaves.get(selected));autosaves.delete(selected);delete drafts[selected];localStorage.setItem(KEY,JSON.stringify(drafts));render()};
  $('#cseCopy').onclick=()=>{const value=edited();if(value)copy(JSON.stringify(value,null,2))};
  $('#csePreview').onclick=async()=>{
   if(!owner()||loading)return;
@@ -312,7 +336,7 @@ function bind(s){
 }
 async function open(){
  if(!owner()||loading)return;
- const nextKey='cellbound-comic-scene-editor-drafts-v1:'+String(window.CellboundGame?.getUser?.()?.id||'signed-out');
+ const nextKey=accountKey();
  if(KEY!==nextKey){KEY=nextKey;try{drafts=JSON.parse(localStorage.getItem(KEY)||(window.CellboundAdmin?.role==='owner'?localStorage.getItem('cellbound-comic-scene-editor-drafts-v1'):null)||'{}')||{}}catch{drafts={}}}
  const root=$('#comicSceneEditorMount');if(!root)return;
  opened=true;root.hidden=false;loading=true;root.textContent='Scanning story scenes…';
@@ -328,6 +352,7 @@ function init(){
  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')access()});
  access()
 }
+window.addEventListener('online',()=>{for(const scene of scenes)if(drafts[scene.id]&&!drafts[scene.id].cloudSaved)scheduleSave(scene)});
 window.CellboundComicSceneEditor={open,close,discover,list:()=>scenes.map(combined),isOwner:owner};
 init()
 })();
