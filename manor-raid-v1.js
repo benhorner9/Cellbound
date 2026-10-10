@@ -69,7 +69,7 @@ const SCREECH_COLOURS=[
 ];
 const SCREECH_TIMEOUT_MS=4500;
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null,pendingRewardSession=null;
-let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0,maidOverlayPenaltyKey='',ownerSoloQa=false;
+let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0,maidOverlayPenaltyKey='',ownerSoloQa=false,raidOpening=false;
 const handledScreechTokens=new Set();
 const resolvingScreechTokens=new Set();
 const screechPromptTimers=new Map();
@@ -253,7 +253,7 @@ async function syncParty(listingId){
 function manorRaidViewBusy(){
  // Lobby polling is separate from active raid-session polling. Never allow a
  // lobby refresh to replace an in-progress two-player or owner QA session.
- return Boolean(ownerSoloQa||raidTimer!==null||paintTimer!==null);
+ return Boolean(ownerSoloQa||raidOpening||raidTimer!==null||paintTimer!==null);
 }
 async function fetchHub(){
  if(manorRaidViewBusy()||!db||!user)return;
@@ -671,14 +671,15 @@ async function loadSession(id){
  members=m||members;
 }
 async function openRaid(id){
- try{await loadSession(id)}catch(e){alert(e.message);return}
+ raidOpening=true;
+ try{await loadSession(id)}catch(e){raidOpening=false;alert(e.message);return}
  sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;resolvingScreechTokens.clear();clearScreechPromptTimers();
  clearInterval(raidTimer);clearInterval(paintTimer);clearReadyLaunch();
  await subscribeRaidRealtime(id);
  await syncSharedRaidView(true);
  raidTimer=setInterval(()=>pollRaidSession(id),2500);
  paintTimer=setInterval(tickRaid,100);
- tickRaid()
+ tickRaid();raidOpening=false
 }
 function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
