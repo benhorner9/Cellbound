@@ -7,13 +7,14 @@ const dirty=()=>doc&&JSON.stringify(doc.spec)!==doc.saved;
 const editable=()=>W()?.can('template','edit');
 function backup(){try{localStorage.setItem(key(),JSON.stringify(doc));return true}catch{message='Device storage is full. Keep this page open and export your draft.';blocked=true;return false}}
 function note(s){message=s;const el=$('#ebStatus');if(el)el.textContent=s}
-function changed(){blocked=false;backup();clearTimeout(timer);timer=setTimeout(()=>save(),2000);status()}
-function status(){const errors=M().validate(doc?.spec);const el=$('#ebValidation');if(el)el.textContent=errors.join(' ');note(errors.length?'Check the highlighted guidance · saved on this device':dirty()?'Saved on this device · waiting for cloud save':doc?.revision?'Cloud draft saved · revision '+doc.revision:'New draft · not yet saved to cloud')}
-function fresh(){if(busy)return;if(dirty()&&!confirm('Keep the current recovery copy and start a new boss? Export it first if you need it.'))return;clearTimeout(timer);doc={slug:'studio-fight-'+crypto.randomUUID(),revision:0,spec:M().fresh(),saved:''};stageTarget=null;blocked=false;backup();render()}
+function changed(){blocked=false;if(!backup()){note(message);return}clearTimeout(timer);timer=setTimeout(()=>save(),2000);status()}
+function status(){if(blocked&&message){note(message);return}const errors=M().validate(doc?.spec);const el=$('#ebValidation');if(el)el.textContent=errors.join(' ');note(errors.length?'Check the highlighted guidance · saved on this device':dirty()?'Saved on this device · waiting for cloud save':doc?.revision?'Cloud draft saved · revision '+doc.revision:'New draft · not yet saved to cloud')}
+function fresh(){if(busy)return;if(dirty()&&!confirm('Discard this unsaved boss and start a new one? Export recovery first if you need it.'))return;clearTimeout(timer);doc={slug:'studio-fight-'+crypto.randomUUID(),revision:0,spec:M().fresh(),saved:''};stageTarget=null;blocked=false;backup();render()}
 async function reload(){rows=(await W().list('template')).filter(r=>r.payload?.kind==='fight'&&r.payload?.blueprint?.enemySpec);return rows}
 async function load(slug){if(busy)return;if(dirty()&&!confirm('Open the cloud version? Export any unsaved changes first.'))return;const result=await W().get('template',slug);if(!result.draft)throw Error('This boss draft is unavailable.');clearTimeout(timer);const r=result.draft;doc={slug,revision:r.revision,spec:clone(r.payload.blueprint.enemySpec),saved:JSON.stringify(r.payload.blueprint.enemySpec)};stageTarget=null;blocked=false;backup();render()}
 async function save(submit=false){
- if(!doc||!editable()||busy||blocked&&!submit)return;
+ if(busy){if(submit)note('Cloud save in progress. Wait before submitting.');return}
+ if(!doc||!editable()||blocked&&!submit)return;
  clearTimeout(timer);const errors=M().validate(doc.spec);if(errors.length){note(errors.join(' '));return}
  if(!dirty()&&!submit)return;
  const current=doc,owner=account,snapshot=clone(doc.spec),encoded=JSON.stringify(snapshot);busy=true;note('Saving private cloud draft…');
@@ -73,7 +74,7 @@ async function open(){
  if(!doc){try{doc=JSON.parse(localStorage.getItem(key())||'null')}catch{}if(!doc?.spec){doc={slug:'studio-fight-'+crypto.randomUUID(),revision:0,spec:M().fresh(),saved:''}}}
  render();try{await reload();picker()}catch(e){note('Cloud unavailable: '+e.message+' Device recovery remains available.')}
 }
-function editStage(id,spec){stageTarget=id;doc={slug:'studio-fight-'+crypto.randomUUID(),revision:0,spec:clone(spec),saved:''};backup();tab='basic';render()}
+function editStage(id,spec){if(busy){note('Wait for the current save first.');return}if(dirty()&&!confirm('Replace the open boss draft with this fight snapshot? Export recovery first to keep unsaved work.'))return;clearTimeout(timer);stageTarget=id;doc={slug:'studio-fight-'+crypto.randomUUID(),revision:0,spec:clone(spec),saved:''};backup();tab='basic';render()}
 window.addEventListener('online',()=>{blocked=false;save()});
 window.addEventListener('beforeunload',e=>{if(dirty()||busy){backup();e.preventDefault();e.returnValue=''}});
 window.addEventListener('cellbound:booth-access',()=>{if(account!==W()?.user()){clearTimeout(timer);doc=null;account=W()?.user()||'';stageTarget=null}if(opened&&W()?.can('template'))open()});
