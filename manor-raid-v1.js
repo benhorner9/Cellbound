@@ -251,6 +251,9 @@ async function syncParty(listingId){
  if(error)throw error;
 }
 async function fetchHub(){
+ // Owner QA is a local synthetic two-party session. A hub poll must never
+ // replace its session/members with the unrelated server-backed party list.
+ if(ownerSoloQa)return;
  if(!db||!user)return;
  try{
    const {data:l}=await db.rpc('manor_lockout_status');lockout=l||null;
