@@ -1675,6 +1675,8 @@ function renderDungeonEnvironment(s){
  for(let i=0;i<count;i++)ambience.appendChild(ashParticle(mix[i%mix.length],i));
  root.appendChild(ambience);
  if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>';
+ // Purely decorative; cannot intercept battlefield commands or mechanic alerts.
+ window.CellboundCinematicAshen?.mount?.(arena,{room:cfg.room,label:cfg.label});
  requestAnimationFrame(()=>syncUnitPixelPositions())
 }
 function resourceClass(name){

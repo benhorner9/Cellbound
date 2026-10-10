@@ -1,0 +1,145 @@
+/* Job 11A — Ashen Vault cinematic battlefield, presentation-only.
+   The 16:9 room illustration stays authoritative. Everything here is a
+   pointer-transparent visual layer BELOW all combat units and telegraphs. */
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"]{
+  isolation:isolate;
+  background-color:#130c0b!important;
+}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-stage-image{
+  filter:brightness(.91) saturate(1.16) contrast(1.10)!important;
+}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-atmosphere{
+  position:absolute;inset:0;z-index:5!important;overflow:hidden;
+  pointer-events:none!important;user-select:none;contain:paint;
+  --cbcin-flame:rgba(255,137,69,.36);
+}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-atmosphere *,
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-atmosphere:before,
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-atmosphere:after{
+  pointer-events:none!important;box-sizing:border-box;
+}
+.cbcin-atmosphere:before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 48% 34% at 72% 58%,rgba(243,103,39,.18),transparent 77%),
+    radial-gradient(ellipse 45% 58% at 22% 70%,rgba(34,111,121,.16),transparent 83%),
+    linear-gradient(180deg,rgba(5,9,13,.06) 0%,transparent 36%,rgba(8,5,8,.11) 75%,rgba(4,3,6,.40) 100%);
+  mix-blend-mode:screen;opacity:.86;
+}
+.cbcin-atmosphere:after{
+  content:"";position:absolute;inset:0;z-index:4;
+  background:linear-gradient(90deg,rgba(4,6,9,.24),transparent 17% 83%,rgba(4,6,9,.32)),
+             linear-gradient(180deg,rgba(3,6,10,.34),transparent 23% 78%,rgba(4,3,5,.34));
+  box-shadow:inset 0 0 55px 5px rgba(7,3,5,.30);
+}
+.cbcin-ray{
+  position:absolute;top:-30%;width:24%;height:155%;
+  background:linear-gradient(90deg,transparent,rgba(255,175,96,.12) 48%,transparent);
+  filter:blur(15px);transform:rotate(19deg);opacity:.72;
+  transform-origin:top center;animation:cbcinLight 11s ease-in-out infinite alternate;
+}
+.cbcin-ray.left{left:21%;opacity:.24;animation-delay:-5s;transform:rotate(-19deg)}
+.cbcin-ray.right{left:65%;width:19%;opacity:.42}
+.cbcin-haze{
+  position:absolute;left:-15%;right:-15%;height:32%;bottom:-10%;z-index:3;
+  background:radial-gradient(ellipse at 35% 70%,rgba(164,103,90,.24),transparent 54%),
+             radial-gradient(ellipse at 71% 43%,rgba(153,115,96,.20),transparent 51%);
+  filter:blur(22px);animation:cbcinHaze 10s ease-in-out infinite alternate;
+}
+.cbcin-ember{
+  position:absolute;z-index:3;width:var(--size,2px);height:var(--size,2px);
+  left:var(--x,50%);bottom:-2%;border-radius:50%;
+  background:rgba(255,181,103,.90);
+  box-shadow:0 0 9px 2px rgba(242,111,40,.38);
+  animation:cbcinRise var(--duration,9s) linear infinite;
+  animation-delay:var(--delay,0s);
+}
+.cbcin-burst-layer{position:absolute;inset:0;z-index:3}
+.cbcin-burst{
+  position:absolute;left:var(--x,50%);top:var(--y,50%);
+  width:clamp(36px,11%,96px);aspect-ratio:1;
+  transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,224,160,.54) 0 4%,rgba(255,137,62,.31) 19%,transparent 65%);
+  mix-blend-mode:screen;animation:cbcinBurst .48s ease-out forwards;
+}
+.cbcin-burst.heal{
+  background:radial-gradient(circle,rgba(182,255,212,.56) 0 4%,rgba(75,210,152,.23) 24%,transparent 68%);
+}
+.cbcin-burst.interrupt{
+  background:radial-gradient(circle,rgba(218,245,255,.63),rgba(87,182,229,.27) 30%,transparent 69%);
+}
+.cbcin-burst.phase{width:42%;background:radial-gradient(circle,rgba(255,226,154,.23),rgba(242,92,50,.26) 32%,transparent 71%);animation-duration:1.15s}
+.cbcin-omen{
+  position:absolute;top:11%;left:50%;transform:translateX(-50%);
+  z-index:4;max-width:90%;padding:5px 16px 6px;
+  font:700 clamp(10px,1.4vw,14px)/1.25 Georgia,serif;
+  color:#ffdbab;text-align:center;letter-spacing:.18em;
+  text-shadow:0 2px 7px #080305,0 0 18px rgba(236,119,69,.60);
+  background:linear-gradient(90deg,transparent,rgba(11,6,8,.50) 16% 84%,transparent);
+  animation:cbcinOmen 1.8s ease-out forwards;
+  white-space:nowrap;
+}
+/* The illustrated actors stay above atmosphere; the boss gets a stronger,
+   taller portrait silhouette rather than another flat circular token. */
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.party .cb-combat-portrait{
+  width:42px;height:51px;border-radius:44% 44% 29% 29%;
+  border-width:2px;border-color:color-mix(in srgb,var(--cb-combat-class,#b9dbc9) 68%,#d9ceac);
+  box-shadow:0 3px 0 rgba(4,3,4,.64),0 7px 16px rgba(0,0,0,.55),0 0 19px color-mix(in srgb,var(--cb-combat-class,#88cec1) 26%,transparent);
+}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.party .cb-combat-portrait .cb-portrait{
+  height:100%;border-radius:inherit;
+}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.party>span:not(.cb-combat-portrait){top:38px;text-shadow:0 2px 5px #000,0 0 9px #000}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.enemy.cb-combat-has-boss-portrait>.cb-combat-boss-portrait{
+  width:76px;height:87px;border-radius:45% 45% 19% 19%;
+  border:2px solid rgba(250,196,115,.82);
+  box-shadow:0 0 0 2px #29120f,0 12px 28px rgba(0,0,0,.65),0 0 36px rgba(238,107,57,.30);
+}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.enemy.cb-combat-has-boss-portrait>span{
+  top:85px!important;font-size:clamp(10px,1.3vw,13px)!important;
+  font-family:Georgia,serif;letter-spacing:.04em;
+}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.enemy.boss .cbl-ground{
+  width:86px!important;opacity:.65;
+}
+.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.party .cbl-ground{opacity:.58}
+/* Encounter HUD treatment. Preserve every real command, cast, chat and stat node. */
+.cbcombat-shell[data-combat-theme="ashen"]{
+  --cbui-accent:#e9b982;--cbui-accent-rgb:233,185,130;
+}
+.cbcombat-shell[data-combat-theme="ashen"] .cbcombat-battle-topbar{
+  border-bottom:1px solid rgba(245,191,130,.22)!important;
+  background:linear-gradient(90deg,rgba(25,13,12,.97),rgba(40,21,20,.76) 58%,rgba(15,11,16,.93))!important;
+}
+.cbcombat-shell[data-combat-theme="ashen"] .cbcombat-battle-topbar:after{
+  content:"ASHEN VAULT  /  CINEMATIC ENCOUNTER";display:block;
+  font:700 9px/1.3 system-ui,sans-serif;letter-spacing:.16em;
+  color:rgba(232,179,123,.68);white-space:normal;text-align:right;padding-right:12px;
+}
+.cbcombat-shell[data-combat-theme="ashen"] :is(.cbcombat-party-panel,.cbcombat-meters-panel,.cbcombat-command-panel){
+  background:linear-gradient(145deg,rgba(45,26,23,.18),rgba(8,13,17,.9) 48%)!important;
+  border-color:rgba(230,175,113,.19)!important;
+}
+.cbcombat-shell[data-combat-theme="ashen"] .cbcombat-arena-wrap{
+  border-color:rgba(245,183,109,.3)!important;
+  box-shadow:0 0 0 1px rgba(255,190,112,.10),0 16px 30px rgba(2,3,7,.48)!important;
+}
+.cbcombat-shell[data-combat-theme="ashen"] .cb2d-room-tag b{
+  font-family:Georgia,serif!important;color:#f4d3a5!important;
+}
+.cbcombat-shell[data-combat-theme="ashen"] .cbcombat-chat{border-top-color:rgba(230,175,113,.21)!important}
+@keyframes cbcinRise{0%{opacity:0;transform:translate3d(0,0,0) scale(.65)}13%{opacity:.70}80%{opacity:.52}100%{opacity:0;transform:translate3d(var(--drift,12px),-380px,0) scale(1.1)}}
+@keyframes cbcinLight{from{opacity:.24}to{opacity:.65}}
+@keyframes cbcinHaze{from{transform:translateX(-5%) scale(1)}to{transform:translateX(7%) scale(1.08)}}
+@keyframes cbcinBurst{0%{opacity:.90;scale:.65}65%{opacity:.60}100%{opacity:0;scale:1.65}}
+@keyframes cbcinOmen{0%{opacity:0;translate:0 -6px}12%,67%{opacity:1;translate:0 0}100%{opacity:0;translate:0 7px}}
+@media(max-width:860px){
+  .cbcombat-shell[data-combat-theme="ashen"] .cbcombat-battle-topbar:after{display:none}
+  .cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.party .cb-combat-portrait{width:34px;height:42px}
+  .cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.enemy.cb-combat-has-boss-portrait>.cb-combat-boss-portrait{width:60px;height:72px}
+  .cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cb2d-unit.enemy.cb-combat-has-boss-portrait>span{top:70px!important;font-size:9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-atmosphere :is(.cbcin-ray,.cbcin-haze,.cbcin-ember,.cbcin-burst,.cbcin-omen){animation:none!important}
+  .cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-ember,.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-burst,.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-omen{display:none!important}
+}
