@@ -59,7 +59,10 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
     assert(await page.locator('#login-form').isVisible(),'mobile staging login remains usable');
   }
 
-  await page.screenshot({path:'/tmp/cellbound-login-screen.png',fullPage:true});
+  // The visual assertions above gate both engines. WebKit can terminate the
+  // page while capturing a large full-page screenshot in CI; screenshots are
+  // diagnostic artifacts, not login correctness checks.
+  if(engine!==webkit)await page.screenshot({path:'/tmp/cellbound-login-screen.png',fullPage:true});
   const authPage=page;
   const authErrors=[];authPage.on('pageerror',e=>authErrors.push(String(e)));
   await authPage.goto('https://cellbound.test/auth-test.html',{waitUntil:'networkidle'});
