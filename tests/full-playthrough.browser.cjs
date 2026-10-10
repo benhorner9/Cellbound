@@ -374,8 +374,13 @@ async function mainGamePlaythrough(browser){
   assert.equal((await page.locator('#betaSupportView').textContent()).trim(),'content','quick report preserves the originating screen');
   assert(await page.locator('#betaReportForm').isVisible(),'beta support form renders');
   assert(await page.locator('#betaPatchNotes .beta-note').count()>=1,'beta patch notes render');
+  // openReport schedules focus after opening. Wait for that UI transition so
+  // it cannot steal focus between Playwright selecting and filling Details.
+  await page.waitForFunction(()=>document.activeElement?.id==='betaReportSummary',{},{timeout:5000,polling:20});
   await page.locator('#betaReportSummary').fill('QA support ticket');
   await page.locator('#betaReportDetails').fill('The automated beta operations playthrough is testing the support submission path.');
+  assert.equal(await page.locator('#betaReportSummary').inputValue(),'QA support ticket');
+  assert((await page.locator('#betaReportDetails').inputValue()).includes('automated beta operations'));
   await page.evaluate(async()=>{await window.CellboundBetaOps.submitReport({preventDefault(){}})});
   await page.waitForFunction(()=>{
     const message=document.querySelector('#betaReportMessage')?.textContent||'';
