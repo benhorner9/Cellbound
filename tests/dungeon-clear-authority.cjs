@@ -14,13 +14,11 @@ const errors=[],alerts=[];
 const ctx={console:{warn:(...a)=>errors.push(a),error:(...a)=>errors.push(a)},alert:t=>alerts.push(t)};
 vm.createContext(ctx);
 vm.runInContext(endgame.slice(first,last),ctx);
-for(const rejected of [null,undefined,false,{}, {error:new Error('offline')}, {valid:false,reason:'rejected'}, {valid:false,error:null}]){
- // An empty object indicates a server RPC response without a valid marker;
- // it is only accepted if the backend actually returned data successfully.
- if(rejected&&typeof rejected==='object'&&!rejected.error&&rejected.valid!==false)continue;
- assert.equal(vm.runInContext('isVerifiedRunRecord(value)',Object.assign(ctx,{value:rejected})),false,'Unverified run must not authorise rewards');
+for(const rejected of [null,undefined,false,{}, {error:new Error('offline')}, {valid:false,reason:'rejected'}, {valid:false,error:null}, {score:500}, {valid:'true'}]){
+ ctx.value=rejected;
+ assert.equal(vm.runInContext('isVerifiedRunRecord(value)',ctx),false,'Missing explicit valid:true must not authorise rewards');
 }
-for(const accepted of [{valid:true,score:1234},{score:500}]){
+for(const accepted of [{valid:true,score:1234},{valid:true,score:500}]){
  ctx.value=accepted;
  assert.equal(vm.runInContext('isVerifiedRunRecord(value)',ctx),true,'A successful, non-rejected server response may confirm a clear');
 }
