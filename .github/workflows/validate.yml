@@ -18,7 +18,7 @@ jobs:
   validate:
     name: Cellbound build validation
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
 
     steps:
       - name: Check out Cellbound
@@ -33,6 +33,9 @@ jobs:
         run: |
           npm run build
           npm run test:appearance
+
+      - name: Core gameplay, PvP, loot, quest and editor regressions
+        run: npm run test:core
 
       - name: Verify deployment package
         shell: bash
@@ -54,45 +57,23 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.51.1
           npx playwright install --with-deps chromium webkit
 
-      - name: Design Booth browser regression
-        run: |
-          node tests/design-booth.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/design-booth.browser.cjs
+      - name: Chromium complete browser regressions
+        id: chromium
+        continue-on-error: true
+        run: npm run test:browser
 
-      - name: Living combat browser regression
-        run: |
-          node tests/living-combat.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/living-combat.browser.cjs
+      - name: WebKit complete browser regressions (iPad Safari engine)
+        id: webkit
+        continue-on-error: true
+        env:
+          CELLBOUND_TEST_ENGINE: webkit
+        run: npm run test:browser
 
-      - name: Equipment fit browser regression
+      - name: Enforce both browser regression gates
+        if: always() && (steps.chromium.outcome == 'failure' || steps.webkit.outcome == 'failure')
         run: |
-          node tests/equipment-fit.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/equipment-fit.browser.cjs
-
-      - name: Race identity browser regression
-        run: |
-          node tests/race-identity.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/race-identity.browser.cjs
-
-      - name: Item Visuals V2 browser regression
-        run: |
-          node tests/item-visuals-v2.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/item-visuals-v2.browser.cjs
-
-      - name: Manor owner QA gameplay regression
-        run: |
-          node tests/gameplay-regression.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/gameplay-regression.browser.cjs
-
-      - name: Full game browser playthrough
-        run: |
-          node tests/full-playthrough.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/full-playthrough.browser.cjs
-
-      - name: Login screen browser regression
-        run: |
-          node tests/login-screen.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/login-screen.browser.cjs
+          echo "Chromium or WebKit failed. See the complete test inventory in the job summary."
+          exit 1
 
       - name: Save combat and playthrough captures
         if: always()
