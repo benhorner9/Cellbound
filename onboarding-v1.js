@@ -1126,7 +1126,19 @@ async function craftTutorialItem(){
 }
 function renderProfessionUse(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),key=s.onboarding.craftedKey,stack=s.consumables.find(x=>x.key===key),p=stack?.payload||{};
-  if(!c||!stack){s.onboarding.stage='quest-lesson';Game.save();render();return}
+  if(!c||!stack){
+    // Recovered saves may have consumed or lost the training item. Never skip
+    // the lesson automatically or trap a player behind an unavailable item.
+    const hasCrafted=Boolean(s.onboarding.professionComplete);
+    const body='<div class="growth-school"><main><small>ZELTIRA · PREPARATION</small><h2>'+ (hasCrafted?'Your training item is no longer in the bag.':'Your training craft needs attention.') +'</h2><p>'+ (hasCrafted?'You already completed your first craft. Review what you learned, then continue to the east-gate contract.':'Choose a profession and craft a training item before leaving Zeltira.') +'</p></main><aside class="z-guide"><small>RECOVER YOUR TRAINING</small><button id="recoverTutorialCraft" class="on-primary">'+(hasCrafted?'I UNDERSTAND · CONTINUE →':'RETURN TO THE CRAFTMASTER →')+'</button></aside></div>';
+    ensureRoot().innerHTML=chrome(body,'profession-use');
+    $('#recoverTutorialCraft')?.addEventListener('click',async()=>{
+      s.onboarding.stage=hasCrafted?'quest-lesson':'profession-choice';
+      if(hasCrafted){s.onboarding.professionUseComplete=true;s.onboarding.coreTrainingComplete=true}
+      Game.save();await Game.persistState?.();render();
+    });
+    return
+  }
   const bonus=P?.bonusText?.(p.bonuses)||'',charges=Number(p.charges)||3;
   let actionTitle='Pack it for the next dungeon',actionCopy=p.description||'This crafted item will be consumed through play.',button='PACK FOR ADVENTURE →';
   if(p.effect==='gear-enhancement'){actionTitle='Apply it to real equipment';actionCopy=(p.description||'')+' Another '+p.slot+' enhancement replaces the current one.';button='APPLY TO '+String(p.slot||'ITEM').toUpperCase()+' →'}
