@@ -251,6 +251,9 @@ async function syncParty(listingId){
  if(error)throw error;
 }
 async function fetchHub(){
+ // Owner QA is a local synthetic two-party session. A hub poll must never
+ // replace its session/members with the unrelated server-backed party list.
+ if(ownerSoloQa)return;
  if(!db||!user)return;
  try{
    const {data:l}=await db.rpc('manor_lockout_status');lockout=l||null;
@@ -972,10 +975,14 @@ async function showVictory(id){await loadSession(id);const root=ensureOverlay();
 async function claimLoot(id){
  const btn=$('[data-mr-claim]');if(btn)btn.disabled=true;
  try{
-   const s=state();s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};s.progression.manorRaidCleared=true;s.raidRewardClaims=s.raidRewardClaims&&typeof s.raidRewardClaims==='object'?s.raidRewardClaims:{};
+   const s=state();s.raidRewardClaims=s.raidRewardClaims&&typeof s.raidRewardClaims==='object'?s.raidRewardClaims:{};
    if(s.raidRewardClaims[id]){renderLootDrops(s.raidRewardClaims[id]);return}
    const {data,error}=await db.rpc('claim_manor_raid_rewards',{p_session_id:id});if(error)throw error;
-   const defs=Array.isArray(data)?data:[],items=defs.map((d,i)=>makeTier5Item(d,i));
+   // This protected RPC promises exactly two valid T5 item definitions.
+   // Never mark a claim complete or mutate inventory for a malformed response.
+   if(!Array.isArray(data)||data.length!==2||data.some(d=>!d||Number(d.tier)!==5||!d.class||!d.slot))throw new Error('The Manor reward service did not return two valid Tier 5 items. No loot was added. Please try claiming again.');
+   const defs=data,items=defs.map((d,i)=>makeTier5Item(d,i));
+   s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};s.progression.manorRaidCleared=true;
    items.forEach(x=>Game.addBankItem?.(x));
    const professionDrops=window.CellboundProfessions?.rollContentReagents?.('manor',{difficulty:'raid',count:5})||[];professionDrops.forEach(d=>Game.addMaterial?.(d.key,d.quantity));
    s.raidRewardClaims[id]=items.map(x=>({itemId:x.itemId,name:x.name,tier:x.tier,itemLevel:x.itemLevel,class:x.class,slot:x.slot,bonusStats:x.bonusStats,setId:x.setId,setName:x.setName,source:x.source}));

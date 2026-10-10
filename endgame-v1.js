@@ -326,6 +326,16 @@ async function saveRuntime(dungeonId,runtimeState){
  return data||{ok:true}
 }
 
+function isVerifiedRunRecord(record){
+ return Boolean(record&&typeof record==='object'&&!record.error&&record.valid===true);
+}
+function reportUnverifiedClear(dungeonId,record){
+ const detail=String(record?.reason||record?.error?.message||'No confirmation returned').slice(0,180);
+ console.warn('Dungeon clear not confirmed; completion rewards blocked',dungeonId,detail);
+ alert('The dungeon clear could not be verified by the server ('+detail+'). No completion XP, currency, unlocks or clear loot have been awarded. Please report the issue in Support before retrying.');
+ return true
+}
+
 async function recordRun(dungeonId,metrics){
  const before={...progressFor(dungeonId)},attempt=attempts[dungeonId];
  if(!db)return null;
@@ -490,7 +500,7 @@ async function init(){
  window.addEventListener('cellbound:dungeon-complete',()=>refresh());
  await refresh();
  window.CellboundEndgame={
-   refresh,render,currentConfig,stageConfig,beginAttempt,beginOrResumeAttempt,resumeAttempt,saveRuntime,abandonAttempt,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,rollClearLootBundle,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
+   refresh,render,currentConfig,stageConfig,beginAttempt,beginOrResumeAttempt,resumeAttempt,saveRuntime,abandonAttempt,recordRun,isVerifiedRunRecord,reportUnverifiedClear,rollPersonalLoot,rollChapterLoot,rollClearLoot,rollClearLootBundle,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
    progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,debugSnapshot,tierPickerMarkup,getSelection:id=>({...selection[id]})
  }
 }
