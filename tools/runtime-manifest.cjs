@@ -108,6 +108,8 @@ const groups=Object.freeze({
   "endgame-v1.js",
   "manor-raid-v1.js",
   "quests-v2.js",
+  "enemy-builder-model-v1.js",
+  "admin-enemy-builder-v1.js",
   "design-booth-content-v1.js",
    "boss-drop-tables-v1.js",
   "admin-design-library-v1.js",

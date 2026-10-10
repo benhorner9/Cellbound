@@ -4,7 +4,7 @@ const $=s=>document.querySelector(s);
 const esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clone=x=>JSON.parse(JSON.stringify(x));
 const gameOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
-const toolScopes={build:['adventure'],library:['template'],rooms:['room-layout','room-art'],comics:['comic-text','comic-art'],'pvp-maps':['pvp-map'],drops:['boss-drops']};
+const toolScopes={enemies:['template'],build:['adventure'],library:['template'],rooms:['room-layout','room-art'],comics:['comic-text','comic-art'],'pvp-maps':['pvp-map'],drops:['boss-drops']};
 const owner=()=>gameOwner()||Object.values(toolScopes).flat().some(k=>window.CellboundBoothWorkflow?.can(k));
 const toolAllowed=id=>gameOwner()||(toolScopes[id]||[]).some(k=>W()?.can(k));
 const W=()=>window.CellboundBoothWorkflow;
@@ -13,6 +13,7 @@ const runtime=()=>window.CellboundDesignedContent;
 let STORE='cellbound-design-booth-workspace-v1';
 let STASH='cellbound-design-booth-project-backups-v2';
 const TOOLS=[
+ {id:'enemies',label:'Enemy & Boss Builder',sub:'Stats · abilities · phases'},
  {id:'director',label:'Game Build Hub',sub:'Full game planning · QA · workflows'},
  {id:'library',label:'Content Creator',sub:'New rooms · bosses · items'},
  {id:'build',label:'Adventure Builder',sub:'Quest · dungeon · raid'},
@@ -27,6 +28,7 @@ const TOOLS=[
  {id:'templates',label:'Minigame Library',sub:'Reusable mechanics'}
 ];
 const GUIDANCE={
+ enemies:{title:"Create → Save Draft → Test → Add to adventure → Review",detail:"Reusable enemies use secure fight templates. Adventures keep a snapshot: changing this template never silently changes an existing fight."},
  "director": {"title":"Choose a system → Open editor or write brief → Test and review","detail":"A one-stop overview of supported editors, build workflows and unfinished engine features. Publishing stays inside the individual approved editor; local design briefs never change player gameplay."},
  "library": {
   "title": "Create → Save Cloud Draft → Reuse → Publish",
@@ -70,8 +72,8 @@ const GUIDANCE={
   "detail": "Pick an existing template inside an adventure minigame stage. Creating a new mechanic still requires game code and testing."
  }
 };
-const plugins={director:'CellboundGameBuildHub',library:'CellboundDesignLibrary',comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer','pvp-maps':'CellboundPvPMapEditor','combat-ui':'CellboundCombatUILayoutEditor'};
-const mountIds={director:'dboDirectorMount',library:'dboLibrary',comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount','pvp-maps':'pvpMapEditorMount','combat-ui':'combatUILayoutMount'};
+const plugins={enemies:'CellboundEnemyBuilder',director:'CellboundGameBuildHub',library:'CellboundDesignLibrary',comics:'CellboundComicSceneEditor',rooms:'CellboundRoomEditor',generator:'CellboundDungeonGenerator',models:'CellboundCharacterFitViewer','pvp-maps':'CellboundPvPMapEditor','combat-ui':'CellboundCombatUILayoutEditor'};
+const mountIds={enemies:'dboEnemies',director:'dboDirectorMount',library:'dboLibrary',comics:'comicSceneEditorMount',rooms:'roomEditorMount',generator:'dungeonGeneratorMount',models:'characterFitViewerMount','pvp-maps':'pvpMapEditorMount','combat-ui':'combatUILayoutMount'};
 let opened=false,active='build',records=[],selectedId=null,project=null,stepIndex=0,busy=false,uploadBusy=false,message='',lastLocal='',initDone=false,selectedDropBoss='',nativeDrops=[],nativeSaving=false,nativeLoadedKey='',nativeBaseline='[]',dropEditIndex=-1,dropSearch='',dropTier='all',dropSort='tier',moreOpen=false;
 let workspace={},baseline='',cloudUpdatedAt=null;
 const keyFor=p=>p?.id?'cloud:'+p.id:'local:'+p?.slug;
@@ -606,7 +608,7 @@ function render(){
  '<nav class="dbo-tabs" role="tablist" aria-label="Design Booth tools">'+TOOLS.filter(t=>toolAllowed(t.id)&&!advanced.includes(t.id)).map(tab).join('')+'</nav>'+
  '<details class="dbo-more" '+(moreOpen||advanced.includes(active)?'open':'')+'><summary>More tools · Character fit, dungeon planner & minigame templates</summary><nav class="dbo-tabs dbo-tabs-more" role="tablist" aria-label="Advanced tools">'+TOOLS.filter(t=>toolAllowed(t.id)&&advanced.includes(t.id)).map(tab).join('')+'</nav></details>'+
  '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Submit for Review when ready. Review & Publishing lets authorised reviewers approve the revision, then publish it. Existing published content stays unchanged until then.</li></ol><p>Local backups are for recovery on this device; only a cloud-saved draft is available on another device.</p></details>'+
- '<details class="booth-workflow-panel"><summary>Review & Publishing · History · Permissions</summary><div id="dboWorkflow"></div></details><aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboDirectorMount" hidden></div><div id="dboLibrary" hidden></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
+ '<details class="booth-workflow-panel"><summary>Review & Publishing · History · Permissions</summary><div id="dboWorkflow"></div></details><aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboDirectorMount" hidden></div><div id="dboLibrary" hidden></div><div id="dboEnemies" hidden></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="pvpMapEditorMount" class="pvp-map-editor-mount" hidden></div><div id="combatUILayoutMount" class="combat-ui-layout-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
  root.querySelector('.booth-workflow-panel').addEventListener('toggle',e=>{if(e.target.open)W().panel()});
