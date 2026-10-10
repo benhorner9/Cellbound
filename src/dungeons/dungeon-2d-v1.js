@@ -2914,11 +2914,14 @@ async function seamlessFrom(startIndex,tok){
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;
   const mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,first=Number(st.dungeonCompletions||0)===0,gold=mode==='normal'?120:mode==='heroic'?190:220+tier*10,renown=mode==='normal'?60:mode==='heroic'?90:100+tier*4,xp=BAL?.dungeonXp?.('ashen-vault',{difficulty:mode,firstClear:first})||(first&&mode==='normal'?2850:mode==='normal'?ASHEN_VAULT_XP:mode==='heroic'?1050:1200);
+  // Server completion must be confirmed before client-side clear rewards or achievements.
+  const metrics=endgameRunMetrics();run.endgameMetrics=metrics;
+  const record=await window.CellboundEndgame?.recordRun?.('ashen-vault',metrics);
+  if(!window.CellboundEndgame?.isVerifiedRunRecord?.(record)){window.CellboundEndgame?.reportUnverifiedClear?.('ashen-vault',record)||alert('The dungeon clear could not be verified by the server. No completion XP, currency, unlocks or clear loot were awarded. Please report the issue in Support before retrying.');close();return;}
+  run.endgameRecord=record;
   st.gold+=gold;st.renown+=renown;run.loot.gold+=gold;run.loot.renown+=renown;run.loot.xp=xp;
   const shards=window.CellboundEndgame?.shardReward?.('ashen-vault')||0;if(shards){Game.addMaterial('cell-shards',shards);recordMaterialDrop({key:'cell-shards',quantity:shards},'Dungeon Clear')}
   const chase=window.CellboundEndgame?.rollChase?.('ashen-vault');if(chase){st.activity.push('Very rare collection reward: '+chase.name+'.');flash('LEGENDARY DROP',false)}
-  const metrics=endgameRunMetrics();run.endgameMetrics=metrics;
-  const record=await window.CellboundEndgame?.recordRun?.('ashen-vault',metrics);run.endgameRecord=record&&!record.error?record:null;
   window.CellboundEndgame?.recordClearLootOutcome?.('ashen-vault',(run.loot?.gear||[]).length>0);
   run.xpGrowth=awardPartyXp(xp);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs,partyIlvl:ilvl(),xpPerCharacter:xp,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy',dungeonVersion:run.endgame?.dungeonVersion||2});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+xp+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs,partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
  }catch(e){
