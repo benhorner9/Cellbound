@@ -143,3 +143,115 @@
   .cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-atmosphere :is(.cbcin-ray,.cbcin-haze,.cbcin-ember,.cbcin-burst,.cbcin-omen){animation:none!important}
   .cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-ember,.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-burst,.cb2d-arena.theme-ashen[data-cinematic="ashen-v1"] .cbcin-omen{display:none!important}
 }
+
+
+/* Job 11B — cinematic language across all existing Combat Reborn arenas.
+   Every scene retains its own artwork, palette, mechanics and stage geometry. */
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena)[data-cinematic="global-v1"]{
+ isolation:isolate;
+}
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena)[data-cinematic="global-v1"] > .cbcin-world-stage{
+ position:absolute;inset:0;overflow:hidden;z-index:2!important;
+ pointer-events:none!important;user-select:none;contain:paint;
+}
+.cbcin-world-stage,.cbcin-world-stage *, .cbcin-world-stage:before,.cbcin-world-stage:after{
+ pointer-events:none!important;box-sizing:border-box;
+}
+.cbcin-world-stage:before{
+ content:"";position:absolute;inset:0;
+ background:radial-gradient(ellipse 44% 43% at 71% 53%,var(--cbcin-glow,rgba(180,157,128,.18)),transparent 78%),
+            radial-gradient(ellipse 51% 35% at 20% 76%,var(--cbcin-mist,rgba(100,150,165,.20)),transparent 78%),
+            linear-gradient(180deg,rgba(4,5,9,.05),transparent 34%,rgba(8,7,12,.25));
+ mix-blend-mode:screen;opacity:.87;
+}
+.cbcin-world-stage:after{
+ content:"";position:absolute;inset:0;z-index:2;
+ background:linear-gradient(90deg,var(--cbcin-edge,rgba(10,12,20,.35)),transparent 15% 85%,var(--cbcin-edge,rgba(10,12,20,.35))),
+            linear-gradient(180deg,rgba(4,7,12,.24),transparent 25% 75%,rgba(4,7,10,.34));
+ box-shadow:inset 0 0 45px rgba(0,0,0,.22);
+}
+.cbcin-world-ray{
+ position:absolute;top:-28%;left:28%;width:23%;height:152%;
+ background:linear-gradient(90deg,transparent,var(--cbcin-glow,rgba(210,180,130,.16)),transparent);
+ filter:blur(16px);opacity:.42;transform:rotate(18deg);
+ animation:cbcinWorldLight 10s ease-in-out infinite alternate;
+}
+.cbcin-world-ray.second{left:70%;width:15%;opacity:.24;transform:rotate(-16deg);animation-delay:-4s}
+.cbcin-world-mist{
+ position:absolute;bottom:-17%;left:-12%;right:-12%;height:41%;
+ background:radial-gradient(ellipse at 37% 40%,var(--cbcin-mist,rgba(110,135,160,.18)),transparent 65%),
+            radial-gradient(ellipse at 69% 72%,var(--cbcin-glow,rgba(160,140,130,.15)),transparent 68%);
+ filter:blur(22px);animation:cbcinWorldMist 13s ease-in-out infinite alternate;
+}
+.cbcin-world-mote{
+ position:absolute;left:var(--x,50%);bottom:-2%;width:2px;height:2px;border-radius:50%;
+ background:var(--cbcin-mote,#ead5b5);box-shadow:0 0 7px var(--cbcin-glow,rgba(170,170,170,.22));
+ animation:cbcinWorldRise var(--duration,10s) linear infinite;animation-delay:var(--delay,0s);
+}
+.cbcin-world-bursts{position:absolute;inset:0;z-index:3}
+.cbcin-world-burst{
+ position:absolute;left:var(--x,50%);top:var(--y,50%);
+ width:clamp(28px,10%,90px);aspect-ratio:1;
+ transform:translate(-50%,-50%);border-radius:50%;
+ background:radial-gradient(circle,var(--cbcin-glow,rgba(240,194,125,.35)),transparent 69%);
+ mix-blend-mode:screen;animation:cbcinWorldBurst .55s ease-out forwards;
+}
+.cbcin-world-burst.phase{width:33%;background:radial-gradient(circle,var(--cbcin-glow,rgba(240,194,125,.35)),transparent 77%);animation-duration:1.05s}
+.cbcin-world-burst.warning{width:20%;opacity:.28;animation-duration:.9s}
+.cbcin-world-burst.heal{background:radial-gradient(circle,rgba(136,255,184,.40),transparent 69%)}
+.cbcin-world-burst.interrupt{background:radial-gradient(circle,rgba(134,206,255,.47),transparent 69%)}
+.cbcin-world-omen{
+ position:absolute;z-index:3;top:8%;left:50%;transform:translateX(-50%);
+ max-width:85%;padding:5px 14px;
+ font:700 clamp(10px,1.25vw,14px)/1.3 Georgia,serif;letter-spacing:.10em;
+ text-align:center;white-space:nowrap;color:var(--cbcin-accent,#e5c7a7);
+ text-shadow:0 2px 5px #000,0 0 15px var(--cbcin-glow,rgba(190,180,120,.3));
+ background:linear-gradient(90deg,transparent,rgba(5,9,12,.48) 17% 83%,transparent);
+ animation:cbcinWorldOmen 1.8s ease-out forwards;
+}
+/* Consistent portrait staging without moving any engine-owned positions. */
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena)[data-cinematic="global-v1"]
+ :is(.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit).party > .cb-combat-portrait{
+ width:clamp(32px,4vw,40px);height:clamp(38px,5vw,47px);
+ border-radius:44% 44% 31% 31%;
+ box-shadow:0 4px 15px rgba(0,0,0,.52),0 0 15px var(--cbcin-glow,rgba(190,160,120,.2));
+}
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena)[data-cinematic="global-v1"]
+ .cb2d-unit.enemy.cb-combat-has-boss-portrait > .cb-combat-boss-portrait{
+ width:clamp(54px,7vw,72px);height:clamp(62px,8vw,80px);
+ border-radius:44% 44% 22% 22%;
+ border-color:var(--cbcin-accent,#dfc18f);
+ box-shadow:0 6px 23px rgba(0,0,0,.62),0 0 24px var(--cbcin-glow,rgba(210,170,120,.23));
+}
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena)[data-cinematic="global-v1"]
+ .cb2d-unit.enemy.cb-combat-has-boss-portrait > span{
+ top:clamp(61px,8vw,82px)!important;color:var(--cbcin-accent,#dfc18f)!important;
+ font-family:Georgia,serif;text-shadow:0 2px 6px #000,0 0 10px #000;
+}
+.cbcombat-shell[data-cinematic-hud="1"]:not([data-combat-theme="ashen"])
+ :is(.cbcombat-party-panel,.cbcombat-command-panel,.cbcombat-meters-panel){
+ border-color:color-mix(in srgb,var(--cbcin-hud-accent,#d3b892) 23%,transparent)!important;
+ background:linear-gradient(145deg,var(--cbcin-hud-glow,rgba(180,140,100,.13)),rgba(9,15,19,.9) 41%)!important;
+}
+.cbcombat-shell[data-cinematic-hud="1"]:not([data-combat-theme="ashen"]) .cbcombat-arena-wrap{
+ box-shadow:0 0 0 1px var(--cbcin-hud-glow,rgba(180,140,100,.14)),0 16px 30px rgba(2,3,7,.4)!important;
+ border-color:var(--cbcin-hud-glow,rgba(180,140,100,.15))!important;
+}
+.cbcombat-shell[data-cinematic-hud="1"]:not([data-combat-theme="ashen"]) .cbcombat-battle-topbar{
+ background:linear-gradient(90deg,var(--cbcin-hud-glow,rgba(180,140,100,.15)),rgba(7,12,16,.94) 65%)!important;
+ border-bottom:1px solid var(--cbcin-hud-glow,rgba(180,140,100,.15))!important;
+}
+@keyframes cbcinWorldRise{0%{opacity:0;translate:0 0}17%{opacity:.63}82%{opacity:.40}100%{opacity:0;translate:var(--drift,12px) -310px}}
+@keyframes cbcinWorldLight{from{opacity:.20}to{opacity:.50}}
+@keyframes cbcinWorldMist{from{transform:translateX(-5%)}to{transform:translateX(7%)}}
+@keyframes cbcinWorldBurst{0%{opacity:.82;scale:.65}100%{opacity:0;scale:1.7}}
+@keyframes cbcinWorldOmen{0%{opacity:0;translate:0 -5px}13%,67%{opacity:1;translate:0 0}100%{opacity:0;translate:0 5px}}
+@media(max-width:760px){
+ .cbcin-world-omen{font-size:10px;letter-spacing:.03em;padding:4px 6px}
+ :where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena)[data-cinematic="global-v1"]
+ .cb2d-unit.enemy.cb-combat-has-boss-portrait > .cb-combat-boss-portrait{width:54px;height:63px}
+}
+@media(prefers-reduced-motion:reduce){
+ .cbcin-world-stage :is(.cbcin-world-ray,.cbcin-world-mist,.cbcin-world-mote,.cbcin-world-burst,.cbcin-world-omen){animation:none!important}
+ .cbcin-world-stage :is(.cbcin-world-mote,.cbcin-world-burst,.cbcin-world-omen){display:none!important}
+}
