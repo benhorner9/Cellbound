@@ -672,14 +672,16 @@ async function loadSession(id){
 }
 async function openRaid(id){
  raidOpening=true;
- try{await loadSession(id)}catch(e){raidOpening=false;alert(e.message);return}
- sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;resolvingScreechTokens.clear();clearScreechPromptTimers();
- clearInterval(raidTimer);clearInterval(paintTimer);clearReadyLaunch();
- await subscribeRaidRealtime(id);
- await syncSharedRaidView(true);
- raidTimer=setInterval(()=>pollRaidSession(id),2500);
- paintTimer=setInterval(tickRaid,100);
- tickRaid();raidOpening=false
+ try{
+  try{await loadSession(id)}catch(e){alert(e.message);return}
+  sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;resolvingScreechTokens.clear();clearScreechPromptTimers();
+  clearInterval(raidTimer);clearInterval(paintTimer);clearReadyLaunch();
+  await subscribeRaidRealtime(id);
+  await syncSharedRaidView(true);
+  raidTimer=setInterval(()=>pollRaidSession(id),2500);
+  paintTimer=setInterval(tickRaid,100);
+  tickRaid()
+ }finally{raidOpening=false}
 }
 function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
