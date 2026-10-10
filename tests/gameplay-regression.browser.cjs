@@ -103,7 +103,11 @@ async function waitClosed(page,selector){
     await page.evaluate(()=>CellboundManorRaid.startOwnerSoloQa());
     await page.waitForSelector('#manorRaidOverlay:not([hidden]) .mr-ready-shell [data-raid-ready]',{timeout:7000});
     assert(await page.locator('#mrOwnerQaControls').isVisible(),'owner Manor QA toolbar is visible');
-    await page.locator('#manorRaidOverlay [data-raid-ready]').click();
+    // This suite verifies the shared raid state transition and combat renderer.
+    // Dispatch the ready-button click atomically: WebKit can re-render the gate
+    // between Playwright's separate pointerdown/up events under CI load.
+    // Separate UI suites still exercise real pointer interactions.
+    await page.locator('#manorRaidOverlay [data-raid-ready]').evaluate(button=>button.click());
     try{await page.waitForSelector('#cb2dBackdrop:not([hidden]) .mr-room-scene.room-butler',{timeout:30000});}catch(error){
       const diagnostic=await page.evaluate(()=>({
         stage:window.CellboundManorRaid?.isOwnerSoloQa?.(),
