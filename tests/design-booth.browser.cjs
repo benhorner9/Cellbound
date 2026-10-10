@@ -19,7 +19,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   }
   await page.locator('#openDesignBooth').click();
   await page.waitForSelector('#designBoothMount:not([hidden]) .dbo-shell',{timeout:6000});
-  assert.equal(await page.locator('[data-dbo-tool]').count(),12,'Master booth includes a complete Game Build Hub and existing content tools');
+  assert.equal(await page.locator('[data-dbo-tool]').count(),13,'Master booth includes a complete Game Build Hub and existing content tools');
   assert.equal(await page.locator('[data-dbo-go]').count(),9,'New editors see the full game build hub among starter tasks');
   assert(await page.locator('#dboToolGuide').innerText().then(t=>t.includes('Save Draft')&&t.includes('Publish')),'Builder explains its draft and publish actions before editing');
   assert.equal(await page.locator('.dbo-more').count(),1,'Advanced tools are grouped separately');

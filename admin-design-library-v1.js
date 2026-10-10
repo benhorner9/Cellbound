@@ -57,7 +57,7 @@ async function refresh(){
  if(!owner()||!db())return false;
  loading=true;
  try{
-  rows=await window.CellboundBoothWorkflow.records('template');
+  rows=(await window.CellboundBoothWorkflow.records('template')).filter(r=>!r.draft_blueprint?.enemySpec);
   if(draft?.id){
    const match=rows.find(x=>x.id===draft.id);
    if(match){
@@ -215,7 +215,7 @@ async function save(publish=false){
   const response={data:await window.CellboundBoothWorkflow.saveLegacy('template',{slug:draft.slug,kind,title:draft.title.trim(),blueprint:clone(draft.data)},publish,draft.workflow_revision||0)};
   if(response.error||!response.data?.id)throw new Error(response.error?.message||'Cloud did not confirm the save.');
   const row=response.data;draft.id=row.id;draft.workflow_revision=row.workflow_revision;draft.status=row.status;draft.version=row.version;draft.cloudUpdatedAt=row.updated_at||null;selected=row;baseline=JSON.stringify(draft);clearLocal();
-  rows=await window.CellboundBoothWorkflow.records('template');
+  rows=(await window.CellboundBoothWorkflow.records('template')).filter(r=>!r.draft_blueprint?.enemySpec);
   message=publish?'SUBMITTED FOR REVIEW · approve and publish in Review & Publishing.':'CLOUD DRAFT SAVED · players still see the published version.';
   if(publish){await window.CellboundDesignedContent?.refresh?.(true);window.CellboundItemCatalog?.render?.()}
  }catch(e){message='Could not save content: '+String(e.message||e)}

@@ -195,6 +195,7 @@ function validate(){
    if(s.template==='sequence'&&(!s.sequence?.length||s.sequence.some(i=>!Number.isInteger(i)||i<0||i>=(s.choices?.length||0))))errors.push(label+': correct order must refer to the choices you listed.');
   }
   if(s.type==='fight'){
+   if(s.enemySpec)errors.push(...window.CellboundEnemyModel.validate(s.enemySpec).map(e=>label+': '+e));
    const raw=project.steps[i]?.drops||[],valid=s.drops||[];
    if(raw.length>6)errors.push(label+': maximum six drop rows per boss.');
    if(raw.length!==valid.length)errors.push(label+': choose valid items and drop chances for every loot row.');
@@ -345,7 +346,7 @@ function stageFields(s){
   extra='<section class="dbo-panel-list"><h4>Comic panels · '+s.panels.length+'/6</h4>'+s.panels.map((p,i)=>'<article class="dbo-comic-panel"><header><b>Panel '+(i+1)+'</b><button type="button" data-db-remove-panel="'+i+'">REMOVE</button></header>'+field('Panel heading','panel.'+i+'.title',p.title)+field('Caption / dialogue','panel.'+i+'.text',p.text,{kind:'textarea'})+imageControl(s,i)+'</article>').join('')+
   '<button type="button" data-db-add-panel '+(s.panels.length>=6?'disabled':'')+'>+ ADD COMIC PANEL</button></section>'
  }
- if(s.type==='fight')extra='<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>'+imageControl(s)+'<button type="button" class="dbo-manage-drops" id="dboGoToDrops">MANAGE THIS BOSS\'S LOOT →</button>';
+ if(s.type==='fight')extra=(s.enemySpec?'<div class="eb-card"><b>'+esc(s.enemySpec.name)+'</b><p>Enemy Builder snapshot · revision '+esc(s.enemySource?.revision||0)+'. Stats, AI, abilities and phases come from this snapshot.</p><button type="button" id="dboEditEnemy">EDIT THIS FIGHT’S BOSS</button></div>':'<div class="dbo-form-grid">'+field('Enemies · comma-separated','step.enemies',s.enemies,{kind:'textarea'})+field('Enemy health','step.enemyHealth',s.enemyHealth,{kind:'number'})+field('Combat mechanic','step.mechanic',s.mechanic,{kind:'select',opts:['none','circle','line','interrupt','adds']})+'</div>')+imageControl(s)+'<button type="button" id="dboChooseEnemy">OPEN ENEMY & BOSS BUILDER</button><button type="button" class="dbo-manage-drops" id="dboGoToDrops">MANAGE THIS BOSS’S LOOT →</button>';
  if(s.type==='room')extra=imageControl(s);
  if(s.type==='minigame')extra='<div class="dbo-form-grid">'+field('Template','step.template',s.template,{kind:'select',opts:(runtime()?.templates?.()||[]).map(t=>({value:t.id,label:t.label}))})+field('Puzzle instruction','step.prompt',s.prompt,{kind:'textarea'})+field('Choices (one per line)','step.choices',s.choices.join('\n'),{kind:'textarea'})+(s.template==='choice'?field('Which answer is correct? (1 = first choice)','step.answerFriendly',(Number(s.answer)||0)+1,{kind:'number'}):field('Correct order (example: 1, 3, 2)','step.sequenceFriendly',s.sequence.map(i=>Number(i)+1).join(', ')))+'</div>'+imageControl(s);
  return'<div class="dbo-stage-fields">'+field('Stage title','step.title',s.title)+field('Stage type','step.type',s.type,{kind:'select',opts:[{value:'comic',label:'Comic Strip'},{value:'room',label:'Room / Transition'},{value:'fight',label:'Combat Encounter'},{value:'minigame',label:'Minigame'}]})+field('Description / narration','step.text',s.text,{kind:'textarea'})+extra+'</div>'
@@ -400,6 +401,8 @@ function bindBuilder(){
   storageBackup();project=copyAsNewDraft(project);selectedId=null;stepIndex=0;cloudUpdatedAt=null;
   setBaseline();storageBackup();announce('Created a new, unpublished copy. The original is unchanged. Save Cloud Draft to share it.');renderBuilder();
  });
+ host.querySelector('#dboChooseEnemy')?.addEventListener('click',()=>setTab('enemies'));
+ host.querySelector('#dboEditEnemy')?.addEventListener('click',()=>{collect();const stage=project.steps[stepIndex];setTab('enemies');window.CellboundEnemyBuilder.editStage(stage.id,stage.enemySpec)});
  host.querySelector('#dboSaveStageTemplate')?.addEventListener('click',()=>{
   collect();window.CellboundDesignLibrary?.useStage?.(clone(project.steps[stepIndex]));
  });
@@ -564,7 +567,7 @@ function bindDrops(){
 }
 
 function insertTemplate(raw,title=''){
- if(!owner()||busy||uploadBusy)return false;
+ if(!W()?.can('adventure','edit')||busy||uploadBusy)return false;
  if(!project){project=fresh('quest');setBaseline()}
  if(project.steps.length>=30){announce('The adventure can contain up to 30 stages.');return false}
  if(!raw||!['room','fight','comic','minigame'].includes(raw.type))return false;
@@ -572,6 +575,11 @@ function insertTemplate(raw,title=''){
  project.steps.push(stage);stepIndex=project.steps.length-1;storageBackup();
  announce('Reusable '+raw.type+' added as Stage '+(stepIndex+1)+'. Save Cloud Draft when ready.');
  setTab('build');return true
+}
+function updateEnemyStage(id,raw){
+ if(!W()?.can('adventure','edit')||busy||uploadBusy)return false;
+ const index=project?.steps?.findIndex(s=>s.id===id);if(index==null||index<0)return false;
+ const old=project.steps[index];project.steps[index]={...old,...clone(raw),id:old.id,drops:old.drops||[]};stepIndex=index;storageBackup();setTab('build');return true;
 }
 function renderTemplates(){
  const host=$('#dboTemplates');if(!host)return;
@@ -651,6 +659,6 @@ function init(){
  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')access()});
  access()
 }
-window.CellboundDesignBooth={open,close,setTab,insertTemplate,validate,save,current:()=>clone(project||{}),isOwner:owner};
+window.CellboundDesignBooth={open,close,setTab,insertTemplate,updateEnemyStage,validate,save,current:()=>clone(project||{}),isOwner:owner};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()
 })();

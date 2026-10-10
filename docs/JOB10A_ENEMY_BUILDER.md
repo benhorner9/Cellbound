@@ -12,3 +12,11 @@
 ## Checkpoint 1
 
 Core builder and validated versioned model implemented: basics, AI, abilities, phases, artwork, private template save/reload/autosave, device recovery, contributor scope, export, review submission. Existing and uploaded backgrounds use the existing art system. Validation/model tests pass. Runtime preview and adventure integration remain checkpoint 2; no deployment yet.
+
+## Checkpoint 2
+
+Implemented independent fight snapshots in Adventure Builder, editing an attached snapshot, built-in/background art reuse, public adventure loading and dedicated reward-free preview. Canonical quest fight adapter preserves the opt-in configuration marker. Existing phase/telegraph/interrupt renderer is reused. Added bounded opt-in defence, fair serial ability scheduling with per-ability minimum cooldowns and health conditions; legacy scheduler stays unchanged. Fixed hidden combat backdrop intercepting taps after preview exit.
+
+Passed model and actual Combat Reborn tests, existing combat authority regressions, existing Design Booth contracts, and Chromium touch browser flow: cloud save/reopen after removing device recovery, phase editing, dungeon insertion/save, public runtime loading, canonical combat viewer, preview exit, no reward/penalty calls, submission and viewer restrictions. PostgreSQL suite passes 50 checks including boss JSON roundtrip, private/public separation, editor/viewer denial, publication and rollback under the unchanged migration.
+
+Checkpoint 3 remains: complete release-gate runs in Chromium/WebKit, publish the feature branch/PR, merge only after green checks, deploy staging, and independently verify the deployed commit.
