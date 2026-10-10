@@ -123,6 +123,12 @@ async function waitClosed(page,selector){
       throw error
     }
     assert.equal(await page.evaluate(()=>CellboundManorRaid.isOwnerSoloQa()),true,'Manor owner solo QA stays local and active during combat');
+    // Simulate the raid hub's periodic refresh while the owner is inspecting a room.
+    // The in-progress local QA session must survive and still advance normally.
+    await page.evaluate(()=>CellboundManorRaid.refresh());
+    await page.locator('#mrOwnerQaControls [data-qa-next]').click();
+    await page.waitForSelector('#manorRaidOverlay:not([hidden]) .mr-ready-shell',{timeout:7000});
+    assert((await page.locator('#mrOwnerQaControls').innerText()).includes('The Maids'),'Owner QA can still advance to The Maids after the hub refresh');
     await page.locator('#mrOwnerQaControls [data-qa-exit]').click();
     await page.waitForFunction(()=>!window.CellboundManorRaid.isOwnerSoloQa(),{},{timeout:5000,polling:50});
     const claimsAfter=await page.evaluate(()=>JSON.stringify(CellboundGame.getState().raidRewardClaims||{}));
