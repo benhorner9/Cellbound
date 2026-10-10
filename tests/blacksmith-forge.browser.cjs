@@ -44,7 +44,30 @@ const root=path.resolve(__dirname,'..');
  assert.equal(await page.evaluate(()=>window.mockState.roster[0].professions[0].projectsCompleted),1,'one completed project');
  assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject),null,'project cleared after claim');
  assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),4,'masterwork consumes two inputs and reclaims exactly one, per existing rules');
+
+ // Forging a batch of five uses the SAME skill challenge, but takes 5x time.
+ await page.evaluate(()=>{window.mockState.materials['zeltiran-iron']=20});
+ const input=page.locator('[data-craft-qty="test-whetstone"]');
+ await input.fill('5');
+ await input.press('Tab');
+ await page.waitForFunction(()=>document.querySelector('[data-craft-qty="test-whetstone"]')?.value==='5');
+ await page.click('[data-craft="test-whetstone"]');
+ await page.waitForSelector('.forge-workshop[data-forge-stage="0"]');
+ assert.deepEqual(await page.evaluate(()=>({qty:window.mockState.workshopCraftProject.quantity,total:window.mockState.workshopCraftProject.totalMs,stock:window.mockState.materials['zeltiran-iron']})),{qty:5,total:110000,stock:10},'five-item work order reserves five recipe inputs and takes exactly five times longer');
+ await page.click('[data-craft-abandon]');
+ await page.waitForSelector('[data-craft="test-whetstone"]');
+ assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),20,'cancelling the five-item batch refunds every reserved input');
+ await page.click('[data-craft="test-whetstone"]');
+ await page.waitForSelector('.forge-workshop[data-forge-stage="0"]');
+ for(let step=0;step<3;step++){await page.click('[data-forge-strike]');await page.waitForSelector('.forge-workshop[data-forge-stage="'+(step+1)+'"]')}
+ assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject.totalMs),110000,'large batches cannot short-circuit the timer');
+ assert.equal(await page.evaluate(()=>window.mockState.consumables[0].quantity),1,'three successful stages alone do not grant five items');
+ await page.evaluate(()=>{const now=Date.now.bind(Date);Date.now=()=>now()+160000});
+ await page.waitForFunction(()=>window.mockState.consumables[0]?.quantity===6,null,{timeout:6000});
+ assert.equal(await page.evaluate(()=>window.mockState.roster[0].professions[0].projectsCompleted),6,'project count accounts for one plus five items');
+ assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),15,'five perfect items each reclaim at most one input');
+ assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject),null,'batch clears after one reward transaction');
  assert.deepEqual(errors,[],'no browser errors');
- console.log('Blacksmith forge economy integration passed: reserve, 3 saved actions, refund, timed quality reward and one output.');
+ console.log('Blacksmith forge economy integration passed: reserve, three saved actions, batch-scaled timer, full cancellation refund and five-item reward.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

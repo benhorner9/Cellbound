@@ -191,13 +191,13 @@ function maxCraftable(recipe,prof){
   if(!prof||prof.level<recipe.level)return 0;
   if(recipe.requiresDiscovery&&!state().discoveredRecipes.includes(recipe.id))return 0;
   const caps=Object.entries(recipe.inputs).map(([k,q])=>Math.floor((Number(state().materials[k])||0)/Math.max(1,Number(q)||1)));
-  return Math.max(0,Math.min(prof.name==='Blacksmithing'?1:99,caps.length?Math.min(...caps):99));
+  return Math.max(0,Math.min(99,caps.length?Math.min(...caps):99));
 }
 function craftSecondsPerUnit(recipe){
   const band=Math.floor(Math.max(0,(Number(recipe.level)||1)-1)/20);
   return 6+band*2+(recipe.endgame?6:0);
 }
-function craftBatchDurationMs(recipe,quantity,profession=''){return profession==='Blacksmithing'?22000:Math.max(1000,craftSecondsPerUnit(recipe)*1000*Math.max(1,Number(quantity)||1))}
+function craftBatchDurationMs(recipe,quantity,profession=''){return profession==='Blacksmithing'?22000*Math.max(1,Math.floor(Number(quantity)||1)):Math.max(1000,craftSecondsPerUnit(recipe)*1000*Math.max(1,Number(quantity)||1))}
 function craftTime(ms){
   const sec=Math.max(0,Math.ceil((Number(ms)||0)/1000)),m=Math.floor(sec/60),s=sec%60;
   return m?m+':'+String(s).padStart(2,'0'):s+'s';
@@ -318,7 +318,7 @@ function forgeProjectMarkup(prof){
  }).join('');
  return '<section class="forge-workshop'+gaugeManual+'" data-forge-stage="'+f.stage+'" aria-label="Blacksmithing forge mini game">'+
   '<div class="forge-scene" aria-hidden="true"><div class="forge-heat-glow"></div><div class="forge-furnace"></div><div class="forge-anvil"><i class="forge-anvil-horn"></i><i class="forge-hot-steel"></i><i class="forge-anvil-leg"></i></div><div class="forge-sparks"></div><span class="forge-scene-label">THE ZELTIRAN FORGE</span></div>'+
-  '<div class="forge-challenge"><div class="forge-challenge-head"><div><small>ARTISAN CHALLENGE · BLACKSMITHING</small><h4>'+(complete?'BLADE COMPLETE':stage.label)+'</h4><p>'+(complete?'Your workmanship has been recorded. Complete the focused workshop time to claim the finished item.':stage.instruction)+'</p></div><span class="forge-result" data-forge-quality>'+(complete?'QUALITY '+quality+'%':f.stage+' / 3 FINISHED')+'</span></div>'+
+  '<div class="forge-challenge"><div class="forge-challenge-head"><div><small>ARTISAN CHALLENGE · BLACKSMITHING</small><h4>'+(complete?'FORGING COMPLETE':stage.label)+'</h4><p>'+(complete?'Your workmanship determines the quality of all '+Math.max(1,Number(craftProject.quantity)||1)+' items. Complete the focused workshop time to claim them.':stage.instruction)+'</p></div><span class="forge-result" data-forge-quality>'+(complete?'QUALITY '+quality+'%':f.stage+' / 3 FINISHED')+'</span></div>'+
   '<div class="forge-stages">'+attempts+'</div>'+
   (complete?
     '<div class="forge-complete" role="status"><b>'+((quality>=90)?'MASTERWORK':quality>=65?'FINE FINISH':'STANDARD FINISH')+' · '+quality+'%</b><small>'+(craftProject.remainingMs>0?'Cooling and finishing time: '+craftTime(craftProject.remainingMs):'Finalising your work order…')+'</small></div>':
@@ -428,7 +428,7 @@ function renderProfessions(){
     const visible=def.recipes.filter(r=>recipeMatchesFilter(r,prof,s));
     const recipes=visible.map(r=>recipeCardMarkup(r,prof,s)).join('');
     const activeRecipe=craftProject&&craftProject.charId===c.id&&craftProject.slot===selectedSlot?def.recipes.find(r=>r.id===craftProject.recipeId):null;
-    body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make and how many.</h3></div><p>${prof.name==='Blacksmithing'?'Forge one item at a time. Your three precise actions determine its crafting quality; focused workshop time still applies.':'Batch crafting uses focused workshop time. Leave Professions or background the app and the timer pauses until you return.'}</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
+    body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make and how many.</h3></div><p>${prof.name==='Blacksmithing'?'Forge a batch in one work order. Your three precise actions set the batch quality and the focused crafting time increases by the number of items (5 items take 5 times as long).':'Batch crafting uses focused workshop time. Leave Professions or background the app and the timer pauses until you return.'}</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
   }
   work.innerHTML=`<div class="profession-slot-grid">${slotHtml}</div>${body}`;
   work.querySelectorAll('[data-prof-slot]').forEach(b=>b.onclick=()=>{if(craftProject)return;selectedSlot=Number(b.dataset.profSlot);lastCraftMessage='';renderProfessions();});

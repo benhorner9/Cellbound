@@ -7,15 +7,15 @@ A precision slider mode is available for touch/accessibility; reduced-motion set
 
 ## Economy and save guarantees
 - Reuses existing reserved materials, profession XP, quality tier grading, recipe outputs and analytics. No new recipe data, item strength, currencies, DB schema or combat changes.
-- One Blacksmithing item per work order; a single perfect attempt cannot upgrade a batch of 99.
-- New forge orders cannot output an item until all three steps AND 22 seconds of focused workshop time complete.
+- Blacksmithing supports batches of up to 99 if sufficient reagents are available. Three successful skill actions establish a shared quality for that batch; larger batches require proportionately more focused crafting time.
+- New forge orders cannot output items until all three steps AND **22 seconds of focused workshop time per item** complete (for example, five items take 110 seconds).
 - Changing screens/backgrounding pauses workshop time; each successful action saves to the existing workshopCraftProject state.
 - Cancelling returns the complete reserved input cost; unfinished orders yield no reward.
 - Old in-progress timed work orders and all other professions continue unchanged.
 - Failure or poor timing still produces the standard item.
 
 ## How to test on the iPad
-Open https://cb.athleticsmanagergame.com, Guild > Professions, select a Blacksmith, and start any unlocked recipe with sufficient materials (for example Tempered Whetstone). Watch the marker and tap Set the Heat, Strike the Anvil, then Quench the Steel. Optionally use the precision slider. Once all stages and focused workshop time finish, confirm one crafted item and its profession XP. Cancel a second order to check materials return. Rotate the iPad and try Reduce Motion.
+Open https://cb.athleticsmanagergame.com, Guild > Professions, select a Blacksmith, and start any unlocked recipe with sufficient materials (for example Tempered Whetstone). Watch the marker and tap Set the Heat, Strike the Anvil, then Quench the Steel. Optionally use the precision slider. For a batch of five, set Amount to five; the estimated time should display 1:50. Once all stages and focused workshop time finish, confirm five crafted items and corresponding profession XP. Cancel a second order to check materials return. Rotate the iPad and try Reduce Motion.
 
 ## Technical tests
-New Node and Chromium/WebKit browser regression tests cover the stage algorithm, quality, material reserve/refund, one-item reward, successful crafting, save requests and accessibility mode. Physical iPad testing still requires owner review.
+New Node and Chromium/WebKit browser regression tests cover the stage algorithm, quality, material reserve/refund, batch-scaled reward, successful crafting, save requests and accessibility mode. Physical iPad testing still requires owner review.
