@@ -349,7 +349,11 @@ function tutorialComicConfig(id){
       ]
     }
   };
-  return scenes[id]||null
+  const scene=scenes[id];if(!scene)return null;
+  // Preserve newer hand-curated scene artwork; only make the three-panel
+  // reading order explicit rather than replacing the illustrations.
+  scene.progressive=true;scene.nextLabel='NEXT PANEL →';scene.continueLabel='CONTINUE →';
+  return scene
 }
 function comicSeen(id){
   const s=state();return Boolean(s?.onboarding?.comicSeen?.[id])
@@ -370,7 +374,7 @@ function maybeTutorialComic(id){
 }
 async function previewTutorialComics(){
   const C=window.CellboundComicScenes;if(!C?.show)return false;
-  const ids=['arrival','west-wall','gear','hollows','loot','contract','departure'];
+  const ids=['arrival','west-wall','gear','hollows','loot','shock','craft','contract','departure'];
   for(const id of ids){const cfg=tutorialComicConfig(id);if(cfg)await C.show({...cfg,eyebrow:'DEV PREVIEW · '+cfg.eyebrow})}
   return true
 }
@@ -1018,12 +1022,12 @@ async function runTutorialDungeon(){
 }
 function tutorialLootItem(){
   const s=state(),id=s?.onboarding?.tutorialLootBankId;
-  return (s?.bank||[]).find(x=>x.id===id)||null;
+  return (s?.bank||[]).find(x=>x.id===id)||[...(s?.bank||[])].reverse().find(x=>x.source==='Zeltiran Hollows · Hollow Warden')||null;
 }
 function renderLootReview(){
   if(maybeTutorialComic('loot'))return;
   const s=state(),item=tutorialLootItem();
-  if(!item){s.onboarding.stage='quest-lesson';s.onboarding.coreTrainingComplete=true;Game.save();render();return}
+  if(!item){s.onboarding.stage='recovery-lesson';Game.save();render();return}
   const eligible=s.roster.filter(ch=>item.class===ch.class||item.classes==='all'||item.classes?.includes?.(ch.class));
   const stats=(G.statLines?.(item)||[]).map(x=>x.text).join(' · ')||'No bonus stats';
   const body='<div class="loot-school"><main><small>ZELTIRA · GUILD BANK</small><h2>The boss dropped an item. It does not equip itself.</h2><p>Drops are secured in the Guild Bank first. Read the roll, choose who benefits, then assign the item.</p><article class="tutorial-loot-card">'+G.artHTML(item,104)+'<div><small>'+esc(item.rarity||'GEAR')+' · '+esc(item.slot)+' · ITEM LEVEL '+(item.itemLevel||0)+'</small><h3>'+esc(item.name)+'</h3><div class="tutorial-loot-stats">'+(G.statLines?.(item)||[]).map(x=>'<span>'+esc(x.text)+'</span>').join('')+'</div><p>Dropped by the Hollow Warden · currently stored in the Guild Bank</p></div></article><div class="gear-school-rule"><b>Dungeon rolls are not fixed</b><span>If this same item drops again, its bonus stat can be different. A bad roll can be replaced later even when the Item Level is unchanged.</span></div></main><aside class="z-guide"><small>ASSIGN THE DROP</small><h2>Who should wear it?</h2><p>This item is restricted by class. The labels below compare its rolled stat against each compatible character’s current spec.</p><div class="tutorial-loot-characters">'+eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return '<button data-tutorial-loot-char="'+ch.id+'"><span>'+esc(ch.portrait)+'</span><div><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+'</small><em class="'+esc(fit?.tone||'')+'">'+esc(fit?.label||'COMPATIBLE')+'</em></div></button>'}).join('')+'</div><p class="tutorial-roll-summary">'+esc(stats)+'</p></aside></div>';
@@ -1038,7 +1042,7 @@ async function equipTutorialLoot(charId){
   ch.equipment=ch.equipment||emptyEquipment();ch.equipment[item.slot]={...equipped,source:'Equipped'};
   ch.gearItems=['Head','Chest','Weapon'].map(slot=>ch.equipment[slot]?.name||'Empty');
   item.quantity=(Number(item.quantity)||1)-1;if(item.quantity<=0)s.bank=s.bank.filter(x=>x.id!==item.id);
-  s.onboarding.tutorialLootEquippedTo=ch.id;s.onboarding.stage='quest-lesson';s.onboarding.coreTrainingComplete=true;
+  s.onboarding.tutorialLootEquippedTo=ch.id;s.onboarding.stage='recovery-lesson';
   s.activity.push(ch.name+' equipped '+item.name+' from the Zeltiran Hollows.');
   Game.save();await Game.persistState();render();
 }
@@ -1092,6 +1096,17 @@ function recipeInputs(recipe){
 function renderCraft(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=c?.professions?.[0],def=P.PROFESSIONS[prof?.name],recipe=def?.recipes?.[0];
   if(!c||!recipe){s.onboarding.stage='profession-choice';Game.save();render();return}
+  // Training must not dead-end when the saved Hollows reagent reward is absent.
+  // Top up only the deficit for the player's chosen first recipe, once per
+  // onboarding run, rather than minting another full reward bundle on refresh.
+  s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};
+  if(!s.onboarding.craftSupplyPrepared){
+    for(const [key,quantity] of Object.entries(recipe.inputs||{})){
+      const have=Math.max(0,Number(s.materials[key])||0);
+      if(have<quantity)s.materials[key]=quantity;
+    }
+    s.onboarding.craftSupplyPrepared=true;Game.save();
+  }
   const can=Object.entries(recipe.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q);
   const body='<div class="craft-tutorial"><aside class="craft-character"><small>APPRENTICE</small><span class="craft-avatar">'+esc(c.portrait)+'</span><h2>'+esc(c.name)+'</h2><p>'+def.icon+' '+esc(prof.name)+' · Skill 1</p><div class="skill-preview"><i style="width:0%"></i></div><small>CRAFTING EARNS PROFESSION XP</small></aside><main><small>ZELTIRA · CRAFT ROW</small><h2>Craft your first preparation item.</h2><p>The reagents from your dungeon are enough for a level 1 recipe. The result is tradeable and useful, but it will not last forever.</p><article class="tutorial-recipe"><div class="recipe-title"><strong>'+def.icon+'</strong><div><small>SKILL 1 RECIPE</small><h3>'+esc(recipe.name)+'</h3><p>'+esc(prof.name)+'</p></div></div><div class="recipe-inputs">'+recipeInputs(recipe)+'</div><div class="craft-output">'+(recipe.output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(recipe.output.key,52,'tutorial-output-art'):'')+'<span>CREATES</span><b>'+esc(recipe.output.name)+' ×'+(recipe.output.quantity||1)+'</b></div><button id="craftTutorialItem" class="on-primary" '+(can?'':'disabled')+'>CRAFT '+esc(recipe.output.name).toUpperCase()+' →</button></article></main></div>';
   ensureRoot().innerHTML=chrome(body,'craft');
@@ -1122,7 +1137,19 @@ async function craftTutorialItem(){
 }
 function renderProfessionUse(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),key=s.onboarding.craftedKey,stack=s.consumables.find(x=>x.key===key),p=stack?.payload||{};
-  if(!c||!stack){s.onboarding.stage='quest-lesson';Game.save();render();return}
+  if(!c||!stack){
+    // Recovered saves may have consumed or lost the training item. Never skip
+    // the lesson automatically or trap a player behind an unavailable item.
+    const hasCrafted=Boolean(s.onboarding.professionComplete);
+    const body='<div class="growth-school"><main><small>ZELTIRA · PREPARATION</small><h2>'+ (hasCrafted?'Your training item is no longer in the bag.':'Your training craft needs attention.') +'</h2><p>'+ (hasCrafted?'You already completed your first craft. Review what you learned, then continue to the east-gate contract.':'Choose a profession and craft a training item before leaving Zeltira.') +'</p></main><aside class="z-guide"><small>RECOVER YOUR TRAINING</small><button id="recoverTutorialCraft" class="on-primary">'+(hasCrafted?'I UNDERSTAND · CONTINUE →':'RETURN TO THE CRAFTMASTER →')+'</button></aside></div>';
+    ensureRoot().innerHTML=chrome(body,'profession-use');
+    $('#recoverTutorialCraft')?.addEventListener('click',async()=>{
+      s.onboarding.stage=hasCrafted?'quest-lesson':'profession-choice';
+      if(hasCrafted){s.onboarding.professionUseComplete=true;s.onboarding.coreTrainingComplete=true}
+      Game.save();await Game.persistState?.();render();
+    });
+    return
+  }
   const bonus=P?.bonusText?.(p.bonuses)||'',charges=Number(p.charges)||3;
   let actionTitle='Pack it for the next dungeon',actionCopy=p.description||'This crafted item will be consumed through play.',button='PACK FOR ADVENTURE →';
   if(p.effect==='gear-enhancement'){actionTitle='Apply it to real equipment';actionCopy=(p.description||'')+' Another '+p.slot+' enhancement replaces the current one.';button='APPLY TO '+String(p.slot||'ITEM').toUpperCase()+' →'}
@@ -1144,7 +1171,7 @@ function renderProfessionUse(){
       stack.quantity--;if(stack.quantity<=0)s.consumables=s.consumables.filter(x=>x!==stack);
       s.activity.push(c.name+' drank '+stack.name+' during training.');
     }
-    s.onboarding.stage='quest-lesson';Game.save();await Game.persistState();render();
+    s.onboarding.stage='quest-lesson';s.onboarding.professionUseComplete=true;s.onboarding.coreTrainingComplete=true;Game.save();await Game.persistState();render();
   });
 }
 
@@ -1161,7 +1188,9 @@ function renderDeparture(){
   $('#beginAdventure')?.addEventListener('click',completeOnboarding);
 }
 async function completeOnboarding(){
-  const s=state();s.onboarding.complete=true;s.onboarding.stage='complete';s.onboarding.completedAt=new Date().toISOString();s.renown=Math.max(10,Number(s.renown)||0);s.activity.push('The First Expedition is complete. The guild accepted Ashes on the East Road.');
+  const s=state();
+  if(!s.onboarding?.coreTrainingComplete){render();return}
+  s.onboarding.complete=true;s.onboarding.stage='complete';s.onboarding.completedAt=new Date().toISOString();s.renown=Math.max(10,Number(s.renown)||0);s.activity.push('The First Expedition is complete. The guild accepted Ashes on the East Road.');
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_complete:true,tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   hide();Game.renderAll();Game.switchView('quests');
@@ -1171,7 +1200,13 @@ function render(){
   const s=state();if(!s)return;
   if(s.onboarding?.complete===true){hide();return}
   show();
-  const stage=s.onboarding?.stage||'party-builder';
+  let stage=s.onboarding?.stage||'party-builder';
+  // Existing unfinished saves may already be at the quest screen because an
+  // earlier build skipped the recovery/profession lessons. Resume them safely.
+  if(['quest-lesson','departure'].includes(stage)&&!s.onboarding?.coreTrainingComplete){
+    stage=!s.onboarding.shockLessonComplete?'recovery-lesson':!s.onboarding.professionComplete?'profession-choice':'profession-use';
+    s.onboarding.stage=stage;Game.save();
+  }
   if(stage==='party-builder')renderPartyBuilder();
   else if(stage==='zeltira-arrival')renderArrival();
   else if(stage==='first-expedition')renderFirstExpedition();

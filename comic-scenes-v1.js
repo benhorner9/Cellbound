@@ -56,7 +56,7 @@ function scenePartyMarkup(){
 }
 function panelMarkup(panel,index,suppressCaption=false){
   const p=panel||{},kind=String(p.kind||'location').replace(/[^a-z0-9_-]/gi,'');
-  const art=p.artwork?'<img src="'+esc(p.artwork)+'" alt="">':'';
+  const art=p.artwork?'<img src="'+esc(p.artwork)+'" alt="'+esc(p.artAlt||p.title||'Illustrated story scene')+'" decoding="async" loading="eager">':'';
   const speaker=p.speaker?'<div class="cbcomic-panel-speaker">'+esc(p.speaker)+'</div>':'';
   const caption=!suppressCaption&&(p.eyebrow||p.title||p.text)?'<div class="cbcomic-panel-caption">'+(p.eyebrow?'<small>'+esc(p.eyebrow)+'</small>':'')+(p.title?'<b>'+esc(p.title)+'</b>':'')+(p.text?'<span>'+esc(p.text)+'</span>':'')+'</div>':'';
   const sigil=p.icon?'<i class="cbcomic-panel-icon">'+esc(p.icon)+'</i>':'';
@@ -112,6 +112,13 @@ async function show(config={}){
       ((config.hideParty||config.panelOnly)?'':scenePartyMarkup())+
       dialogue+
     '</section>';
+    // A missing approved illustration must not cover the dialogue with a
+    // browser broken-image icon. Keep the panel and its story controls usable.
+    root.querySelectorAll('.cbcomic-panel img').forEach(img=>{
+      const unavailable=()=>{img.closest('.cbcomic-panel')?.classList.add('art-unavailable');img.remove()};
+      img.addEventListener('error',unavailable,{once:true});
+      if(img.complete&&img.naturalWidth===0)unavailable();
+    });
 
     const continueBtn=root.querySelector('[data-comic-continue]');
     const choicesWrap=root.querySelector('#cbcomicChoices');
@@ -138,6 +145,7 @@ async function show(config={}){
         const node=document.createElement('div');
         node.innerHTML=revealMarkup(r);
         const box=node.firstElementChild;
+        panel.querySelectorAll('.cbcomic-reveal-caption').forEach(old=>old.remove());
         if(box)panel.appendChild(box);
       }
       updateProgressiveControls();
@@ -159,7 +167,7 @@ async function show(config={}){
       if(reply){reply.hidden=false;reply.innerHTML='<small>'+esc(choice.replySpeaker||config.speaker||'')+'</small><p>'+esc(choice.reply||config.defaultReply||'')+'</p>'}
       if(continueBtn){continueBtn.disabled=false;continueBtn.focus()}
     }));
-    updateProgressiveControls();
+    if(progressive)revealNext();else updateProgressiveControls();
   });
 }
 function close(){
