@@ -21,7 +21,7 @@ jobs:
     # Manual dispatch on any other branch must never publish to the dev host.
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Check out exact pushed commit
@@ -40,70 +40,25 @@ jobs:
       - name: Appearance foundation tests
         run: npm run test:appearance
 
-      - name: Core regression tests
-        run: |
-          node tests/admin-ux.cjs
-          node tests/beta-analytics.cjs
-          node tests/beta-balance.cjs
-          node tests/beta-operations.cjs
-          node tests/beta-ui-polish.cjs
-          node tests/gameplay-contracts.cjs
-          node tests/dungeon-presentation-integrity.cjs
-          node tests/story-presentation-integrity.cjs
-          node tests/manor-raid-integrity.cjs
-          node tests/performance-contracts.cjs
-          node tests/living-combat.authority.cjs
+      - name: Core gameplay, PvP, loot, quest and editor regressions
+        run: npm run test:core
 
       - name: Install browser QA tools
         run: |
           npm install --no-save --package-lock=false playwright@1.51.1
           npx playwright install --with-deps chromium webkit
 
-      - name: Chromium browser regressions
+      - name: Chromium complete browser regressions
         id: chromium
         continue-on-error: true
-        shell: bash
-        run: |
-          failed=0
-          for test in \
-            tests/login-screen.browser.cjs \
-            tests/living-combat.browser.cjs \
-            tests/equipment-fit.browser.cjs \
-            tests/race-identity.browser.cjs \
-            tests/item-visuals-v2.browser.cjs \
-            tests/design-booth.browser.cjs \
-            tests/gameplay-regression.browser.cjs \
-            tests/ui-performance.browser.cjs \
-            tests/full-playthrough.browser.cjs
-          do
-            echo "===== Chromium: $test ====="
-            node "$test" || failed=1
-          done
-          exit "$failed"
+        run: npm run test:browser
 
-      - name: WebKit browser regressions
+      - name: WebKit complete browser regressions (iPad Safari engine)
         id: webkit
         continue-on-error: true
-        shell: bash
         env:
           CELLBOUND_TEST_ENGINE: webkit
-        run: |
-          failed=0
-          for test in \
-            tests/login-screen.browser.cjs \
-            tests/living-combat.browser.cjs \
-            tests/equipment-fit.browser.cjs \
-            tests/race-identity.browser.cjs \
-            tests/item-visuals-v2.browser.cjs \
-            tests/design-booth.browser.cjs \
-            tests/gameplay-regression.browser.cjs \
-            tests/ui-performance.browser.cjs \
-            tests/full-playthrough.browser.cjs
-          do
-            echo "===== WebKit: $test ====="
-            node "$test" || failed=1
-          done
-          exit "$failed"
+        run: npm run test:browser
 
       - name: JavaScript syntax sweep
         shell: bash
