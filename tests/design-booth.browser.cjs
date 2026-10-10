@@ -218,7 +218,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await page.locator('[data-dbo-go="library"]').click();
   await page.waitForSelector('#dboLibrary:not([hidden]) .dbo-library-shell');
   assert.equal(await page.locator('[data-lib-new]').count(),5,'Content Creator supports new rooms, encounters, comics, puzzles and items');
-  assert(await page.locator('#dboLibrary').innerText().then(t=>t.includes('SAVE CLOUD DRAFT')&&t.includes('PUBLISH CONTENT')),'Creator separates draft saves from publishing');
+  assert(await page.locator('#dboLibrary').innerText().then(t=>t.includes('SAVE CLOUD DRAFT')&&t.includes('SUBMIT FOR REVIEW')),'Creator separates draft saves from publishing');
   await page.locator('[data-lib-new="item"]').click();
   assert.equal(await page.locator('[data-lib-field="baseItemId"] option').count()>20,true,'New equipment picks from existing balanced gear templates');
   await page.locator('[data-lib-field="title"]').fill('QA New Gear Variant');

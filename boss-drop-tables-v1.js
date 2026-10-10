@@ -39,9 +39,10 @@ function defaultLoot(b){
  return DEFAULT_REWARDS[b.key]||(b.raid?'Base raid: Manor rewards are managed by the protected multiplayer raid claim system.':'Base dungeon: original clear-cache equipment and profession rewards are granted on completion.');
 }
 const keys=new Set(BOSSES.map(b=>b.key)),tables=new Map();let pending=null,lastLoaded=0;
+const draftTables=new Map();
 const Game=()=>window.CellboundGame;
 const db=()=>Game()?.getSupabase?.();
-const isOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&window.CellboundAdmin?.role==='owner';
+const isOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&window.CellboundAdmin?.role==='owner'||Boolean(window.CellboundBoothWorkflow?.can('boss-drops','edit'));
 const clean=drops=>(Array.isArray(drops)?drops:[]).slice(0,6).map(d=>({
  kind:d?.kind==='material'?'material':'gear',
  key:String(d?.key||'').slice(0,100),
@@ -56,12 +57,16 @@ async function refresh(force=false){
   const {data,error}=await db().from('cellbound_boss_drop_tables').select('boss_key,drops').order('boss_key');
   if(error)throw error;
   tables.clear();for(const row of data||[]){if(keys.has(row.boss_key))tables.set(row.boss_key,clean(row.drops))}
+  if(window.CellboundBoothWorkflow?.can?.('boss-drops')){
+   draftTables.clear();for(const row of await window.CellboundBoothWorkflow.list('boss-drops'))draftTables.set(row.key,{drops:clean(row.payload.drops),revision:row.revision});
+  }
   lastLoaded=Date.now();return true
  })().finally(()=>{pending=null});
  try{return await pending}catch(e){console.warn('Boss drop tables unavailable',e);return false}
 }
 function get(key){return (tables.get(key)||[]).map(x=>({...x}))}
-async function save(key,drops){
+function draft(key){const row=draftTables.get(key);return row?{drops:row.drops.map(x=>({...x})),revision:row.revision}:null}
+async function save(key,drops,expectedRevision=0){
  if(!isOwner()||!keys.has(key))throw Error('Only the owner may edit registered boss drop tables.');
  if(!db())throw Error('Boss drop database unavailable.');
  const checked=window.CellboundDesignedContent?.cleanBlueprint?.({steps:[{type:'fight',drops}]}).steps[0]?.drops||[];
@@ -71,9 +76,8 @@ async function save(key,drops){
  if(checked.some(x=>x.chance<1||x.chance>100))throw Error('Drop percentages must be 1–100%.');
  const {data:{user},error:authError}=await db().auth.getUser();
  if(authError||!user?.id)throw Error('Please sign in as the Cellbound owner.');
- const {error}=await db().from('cellbound_boss_drop_tables').upsert({boss_key:key,drops:checked,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:'boss_key'});
- if(error)throw error;
- tables.set(key,clean(checked));lastLoaded=Date.now();
+ const saved=await window.CellboundBoothWorkflow.submit('boss-drops',key,{boss_key:key,drops:checked},expectedRevision);
+ draftTables.set(key,{drops:checked,revision:saved.revision});
  return checked
 }
 async function award(key,attemptId,source,options={}){
@@ -107,5 +111,5 @@ async function award(key,attemptId,source,options={}){
  Game().save?.();await Game().persistState?.();
  return earned
 }
-window.CellboundBossDropTables={bosses:()=>BOSSES.map(b=>({...b,baseRewards:defaultLoot(b)})),refresh,get,save,award,clean};
+window.CellboundBossDropTables={bosses:()=>BOSSES.map(b=>({...b,baseRewards:defaultLoot(b)})),refresh,get,draft,save,award,clean};
 })();

@@ -5,9 +5,9 @@
 const $=s=>document.querySelector(s);
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=x=>JSON.parse(JSON.stringify(x));
-const owner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
+const owner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'||Boolean(window.CellboundBoothWorkflow?.can('template'));
 const db=()=>window.CellboundGame?.getSupabase?.();
-const table='cellbound_design_templates',KEY='cellbound-design-library-draft-v1';
+const table='cellbound_design_templates';let KEY='cellbound-design-library-draft-v1';
 const KINDS=[['room','Room / transition'],['fight','Boss or encounter'],['comic','Comic scene'],['minigame','Puzzle / minigame'],['item','Equipment item']];
 let rows=[],kind='room',selected=null,draft=null,baseline='',busy=false,message='',loading=false,listFilter='all';
 const typeName=k=>KINDS.find(x=>x[0]===k)?.[1]||k;
@@ -50,15 +50,14 @@ function openRecord(record){
  if(draft&&changed()&&!confirm('Open a different template? Unsaved changes will be lost unless saved to cloud.'))return;
  selected=record;kind=record.kind;
  draft={id:record.id,slug:record.slug,kind,title:String(record.draft_blueprint?.title||record.title),status:record.status,version:record.version,
-  data:clone(record.draft_blueprint&&Object.keys(record.draft_blueprint).length?record.draft_blueprint:record.blueprint||{}),cloudUpdatedAt:record.updated_at||null};
+  data:clone(record.draft_blueprint&&Object.keys(record.draft_blueprint).length?record.draft_blueprint:record.blueprint||{}),cloudUpdatedAt:record.updated_at||null,workflow_revision:record.workflow_revision};
  baseline=JSON.stringify(draft);persist();render()
 }
 async function refresh(){
  if(!owner()||!db())return false;
  loading=true;
  try{
-  const {data,error}=await db().from(table).select('id,slug,kind,title,status,version,blueprint,draft_blueprint,updated_at').order('updated_at',{ascending:false});
-  if(error)throw error;rows=data||[];
+  rows=await window.CellboundBoothWorkflow.records('template');
   if(draft?.id){
    const match=rows.find(x=>x.id===draft.id);
    if(match){
@@ -154,11 +153,12 @@ function render(){
  '<main class="dbo-project-editor"><div class="dbo-library-state"><small>'+esc(typeName(kind).toUpperCase())+' · '+(asset?'PUBLISHED · draft changes will not affect players':'UNPUBLISHED')+'</small><h3>'+esc(draft.title)+'</h3><span id="dboLibraryDirty"></span></div>'+
  '<section id="dboLibraryFields">'+editorFields()+'</section>'+
  '<section class="dbo-review"><h4>'+(issues.length?issues.length+' thing'+(issues.length===1?'':'s')+' to finish':'Ready to publish')+'</h4>'+(issues.length?'<ol>'+issues.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'<p>All required fields are ready. Add it to an adventure to test the gameplay.</p>')+'</section>'+
- '<div class="dbo-footer"><button type="button" id="dboLibrarySave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button type="button" id="dboLibraryPublish" '+(busy||issues.length?'disabled':'')+'>PUBLISH CONTENT</button>'+
+ '<div class="dbo-footer"><button type="button" id="dboLibrarySave" '+(busy?'disabled':'')+'>SAVE CLOUD DRAFT</button><button type="button" id="dboLibraryPublish" '+(busy||issues.length?'disabled':'')+'>SUBMIT FOR REVIEW</button>'+
  (kind!=='item'?'<button type="button" id="dboLibraryInsert">+ ADD TO ADVENTURE</button>':'<button type="button" id="dboLibraryCatalogue">VIEW ITEM CATALOGUE →</button>')+
- '<button type="button" id="dboLibraryDuplicate">COPY AS NEW</button>'+(selected?.id&&!asset?'<button type="button" id="dboLibraryDelete">DELETE DRAFT</button>':'')+'</div><p role="status" id="dboLibraryMessage">'+esc(message||'Create, save, reuse and publish without editing game files.')+'</p>'+
+ '<button type="button" id="dboLibraryDuplicate">COPY AS NEW</button>'+'</div><p role="status" id="dboLibraryMessage">'+esc(message||'Create, save, reuse and publish without editing game files.')+'</p>'+
  '</main></div></section>';
- bind();persist()
+ bind();persist();
+ if(!window.CellboundBoothWorkflow?.can('template','edit'))host.querySelectorAll('input,textarea,select,#dboLibrarySave,#dboLibraryPublish,#dboLibraryDelete,[data-lib-new],[data-lib-remove-panel],#dboLibraryAddPanel').forEach(el=>el.disabled=true)
 }
 function bind(){
  const root=$('#dboLibrary');if(!root)return;
@@ -174,7 +174,7 @@ function bind(){
  root.querySelector('#dboLibraryAddPanel')?.addEventListener('click',()=>{collect();draft.data.panels.push({title:'Panel '+(draft.data.panels.length+1),text:'',artPath:''});persist();render()});
  root.querySelectorAll('[data-lib-remove-panel]').forEach(btn=>btn.onclick=()=>{collect();draft.data.panels.splice(Number(btn.dataset.libRemovePanel),1);persist();render()});
  root.querySelector('#dboLibrarySave')?.addEventListener('click',()=>save(false));
- root.querySelector('#dboLibraryPublish')?.addEventListener('click',()=>{collect();if(confirm('Publish this '+typeName(kind).toLowerCase()+'? Published items can appear in boss drop pickers and published templates become reusable.'))save(true)});
+ root.querySelector('#dboLibraryPublish')?.addEventListener('click',()=>{collect();if(confirm('Submit this '+typeName(kind).toLowerCase()+' for review? The published version is unchanged.'))save(true)});
  root.querySelector('#dboLibraryInsert')?.addEventListener('click',()=>{collect();insertIntoAdventure()});
  root.querySelector('#dboLibraryDuplicate')?.addEventListener('click',()=>{collect();newDraft(kind,{copy:true})});
  root.querySelector('#dboLibraryDelete')?.addEventListener('click',remove);
@@ -212,34 +212,17 @@ async function save(publish=false){
  try{
   const user=await db().auth.getUser();
   if(user.error||!user.data?.user?.id)throw new Error('Sign in with your owner account.');
-  const payload={draft_blueprint:clone(draft.data),updated_by:user.data.user.id,updated_at:new Date().toISOString()};
-  if(publish)Object.assign(payload,{title:draft.title.trim(),blueprint:clone(draft.data),status:'published',published_at:payload.updated_at,version:(Number(selected?.version)||0)+1});
-  else if(selected?.status!=='published')payload.title=draft.title.trim();
-  let response;
-  if(selected?.id)response=await db().from(table).update(payload).eq('id',selected.id).select().single();
-  else{
-   Object.assign(payload,{slug:draft.slug,kind,created_by:user.data.user.id,status:publish?'published':'draft'});
-   if(!publish){payload.blueprint={};payload.version=1}
-   response=await db().from(table).insert(payload).select().single();
-  }
+  const response={data:await window.CellboundBoothWorkflow.saveLegacy('template',{slug:draft.slug,kind,title:draft.title.trim(),blueprint:clone(draft.data)},publish,draft.workflow_revision||0)};
   if(response.error||!response.data?.id)throw new Error(response.error?.message||'Cloud did not confirm the save.');
-  const row=response.data;draft.id=row.id;draft.status=row.status;draft.version=row.version;draft.cloudUpdatedAt=row.updated_at||null;selected=row;baseline=JSON.stringify(draft);clearLocal();
-  const {data,error}=await db().from(table).select('id,slug,kind,title,status,version,blueprint,draft_blueprint,updated_at').order('updated_at',{ascending:false});
-  if(error)throw error;rows=data||[];
-  message=publish?(kind==='item'?'ITEM PUBLISHED · assign it to a specific boss in Drop Tables. It will not enter random dungeon drops.':'TEMPLATE PUBLISHED · add it to an adventure and publish the adventure before players can encounter it.'):'CLOUD DRAFT SAVED · players still see the previously published version.';
+  const row=response.data;draft.id=row.id;draft.workflow_revision=row.workflow_revision;draft.status=row.status;draft.version=row.version;draft.cloudUpdatedAt=row.updated_at||null;selected=row;baseline=JSON.stringify(draft);clearLocal();
+  rows=await window.CellboundBoothWorkflow.records('template');
+  message=publish?'SUBMITTED FOR REVIEW · approve and publish in Review & Publishing.':'CLOUD DRAFT SAVED · players still see the published version.';
   if(publish){await window.CellboundDesignedContent?.refresh?.(true);window.CellboundItemCatalog?.render?.()}
  }catch(e){message='Could not save content: '+String(e.message||e)}
  finally{busy=false;render()}
 }
-async function remove(){
- if(!selected?.id||selected.status==='published'||busy||!confirm('Delete this unpublished template from the cloud?'))return;
- busy=true;try{
-  const {error}=await db().from(table).delete().eq('id',selected.id);if(error)throw error;
-  selected=null;draft=fresh(kind);baseline=JSON.stringify(draft);clearLocal();message='Draft deleted.';
-  await refresh()
- }catch(e){message='Delete failed: '+String(e.message||e)}
- finally{busy=false;render()}
-}
+function remove(){message='Deletion is disabled. Use version history to roll back published content.';render()}
+
 function useStage(s){
  if(!s||!['room','fight','comic','minigame'].includes(s.type))return;
  if(!window.CellboundDesignBooth?.setTab)return;
@@ -251,11 +234,17 @@ function useStage(s){
 async function open(){
  if(!owner())return;
  const host=$('#dboLibrary');if(!host)return;
+ const key='cellbound-design-library-draft-v1:'+window.CellboundBoothWorkflow.user();
+ if(KEY!==key){draft=null;selected=null;KEY=key}
  host.hidden=false;
  if(!draft){if(!loadLocal()){draft=fresh(kind);baseline=JSON.stringify(draft)}}
  render();
  if(!loading)await refresh()
 }
 function close(){const host=$('#dboLibrary');if(host)host.hidden=true}
+let autosaveBlocked=false;
+setInterval(()=>{const host=$('#dboLibrary');if(host&&!host.hidden&&changed()&&!busy&&!autosaveBlocked&&!host.contains(document.activeElement)&&window.CellboundBoothWorkflow?.can('template','edit')){autosaveBlocked=true;save(false)}},5000);
+document.addEventListener('input',e=>{if(e.target.closest?.('#dboLibrary'))autosaveBlocked=false});
+window.addEventListener('beforeunload',e=>{if(changed()){persist();e.preventDefault();e.returnValue=''}});
 window.CellboundDesignLibrary={open,close,refresh,useStage,startNew:k=>{if(KINDS.some(x=>x[0]===k))newDraft(k)},current:()=>clone(draft||{}),validate:validation};
 })();

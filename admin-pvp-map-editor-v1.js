@@ -3,12 +3,13 @@
 // PvP Map Studio: owner-only authoring on the shared Combat Reborn map contract.
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const clone=x=>JSON.parse(JSON.stringify(x)),api=()=>window.CellboundPvPMaps;
-const owner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
+const owner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'||Boolean(window.CellboundBoothWorkflow?.can('pvp-map'));
 const LOCAL='cellbound-owner-pvp-map-editor-v1';
+const localKey=()=>LOCAL+':'+String(window.CellboundGame?.getUser?.()?.id||'signed-out');
 let opened=false,selected='crucible-arena',draft=null,baseline='',busy=false,message='',selectedMarker='spawn-blue-0',grid=true,initialized=false;
-const getLocal=()=>{try{return JSON.parse(localStorage.getItem(LOCAL)||'{}')||{}}catch{return{}}};
-const localDrafts=getLocal();
-const persist=()=>{if(!draft)return;localDrafts[draft.id]=clone(draft);try{localStorage.setItem(LOCAL,JSON.stringify(localDrafts))}catch{}};
+const getLocal=()=>{try{return JSON.parse(localStorage.getItem(localKey())||(window.CellboundAdmin?.role==='owner'?localStorage.getItem(LOCAL):null)||'{}')||{}}catch{return{}}};
+let localDrafts={},account='';
+const persist=()=>{if(!draft)return;localDrafts[draft.id]=clone(draft);try{localStorage.setItem(localKey(),JSON.stringify(localDrafts))}catch{}};
 const dirty=()=>Boolean(draft)&&JSON.stringify(draft)!==baseline;
 function note(txt){message=txt;const label=$('#pmeMessage');if(label)label.textContent=txt}
 function markerList(m){
@@ -87,11 +88,14 @@ function render(){
  (chosen?.kind==='blocker'?'<div class="pme-xy"><label>Width %<input id="pmeW" type="number" min="2" max="35" value="'+(chosen.width||8)+'"></label><label>Height %<input id="pmeH" type="number" min="2" max="35" value="'+(chosen.height||8)+'"></label></div><button type="button" id="pmeRemoveBlocker">Remove cover</button>':'')+
  '<div class="pme-cover"><h4>Collision cover</h4><p>Add rectangular obstacles that block movement and sight in this map.</p><button type="button" id="pmeAddBlocker" '+(m.layout.blockers.length>=20?'disabled':'')+'>+ Add cover (max 20)</button></div>'+
  '<div class="pme-check"><h4>Map checklist</h4><p>'+(!issues.length?'✓ Valid map layout · all team spawns and mode objectives are set':issues.map(x=>'• '+esc(x)).join(' ') )+'</p></div>'+
- '<div class="pme-actions"><button type="button" id="pmeSave" '+(busy?'disabled':'')+'>Save Cloud Draft</button><button type="button" id="pmeTest" '+(busy?'disabled':'')+'>Test in Practice</button><button type="button" id="pmePublish" '+(busy||issues.length?'disabled':'')+'>Publish Map</button><button type="button" id="pmeClearTest" '+(!activeTest?'disabled':'')+'>Stop Owner Test</button><button type="button" id="pmeUnpublish" '+(!api().isPublished(m.id)||busy?'disabled':'')+'>Restore Built-in / Unpublish</button></div>'+
+ '<div class="pme-actions"><button type="button" id="pmeSave" '+(busy?'disabled':'')+'>Save Cloud Draft</button><button type="button" id="pmeTest" '+(busy?'disabled':'')+'>Test in Practice</button><button type="button" id="pmePublish" '+(busy||issues.length?'disabled':'')+'>Submit for Review</button><button type="button" id="pmeClearTest" '+(!activeTest?'disabled':'')+'>Stop Owner Test</button><button type="button" id="pmeUnpublish" '+(!api().isPublished(m.id)||busy?'disabled':'')+'>Restore Built-in / Unpublish</button></div>'+
  '<small class="pme-warning">Save Draft is private. Test only affects your owner account. Publish updates staging PvP maps; it does not open public PvP or award rewards.</small>'+
  '<p id="pmeMessage" aria-live="polite">'+esc(message|| (dirty()?'Unsaved draft changes on this device.':'Map is ready for editing.'))+'</p>'+
  '</aside></div></section>';
- bind()
+ bind();
+ const w=window.CellboundBoothWorkflow;
+ if(w&&!w.can('pvp-map','edit'))host.querySelectorAll('button,input,select').forEach(e=>{if(!['pmeClose','pmeMap','pmeMarker','pmeGrid','pmeTest','pmeClearTest'].includes(e.id))e.disabled=true});
+ if(w&&w.access().role!=='owner'&&$('#pmeUnpublish'))$('#pmeUnpublish').disabled=true;
 }
 function bind(){
  $('#pmeMap')?.addEventListener('change',e=>{if(!choose(e.target.value))e.target.value=selected});
@@ -116,13 +120,13 @@ function bind(){
    selectedMarker='spawn-blue-0';persist();render();note('New map created locally. Save Cloud Draft before testing or publishing.')
   }catch(e){note(e.message)}
  });
- $('#pmeSave')?.addEventListener('click',()=>action(async()=>{await api().saveDraft(draft);baseline=JSON.stringify(api().clean(draft));persist();return'Cloud draft saved. Other owner devices can access it.'}));
+ $('#pmeSave')?.addEventListener('click',()=>action(async()=>{const snapshot=clone(draft),saved=await api().saveDraft(snapshot);if(draft.id===snapshot.id){draft.workflow_revision=saved.workflow_revision;baseline=JSON.stringify(saved);persist()}return'Cloud draft saved. You can resume it on another device.'}));
  $('#pmeTest')?.addEventListener('click',()=>{
   try{api().clean(draft);api().setTest(draft);persist();render();note('OWNER TEST ON · Open PvP → Crucible Practice Room and select '+draft.title+'. You will see these positions and artwork.') }
   catch(e){note(e.message)}
  });
  $('#pmeClearTest')?.addEventListener('click',()=>{api().clearTest(draft.id);render();note('Owner map test ended.')});
- $('#pmePublish')?.addEventListener('click',()=>action(async()=>{const errors=api().validate(draft);if(errors.length)throw Error(errors[0]);await api().publish(draft);baseline=JSON.stringify(api().clean(draft));persist();return'PUBLISHED · owner Practice Room now uses this map. Public PvP remains locked.'}));
+ $('#pmePublish')?.addEventListener('click',()=>action(async()=>{const errors=api().validate(draft);if(errors.length)throw Error(errors[0]);const snapshot=clone(draft),saved=await api().publish(snapshot);if(draft.id===snapshot.id){draft.workflow_revision=saved.workflow_revision;baseline=JSON.stringify(saved);persist()}return'SUBMITTED · approve and publish in Review & Publishing.'}));
  $('#pmeUnpublish')?.addEventListener('click',()=>{if(!confirm('Unpublish this PvP map? Built-in maps revert to their original positions; custom maps disappear from the selection list.'))return;action(async()=>{await api().unpublish(draft.id);baseline=JSON.stringify(api().clean(draft));return'Map unpublished. Built-in defaults restored.'})});
  $('#pmeDefaultArt')?.addEventListener('click',()=>{draft.artPath='';persist();render();note('Built-in artwork restored in draft. Publish the map to make this change available.')});
  $('#pmeArt')?.addEventListener('change',e=>{const file=e.target.files?.[0];if(file)action(async()=>{draft=await api().uploadArt(draft,file);persist();return'Artwork uploaded to the owner draft. Save Cloud Draft, then Publish Map when ready.'})});
@@ -164,6 +168,7 @@ async function action(fn){
 }
 async function open(){
  if(!owner())return;
+ if(account!==localKey()){account=localKey();localDrafts=getLocal();draft=null;baseline=''}
  const host=$('#pvpMapEditorMount');if(!host)return;opened=true;host.hidden=false;
  if(!draft)choose(selected,{force:true});
  render();

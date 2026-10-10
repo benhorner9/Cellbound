@@ -3,7 +3,7 @@
 const $=s=>document.querySelector(s);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 let activeToken=0;
-const BUCKET='comic-scene-art',published=new Map(),catalog=new Map();
+const BUCKET='comic-scene-art',published=new Map(),catalog=new Map(),publishedText=new Map();
 let pendingLoad=null,lastArtLoad=0;
 const slug=v=>String(v||'').normalize('NFKD').toLowerCase().replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function sceneKey(config={}){
@@ -20,6 +20,8 @@ async function reloadArt(){
  const {data,error}=await db.from('comic_scene_panel_art').select('scene_id,panel_index,object_path');
  if(error)throw error;
  published.clear();(data||[]).forEach(row=>published.set(row.scene_id+':'+row.panel_index,row.object_path));
+ const captions=await db.from('cellbound_comic_text').select('scene_id,panels');
+ if(!captions.error){publishedText.clear();(captions.data||[]).forEach(row=>publishedText.set(row.scene_id,row.panels))}
  lastArtLoad=Date.now();
  return true
 }
@@ -91,9 +93,10 @@ async function show(config={}){
       resolve(result||{choiceId:selected,skipped:false});
     };
     const original=Array.isArray(config.panels)&&config.panels.length?config.panels:[{kind:'location',title:config.title,text:config.text}];
-    const panels=original.map((p,i)=>({...p,artwork:artworkFor(config,i,p.artwork)}));
+    const text=config.boothPreview?null:publishedText.get(sceneKey(config));
+    const panels=original.map((p,i)=>({...p,...(text?.[i]||{}),artwork:config.boothPreview?p.artwork:artworkFor(config,i,p.artwork)}));
     const choices=Array.isArray(config.choices)?config.choices:[];
-    const explicitReveals=Array.isArray(config.reveals)?config.reveals:[];
+    const explicitReveals=Array.isArray(config.reveals)?config.reveals.map(r=>({...r,...(text?.[r.panel]||{})})):[];
     const reveals=explicitReveals.length?explicitReveals:(config.progressive?panels.map((p,i)=>({panel:i,eyebrow:p.eyebrow||'',speaker:p.speaker||'',title:p.title||'',text:p.text||'',placement:['bottom-left','top-left','bottom-right'][i%3]})).filter(r=>r.eyebrow||r.speaker||r.title||r.text):[]);
     const progressive=reveals.length>0;
     const storyOnly=Boolean(config.storyOnly||config.panelOnly);
