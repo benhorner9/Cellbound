@@ -4,6 +4,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>JSON.parse(JSON.stringify(v));
 let KEY='cellbound-comic-scene-editor-drafts-v1';
+const accountKey=()=> 'cellbound-comic-scene-editor-drafts-v1:'+String(window.CellboundGame?.getUser?.()?.id||'signed-out');
 const SOURCES=[
  ['quests-v2.js','Main Quests',['showDialogue','nullComic','comic.show','window.CellboundComicScenes.show']],
  ['thirteenth-bell-v1.js','The Thirteenth Bell',['bellComic']],
@@ -252,7 +253,7 @@ function scheduleSave(s){
  autosaves.set(s.id,setTimeout(()=>saveScene(s,false,store,key),2000));
 }
 async function saveScene(s,submit,store,storageKey){
- if(store!==drafts||storageKey!==KEY||!store[s.id])return;
+ if(store!==drafts||storageKey!==KEY||storageKey!==accountKey()||!store[s.id])return;
  if(saving.has(s.id)){if(!submit)scheduleSave(s);else message('Cloud save in progress. Wait before submitting.');return}
  clearTimeout(autosaves.get(s.id));autosaves.delete(s.id);
  const snapshot=clone(store[s.id]);saving.add(s.id);
@@ -260,7 +261,7 @@ async function saveScene(s,submit,store,storageKey){
   if(!s.config)throw Error('This source-only scene has no runtime ID. Export this draft for developer review.');
   const key=window.CellboundComicScenes.sceneKey(s.config),payload={scene_id:key,panels:snapshot.panels.map(p=>({title:p.title,text:p.text}))};
   const result=await window.CellboundBoothWorkflow[submit?'submit':'save']('comic-text',key,payload,snapshot.workflow_revision||0);
-  if(store!==drafts||storageKey!==KEY||!store[s.id])return;
+  if(store!==drafts||storageKey!==KEY||storageKey!==accountKey()||!store[s.id])return;
   const current=store[s.id];current.workflow_revision=result.revision;
   current.cloudSaved=JSON.stringify(current.panels)===JSON.stringify(snapshot.panels);
   localStorage.setItem(storageKey,JSON.stringify(store));
@@ -335,7 +336,7 @@ function bind(s){
 }
 async function open(){
  if(!owner()||loading)return;
- const nextKey='cellbound-comic-scene-editor-drafts-v1:'+String(window.CellboundGame?.getUser?.()?.id||'signed-out');
+ const nextKey=accountKey();
  if(KEY!==nextKey){KEY=nextKey;try{drafts=JSON.parse(localStorage.getItem(KEY)||(window.CellboundAdmin?.role==='owner'?localStorage.getItem('cellbound-comic-scene-editor-drafts-v1'):null)||'{}')||{}}catch{drafts={}}}
  const root=$('#comicSceneEditorMount');if(!root)return;
  opened=true;root.hidden=false;loading=true;root.textContent='Scanning story scenes…';

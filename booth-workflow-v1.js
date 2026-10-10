@@ -34,12 +34,14 @@ async function save(kind,key,payload,expectedRevision){
  // Never silently reload the revision immediately before a write: that would
  // turn stale edits into an overwrite. Unknown documents use revision zero.
  const revision=expectedRevision??snapshots.get(id)?.revision??0;
- try{localStorage.setItem(localKey(kind,key),JSON.stringify({payload,revision,at:Date.now()}))}catch(e){throw Error('Recovery storage is full. Copy or export your changes before continuing.')}
- pending.set(id,true);
+ const account=userId,recoveryKey=localKey(kind,key),request={};
+ try{localStorage.setItem(recoveryKey,JSON.stringify({payload,revision,at:Date.now()}))}catch(e){throw Error('Recovery storage is full. Copy or export your changes before continuing.')}
+ pending.set(id,request);
  try{
-  const result=await rpc('save',kind,key,revision,payload);snapshots.set(id,result);
-  localStorage.removeItem(localKey(kind,key));return result;
- }finally{pending.delete(id)}
+  const result=await rpc('save',kind,key,revision,payload);
+  if(account!==userId)throw Error('Account changed during saving. The original account recovery copy is retained.');
+  snapshots.set(id,result);localStorage.removeItem(recoveryKey);return result;
+ }finally{if(pending.get(id)===request)pending.delete(id)}
 }
 async function transition(action,kind,key,payload={},expectedRevision){
  const id=token(kind,key),current=snapshots.get(id);
