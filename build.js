@@ -58,7 +58,7 @@ for(const file of files){
   let contents=fs.readFileSync(src,'utf8');
   if(['auth.js','guild-v4.js'].includes(file)&&process.env.CELLBOUND_STAGING_SUPABASE_URL){
     const url=process.env.CELLBOUND_STAGING_SUPABASE_URL,key=process.env.CELLBOUND_STAGING_SUPABASE_KEY||'';
-    require('./tools/verify-booth-staging.cjs').validate(url,key);
+    require('./tools/verify-booth-staging.cjs').validate(url,key,require('./config/booth-release.json'));
     contents=contents.replace(/const SUPABASE_URL='[^']*';/, 'const SUPABASE_URL='+JSON.stringify(url)+';')
       .replace(/const SUPABASE_PUBLISHABLE_KEY='[^']*';/, 'const SUPABASE_PUBLISHABLE_KEY='+JSON.stringify(key)+';');
   }

@@ -29,7 +29,7 @@ const clone=v=>JSON.parse(JSON.stringify(v));
 const clamp=n=>Math.max(2,Math.min(98,Math.round((Number(n)||50)*10)/10));
 const point=(v,base)=>({x:clamp(v?.x??base?.x??50),y:clamp(v?.y??base?.y??50)});
 const idSafe=id=>/^[a-z0-9-]{3,64}$/.test(String(id||''));
-const isOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
+const isOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'||Boolean(window.CellboundBoothWorkflow?.can?.('pvp-map'));
 const db=()=>window.CellboundGame?.getSupabase?.();
 const published=new Map(),drafts=new Map();
 let loading=null,lastRefresh=0;
@@ -56,7 +56,7 @@ function clean(input){
  })):[];
  const artPath=String(input?.artPath||'');
  if(artPath.length>255||artPath&&(!/^[a-z0-9/_-]+\.(webp|png|jpe?g|avif)$/i.test(artPath)||artPath.includes('..')))throw new Error('Invalid PvP artwork path.');
- return{id,mode,title,artPath,layout:{spawns,flags,hills,storm:point(raw.storm,base.storm),lanes,blockers}}
+ return{id,mode,title,artPath,workflow_revision:Number(input?.workflow_revision)||0,layout:{spawns,flags,hills,storm:point(raw.storm,base.storm),lanes,blockers}}
 }
 function validate(map){
  const m=clean(map),issues=[],p=m.layout;
@@ -66,9 +66,10 @@ function validate(map){
  if(m.mode==='king-of-the-hill'&&p.hills.some(h=>Math.abs(h.x-50)>45||Math.abs(h.y-50)>45))issues.push('Hill points should stay inside the playable battlefield.');
  return issues
 }
-function testStore(){try{return JSON.parse(localStorage.getItem(TEST_KEY)||'{}')||{}}catch{return{}}}
-function setTest(map){if(!isOwner())throw Error('Owner only');const m=clean(map);const tests=testStore();tests[m.id]=m;localStorage.setItem(TEST_KEY,JSON.stringify(tests));return m}
-function clearTest(id){if(!isOwner())return;const tests=testStore();delete tests[id];localStorage.setItem(TEST_KEY,JSON.stringify(tests))}
+const testKey=()=>TEST_KEY+':'+String(window.CellboundGame?.getUser?.()?.id||'signed-out');
+function testStore(){try{return JSON.parse(localStorage.getItem(testKey())||'{}')||{}}catch{return{}}}
+function setTest(map){if(!isOwner())throw Error('Owner only');const m=clean(map);const tests=testStore();tests[m.id]=m;localStorage.setItem(testKey(),JSON.stringify(tests));return m}
+function clearTest(id){if(!isOwner())return;const tests=testStore();delete tests[id];localStorage.setItem(testKey(),JSON.stringify(tests))}
 function isTesting(id){return isOwner()&&Boolean(testStore()[id])}
 function get(id,{ownerPreview=false}={}){
  const key=String(id||'');
@@ -101,7 +102,7 @@ function refresh(force=false){
   for(const row of data||[]){try{const m=clean({...row,artPath:row.art_path});published.set(m.id,m)}catch(e){console.warn('Skipped invalid PvP map',row.id,e.message)}}
   drafts.clear();
   if(isOwner()){
-   const res={data:(await window.CellboundBoothWorkflow.list('pvp-map')).map(r=>r.payload)};
+   const res={data:(await window.CellboundBoothWorkflow.list('pvp-map')).map(r=>({...r.payload,workflow_revision:r.revision}))};
    if(res.error)throw res.error;
    for(const row of res.data||[]){try{const m=clean({...row,artPath:row.art_path});drafts.set(m.id,m)}catch(e){console.warn('Skipped invalid PvP draft',row.id,e.message)}}
   }
@@ -118,14 +119,16 @@ async function currentUser(){
 async function saveDraft(map){
  const m=clean(map),uid=await currentUser();
  const payload={id:m.id,mode:m.mode,title:m.title,layout:m.layout,art_path:m.artPath||null,updated_by:uid,updated_at:new Date().toISOString()};
- await window.CellboundBoothWorkflow.save('pvp-map',m.id,payload);
+ const saved=await window.CellboundBoothWorkflow.save('pvp-map',m.id,payload,m.workflow_revision);
+ m.workflow_revision=saved.revision;
  drafts.set(m.id,m);return clone(m)
 }
 async function publish(map){
  const m=clean(map),errors=validate(m);if(errors.length)throw Error(errors[0]);
  const uid=await currentUser();
- await saveDraft(m);
- await window.CellboundBoothWorkflow.transition('submit','pvp-map',m.id);
+ const saved=await saveDraft(m);
+ const submitted=await window.CellboundBoothWorkflow.transition('submit','pvp-map',m.id,{},saved.workflow_revision);
+ m.workflow_revision=submitted.revision;drafts.set(m.id,m);
  return clone(m)
 }
 async function unpublish(id){

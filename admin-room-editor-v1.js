@@ -69,7 +69,7 @@ const storageKey=()=>STORAGE_KEY+':'+String(window.CellboundGame?.getUser?.()?.i
 
 function load(){try{return JSON.parse(localStorage.getItem(storageKey())||'{}')||{}}catch{return{}}}
 function persist(){try{localStorage.setItem(storageKey(),JSON.stringify(state))}catch{}}
-function isOwner(){return Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'}
+function isOwner(){return Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'||Boolean(window.CellboundBoothWorkflow?.can('room-layout')||window.CellboundBoothWorkflow?.can('room-art'))}
 function group(){return CATALOG.find(x=>x.id===contentId)||CATALOG[0]}
 function room(){return group().rooms.find(x=>x.id===roomId)||group().rooms[0]}
 function roomKey(){return contentId+'::'+roomId}
@@ -240,7 +240,12 @@ function render(){
   '<section class="rqe-art-upload"><header><div><small>ROOM BACKGROUND</small><h3>Replace artwork</h3></div><span>'+(artPreview?'LOCAL PREVIEW':publishedArt?'PUBLISHED ART':'ORIGINAL ART')+'</span></header><p>Upload a 16:9 image. Preview it here before publishing. Your room markers stay in place.</p><label class="rqe-art-file">CHOOSE BACKGROUND IMAGE<input id="rqeArtFile" type="file" accept="image/webp,image/png,image/jpeg,image/avif"></label><small>WebP, PNG, JPEG or AVIF · maximum 10 MB · 16:9 recommended.</small><div class="rqe-art-actions"><button id="rqeArtPublish" '+(!artFile||artBusy?'disabled':'')+'>'+(artBusy?'UPLOADING…':'UPLOAD & SUBMIT BACKGROUND')+'</button>'+(publishedArt?'<button id="rqeArtRestore" '+(artBusy?'disabled':'')+'>RESTORE ORIGINAL</button>':'')+'</div><p id="rqeArtMessage" role="status">'+esc(artMessage||'Uploads create an artwork draft for review. Backgrounds and marker positions are approved and published separately.')+'</p></section>'+
  '<div class="rqe-room-meta"><div class="rqe-room-copy"><b>'+esc(g.name+' · '+r.name)+'</b><span>'+(d.art?'Production art loaded from '+esc(d.art.replace('./','')):runtimePreview?'Live Manor runtime scene preview · same environment used in combat':'Dedicated room art missing')+'</span>'+legend()+'</div><div class="rqe-room-nav"><button id="rqePrev" '+(idx<=0?'disabled':'')+'>← PREV</button><button id="rqeNext" '+(idx>=g.rooms.length-1?'disabled':'')+'>NEXT →</button></div></div></main>'+
   '<aside class="rqe-side"><section class="rqe-inspector"><small>ROOM REVIEW</small><h3>Layout state</h3><label><small>STATUS</small><select id="rqeReview">'+statusOptions(status)+'</select></label><div class="rqe-inspector-grid"><div><b>'+d.markers.filter(x=>x.kind==='party').length+'</b><span>party anchors</span></div><div><b>'+d.markers.filter(x=>x.kind==='enemy'||x.kind==='add').length+'</b><span>hostile anchors</span></div><div><b>'+d.markers.filter(x=>x.kind==='entry').length+'</b><span>entrances</span></div><div><b>'+d.markers.filter(x=>x.kind==='exit').length+'</b><span>exits</span></div></div><div class="rqe-live-state" data-mode="'+live.mode+'"><small>ACTIVE DUNGEON LAYOUT</small><b>'+(live.mode==='test'?'OWNER TEST ACTIVE':live.mode==='published'?'PUBLISHED · VERSION '+Number(live.published?.version||1):'BUILT-IN DEFAULT')+'</b><span>'+(live.mode==='test'?'Only your owner account uses the current test layout.':live.mode==='published'?'All staging players use this published layout.':'No shared room override is published.')+'</span></div><div class="rqe-inspector-actions"><button class="primary" id="rqeSave">SAVE DRAFT</button><button class="test" id="rqeTest">TEST LAYOUT</button><button class="publish" id="rqePublish">SUBMIT LAYOUT</button>'+(live.testing?'<button id="rqeClearTest">STOP TESTING</button>':'')+(live.published?'<button class="danger" id="rqeUnpublish">RESTORE BUILT-IN DEFAULT</button>':'')+'<button id="rqeCopy">COPY ROOM JSON</button></div><div id="rqeSaveState" class="'+(dirty?'rqe-dirty':'rqe-dirty rqe-saved')+'">'+(dirty?'UNSAVED CHANGES':state.rooms?.[roomKey()]?.cloudSaved?'CLOUD DRAFT SAVED':state.rooms?.[roomKey()]?.updatedAt?'DRAFT SAVED ON THIS DEVICE':live.mode==='published'?'VIEWING PUBLISHED LAYOUT':'VIEWING GAME DEFAULTS')+'</div><div class="rqe-json"><small>CURRENT COORDINATES</small><pre id="rqeJson">'+esc(jsonFor(d))+'</pre></div></section>'+auditHTML()+'</aside></div></section>';
- bind(d)
+ bind(d);
+ const workflow=window.CellboundBoothWorkflow;
+ if(workflow&&!workflow.can('room-layout','edit'))mount.querySelectorAll('[data-marker],#rqeReview,#rqeSave,#rqePublish,#rqeReset').forEach(e=>e.disabled=true);
+ if(workflow&&!workflow.can('room-art','edit'))mount.querySelectorAll('#rqeArtFile,#rqeArtPublish').forEach(e=>e.disabled=true);
+ if(workflow&&workflow.access().role!=='owner')mount.querySelectorAll('#rqeUnpublish,#rqeArtRestore').forEach(e=>e.disabled=true);
+ if(window.CellboundAdmin?.role!=='owner')mount.querySelectorAll('#rqeTest,#rqeClearTest').forEach(e=>{e.disabled=true;e.title='Use the canvas preview. In-game test overrides remain owner-only.'});
 }
 function bind(draft){
  $('#rqeClose')?.addEventListener('click',close);
@@ -297,8 +302,8 @@ function flash(message){const e=$('#rqeSaveState');if(e){e.textContent=message;e
 async function open(){
  if(!isOwner())return;
  state=load();
- if(!Object.keys(state).length){try{const legacy=localStorage.getItem(STORAGE_KEY);if(legacy&&confirm('Recover room drafts saved by the previous owner editor on this device?')){state=JSON.parse(legacy)||{};persist()}}catch{}}
- try{for(const row of await window.CellboundBoothWorkflow.list('room-layout')){const k=row.key.replace('/','::');state.rooms=state.rooms||{};if(!state.rooms[k]||state.rooms[k].cloudSaved)state.rooms[k]={markers:clone(row.payload.layout.markers),workflow_revision:row.revision,cloudSaved:true}}}catch(e){artMessage='Cloud drafts unavailable: '+e.message}
+ if(!Object.keys(state).length&&window.CellboundAdmin?.role==='owner'){try{const legacy=localStorage.getItem(STORAGE_KEY);if(legacy&&confirm('Recover room drafts saved by the previous owner editor on this device?')){state=JSON.parse(legacy)||{};persist()}}catch{}}
+ try{if(window.CellboundBoothWorkflow.can('room-layout'))for(const row of await window.CellboundBoothWorkflow.list('room-layout')){const k=row.key.replace('/','::');state.rooms=state.rooms||{};if(!state.rooms[k]||state.rooms[k].cloudSaved)state.rooms[k]={markers:clone(row.payload.layout.markers),workflow_revision:row.revision,cloudSaved:true}}}catch(e){artMessage='Cloud drafts unavailable: '+e.message}
  const mount=$('#roomEditorMount');if(!mount)return;
  opened=true;
  if(state.last?.contentId&&CATALOG.some(x=>x.id===state.last.contentId)){contentId=state.last.contentId;const g=group();roomId=g.rooms.some(x=>x.id===state.last.roomId)?state.last.roomId:g.rooms[0].id}

@@ -4,8 +4,9 @@ const $=s=>document.querySelector(s);
 const esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clone=x=>JSON.parse(JSON.stringify(x));
 const gameOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
-const owner=()=>gameOwner()||Boolean(window.CellboundBoothWorkflow?.can('adventure')||window.CellboundBoothWorkflow?.can('template'));
-const toolAllowed=id=>gameOwner()||(id==='build'&&W()?.can('adventure'))||(id==='library'&&W()?.can('template'));
+const toolScopes={build:['adventure'],library:['template'],rooms:['room-layout','room-art'],comics:['comic-text','comic-art'],'pvp-maps':['pvp-map'],drops:['boss-drops']};
+const owner=()=>gameOwner()||Object.values(toolScopes).flat().some(k=>window.CellboundBoothWorkflow?.can(k));
+const toolAllowed=id=>gameOwner()||(toolScopes[id]||[]).some(k=>W()?.can(k));
 const W=()=>window.CellboundBoothWorkflow;
 const db=()=>window.CellboundGame?.getSupabase?.();
 const runtime=()=>window.CellboundDesignedContent;
@@ -76,6 +77,7 @@ let workspace={},baseline='',cloudUpdatedAt=null;
 const keyFor=p=>p?.id?'cloud:'+p.id:'local:'+p?.slug;
 const changed=()=>Boolean(project)&&JSON.stringify(project)!==baseline;
 const nativeChanged=()=>nativeLoadedKey!==''&&JSON.stringify(nativeDrops)!==nativeBaseline;
+let nativeRevision=0;
 function announce(s){message=s;document.querySelectorAll('[data-dbo-message]').forEach(slot=>slot.textContent=s)}
 function updateSaveState(){
  const dirty=changed();
@@ -431,12 +433,12 @@ function bossChoices(){
     source:'design',projectId:p.id||null,stepId:st.id,stepIndex:i,type:p.content_type||'quest'})
   })
  }
- if(project)projectBosses(project);
- for(const r of records){
+ if(project&&W()?.can('adventure'))projectBosses(project);
+ for(const r of W()?.can('adventure')?records:[]){
   const b=r.draft_blueprint&&Array.isArray(r.draft_blueprint.steps)?r.draft_blueprint:r.blueprint||{};
   projectBosses({...b,id:r.id,title:b.title||r.title,content_type:r.content_type})
  }
- const native=window.CellboundBossDropTables?.bosses?.()||[];
+ const native=W()?.can('boss-drops')?(window.CellboundBossDropTables?.bosses?.()||[]):[];
  native.forEach(b=>all.push({id:'native:'+b.key,title:b.dungeon+' · '+b.boss,source:'native',key:b.key,raid:b.raid}));
  return all
 }
@@ -467,7 +469,8 @@ function renderDrops(){
   }else if(project)stepIndex=project.steps.findIndex(st=>st.id===target.stepId);
  }
  if(native&&nativeLoadedKey!==target.key){
-  nativeDrops=clone(window.CellboundBossDropTables?.get?.(target.key)||[]);
+  const cloud=window.CellboundBossDropTables?.draft?.(target.key);
+  nativeDrops=clone(cloud?.drops||window.CellboundBossDropTables?.get?.(target.key)||[]);nativeRevision=cloud?.revision||0;
   nativeLoadedKey=target.key;nativeBaseline=JSON.stringify(nativeDrops)
  }
  if(!native)nativeLoadedKey='';
@@ -551,10 +554,11 @@ function bindDrops(){
   if(!target||nativeSaving)return;
   const error=validateLootRows(nativeDrops);if(error){announce(error);return}
   nativeSaving=true;renderDrops();
-  try{await window.CellboundBossDropTables.save(target.key,nativeDrops);nativeBaseline=JSON.stringify(nativeDrops);announce('Boss drop draft submitted. Approve and publish it in Review & Publishing.')}
+  try{await window.CellboundBossDropTables.save(target.key,nativeDrops,nativeRevision);nativeRevision=window.CellboundBossDropTables.draft(target.key)?.revision||0;nativeBaseline=JSON.stringify(nativeDrops);announce('Boss drop draft submitted. Approve and publish it in Review & Publishing.')}
   catch(e){announce('Could not save boss drops: '+String(e?.message||e))}
   finally{nativeSaving=false;renderDrops()}
  })
+ if(!W()?.can(nativeLoadedKey?'boss-drops':'adventure','edit'))host.querySelectorAll('button,input,select').forEach(e=>{if(!['dboBossPicker','dboDropSearch','dboDropTier','dboDropSort'].includes(e.id))e.disabled=true});
 }
 
 function insertTemplate(raw,title=''){
@@ -616,12 +620,12 @@ async function open(){
  await W().connect();
  const account=W().user();
  const nextStore='cellbound-design-booth-workspace-v1:'+account;
- if(STORE!==nextStore){project=null;workspace={};STORE=nextStore;STASH='cellbound-design-booth-project-backups-v2:'+account}
- if(!toolAllowed(active))active=W().can('adventure')?'build':'library';
+ if(STORE!==nextStore){project=null;workspace={};records=[];nativeLoadedKey='';nativeDrops=[];STORE=nextStore;STASH='cellbound-design-booth-project-backups-v2:'+account}
+ if(!toolAllowed(active))active=Object.keys(toolScopes).find(toolAllowed)||'build';
  opened=true;root.hidden=false;
  if(!project){restoreBackup();if(!project){project=fresh('quest');setBaseline()}}
  render();
- try{await Promise.all([W().can('adventure')?fetchRecords():Promise.resolve(),gameOwner()?window.CellboundBossDropTables?.refresh?.(true):Promise.resolve()]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&(!lastLocal||r.updated_at!==cloudUpdatedAt)){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
+ try{await Promise.all([W().can('adventure')?fetchRecords():Promise.resolve(),W().can('boss-drops')?window.CellboundBossDropTables?.refresh?.(true):Promise.resolve()]);if(project.id){const r=records.find(x=>x.id===project.id);if(r&&(!lastLocal||r.updated_at!==cloudUpdatedAt)){loadRecord(r);return}}if(!lastLocal&&records.length)loadRecord(records[0]);else render()}catch(e){announce('Cloud project list unavailable: '+String(e?.message||e))}
  root.scrollIntoView?.({behavior:'smooth',block:'start'})
 }
 function close({force=false}={}){

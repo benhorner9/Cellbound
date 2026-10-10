@@ -14,8 +14,9 @@ let db=null,loaded=false,loading=null;
 function isOwner(){
  return Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'
 }
-function readTests(){try{return JSON.parse(localStorage.getItem(TEST_KEY)||'{}')||{}}catch{return{}}}
-function writeTests(value){try{localStorage.setItem(TEST_KEY,JSON.stringify(value||{}))}catch{}}
+const testKey=()=>TEST_KEY+':'+String(window.CellboundGame?.getUser?.()?.id||'signed-out');
+function readTests(){try{return JSON.parse(localStorage.getItem(testKey())||'{}')||{}}catch{return{}}}
+function writeTests(value){try{localStorage.setItem(testKey(),JSON.stringify(value||{}))}catch{}}
 function cleanLayout(layout){
  const markers=(Array.isArray(layout?.markers)?layout.markers:[]).slice(0,64).map(m=>({
    kind:String(m?.kind||'').toLowerCase(),
@@ -68,7 +69,7 @@ async function refreshArt(){
  return true
 }
 async function publishArt(content,room,file){
- if(!isOwner())throw new Error('Owner access required.');
+ if(!isOwner()&&!window.CellboundBoothWorkflow?.can?.('room-art','edit'))throw new Error('Artwork editing access required.');
  if(!file||!['image/webp','image/jpeg','image/png','image/avif'].includes(file.type))throw new Error('Choose a WebP, JPEG, PNG or AVIF image.');
  if(file.size>10*1024*1024)throw new Error('Artwork must be 10 MB or smaller.');
  if(!/^[a-z0-9-]{1,90}$/.test(content)||!/^[a-z0-9-]{1,90}$/.test(room))throw new Error('Invalid room.');
@@ -178,7 +179,7 @@ async function ready(){
  return loading
 }
 async function publish(content,room,layout,expectedRevision){
- if(!isOwner())throw new Error('Owner access required');
+ if(!isOwner()&&!window.CellboundBoothWorkflow?.can?.('room-layout','edit'))throw new Error('Layout editing access required');
  await ready();if(!db)throw new Error('Room layout service unavailable');
  const clean=cleanLayout(layout);
  const result=await window.CellboundBoothWorkflow.submit('room-layout',content+'/'+room,{content_id:content,room_id:room,layout:clean},expectedRevision);

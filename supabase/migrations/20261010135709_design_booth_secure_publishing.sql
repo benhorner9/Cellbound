@@ -1,14 +1,32 @@
--- Job 9. Apply ONLY to an isolated development database after copying published
--- content. Staging and production currently share a database: do not apply there.
+-- Job 9. Shared-backend rollout explicitly authorised by Ben on 2026-10-10.
+-- Website deployment remains dev-only. Require an explicit operator choice.
 begin;
 do $$ begin
- if current_setting('cellbound.booth_environment',true) is distinct from 'isolated-development' then
- raise exception 'STOP: verify an isolated development database, then SET cellbound.booth_environment to isolated-development in this session. Never apply on the shared production project.';
+ if coalesce(current_setting('cellbound.booth_environment',true),'') not in ('isolated-development','owner-approved-shared-2026-10-10') then
+ raise exception 'STOP: explicitly select isolated-development or owner-approved-shared-2026-10-10 before this migration.';
  end if;
 end $$;
 create schema if not exists booth_private;
 revoke all on schema booth_private from public, anon;
 grant usage on schema booth_private to authenticated;
+-- Immutable operator snapshot. No client access; no existing content is removed.
+create table booth_private.migration_backup (
+ name text primary key, data jsonb not null, captured_at timestamptz not null default now()
+);
+alter table booth_private.migration_backup enable row level security;
+revoke all on booth_private.migration_backup from public,anon,authenticated;
+do $$ declare name text; snapshot jsonb; begin
+ foreach name in array array['cellbound_design_blueprints','cellbound_design_templates','cellbound_room_layouts','cellbound_room_art','comic_scene_panel_art','cellbound_pvp_maps','cellbound_pvp_map_drafts','cellbound_boss_drop_tables'] loop
+  execute format('select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),''[]''::jsonb) from public.%I t',name) into snapshot;
+  insert into booth_private.migration_backup values(name,snapshot,now());
+ end loop;
+ insert into booth_private.migration_backup(name,data)
+ select 'table_grants',coalesce(jsonb_agg(to_jsonb(g)),'[]'::jsonb) from information_schema.role_table_grants g
+ where table_schema='public' and table_name in (select b.name from booth_private.migration_backup b);
+ insert into booth_private.migration_backup(name,data)
+ select 'legacy_functions',coalesce(jsonb_agg(jsonb_build_object('signature',oid::regprocedure::text,'acl',proacl::text,'definition',pg_get_functiondef(oid))),'[]'::jsonb)
+ from pg_proc where proname in ('cellbound_owner_publish_room_layout','cellbound_owner_unpublish_room_layout');
+end $$;
 create table booth_private.members (
  user_id uuid primary key references auth.users(id),
  role text not null check(role in ('admin','editor','viewer')),
@@ -253,7 +271,7 @@ end $$;
 
 create function booth_private.can_upload()
 returns boolean language sql security definer set search_path='' as $$
- select booth_private.allowed('adventure','edit') or booth_private.allowed('template','edit')
+ select booth_private.allowed('adventure','edit') or booth_private.allowed('template','edit') or booth_private.allowed('pvp-map','edit')
 $$;
 revoke all on function booth_private.can_upload() from public,anon,authenticated;
 grant execute on function booth_private.can_upload() to authenticated;
@@ -263,4 +281,22 @@ revoke all on function public.cellbound_booth_can_upload() from public,anon;
 grant execute on function public.cellbound_booth_can_upload() to authenticated;
 create policy "Contributors append design artwork" on storage.objects for insert to authenticated
  with check(bucket_id='cellbound-design-art' and (select public.cellbound_booth_can_upload()));
+create function public.cellbound_booth_can_upload_kind(p_kind text)
+returns boolean language sql security invoker set search_path='' as $$
+ select (public.cellbound_booth('access')->>'role'='owner') or
+ ((public.cellbound_booth('access')->'scopes') ? p_kind and public.cellbound_booth('access')->>'role' in ('editor','admin'))
+$$;
+revoke all on function public.cellbound_booth_can_upload_kind(text) from public,anon;
+grant execute on function public.cellbound_booth_can_upload_kind(text) to authenticated;
+create policy "Contributors append room artwork" on storage.objects for insert to authenticated
+ with check(bucket_id='cellbound-room-art' and (select public.cellbound_booth_can_upload_kind('room-art')));
+create policy "Contributors append comic artwork" on storage.objects for insert to authenticated
+ with check(bucket_id='comic-scene-art' and (select public.cellbound_booth_can_upload_kind('comic-art')));
+-- Fail the entire migration if any pre-existing source row was changed.
+do $$ declare item record; actual jsonb; begin
+ for item in select name,data from booth_private.migration_backup where name not in ('table_grants','legacy_functions') loop
+  execute format('select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),''[]''::jsonb) from public.%I t',item.name) into actual;
+  if actual is distinct from item.data then raise exception 'Existing content changed during migration: %',item.name; end if;
+ end loop;
+end $$;
 commit;

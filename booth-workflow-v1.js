@@ -70,6 +70,7 @@ async function panel(){
  try{
   const rows=(await Promise.all((access.scopes||[]).filter(k=>can(k)).map(list))).flat();
   host.innerHTML='<h3>Review & publishing</h3><p>Create → Save Draft → Preview → Submit for Review → Approve → Publish. Only this panel publishes changes. Archiving restores built-in content where available; version history retains the removed override.</p><p role="status" id="boothWorkflowMessage">'+esc(status)+'</p>'+rows.map((r,i)=>'<article class="booth-review"><b>'+esc(r.payload.title||r.key)+'</b><small>'+esc(r.kind+' · '+r.state+' · revision '+r.revision+' · '+new Date(r.updated_at).toLocaleString())+'</small><div>'+['compare','history',...(access.role==='owner'&&r.base?['archive']:[]),...(r.state==='draft'&&can(r.kind,'edit')?['submit']:[]),...(r.state==='review'&&can(r.kind,'approve')?['approve']:[]),...(r.state==='approved'&&can(r.kind,'publish')?['publish']:[])].map(a=>'<button type="button" data-booth-action="'+a+'" data-row="'+i+'">'+a.toUpperCase()+'</button>').join('')+'</div><div data-booth-details="'+i+'"></div></article>').join('')+(access.role==='owner'?'<details><summary>Contributor permissions</summary><p>Use the contributor’s verified account UUID. These permissions never grant game admin access. Revoking access takes effect on the next server request.</p><label>Account UUID<input id="boothMemberId" autocomplete="off"></label><label>Role<select id="boothMemberRole"><option>viewer</option><option>editor</option><option>admin</option></select></label><label>Content scopes<select multiple id="boothMemberScopes">'+access.scopes.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join('')+'</select></label><label><input type="checkbox" id="boothMemberPublish"> Allow admin publishing</label><button id="boothGrant">SAVE PERMISSIONS</button><button id="boothRevoke">REVOKE ACCESS</button><pre id="boothMembers"></pre></details>':'');
+  host.insertAdjacentHTML('afterbegin','<p role="note"><strong>Shared game database:</strong> publishing, archiving and rollback affect both dev and main game content. Drafts and previews remain unpublished.</p>');
   const message=text=>{const el=host.querySelector('#boothWorkflowMessage');if(el)el.textContent=text};
   host.querySelectorAll('[data-booth-action]').forEach(button=>button.onclick=async()=>{
    const index=Number(button.dataset.row),row=rows[index],action=button.dataset.boothAction,details=host.querySelector('[data-booth-details="'+index+'"]');button.disabled=true;
@@ -82,11 +83,11 @@ async function panel(){
      details.innerHTML=history.map((h,j)=>'<details><summary>'+esc(h.action+' · '+h.at+' · '+h.actor)+'</summary><pre>'+esc(JSON.stringify(diff(h.before_data,h.after_data),null,2))+'</pre>'+(access.role==='owner'&&h.before_data?'<button data-rollback="'+j+'">RESTORE PREVIOUS VERSION</button>':'')+'</details>').join('')||'<p>No publications yet.</p>';
      details.querySelectorAll('[data-rollback]').forEach(b=>b.onclick=async()=>{
       const h=history[Number(b.dataset.rollback)];
-      if(!confirm('Restore the version before '+h.at+'? The current published version will also be preserved in history.'))return;
+      if(!confirm('Restore the version before '+h.at+' in the shared dev/main database? The current published version will also be preserved in history.'))return;
       b.disabled=true;try{await transition('rollback',row.kind,row.key,{history_id:h.id},row.revision);await panel()}catch(e){message(e.message);b.disabled=false}
      });
     }else{
-     if(!confirm(action.toUpperCase()+' revision '+row.revision+' of '+(row.payload.title||row.key)+'?'+(['publish','archive'].includes(action)?' This changes the development game. Archiving retains history.':'')))return;
+     if(!confirm(action.toUpperCase()+' revision '+row.revision+' of '+(row.payload.title||row.key)+'?'+(['publish','archive'].includes(action)?' This changes shared dev AND main game content. Archiving retains history.':'')))return;
      await transition(action,row.kind,row.key,{},row.revision);await panel();
     }
    }catch(e){message(e.message)}finally{button.disabled=false}
@@ -104,7 +105,7 @@ async function panel(){
 }
 function entry(){
  let button=document.querySelector('#boothContributorEntry');
- const available=access.role!=='owner'&&(can('adventure')||can('template'));
+ const available=access.role!=='owner'&&(access.scopes||[]).some(k=>can(k));
  if(!button){button=document.createElement('button');button.id='boothContributorEntry';button.textContent='DESIGN BOOTH';document.body.appendChild(button);button.onclick=()=>{
   let overlay=document.querySelector('#boothContributorOverlay');
   if(!overlay){overlay=document.createElement('section');overlay.id='boothContributorOverlay';document.body.appendChild(overlay)}

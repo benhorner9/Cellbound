@@ -8,8 +8,12 @@ const token=role=>'header.'+Buffer.from(JSON.stringify({role})).toString('base64
 assert.throws(()=>validate('https://abcdefghijklmnopqrst.supabase.co',token('service_role')),/Server credentials/);
 assert(validate('https://abcdefghijklmnopqrst.supabase.co','sb_publishable_staging'));
 assert(validate('https://abcdefghijklmnopqrst.supabase.co',token('anon')));
+const approval=require('../config/booth-release.json');
+assert(validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_publishable_test',approval));
+assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_publishable_test',{...approval,websiteTarget:'main'}));
+assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_secret_test',approval));
 const workflow=fs.readFileSync('.github/workflows/deploy-staging.yml','utf8');
 assert(workflow.indexOf('node tools/verify-booth-staging.cjs')<workflow.indexOf('name: Deploy staging build'));
 const builder=fs.readFileSync('build.js','utf8');
 assert(builder.includes("['auth.js','guild-v4.js'].includes(file)"),'Both clients must use the isolated staging backend');
-console.log('Booth staging guard passed: shared production and server credentials are rejected before deployment.');
+console.log('Booth staging guard passed: unapproved shared backends, main website target and server credentials are rejected.');

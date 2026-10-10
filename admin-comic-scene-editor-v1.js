@@ -3,7 +3,7 @@
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>JSON.parse(JSON.stringify(v));
-const KEY='cellbound-comic-scene-editor-drafts-v1';
+let KEY='cellbound-comic-scene-editor-drafts-v1';
 const SOURCES=[
  ['quests-v2.js','Main Quests',['showDialogue','nullComic','comic.show','window.CellboundComicScenes.show']],
  ['thirteenth-bell-v1.js','The Thirteenth Bell',['bellComic']],
@@ -14,8 +14,8 @@ const TUTORIAL=['arrival','west-wall','gear','hollows','loot','shock','craft','c
 const NULL_ART={signal:'voss-signal',entry:'facility-entry',splice:'first-aberrant',orin:'orin-recording',zero:'subject-zero',teleporter:'teleporter',overseer:'overseer-awakens',prototype:'prototype-07',escape:'escape',sting:'subject-zero-awake'};
 let scenes=[],selected='',filter='',group='all',gaps=false,opened=false,loading=false,warning='';
 const broken=new Set();
-let drafts={};try{drafts=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}
-const owner=()=>window.CellboundAdmin?.isAdmin===true&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner';
+let drafts={};
+const owner=()=>window.CellboundAdmin?.isAdmin===true&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'||Boolean(window.CellboundBoothWorkflow?.can('comic-text')||window.CellboundBoothWorkflow?.can('comic-art'));
 function quotedEnd(s,i){const q=s[i++];while(i<s.length){if(s[i]==='\\'){i+=2;continue}if(s[i++]===q)break}return i}
 function bracket(s,i){
  const endings={'(':')','[':']','{':'}'},stack=[endings[s[i]]];if(!stack[0])return null;
@@ -224,7 +224,10 @@ function render(){
  '<div class="cse-columns"><aside class="cse-left"><div class="cse-filters"><input id="cseSearch" type="search" placeholder="Find a scene…" value="'+esc(filter)+'"><select id="cseGroup">'+categories.map(x=>'<option value="'+esc(x)+'" '+(x===group?'selected':'')+'>'+esc(x==='all'?'All story groups':x)+'</option>').join('')+'</select><label><input type="checkbox" id="cseGaps" '+(gaps?'checked':'')+'> Show artwork gaps only</label></div><div id="cseSceneList">'+listMarkup()+'</div></aside>'+
  '<main class="cse-right">'+(s?'<div class="cse-title"><small>'+esc(s.category)+' · '+esc(s.path)+(s.line?' : '+s.line:'')+'</small><h3>'+esc(s.title)+'</h3><p>'+esc(s.note||'Check every comic panel and its artwork.')+'</p></div><div class="cse-controls"><label>REVIEW<select id="cseReview"><option value="unreviewed" '+(s.review==='unreviewed'?'selected':'')+'>Unreviewed</option><option value="needs-work" '+(s.review==='needs-work'?'selected':'')+'>Needs work</option><option value="approved" '+(s.review==='approved'?'selected':'')+'>Approved</option></select></label><button id="csePreview">▶ PREVIEW STRIP</button><button id="cseSave" class="primary">SAVE CLOUD DRAFT</button><button id="cseSubmit">SUBMIT CAPTIONS</button><button id="cseReset">RESET</button></div><div class="cse-panel-grid">'+s.panels.map(panelMarkup).join('')+'</div><footer><button id="cseCopy">COPY THIS SCENE</button><p id="cseMessage">Cloud captions resume across devices; artwork uploads require review and publication.</p></footer>':'<p class="cse-empty">No scenes could be loaded.</p>')+'</main></div></section>';
  root.querySelectorAll('[data-cse-image]').forEach(img=>img.onerror=()=>{const art=img.getAttribute('src');if(!broken.has(art)){broken.add(art);render()}else{const badge=img.parentNode.querySelector('em');if(badge){badge.textContent='BROKEN IMAGE';badge.className='missing'}}});
- bind(s);showList()
+ bind(s);showList();
+ const workflow=window.CellboundBoothWorkflow;
+ if(workflow&&!workflow.can('comic-text','edit'))root.querySelectorAll('[data-title],[data-text],#cseReview,#cseSave,#cseSubmit,#cseReset').forEach(e=>e.disabled=true);
+ if(workflow&&!workflow.can('comic-art','edit'))root.querySelectorAll('[data-art],[data-upload-file],[data-upload-publish]').forEach(e=>e.disabled=true);
 }
 function edited(){
  const raw=scenes.find(s=>s.id===selected);if(!raw)return null;
@@ -309,9 +312,11 @@ function bind(s){
 }
 async function open(){
  if(!owner()||loading)return;
+ const nextKey='cellbound-comic-scene-editor-drafts-v1:'+String(window.CellboundGame?.getUser?.()?.id||'signed-out');
+ if(KEY!==nextKey){KEY=nextKey;try{drafts=JSON.parse(localStorage.getItem(KEY)||(window.CellboundAdmin?.role==='owner'?localStorage.getItem('cellbound-comic-scene-editor-drafts-v1'):null)||'{}')||{}}catch{drafts={}}}
  const root=$('#comicSceneEditorMount');if(!root)return;
  opened=true;root.hidden=false;loading=true;root.textContent='Scanning story scenes…';
- try{await window.CellboundComicScenes?.loadArt?.();await discover();for(const row of await window.CellboundBoothWorkflow.list('comic-text')){const scene=scenes.find(s=>s.config&&window.CellboundComicScenes.sceneKey(s.config)===row.key);if(scene&&!drafts[scene.id])drafts[scene.id]={panels:scene.panels.map((p,i)=>({...p,...(row.payload.panels[i]||{})})),workflow_revision:row.revision}}}catch(e){warning=String(e)}
+ try{await window.CellboundComicScenes?.loadArt?.();await discover();if(window.CellboundBoothWorkflow.can('comic-text'))for(const row of await window.CellboundBoothWorkflow.list('comic-text')){const scene=scenes.find(s=>s.config&&window.CellboundComicScenes.sceneKey(s.config)===row.key);if(scene&&!drafts[scene.id])drafts[scene.id]={panels:scene.panels.map((p,i)=>({...p,...(row.payload.panels[i]||{})})),workflow_revision:row.revision}}}catch(e){warning=String(e)}
  loading=false;if(!opened)return;render();requestAnimationFrame(()=>root.scrollIntoView({behavior:'smooth',block:'start'}))
 }
 function close(){opened=false;const root=$('#comicSceneEditorMount');if(root){root.hidden=true;root.innerHTML=''}}

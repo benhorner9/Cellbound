@@ -16,7 +16,7 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
     if(name!=='cellbound_booth')return original(name,a);
     const f=window.boothFixture,k=a.p_kind+':'+a.p_key,row=f.rows[k];
     if(f.offline)return{error:{message:'Offline test'}};
-    if(a.p_action==='access')return{data:{role:f.role,scopes:['adventure','template'],can_publish:f.role==='owner'}};
+    if(a.p_action==='access')return{data:{role:f.role,scopes:f.scopes||['adventure','template'],can_publish:f.role==='owner'}};
     if(a.p_action==='list')return{data:Object.values(f.rows).filter(x=>x.kind===a.p_kind)};
     if(a.p_action==='members'||a.p_action==='history')return{data:[]};
     if(a.p_action==='get')return{data:{draft:row||null,published:null}};
@@ -55,6 +55,16 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
   await page.evaluate(async()=>{boothFixture.role='viewer';await CellboundBoothWorkflow.connect();await CellboundDesignBooth.open()});
   assert.equal(await page.locator('#dboSave').isDisabled(),true,'Viewer cannot edit or save in the UI');
   assert.equal(await page.locator('#boothContributorOverlay').evaluate(e=>e.scrollWidth<=e.clientWidth+2),true,'13-inch iPad landscape has no page overflow');
+  for(const [scope,tab,control] of [['room-layout','rooms','#rqeSave'],['pvp-map','pvp-maps','#pmeSave'],['comic-text','comics','#cseSave'],['boss-drops','drops','#dboAddLoot']]){
+   await page.evaluate(async scope=>{boothFixture.scopes=[scope];await CellboundBoothWorkflow.connect();await CellboundDesignBooth.open()},scope);
+   assert.equal(await page.locator('[data-dbo-tool]').count(),1,'Specialist only sees their scoped tool');
+   await page.locator(control).waitFor({state:'visible'});
+   assert(await page.locator(control).isDisabled(),'Specialist viewer cannot save '+scope);
+   await page.evaluate(async()=>{boothFixture.role='editor';await CellboundBoothWorkflow.connect();await CellboundDesignBooth.open()});
+   await page.locator(control).waitFor({state:'visible'});
+   assert(!(await page.locator(control).isDisabled()),'Specialist editor can save '+scope);
+   await page.evaluate(()=>{boothFixture.role='viewer'});
+  }
   console.log('Booth workflow browser passed: scoped contributor entry, cloud confirmation, stale/offline recovery, review comparison, submit and viewer controls.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});

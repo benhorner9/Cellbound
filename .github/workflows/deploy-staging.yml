@@ -50,7 +50,7 @@ jobs:
             echo "Superseded by $latest. No dev deployment was attempted." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Require an isolated development database
+      - name: Verify approved backend and staging-only website target
         if: steps.freshness.outputs.current == 'true'
         run: node tools/verify-booth-staging.cjs
 

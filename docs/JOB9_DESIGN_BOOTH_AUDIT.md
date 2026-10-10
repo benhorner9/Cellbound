@@ -2,13 +2,15 @@
 
 Status: implementation and local regression work; **not released or ready for contributor rollout**.
 
-## Release blocker: shared production database
+## Shared backend decision and release status
 
 Both `origin/main` and the initial `origin/staging` contain the same Supabase URL in `auth.js` and `guild-v4.js`: project `jvydqeikdpelmtloulnd`. The connected Supabase account reported no development branches. Separate FTP credentials and a staging URL therefore do **not** isolate content changes from production.
 
-No migration or content mutation was executed against this project. Read-only catalog queries confirmed existing ownership checks and policies. Do not merge/deploy this PR until a separate development database is provisioned and the backend acceptance checks below pass.
+On 2026-10-10 Ben explicitly authorised applying the database work to the shared project, noting the main game is not released. The website deployment remains dev-only. This supersedes the earlier isolation prerequisite; it does not mean the environments are isolated. Publishing through either website will affect both.
 
-The migration refuses to run unless the operator explicitly sets `cellbound.booth_environment` to `isolated-development` in the migration session. This is an operational stop guard, not a substitute for verifying the project reference. Deployment additionally rejects the existing production project and requires the `STAGING_SUPABASE_URL` and `STAGING_SUPABASE_PUBLISHABLE_KEY` repository secrets. The build substitutes these into both browser clients; server credentials are rejected.
+The migration requires an explicit `cellbound.booth_environment` choice: `isolated-development` or `owner-approved-shared-2026-10-10`. The shared authorization is recorded in `config/booth-release.json`; website deployment stays restricted to `staging`. Optional staging URL/key overrides must be configured together, and server credentials remain forbidden. The migration creates an inaccessible content/permission snapshot and compares every existing source row before committing.
+
+A hosted rollback-only rehearsal passed permission, conflict, publication, failed-publication and rollback checks using transient synthetic identities. A later rehearsal of the updated migration encountered repeated connector `Invalid or expired requestState` errors. Writes were paused. Subsequent read-only checks confirmed no Booth schema or leftover test accounts, with 18 room layouts, 6 room artwork mappings and 3 PvP maps still present. No lasting migration, merge or deployment has occurred.
 
 ## Existing editor audit
 
@@ -48,7 +50,7 @@ The migration refuses to run unless the operator explicitly sets `cellbound.boot
 - Private schema tables have RLS enabled, no direct client table grants and no public mutation privileges.
 - A public invoker RPC delegates to a private, explicitly granted function with an empty search path. Resource tables/columns are selected from a fixed server-side allowlist.
 - Existing direct content-write grants and legacy room publish RPC execution are revoked by the migration. Players retain access only to published columns; private drafts are read through authorized RPCs.
-- Editor UI access is currently complete for Adventure Builder and Content Creator. Other specialist editors remain owner-only even if the backend supports their content scopes. Do not invite specialist contributors until those UI integrations are completed and tested.
+- Scoped contributor navigation now includes room layouts/art, comics, PvP maps and boss drops as well as Adventure Builder and Content Creator. Viewer controls and owner-only archive actions are gated separately. New browser regressions cover specialist entry and viewer/editor controls. Contributor rollout still requires hosted real-login and Storage checks.
 - Existing image buckets remain public for runtime compatibility. Draft metadata is private, but an uploaded image is accessible to somebody holding its URL. Private draft-asset delivery is still required before confidential art collaboration.
 
 ## Publish and rollback semantics
@@ -75,12 +77,12 @@ A publication is atomic per content resource. A room background and its marker l
 
 ## Remaining acceptance work before release
 
-1. Provision isolated staging Supabase, copy the complete required schema and published content/art references, and establish a staging owner account without modifying production. Database branch cost requires confirmation through the Supabase connector.
-2. Apply the guarded migration there, run Supabase security advisors, and exercise the real PostgREST RPC using separate owner/admin/editor/viewer accounts. Local PostgreSQL tests do not verify hosted API schema exposure or Storage policies.
-3. Complete specialist contributor entry/permissions, private draft-art storage, account-scoped recovery for legacy editors, and consistent autosaving across those editors. Adventure/template/room autosaving is implemented; caption/PvP saves remain explicit.
+1. Restore a working Supabase mutation connection/approval flow and rerun the final migration rehearsal. Isolation is a recommended follow-up, not a prerequisite after the owner's explicit shared-backend approval.
+2. Apply the guarded shared migration, verify snapshot equality, run Supabase security advisors, and exercise the real PostgREST RPC using separate owner/admin/editor/viewer accounts. Transactional role tests do not verify real login or Storage delivery.
+3. Finish private draft-art storage and consistent autosaving across legacy editors. Room, comic and PvP recovery is now account-scoped; PvP draft revisions travel with their local recovery records. Adventure/template/room autosaving is implemented; caption/PvP saves remain explicit. Boss drafts now reload from cloud rather than the published reward table.
 4. Add a guided visual version comparison/preview to replace the technical field comparison for nontechnical reviewers. Current field history is readable and escaped but is still technical.
 5. Complete safe rebase/merge UX after conflicts. Current conflict handling refuses overwrite and keeps recovery content; it does not automatically merge two people's edits.
 6. Validate physical 13-inch iPad Safari: touch marker capture, resizing, scrolling, keyboard focus, file uploads, browser background/termination, reconnect, and second-device recovery.
-7. Only after those checks and green PR CI: merge into `staging`, verify `build-meta.json` matches the merged commit, check database identity and publish/rollback an isolated test resource. Never merge to `main` as part of Job 9.
+7. Only after required backend checks and green PR CI: merge into `staging`, verify `build-meta.json` matches the merged commit, and check the approved shared database identity. Never merge to `main` as part of Job 9. Hosted publication probes must remain rolled back and must never modify existing game resources.
 
 This branch is a tested security/publishing foundation with practical editor changes. It is deliberately **not represented as completed Job 9** while these gates remain open.
