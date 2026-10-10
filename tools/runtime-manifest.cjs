@@ -150,7 +150,9 @@ const groups=Object.freeze({
   "combat-polish-v3.js",
   "combat-polish-v3.css",
   "combat-physical-v4.js",
-  "combat-physical-v4.css"
+  "combat-physical-v4.css",
+  "combat-cinematic-v1.css",
+  "combat-cinematic-v1.js"
 ]),
   dungeons:Object.freeze([
   "dungeon-2d-v1.css",
@@ -183,6 +185,8 @@ const sourceOverrides=Object.freeze({
   "combat-data-v1.js":"src/combat/combat-data-v1.js",
   "combat-physical-v4.css":"src/combat/combat-physical-v4.css",
   "combat-physical-v4.js":"src/combat/combat-physical-v4.js",
+  "combat-cinematic-v1.css":"src/combat/combat-cinematic-v1.css",
+  "combat-cinematic-v1.js":"src/combat/combat-cinematic-v1.js",
   "combat-polish-v2.css":"src/combat/combat-polish-v2.css",
   "combat-polish-v2.js":"src/combat/combat-polish-v2.js",
   "combat-polish-v3.css":"src/combat/combat-polish-v3.css",
