@@ -440,6 +440,7 @@ function renderProfessions(){
   work.querySelector('[data-craft-abandon]')?.addEventListener('click',abandonCraft);
   work.querySelector('[data-forge-strike]')?.addEventListener('click',strikeForge);
   work.querySelector('[data-forge-toggle]')?.addEventListener('click',()=>{forgeManual=!forgeManual;renderProfessions()});
+  work.querySelector('[data-forge-position]')?.addEventListener('input',e=>{const n=work.querySelector('[data-forge-needle]');if(n&&forgeManual)n.style.left=Number(e.currentTarget.value)+'%'});
   document.querySelectorAll('#professionRecipeFilters [data-prof-recipe-filter]').forEach(b=>b.classList.toggle('active',b.dataset.profRecipeFilter===recipeFilter));
   if(craftProject)ensureCraftTicker();
 }
