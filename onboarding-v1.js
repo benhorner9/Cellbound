@@ -1096,6 +1096,17 @@ function recipeInputs(recipe){
 function renderCraft(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=c?.professions?.[0],def=P.PROFESSIONS[prof?.name],recipe=def?.recipes?.[0];
   if(!c||!recipe){s.onboarding.stage='profession-choice';Game.save();render();return}
+  // Training must not dead-end when the saved Hollows reagent reward is absent.
+  // Top up only the deficit for the player's chosen first recipe, once per
+  // onboarding run, rather than minting another full reward bundle on refresh.
+  s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};
+  if(!s.onboarding.craftSupplyPrepared){
+    for(const [key,quantity] of Object.entries(recipe.inputs||{})){
+      const have=Math.max(0,Number(s.materials[key])||0);
+      if(have<quantity)s.materials[key]=quantity;
+    }
+    s.onboarding.craftSupplyPrepared=true;Game.save();
+  }
   const can=Object.entries(recipe.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q);
   const body='<div class="craft-tutorial"><aside class="craft-character"><small>APPRENTICE</small><span class="craft-avatar">'+esc(c.portrait)+'</span><h2>'+esc(c.name)+'</h2><p>'+def.icon+' '+esc(prof.name)+' · Skill 1</p><div class="skill-preview"><i style="width:0%"></i></div><small>CRAFTING EARNS PROFESSION XP</small></aside><main><small>ZELTIRA · CRAFT ROW</small><h2>Craft your first preparation item.</h2><p>The reagents from your dungeon are enough for a level 1 recipe. The result is tradeable and useful, but it will not last forever.</p><article class="tutorial-recipe"><div class="recipe-title"><strong>'+def.icon+'</strong><div><small>SKILL 1 RECIPE</small><h3>'+esc(recipe.name)+'</h3><p>'+esc(prof.name)+'</p></div></div><div class="recipe-inputs">'+recipeInputs(recipe)+'</div><div class="craft-output">'+(recipe.output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(recipe.output.key,52,'tutorial-output-art'):'')+'<span>CREATES</span><b>'+esc(recipe.output.name)+' ×'+(recipe.output.quantity||1)+'</b></div><button id="craftTutorialItem" class="on-primary" '+(can?'':'disabled')+'>CRAFT '+esc(recipe.output.name).toUpperCase()+' →</button></article></main></div>';
   ensureRoot().innerHTML=chrome(body,'craft');
