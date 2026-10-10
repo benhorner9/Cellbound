@@ -26,6 +26,7 @@ assert(equip.includes("s.onboarding.stage='recovery-lesson'"),'Equipping first d
 assert(!equip.includes("coreTrainingComplete=true"),'First loot must not mark training complete');
 assert(onboarding.includes("setStage('profession-choice',{shockLessonComplete:true})"),'Cell Shock lesson must progress to a profession');
 assert(onboarding.includes("s.onboarding.stage='craft'"),'Profession choice must lead to crafting');
+assert(onboarding.includes('if(!s.onboarding.craftSupplyPrepared)')&&onboarding.includes('if(have<quantity)s.materials[key]=quantity'),'Missing first-recipe reagents must be supplied only once');
 assert(onboarding.includes("s.onboarding.stage='profession-use'"),'Crafting must lead to first-use lesson');
 assert(profession.includes("s.onboarding.professionUseComplete=true;s.onboarding.coreTrainingComplete=true"),'Only preparation use completes the foundational lessons');
 assert(profession.includes('recoverTutorialCraft'),'Unavailable crafting item needs an explicit recovery action');
