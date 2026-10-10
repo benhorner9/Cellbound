@@ -20,6 +20,7 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
     if(a.p_action==='list')return{data:Object.values(f.rows).filter(x=>x.kind===a.p_kind)};
     if(a.p_action==='members'||a.p_action==='history')return{data:[]};
     if(a.p_action==='get')return{data:{draft:row||null,published:null}};
+    if(a.p_action==='save'&&f.holdSave){f.holdSave=false;await new Promise(resolve=>{f.releaseSave=resolve})}
     if((row?.revision||0)!==a.p_revision)return{error:{code:'40001',message:'Stale'}};
     if(a.p_action==='save')f.rows[k]={kind:a.p_kind,key:a.p_key,payload:a.p_payload,revision:(row?.revision||0)+1,state:'draft',updated_at:new Date().toISOString()};
     else if(a.p_action==='submit')Object.assign(row,{state:'review',revision:row.revision+1});
@@ -63,6 +64,26 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
    await page.evaluate(async()=>{boothFixture.role='editor';await CellboundBoothWorkflow.connect();await CellboundDesignBooth.open()});
    await page.locator(control).waitFor({state:'visible'});
    assert(!(await page.locator(control).isDisabled()),'Specialist editor can save '+scope);
+   if(scope==='pvp-map'){
+    await page.locator('#pmeTitle').fill('Autosaved arena');
+    await page.waitForFunction(()=>Object.values(boothFixture.rows).some(r=>r.kind==='pvp-map'&&r.payload.title==='Autosaved arena'));
+    await page.evaluate(()=>{boothFixture.offline=true});
+    await page.locator('#pmeTitle').fill('Recovered arena');
+    await page.waitForFunction(()=>document.querySelector('#pmeMessage').textContent.includes('Not saved to cloud'));
+    await page.evaluate(()=>{boothFixture.offline=false;dispatchEvent(new Event('online'))});
+    await page.waitForFunction(()=>Object.values(boothFixture.rows).some(r=>r.kind==='pvp-map'&&r.payload.title==='Recovered arena'));
+   }
+   if(scope==='comic-text'){
+    await page.locator('[data-text="0"]').fill('Autosaved caption');
+    await page.waitForFunction(()=>Object.values(boothFixture.rows).some(r=>r.kind==='comic-text'&&r.payload.panels[0].text==='Autosaved caption'));
+    await page.evaluate(()=>{boothFixture.holdSave=true});
+    await page.locator('[data-text="0"]').fill('Earlier snapshot');
+    await page.waitForFunction(()=>Boolean(boothFixture.releaseSave));
+    await page.locator('[data-text="0"]').fill('Newer unsaved caption');
+    await page.evaluate(()=>{boothFixture.releaseSave();delete boothFixture.releaseSave});
+    await page.waitForFunction(()=>Object.values(boothFixture.rows).some(r=>r.kind==='comic-text'&&r.payload.panels[0].text==='Newer unsaved caption'));
+    assert.equal(await page.locator('[data-text="0"]').inputValue(),'Newer unsaved caption','In-flight completion preserves newer typed text');
+   }
    await page.evaluate(()=>{boothFixture.role='viewer'});
   }
   console.log('Booth workflow browser passed: scoped contributor entry, cloud confirmation, stale/offline recovery, review comparison, submit and viewer controls.');

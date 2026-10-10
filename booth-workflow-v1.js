@@ -64,6 +64,11 @@ function diff(a,b,path=''){
   else out.push({field:name,before:x,after:y});
  }return out;
 }
+function comparison(changes){
+ const value=v=>v==null?'Not set':typeof v==='object'?JSON.stringify(v,null,2):String(v);
+ const label=p=>p.replace(/^blueprint\./,'').replace(/steps\.(\d+)/g,(_,n)=>'Stage '+(Number(n)+1)).replace(/panels\.(\d+)/g,(_,n)=>'Panel '+(Number(n)+1)).replace(/_/g,' ').replace(/\./g,' → ');
+ return changes.length?'<div style="overflow-x:auto"><table><thead><tr><th>Changed field</th><th>Before</th><th>After</th></tr></thead><tbody>'+changes.map(c=>'<tr><th>'+esc(label(c.field))+'</th><td><pre>'+esc(value(c.before))+'</pre></td><td><pre>'+esc(value(c.after))+'</pre></td></tr>').join('')+'</tbody></table></div>':'<p>No content differences.</p>';
+}
 async function panel(){
  const host=document.querySelector('#dboWorkflow');if(!host)return;
  host.innerHTML='<p role="status">'+esc(status)+'</p>';
@@ -77,10 +82,10 @@ async function panel(){
    try{
     if(action==='compare'){
      const changes=diff(row.base||{},row.payload);
-     details.innerHTML='<h4>Published version → draft</h4><pre>'+esc(JSON.stringify(changes,null,2))+'</pre><p>Use the editor’s Preview or Test action to check appearance before approval.</p>';
+     details.innerHTML='<h4>Published version → draft</h4>'+comparison(changes)+'<p>Use the editor’s Preview or Test action to check appearance before approval.</p>';
     }else if(action==='history'){
      const history=await rpc('history',row.kind,row.key);
-     details.innerHTML=history.map((h,j)=>'<details><summary>'+esc(h.action+' · '+h.at+' · '+h.actor)+'</summary><pre>'+esc(JSON.stringify(diff(h.before_data,h.after_data),null,2))+'</pre>'+(access.role==='owner'&&h.before_data?'<button data-rollback="'+j+'">RESTORE PREVIOUS VERSION</button>':'')+'</details>').join('')||'<p>No publications yet.</p>';
+     details.innerHTML=history.map((h,j)=>'<details><summary>'+esc(h.action+' · '+h.at+' · '+h.actor)+'</summary>'+comparison(diff(h.before_data,h.after_data))+(access.role==='owner'&&h.before_data?'<button data-rollback="'+j+'">RESTORE PREVIOUS VERSION</button>':'')+'</details>').join('')||'<p>No publications yet.</p>';
      details.querySelectorAll('[data-rollback]').forEach(b=>b.onclick=async()=>{
       const h=history[Number(b.dataset.rollback)];
       if(!confirm('Restore the version before '+h.at+' in the shared dev/main database? The current published version will also be preserved in history.'))return;
