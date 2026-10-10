@@ -9,19 +9,18 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: cellbound-staging-release-v3
-  # Do not cancel a running FTPS transfer when another staging commit arrives.
-  # Keep the newest pending release queued until the active upload/smoke test finishes.
-  cancel-in-progress: false
-
 jobs:
-  qa:
-    name: Build and static QA
-    # Manual dispatch on any other branch must never publish to the dev host.
+  release:
+    name: Fast checks and deploy to dev
+    # Never publish when workflow_dispatch is run from any non-staging branch.
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
+    # Constrain ONLY the FTP deployment job. Independent browser QA must not
+    # delay the next update, and an in-progress upload must never be cancelled.
+    concurrency:
+      group: cellbound-staging-ftps-v4
+      cancel-in-progress: false
 
     steps:
       - name: Check out exact pushed commit
@@ -34,33 +33,34 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Check staging commit is not superseded
+        id: freshness
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest="$(git ls-remote origin refs/heads/staging | cut -f1)"
+          test -n "$latest"
+          if [ "$latest" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Superseded by $latest. No dev deployment was attempted." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Build
+        if: steps.freshness.outputs.current == 'true'
         run: npm run build
 
       - name: Appearance foundation tests
+        if: steps.freshness.outputs.current == 'true'
         run: npm run test:appearance
 
       - name: Core gameplay, PvP, loot, quest and editor regressions
+        if: steps.freshness.outputs.current == 'true'
         run: npm run test:core
 
-      - name: Install browser QA tools
-        run: |
-          npm install --no-save --package-lock=false playwright@1.51.1
-          npx playwright install --with-deps chromium webkit
-
-      - name: Chromium complete browser regressions
-        id: chromium
-        continue-on-error: true
-        run: npm run test:browser
-
-      - name: WebKit complete browser regressions (iPad Safari engine)
-        id: webkit
-        continue-on-error: true
-        env:
-          CELLBOUND_TEST_ENGINE: webkit
-        run: npm run test:browser
-
       - name: JavaScript syntax sweep
+        if: steps.freshness.outputs.current == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -71,6 +71,7 @@ jobs:
           echo "JavaScript syntax sweep passed."
 
       - name: HTML and built-asset integrity
+        if: steps.freshness.outputs.current == 'true'
         run: |
           node <<'NODE'
           const fs=require('fs');
@@ -126,14 +127,8 @@ jobs:
           console.log('HTML and built-asset integrity passed.');
           NODE
 
-      - name: Browser regression gate
-        if: always() && (steps.chromium.outcome == 'failure' || steps.webkit.outcome == 'failure')
-        run: |
-          echo "One or more browser regression suites failed. See the Chromium/WebKit steps above."
-          exit 1
-
       - name: QA inventory
-        if: always()
+        if: failure() && steps.freshness.outputs.current == 'true'
         shell: bash
         run: |
           echo "===== Largest JS/CSS ====="
@@ -145,28 +140,8 @@ jobs:
           grep -RniE 'console\.(warn|error)\(' --include='*.js' . \
             --exclude-dir=node_modules --exclude-dir=dist | head -100 || true
 
-  deploy:
-    name: Deploy QA-approved staging build
-    if: github.ref == 'refs/heads/staging'
-    needs: qa
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-
-    steps:
-      - name: Check out exact approved commit
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build exact approved commit
-        run: npm run build
-
       - name: Stamp deployment identity
+        if: steps.freshness.outputs.current == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -174,6 +149,7 @@ jobs:
           cat dist/build-meta.json
 
       - name: Verify deployment package
+        if: steps.freshness.outputs.current == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -204,6 +180,7 @@ jobs:
           echo "Verified deploy package for $GITHUB_SHA"
 
       - name: Verify staging-only deployment credentials
+        if: steps.freshness.outputs.current == 'true'
         shell: bash
         env:
           STAGING_FTP_SERVER: ${{ secrets.STAGING_FTP_SERVER }}
@@ -217,7 +194,23 @@ jobs:
           test -n "$STAGING_FTP_PASSWORD"
           echo 'Approved staging credentials are configured; public-site credentials are not used.'
 
+      - name: Reconfirm staging is current before FTP transfer
+        if: steps.freshness.outputs.current == 'true'
+        id: preupload
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest="$(git ls-remote origin refs/heads/staging | cut -f1)"
+          test -n "$latest"
+          if [ "$latest" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Another staging commit replaced this one before upload; skipping superseded deployment." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Deploy staging build
+        if: steps.preupload.outputs.current == 'true'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.STAGING_FTP_SERVER }}
@@ -230,6 +223,7 @@ jobs:
           log-level: standard
 
       - name: Verify the exact deployed commit over HTTPS
+        if: steps.preupload.outputs.current == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -261,30 +255,8 @@ jobs:
           grep -F "data-combat-view" /tmp/cellbound-combat-viewer.js >/dev/null
           echo "HTTPS smoke test confirms staging commit $GITHUB_SHA"
 
-      - name: Remove obsolete uppercase CB staging copy
-        shell: bash
-        env:
-          FTP_SERVER: ${{ secrets.STAGING_FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.STAGING_FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.STAGING_FTP_PASSWORD }}
-          FTP_PORT: ${{ secrets.STAGING_FTP_PORT }}
-        run: |
-          set -euo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq lftp
-          PORT="${FTP_PORT:-21}"
-          COMMON="set cmd:fail-exit yes; set net:max-retries 2; set net:timeout 20; set ftp:ssl-force yes; set ftp:ssl-protect-data yes; set ssl:verify-certificate no;"
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -p "$PORT" "$FTP_SERVER" \
-            -e "$COMMON rm -r /CB; bye" || true
-          if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -p "$PORT" "$FTP_SERVER" \
-            -e "$COMMON cls -1 /CB; bye" >/tmp/legacy-cb.txt 2>/dev/null; then
-            echo "Legacy /CB still exists:"
-            cat /tmp/legacy-cb.txt
-            exit 1
-          fi
-          echo "Legacy /CB is absent. Canonical staging directory remains /cb/."
-
       - name: Post-deploy canonical host diagnostics
+        if: steps.preupload.outputs.current == 'true'
         shell: bash
         run: |
           set -euo pipefail
