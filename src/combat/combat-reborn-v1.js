@@ -542,6 +542,7 @@ function normaliseEnemies(encounter){
    bodyRadius:Math.max(.9,Number(data.bodyRadius)||(classification==='world-boss'?3.1:classification==='boss'?2.8:classification==='elite'?1.6:1.15)),
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,moveStartedAt:0,moveFrom:null,moveTo:null,nextAttack:900+i*220,currentCast:null,
    isAdd:false,priority:Number.isFinite(Number(data.priority))?Number(data.priority):(i===0?2:1),focusSelected:Boolean(data.focusSelected),damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
+   designerDefence:encounter.designerEnemy?clamp(Number(data.designerDefence)||0,0,60):0,
    visualArchetype:data.visualArchetype||null,combatBehaviour:inferredEnemyBehaviour(data,classification),targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe),passive:Boolean(data.passive),addGroup:data.addGroup||null
   }
  })
@@ -2072,6 +2073,7 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(ctx.pvp&&source.team===target.team)return 0;
  if(ctx?.encounter?.focusSelectedDamageOnly&&source.role!=='enemy'&&target.role==='enemy'&&!target.focusSelected)return 0;
  let final=Math.max(0,amount);
+ if(target.role==='enemy'&&ctx.encounter.designerEnemy)final*=1-(Number(target.designerDefence)||0)/100;
  if(target.role!=='enemy'){
   if(!opts.ignoreMitigation){
    const mitigationOpts={...opts};final*=mitigation(ctx,target,opts.damageType||'physical',mitigationOpts);if(mitigationOpts.blocked)opts.blocked=true;
@@ -3590,6 +3592,22 @@ function refillMechanicBag(ctx,list){
 }
 function scheduleNextMechanic(ctx){
  if(ctx.finished)return;
+ if(ctx.encounter.designerEnemy){
+  const delay=Math.max(1000,Math.min(30000,Number(ctx.encounter.mechanicIntervalMs)||3000));
+  schedule(ctx,ctx.time+delay,()=>{
+   if(ctx.finished)return;
+   if(ctx.activeEnemyCast){scheduleNextMechanic(ctx);return}
+   const enemy=livingEnemies(ctx).find(e=>!e.isAdd);if(!enemy)return;
+   const hp=pct(enemy.health,enemy.maxHealth);ctx.designerReady=ctx.designerReady||{};
+   const list=ctx.encounter.mechanics||[],available=list.filter(m=>hp<=Number(m.belowPct??100)&&ctx.time>=Number(ctx.designerReady[m.id]||0));
+   if(!available.length){scheduleNextMechanic(ctx);return}
+   const ordered=[...list.slice(ctx.designerCursor||0),...list.slice(0,ctx.designerCursor||0)],m=ordered.find(m=>available.includes(m));
+   ctx.designerCursor=(list.indexOf(m)+1)%list.length;
+   ctx.lastMechanicKey=m.id;ctx.designerReady[m.id]=ctx.time+Math.max(2000,Math.min(60000,Number(m.cooldownMs)||6000));
+   startMechanic(ctx,m);
+  },'designer-mechanic-start');
+  return;
+ }
  const list=(ctx.encounter.mechanics||[]).filter(m=>!m.ownerEnemyId||getUnit(ctx,m.ownerEnemyId)?.alive);if(!list.length)return;
  const baseDelay=Number(ctx.encounter.mechanicIntervalMs)||(ctx.encounter.kind==='final'?3600:ctx.encounter.kind==='boss'?4200:ctx.encounter.kind==='world-boss'?2500:5000);
  const delay=Math.max(900,Math.round(baseDelay*scalingValue(ctx,'mechanicFrequency',1)));

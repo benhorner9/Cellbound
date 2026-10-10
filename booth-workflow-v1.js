@@ -46,6 +46,11 @@ async function save(kind,key,payload,expectedRevision){
 async function transition(action,kind,key,payload={},expectedRevision){
  const id=token(kind,key),current=snapshots.get(id);
  if(!current)throw Error('Open the current draft before changing its status.');
+ if(['submit','approve','publish'].includes(action)){
+  const b=current.payload?.blueprint;
+  const specs=[...(b?.enemySpec?[b.enemySpec]:[]),...(b?.steps||[]).filter(s=>s.enemySpec).map(s=>s.enemySpec)];
+  for(const spec of specs){if(!window.CellboundEnemyModel)throw Error('Enemy validation is unavailable. Reload before reviewing.');window.CellboundEnemyModel.clean(spec)}
+ }
  const result=await rpc(action,kind,key,expectedRevision??current.revision,payload);snapshots.set(id,result);
  if(['publish','rollback','archive'].includes(action)){
   window.dispatchEvent(new CustomEvent('cellbound:design-published'));

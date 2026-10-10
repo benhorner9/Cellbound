@@ -502,3 +502,5 @@ radial-gradient(ellipse at 76% 74%,rgba(104,85,53,.08),transparent 22%)}
 .quest-cb2d-shell.quest-ashfall-cinder-cart .cb2d-caption{
   z-index:8;
 }
+/* Closing a Booth preview must remove the canonical viewer's hit targets too. */
+#questEncounterBackdrop[hidden]{display:none!important;pointer-events:none!important}

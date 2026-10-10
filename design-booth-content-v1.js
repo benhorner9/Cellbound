@@ -6,7 +6,7 @@ const templates=new Map(),published=new Map();
 let loading=null,playing=false,lastRefresh=0,activeSession=0;
 const db=()=>window.CellboundGame?.getSupabase?.();
 const isOwner=()=>Boolean(window.CellboundAdmin?.isAdmin)&&window.CellboundAdmin?.role==='owner';
-const artUrl=path=>path&&db()?.storage?.from('cellbound-design-art').getPublicUrl(path)?.data?.publicUrl||'';
+const artUrl=path=>window.CellboundEnemyModel?.safeArt(path)&&path.startsWith('assets/')?new URL(path,document.baseURI).href:path&&db()?.storage?.from('cellbound-design-art').getPublicUrl(path)?.data?.publicUrl||'';
 const safeUrl=url=>/^https:\/\//i.test(String(url||''))?String(url):'';
 /* Boss loot is chosen from existing early-tier gear and profession reagents.
    No arbitrary item JSON, Tier 5 raid equipment or endgame-only materials. */
@@ -134,6 +134,7 @@ function cleanBlueprint(x){
    id:String(s.id||'step').slice(0,70),type:['comic','room','fight','minigame'].includes(s.type)?s.type:'room',
    title:String(s.title||'Untitled stage').slice(0,100),text:String(s.text||'').slice(0,1500),artPath:String(s.artPath||'').slice(0,255),
    panels:(Array.isArray(s.panels)?s.panels:[]).slice(0,6).map(p=>({title:String(p.title||'').slice(0,100),text:String(p.text||'').slice(0,550),artPath:String(p.artPath||'').slice(0,255)})),
+   enemySpec:s.enemySpec==null?null:JSON.parse(JSON.stringify(s.enemySpec)),enemySource:s.enemySource?{slug:String(s.enemySource.slug||''),revision:Number(s.enemySource.revision)||0}:null,
    enemies:String(s.enemies||'Enemy').slice(0,280),enemyHealth:Math.max(30,Math.min(50000,Number(s.enemyHealth)||750)),
    mechanic:['none','circle','line','interrupt','adds'].includes(s.mechanic)?s.mechanic:'none',template:String(s.template||'choice').slice(0,64),
    prompt:String(s.prompt||'').slice(0,300),choices:choicesFor(s),answer:Math.max(0,Number(s.answer)||0),
@@ -191,6 +192,7 @@ async function play(id,override=null){
  const row=override||published.get(id);if(!row)return;
  const b=cleanBlueprint(row.blueprint||row.draft_blueprint);
  if(!b.steps.length){alert('This adventure has no playable stages.');return}
+ try{for(const step of b.steps)if(step.enemySpec)window.CellboundEnemyModel.clean(step.enemySpec)}catch(e){alert('Invalid enemy configuration: '+e.message);return}
  const party=window.CellboundGame?.getPartyCharacters?.()||[];
  if(party.length!==5){alert('Build a five-character party before entering.');return}
  if(party.some(c=>Number(c.level||1)<b.level)){alert('Every character must be at least level '+b.level+'.');return}
@@ -204,10 +206,11 @@ async function play(id,override=null){
     const result=await window.CellboundComicScenes?.show?.({eyebrow:String(row.content_type).toUpperCase()+' · '+(i+1)+' / '+b.steps.length,title:step.title,subtitle:row.title,page:'STORY',theme:'zeltira',panels,storyOnly:true,allowSkip:true});
     if(token!==activeSession)return
    }else if(step.type==='fight'){
-    const enemies=step.enemies.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean).slice(0,5);
-    const encounter={kind:enemies.length===1?'boss':'trash',level:b.level,enemyHealth:step.enemyHealth,mechanics:step.mechanic==='none'?[]:[{name:({'circle':'Ground Burst','line':'Sweeping Attack','interrupt':'Dangerous Cast','adds':'Reinforcements'})[step.mechanic]||'Mechanic',type:step.mechanic==='adds'?'adds':step.mechanic,duration:1600}],mechanicIntervalMs:step.mechanic==='none'?0:3600};
+    let enemies=step.enemies.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean).slice(0,5);
+    let encounter={kind:enemies.length===1?'boss':'trash',level:b.level,enemyHealth:step.enemyHealth,mechanics:step.mechanic==='none'?[]:[{name:({'circle':'Ground Burst','line':'Sweeping Attack','interrupt':'Dangerous Cast','adds':'Reinforcements'})[step.mechanic]||'Mechanic',type:step.mechanic==='adds'?'adds':step.mechanic,duration:1600}],mechanicIntervalMs:step.mechanic==='none'?0:3600};
+    if(step.enemySpec){encounter=window.CellboundEnemyModel.encounter(step.enemySpec);enemies=encounter.enemies}
     const markup=roomImg?'<div class="dbo-combat-art"><img src="'+esc(roomImg)+'" alt="" draggable="false"></div>':'';
-    const won=await window.CellboundQuests?.runQuest2DFight?.({quest:row.title,title:step.title,location:row.title,ambience:step.text,presentationKind:row.content_type==='quest'?'quest':'dungeon',enemies:enemies.length?enemies:['Enemy'],environmentMarkup:markup,combat:encounter,noLossPenalty:true,autoContinueOnVictory:true,autoContinueDelayMs:650,completeText:'The way ahead is clear.'});
+    const won=await window.CellboundQuests?.runQuest2DFight?.({quest:row.title,title:step.title,location:step.enemySpec?.location||row.title,ambience:step.text,presentationKind:row.content_type==='quest'?'quest':'dungeon',enemies:enemies.length?enemies:['Enemy'],environmentMarkup:markup,combat:encounter,noLossPenalty:true,autoContinueOnVictory:true,autoContinueDelayMs:650,completeText:'The way ahead is clear.'});
     if(token!==activeSession)return;
     if(won!==true){completed=false;break}
     if(Array.isArray(step.drops)&&step.drops.length){
@@ -237,12 +240,27 @@ async function play(id,override=null){
  }catch(e){console.error('Designed adventure failed',e);alert('Adventure could not continue: '+(e?.message||e))}
  finally{if(token===activeSession)stop()}
 }
+
+async function previewEnemy(raw){
+ if(!window.CellboundBoothWorkflow?.can('template'))throw Error('Enemy preview requires Design Booth access.');
+ if(playing)throw Error('Exit the current adventure before testing another encounter.');
+ const spec=window.CellboundEnemyModel.clean(raw),combat=window.CellboundEnemyModel.encounter(spec);
+ const party=window.CellboundGame?.getPartyCharacters?.()||[];
+ if(party.length!==5)throw Error('Choose a five-character party first.');
+ let result=null;playing=true;
+ try{
+  const url=safeUrl(artUrl(spec.artPath));
+  await window.CellboundQuests.runQuest2DFight({quest:'DESIGN BOOTH · REWARD-FREE PREVIEW',title:spec.name,location:spec.location,ambience:spec.description,participants:JSON.parse(JSON.stringify(party)),enemies:combat.enemies,combat,noLossPenalty:true,presentationKind:'dungeon',environmentMarkup:url?'<div class="dbo-combat-art"><img src="'+esc(url)+'" alt="" draggable="false"></div>':'',completeText:'Preview complete. No XP, currency, items or progression were awarded.',onResult:r=>{result=r}});
+  return result;
+ }finally{playing=false}
+}
+
 function bind(){
  window.addEventListener('cellbound:view-changed',()=>{if(Date.now()-lastRefresh>20000)refresh().then(renderCards);else renderCards()});
  window.addEventListener('cellbound:design-published',()=>refresh(true).then(renderCards));
  const boot=async()=>{for(let i=0;i<80&&!window.CellboundGame?.ready;i++)await new Promise(r=>setTimeout(r,150));await refresh();renderCards()};
  boot()
 }
-window.CellboundDesignedContent={refresh,renderCards,play,stop,cleanBlueprint,artUrl,lootCatalog,rollBossLoot,registerMinigame,templates:()=>[...templates.values()].map(({id,label,description})=>({id,label,description}))};
+window.CellboundDesignedContent={refresh,renderCards,play,stop,previewEnemy,cleanBlueprint,artUrl,lootCatalog,rollBossLoot,registerMinigame,templates:()=>[...templates.values()].map(({id,label,description})=>({id,label,description}))};
 bind()
 })();

@@ -1,0 +1,32 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const sandbox={window:{},console};vm.createContext(sandbox);vm.runInContext(fs.readFileSync('enemy-builder-model-v1.js','utf8'),sandbox);
+const M=sandbox.window.CellboundEnemyModel,boss=M.fresh();
+assert.deepEqual([...M.validate(boss)],[]);
+for(const [field,value] of [['health',Infinity],['health',50001],['level',0],['level',1.5],['defence',61],['damageScale',4],['behaviour','javascript'],['artPath','javascript:alert(1)'],['artPath','assets/../secret.png'],['intervalMs',0]]){
+ const bad={...boss,[field]:value};assert(M.validate(bad).length,field+' must reject '+value);assert.throws(()=>M.encounter(bad));
+}
+const bad=M.fresh();bad.phases.push({...M.phase(),atPct:70});assert(M.validate(bad).some(x=>x.includes('thresholds')));
+const unknown=M.fresh();unknown.abilities[0].type='raid-wipe';assert.throws(()=>M.encounter(unknown));
+const encounter=M.encounter(boss);assert.equal(encounter.enemies[0].maxHealth,1500);assert.equal(encounter.enemies[0].absoluteHealth,true);assert.equal(encounter.phases[0].atPct,50);assert.equal(encounter.phases[0].addMechanics[0].type,'interrupt');
+const stage=M.stage(boss,{slug:'studio-fight-test',revision:3});boss.health=999;assert.equal(stage.enemySpec.health,1500,'adventure gets an independent snapshot');assert.equal(stage.enemySource.revision,3);
+for(const path of M.backgrounds)assert(fs.existsSync(path),'Built-in art exists: '+path);
+console.log('Enemy builder validation and snapshot contracts passed.');
+for(const file of ['src/combat/combat-data-v1.js','src/combat/combat-reborn-v1.js'])vm.runInContext(fs.readFileSync(file,'utf8'),sandbox,{filename:file});
+const party=Array.from({length:5},(_,i)=>({id:'builder-'+i,name:'Tester '+i,class:i===0?'Warrior':i===1?'Priest':'Mage',spec:i===0?'Protection':i===1?'Holy':'Arcane',level:5,power:10}));
+const live=M.fresh();live.health=8000;live.damageScale=.25;live.intervalMs=1000;live.phases[0].atPct=99;live.abilities[0].cooldownMs=4000;
+const engine=sandbox.window.CellboundCombatReborn;
+const result=engine.simulate({party,encounter:M.encounter(live),seed:'builder-phase',maxDurationMs:30000});
+assert(result.events.some(e=>e.type==='PHASE_CHANGE'&&e.payload.phaseId==='designer-phase-0'),'health transition occurs in real engine');
+assert(result.events.some(e=>e.type==='CAST_START'&&e.ability==='Dangerous cast'),'phase ability becomes playable');
+const casts=result.events.filter(e=>e.type==='CAST_START'&&e.ability==='Ground burst');assert(casts.length>=2);
+for(let i=1;i<casts.length;i++)assert(casts[i].timestamp-casts[i-1].timestamp>=4000,'cooldowns respected');
+const blocked=M.fresh();blocked.health=50000;blocked.phases=[];blocked.abilities[0].belowPct=1;
+assert(!engine.simulate({party,encounter:M.encounter(blocked),seed:'builder-health',maxDurationMs:5000}).events.some(e=>e.type==='CAST_START'&&e.source==='e-0'),'health condition prevents casting');
+const base=M.fresh();base.health=50000;base.phases=[];base.abilities=[];
+const damage=defence=>{base.defence=defence;return engine.simulate({party,encounter:M.encounter(base),seed:'builder-defence',maxDurationMs:5000}).summary.totalDamage};
+assert(damage(50)<damage(0),'configured defence reduces actual incoming damage');
+const legacy={kind:'boss',enemies:[{name:'Existing Boss',designerDefence:60}],enemyHealth:8000,mechanics:[]};
+const run=e=>JSON.stringify(engine.simulate({party,encounter:e,seed:'unchanged',maxDurationMs:5000}).events);
+assert.equal(run(legacy),run({...legacy,enemies:[{name:'Existing Boss'}]}),'non-builder encounters ignore new defence field');
+console.log('Real Combat Reborn: phase activation, phase abilities, cooldown, health condition, defence and unchanged legacy encounters passed.');
