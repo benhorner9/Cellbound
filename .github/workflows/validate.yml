@@ -15,11 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Cellbound build validation
+  preflight:
+    name: Build, gameplay and asset validation
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    timeout-minutes: 15
     steps:
       - name: Check out Cellbound
         uses: actions/checkout@v4
@@ -29,7 +28,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build and run regressions
+      - name: Build and run appearance regressions
         run: |
           npm run build
           npm run test:appearance
@@ -52,34 +51,50 @@ jobs:
           test -f dist/assets/combat/status-icons-v1.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 
-      - name: Install browser test tools
-        run: |
-          npm install --no-save --package-lock=false playwright@1.51.1
-          npx playwright install --with-deps chromium webkit
 
-      - name: Chromium complete browser regressions
-        id: chromium
-        continue-on-error: true
-        run: npm run test:browser
+  browser:
+    name: Complete ${{ matrix.engine }} browser regressions
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - name: Check out Cellbound
+        uses: actions/checkout@v4
 
-      - name: WebKit complete browser regressions (iPad Safari engine)
-        id: webkit
-        continue-on-error: true
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build testable game
+        run: npm run build
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --package-lock=false playwright@1.51.1
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: cellbound-${{ runner.os }}-playwright-1.51.1-${{ matrix.engine }}
+
+      - name: Install browser and system dependencies
+        run: npx playwright install --with-deps ${{ matrix.engine }}
+
+      - name: Run complete browser regressions
         env:
-          CELLBOUND_TEST_ENGINE: webkit
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
         run: npm run test:browser
-
-      - name: Enforce both browser regression gates
-        if: always() && (steps.chromium.outcome == 'failure' || steps.webkit.outcome == 'failure')
-        run: |
-          echo "Chromium or WebKit failed. See the complete test inventory in the job summary."
-          exit 1
 
       - name: Save combat and playthrough captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cellbound-release-review
+          name: cellbound-release-review-${{ matrix.engine }}
           path: |
             /tmp/cellbound-living-combat.png
             /tmp/cellbound-equipment-fit-*.png
@@ -89,3 +104,21 @@ jobs:
             /tmp/cellbound-login-screen.png
             /tmp/cellbound-creator-*.png
           if-no-files-found: ignore
+
+  validate:
+    # Preserve the existing required-check name and only pass once BOTH
+    # browser engines and the core preflight have succeeded.
+    name: Cellbound build validation
+    if: always()
+    needs: [preflight, browser]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce full PR release gate
+        env:
+          PREFLIGHT: ${{ needs.preflight.result }}
+          BROWSERS: ${{ needs.browser.result }}
+        run: |
+          echo "Preflight: $PREFLIGHT"
+          echo "Chromium and WebKit: $BROWSERS"
+          test "$PREFLIGHT" = "success"
+          test "$BROWSERS" = "success"
