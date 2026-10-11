@@ -40,8 +40,8 @@
   hero.className='cb-guild-hall';hero.setAttribute('aria-label','Guild Hall');
   hero.innerHTML=
     '<div class="cb-guild-hall__art" role="img" aria-label="Painted fantasy guild gathering scene"></div>'+
-    '<div class="cb-guild-hall__copy"><span class="cb-guild-hall__eyebrow">YOUR GUILD · YOUR STORY</span>'+
-      '<h2>The Guild Hall</h2><p id="cbHallGreeting">Gather your adventurers, prepare for the road ahead, and decide where the guild goes next.</p>'+
+    '<div class="cb-guild-hall__copy"><span class="cb-guild-hall__eyebrow">GUILD COMMAND</span>'+
+      '<h2>The Guild Hall</h2><p id="cbHallGreeting">Check your party, sort their equipment or choose the next expedition.</p>'+
       '<div class="cb-guild-hall__actions"><button type="button" data-cb-go="content">VENTURE OUT →</button><button type="button" data-cb-go="party">ASSEMBLE PARTY</button></div></div>'+
     '<div class="cb-hall-quick" aria-label="Guild Hall destinations">'+
       '<button type="button" data-cb-go="quests"><span>⌁</span><b>Quest Journal</b><em>→</em></button>'+
@@ -57,7 +57,7 @@
   more.id='cbMorePanel';more.className='cb-more';more.hidden=true;
   more.innerHTML='<button type="button" class="cb-more__shade" data-cb-close aria-label="Close destinations"></button>'+
     '<section class="cb-more__panel" role="dialog" aria-modal="true" aria-label="All destinations">'+
-      '<header class="cb-more__head"><div><small>CELLBOUND</small><h2>Where to next?</h2></div><button type="button" data-cb-close aria-label="Close menu">✕</button></header>'+
+      '<header class="cb-more__head"><div><small>CELLBOUND</small><h2>Other destinations</h2></div><button type="button" data-cb-close aria-label="Close menu">✕</button></header>'+
       '<div id="cbMoreGroups"></div><button type="button" class="cb-more__signout" data-cb-signout>Sign out</button></section>';
   document.body.append(more);
   const moreToggle=$('#cbMoreToggle');
@@ -132,7 +132,7 @@
     const state=window.CellboundGame?.getState?.();
     const guildName=clean(account?.guild_name||state?.socialDisplayName).trim();
     const greeting=$('#cbHallGreeting');
-    if(greeting&&guildName)greeting.textContent='Welcome back, '+guildName+'. Gather your adventurers, prepare for the road ahead, and decide your next move.';
+    if(greeting&&guildName)greeting.textContent=''+guildName+' · Check your party, equipment and available expeditions.';
   }
   document.addEventListener('click',event=>{
     const target=event.target.closest('[data-cb-go]');
