@@ -462,7 +462,7 @@ if(file==='quests-v2.js'){
   if(file==='economy-v2.js'&&!contents.includes('USE POTION button'))throw new Error('Crafted combat potions must explain their live-combat use');
 
   if(file==='pvp-v1.js'){
-    for(const hook of ["const PVP_ENABLED=false","const pvpEnabled=()=>false","PvP is currently locked","shared Combat Reborn and Cellbound combat viewer framework","window.CellboundPvP"])if(!contents.includes(hook))throw new Error('Locked PvP shell contract is missing '+hook);
+    for(const hook of ["const PVP_ENABLED=false","const pvpEnabled=()=>false","PvP is currently locked","new combat integration is being tested","window.CellboundPvP"])if(!contents.includes(hook))throw new Error('Locked PvP shell contract is missing '+hook);
     if(contents.includes("CellboundAdmin?.role==='owner'"))throw new Error('Locked PvP must not expose an owner bypass to a retired standalone engine');
   }
   if(file==='evolution-v1.js'){
