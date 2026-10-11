@@ -1,0 +1,176 @@
+/* Cellbound Immersive Guild Shell v1: navigation and presentation only */
+html body.cb-immersive-ui{overflow-x:hidden;background:#05090c}
+html body.cb-immersive-ui .app-shell{
+  display:block!important;grid-template-columns:none!important;
+  min-height:100svh;padding-bottom:calc(105px + env(safe-area-inset-bottom))!important;
+  background:radial-gradient(ellipse at 50% 4%,rgba(94,66,33,.18),transparent 42%),linear-gradient(180deg,#0b1216 0%,#05090c 100%)!important
+}
+html body.cb-immersive-ui .app-shell>.sidebar{display:none!important}
+html body.cb-immersive-ui .app-shell>.main{
+  width:100%!important;max-width:1600px!important;margin:0 auto!important;
+  padding:0 clamp(14px,3vw,42px) 50px!important;min-width:0!important
+}
+html body.cb-immersive-ui .topbar{
+  position:relative!important;inset:auto!important;width:100%!important;
+  height:auto!important;min-height:88px!important;display:flex!important;flex-wrap:wrap;
+  padding:10px 0!important;margin:0!important;gap:12px 24px;
+  background:linear-gradient(180deg,rgba(7,12,15,.94),rgba(7,12,15,.6))!important;
+  border-bottom:1px solid rgba(208,166,94,.23)!important
+}
+.cb-top-crest{
+  display:flex;align-items:center;gap:10px;min-width:132px;flex-shrink:0;
+  border:0;background:transparent;color:#f7ecd2;text-align:left;cursor:pointer;padding:6px 4px
+}
+.cb-top-crest__mark{
+  width:42px;height:42px;display:grid;place-items:center;flex:0 0 auto;
+  border:1px solid #c49d58;border-radius:11px 11px 15px 15px;
+  background:linear-gradient(145deg,#3c2e1c,#0c161b);font:26px Georgia,serif;
+  color:#eac987;box-shadow:0 4px 25px #0009,inset 0 0 10px #d8a64b22
+}
+.cb-top-crest b{display:block;font:700 14px Georgia,serif;letter-spacing:.12em}
+.cb-top-crest small{display:block;margin-top:3px;color:#b49a6b!important;font-size:9px!important;letter-spacing:.13em}
+html body.cb-immersive-ui .topbar>div:nth-child(2){flex:1;min-width:140px}
+html body.cb-immersive-ui .topbar>div:nth-child(2)>small{color:#c8a363!important}
+html body.cb-immersive-ui .topbar h1{font-size:clamp(1.25rem,2vw,1.9rem);margin-top:2px}
+html body.cb-immersive-ui .topbar>.resource-strip{
+  flex:0 1 auto;min-width:0;max-width:100%;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px
+}
+html body.cb-immersive-ui .resource-strip>div{min-width:75px;padding:7px 10px;border-color:#c49d582b}
+.cb-subnav{
+  min-height:54px;display:flex;align-items:center;gap:12px;
+  padding:7px 0 9px;border-bottom:1px solid rgba(199,157,91,.14)
+}
+.cb-subnav[hidden]{display:none!important}
+.cb-subnav__label{
+  flex:0 0 auto;text-transform:uppercase;letter-spacing:.17em;font-size:10px;
+  color:#b18e54;font-weight:900
+}
+.cb-subnav__links{display:flex;flex:1;gap:7px;overflow-x:auto;scrollbar-width:none}
+.cb-subnav__links::-webkit-scrollbar{display:none}
+.cb-subnav__links button{
+  min-height:35px;flex:0 0 auto;white-space:nowrap;padding:8px 13px;
+  border:1px solid rgba(194,158,98,.2);border-radius:3px;
+  background:linear-gradient(#121c20,#0a1316);color:#a7b0ac;
+  font-size:11px;font-weight:750;cursor:pointer
+}
+.cb-subnav__links button[aria-current="page"]{
+  border-color:#c8a26188;background:linear-gradient(#44321d,#201a14);
+  color:#f5dfb0;box-shadow:inset 0 1px #ffe0a327
+}
+.cb-subnav__links button:hover{color:#ffe5b4;border-color:#c8a261aa}
+.cb-guild-hall{
+  position:relative;isolation:isolate;min-height:365px;overflow:hidden;
+  display:flex;align-items:center;margin:20px 0 18px;padding:30px clamp(18px,3vw,48px);
+  border:1px solid rgba(229,182,101,.39);border-radius:8px;
+  box-shadow:0 22px 75px #0009,inset 0 0 45px #0008;
+  background:#16191a
+}
+.cb-guild-hall__art{
+  position:absolute;z-index:-2;inset:0;
+  background-image:linear-gradient(90deg,#080e10 0%,#091014ed 34%,#08101470 69%,#070d0e62),linear-gradient(0deg,#080b0cf2 0%,transparent 46%),url('./assets/comics/tutorial-2026/sunset-briefing.webp');
+  background-size:cover;background-position:center 42%;filter:saturate(.87)
+}
+.cb-guild-hall:after{content:"";position:absolute;pointer-events:none;inset:0;box-shadow:inset 0 0 90px #0009;z-index:-1}
+.cb-guild-hall__copy{width:min(100%,620px)}
+.cb-guild-hall__eyebrow{color:#e7bc72;font-size:11px;font-weight:850;letter-spacing:.22em}
+.cb-guild-hall h2{
+  margin:14px 0 13px;color:#faf0db;font:normal clamp(2.5rem,5vw,5.4rem)/.97 Georgia,serif;
+  text-shadow:0 5px 25px #000;letter-spacing:-.025em
+}
+.cb-guild-hall p{max-width:460px;color:#d0c5b0;font-size:clamp(12px,1.3vw,15px);line-height:1.65;text-shadow:0 2px 10px #000}
+.cb-guild-hall__actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:23px}
+.cb-guild-hall__actions button,.cb-hall-quick button{
+  min-height:43px;border:1px solid #d3ad6e77;color:#f8e5bc;
+  padding:10px 17px;border-radius:3px;background:linear-gradient(#67502b,#34271b);
+  font-size:11px;font-weight:850;letter-spacing:.08em;cursor:pointer
+}
+.cb-guild-hall__actions button+button{background:#101a1cc9;border-color:#d3ad6e50}
+.cb-guild-hall__actions button:hover,.cb-hall-quick button:hover{border-color:#edc583;background:#62451f}
+.cb-hall-quick{
+  position:absolute;right:25px;bottom:28px;display:grid;gap:8px;width:min(240px,28%);
+}
+.cb-hall-quick button{
+  text-align:left;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:#091116dd;backdrop-filter:blur(10px);border-color:#c7a56b66
+}
+.cb-hall-quick button span{font:23px Georgia,serif;color:#e5bc74}
+.cb-hall-quick button b{flex:1;font-size:11px}
+.cb-hall-quick button em{font-style:normal;opacity:.65}
+.cb-dock{
+  position:fixed;z-index:65;left:50%;bottom:max(9px,env(safe-area-inset-bottom));transform:translateX(-50%);
+  width:min(960px,calc(100vw - 26px));
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;
+  padding:8px;border:1px solid #bd92586b;border-radius:13px;
+  background:linear-gradient(180deg,rgba(24,29,29,.97),rgba(8,13,16,.98));
+  box-shadow:0 12px 60px #000b,inset 0 1px #dfbc7a25;
+  backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px)
+}
+.cb-dock button{
+  position:relative;display:grid;justify-items:center;align-content:center;gap:5px;
+  min-width:0;min-height:62px;padding:5px 2px;color:#a69d8a;
+  border:1px solid transparent;border-radius:8px;background:transparent;cursor:pointer
+}
+.cb-dock button:hover,.cb-dock button.is-active,.cb-dock button[aria-expanded="true"]{
+  color:#ffe3a7;background:linear-gradient(#5b462a9c,#221b15e8);border-color:#b98e5766
+}
+.cb-dock button.is-active:before{content:"";position:absolute;top:0;left:25%;width:50%;height:2px;background:#edc783;box-shadow:0 0 12px #f9d28b}
+.cb-dock__icon{font:27px/1 Georgia,serif}
+.cb-dock__label{font-size:10px;font-weight:850;letter-spacing:.05em;white-space:nowrap}
+.cb-more{position:fixed;inset:0;z-index:70}
+.cb-more[hidden]{display:none!important}
+.cb-more__shade{position:absolute;inset:0;width:100%;height:100%;border:0;background:#020405bf;cursor:pointer}
+.cb-more__panel{
+  position:absolute;right:max(14px,calc((100vw - 960px)/2));bottom:calc(94px + env(safe-area-inset-bottom));
+  max-height:min(70vh,700px);width:min(430px,calc(100vw - 28px));overflow-y:auto;
+  padding:17px;border:1px solid #c4a16a88;border-radius:10px;
+  background:linear-gradient(145deg,#18201f,#0a1115 70%);
+  box-shadow:0 20px 80px #000e
+}
+.cb-more__head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:13px;border-bottom:1px solid #d8b67933}
+.cb-more__head h2{margin:0;color:#f0e2c7;font:normal 23px Georgia,serif}
+.cb-more__head small{color:#b69a68;letter-spacing:.15em;font-weight:900;font-size:10px}
+.cb-more__head button{border:1px solid #b8a27977;background:#141b1d;color:#f4e1b9;min-width:36px;min-height:36px;border-radius:4px;cursor:pointer}
+.cb-more__group{margin-top:18px}
+.cb-more__group>h3{font-size:10px;letter-spacing:.18em;color:#c09a5e;text-transform:uppercase;margin:0 0 8px}
+.cb-more__links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cb-more__links button{min-height:48px;display:flex;gap:10px;align-items:center;text-align:left;padding:10px 12px;
+  color:#e6dbca;background:#111c1f;border:1px solid #be9d6740;border-radius:4px;cursor:pointer;font-size:12px;font-weight:750}
+.cb-more__links button:hover{background:#362a1e;border-color:#e5bc6e}
+.cb-more__links button span{font:22px Georgia,serif;color:#e4bd7c}
+.cb-more__signout{width:100%;min-height:42px;margin-top:17px;background:transparent;color:#c3aa86;border:1px solid #987c5740;border-radius:4px;cursor:pointer}
+body.cb-menu-open{overflow:hidden}
+body.cb2d-open .cb-dock,body.hs2d-open .cb-dock,body.cc2d-open .cb-dock,body.bs2d-open .cb-dock,
+body.cb2d-open .cb-more,body.hs2d-open .cb-more,body.cc2d-open .cb-more,body.bs2d-open .cb-more,
+body.cb2d-open .cb-subnav,body.hs2d-open .cb-subnav,body.cc2d-open .cb-subnav,body.bs2d-open .cb-subnav{display:none!important}
+@media(max-width:1000px){
+ html body.cb-immersive-ui .topbar>.resource-strip{width:100%;justify-content:flex-start}
+ html body.cb-immersive-ui .resource-strip>div{flex:1 1 90px}
+ .cb-guild-hall{min-height:345px}
+}
+@media(max-width:720px){
+ html body.cb-immersive-ui .app-shell>.main{padding:0 12px 30px!important}
+ html body.cb-immersive-ui .topbar{padding:10px 0!important;min-height:0!important;gap:8px!important}
+ .cb-top-crest{min-width:0}.cb-top-crest__mark{width:34px;height:34px;font-size:22px}
+ .cb-top-crest b{font-size:11px}.cb-top-crest small{font-size:7px!important}
+ html body.cb-immersive-ui .topbar>div:nth-child(2){min-width:95px}
+ html body.cb-immersive-ui .topbar h1{font-size:1.1rem}
+ html body.cb-immersive-ui .topbar .sync-status{font-size:9px}
+ html body.cb-immersive-ui .topbar>.resource-strip{gap:3px}
+ html body.cb-immersive-ui .resource-strip>div{flex:1 1 27%;min-width:0;padding:6px}
+ html body.cb-immersive-ui .resource-strip span{font-size:8px}
+ html body.cb-immersive-ui .resource-strip b{font-size:12px}
+ .cb-subnav{gap:6px;min-height:46px}.cb-subnav__label{display:none}.cb-subnav__links button{min-height:34px;font-size:10px;padding:7px 9px}
+ .cb-guild-hall{min-height:345px;margin-top:12px;align-items:flex-start;padding:28px 19px}
+ .cb-guild-hall__art{background-image:linear-gradient(0deg,#070c10 0%,#071013dc 34%,#07101384 78%),url('./assets/comics/tutorial-2026/sunset-briefing.webp')}
+ .cb-guild-hall h2{font-size:clamp(2.5rem,10vw,4rem)}
+ .cb-guild-hall p{max-width:95%}
+ .cb-hall-quick{position:relative;right:auto;bottom:auto;width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:17px}
+ .cb-guild-hall{display:block}
+ .cb-hall-quick button{min-height:48px;padding:7px;justify-content:center}
+ .cb-hall-quick button b{font-size:10px}.cb-hall-quick button span,.cb-hall-quick button em{display:none}
+ .cb-dock{width:calc(100vw - 10px);bottom:max(4px,env(safe-area-inset-bottom));padding:4px;gap:1px;border-radius:9px}
+ .cb-dock button{min-height:56px;gap:4px}
+ .cb-dock__icon{font-size:22px}.cb-dock__label{font-size:clamp(8px,2.1vw,10px);letter-spacing:0}
+ .cb-more__panel{right:5px;bottom:calc(76px + env(safe-area-inset-bottom));width:calc(100vw - 10px);max-height:68dvh}
+}
+@media(prefers-reduced-motion:reduce){.cb-dock *, .cb-guild-hall *{transition:none!important;animation:none!important}}
