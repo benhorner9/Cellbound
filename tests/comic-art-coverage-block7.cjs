@@ -1,0 +1,17 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');
+const file='assets/comics/thirteenth-bell/greywake_arrival-restored.svg';
+const svg=fs.readFileSync(path.join(root,file),'utf8');
+assert(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"'));
+assert(svg.includes('viewBox="0 0 1600 900"'),'16:9 cinematic image framing');
+const data=svg.match(/href="data:image\/webp;base64,([A-Za-z0-9+/=]+)"/);
+assert(data,'The original painting must be embedded in the shipped art file');
+const image=Buffer.from(data[1],'base64');
+assert.equal(image.toString('ascii',0,4),'RIFF');
+assert.equal(image.toString('ascii',8,12),'WEBP');
+const bell=fs.readFileSync(path.join(root,'thirteenth-bell-v1.js'),'utf8');
+assert(bell.includes("name==='greywake_arrival'?'-restored.svg?v=9'"),'Greywake arrival must load the cleaned illustration');
+const build=fs.readFileSync(path.join(root,'build.js'),'utf8');
+assert(build.includes(file),'Cleaned artwork included in staging build');
+console.log('Thirteenth Bell art block 7: restored caption-free Greywake arrival artwork and shipping route verified.');
