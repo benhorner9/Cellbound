@@ -23,7 +23,7 @@ const root=path.resolve(__dirname,'..');
  assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),3,'inputs reserved on start');
  assert.equal(await page.locator('.forge-phase').count(),3);
  assert.equal(await page.locator('[data-forge-artisan-id="hero1"] .cb-paper-doll').count(),1,'the actual selected adventurer uses the full-body paper-doll renderer');
- assert.match(await page.locator('.forge-artisan-identity').innerText(),/Smith[\\s\\S]*BLACKSMITH 10/,'adventurer identity and real skill level appear in the forge');
+ assert((await page.locator('.forge-artisan-identity').innerText()).includes('Smith')&&(await page.locator('.forge-artisan-identity').innerText()).includes('BLACKSMITH 10'),'real adventurer and profession skill identify the visible forge worker');
  assert.equal(await page.evaluate(()=>window.mockState.consumables.length),0,'no item before mini-game');
  await page.click('[data-forge-toggle]');
  await page.waitForSelector('.forge-workshop.manual');
