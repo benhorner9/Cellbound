@@ -688,14 +688,14 @@ function qAddUnit(id,label,cls,x,y,size='',meta=''){
   const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+size;e.dataset.qUnit=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cb2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em class="cb2d-unit-hp"><i style="width:100%"></i></em>';root.appendChild(e)
 }
 function qUnit(id){return $('[data-q-unit="'+id+'"]')}
-function qMove(id,x,y,ms=520){const e=qUnit(id);if(!e)return;const ox=parseFloat(e.style.left);const oy=parseFloat(e.style.top);const fromX=Number.isFinite(ox)?ox:x,fromY=Number.isFinite(oy)?oy:y,speed=Math.max(.25,Number(questFight?.speed)||1),dur=Math.max(90,Math.round((Number(ms)||520)/speed));e.style.setProperty('--face-angle',(Math.atan2(y-fromY,x-fromX)*180/Math.PI)+'deg');e.style.transitionDuration=dur+'ms';requestAnimationFrame(()=>{if(!e.isConnected)return;e.style.left=x+'%';e.style.top=y+'%'})}
+function qMove(id,x,y,ms=520){const e=qUnit(id);if(!e)return;const ox=parseFloat(e.style.left);const oy=parseFloat(e.style.top);const fromX=Number.isFinite(ox)?ox:x,fromY=Number.isFinite(oy)?oy:y,speed=combatRate(questFight?.speed||1),dur=Math.max(90,Math.round((Number(ms)||520)/speed));e.style.setProperty('--face-angle',(Math.atan2(y-fromY,x-fromX)*180/Math.PI)+'deg');e.style.transitionDuration=dur+'ms';requestAnimationFrame(()=>{if(!e.isConnected)return;e.style.left=x+'%';e.style.top=y+'%'})}
 function qPoint(id){const a=$('#q2dArena'),u=qUnit(id);if(!a||!u)return null;const ar=a.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left-ar.left+r.width/2,y:r.top-ar.top+r.height/2,w:ar.width,h:ar.height}}
 function qFace(id,targetId){const e=qUnit(id),a=qPoint(id),b=qPoint(targetId);if(!e||!a||!b)return;e.style.setProperty('--face-angle',(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI)+'deg')}
 function qProjectile(from,to,kind='physical',ms=320){
  if(window.CellboundCombatFX?.living)return;
-const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const speed=Math.max(.25,Number(questFight?.speed)||1),dur=Math.max(1,Math.round(ms/speed)),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=dur+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});setTimeout(()=>e.remove(),dur+130)}
+const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const speed=combatRate(questFight?.speed||1),dur=Math.max(1,Math.round(ms/speed)),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=dur+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});setTimeout(()=>e.remove(),dur+130)}
 function qPulseUnit(id,cls,ms=360){
-  const e=qUnit(id);if(!e)return;const speed=Math.max(.25,Number(questFight?.speed)||1),dur=Math.max(90,Math.round(ms/speed));
+  const e=qUnit(id);if(!e)return;const speed=combatRate(questFight?.speed||1),dur=Math.max(90,Math.round(ms/speed));
   e.classList.remove(cls);void e.offsetWidth;e.classList.add(cls);setTimeout(()=>e?.classList?.remove(cls),dur)
 }
 function qFloat(id,text,kind='damage'){const arena=$('#q2dArena'),p=qPoint(id);if(!arena||!p)return;const e=document.createElement('div');e.className='cb2d-number '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),850)}
@@ -855,7 +855,7 @@ function qResourceVisual(e){
   }
 }
 function qCastStart(e){
-  const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0),realDuration=Math.max(1,Math.round(duration/Math.max(.25,Number(questFight?.speed)||1)));
+  const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0),realDuration=Math.max(1,Math.round(duration/combatRate(questFight?.speed||1)));
   if(n)n.textContent=e.ability||'Enemy Cast';if(t)t.textContent=(duration/1000).toFixed(1)+'s';
   if(f){f.style.background='';f.style.transition='none';f.style.width='0%';void f.offsetWidth;requestAnimationFrame(()=>{f.style.transition='width '+realDuration+'ms linear';f.style.width='100%'})}
 }
@@ -947,7 +947,7 @@ function qRenderRebornEvent(e){
     case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
       const u=qUnit(e.target);if(u){u.classList.add('dead');window.CellboundCombatFX?.death?.(u,{boss:e.type==='ENEMY_DEFEATED'&&String(questFight?.presentationKind||'')==='dungeon'&&enemyIndex===Math.max(0,Number(questFight?.eliteIndex)||0)});}if(enemyIndex>=0)qSetEnemyHp(enemyIndex,0);else qSetAddHp(e.target,0);break;
     }
-    case'PLAYER_DEFEATED':if(targetChar){window.CellboundCombatFX?.death?.(qUnit(e.target));qPulseUnit(e.target,'dying',360);qSetPartyHp(targetChar,0);setTimeout(()=>qUnit(e.target)?.classList.add('dead'),Math.max(120,Math.round(300/Math.max(.25,Number(questFight?.speed)||1))));qLog(targetChar.name+' is defeated.')}break;
+    case'PLAYER_DEFEATED':if(targetChar){window.CellboundCombatFX?.death?.(qUnit(e.target));qPulseUnit(e.target,'dying',360);qSetPartyHp(targetChar,0);setTimeout(()=>qUnit(e.target)?.classList.add('dead'),Math.max(120,Math.round(300/combatRate(questFight?.speed||1))));qLog(targetChar.name+' is defeated.')}break;
     case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.(document.querySelector('.quest-cb2d-arena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);qStatus(e.ability||'PHASE CHANGE');qLog((e.ability||'A new phase')+' begins.');break;
     case'ENRAGE':if(e.result==='hard')window.CellboundFX?.shake?.('hard');else window.CellboundFX?.flash?.('danger');qStatus(e.result==='hard'?'HARD ENRAGE':(e.ability||'ENRAGE'));qLog((e.ability||'The enemy enrages')+'.');break;
     case'DEFENSIVE_ACTIVATED':if(srcChar)qLog(srcChar.name+' activates '+(e.ability||'a defensive')+'.');break;
