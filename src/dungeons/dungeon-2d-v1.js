@@ -960,8 +960,8 @@ async function syncPartyXpRecords(gains){
  }catch(error){console.warn('Character XP mirror sync failed',error)}
 }
 const delay=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
-const NORMAL_COMBAT_PLAYBACK=.85;
-const combatPlaybackSpeed=value=>{const v=Math.max(.25,Number(value)||1);return Math.abs(v-1)<.001?NORMAL_COMBAT_PLAYBACK:v};
+const combatPlaybackSpeed=value=>window.CellboundCombatStandard?.playbackRate?.(value)??Math.max(.25,(Number(value)||1)*.7);
+const combatPlaybackLabel=value=>window.CellboundCombatStandard?.playbackLabel?.(value)||Number(combatPlaybackSpeed(value).toFixed(2))+'×';
 const cond=id=>run&&run.condition[id]!=null?run.condition[id]:100;
 const setCond=(id,v)=>{if(run)run.condition[id]=clamp(Math.round(v),0,100)};
 const hp=id=>run&&run.hp&&run.hp[id]!=null?run.hp[id]:100;
@@ -1418,7 +1418,7 @@ function mountCombatViewer(rootEl,options={}){
   commandsMarkup:command,commandGrouped:true,
   battleClass:options.battleClass||options.shellClass||'',
   theme:options.theme||'default',
-  speedAttribute:'data-speed',closeAttribute:'data-close',
+  speedAttribute:'data-speed',closeAttribute:'data-close',speedLabel:combatPlaybackLabel(run?.speed),
   titleId:'cb2dTitle',routeId:'cb2dRoute',endId:'cb2dEnd'
  })
 }
@@ -1438,7 +1438,7 @@ function drawViewer(){
   commandPlacement:'right'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
- r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
+ r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=combatPlaybackLabel(run.speed)};
  r.querySelector('[data-combat-potion]')?.addEventListener('click',e=>override('consumable',e.currentTarget));
  bindCombatCommandButtons();setCombatCommandPrompt();
  renderCombatPetRows();
@@ -2473,7 +2473,7 @@ function cbrStatusTargets(id){
 function renderRebornEvent(e,result,replayMode=false){
  if(!run||!e)return;
  rebornDebugEvent(e,result);
- const visualSpeed=()=>combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
+ const visualSpeed=()=>!replayMode&&run?.externalMode?1:combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cb2dArena'),speed:visualSpeed});
  updateCommandContextFromEvent(e);
  if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:visualSpeed}))return;
@@ -2655,10 +2655,10 @@ function mountRebornReplayControls(){
  removeRebornReplayControls();const arena=$('#cb2dArena');if(!arena)return;
  run.replayPaused=false;run.replaySpeed=1;run.replayRestartRequested=false;
  const el=document.createElement('div');el.id='cbrReplayControls';el.className='cbr-replay-controls';
- el.innerHTML='<button type="button" data-cbr-pause>PAUSE</button><button type="button" data-cbr-speed>1×</button><button type="button" data-cbr-restart>RESTART</button>';
+ el.innerHTML='<button type="button" data-cbr-pause>PAUSE</button><button type="button" data-cbr-speed>'+combatPlaybackLabel(1)+'</button><button type="button" data-cbr-restart>RESTART</button>';
  arena.appendChild(el);
  el.querySelector('[data-cbr-pause]').onclick=e=>{run.replayPaused=!run.replayPaused;e.currentTarget.textContent=run.replayPaused?'PLAY':'PAUSE'};
- el.querySelector('[data-cbr-speed]').onclick=e=>{const speeds=[.5,1,2],i=speeds.indexOf(run.replaySpeed),next=speeds[(i+1)%speeds.length];run.replaySpeed=next;e.currentTarget.textContent=next+'×'};
+ el.querySelector('[data-cbr-speed]').onclick=e=>{const speeds=[.5,1,2],i=speeds.indexOf(run.replaySpeed),next=speeds[(i+1)%speeds.length];run.replaySpeed=next;e.currentTarget.textContent=combatPlaybackLabel(next)};
  el.querySelector('[data-cbr-restart]').onclick=()=>{run.replayRestartRequested=true;run.replayPaused=false;const p=el.querySelector('[data-cbr-pause]');if(p)p.textContent='PAUSE'}
 }
 async function playLiveRebornSession(result,tok){
@@ -2720,7 +2720,8 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
 
  return await new Promise(resolve=>{
    let index=0,simTime=0,wallAnchor=replayMode?Date.now():(Number(run?.runtimeStageStartedAt)||Date.now()),simAnchor=0,lastSpeed=null,finished=false,raf=0;
-   const speedNow=()=>combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
+   // The real two-commander Manor remains server-clock authoritative.
+   const speedNow=()=>!replayMode&&run?.externalMode?1:combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
    const readClock=()=>{
      if(replayMode&&run?.replayPaused){wallAnchor=Date.now();simAnchor=simTime;return simTime}
      const speed=speedNow();
@@ -3034,7 +3035,7 @@ function sharedViewerShell(options={}){
   planCopy:options.planCopy||'Combat Reborn runs movement, rotations and mechanics. Use Command Center orders to influence the fight.'
  });
  r.querySelector('[data-close]').onclick=close;
- r.querySelector('[data-speed]').onclick=e=>{if(!run)return;run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
+ r.querySelector('[data-speed]').onclick=e=>{if(!run)return;run.speed=run.speed===2?1:2;e.currentTarget.textContent=combatPlaybackLabel(run.speed)};
  r.querySelector('[data-shared-potion]')?.addEventListener('click',e=>{
    const used=useCombatPotion({members:party(),getHp:c=>hp(c.id),setHp:(c,v)=>setHp(c.id,v),getCondition:c=>cond(c.id),setCondition:(c,v)=>setCond(c.id,v)});
    if(!used.ok){log(used.reason==='full'?'The party is already at full recovery.':'No combat potions remain.');refreshCombatPotionButton(e.currentTarget);return}

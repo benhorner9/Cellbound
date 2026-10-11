@@ -43,6 +43,8 @@ const CLUE_HP_PCT=8;
 
 let Game=null,G=null,db=null,run=null,token=0,meterRenderPending=false,lastMeterRenderAt=0;
 
+const combatRate=value=>window.CellboundCombatStandard?.playbackRate?.(value)??Math.max(.25,(Number(value)||1)*.7);
+const combatLabel=value=>window.CellboundCombatStandard?.playbackLabel?.(value)||Number(combatRate(value).toFixed(2))+'×';
 const wait=ms=>new Promise(r=>setTimeout(r,Math.max(0,Math.round(ms/((run&&run.speed)||1)))));
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -413,7 +415,7 @@ function hideRoleZones(immediate=false){
  const epoch=layer.dataset.zoneEpoch||'0';
  if(immediate||!layer.childElementCount){layer.classList.remove('resolving');layer.innerHTML='';return}
  layer.classList.add('resolving');
- const speed=Math.max(.25,Number(run?.speed)||1),delay=Math.max(70,120/speed);
+ const speed=combatRate(run?.speed||1),delay=Math.max(70,120/speed);
  setTimeout(()=>{if(!layer.isConnected||layer.dataset.zoneEpoch!==epoch)return;layer.innerHTML='';layer.classList.remove('resolving')},delay)
 }
 function bsStripDirectionBlips(){
@@ -424,9 +426,9 @@ function bsStripDirectionBlips(){
  })
 }
 function eventRender(e){
- window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#bsArena'),resolve:id=>statusTargets(id)?.[0],speed:()=>run?.speed||1});
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#bsArena'),resolve:id=>statusTargets(id)?.[0],speed:()=>combatRate(run?.speed||1)});
  bsStripDirectionBlips();
- try{if(window.CellboundCombatStatuses?.handle(e,{resolve:statusTargets,speed:()=>run?.speed||1}))return}catch(error){console.warn('Blackout Station status UI skipped',e?.type,error)}
+ try{if(window.CellboundCombatStatuses?.handle(e,{resolve:statusTargets,speed:()=>combatRate(run?.speed||1)}))return}catch(error){console.warn('Blackout Station status UI skipped',e?.type,error)}
 
  const src=renderId(e.source),target=renderId(e.target),srcChar=charFor(e.source),targetChar=charFor(e.target);
  switch(e.type){
@@ -471,7 +473,7 @@ function eventRender(e){
    let shockEpoch=0;if(arena){shockEpoch=(Number(arena.dataset.shockEpoch)||0)+1;arena.dataset.shockEpoch=String(shockEpoch);arena.classList.remove('shockwave');void arena.offsetWidth;arena.classList.add('shockwave')}
    setStatus(e.result==='casualties'?'SHOCKWAVE — WRONG ROLE CIRCUIT':'SHOCKWAVE SURVIVED');feed(e.result==='casualties'?'Emergency Overload resolves: anyone outside their correct role circle is killed instantly.':'Emergency Overload resolves safely. Every living character reached the correct role circuit.');
    const epochs={};party().forEach((ch,i)=>{epochs['p'+i]=Number(run?.movementEpoch?.['p'+i]||0)});
-   const speed=Math.max(.25,Number(run?.speed)||1),delay=Math.max(120,320/speed);
+   const speed=combatRate(run?.speed||1),delay=Math.max(120,320/speed);
    setTimeout(()=>{if(!run)return;if(arena&&Number(arena.dataset.shockEpoch)===shockEpoch)arena.classList.remove('shockwave');bsRegroup(360,epochs)},delay);
    break;
   }
@@ -503,7 +505,7 @@ async function playTimeline(result,tok){
   const frame=now=>{
    if(finished)return;if(tok!==token||!run){finish(false);return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
-   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(run.speed)||1);lastWall=now;
+   const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(run.speed);lastWall=now;
    const step=session.advance(delta);run.combatElapsed=step.timeMs;window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-bs-command]','bsCommand');if(step.events?.length)renderEvents(step.events);
    if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)
@@ -560,10 +562,10 @@ function drawCombat(){
   partyLabel:'PARTY CONDITION · ILVL '+ilvl(),partyMarkup:'',partyRowsId:'bsRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
   theme:'blackout',battleClass:'bs2d-shell',partySize:party().length,speedAttribute:'data-bs-speed',closeAttribute:'data-bs-close',
-  speedLabel:run.speed+'×',titleId:'bsTitle',endId:'bsEnd'
+  speedLabel:combatLabel(run.speed),titleId:'bsTitle',endId:'bsEnd'
  });
  r.querySelector('[data-bs-close]').onclick=close;
- r.querySelector('[data-bs-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
+ r.querySelector('[data-bs-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=combatLabel(run.speed)};
  r.querySelector('[data-bs-potion]')?.addEventListener('click',e=>bsUseCombatPotion(e.currentTarget));
  r.querySelectorAll('[data-bs-command]').forEach(b=>b.onclick=()=>bsIssueCommand(b.dataset.bsCommand,b));
  window.CellboundDungeon2D?.refreshCombatPotionButton?.(r.querySelector('[data-bs-potion]'),state());

@@ -88,6 +88,8 @@ const CANYON_CROSSING={
  art:'./assets/chaos-canyon/rooms/crossing.webp?v=4',liveProfile:'canyon-crossing'
 };
 const XP=1600;
+const combatRate=value=>window.CellboundCombatStandard?.playbackRate?.(value)??Math.max(.25,(Number(value)||1)*.7);
+const combatLabel=value=>window.CellboundCombatStandard?.playbackLabel?.(value)||Number(combatRate(value).toFixed(2))+'×';
 const wait=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -344,8 +346,8 @@ function ccStatusTargets(id){
  return out
 }
 function ccRenderRebornEvent(e){
- window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cc2dArena'),resolve:id=>ccStatusTargets(id)?.[0],speed:()=>run?.speed||1,position:(el,p,ms)=>move(el.dataset.cc,p.x,p.y,ms)});
- if(window.CellboundCombatStatuses?.handle(e,{resolve:ccStatusTargets,speed:()=>run?.speed||1}))return;
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cc2dArena'),resolve:id=>ccStatusTargets(id)?.[0],speed:()=>combatRate(run?.speed||1),position:(el,p,ms)=>move(el.dataset.cc,p.x,p.y,ms)});
+ if(window.CellboundCombatStatuses?.handle(e,{resolve:ccStatusTargets,speed:()=>combatRate(run?.speed||1)}))return;
  const src=ccRenderId(e.source),target=ccRenderId(e.target),srcChar=ccCharacter(e.source),targetChar=ccCharacter(e.target);
  switch(e.type){
   case'COMBAT_START':{const arena=$('#cc2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat underway.');feed('Combat begins.');break;}
@@ -428,7 +430,7 @@ async function ccPlayTimeline(result,tok){
   const frame=now=>{
    if(finished)return;if(tok!==token||!run){finish(false);return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
-   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(run.speed)||1);lastWall=now;
+   const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(run.speed);lastWall=now;
    const step=session.advance(delta);window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-cc-override]:not([data-cc-override="consumable"])','ccOverride');if(step.events?.length)renderEvents(step.events);
    if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)
@@ -662,11 +664,11 @@ function draw(){
   header:'CHAOS CANYON · LIVE DUNGEON',title:stage.title,routeMarkup:ccRouteMarkup(stage.id,false),
   partyLabel:'PARTY CONDITION · ILVL '+ilvl(),partyMarkup:ccPartyRows(),partyRowsId:'cc2dRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
-  theme:'chaos',battleClass:'cc2d-unified-shell',partySize:party().length,speedAttribute:'data-speed',closeAttribute:'data-close',
+  theme:'chaos',battleClass:'cc2d-unified-shell',partySize:party().length,speedAttribute:'data-speed',closeAttribute:'data-close',speedLabel:combatLabel(run.speed),
   titleId:'cc2dTitle',routeId:'cc2dRoute',endId:'cc2dEnd'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave Chaos Canyon?'))return;close()};
- r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
+ r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=combatLabel(run.speed)};
  r.querySelectorAll('[data-cc-override]').forEach(b=>b.onclick=()=>ccOverride(b.dataset.ccOverride,b));
  window.CellboundDungeon2D?.refreshCombatPotionButton?.(r.querySelector('[data-cc-override="consumable"]'),state());
  stageEnvironment(stage);ccRenderMeters();ccUpdateSidebar();feed('The party enters Chaos Canyon.')

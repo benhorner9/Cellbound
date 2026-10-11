@@ -3,6 +3,11 @@
 
 const MODEL='Combat Reborn';
 const CONTRACT_VERSION='1.1.0';
+// Shared presentation pacing: the Combat Reborn simulation remains unchanged.
+// Normal battles run at 0.7x (30% slower); the optional faster mode is 1.4x.
+const NORMAL_PLAYBACK_RATE=0.7;
+const playbackRate=selection=>{const speed=Number(selection);return Math.max(.25,Math.min(4,(Number.isFinite(speed)&&speed>0?speed:1)*NORMAL_PLAYBACK_RATE))};
+const playbackLabel=selection=>Number(playbackRate(selection).toFixed(2))+'×';
 const zones=new Map();
 
 function core(){
@@ -83,7 +88,7 @@ function audit(){
 }
 
 window.CellboundCombatStandard={
-  MODEL,CONTRACT_VERSION,core,simulate,createLiveSession,createPvpSession,assertServerPayload,register,audit,dispatchCombatEvents,
+  MODEL,CONTRACT_VERSION,NORMAL_PLAYBACK_RATE,playbackRate,playbackLabel,core,simulate,createLiveSession,createPvpSession,assertServerPayload,register,audit,dispatchCombatEvents,
   UI:{
     shell:'shared CB2D combat shell',
     vitals:'HP above class resource',

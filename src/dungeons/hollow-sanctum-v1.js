@@ -72,6 +72,8 @@ function hollowRoomConfig(id){
 }
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
 const XP=1200;
+const combatRate=value=>window.CellboundCombatStandard?.playbackRate?.(value)??Math.max(.25,(Number(value)||1)*.7);
+const combatLabel=value=>window.CellboundCombatStandard?.playbackLabel?.(value)||Number(combatRate(value).toFixed(2))+'×';
 const wait=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -385,9 +387,9 @@ function hsStatusTargets(id){
  return out
 }
 function hsRenderRebornEvent(e){
- window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#hs2dArena'),resolve:id=>hsStatusTargets(id)?.[0],speed:()=>run?.speed||1});
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#hs2dArena'),resolve:id=>hsStatusTargets(id)?.[0],speed:()=>combatRate(run?.speed||1)});
  try{
-  if(window.CellboundCombatStatuses?.handle(e,{resolve:hsStatusTargets,speed:()=>run?.speed||1}))return;
+  if(window.CellboundCombatStatuses?.handle(e,{resolve:hsStatusTargets,speed:()=>combatRate(run?.speed||1)}))return;
  }catch(error){console.warn('Hollow Sanctum status visual skipped',e?.type,error)}
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
@@ -470,7 +472,7 @@ async function hsPlayTimeline(result,tok){
   const frame=now=>{
    if(finished)return;if(tok!==token||!run){finish(false);return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
-   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(run.speed)||1);lastWall=now;
+   const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(run.speed);lastWall=now;
    const step=session.advance(delta);window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-hs-override]:not([data-hs-override="consumable"])','hsOverride');if(step.events?.length)renderEvents(step.events);
    if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)
@@ -682,11 +684,11 @@ function draw(){
   header:'THE HOLLOW SANCTUM · LIVE DUNGEON',title:stage.title,routeMarkup,
   partyLabel:'PARTY CONDITION · ILVL '+ilvl(),partyMarkup:hsPartyRows(),partyRowsId:'hs2dRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
-  theme:'hollow',battleClass:'hs2d-unified-shell',partySize:party().length,speedAttribute:'data-speed',closeAttribute:'data-close',
+  theme:'hollow',battleClass:'hs2d-unified-shell',partySize:party().length,speedAttribute:'data-speed',closeAttribute:'data-close',speedLabel:combatLabel(run.speed),
   titleId:'hs2dTitle',routeId:'hs2dRoute',endId:'hs2dEnd'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()};
- r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
+ r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=combatLabel(run.speed)};
  r.querySelectorAll('[data-hs-override]').forEach(b=>b.onclick=()=>hsOverride(b.dataset.hsOverride,b));
  window.CellboundDungeon2D?.refreshCombatPotionButton?.(r.querySelector('[data-hs-override="consumable"]'),state());
  stageEnvironment(stage);hsRenderMeters();hsUpdateSidebar();feed('The party enters The Hollow Sanctum.')

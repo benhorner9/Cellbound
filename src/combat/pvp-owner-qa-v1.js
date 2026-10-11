@@ -84,7 +84,8 @@ function setupPractice(){
     if(pvpPractice!==practice)return;
     if(!root.isConnected||window.CellboundAdmin?.role!=='owner'){stopPractice();return}
     try{
-     const step=session.advance(200);
+     // Owner PvP practice uses the same relaxed, simulation-safe combat pace as PvE.
+     const step=session.advance(200*(engine.playbackRate?.(1)??.7));
      viewer.renderPvpFrame(shell,session.snapshot(),{events:step.events});
      if(step.finished){clearInterval(practice.timer);practice.timer=null;
       status.textContent='Practice '+(step.result?.pvp?.winner||'draw').toUpperCase()+' · '+Math.round(session.timeMs/1000)+'s · no results saved.';
