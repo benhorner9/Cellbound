@@ -2473,7 +2473,7 @@ function cbrStatusTargets(id){
 function renderRebornEvent(e,result,replayMode=false){
  if(!run||!e)return;
  rebornDebugEvent(e,result);
- const visualSpeed=()=>!replayMode&&run?.externalMode?1:combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
+ const visualSpeed=()=>!replayMode&&run?.rebornSimulation?.meta?.zone==='manor-raid'?1:combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cb2dArena'),speed:visualSpeed});
  updateCommandContextFromEvent(e);
  if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:visualSpeed}))return;
@@ -2721,7 +2721,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
  return await new Promise(resolve=>{
    let index=0,simTime=0,wallAnchor=replayMode?Date.now():(Number(run?.runtimeStageStartedAt)||Date.now()),simAnchor=0,lastSpeed=null,finished=false,raf=0;
    // The real two-commander Manor remains server-clock authoritative.
-   const speedNow=()=>!replayMode&&run?.externalMode?1:combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
+   const speedNow=()=>!replayMode&&run?.rebornSimulation?.meta?.zone==='manor-raid'?1:combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
    const readClock=()=>{
      if(replayMode&&run?.replayPaused){wallAnchor=Date.now();simAnchor=simTime;return simTime}
      const speed=speedNow();
