@@ -4528,3 +4528,274 @@ body.cb2d-open .cb-subnav,body.hs2d-open .cb-subnav,body.cc2d-open .cb-subnav,bo
  .cb-more__panel{right:5px;bottom:calc(76px + env(safe-area-inset-bottom));width:calc(100vw - 10px);max-height:68dvh}
 }
 @media(prefers-reduced-motion:reduce){.cb-dock *, .cb-guild-hall *{transition:none!important;animation:none!important}}
+
+
+/* ==========================================================================
+   CELLBOUND WORLD INTERFACE v2
+   A single visual language for the whole guild, all destinations and UI chrome.
+   Source: bundled final layout stylesheet; intentionally no additional CSS request.
+   Gameplay, combat sizing, Design Booth publishing and gameplay modals are unchanged.
+   ========================================================================== */
+body.cb-immersive-ui {
+  --cb-brass:#c7a26a;
+  --cb-brass-bright:#f1d49e;
+  --cb-brass-line:rgba(199,162,106,.25);
+  --cb-surface:#0b1417;
+  --cb-surface-raised:#111d20;
+  --cb-ink:#e8e2d5;
+  --cb-ink-muted:#acb4ad;
+  color:var(--cb-ink);
+}
+body.cb-immersive-ui .main>.view:not(#overview) {
+  --cb-place-art:url('./assets/comics/tutorial-2026/sunset-briefing.webp');
+  --cb-place-accent:#c7a26a;
+  --cb-place-symbol:"◇";
+  padding-top:17px!important;
+  min-width:0;
+}
+body.cb-immersive-ui #roster{--cb-place-art:url('./assets/comics/tutorial-2026/sunset-briefing.webp');--cb-place-symbol:"♜"}
+body.cb-immersive-ui #party{--cb-place-art:url('./assets/comics/tutorial-2026/twilight-siege.webp');--cb-place-symbol:"♟"}
+body.cb-immersive-ui #bank{--cb-place-art:url('./assets/comics/tutorial/the_quartermaster_s_choice.webp');--cb-place-symbol:"▣"}
+body.cb-immersive-ui #professions{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-armory.webp');--cb-place-symbol:"⚒"}
+body.cb-immersive-ui #trading{--cb-place-art:url('./assets/comics/tutorial/the_quartermaster_s_choice.webp');--cb-place-symbol:"⚖"}
+body.cb-immersive-ui #quests{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-trail.webp');--cb-place-symbol:"⌁"}
+body.cb-immersive-ui #content{--cb-place-art:url('./assets/dungeons/ashen-vault.webp');--cb-place-symbol:"⚔"}
+body.cb-immersive-ui #world{--cb-place-art:url('./assets/world/twelve-below-key-art.webp');--cb-place-symbol:"✦"}
+body.cb-immersive-ui #pvp{--cb-place-art:url('./assets/fractured-ages/rooms/iron-kingdom.webp');--cb-place-symbol:"⚔";--cb-place-accent:#d48d78}
+body.cb-immersive-ui #chat{--cb-place-art:url('./assets/comics/tutorial-2026/sunset-briefing.webp');--cb-place-symbol:"❖"}
+body.cb-immersive-ui #highscores{--cb-place-art:url('./assets/comics/tutorial-2026/twilight-evacuation.webp');--cb-place-symbol:"♛"}
+body.cb-immersive-ui #support{--cb-place-art:url('./assets/comics/tutorial-2026/investigating-tracks.webp');--cb-place-symbol:"!"}
+body.cb-immersive-ui #admin{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-armory.webp');--cb-place-symbol:"⚙"}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro {
+  position:relative;isolation:isolate;overflow:hidden;align-items:center;
+  min-height:205px;margin:0 0 18px;padding:27px clamp(18px,3vw,36px)!important;
+  border:1px solid rgba(212,174,114,.31);border-radius:7px;
+  background-color:#10191a;
+  background-image:
+    linear-gradient(90deg,rgba(5,11,13,.97) 0%,rgba(8,15,17,.94) 30%,rgba(8,15,17,.65) 67%,rgba(8,15,17,.31) 100%),
+    linear-gradient(0deg,rgba(4,9,11,.72),transparent 53%),
+    var(--cb-place-art);
+  background-size:cover;background-position:center,center,center 42%;
+  box-shadow:0 17px 46px rgba(0,0,0,.33),inset 0 0 90px #0005;
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro:before {
+  position:absolute;inset:0 auto 0 0;content:"";width:4px;
+  background:linear-gradient(180deg,transparent,var(--cb-place-accent),transparent);
+  box-shadow:0 0 18px rgba(224,166,90,.34);pointer-events:none;
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro:after {
+  content:var(--cb-place-symbol);position:absolute;right:2.4%;top:8%;
+  color:rgba(245,202,138,.15);font:normal clamp(68px,9vw,155px)/1 Georgia,serif;
+  pointer-events:none;text-shadow:0 3px 18px #0004;
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro>div,
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro>button,
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro>b,
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro>a{
+  position:relative;z-index:1
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro>div:first-child{
+  flex:1 1 450px;max-width:780px;min-width:0
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro small{
+  display:block;margin:0 0 9px;color:#e2b974!important;
+  font-size:10px;letter-spacing:.19em;text-shadow:0 2px 10px #000
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro h2{
+  font:normal clamp(2.05rem,3.5vw,3.15rem)/1.05 Georgia,serif;
+  color:#f5ead7;letter-spacing:-.027em;margin:0 0 12px;
+  text-shadow:0 4px 24px rgba(0,0,0,.85)
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro p{
+  color:#bfc7ba!important;font-size:clamp(12px,1.25vw,14px);
+  line-height:1.6;max-width:650px;text-shadow:0 3px 16px #000;
+  margin:0;overflow-wrap:anywhere
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro :is(.ghost-btn,.economy-badge,.content-status,.quest-campaign-status){
+  flex:0 0 auto;border:1px solid #d4ad7475;border-radius:3px;
+  background:#0c1316da;color:#ebce92;box-shadow:0 8px 25px #0006
+}
+body.cb-immersive-ui .main>.view:not(#overview)>.section-intro .ghost-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:42px;padding:10px 15px;font-size:11px;letter-spacing:.08em
+}
+/* Common frames: parchment-gold hardware, charcoal wood-and-stone interiors. */
+body.cb-immersive-ui .main>.view :is(
+  .panel,.pvp-panel,.tp-panel,.tp-main-panel,.tp-side-panel,
+  .beta-panel,.quest-journal-shell,.quest-journal-nav,.quest-stage-panel,
+  .profession-roster-panel,.workshop-panel,.formation-panel,.selection-panel,
+  .eg-content,.eg-weekly,.eg-dungeon-card,.eg-prep-block,.eg-achievements,
+  .mr-card,.dungeon-episode,.dungeon-browser-card,.roster-character-card,
+  .char-card,.bank-card,.reagent-card,.profession-slot-card,.recipe-card,
+  .tp-market-bar,.social-chat-panel,.admin-card
+){
+  border-color:rgba(198,162,102,.23);
+  background-color:#0b1517;
+  box-shadow:0 12px 34px #0004,inset 0 1px rgba(240,205,145,.025)
+}
+body.cb-immersive-ui .main>.view :is(.panel,.pvp-panel,.tp-panel,.beta-panel,.admin-card,.dungeon-episode) {
+  background-image:linear-gradient(165deg,#152023e8,#0a1216f2 62%,#090f12f5);
+}
+body.cb-immersive-ui .main>.view :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) {
+  border-bottom-color:rgba(200,162,103,.14)
+}
+body.cb-immersive-ui .main>.view :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) small{
+  color:#d0ab70!important;font-size:max(9px,.58rem)
+}
+body.cb-immersive-ui .main>.view :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) h3{
+  font-family:Georgia,serif;color:#f3e6d2;font-weight:400
+}
+body.cb-immersive-ui .main>.view :is(
+  .roster-overview-strip,.bank-overview-strip,.pvp-currency-strip,
+  .pvp-stat-strip,.roster-command-bar,.bank-controls,.tp-market-stats
+){
+  border-color:rgba(204,161,103,.2);background:linear-gradient(145deg,#162025,#0b1417)
+}
+body.cb-immersive-ui .main>.view :is(
+  .roster-overview-strip,.bank-overview-strip,.pvp-currency-strip
+)>:is(article,div){
+  background:linear-gradient(145deg,rgba(30,34,29,.5),rgba(8,16,19,.55));
+  border-color:rgba(200,159,100,.17)
+}
+body.cb-immersive-ui .main>.view :is(.roster-overview-strip,.bank-overview-strip,.pvp-currency-strip) b{
+  color:#f0d8a5;font-family:Georgia,serif
+}
+/* Tactile controls: use existing selectors, never alter button state or behaviour. */
+body.cb-immersive-ui .main>.view :is(
+  .ghost-btn,.home-panel-action,.filter,.bank-category-tabs button,
+  .quest-tabs button,.tp-tabs button,.chat-tabs button,.pvp-tabs button,
+  .eg-mode-tabs button,.eg-prep-tabs button,.mr-stage-tabs button,
+  .admin-workspace-nav button
+){
+  border-color:rgba(199,163,107,.36);
+  background:linear-gradient(180deg,#1c2929,#101b1e);
+  color:#c8c3b6
+}
+body.cb-immersive-ui .main>.view :is(
+  .filter.active,.bank-category-tabs button.active,.quest-tabs button.active,
+  .tp-tabs button.active,.chat-tabs button.active,.pvp-tabs button.active,
+  .eg-mode-tabs button.active,.eg-prep-tabs button.active,.mr-stage-tabs button.active,
+  .admin-workspace-nav button.active
+){
+  color:#ffe1a5;border-color:rgba(233,190,118,.8);
+  background:linear-gradient(180deg,#614527,#2a231a)
+}
+body.cb-immersive-ui .main>.view :is(
+  .ghost-btn,.filter,.bank-category-tabs button,.quest-tabs button,
+  .tp-tabs button,.chat-tabs button,.pvp-tabs button
+):hover:not(:disabled){
+  border-color:#e4b976;color:#f8e8c9
+}
+body.cb-immersive-ui .main>.view :is(
+  input:not([type=checkbox]):not([type=radio]),select,textarea
+){
+  color:#ebe4d7;border-color:rgba(197,160,98,.35);
+  background-color:#0b1417;accent-color:#dcb675
+}
+body.cb-immersive-ui .main>.view input::placeholder,
+body.cb-immersive-ui .main>.view textarea::placeholder{color:#939d94}
+body.cb-immersive-ui :is(.main>.view,.cb-dock,.cb-subnav,.cb-more) :is(button,a,input,textarea,select):focus-visible{
+  outline:2px solid #e9c583!important;outline-offset:3px!important;
+  box-shadow:0 0 0 4px rgba(7,13,15,.88)
+}
+body.cb-immersive-ui .main>.view :is(.roster-character-card,.char-card,.dungeon-browser-card,.recipe-card,.profession-char,.quest-v2-list-card,.tp-listing-card):hover{
+  border-color:rgba(224,182,112,.6);box-shadow:0 12px 28px #0007
+}
+/* Rich destinations retain their own interaction models but share the skin. */
+body.cb-immersive-ui #professions :is(.profession-char.active,.profession-choice.active,.recipe-card.active){
+  background:linear-gradient(130deg,#4a3521,#152024);border-color:#d7ad6a
+}
+body.cb-immersive-ui #professions :is(.profession-slot-card,.recipe-card,.reagent-card){
+  border-radius:5px
+}
+body.cb-immersive-ui #professions .profession-workshop{
+  background:radial-gradient(circle at 80% 0,rgba(200,122,54,.12),transparent 37%),linear-gradient(#111b1c,#091113)
+}
+body.cb-immersive-ui #trading :is(.tp-tabs,.tp-market-bar,.tp-panel){
+  border-color:#b08b5b55
+}
+body.cb-immersive-ui #quests .quest-v2-hero{
+  background:radial-gradient(circle at 85% 20%,#bb8e4824,transparent 35%),linear-gradient(#1b2423,#0a1517)
+}
+body.cb-immersive-ui #quests .quest-v2-list-card{
+  border-color:#ba965c55;color:#e7dbc9
+}
+body.cb-immersive-ui #content :is(.dungeon-episode,.dungeon-browser-card){
+  border-radius:6px;overflow:hidden
+}
+body.cb-immersive-ui #content .dungeon-browser-card:hover{border-color:#deb578}
+body.cb-immersive-ui #pvp .pvp-hero{
+  border-color:#c9997866;
+  background:linear-gradient(90deg,#0a1115f2,#0a1215ad),
+    url('./assets/fractured-ages/rooms/iron-kingdom.webp') center/cover no-repeat
+}
+body.cb-immersive-ui #pvp .pvp-hero :is(h2,b){color:#f0e4d4}
+body.cb-immersive-ui #pvp .pvp-rank-card{
+  background:#100f12d9;border-color:#bf9b7080
+}
+body.cb-immersive-ui #chat :is(.chat-panel,.social-layout .panel){
+  border-color:rgba(202,161,92,.24)
+}
+body.cb-immersive-ui #raids .mr-hero,
+body.cb-immersive-ui #endgame .eg-hero{
+  border-color:rgba(218,179,110,.43);border-radius:7px;
+  box-shadow:0 18px 46px #0007
+}
+body.cb-immersive-ui #endgame .eg-hero{
+  background:linear-gradient(90deg,#081216f2,#0711169e),
+    url('./assets/dungeons/ashen-vault.webp') center/cover no-repeat
+}
+body.cb-immersive-ui #endgame .eg-season,
+body.cb-immersive-ui #raids .mr-lockout{
+  border-color:rgba(213,168,104,.33);background:#080e11ce
+}
+body.cb-immersive-ui #admin .admin-shell{
+  border-color:rgba(194,161,110,.27)
+}
+body.cb-immersive-ui #admin .dbo-shell{
+  border-color:rgba(218,186,124,.33);box-shadow:0 23px 65px #0007
+}
+body.cb-immersive-ui #admin .dbo-master-head{
+  background:linear-gradient(105deg,#2d251c,#132027 65%,#1e2520)
+}
+body.cb-immersive-ui #admin .dbo-tabs button.active{
+  color:#f8e8ce;background:#3e3225;border-bottom-color:#e0be83
+}
+body.cb-immersive-ui #support :is(.beta-panel,.beta-support-grid){
+  border-color:rgba(195,164,111,.3)
+}
+/* The combat director has its own layout: accents only, no resized combat panes. */
+body.cb-immersive-ui :is(.cbcombat-panel,.cb2d-shell,.cb2d-arena) {
+  border-color:rgba(185,154,100,.19)
+}
+/* Graceful scaling from desktop to iPad portrait and phone. */
+@media(max-width:1000px){
+ body.cb-immersive-ui .main>.view:not(#overview)>.section-intro{
+  min-height:175px;padding:21px!important
+ }
+ body.cb-immersive-ui .main>.view:not(#overview)>.section-intro h2{font-size:clamp(1.85rem,4vw,2.7rem)}
+}
+@media(max-width:720px){
+ body.cb-immersive-ui .main>.view:not(#overview)>.section-intro{
+   min-height:190px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+   gap:10px;padding:18px!important;margin-bottom:12px;
+   background-image:linear-gradient(90deg,#050b0eee 0%,#061012cd 63%,#0610127a 100%),
+     linear-gradient(0deg,#03090cd9,transparent 75%),var(--cb-place-art)
+ }
+ body.cb-immersive-ui .main>.view:not(#overview)>.section-intro>div:first-child{
+   flex:0 1 auto;width:100%;max-width:100%
+ }
+ body.cb-immersive-ui .main>.view:not(#overview)>.section-intro h2{font-size:clamp(1.8rem,8vw,2.4rem);margin:0 0 8px}
+ body.cb-immersive-ui .main>.view:not(#overview)>.section-intro p{font-size:12px;line-height:1.45}
+ body.cb-immersive-ui .main>.view:not(#overview)>.section-intro:after{font-size:75px;opacity:.6}
+ body.cb-immersive-ui .main>.view:not(#overview)>.section-intro :is(.ghost-btn,.economy-badge,.content-status,.quest-campaign-status){
+   align-self:flex-start;min-height:35px
+ }
+ body.cb-immersive-ui #pvp .pvp-hero{background-position:center right}
+ body.cb-immersive-ui .main>.view :is(.panel-head,.tp-panel-head,.pvp-panel>header) h3{font-size:clamp(15px,4vw,19px)}
+}
+/* Do not compete with fullscreen encounters, onboarding or active blocking modals. */
+body.cb-immersive-ui:has(.modal-backdrop:not([hidden])) .cb-dock,
+body.cb-immersive-ui:has(.recruit-modal-backdrop:not([hidden])) .cb-dock{
+  visibility:hidden;pointer-events:none
+}

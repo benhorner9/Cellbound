@@ -38,50 +38,51 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
         assert(m.activeWidth<=m.innerWidth+3,view+' active surface exceeds the viewport at '+size.width+'px');
       }
 
-      if(size.width>720){
-        const desktop=await page.evaluate(()=>{
-          const sidebar=document.querySelector('.sidebar'),nav=document.querySelector('.sidebar .primary-nav');
-          const s=getComputedStyle(sidebar),n=getComputedStyle(nav);
-          window.scrollTo(0,Math.min(480,Math.max(0,document.documentElement.scrollHeight-innerHeight)));
-          if(nav&&nav.scrollHeight>nav.clientHeight+4)nav.scrollTop=Math.min(120,nav.scrollHeight-nav.clientHeight);
-          return {
-            position:s.position,top:sidebar.getBoundingClientRect().top,height:sidebar.getBoundingClientRect().height,
-            viewport:innerHeight,navOverflow:n.overflowY,navScrollTop:nav?.scrollTop||0,
-            navScrollable:Boolean(nav&&nav.scrollHeight>nav.clientHeight+4)
-          };
-        });
-        assert.equal(desktop.position,'sticky','desktop/tablet sidebar must stay sticky');
-        assert(Math.abs(desktop.top)<=2,'sticky sidebar moved away from the viewport top');
-        assert(desktop.height<=desktop.viewport+2,'sidebar exceeds viewport height');
-        assert(['auto','scroll'].includes(desktop.navOverflow),'sidebar navigation needs its own vertical scroll');
-        if(desktop.navScrollable)assert(desktop.navScrollTop>0,'sidebar navigation must scroll independently');
-        await page.evaluate(()=>window.scrollTo(0,0));
-      }else{
-        const mobile=await page.evaluate(()=>{
-          const sidebar=document.querySelector('.sidebar'),more=document.querySelector('#mobileNavMore');
-          const s=getComputedStyle(sidebar),r=sidebar.getBoundingClientRect();
-          return {position:s.position,bottom:Math.abs(innerHeight-r.bottom),moreVisible:Boolean(more&&getComputedStyle(more).display!=='none'),season:Boolean(document.querySelector('.season-card'))};
-        });
-        assert.equal(mobile.position,'fixed','phone navigation must use the fixed bottom dock');
-        assert(mobile.bottom<=2,'phone navigation must stay attached to the viewport bottom');
-        assert.equal(mobile.moreVisible,true,'phone More navigation must remain available');
-        assert.equal(mobile.season,false,'retired Founding Season panel must stay removed');
-      }
+      const navigation=await page.evaluate(()=>{
+        const dock=document.querySelector('#cbImmersiveDock');
+        const sidebar=document.querySelector('.sidebar');
+        const more=document.querySelector('#cbMoreToggle');
+        const style=dock?getComputedStyle(dock):null;
+        const rect=dock?.getBoundingClientRect();
+        window.scrollTo(0,Math.min(400,Math.max(0,document.documentElement.scrollHeight-innerHeight)));
+        const scrollRect=dock?.getBoundingClientRect();
+        return {
+          dockPresent:!!dock,position:style?.position,
+          sidebarHidden:getComputedStyle(sidebar).display==='none',
+          bottom:rect?Math.abs(innerHeight-rect.bottom):Infinity,
+          scrolledBottom:scrollRect?Math.abs(innerHeight-scrollRect.bottom):Infinity,
+          width:rect?.width||Infinity,
+          moreVisible:!!more&&getComputedStyle(more).display!=='none',
+          moreAria:more?.getAttribute('aria-expanded')
+        };
+      });
+      assert.equal(navigation.dockPresent,true,'new immersive navigation dock must exist');
+      assert.equal(navigation.position,'fixed','game dock must be fixed at every viewport');
+      assert.equal(navigation.sidebarHidden,true,'retired sidebar must not take up space');
+      assert(navigation.bottom<=30,'dock must sit at the viewport bottom');
+      assert(navigation.scrolledBottom<=30,'dock must remain anchored after scrolling');
+      assert(navigation.width<=size.width+2,'dock must fit within viewport');
+      assert.equal(navigation.moreVisible,true,'More must stay available on tablets and phones');
+      assert.equal(navigation.moreAria,'false','More menu should start closed');
+      await page.evaluate(()=>window.scrollTo(0,0));
     }
 
     await page.setViewportSize({width:1366,height:1024});
     await page.evaluate(()=>{CellboundGame.switchView('overview');document.body.focus()});
-    let focus=null;
-    for(let i=0;i<30;i++){
-      await page.keyboard.press('Tab');
-      focus=await page.evaluate(()=>{
-        const el=document.activeElement;
-        return {isNav:Boolean(el?.classList?.contains('nav-btn')),tag:el?.tagName};
-      });
-      if(focus.isNav)break;
-    }
-    assert.equal(focus?.isNav,true,'keyboard Tab navigation must reach the sidebar');
-    assert.equal(focus?.tag,'BUTTON','keyboard focus lands on a navigation control');
+    await page.evaluate(()=>document.querySelector('#cbImmersiveDock [data-cb-dock="overview"]').focus());
+    const focusStart=await page.evaluate(()=>document.activeElement?.closest('#cbImmersiveDock')!==null);
+    assert.equal(focusStart,true,'keyboard users must be able to focus the bottom dock');
+    await page.keyboard.press('Tab');
+    const focusNext=await page.evaluate(()=>document.activeElement?.closest('#cbImmersiveDock')!==null);
+    assert.equal(focusNext,true,'Tab must move between dock destinations');
+    const moreButton=page.locator('#cbMoreToggle');
+    await moreButton.click();
+    assert.equal(await page.locator('#cbMorePanel').isVisible(),true,'More destination panel must open');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#cbMorePanel').isVisible(),false,'Escape must dismiss the destination panel');
+    await page.locator('#cbImmersiveDock [data-cb-dock="quests"]').click();
+    assert.equal(await page.locator('#quests').evaluate(el=>el.classList.contains('active')),true,'bottom dock must navigate via the canonical game view router');
+    await page.evaluate(()=>CellboundGame.switchView('overview'));
     const focusRuleLoaded=await page.evaluate(()=>{
       for(const sheet of [...document.styleSheets]){
         let rules;
