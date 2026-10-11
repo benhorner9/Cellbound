@@ -99,6 +99,7 @@ async function show(config={}){
     const explicitReveals=Array.isArray(config.reveals)?config.reveals.map(r=>({...r,...(text?.[r.panel]||{})})):[];
     const reveals=explicitReveals.length?explicitReveals:(config.progressive?panels.map((p,i)=>({panel:i,eyebrow:p.eyebrow||'',speaker:p.speaker||'',title:p.title||'',text:p.text||'',placement:['bottom-left','top-left','bottom-right'][i%3]})).filter(r=>r.eyebrow||r.speaker||r.title||r.text):[]);
     const progressive=reveals.length>0;
+    const cinematicSequence=Boolean(config.cinematicSequence&&progressive&&panels.length>1);
     const storyOnly=Boolean(config.storyOnly||config.panelOnly);
     const skipButton=config.allowSkip===false?'':'<button type="button" data-comic-skip>'+esc(config.skipLabel||'SKIP')+'</button>';
     root.dataset.theme=config.theme||'zeltira';
@@ -111,7 +112,7 @@ async function show(config={}){
       '</footer>';
     root.innerHTML='<section class="cbcomic-shell" role="dialog" aria-modal="true" aria-label="'+esc(config.title||'Story scene')+'">'+
       '<header class="cbcomic-head"><div><small>'+esc(config.eyebrow||'CELLBOUND · STORY')+'</small><h2>'+esc(config.title||'Story Scene')+'</h2><span>'+esc(config.subtitle||'')+'</span></div><div class="cbcomic-page-mark">'+esc(config.page||'STORY')+'</div></header>'+
-      '<div class="cbcomic-page count-'+panels.length+'">'+panels.map((p,i)=>panelMarkup(p,i,progressive)).join('')+'</div>'+
+      '<div class="cbcomic-page count-'+panels.length+(cinematicSequence?' cinematic-sequence':'')+'">'+panels.map((p,i)=>panelMarkup(p,i,progressive)).join('')+'</div>'+
       ((config.hideParty||config.panelOnly)?'':scenePartyMarkup())+
       dialogue+
     '</section>';
@@ -141,8 +142,11 @@ async function show(config={}){
       if(!progressive||revealIndex>=reveals.length)return false;
       const r=reveals[revealIndex++];
       const idx=Math.max(0,Math.min(panels.length-1,Number(r?.panel)||0));
-      root.querySelectorAll('.cbcomic-panel').forEach(x=>x.classList.remove('reveal-active'));
       const panel=root.querySelector('[data-panel="'+idx+'"]');
+      root.querySelectorAll('.cbcomic-panel').forEach(x=>{
+        x.classList.toggle('reveal-active',x===panel);
+        if(cinematicSequence)x.hidden=x!==panel;
+      });
       if(panel){
         panel.classList.add('reveal-active');
         const node=document.createElement('div');

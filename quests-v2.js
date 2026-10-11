@@ -302,12 +302,12 @@ function questComicArtSet(title,speaker){
  if(/seal|hollow|fragment|tessa|jory|bram|letter|bearer|pressure/.test(key))return QUEST_COMIC_ART.hollow;
  return QUEST_COMIC_ART.zeltira
 }
-// Three stable painted frames, independent of the number of spoken beats.
-// The speaker's dialogue is revealed progressively within those frames.
-function comicPanels(title,speaker){
+// Show the commissioned painting for each authored story beat.
+function comicPanels(title,speaker,beats){
  const art=questComicArtSet(title,speaker);
- return [0,1,2].map(i=>({
-  kind:i===0?'location':i===1?'dialogue':'reveal',
+ const lines=(Array.isArray(beats)?beats:[beats]).map(x=>String(x||'')).filter(Boolean);
+ return Array.from({length:Math.max(1,lines.length)},(_,i)=>({
+  kind:i===0?'location':i===lines.length-1?'reveal':'dialogue',
   eyebrow:i===0?'QUEST STORY':'',speaker,
   title:i===0?title:'',artwork:art[i%art.length]
  }))
@@ -315,7 +315,7 @@ function comicPanels(title,speaker){
 function comicLineReveals(speaker,beats){
  const lines=(Array.isArray(beats)?beats:[beats]).map(x=>String(x||'')).filter(Boolean);
  return lines.map((text,i)=>({
-  panel:Math.min(2,Math.floor(i*3/Math.max(1,lines.length))),
+  panel:i,
   speaker,text,placement:i%2?'top-left':'bottom-left'
  }))
 }
@@ -328,8 +328,9 @@ async function showDialogue(title,speaker,beats,onDone){
    subtitle:speaker,
    page:'QUEST',
    theme:'zeltira',
-   panels:comicPanels(title,speaker),
+   panels:comicPanels(title,speaker,beats),
    reveals:comicLineReveals(speaker,beats),
+   cinematicSequence:true,
    progressive:true,
    storyOnly:true,
    allowSkip:true,

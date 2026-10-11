@@ -171,7 +171,7 @@ function story(label,title,speaker,lines,onDone,button='CONTINUE →'){
    panel:i%panels.length,placement:placements[i%placements.length],speaker,
    eyebrow:i===0?label:'',text:String(text||'')
   })),
-  progressive:true,panelOnly:true,allowSkip:true,skipLabel:'SKIP STORY',nextLabel:'NEXT →',continueLabel:button
+  progressive:true,cinematicSequence:true,panelOnly:true,allowSkip:true,skipLabel:'SKIP STORY',nextLabel:'NEXT →',continueLabel:button
  }).then(async()=>{
   if(r?.isConnected){r.hidden=false;document.body.classList.add('nwb-open')}
   if(onDone)await onDone()

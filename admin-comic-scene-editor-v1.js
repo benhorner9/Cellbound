@@ -130,7 +130,7 @@ function scanDialogue(src,path,category,name,c){
  }
  const line=src.slice(0,c.at).split('\n').length;
  const panels=name==='story'?art.map((image,i)=>panel(beats.filter((_,j)=>j%art.length===i).join('\n'),title,image,i)):beats.map((text,i)=>panel(text,title,art.length?art[i%art.length]:'',i));
- const config={theme:name==='nullComic'?'null':name==='story'?(isVoyage?'manor':'fourfold'):'zeltira',page:name==='nullComic'?'SIGNAL FROM NOWHERE':path==='fourfold-lock-v1.js'?'THE FOURFOLD LOCK':isVoyage?'NO WAY BACK':'QUEST',title,subtitle:speaker,panels,progressive:true,storyOnly:true,panelOnly:name==='story'};
+ const config={theme:name==='nullComic'?'null':name==='story'?(isVoyage?'manor':'fourfold'):'zeltira',page:name==='nullComic'?'SIGNAL FROM NOWHERE':path==='fourfold-lock-v1.js'?'THE FOURFOLD LOCK':isVoyage?'NO WAY BACK':'QUEST',title,subtitle:speaker,panels,progressive:true,cinematicSequence:name==='showDialogue'||(name==='story'&&isVoyage),storyOnly:true,panelOnly:name==='story'};
  return{id:path+':'+title.toLowerCase().replace(/[^a-z0-9]+/g,'-'),title,category,speaker,path,line,origin,note,panels,config}
 }
 function scanBell(src,path,category,c){
