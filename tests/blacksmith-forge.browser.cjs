@@ -10,10 +10,10 @@ const root=path.resolve(__dirname,'..');
  await page.addStyleTag({content:fs.readFileSync(path.join(root,'dist','economy-v2.css'),'utf8')});
  await page.evaluate(()=>{
   window.mockState={roster:[{id:'hero1',name:'Smith',class:'Warrior',spec:'Protection',professions:[{name:'Blacksmithing',level:10,xp:0,craftHistory:{},masterworks:0,projectsCompleted:0}],equipment:{}}],materials:{'zeltiran-iron':5},consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],activity:[]};
-  window.mockSaveCount=0;window.mockPersistCount=0;
+  window.mockSaveCount=0;window.mockPersistCount=0;window.mockEntitlements={isAdmin:false,adminRole:null};
   window.CellboundGear={};window.CellboundPortraits={portraitHTML:()=>'<b>Smith</b>',paperDollHTML:(c)=>'<span class="cb-paper-doll cb-paper-doll--creator" role="img" aria-label="'+c.name+' working at the forge"><svg viewBox="0 0 80 120"><path d="M8 118 L39 5 L72 118" /></svg></span>'};
   window.CellboundProfessions={MATERIALS:{'zeltiran-iron':{name:'Zeltiran Iron',source:'Dungeon',rarity:'Common'}},PROFESSIONS:{Blacksmithing:{icon:'⚒',summary:'Make armour and steel.',recipes:[{id:'test-whetstone',name:'Test Whetstone',level:1,inputs:{'zeltiran-iron':2},xp:18,output:{category:'consumable',name:'Test Whetstone',key:'test-whetstone',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon'}}}]}},skillThreshold:()=>100000};
-  window.CellboundGame={ready:true,getState:()=>window.mockState,getEntitlements:()=>({professionSlots:1}),getSupabase:()=>({rpc:async()=>({data:null,error:null})}),getUser:()=>({id:'test'}),isCharacterRosterUnlocked:()=>true,save:()=>{window.mockSaveCount++},persistState:async()=>{window.mockPersistCount++},renderAll:()=>{},addMaterial:(key,qty)=>{window.mockState.materials[key]=(window.mockState.materials[key]||0)+qty}};
+  window.CellboundGame={ready:true,getState:()=>window.mockState,getEntitlements:()=>({professionSlots:1,...window.mockEntitlements}),getSupabase:()=>({rpc:async()=>({data:null,error:null})}),getUser:()=>({id:'test'}),isCharacterRosterUnlocked:()=>true,save:()=>{window.mockSaveCount++},persistState:async()=>{window.mockPersistCount++},renderAll:()=>{},addMaterial:(key,qty)=>{window.mockState.materials[key]=(window.mockState.materials[key]||0)+qty}};
  });
  await page.addScriptTag({content:fs.readFileSync(path.join(root,'dist','blacksmith-forge-v1.js'),'utf8')});
  await page.addScriptTag({content:fs.readFileSync(path.join(root,'dist','economy-v2.js'),'utf8')});
@@ -126,6 +126,71 @@ const root=path.resolve(__dirname,'..');
  await page.click('[data-forge-summary-close]');
  await page.waitForSelector('[data-craft="test-whetstone"]');
  assert.equal(await page.evaluate(()=>window.mockState.workshopCraftSummary),null,'completion dismissal unlocks future work');
+
+ // Normal players must never see or benefit from the administrator test option.
+ assert.equal(await page.locator('[data-admin-craft-reagents]').count(),0,'normal players see no admin crafting switch');
+ await page.evaluate(()=>{window.mockState.materials['zeltiran-iron']=0;window.mockState.adminCraftWithoutReagents=true;window.CellboundEconomy.renderProfessions()});
+ assert.equal(await page.locator('[data-admin-craft-reagents]').count(),0,'tampering with a save cannot reveal admin controls');
+ assert.equal(await page.locator('[data-craft="test-whetstone"]').isDisabled(),true,'non-admin cannot bypass material costs using a saved flag');
+
+ // A verified admin turns on reagent-free testing without manufacturing stock.
+ await page.evaluate(()=>{window.mockEntitlements={isAdmin:true,adminRole:'admin'};window.mockState.adminCraftWithoutReagents=false;window.CellboundEconomy.renderProfessions()});
+ assert.equal(await page.locator('[data-admin-craft-reagents]').count(),1,'admin sees the toggle');
+ assert.equal(await page.locator('[data-admin-craft-reagents]').getAttribute('aria-pressed'),'false','admin bypass defaults off');
+ assert.equal(await page.locator('[data-craft="test-whetstone"]').isDisabled(),true,'admin off still needs actual ingredients');
+ const savesBefore=await page.evaluate(()=>window.mockPersistCount);
+ await page.click('[data-admin-craft-reagents]');
+ await page.waitForFunction(()=>window.mockPersistCount>0&&window.mockState.adminCraftWithoutReagents===true);
+ assert((await page.evaluate(()=>window.mockPersistCount))>savesBefore,'admin choice is persisted');
+ assert.equal(await page.locator('[data-admin-craft-reagents]').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('[data-craft="test-whetstone"]').isEnabled(),true,'admin can craft with zero materials');
+ assert((await page.locator('.admin-reagents-waived').first().innerText()).includes('WAIVED'),'recipes disclose free test materials');
+ assert.equal(await page.locator('[data-craft-qty="test-whetstone"]').getAttribute('max'),'5','free material admin mode retains blacksmith batch limit');
+
+ await page.locator('[data-craft-qty="test-whetstone"]').fill('2');
+ await page.locator('[data-craft-qty="test-whetstone"]').press('Tab');
+ await page.click('[data-craft="test-whetstone"]');
+ await page.waitForSelector('.forge-workshop[data-forge-stage="0"]');
+ assert.deepEqual(await page.evaluate(()=>({stock:window.mockState.materials['zeltiran-iron'],reserved:window.mockState.workshopCraftProject.reservedInputs,free:window.mockState.workshopCraftProject.adminFreeReagents,qty:window.mockState.workshopCraftProject.quantity})),{stock:0,reserved:{},free:true,qty:2},'admin order reserves nothing and consumes no materials');
+ assert.equal(await page.locator('[data-admin-craft-reagents]').isDisabled(),true,'toggle cannot change during a work order');
+ await page.click('[data-craft-abandon]');
+ await page.waitForSelector('[data-craft="test-whetstone"]');
+ assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),0,'cancelling an admin test never refunds imaginary reagents');
+
+ // Test a whole free-material order and ensure masterwork does not generate phantom reagents.
+ await page.locator('[data-craft-qty="test-whetstone"]').fill('1');
+ await page.locator('[data-craft-qty="test-whetstone"]').press('Tab');
+ const existing=await page.evaluate(()=>window.mockState.consumables[0].quantity);
+ await page.click('[data-craft="test-whetstone"]');
+ await page.waitForSelector('.forge-workshop[data-forge-stage="0"]');
+ for(let step=0;step<3;step++){await page.click('[data-forge-strike]');await page.waitForSelector('.forge-workshop[data-forge-stage="'+(step+1)+'"]')}
+ await page.evaluate(()=>{const now=Date.now.bind(Date);Date.now=()=>now()+30000});
+ await page.waitForFunction(qty=>window.mockState.consumables[0]?.quantity===qty+1,existing,{timeout:6000});
+ assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),0,'free masterwork must not reclaim any material');
+ assert.equal(await page.evaluate(()=>window.mockState.workshopCraftSummary.reclaimed),0,'summary correctly shows zero reagent refunds');
+ await page.click('[data-forge-summary-close]');
+ await page.waitForSelector('[data-craft="test-whetstone"]');
+ await page.click('[data-admin-craft-reagents]');
+ assert.equal(await page.locator('[data-craft="test-whetstone"]').isDisabled(),true,'turning off restores normal material checks');
+ assert.equal(await page.evaluate(()=>window.mockState.adminCraftWithoutReagents),false);
+ // The same setting must work for other professions, not just the forge.
+ await page.evaluate(()=>{
+   window.mockState.roster[0].professions[0]={name:'Alchemy',level:10,xp:0,craftHistory:{},masterworks:0,projectsCompleted:0};
+   window.CellboundProfessions.PROFESSIONS.Alchemy={icon:'◌',summary:'Brew test potions.',recipes:[{id:'test-potion',name:'Test Potion',level:1,inputs:{'zeltiran-iron':3},xp:12,output:{category:'consumable',name:'Test Potion',key:'test-potion',quantity:1,payload:{effect:'flask'}}}]};
+   window.CellboundEconomy.renderProfessions();
+ });
+ assert.equal(await page.locator('[data-craft="test-potion"]').isDisabled(),true,'other professions still respect normal reagent costs');
+ await page.click('[data-admin-craft-reagents]');
+ assert.equal(await page.locator('[data-craft="test-potion"]').isEnabled(),true,'admin bypass applies to Alchemy');
+ assert.equal(await page.locator('[data-craft-qty="test-potion"]').getAttribute('max'),'99','other professions retain their batch cap');
+ await page.click('[data-craft="test-potion"]');
+ await page.waitForSelector('.timed-craft-project');
+ assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject.adminFreeReagents),true,'other profession orders also capture test mode');
+ assert.deepEqual(await page.evaluate(()=>window.mockState.workshopCraftProject.reservedInputs),{},'non-blacksmith order requires no reagents');
+ await page.click('[data-craft-abandon]');
+ assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),0);
+ await page.evaluate(()=>{window.mockState.roster[0].professions[0].name='Blacksmithing';window.CellboundEconomy.renderProfessions()});
+ await page.click('[data-admin-craft-reagents]');
  assert.deepEqual(errors,[],'no browser errors');
  console.log('Blacksmith forge economy integration passed: reserve, three saved actions, batch-scaled timer, full cancellation refund and five-item reward.');
  }finally{await browser.close()}

@@ -1212,3 +1212,17 @@
  .forge-summary-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
  .forge-summary-steps{grid-template-columns:1fr}
 }
+
+
+/* Admin-only reagent-free profession testing — kept within the workshop. */
+.admin-craft-toggle{margin:13px 14px 10px;padding:15px 18px;border:1px solid rgba(156,142,91,.6);border-radius:8px;background:linear-gradient(120deg,rgba(41,45,37,.96),rgba(22,29,29,.97));display:flex;gap:12px;align-items:center;justify-content:space-between}
+.admin-craft-toggle>div{min-width:0;flex:1}
+.admin-craft-toggle small{display:block;color:#d4b879;font:800 10px/1.3 system-ui,sans-serif;letter-spacing:.14em}
+.admin-craft-toggle strong{display:block;margin-top:3px;color:#f7e1bc;font:600 18px/1.2 Georgia,serif}
+.admin-craft-toggle p{margin:6px 0 0;color:#cbc6b6;font:400 12px/1.5 system-ui,sans-serif}
+.admin-craft-toggle button{flex:none;min-width:174px;padding:12px 13px;min-height:44px;border:1px solid #98886c;border-radius:6px;background:#282f30;color:#e1d1b5;font:800 11px/1.2 system-ui,sans-serif;letter-spacing:.05em;cursor:pointer;touch-action:manipulation}
+.admin-craft-toggle button[aria-pressed="true"]{background:#4f6449;color:#e8f5d9;border-color:#adc198}
+.admin-craft-toggle button:disabled{cursor:not-allowed;opacity:.55}
+.admin-craft-toggle button:focus-visible{outline:3px solid #ffdb9b;outline-offset:3px}
+.admin-reagents-waived{font:800 10px/1.35 system-ui,sans-serif;color:#afca9e;letter-spacing:.035em}
+@media(max-width:710px){.admin-craft-toggle{margin:9px 6px;flex-direction:column;align-items:stretch}.admin-craft-toggle button{width:100%}}

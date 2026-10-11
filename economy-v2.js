@@ -6,6 +6,25 @@ let Game=null,db=null,user=null,selectedChar=null,selectedSlot=0,tradeFilter='al
 
 const state=()=>Game?.getState?.();
 const ent=()=>Game?.getEntitlements?.()||{professionSlots:1};
+// Gate this account preference on authenticated entitlements, not on the saved flag.
+function adminCanTestCrafts(){
+ const e=ent();return e.isAdmin===true&&(e.adminRole==='owner'||e.adminRole==='admin');
+}
+function waiveCraftMaterials(){return adminCanTestCrafts()&&state()?.adminCraftWithoutReagents===true}
+async function toggleAdminCraftReagents(){
+ if(!adminCanTestCrafts()||craftProject||craftCompleting||state()?.workshopCraftSummary)return;
+ const s=state();if(!s)return;
+ s.adminCraftWithoutReagents=!waiveCraftMaterials();
+ Game.save();renderProfessions();
+ try{await Game.persistState()}catch(error){console.warn('Admin reagent preference save failed',error)}
+}
+function adminCraftToggleMarkup(){
+ if(!adminCanTestCrafts())return'';
+ const enabled=waiveCraftMaterials();
+ return '<section class="admin-craft-toggle" aria-label="Admin profession testing">'+
+ '<div><small>ADMIN TESTING</small><strong>Craft without reagents</strong><p>'+(enabled?'ON · Materials are not spent or refunded on new test orders.':'OFF · Crafting uses normal material costs.')+' Skill and recipe unlock requirements still apply.</p></div>'+
+ '<button type="button" data-admin-craft-reagents aria-pressed="'+enabled+'" '+(craftProject||craftCompleting||state()?.workshopCraftSummary?'disabled title="Finish or cancel the active order to change this setting"':'')+'>'+(enabled?'ENABLED · TURN OFF':'DISABLED · TURN ON')+'</button></section>';
+}
 const usableRoster=()=>state()?.roster?.filter(c=>Game?.isCharacterRosterUnlocked?.(c.id)!==false)||[];
 const characterUsable=id=>Game?.isCharacterRosterUnlocked?.(id)!==false;
 const materialName=k=>P?.MATERIALS?.[k]?.name||k;
@@ -78,7 +97,7 @@ function professionLevelUp(p,xp){
 function canCraft(recipe,prof){
   if(!prof||prof.level<recipe.level)return false;
   if(recipe.requiresDiscovery&&!state().discoveredRecipes.includes(recipe.id))return false;
-  return Object.entries(recipe.inputs).every(([k,q])=>(Number(state().materials[k])||0)>=q);
+  return waiveCraftMaterials()||Object.entries(recipe.inputs).every(([k,q])=>(Number(state().materials[k])||0)>=q);
 }
 function materialRaritySlug(k){return String(P?.MATERIALS?.[k]?.rarity||'Common').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
 function recipeInputs(recipe){return Object.entries(recipe.inputs).map(([k,q])=>`<span class="recipe-reagent rarity-${materialRaritySlug(k)}"><b>${materialName(k)}</b><em>×${q}</em></span>`).join(' ');}
@@ -191,7 +210,7 @@ function projectPrompt(need){
 function maxCraftable(recipe,prof){
   if(!prof||prof.level<recipe.level)return 0;
   if(recipe.requiresDiscovery&&!state().discoveredRecipes.includes(recipe.id))return 0;
-  const caps=Object.entries(recipe.inputs).map(([k,q])=>Math.floor((Number(state().materials[k])||0)/Math.max(1,Number(q)||1)));
+  const caps=waiveCraftMaterials()?[]:Object.entries(recipe.inputs).map(([k,q])=>Math.floor((Number(state().materials[k])||0)/Math.max(1,Number(q)||1)));
   const limit=prof.name==='Blacksmithing'?5:99;
    return Math.max(0,Math.min(limit,caps.length?Math.min(...caps):limit));
 }
@@ -238,18 +257,19 @@ async function beginCraft(recipeId){
   if(!c||!characterUsable(c.id)||!recipe)return;
   const max=maxCraftable(recipe,prof),quantity=craftQuantity(recipe.id,max);if(max<1||quantity>max)return;
   const forging=prof.name==='Blacksmithing'&&Boolean(Forge?.create);
-  const totalMs=craftBatchDurationMs(recipe,quantity,prof.name),reservedInputs=reserveCraftInputs(recipe,quantity);
-  setCraftProject({version:forging?3:2,charId:c.id,slot:selectedSlot,profession:prof.name,recipeId:recipe.id,quantity,totalMs,remainingMs:totalMs,reservedInputs,forge:forging?Forge.create():null,forgeHeatPct:forging?100:null,forgeReheats:0,forgeBonusMs:0,forgeReheatLog:[],startedAt:new Date().toISOString(),paused:!craftFocusActive()});
+  const freeReagents=waiveCraftMaterials();
+ const totalMs=craftBatchDurationMs(recipe,quantity,prof.name),reservedInputs=freeReagents?{}:reserveCraftInputs(recipe,quantity);
+  setCraftProject({version:forging?3:2,charId:c.id,slot:selectedSlot,profession:prof.name,recipeId:recipe.id,quantity,totalMs,remainingMs:totalMs,reservedInputs,adminFreeReagents:freeReagents,forge:forging?Forge.create():null,forgeHeatPct:forging?100:null,forgeReheats:0,forgeBonusMs:0,forgeReheatLog:[],startedAt:new Date().toISOString(),paused:!craftFocusActive()});
   forgeFeedback=null;if(forgeFeedbackTimer){clearTimeout(forgeFeedbackTimer);forgeFeedbackTimer=null}
   craftLastTick=0;craftSaveAt=0;lastCraftMessage='';
-  s.activity.push(c.name+' started a '+recipe.name+' work order ×'+quantity+'.');
+  s.activity.push(c.name+' started a '+recipe.name+' work order ×'+quantity+(freeReagents?' (admin free reagents)':'')+'.');
   Game.save();await Game.persistState();renderProfessions();ensureCraftTicker()
 }
 async function abandonCraft(){
   const project=craftProject;if(!project)return;
   const s=state(),c=s.roster.find(x=>x.id===project.charId),def=professionDef(project.profession),recipe=def?.recipes.find(r=>r.id===project.recipeId);
   returnReservedInputs(project);setCraftProject(null);forgeFeedback=null;if(forgeFeedbackTimer){clearTimeout(forgeFeedbackTimer);forgeFeedbackTimer=null}craftLastTick=0;craftCompleting=false;
-  lastCraftMessage='Work order cancelled. Reserved reagents were returned.';
+  lastCraftMessage=project.adminFreeReagents?'Admin test work order cancelled. No reagents were used.':'Work order cancelled. Reserved reagents were returned.';
   if(c&&recipe)s.activity.push(c.name+' cancelled '+recipe.name+' ×'+project.quantity+'.');
   Game.save();await Game.persistState();renderProfessions()
 }
@@ -263,13 +283,19 @@ async function finishTimedCraft(){
   if(!c||!prof||!recipe){
     returnReservedInputs(project);setCraftProject(null);craftLastTick=0;craftCompleting=false;lastCraftMessage='The work order could not be completed. Reserved reagents were returned.';await commit();return
   }
-  const quantity=Math.max(1,Number(project.quantity)||1),history=recipeHistory(prof,recipe.id),firstInput=Object.keys(recipe.inputs)[0],skillBefore=prof.level;
+  // Never complete a test order if the account lost admin privileges mid-order.
+ if(project.adminFreeReagents&&!adminCanTestCrafts()){
+   setCraftProject(null);craftLastTick=0;craftCompleting=false;
+   lastCraftMessage='Admin test permission expired. The free-material work order was cancelled without rewards.';
+   await commit();return;
+ }
+ const quantity=Math.max(1,Number(project.quantity)||1),history=recipeHistory(prof,recipe.id),firstInput=Object.keys(recipe.inputs)[0],skillBefore=prof.level;
   prof.craftHistory[recipe.id]=history;
   let xpTotal=0,masterworks=0,best=0,reclaimed=0;
   for(let i=0;i<quantity;i++){
     const quality=project.forge?Forge.quality(project.forge):timedCraftQuality(recipe,prof),tier=qualityTier(quality),xp=craftXp(recipe,prof,tier,0);
     xpTotal+=xp;best=Math.max(best,quality);
-    if(tier.key==='masterwork'){masterworks++;if(firstInput){s.materials[firstInput]=(Number(s.materials[firstInput])||0)+1;reclaimed++}}
+    if(tier.key==='masterwork'){masterworks++;if(firstInput&&!project.adminFreeReagents){s.materials[firstInput]=(Number(s.materials[firstInput])||0)+1;reclaimed++}}
     history.count=(Number(history.count)||0)+1;
     history.best=Math.max(Number(history.best)||0,quality);
     if(tier.key==='masterwork'&&!history.masterwork){history.masterwork=true;prof.masterworks=(Number(prof.masterworks)||0)+1}
@@ -474,7 +500,7 @@ function craftProjectMarkup(c,prof,recipe){
     '<div class="craft-timer-head"><span><b data-craft-status>'+(craftFocusActive()?'WORKSHOP ACTIVE':'PAUSED · RETURN TO PROFESSIONS')+'</b><small>OUTPUT ×'+outQty+' · '+(craftProject.forge?'22':craftSecondsPerUnit(recipe))+'s PER CRAFT</small></span><strong data-craft-remaining>'+craftTime(craftProject.remainingMs)+'</strong></div>'+
     '<div class="craft-timer-track"><i data-craft-progress style="width:'+pct.toFixed(2)+'%"></i></div>'+ 
     (craftProject.forge?forgeProjectMarkup(prof):'')+
-    '<div class="craft-batch-rules"><span><b>FOCUS REQUIRED</b><small>Switching to another game screen pauses progress.</small></span><span><b>REAGENTS RESERVED</b><small>Materials are held for the whole batch and returned if cancelled.</small></span><span><b>NO OFFLINE PROGRESS</b><small>Closing or backgrounding the app pauses the timer.</small></span></div>'+
+    '<div class="craft-batch-rules"><span><b>FOCUS REQUIRED</b><small>Switching to another game screen pauses progress.</small></span><span><b>'+(craftProject.adminFreeReagents?'ADMIN MATERIALS WAIVED':'REAGENTS RESERVED')+'</b><small>'+(craftProject.adminFreeReagents?'No ingredients were deducted from this test order.':'Materials are held for the whole batch and returned if cancelled.')+'</small></span><span><b>NO OFFLINE PROGRESS</b><small>Closing or backgrounding the app pauses the timer.</small></span></div>'+
   '</section>';
 }
 async function learnProfession(charId,slot,name){
@@ -486,7 +512,7 @@ async function learnProfession(charId,slot,name){
 function recipeAvailability(recipe,prof,s){
   const discovered=!recipe.requiresDiscovery||s.discoveredRecipes.includes(recipe.id);
   const levelOk=prof.level>=recipe.level;
-  const materialsOk=Object.entries(recipe.inputs).every(([key,qty])=>(Number(s.materials[key])||0)>=qty);
+  const materialsOk=waiveCraftMaterials()||Object.entries(recipe.inputs).every(([key,qty])=>(Number(s.materials[key])||0)>=qty);
   const ready=discovered&&levelOk&&materialsOk;
   const lock=!discovered?'Recipe not discovered':!levelOk?`Requires skill ${recipe.level}`:!materialsOk?'Missing reagents':'';
   return{discovered,levelOk,materialsOk,ready,lock};
@@ -512,7 +538,7 @@ function recipeCardMarkup(recipe,prof,s){
     <div class="recipe-main">
       <div class="recipe-kicker"><span>${recipe.endgame?'END-GAME · ':''}${recipe.crafterOnly?'CRAFTER ONLY · ':''}SKILL ${recipe.level}</span><em>${craftXpLabel(recipe,prof)}</em></div>
       <h4>${recipe.name}</h4>
-      <p>${recipeInputs(recipe)} <i>→</i> <b>${recipe.output.name}</b></p>
+      <p>${recipeInputs(recipe)} <i>→</i> <b>${recipe.output.name}</b>${waiveCraftMaterials()?'<span class="admin-reagents-waived"> · REAGENTS WAIVED</span>':''}</p>
       <div class="recipe-history"><span>${history.count||0} completed</span><span>Best ${Math.round(history.best||0)}%</span><span>${history.masterwork?'✓ Masterwork achieved':'Masterwork bonus available'}</span></div>
       ${lock?`<p class="recipe-lock-reason">${lock}</p>`:''}
     </div>
@@ -530,8 +556,9 @@ function renderProfessions(){
   const c=s.roster.find(x=>x.id===selectedChar);if(!c){work.innerHTML='<div class="profession-empty">No adventurer selected.</div>';return;}
   const slots=ent().professionSlots;$('#workshopTitle').textContent=s.workshopCraftSummary&&!craftProject?'Blacksmithing · Finished Order':`${c.name}'s Workshop`;
   if(!craftProject&&s.workshopCraftSummary?.profession==='Blacksmithing'){
-    work.innerHTML=forgeSummaryMarkup(s.workshopCraftSummary);
+    work.innerHTML=adminCraftToggleMarkup()+forgeSummaryMarkup(s.workshopCraftSummary);
     work.querySelector('[data-forge-summary-close]')?.addEventListener('click',dismissCraftSummary);
+    work.querySelector('[data-admin-craft-reagents]')?.addEventListener('click',toggleAdminCraftReagents);
     return;
   }
   const slotHtml=[0].map(i=>{const p=c.professions[i];return `<button class="profession-slot-card ${selectedSlot===i?'active':''}" data-prof-slot="${i}"><small>PROFESSION</small><b>${p?.name||'Unlearned'}</b><p>${p?`Skill ${p.level}/100 · ${p.projectsCompleted||0} projects`:'Choose a trade skill for this adventurer.'}</p></button>`;}).join('');
@@ -549,7 +576,8 @@ function renderProfessions(){
     const activeRecipe=craftProject&&craftProject.charId===c.id&&craftProject.slot===selectedSlot?def.recipes.find(r=>r.id===craftProject.recipeId):null;
     body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make and how many.</h3></div><p>${prof.name==='Blacksmithing'?'Craft up to five at once. Reheat when the furnace reaches 25%; your timing controls recovered heat and scores above 80% reduce production time.':'Batch crafting uses focused workshop time. Leave Professions or background the app and the timer pauses until you return.'}</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
   }
-  work.innerHTML=`<div class="profession-slot-grid">${slotHtml}</div>${body}`;
+  work.innerHTML=`${adminCraftToggleMarkup()}<div class="profession-slot-grid">${slotHtml}</div>${body}`;
+  work.querySelector('[data-admin-craft-reagents]')?.addEventListener('click',toggleAdminCraftReagents);
   work.querySelectorAll('[data-prof-slot]').forEach(b=>b.onclick=()=>{if(craftProject)return;selectedSlot=Number(b.dataset.profSlot);lastCraftMessage='';renderProfessions();});
   work.querySelectorAll('[data-learn-prof]').forEach(b=>b.onclick=()=>learnProfession(c.id,selectedSlot,b.dataset.learnProf));
   work.querySelectorAll('[data-craft-qty]').forEach(input=>input.onchange=()=>{const recipe=prof?professionDef(prof.name)?.recipes.find(r=>r.id===input.dataset.craftQty):null,max=recipe?maxCraftable(recipe,prof):1;setCraftQuantity(input.dataset.craftQty,input.value,max);renderProfessions()});
@@ -621,7 +649,8 @@ async function loadMarket(){return window.CellboundTradingPostV3?.refresh?.()}
 function bind(){
   document.querySelectorAll('.nav-btn[data-view="professions"]').forEach(b=>b.addEventListener('click',renderProfessions));
   document.querySelectorAll('#professionRecipeFilters [data-prof-recipe-filter]').forEach(b=>b.addEventListener('click',()=>{recipeFilter=b.dataset.profRecipeFilter||'all';renderProfessions()}));
-  window.addEventListener('cellbound:view-changed',e=>{
+  window.addEventListener('cellbound:admin-status',renderProfessions);
+   window.addEventListener('cellbound:view-changed',e=>{
     if(e.detail?.view==='professions'){renderProfessions();ensureCraftTicker()}
     else pauseCraftTimer();
   });

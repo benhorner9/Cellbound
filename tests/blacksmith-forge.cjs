@@ -48,6 +48,14 @@ for(const term of ["craftProject.forge&&!Forge?.isComplete?.(craftProject.forge)
 assert(economy.includes("prof.name==='Blacksmithing'?5:99"),'only blacksmithing limited to five');
 assert(economy.includes('Forge.advance(craftProject.forgeHeatPct,delta)'),'timing must respect furnace heat');
 assert(economy.includes('Forge.reheat(position,prof.level)'),'reheat action required');
+assert(economy.includes("e.isAdmin===true&&(e.adminRole==='owner'||e.adminRole==='admin')"),'only verified admin and owner entitlements enable free materials');
+assert(economy.includes("state()?.adminCraftWithoutReagents===true"),'reagent waiver must be explicitly enabled');
+assert(economy.includes('waiveCraftMaterials()?[]:'),'max-craftable must ignore missing materials in test mode');
+assert(economy.includes('freeReagents?{}:reserveCraftInputs(recipe,quantity)'),'test work order must not consume any reagents');
+assert(economy.includes('if(firstInput&&!project.adminFreeReagents)'),'test masterwork must not mint spare raw materials');
+assert(economy.includes('if(project.adminFreeReagents&&!adminCanTestCrafts())'),'revoked admin access cannot finish a free-resource order');
+assert(economy.includes('data-admin-craft-reagents'),'admin test mode toggle must exist');
+assert(css.includes('.admin-craft-toggle'),'admin control must be styled');
 assert(economy.includes('Math.min(Math.max(0,project.remainingMs),Math.max(0,next.bonusMs||0))'),'bonus cannot exceed remaining time');
 assert(economy.includes('project.forgeReheatLog.push'),'reheat performance stored for the result screen');
 assert(economy.includes('workshopCraftSummary'),'finished job result saved');

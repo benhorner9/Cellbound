@@ -43,3 +43,14 @@ The work order now records actual heat restored, precision scores and actual tim
 Completing a Blacksmithing work order opens a dedicated results screen within the Professions workshop showing the resulting item art, item name and quantity, earned XP, overall quality/masterwork grade, the original three action scores, all reheat results, count, total time saved, skill-level changes and reclaimed reagents (when relevant). Actual rewards are still granted through the existing work-order completion transaction. The summary itself is stored in the normal saved guild state, appears after reload, and is cleared when the player taps **Return to Workshop**. Other professions continue their existing completion flow.
 
 QA: test a one-item order with no reheat; test five items with one perfect reheat and one poor reheat, confirm different restored temperatures, capped 8-second precision bonuses, unchanged quality, no early payout, correct XP and quantity on the result screen, and normal re-entry to the workshop. Test in Chromium and WebKit with reduced motion and landscape/portrait iPad layouts.
+
+
+## Job 12E — admin reagent-free testing
+
+Verified **admin/owner** accounts can toggle **Craft without reagents** in the Guild > Professions workshop. This is an explicit per-account saved choice, **OFF** by default, and has no effect for ordinary accounts even if their saved state contains the preference.
+
+When enabled, recipe availability and batch limits ignore ingredient stock; normal caps remain (Blacksmithing maximum five, other professions maximum 99). The game does not reserve, subtract or refund any inputs for these test orders. The order stores `adminFreeReagents` so cancellation and completion remain consistent even after a refresh, and privilege is checked again before a free-material order can grant rewards. Free masterworks do not create phantom recovered reagents. All actual skills, challenges, timers, recipe skill/discovery locks, XP and output rules remain unchanged. Toggling is disabled while an order or completion summary is active, avoiding mid-order cost changes.
+
+Regression tests cover non-admin account gating, a forged saved preference, admin toggle persistence, Blacksmithing without reagents, normal limits, cancellation/refund prevention, masterwork material-reclaim protection and Alchemy using the same bypass.
+
+Test: go to Guild > Professions on an admin account, find the ADMIN TESTING switch above the selected character's trade, enable it, and start a recipe with zero ingredients. Turn it off to return to ordinary crafting.
