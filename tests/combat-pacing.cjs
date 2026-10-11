@@ -22,5 +22,5 @@ assert(source('pvp-owner-qa-v1.js').includes('engine.playbackRate?.(1)'), 'PvP o
 assert(source('dungeon-2d-v1.js').includes('!replayMode&&run?.rebornSimulation?.meta?.zone==='manor-raid'?1'), 'synchronised two-player Manor raids retain authoritative server timing');
 const engine=source('combat-reborn-v1.js');
 assert(engine.includes('const TICK=100'),'authoritative simulation tick must stay at 100ms');
-assert(engine.includes('const COMMAND_POWER_REGEN_MS=8000'),'gameplay command cooldowns and balance are unchanged');
+assert(engine.includes('COMMAND_POWER_REGEN_MS=8000'),'gameplay command cooldowns and balance are unchanged');
 console.log('Shared relaxed combat playback contract passed: all live PvE views, raid authority safety, PvP owner practice and replay labels.');
