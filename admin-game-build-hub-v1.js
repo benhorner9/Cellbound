@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 /*
- * Game Build Hub
+ * Game Tools
  * The source-of-truth for executable game logic remains the tested game code.
  * This hub does not pretend locally authored system briefs alter the runtime.
  */
@@ -35,7 +35,7 @@ const AREAS=[
  ['operations','Accounts & beta operations','Membership, admin tools, analytics, support and release QA','Design brief only',null,null,'Operations']
 ].map(([id,label,detail,capability,tab,api,kind])=>({id,label,detail,capability,tab,api,kind}));
 const WORKFLOWS=[
- {id:'dungeon',title:'Build a dungeon or raid',subtitle:'From first room to an approved playable adventure',steps:[['content','Reusable room / boss / comic assets'],['build','Adventure stages and rewards'],['rooms','Spatial layout and artwork'],['drops','Boss drop checks'],['comics','Story illustration checks'],['combat-ui','Combat screen fit'],['audit','Run end-to-end test before Publish']]},
+ {id:'dungeon',title:'Build a dungeon or raid',subtitle:'Rooms, encounters, testing and publishing',steps:[['content','Reusable room / boss / comic assets'],['build','Adventure stages and rewards'],['rooms','Spatial layout and artwork'],['drops','Boss drop checks'],['comics','Story illustration checks'],['combat-ui','Combat screen fit'],['audit','Run end-to-end test before Publish']]},
  {id:'quest',title:'Create a quest storyline',subtitle:'Stories, interactions, illustrations and rewards',steps:[['content','Reusable comic and scenes'],['build','Quest stages and test'],['comics','Review every existing story panel'],['drops','Inspect reward opportunities'],['audit','Test from the first to last stage']]},
  {id:'pvp',title:'Make a PvP battleground',subtitle:'Playable map geometry, objectives and the visual screen',steps:[['pvp-maps','Map and objective positions'],['combat-ui','Responsive HUD and team information'],['audit','Owner practice: objectives, respawns and win state']]},
  {id:'gear',title:'Develop equipment and rewards',subtitle:'Craft new items while preserving equipment balance',steps:[['content','Create balanced equipment template'],['models','Inspect race/body gear fit'],['items','Search existing equipment and item IDs'],['drops','Assign boss drops'],['audit','Confirm Bank, crafting and dismantle pathways']]},
@@ -112,14 +112,14 @@ function workflowMarkup(){
 }
 function coverage(){
  const data=AREAS.filter(a=>(area==='all'||a.capability===area)&&(!filter||[a.label,a.detail,a.capability].join(' ').toLowerCase().includes(filter.toLowerCase())));
- return '<section class="gdh-section"><div class="gdh-section-head"><div><h3>Build Cellbound by system</h3><p>Select an editor to change gameplay content, or create a brief for systems not yet connected to authoring tools.</p></div><div class="gdh-filters"><input type="search" id="gdhSearch" placeholder="Find skills, maps, economy…" value="'+esc(filter)+'"><select id="gdhCapability"><option value="all">All systems</option>'+[...new Set(AREAS.map(a=>a.capability))].map(a=>'<option value="'+esc(a)+'" '+(a===area?'selected':'')+'>'+esc(a)+'</option>').join('')+'</select></div></div>'+
+ return '<section class="gdh-section"><div class="gdh-section-head"><div><h3>Game systems</h3><p>Open a working editor, or write a plan for systems that cannot be edited here yet.</p></div><div class="gdh-filters"><input type="search" id="gdhSearch" placeholder="Find skills, maps, economy…" value="'+esc(filter)+'"><select id="gdhCapability"><option value="all">All systems</option>'+[...new Set(AREAS.map(a=>a.capability))].map(a=>'<option value="'+esc(a)+'" '+(a===area?'selected':'')+'>'+esc(a)+'</option>').join('')+'</select></div></div>'+
  '<div class="gdh-domains">'+data.map(domainCard).join('')+'</div>'+(!data.length?'<p>No matching build areas.</p>':'')+'</section>'
 }
 function listBriefs(){
  return briefs.slice().sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).map(b=>'<button type="button" data-gdh-brief="'+esc(b.id)+'" class="'+(b.id===selected?'selected':'')+'"><b>'+esc(b.title||'Untitled')+'</b><small>'+esc(AREAS.find(a=>a.id===b.area)?.label||'System')+' · '+esc(b.status)+'</small></button>').join('')||'<p class="gdh-muted">No system briefs yet. Pick a system above to create one.</p>'
 }
 function editor(){
- const b=selectedBrief();return '<section class="gdh-section gdh-author" id="gdhAuthor"><div class="gdh-section-head"><div><h3>Game system designs</h3><p>Structured briefs for areas that need new game logic. These do not modify combat, skills, economies or player progression until implemented and tested.</p></div><div><button id="gdhAdd" type="button">+ NEW BRIEF</button><button id="gdhExport" type="button">EXPORT BUILD PLAN</button><button id="gdhImport" type="button">IMPORT</button><input id="gdhImportFile" type="file" accept=".json,application/json" hidden></div></div>'+
+ const b=selectedBrief();return '<section class="gdh-section gdh-author" id="gdhAuthor"><div class="gdh-section-head"><div><h3>Feature plans</h3><p>Plans for features that still need development. Saving a plan does not change gameplay.</p></div><div><button id="gdhAdd" type="button">+ NEW BRIEF</button><button id="gdhExport" type="button">EXPORT BUILD PLAN</button><button id="gdhImport" type="button">IMPORT</button><input id="gdhImportFile" type="file" accept=".json,application/json" hidden></div></div>'+
  '<div class="gdh-author-grid"><aside class="gdh-brief-list">'+listBriefs()+'</aside><main class="gdh-editor">'+(b?'<label>Game system<select data-gdh-field="area">'+AREAS.map(a=>'<option value="'+esc(a.id)+'" '+(a.id===b.area?'selected':'')+'>'+esc(a.label)+'</option>').join('')+'</select></label>'+
  '<label>Design title<input data-gdh-field="title" maxlength="120" value="'+esc(b.title)+'"></label>'+
  '<label>Development stage<select data-gdh-field="status">'+STATUS.map(v=>'<option value="'+esc(v)+'" '+(v===b.status?'selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>'+
@@ -130,15 +130,15 @@ function editor(){
 function readiness(){
  const results=report();const list=QA.map(([id,title])=>{const on=Boolean(checklists[id]);return '<label class="gdh-check"><input type="checkbox" data-gdh-check="'+id+'" '+(on?'checked':'')+'><span>'+esc(title)+'</span></label>'}).join('');
  const completed=QA.filter(([id])=>Boolean(checklists[id])).length;
- return '<section class="gdh-section" id="gdhAudit"><div class="gdh-section-head"><div><h3>Release and completeness checks</h3><p>This is a manually maintained owner checklist, not an automatic certification. All eight items must be reviewed for each release.</p></div><button id="gdhRefresh" type="button">REFRESH AUDIT</button></div>'+
+ return '<section class="gdh-section" id="gdhAudit"><div class="gdh-section-head"><div><h3>Release and completeness checks</h3><p>Review all eight checks before release. This list does not run automated tests.</p></div><button id="gdhRefresh" type="button">REFRESH AUDIT</button></div>'+
  '<div class="gdh-audit-columns"><div><div class="gdh-progress"><b>'+completed+' / '+QA.length+' checked</b><div><i style="width:'+(completed/QA.length*100)+'%"></i></div></div>'+list+
  '<button id="gdhResetQA" type="button">RESET QA CHECKS</button></div><div><h4>Project diagnostics</h4><p>'+results.roomGroups+' location groups, '+results.knownRooms+' predefined rooms, '+results.bossCount+' boss entries, '+results.itemCount+' item records.</p>'+
  (results.scanned?'<p>'+results.sceneCount+' discovered comic scenes with '+results.panels+' panels. '+results.missing+' have no artwork path (broken or reused images may need additional review).</p>':'<p>Comic scan not loaded. Open Comic Art to run its source scanner and review missing or reused artwork.</p>')+
- '<p>Missing feature areas are visible as <b>Design brief only</b> cards. They are tracked, not silently treated as implemented.</p><p class="gdh-warning">Publishing is tool-specific. The Build Hub cannot bypass player safety, database permissions or staging release checks.</p></div></div></section>'
+ '<p>Features without editors are marked as <b>Design brief only</b> cards. They are tracked, not silently treated as implemented.</p><p class="gdh-warning">Publishing requires the appropriate editor permissions and release checks.</p></div></div></section>'
 }
 function render(){
  const host=$(ROOT);if(!host||!active||!owner())return;load();const x=report();
- host.innerHTML='<section class="gdh-shell"><header class="gdh-head"><div><small>DESIGN BOOTH · FULL GAME BUILD</small><h2>Game Build Hub</h2><p>Every editor, system plan and QA handoff in one owner workspace. Start with a workflow or search for what you need.</p></div><div>'+badge('editing',x.available+' Booth tools loaded')+badge('planned',(AREAS.length-x.total)+' systems to expand')+'</div></header>'+
+ host.innerHTML='<section class="gdh-shell"><header class="gdh-head"><div><small>DESIGN BOOTH · FULL GAME BUILD</small><h2>Game Tools</h2><p>Open an editor, review a feature plan or check release readiness.</p></div><div>'+badge('editing',x.available+' Booth tools loaded')+badge('planned',(AREAS.length-x.total)+' systems to expand')+'</div></header>'+
  '<div class="gdh-content">'+stats()+workflowMarkup()+coverage()+editor()+readiness()+'<p class="gdh-message" id="gdhNote" role="status">'+esc(note)+'</p></div></section>';
  bind(host)
 }

@@ -357,7 +357,7 @@ function reviewHTML(){
  (issues.length?'<ol class="dbo-review-list">'+issues.map(issue=>{
   const match=/^Stage (\d+):/.exec(issue);
   return '<li>'+(match?'<button type="button" data-db-fix-step="'+(Number(match[1])-1)+'">'+esc(issue)+' →</button>':esc(issue))+'</li>'
- }).join('')+'</ol>':'<p>All required stages are ready. Test the adventure before publishing it.</p>')+
+ }).join('')+'</ol>':'<p>The required stages are complete. Run a test before publishing.</p>')+
  '<small>Save Cloud Draft first to protect your work. Testing does not publish or award loot. Publishing changes what players can access.</small>'
 }
 function renderReview(){
@@ -491,7 +491,7 @@ function renderDrops(){
  '<div class="dbo-catalog-shortcut"><span>Need to check which items exist, their tier or class?</span><button type="button" id="dboGoToItemCatalog">BROWSE ITEM CATALOGUE →</button></div>'+
  '<div class="dbo-drops-status"><b>'+esc(target.title)+'</b><small>'+esc(native?(nativeChanged()?'UNSAVED EDITS · SAVE BOSS DROPS':'EXISTING GAME BOSS · ADDITIONAL DROP TABLE'):target.type.toUpperCase()+' · DESIGN BOOTH PROJECT')+'</small></div>'+
  (native?'<div class="dbo-native-default"><small>EXISTING GAME REWARDS · NOT OVERRIDDEN</small><p>'+esc((window.CellboundBossDropTables?.bosses?.()||[]).find(b=>b.key===target.key)?.baseRewards||'Original game rewards remain unchanged.')+'</p></div><p class="dbo-loot-notice">This screen manages <b>extra boss drops</b>. Original dungeon drops, rare items, guaranteed completion rewards and Tier 5 raid rewards still follow their existing game rules. '+(target.raid?'Manor raid bonus rewards are in planning mode and will not award to players yet.':'Additional drops are sent to the Bank when this boss is defeated.')+'</p>':
- '<p class="dbo-loot-notice">This is the full drop table for this designed encounter. Changes save to its project draft; press Publish to make them available in-game.</p>')+
+ '<p class="dbo-loot-notice">These drops belong to this boss. Save the draft, then Publish to update the game.</p>')+
  lootOverview(current?.drops||[])+lootEditor(current||{drops:[]},{raid:target.raid||target.type==='raid',editIndex:dropEditIndex})+
  '<div class="dbo-drops-footer"><p role="status" data-dbo-message>'+esc(message||'Choose a boss to edit its loot.')+'</p>'+
  (bad?'<p class="dbo-drop-error">'+esc(bad)+'</p>':'')+
@@ -584,7 +584,7 @@ function updateEnemyStage(id,raw){
 function renderTemplates(){
  const host=$('#dboTemplates');if(!host)return;
  const rows=runtime()?.templates?.()||[];
- host.innerHTML='<section class="dbo-template-library"><h3>Minigame Template Library</h3><p>Templates are reusable across quests, dungeons and raids. Choose one while editing a minigame stage. Future mechanics can be added through the central <code>CellboundDesignedContent.registerMinigame</code> interface.</p><div class="dbo-public-grid">'+rows.map(t=>'<article><small>ACTIVE TEMPLATE</small><h4>'+esc(t.label)+'</h4><p>'+esc(t.description)+'</p></article>').join('')+'</div><p>New templates still require tested gameplay logic to be added to the codebase. This is not an executable AI-code uploader.</p></section>'
+ host.innerHTML='<section class="dbo-template-library"><h3>Minigame Template Library</h3><p>Reuse a minigame template when adding a stage to a quest, dungeon or raid. Future mechanics can be added through the central <code>CellboundDesignedContent.registerMinigame</code> interface.</p><div class="dbo-public-grid">'+rows.map(t=>'<article><small>ACTIVE TEMPLATE</small><h4>'+esc(t.label)+'</h4><p>'+esc(t.description)+'</p></article>').join('')+'</div><p>New minigame types still need their gameplay code written and tested.</p></section>'
 }
 function toolApi(id){return window[plugins[id]]}
 function setTab(id){
@@ -610,12 +610,12 @@ function render(){
  const root=$('#designBoothMount');if(!root||!opened||!owner())return;
  const advanced=['generator','models','templates'];
  const tab=t=>'<button type="button" role="tab" data-dbo-tool="'+t.id+'" aria-selected="'+(active===t.id?'true':'false')+'" class="'+(active===t.id?'active':'')+'"><b>'+t.label+'</b><small>'+t.sub+'</small></button>';
- root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · CREATIVE WORKSPACE</small><h2>Design Booth</h2><p>Build new Cellbound adventures, plan game systems, test ideas, manage rewards and refine existing scenes.</p></div><button id="dboClose" type="button">CLOSE ×</button></header>'+
- '<section class="dbo-quickstart" aria-label="Choose a task"><div><h3>What do you want to do?</h3><p>Choose a job. Changes stay private until approved and published in Review & Publishing.</p></div><div class="dbo-quick-actions">'+
+ root.innerHTML='<section class="dbo-shell"><header class="dbo-master-head"><div><small>CELLBOUND · CREATIVE WORKSPACE</small><h2>Design Booth</h2><p>Create quests, dungeons, rooms, comic scenes and drop tables. Test changes before publishing.</p></div><button id="dboClose" type="button">CLOSE ×</button></header>'+
+ '<section class="dbo-quickstart" aria-label="Choose a task"><div><h3>Choose an editor</h3><p>Select the area to work on. Drafts stay private until you publish them.</p></div><div class="dbo-quick-actions">'+
  [['director','Full game build hub'],['library','Create game content'],['build','Build an adventure'],['drops','Edit boss loot'],['items','Find an item'],['comics','Edit comic art'],['rooms','Edit dungeon rooms'],['pvp-maps','Design PvP maps'],['combat-ui','Edit combat UI']].filter(([id])=>toolAllowed(id)).map(([id,label])=>'<button type="button" data-dbo-go="'+id+'" class="'+(active===id?'active':'')+'">'+label+' →</button>').join('')+'</div></section>'+
  '<nav class="dbo-tabs" role="tablist" aria-label="Design Booth tools">'+TOOLS.filter(t=>toolAllowed(t.id)&&!advanced.includes(t.id)).map(tab).join('')+'</nav>'+
  '<details class="dbo-more" '+(moreOpen||advanced.includes(active)?'open':'')+'><summary>More tools · Character fit, dungeon planner & minigame templates</summary><nav class="dbo-tabs dbo-tabs-more" role="tablist" aria-label="Advanced tools">'+TOOLS.filter(t=>toolAllowed(t.id)&&advanced.includes(t.id)).map(tab).join('')+'</nav></details>'+
- '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Submit for Review when ready. Review & Publishing lets authorised reviewers approve the revision, then publish it. Existing published content stays unchanged until then.</li></ol><p>Local backups are for recovery on this device; only a cloud-saved draft is available on another device.</p></details>'+
+ '<details class="dbo-help"><summary>New here? See the four-step workflow</summary><ol><li>Pick a task, or create a new quest, dungeon or raid.</li><li>Add stages, background artwork and boss drops. Use the checklist to find missing details.</li><li>Save Cloud Draft and use Test From Stage to check your work without changing the live game.</li><li>Submit for Review when ready. Review & Publishing lets authorised reviewers approve the revision, then publish it. Existing published content stays unchanged until then.</li></ol><p>Local backups stay on this device. Save to Cloud Drafts to work from another device.</p></details>'+
  '<details class="booth-workflow-panel"><summary>Review & Publishing · History · Permissions</summary><div id="dboWorkflow"></div></details><aside id="dboToolGuide" class="dbo-tool-guide" role="note"><b></b><span></span></aside><div id="dboWorkbench"></div><div id="dboDirectorMount" hidden></div><div id="dboLibrary" hidden></div><div id="dboEnemies" hidden></div><div id="dboDrops" hidden></div><div id="dboCatalog" hidden></div><div id="dboTemplates" hidden></div>'+
  '<div id="dungeonGeneratorMount" class="dungeon-generator-mount" hidden></div><div id="characterFitViewerMount" class="character-fit-viewer-mount" hidden></div><div id="roomEditorMount" class="room-editor-mount" hidden></div><div id="pvpMapEditorMount" class="pvp-map-editor-mount" hidden></div><div id="combatUILayoutMount" class="combat-ui-layout-mount" hidden></div><div id="comicSceneEditorMount" class="comic-scene-editor-mount" hidden></div></section>';
  root.querySelector('#dboClose').onclick=close;
