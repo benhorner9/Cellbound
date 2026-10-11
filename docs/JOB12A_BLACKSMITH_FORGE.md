@@ -19,3 +19,10 @@ Open https://cb.athleticsmanagergame.com, Guild > Professions, select a Blacksmi
 
 ## Technical tests
 New Node and Chromium/WebKit browser regression tests cover the stage algorithm, quality, material reserve/refund, batch-scaled reward, successful crafting, save requests and accessibility mode. Physical iPad testing still requires owner review.
+
+## Job 12B — character presence and effects (visual-only)
+The actual selected roster adventurer now appears next to the forge using `CellboundPortraits.paperDollHTML`, so their race, appearance and equipped gear match the character players created. The name, race, class and Blacksmithing skill level appear in an in-scene identifier. This changes with the active work order on reload rather than using a generic blacksmith.
+
+The three real mini-game inputs drive distinct sub-second effects: **heat** brightens the furnace, **strike** animates an overlaid hammer, character recoil and a burst of sparks, and **temper** adds a cooling steam plume. Stronger timing results brighten the impacts. Effects are capped to one short-lived sequence per input, do not block touch targets, and have reduced-motion fallbacks. Both timer and reward determination are unchanged.
+
+On iPad: start any forge order; confirm the full-body model resembles the selected adventurer and changes with their equipped gear. Tap all three phases; inspect heat, hammer and steam effects. Complete a five-item batch and ensure the timer still reads 1:50. Verify portrait and landscape, reduced motion, and cancellation.

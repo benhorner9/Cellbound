@@ -11,7 +11,7 @@ const root=path.resolve(__dirname,'..');
  await page.evaluate(()=>{
   window.mockState={roster:[{id:'hero1',name:'Smith',class:'Warrior',spec:'Protection',professions:[{name:'Blacksmithing',level:10,xp:0,craftHistory:{},masterworks:0,projectsCompleted:0}],equipment:{}}],materials:{'zeltiran-iron':5},consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],activity:[]};
   window.mockSaveCount=0;window.mockPersistCount=0;
-  window.CellboundGear={};window.CellboundPortraits={portraitHTML:()=>'<b>Smith</b>'};
+  window.CellboundGear={};window.CellboundPortraits={portraitHTML:()=>'<b>Smith</b>',paperDollHTML:(c)=>'<span class="cb-paper-doll cb-paper-doll--creator" role="img" aria-label="'+c.name+' working at the forge"><svg viewBox="0 0 80 120"><path d="M8 118 L39 5 L72 118" /></svg></span>'};
   window.CellboundProfessions={MATERIALS:{'zeltiran-iron':{name:'Zeltiran Iron',source:'Dungeon',rarity:'Common'}},PROFESSIONS:{Blacksmithing:{icon:'⚒',summary:'Make armour and steel.',recipes:[{id:'test-whetstone',name:'Test Whetstone',level:1,inputs:{'zeltiran-iron':2},xp:18,output:{category:'consumable',name:'Test Whetstone',key:'test-whetstone',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon'}}}]}},skillThreshold:()=>100000};
   window.CellboundGame={ready:true,getState:()=>window.mockState,getEntitlements:()=>({professionSlots:1}),getSupabase:()=>({rpc:async()=>({data:null,error:null})}),getUser:()=>({id:'test'}),isCharacterRosterUnlocked:()=>true,save:()=>{window.mockSaveCount++},persistState:async()=>{window.mockPersistCount++},renderAll:()=>{},addMaterial:(key,qty)=>{window.mockState.materials[key]=(window.mockState.materials[key]||0)+qty}};
  });
@@ -22,11 +22,16 @@ const root=path.resolve(__dirname,'..');
  await page.waitForSelector('.forge-workshop[data-forge-stage="0"]');
  assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),3,'inputs reserved on start');
  assert.equal(await page.locator('.forge-phase').count(),3);
+ assert.equal(await page.locator('[data-forge-artisan-id="hero1"] .cb-paper-doll').count(),1,'the actual selected adventurer uses the full-body paper-doll renderer');
+ assert.match(await page.locator('.forge-artisan-identity').innerText(),/Smith[\\s\\S]*BLACKSMITH 10/,'adventurer identity and real skill level appear in the forge');
  assert.equal(await page.evaluate(()=>window.mockState.consumables.length),0,'no item before mini-game');
  await page.click('[data-forge-toggle]');
  await page.waitForSelector('.forge-workshop.manual');
  await page.click('[data-forge-strike]');
  await page.waitForSelector('.forge-workshop[data-forge-stage="1"]');
+ assert.equal(await page.locator('.forge-scene.forge-action-heat.is-reacting [data-does-not-exist]').count(),0);
+ assert.equal(await page.locator('.forge-scene.forge-action-heat.is-reacting').count(),1,'heating animates the furnace on the selected character stage');
+ assert.equal(await page.locator('.forge-action-popup[role="status"]').count(),1,'forge feedback is announced accessibly');
  assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject.forge.results.length),1,'stage saved');
  assert.equal(await page.evaluate(()=>window.mockPersistCount>=2),true,'progress persistence requested');
  await page.click('[data-craft-abandon]');
@@ -35,7 +40,7 @@ const root=path.resolve(__dirname,'..');
  assert.equal(await page.evaluate(()=>window.mockState.consumables.length),0,'cancel grants no item');
  await page.click('[data-craft="test-whetstone"]');
  await page.waitForSelector('.forge-workshop[data-forge-stage="0"]');
- for(let step=0;step<3;step++){await page.click('[data-forge-strike]');await page.waitForSelector('.forge-workshop[data-forge-stage="'+(step+1)+'"]')}
+ for(let step=0;step<3;step++){await page.click('[data-forge-strike]');await page.waitForSelector('.forge-workshop[data-forge-stage="'+(step+1)+'"]');assert.equal(await page.locator('.forge-scene.forge-action-'+['heat','strike','temper'][step]+'.is-reacting').count(),1,'stage-specific effects run for '+step)}
  assert.equal(await page.locator('.forge-complete').count(),1,'three forge actions finish workpiece');
  assert.equal(await page.evaluate(()=>window.mockState.consumables.length),0,'quality alone cannot skip timer');
  await page.evaluate(()=>{const now=Date.now.bind(Date);Date.now=()=>now()+30000});
@@ -61,6 +66,7 @@ const root=path.resolve(__dirname,'..');
  await page.waitForSelector('.forge-workshop[data-forge-stage="0"]');
  for(let step=0;step<3;step++){await page.click('[data-forge-strike]');await page.waitForSelector('.forge-workshop[data-forge-stage="'+(step+1)+'"]')}
  assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject.totalMs),110000,'large batches cannot short-circuit the timer');
+ assert.equal(await page.locator('[data-forge-artisan-id="hero1"] .cb-paper-doll').count(),1,'full-body character remains visible through all three batch actions');
  assert.equal(await page.evaluate(()=>window.mockState.consumables[0].quantity),1,'three successful stages alone do not grant five items');
  await page.evaluate(()=>{const now=Date.now.bind(Date);Date.now=()=>now()+160000});
  await page.waitForFunction(()=>window.mockState.consumables[0]?.quantity===6,null,{timeout:6000});
