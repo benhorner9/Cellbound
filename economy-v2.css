@@ -1169,3 +1169,46 @@
  .forge-artisan-tool{display:none!important}
  .forge-heat-track i{transition:none}
 }
+
+
+/* Job 12D — precision furnace bonuses and end-of-order results. */
+.forge-workshop[data-forge-reheat="true"] .forge-gauge-legend strong{color:#ffd491}
+.forge-workshop[data-forge-reheat="true"] .forge-heat-status small{font-weight:800}
+.forge-job-summary{margin:15px 12px 26px;overflow:hidden;border:1px solid #8e613c;border-radius:12px;background:#131719;box-shadow:0 18px 45px rgba(0,0,0,.28);color:#f0dfc5}
+.forge-summary-head{position:relative;padding:28px clamp(18px,4vw,37px) 25px;text-align:center;background:linear-gradient(180deg,rgba(19,20,22,.35) 0%,#15191a 95%),url('./assets/ashen-vault/rooms/furnace.webp') center 48% / cover no-repeat}
+.forge-summary-head:after{content:"";position:absolute;bottom:0;left:7%;right:7%;height:1px;background:linear-gradient(90deg,transparent,#c39455,transparent)}
+.forge-summary-head small{display:block;color:#e5ae69;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.17em}
+.forge-summary-head h3{margin:7px 0 8px;color:#ffe6b5;font:500 clamp(30px,5vw,43px)/1.2 Georgia,serif;letter-spacing:.065em;text-shadow:0 3px 8px rgba(0,0,0,.7)}
+.forge-summary-head h3:focus{outline:0}
+.forge-summary-head p{margin:0;color:#e6ccb1;font-size:13px}
+.forge-summary-reward{display:flex;align-items:center;gap:22px;margin:20px clamp(15px,3vw,35px);padding:20px;border:1px solid #665139;border-radius:9px;background:linear-gradient(125deg,#28241e,#171a1b)}
+.forge-summary-art{flex:0 0 104px;width:104px;height:104px;display:grid;place-items:center;border:1px solid rgba(244,176,88,.32);border-radius:7px;background:radial-gradient(circle,#47321d,#171c1e);overflow:hidden}
+.forge-summary-art img,.forge-summary-art svg{max-width:94%;max-height:94%;object-fit:contain}
+.forge-summary-item-fallback{font-size:51px;color:#e6af6f}
+.forge-summary-reward-copy{min-width:0}
+.forge-summary-reward-copy small{font:800 10px/1.4 system-ui,sans-serif;color:#c69d6d;letter-spacing:.12em}
+.forge-summary-reward-copy h4{margin:6px 0;color:#ffe0ad;font:500 clamp(21px,3vw,30px)/1.2 Georgia,serif;overflow-wrap:anywhere}
+.forge-summary-reward-copy strong{display:block;color:#fff;font:800 28px/1.2 system-ui,sans-serif}
+.forge-summary-reward-copy p{margin:6px 0 0;color:#c2b6a3;font-size:12px}
+.forge-summary-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 clamp(15px,3vw,35px) 20px}
+.forge-summary-stats>div{min-width:0;padding:14px 10px;border:1px solid #443d34;border-radius:7px;background:#1c2020;text-align:center}
+.forge-summary-stats small{display:block;color:#b2a28f;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.08em}
+.forge-summary-stats b{display:block;margin-top:5px;font:600 clamp(20px,3vw,27px)/1.1 Georgia,serif;color:#ffca82}
+.forge-summary-section{margin:17px clamp(15px,3vw,35px)}
+.forge-summary-section h4{margin:0 0 8px;color:#c9bca6;font:800 11px/1.3 system-ui,sans-serif;letter-spacing:.13em}
+.forge-summary-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.forge-summary-stage,.forge-summary-reheat{display:grid;gap:3px;min-width:0;padding:12px;border-radius:5px;border:1px solid #393c39;background:#1c2223}
+.forge-summary-stage span,.forge-summary-reheat span{font-size:10px;color:#b9ab95;line-height:1.3}
+.forge-summary-stage b,.forge-summary-reheat b{color:#f6cf93;font:700 17px/1.2 Georgia,serif}
+.forge-summary-stage small,.forge-summary-reheat small{color:#b4b9ac;font-size:10px}
+.forge-summary-empty{grid-column:1/-1;margin:6px 0;color:#adb2ac;font-size:12px}
+.forge-summary-extra{margin:20px clamp(15px,3vw,35px);color:#b2ad9f;font-size:12px;line-height:1.6}
+.forge-summary-continue{display:block;width:calc(100% - 30px);max-width:370px;margin:18px auto 26px;padding:15px 18px;min-height:51px;border:1px solid #e8b475;border-radius:7px;background:linear-gradient(#aa673d,#70402b);color:#fff5df;font:800 12px/1.2 system-ui,sans-serif;letter-spacing:.1em;cursor:pointer;touch-action:manipulation}
+.forge-summary-continue:focus-visible{outline:3px solid #ffe1a7;outline-offset:3px}
+@media(max-width:710px){
+ .forge-job-summary{margin:10px 6px 22px}
+ .forge-summary-reward{gap:11px;padding:12px}
+ .forge-summary-art{flex-basis:79px;width:79px;height:79px}
+ .forge-summary-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .forge-summary-steps{grid-template-columns:1fr}
+}

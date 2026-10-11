@@ -233,13 +233,13 @@ function timedCraftQuality(recipe,prof){
   return Math.max(35,Math.min(100,Math.round(55+Math.min(18,gap*.35)+Math.random()*40)));
 }
 async function beginCraft(recipeId){
-  if(craftProject)return;
+  if(craftProject||state()?.workshopCraftSummary)return;
   const s=state(),c=s.roster.find(x=>x.id===selectedChar),prof=c?.professions?.[selectedSlot],def=professionDef(prof?.name),recipe=def?.recipes.find(r=>r.id===recipeId);
   if(!c||!characterUsable(c.id)||!recipe)return;
   const max=maxCraftable(recipe,prof),quantity=craftQuantity(recipe.id,max);if(max<1||quantity>max)return;
   const forging=prof.name==='Blacksmithing'&&Boolean(Forge?.create);
   const totalMs=craftBatchDurationMs(recipe,quantity,prof.name),reservedInputs=reserveCraftInputs(recipe,quantity);
-  setCraftProject({version:forging?3:2,charId:c.id,slot:selectedSlot,profession:prof.name,recipeId:recipe.id,quantity,totalMs,remainingMs:totalMs,reservedInputs,forge:forging?Forge.create():null,forgeHeatPct:forging?100:null,forgeReheats:0,startedAt:new Date().toISOString(),paused:!craftFocusActive()});
+  setCraftProject({version:forging?3:2,charId:c.id,slot:selectedSlot,profession:prof.name,recipeId:recipe.id,quantity,totalMs,remainingMs:totalMs,reservedInputs,forge:forging?Forge.create():null,forgeHeatPct:forging?100:null,forgeReheats:0,forgeBonusMs:0,forgeReheatLog:[],startedAt:new Date().toISOString(),paused:!craftFocusActive()});
   forgeFeedback=null;if(forgeFeedbackTimer){clearTimeout(forgeFeedbackTimer);forgeFeedbackTimer=null}
   craftLastTick=0;craftSaveAt=0;lastCraftMessage='';
   s.activity.push(c.name+' started a '+recipe.name+' work order ×'+quantity+'.');
@@ -263,7 +263,7 @@ async function finishTimedCraft(){
   if(!c||!prof||!recipe){
     returnReservedInputs(project);setCraftProject(null);craftLastTick=0;craftCompleting=false;lastCraftMessage='The work order could not be completed. Reserved reagents were returned.';await commit();return
   }
-  const quantity=Math.max(1,Number(project.quantity)||1),history=recipeHistory(prof,recipe.id),firstInput=Object.keys(recipe.inputs)[0];
+  const quantity=Math.max(1,Number(project.quantity)||1),history=recipeHistory(prof,recipe.id),firstInput=Object.keys(recipe.inputs)[0],skillBefore=prof.level;
   prof.craftHistory[recipe.id]=history;
   let xpTotal=0,masterworks=0,best=0,reclaimed=0;
   for(let i=0;i<quantity;i++){
@@ -278,10 +278,25 @@ async function finishTimedCraft(){
   if(out.category==='consumable')addConsumable(out,outputQuantity,recipe.crafterOnly?c:null);
   else if(out.category==='material')Game.addMaterial(out.key,outputQuantity);
   professionLevelUp(prof,xpTotal);prof.craftHistory[recipe.id]=history;prof.projectsCompleted=(Number(prof.projectsCompleted)||0)+quantity;
+  if(project.forge){
+    s.workshopCraftSummary={
+      version:1,profession:prof.name,characterId:c.id,characterName:c.name,slot:project.slot,
+      recipeName:recipe.name,outputName:out.name,outputKey:out.key||'',outputCategory:out.category||'',
+      outputQuantity,quantity,quality:best,grade:qualityTier(best).label,
+      xpTotal,skillBefore,skillAfter:prof.level,masterworks,reclaimed,
+      stageResults:project.forge.results.map(r=>({key:r.key,points:r.points,label:r.label})),
+      reheatCount:Math.max(0,Number(project.forgeReheats)||0),
+      bonusMs:Math.max(0,Number(project.forgeBonusMs)||0),
+      reheatLog:(Array.isArray(project.forgeReheatLog)?project.forgeReheatLog:[]).slice(-20).map(r=>({points:r.points,heatPct:r.heatPct,bonusMs:r.bonusMs})),
+      totalMs:project.totalMs,finishedAt:new Date().toISOString()
+    };
+  }
   s.activity.push(c.name+' completed '+recipe.name+' ×'+quantity+' after '+craftTime(project.totalMs)+' of focused workshop time.');
   lastCraftMessage=out.name+' ×'+outputQuantity+' completed'+(recipe.crafterOnly?' · BOUND TO '+c.name.toUpperCase():'')+' · +'+xpTotal+' profession XP'+(masterworks?' · '+masterworks+' masterwork'+(masterworks===1?'':'s'):'')+(reclaimed?' · '+reclaimed+' reagent'+(reclaimed===1?'':'s')+' reclaimed':'');
   window.CellboundAnalytics?.track?.('craft_completed',{character_id:c.id,class:c.class,race:c.race,profession:prof.name,recipe_id:recipe.id,recipe_name:recipe.name,quantity,output_quantity:outputQuantity,output_category:out.category||'',masterworks});
-  setCraftProject(null);forgeFeedback=null;if(forgeFeedbackTimer){clearTimeout(forgeFeedbackTimer);forgeFeedbackTimer=null}craftLastTick=0;craftCompleting=false;await commit()
+  setCraftProject(null);forgeFeedback=null;if(forgeFeedbackTimer){clearTimeout(forgeFeedbackTimer);forgeFeedbackTimer=null}craftLastTick=0;craftCompleting=false;
+  await commit();
+  if(project.forge)document.querySelector('[data-forge-summary-title]')?.focus?.({preventScroll:true})
 }
 function updateCraftTimerUI(){
   if(!craftProject)return;
@@ -338,7 +353,40 @@ function forgeReactionMarkup(active){
  if(!active)return'<div class="forge-reaction-fx" aria-hidden="true"></div>';
  const points=Math.max(35,Math.min(100,Number(active.points)||35));
  return '<div class="forge-reaction-fx" aria-hidden="true"><i class="forge-fx-burst"></i><i class="forge-fx-steam"></i><i class="forge-fx-shockwave"></i><i class="forge-fx-hammer"></i></div>'+
-  '<div class="forge-action-popup" role="status">'+forgeEscape(active.label)+' · '+points+'%'+(active.key==='heat'?' HEAT':active.key==='strike'?' STRIKE':' TEMPER')+'</div>';
+  '<div class="forge-action-popup" role="status">'+forgeEscape(active.label)+' · '+points+'%'+(active.reheat?' · '+Math.round(active.heatPct)+'% HEAT'+(active.bonusMs?' · -'+craftTime(active.bonusMs):' · NO TIME BONUS'):active.key==='heat'?' HEAT':active.key==='strike'?' STRIKE':' TEMPER')+'</div>';
+}
+
+
+function forgeSummaryMarkup(result){
+  const esc=forgeEscape,score=Math.max(35,Math.min(100,Number(result.quality)||35));
+  const grade=score>=90?'MASTERWORK':score>=65?'FINE FINISH':'STANDARD FINISH';
+  const art=result.outputCategory==='consumable'&&P?.consumableArtHTML
+    ?P.consumableArtHTML(result.outputKey,88,'forge-summary-item-art')
+    :result.outputCategory==='material'&&P?.materialArtHTML
+      ?P.materialArtHTML(result.outputKey,88,'forge-summary-item-art')
+      :'<span class="forge-summary-item-fallback" aria-hidden="true">⚒</span>';
+  const stages=(Array.isArray(result.stageResults)?result.stageResults:[]).map((r,i)=>
+    '<div class="forge-summary-stage"><span>'+esc(Forge?.STAGES?.[i]?.label||r.key||'Step')+'</span><b>'+Math.max(35,Math.min(100,Number(r.points)||35))+'%</b><small>'+esc(r.label||'')+'</small></div>'
+  ).join('');
+  const reheats=(Array.isArray(result.reheatLog)?result.reheatLog:[]).map((r,i)=>
+    '<div class="forge-summary-reheat"><span>REHEAT '+(i+1)+'</span><b>'+Math.max(35,Math.min(100,Number(r.points)||35))+'% accuracy</b><small>'+Math.max(25,Math.min(100,Number(r.heatPct)||25))+'% heat · '+(r.bonusMs?'-'+craftTime(r.bonusMs):'No bonus')+'</small></div>'
+  ).join('');
+  const saved=Math.max(0,Number(result.bonusMs)||0),total=Math.max(0,Number(result.totalMs)||0);
+  return '<section class="forge-job-summary" aria-label="Blacksmithing completed job" data-forge-job-summary>'+
+    '<div class="forge-summary-head"><small>THE ZELTIRAN FORGE · COMPLETED WORK ORDER</small><h3 data-forge-summary-title tabindex="-1">JOB COMPLETE</h3><p>'+esc(result.characterName)+' finished '+esc(result.recipeName)+' · '+grade+'</p></div>'+
+    '<div class="forge-summary-reward"><div class="forge-summary-art">'+art+'</div><div class="forge-summary-reward-copy"><small>ADDED TO YOUR INVENTORY</small><h4>'+esc(result.outputName)+'</h4><strong>×'+Math.max(1,Number(result.outputQuantity)||1)+'</strong><p>'+esc(grade)+' · '+score+'% workmanship</p></div></div>'+
+    '<div class="forge-summary-stats"><div><small>PROFESSION XP</small><b>+'+Math.max(0,Number(result.xpTotal)||0)+'</b></div><div><small>QUALITY</small><b>'+score+'%</b></div><div><small>REHEATS</small><b>'+Math.max(0,Number(result.reheatCount)||0)+'</b></div><div><small>TIME SAVED</small><b>'+craftTime(saved)+'</b></div></div>'+
+    '<div class="forge-summary-section"><h4>WORKMANSHIP</h4><div class="forge-summary-steps">'+stages+'</div></div>'+
+    '<div class="forge-summary-section"><h4>FURNACE PERFORMANCE</h4><div class="forge-summary-steps">'+(reheats||'<p class="forge-summary-empty">No reheats required for this order.</p>')+'</div></div>'+
+    '<p class="forge-summary-extra">Base workshop time: '+craftTime(total)+' · Precision bonuses: -'+craftTime(saved)+' · '+(result.skillAfter>result.skillBefore?'Skill level '+result.skillBefore+' → '+result.skillAfter+' · ':'')+(result.reclaimed?result.reclaimed+' reagents reclaimed · ':'')+Math.max(1,Number(result.quantity)||1)+' item(s) crafted</p>'+
+    '<button type="button" class="forge-summary-continue" data-forge-summary-close>RETURN TO WORKSHOP →</button>'+
+    '</section>';
+}
+async function dismissCraftSummary(){
+  const s=state();if(!s?.workshopCraftSummary)return;
+  s.workshopCraftSummary=null;lastCraftMessage='';
+  Game.save();renderProfessions();
+  try{await Game.persistState()}catch(err){console.warn('Forge summary dismissal save failed',err)}
 }
 
 function forgeProjectMarkup(prof){
@@ -358,14 +406,14 @@ function forgeProjectMarkup(prof){
  }).join('');
  return '<section class="forge-workshop'+gaugeManual+'" data-forge-stage="'+f.stage+'" data-forge-reheat="'+(reheat?'true':'false')+'" aria-label="Blacksmithing forge mini game">'+
   '<div class="forge-scene'+reactionClass+(complete&&!reheat?' is-working':'')+'" role="group" aria-label="Blacksmith forge scene" data-forge-effect="'+(reaction?.key||'idle')+'"><div class="forge-heat-glow"></div><div class="forge-furnace"></div>'+forgeArtisanMarkup(smith,prof)+'<div class="forge-anvil"><i class="forge-anvil-horn"></i><i class="forge-hot-steel"></i><i class="forge-anvil-leg"></i></div><div class="forge-sparks"></div>'+forgeReactionMarkup(reaction)+'<span class="forge-scene-label">THE ZELTIRAN FORGE</span></div>'+
-  '<div class="forge-challenge"><div class="forge-challenge-head"><div><small>ARTISAN CHALLENGE · BLACKSMITHING</small><h4>'+(reheat?'REHEAT THE FURNACE':complete?'FORGING COMPLETE':stage.label)+'</h4><p>'+(reheat?'The forge has cooled. Set the heat again to restart production; your original item quality is safe.':complete?'Your workmanship determines the quality of all '+Math.max(1,Number(craftProject.quantity)||1)+' items. Keep the furnace hot while the batch finishes.':stage.instruction)+'</p></div><span class="forge-result" data-forge-quality>'+(complete?'QUALITY '+quality+'%':f.stage+' / 3 FINISHED')+'</span></div>'+
+  '<div class="forge-challenge"><div class="forge-challenge-head"><div><small>ARTISAN CHALLENGE · BLACKSMITHING</small><h4>'+(reheat?'REHEAT THE FURNACE':complete?'FORGING COMPLETE':stage.label)+'</h4><p>'+(reheat?'The forge has cooled. Accuracy determines how much heat you regain. Above 80% accuracy also cuts up to 8 seconds from the remaining time. Your original item quality stays safe.':complete?'Your workmanship determines the quality of all '+Math.max(1,Number(craftProject.quantity)||1)+' items. Keep the furnace hot while the batch finishes.':stage.instruction)+'</p></div><span class="forge-result" data-forge-quality>'+(complete?'QUALITY '+quality+'%':f.stage+' / 3 FINISHED')+'</span></div>'+
   '<div class="forge-heat-status"><span>FURNACE HEAT <b data-forge-heat>'+Math.round(heatPct)+'%</b></span><div class="forge-heat-track"><i data-forge-heat-fill style="width:'+heatPct.toFixed(1)+'%"></i></div><small>'+(reheat?'COLD · STOKE NOW':'Production stops at '+Forge.HEAT_THRESHOLD+'% · Reheats '+(Number(craftProject.forgeReheats)||0))+'</small></div>'+
   '<div class="forge-stages">'+attempts+'</div>'+
   (complete&&!reheat?
     '<div class="forge-complete" role="status"><b>'+((quality>=90)?'MASTERWORK':quality>=65?'FINE FINISH':'STANDARD FINISH')+' · '+quality+'%</b><small>'+(craftProject.remainingMs>0?'Cooling and finishing time: '+craftTime(craftProject.remainingMs):'Finalising your work order…')+'</small></div>':
     '<div class="forge-gauge"><div class="forge-gauge-legend"><span>ROUGH</span><strong>PRECISION WINDOW</strong><span>ROUGH</span></div><div class="forge-timing-track" data-forge-track style="--forge-target:'+challenge.target+'%;--forge-period:'+challenge.period+'ms"><span class="forge-target-band"></span><span class="forge-target-core"></span><i class="forge-needle" data-forge-needle aria-hidden="true"></i></div>'+
     '<label class="forge-manual-control">Position the marker<input type="range" min="0" max="100" value="'+challenge.target+'" step="1" data-forge-position aria-label="Position precision marker"></label>'+
-    '<div class="forge-instructions"><span>Watch the glowing marker sweep across the bar. Tap when it meets the bright centre.</span><button type="button" data-forge-toggle aria-pressed="'+(forgeManual?'true':'false')+'">'+(forgeManual?'USE TIMING MODE':'USE PRECISION SLIDER')+'</button></div>'+
+    '<div class="forge-instructions"><span>'+(reheat?'Aim for the centre: more accuracy restores more heat. Above 80% saves time.':'Watch the glowing marker sweep across the bar. Tap when it meets the bright centre.')+'</span><button type="button" data-forge-toggle aria-pressed="'+(forgeManual?'true':'false')+'">'+(forgeManual?'USE TIMING MODE':'USE PRECISION SLIDER')+'</button></div>'+
     '<button type="button" class="forge-strike" data-forge-strike '+(!craftFocusActive()?'disabled':'')+'>'+challenge.icon+' '+(reheat?'STOKE THE FURNACE':stage.action)+' <span>→</span></button></div>')+
   '</div></section>'
 }
@@ -388,10 +436,19 @@ async function strikeForge(){
  if(prof?.name!=='Blacksmithing')return;
  const next=reheating?Forge.reheat(position,prof.level):Forge.record(project.forge,position,prof.level);
  if(!next)return;
- if(reheating){project.forgeHeatPct=next.heatPct;project.forgeReheats=(Number(project.forgeReheats)||0)+1;craftLastTick=Date.now()}
+ if(reheating){
+    const bonusMs=Math.min(Math.max(0,project.remainingMs),Math.max(0,next.bonusMs||0));
+    project.forgeHeatPct=next.heatPct;
+    project.remainingMs=Math.max(0,project.remainingMs-bonusMs);
+    project.forgeBonusMs=(Number(project.forgeBonusMs)||0)+bonusMs;
+    project.forgeReheats=(Number(project.forgeReheats)||0)+1;
+    project.forgeReheatLog=Array.isArray(project.forgeReheatLog)?project.forgeReheatLog:[];
+    project.forgeReheatLog.push({points:next.points,heatPct:next.heatPct,bonusMs});
+    craftLastTick=Date.now();
+  }
   else project.forge=next;
  const result=reheating?{...next,key:'heat',label:'REHEATED'}:next.results.at(-1);
- forgeFeedback={project,key:result.key,points:result.points,label:result.label,grade:result.points>=90?'perfect':result.points>=65?'fine':'standard'};
+ forgeFeedback={project,key:result.key,points:result.points,label:result.label,grade:result.points>=90?'perfect':result.points>=65?'fine':'standard',reheat:reheating,heatPct:result.heatPct,bonusMs:reheating?project.forgeReheatLog.at(-1).bonusMs:0};
  if(forgeFeedbackTimer)clearTimeout(forgeFeedbackTimer);
  // Show the action on the real character immediately, without delaying combat or saving.
  Game.save();renderProfessions();
@@ -406,7 +463,7 @@ async function strikeForge(){
  // Persist the current mini-game progress before the next tap/refresh.
  try{await Game.persistState()}catch(err){console.warn('Forge progress cloud save failed',err)}
 
- if(!reheating&&next.stage===3&&project.remainingMs<=0)finishTimedCraft()
+ if((!reheating&&next.stage===3||reheating)&&project.remainingMs<=0)finishTimedCraft()
 }
 
 function craftProjectMarkup(c,prof,recipe){
@@ -464,14 +521,19 @@ function recipeCardMarkup(recipe,prof,s){
 }
 function renderProfessions(){
   if(!Game?.ready)return;normalise();const s=state(),list=$('#professionCharacterList'),work=$('#professionWorkshop'),grid=$('#reagentGrid');if(!list||!work||!grid)return;
-  const usable=usableRoster();if(craftProject){selectedChar=craftProject.charId;selectedSlot=Number(craftProject.slot)||0}else if(!selectedChar||!usable.some(c=>c.id===selectedChar))selectedChar=usable[0]?.id||null;
+  const usable=usableRoster();if(craftProject){selectedChar=craftProject.charId;selectedSlot=Number(craftProject.slot)||0}else if(s.workshopCraftSummary?.profession==='Blacksmithing'){selectedChar=s.workshopCraftSummary.characterId;selectedSlot=Number(s.workshopCraftSummary.slot)||0}else if(!selectedChar||!usable.some(c=>c.id===selectedChar))selectedChar=usable[0]?.id||null;
   const selected=s.roster.find(x=>x.id===selectedChar),selectedProf=selected?.professions?.[selectedSlot],selectedDef=professionDef(selectedProf?.name);
   const relevantMaterials=new Set(selectedDef?.recipes?.flatMap(r=>Object.keys(r.inputs))||[]);
   grid.innerHTML=Object.entries(P.MATERIALS).map(([k,m])=>{const rarity=String(m.rarity||'Common'),slug=materialRaritySlug(k),art=P?.materialArtHTML?P.materialArtHTML(k,48,'reagent-material-art'):`<span class="reagent-symbol">${m.icon||'◇'}</span>`;return `<div class="reagent-card rarity-${slug} ${relevantMaterials.has(k)?'relevant':''}" data-rarity="${rarity}" data-endgame="${m.endgame?'1':'0'}"><div class="reagent-icon">${art}</div><div class="reagent-copy"><em class="reagent-rarity rarity-${slug}">${rarity}</em><b>${m.name}</b><small>${m.source}</small></div><strong>${Number(s.materials[k])||0}</strong></div>`}).join('');
   list.innerHTML=usable.map(c=>{const ps=c.professions.filter(Boolean),portrait=CP?.portraitHTML?CP.portraitHTML(c,{size:'fill',className:'profession-roster-portrait',label:c.name+' portrait'}):c.portrait;return `<button class="profession-char ${c.id===selectedChar?'active':''}" data-prof-char="${c.id}"><span class="avatar">${portrait}</span><span><b>${c.name}</b><small>${c.class} · ${c.spec}</small></span><em>${ps.length?ps.map(p=>`${p.name} ${p.level}`).join(' / '):'Untrained'}</em></button>`;}).join('');
   list.querySelectorAll('[data-prof-char]').forEach(b=>b.onclick=()=>{if(craftProject)return;selectedChar=b.dataset.profChar;selectedSlot=0;lastCraftMessage='';renderProfessions();});
   const c=s.roster.find(x=>x.id===selectedChar);if(!c){work.innerHTML='<div class="profession-empty">No adventurer selected.</div>';return;}
-  const slots=ent().professionSlots;$('#workshopTitle').textContent=`${c.name}'s Workshop`;
+  const slots=ent().professionSlots;$('#workshopTitle').textContent=s.workshopCraftSummary&&!craftProject?'Blacksmithing · Finished Order':`${c.name}'s Workshop`;
+  if(!craftProject&&s.workshopCraftSummary?.profession==='Blacksmithing'){
+    work.innerHTML=forgeSummaryMarkup(s.workshopCraftSummary);
+    work.querySelector('[data-forge-summary-close]')?.addEventListener('click',dismissCraftSummary);
+    return;
+  }
   const slotHtml=[0].map(i=>{const p=c.professions[i];return `<button class="profession-slot-card ${selectedSlot===i?'active':''}" data-prof-slot="${i}"><small>PROFESSION</small><b>${p?.name||'Unlearned'}</b><p>${p?`Skill ${p.level}/100 · ${p.projectsCompleted||0} projects`:'Choose a trade skill for this adventurer.'}</p></button>`;}).join('');
   const prof=c.professions[selectedSlot];
   let body='';
@@ -485,7 +547,7 @@ function renderProfessions(){
     const visible=def.recipes.filter(r=>recipeMatchesFilter(r,prof,s));
     const recipes=visible.map(r=>recipeCardMarkup(r,prof,s)).join('');
     const activeRecipe=craftProject&&craftProject.charId===c.id&&craftProject.slot===selectedSlot?def.recipes.find(r=>r.id===craftProject.recipeId):null;
-    body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make and how many.</h3></div><p>${prof.name==='Blacksmithing'?'Craft up to five at once. Complete three precision actions, then stoke the furnace whenever its heat falls to 25% to keep production moving.':'Batch crafting uses focused workshop time. Leave Professions or background the app and the timer pauses until you return.'}</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
+    body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make and how many.</h3></div><p>${prof.name==='Blacksmithing'?'Craft up to five at once. Reheat when the furnace reaches 25%; your timing controls recovered heat and scores above 80% reduce production time.':'Batch crafting uses focused workshop time. Leave Professions or background the app and the timer pauses until you return.'}</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
   }
   work.innerHTML=`<div class="profession-slot-grid">${slotHtml}</div>${body}`;
   work.querySelectorAll('[data-prof-slot]').forEach(b=>b.onclick=()=>{if(craftProject)return;selectedSlot=Number(b.dataset.profSlot);lastCraftMessage='';renderProfessions();});

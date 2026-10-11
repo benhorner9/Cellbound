@@ -32,3 +32,14 @@ The furnace now displays a live heat percentage. Focused crafting drains heat at
 Each action visibly moves the selected character and an attached smithing tool, with an idle work loop during production. The heating, striking and quenching actions use longer, distinct motion and effect cues. Reduced-motion settings keep static, readable feedback instead.
 
 QA: check a two-to-five item batch, confirm heat stalls at 25%, pressing Stoke restores 100%, original quality stays the same, work order is saved/refundable, and no items are awarded until timer + original steps finish.
+
+
+## Job 12D — scored reheats and completion report
+
+Reheating is no longer a flat reset to 100%. The *Set the Heat / Stoke the Furnace* precision challenge is scored with the existing 35–100% timing/skill calculation. Restored furnace heat is calculated from the score: 35% accuracy restores 51% heat, ~80% restores 85%, and 100% restores 100%. Below or equal to 80% accuracy there is no speed bonus. Above 80%, saved production time scales linearly up to **8 seconds at 100%**, capped by the current remaining timer. Scores affect neither the first three forge quality stages nor material costs, output quantity, or XP. A poor reheat still allows work to continue, but it cools more quickly and requires another heating challenge sooner.
+
+The work order now records actual heat restored, precision scores and actual time saved for every reheat in the existing saved workshop project, including across reloads. New and restored projects both support the updated rules.
+
+Completing a Blacksmithing work order opens a dedicated results screen within the Professions workshop showing the resulting item art, item name and quantity, earned XP, overall quality/masterwork grade, the original three action scores, all reheat results, count, total time saved, skill-level changes and reclaimed reagents (when relevant). Actual rewards are still granted through the existing work-order completion transaction. The summary itself is stored in the normal saved guild state, appears after reload, and is cleared when the player taps **Return to Workshop**. Other professions continue their existing completion flow.
+
+QA: test a one-item order with no reheat; test five items with one perfect reheat and one poor reheat, confirm different restored temperatures, capped 8-second precision bonuses, unchanged quality, no early payout, correct XP and quantity on the result screen, and normal re-entry to the workshop. Test in Chromium and WebKit with reduced motion and landscape/portrait iPad layouts.

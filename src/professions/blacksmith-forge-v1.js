@@ -17,9 +17,18 @@ function advance(heatPct,elapsedMs){
  const next=Math.max(HEAT_THRESHOLD,heat-activeMs*COOLING_PER_SECOND/1000);
  return {heatPct:next,activeMs,needsReheat:needsReheat(next)};
 }
+// Reheat precision governs both restored temperature and a modest production bonus.
+// A poor hit still restarts the forge; only scores above 80% save any time.
+const REHEAT_BONUS_THRESHOLD=80,MAX_REHEAT_BONUS_MS=8000;
 function reheat(position,skillLevel=1){
  const action=record(create(),position,skillLevel);
- return action?{...action.results[0],heatPct:100}:null;
+ if(!action)return null;
+ const result=action.results[0],points=result.points;
+ const heatPct=clamp(Math.round(25+points*.75),51,100);
+ const bonusMs=points>REHEAT_BONUS_THRESHOLD
+   ?Math.round((points-REHEAT_BONUS_THRESHOLD)/(100-REHEAT_BONUS_THRESHOLD)*MAX_REHEAT_BONUS_MS)
+   :0;
+ return {...result,heatPct,bonusMs};
 }
 function create(){return {version:1,stage:0,results:[]}}
 function isComplete(forge){return forge?.version===1&&forge.stage===3&&Array.isArray(forge.results)&&forge.results.length===3}
@@ -36,5 +45,5 @@ function quality(forge){
  if(!isComplete(forge))return null;
  return clamp(Math.round(forge.results.reduce((sum,x)=>sum+clamp(Number(x.points)||35,35,100),0)/3),35,100)
 }
-window.CellboundBlacksmithForge=Object.freeze({version:'12C.1',STAGES,HEAT_THRESHOLD,COOLING_PER_SECOND,needsReheat,advance,reheat,create,record,quality,isComplete});
+window.CellboundBlacksmithForge=Object.freeze({version:'12D.1',STAGES,HEAT_THRESHOLD,COOLING_PER_SECOND,REHEAT_BONUS_THRESHOLD,MAX_REHEAT_BONUS_MS,needsReheat,advance,reheat,create,record,quality,isComplete});
 })();
