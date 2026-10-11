@@ -194,7 +194,7 @@ function renderGuildIntroduction(){
       '<div class="onboard-intro__hero-copy"><small>CELLBOUND · ZELTIRA</small>'+
         '<h2>You don’t play one hero.<br>You lead the guild.</h2>'+
         '<p>Manage five adventurers, give orders in live combat and prepare them for harder fights.</p>'+
-        '<span class="onboard-intro__crest">◇ &nbsp; THE CHARTER AWAITS &nbsp; ◇</span>'+
+        '<span class="onboard-intro__crest">◇ &nbsp; GUILD CHARTER &nbsp; ◇</span>'+
       '</div></div>'+
     '<div class="onboard-intro__below">'+
       '<section class="onboard-intro__lesson"><div class="onboard-intro__tabs" role="group" aria-label="Discover Cellbound">'+
@@ -423,7 +423,7 @@ function tutorialComicConfig(id){
       panels:[
         {kind:'location',artwork:'./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp',eyebrow:'DAWN',title:'The eastern gate opens.',text:'For the first time, the route ahead belongs entirely to your guild.',icon:'☼'},
         {artwork:'./assets/comics/tutorial-2026/sunset-briefing.webp',kind:'npc',eyebrow:'ELARA',title:'No more training ward',text:'The systems you learned remain. The safety net does not.'},
-        {artwork:'./assets/comics/tutorial-2026/twilight-evacuation.webp',kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Raid',text:'Your first real adventure starts here.',icon:'→'}
+        {artwork:'./assets/comics/tutorial-2026/twilight-evacuation.webp',kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Raid',text:'Elara has given you a contract: Ashes on the East Road.',icon:'→'}
       ],
       choices:[
         {id:'advice',icon:'?',label:'Any final advice?',reply:'Read the fight. Read the item. Read the room. Most bad outcomes tell you what you missed.'},
