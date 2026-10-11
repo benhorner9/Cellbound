@@ -167,7 +167,7 @@ function render(){
  const root=$('#endgameHub');if(!root||!Game?.ready)return;
  const rotation=server.rotation||{},minor=D.AFFIXES[rotation.minor_affix],major=D.AFFIXES[rotation.major_affix];
  root.innerHTML=
- '<section class="eg-hero"><div><small>DUNGEON MASTERY</small><h2>Push beyond Normal.</h2><p>Learn the route on Normal, step up to Heroic, then climb Cellbound+ with rotating affixes, scores and weekly rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
+ '<section class="eg-hero"><div><small>DUNGEON MASTERY</small><h2>Try Heroic or Cellbound+.</h2><p>Normal teaches the route. Heroic is harder. Cellbound+ adds rotating affixes, scores and weekly rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
  weeklyMarkup()+milestoneMarkup()+achievementMarkup()+collectionMarkup()+
  '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+dungeonCard('chaos-canyon')+'</div>'+
  '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+leaderboardMarkup('chaos-canyon')+'</div>';
