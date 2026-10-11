@@ -11,6 +11,10 @@ assert(on.includes("setStage('party-builder',{introSeen:true,introVersion:1})"),
 for(const id of ['guild','combat','journey'])assert(on.includes("id:'"+id+"'"),'intro must explain '+id);
 for(const text of ['You don’t play one hero.','You lead the guild.','Tank holds','Healer','Damage','Your party fights automatically.','Cell Shock','Quest Journal','Party & Bank'])assert(on.toLowerCase().includes(text.toLowerCase()),'onboarding missing '+text);
 assert(on.includes("if(stage==='party-builder')renderPartyBuilder()"),'the working Character Forge entry point remains');
+assert(on.includes('introPreview=false;hide();return'),'admin preview closes without proceeding to creation');
+assert(on.includes('state()?.onboarding?.complete!==true'),'only fully-onboarded staff can open the preview');
+assert(read('guild.html').includes('adminPreviewGuildMaster'),'admin UI provides a safe preview');
+assert(read('admin-v1.js').includes("addEventListener('click',previewGuildMaster)"),'admin preview button is interactive');
 assert(on.includes("if(!s.onboarding?.coreTrainingComplete)"),'training completion gate remains');
 assert(on.includes("window.CellboundComicScenes"),'existing comic scenes remain');
 assert(css.includes('.onboard-intro__hero')&&css.includes('@media(max-width:640px)'), 'intro must have illustrated and mobile layouts');

@@ -118,6 +118,13 @@ function resetTwelveBelow(){
     render();
   }
 }
+function previewGuildMaster(){
+  if(!status.is_admin)return;
+  try{
+    const ok=window.CellboundOnboarding?.previewIntroduction?.();
+    if(!ok)message('Guild Master preview requires a completed tutorial and a signed-in admin account.','error');
+  }catch(error){message(error?.message||'Guild Master preview could not open.','error')}
+}
 async function previewTutorialComics(){
   if(!status.is_admin)return;
   const btn=$('#adminPreviewTutorialComics');if(btn){btn.disabled=true;btn.firstChild.textContent='PLAYING COMIC PREVIEW…'}
@@ -213,6 +220,7 @@ function bind(){
   document.querySelectorAll('[data-admin-panel-tab]').forEach(btn=>btn.addEventListener('click',()=>setPanel(btn.dataset.adminPanelTab,{scroll:true})));
   $('#adminResetShock')?.addEventListener('click',resetShock);
   $('#adminResetTwelve')?.addEventListener('click',resetTwelveBelow);
+  $('#adminPreviewGuildMaster')?.addEventListener('click',previewGuildMaster);
   $('#adminPreviewTutorialComics')?.addEventListener('click',previewTutorialComics);
   $('#adminFreshStart')?.addEventListener('click',freshStart);
   $('#adminAutoToggle')?.addEventListener('click',toggleAuto);

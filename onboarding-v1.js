@@ -35,7 +35,7 @@ const SLOTS=[
 ];
 const ROLE_LABEL={tank:'Tank',healer:'Healer',dps:'Damage'};
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
-let draft=[],activeSlot=0,builderStep='form',introPage='guild',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
+let draft=[],activeSlot=0,builderStep='form',introPage='guild',introPreview=false,tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
@@ -207,7 +207,7 @@ function renderGuildIntroduction(){
       '<ul>'+selected.bullets.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>'+
       '<div class="onboard-intro__roles" aria-label="Your five-person party"><span>TANK × 1</span><span>HEALER × 1</span><span>DAMAGE × 3</span></div>'+
       '<p>You’ll learn by doing: create your party, make a choice in the field, fight, equip a drop and craft your first item.</p>'+
-      '<button type="button" id="startGuildCharter" class="on-primary">BUILD MY GUILD →</button>'+
+      '<button type="button" id="startGuildCharter" class="on-primary">'+(introPreview?'CLOSE PREVIEW · RETURN TO GAME':'BUILD MY GUILD →')+'</button>'+
       '<small class="onboard-intro__footnote">Your choices and progress are saved. No need to memorise everything now.</small>'+
       '</aside></div></div>';
   const root=ensureRoot();root.innerHTML=chrome(body,'guild-introduction');
@@ -216,10 +216,16 @@ function renderGuildIntroduction(){
     root.querySelector('[data-intro-page="'+introPage+'"]')?.focus({preventScroll:true});
   }));
   root.querySelector('#startGuildCharter')?.addEventListener('click',()=>{
+    if(introPreview){introPreview=false;hide();return}
     setStage('party-builder',{introSeen:true,introVersion:1});
   });
 }
 
+function previewIntroduction(){
+  if(!window.CellboundAdmin?.isAdmin||state()?.onboarding?.complete!==true)return false;
+  introPreview=true;introPage='guild';renderGuildIntroduction();
+  return true;
+}
 function renderPartyBuilder(){
   show();restoreDraft();
   const d=draft[activeSlot],slot=SLOTS[activeSlot];
@@ -1307,7 +1313,7 @@ async function init(){
   if(!G||!P)return;
   window.CellboundCombatStandard?.register?.('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-cb2d'});
   render();
-  window.CellboundOnboarding={render,RACES,previewTutorialComics,tutorialComicConfig,introductionPages:INTRO_PAGES.map(({id,tab})=>({id,tab}))};
+  window.CellboundOnboarding={render,RACES,previewIntroduction,previewTutorialComics,tutorialComicConfig,introductionPages:INTRO_PAGES.map(({id,tab})=>({id,tab}))};
 }
 init();
 })();
