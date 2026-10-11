@@ -1,5 +1,8 @@
 (()=>{
 'use strict';
+const combatRate=value=>window.CellboundCombatStandard?.playbackRate?.(value)??Math.max(.25,(Number(value)||1)*.7);
+const combatLabel=value=>window.CellboundCombatStandard?.playbackLabel?.(value)||Number(combatRate(value).toFixed(2))+'×';
+
 
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -905,8 +908,8 @@ function tdMechanicTelegraph(e){
 function tdRenderCombatEvent(e,telegraphs){
   if(tutorialCombatStats)tutorialCombatStats.elapsed=Math.max(Number(tutorialCombatStats.elapsed)||0,Number(e.timestamp)||0);
   const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
-  try{window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tdArena'),resolve:id=>{const sel=tdSelectorFor(id);return sel?$(sel):null},speed:1})}catch(error){console.warn('First Expedition living combat visual skipped',e?.type,error)}
-  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:1}))return}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
+  try{window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tdArena'),resolve:id=>{const sel=tdSelectorFor(id);return sel?$(sel):null},speed:combatRate(1)})}catch(error){console.warn('First Expedition living combat visual skipped',e?.type,error)}
+  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:combatRate(1)}))return}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
   switch(e.type){
     case'COMBAT_START':tdFeed('The pull begins.');break;
     case'MOVEMENT_START':
@@ -982,7 +985,7 @@ async function tdPlayCombat(session,result,my){
   const frame=now=>{
    if(finished)return;if(my!==tutorialToken){finish(false);return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
-   const delta=Math.max(0,Math.min(250,now-lastWall));lastWall=now;
+   const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(1);lastWall=now;
    const step=session.advance(delta);if(step.events?.length)renderEvents(step.events);
    if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)

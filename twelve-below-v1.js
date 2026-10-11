@@ -1,5 +1,8 @@
 (()=>{
 'use strict';
+const combatRate=value=>window.CellboundCombatStandard?.playbackRate?.(value)??Math.max(.25,(Number(value)||1)*.7);
+const combatLabel=value=>window.CellboundCombatStandard?.playbackLabel?.(value)||Number(combatRate(value).toFixed(2))+'×';
+
 window.CellboundCombatStandard?.register?.('twelve-below',{kind:'endgame-event',execution:'local',ui:'shared-combat-vitals'});
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -325,7 +328,7 @@ async function playLiveRun(session){
    if(finished)return;
    if(token!==playToken||!run){session.stop('overrun');finished=true;resolve();return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
-   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(1,Number(playSpeed)||1);lastWall=now;
+   const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(playSpeed);lastWall=now;
    const step=session.advance(delta);run.elapsed=Number(step.timeMs)||run.elapsed||0;window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-tb-command]','tbCommand');
    if(step.events?.length)renderEvents(step.events);
    openDueBosses();const spawnedEvents=session.drainEvents?.()||[];if(spawnedEvents.length)renderEvents(spawnedEvents);
@@ -386,7 +389,7 @@ function tbAtmosphere(){
 function tbArenaBurst(id,kind='open'){
  const arena=$('#tbArena'),crypt=$('[data-tb-crypt="'+id+'"]');if(!arena||!crypt)return;
  const r=crypt.getBoundingClientRect(),a=arena.getBoundingClientRect(),x=(r.left+r.width/2-a.left)/Math.max(1,a.width)*100,y=(r.top+r.height/2-a.top)/Math.max(1,a.height)*100;
- const burst=document.createElement('i');burst.className='tb-soul-burst '+kind;burst.style.left=x+'%';burst.style.top=y+'%';arena.appendChild(burst);setTimeout(()=>burst.remove(),1200/playSpeed)
+ const burst=document.createElement('i');burst.className='tb-soul-burst '+kind;burst.style.left=x+'%';burst.style.top=y+'%';arena.appendChild(burst);setTimeout(()=>burst.remove(),1200/combatRate(playSpeed))
 }
 function tbPartyFormation(c,i){
  const r=roleOf(c);
@@ -398,7 +401,7 @@ function tbPartyFormation(c,i){
 function tbSetPos(el,x,y,ms=500){
  if(!el)return;
  const safeX=clamp(Number(x)||50,7,93),safeY=clamp(Number(y)||50,10,90);
- el.dataset.x=String(safeX);el.dataset.y=String(safeY);el.style.transitionDuration=Math.max(80,ms/playSpeed)+'ms';el.style.left=safeX+'%';el.style.top=safeY+'%'
+ el.dataset.x=String(safeX);el.dataset.y=String(safeY);el.style.transitionDuration=Math.max(80,ms/combatRate(playSpeed))+'ms';el.style.left=safeX+'%';el.style.top=safeY+'%'
 }
 function tbUnitPos(id){
  const el=$('[data-tb-unit="'+id+'"],[data-tb-boss="'+id+'"]');return el?{x:Number(el.dataset.x)||50,y:Number(el.dataset.y)||50}:null
@@ -427,12 +430,12 @@ function tbLunge(source,target){
  if(!el||!tp)return;
  const ox=Number(el.dataset.x)||50,oy=Number(el.dataset.y)||50,dx=tp.x-ox,dy=tp.y-oy,len=Math.max(1,Math.hypot(dx,dy)),step=src.startsWith('tb-')?5:3.5;
  tbSetPos(el,ox+dx/len*step,oy+dy/len*step,150);
- setTimeout(()=>tbSetPos(el,ox,oy,220),Math.max(130,180/playSpeed))
+ setTimeout(()=>tbSetPos(el,ox,oy,220),Math.max(130,180/combatRate(playSpeed)))
 }
 function tbFloat(target,text,kind='damage'){
  const arena=$('#tbArena'),id=String(target||''),el=id.startsWith('tb-')?$('[data-tb-boss="'+id.slice(3)+'"]'):$('[data-tb-unit="'+id+'"]');if(!arena||!el)return;
  const p=tbUnitPos(id.startsWith('tb-')?id.slice(3):id);if(!p)return;
- const n=document.createElement('i');n.className='cb2d-number '+kind;n.textContent=text;n.style.left=p.x+'%';n.style.top=p.y+'%';arena.appendChild(n);setTimeout(()=>n.remove(),900/playSpeed)
+ const n=document.createElement('i');n.className='cb2d-number '+kind;n.textContent=text;n.style.left=p.x+'%';n.style.top=p.y+'%';arena.appendChild(n);setTimeout(()=>n.remove(),900/combatRate(playSpeed))
 }
 function tbUseCombatPotion(button){
  const helper=window.CellboundDungeon2D;if(!run?.liveSession||!helper?.useCombatPotion)return;
@@ -457,10 +460,10 @@ function renderLive(){
   header:'THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT',title:'The Twelve Below',
   routeMarkup,partyLabel:'ACTIVE FIVE · PRIVATE INSTANCE',partyMarkup,partyRowsId:'tbPartyRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
-  theme:'twelve',battleClass:'tb-shell',partySize:party().length,speedAttribute:'data-tb-speed',closeAttribute:'data-tb-close',speedLabel:playSpeed+'×'
+  theme:'twelve',battleClass:'tb-shell',partySize:party().length,speedAttribute:'data-tb-speed',closeAttribute:'data-tb-close',speedLabel:combatLabel(playSpeed)
  });
  root.querySelector('[data-tb-close]').onclick=close;
- root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=playSpeed+'×'};
+ root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=combatLabel(playSpeed)};
  root.querySelectorAll('[data-tb-command]').forEach(b=>b.onclick=()=>tbIssueCommand(b.dataset.tbCommand,b));
  root.querySelector('[data-tb-potion]')?.addEventListener('click',e=>tbUseCombatPotion(e.currentTarget));
  window.CellboundDungeon2D?.refreshCombatPotionButton?.(root.querySelector('[data-tb-potion]'),Game?.getState?.()||undefined);
@@ -476,10 +479,10 @@ function spawnBoss(id){
  const accent=TB_VICE_COLORS[idx%TB_VICE_COLORS.length];
  root.insertAdjacentHTML('beforeend','<div class="cb2d-unit tb-unit enemy boss" data-tb-boss="'+id+'" data-x="96" data-y="'+entryY+'" style="left:96%;top:'+entryY+'%;--tb-boss-accent:'+accent+'"><i></i><span>'+esc(b.vice)+'<small class="cb2d-unit-meta">'+esc(b.name)+'</small></span><em class="cb2d-unit-hp"><i style="width:100%"></i></em></div>');
  run.activeBosses.add(id);run.liveSession?.setMechanicInterval?.(Math.max(2400,4300-run.activeBosses.size*180));layoutBosses(760);
- const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.add('open');crypt?.classList.add('opening');setTimeout(()=>{crypt?.classList.remove('opening');crypt?.classList.add('open')},650/playSpeed);tbArenaBurst(id,'open');tbAtmosphere();window.CellboundFX?.callout?.({eyebrow:'TOMB OPENED · '+b.vice,title:b.name,tone:'danger',duration:1200});feed(b.name+' rises from the tomb.','spawn');$('#tbStatus').textContent=b.name+' has entered the burial ground.'
+ const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.add('open');crypt?.classList.add('opening');setTimeout(()=>{crypt?.classList.remove('opening');crypt?.classList.add('open')},650/combatRate(playSpeed));tbArenaBurst(id,'open');tbAtmosphere();window.CellboundFX?.callout?.({eyebrow:'TOMB OPENED · '+b.vice,title:b.name,tone:'danger',duration:1200});feed(b.name+' rises from the tomb.','spawn');$('#tbStatus').textContent=b.name+' has entered the burial ground.'
 }
 function defeatBoss(id){
- run.activeBosses.delete(id);run.defeated.add(id);run.liveSession?.setMechanicInterval?.(Math.max(2400,4300-run.activeBosses.size*180));const dead=$('[data-tb-boss="'+id+'"]');if(dead){dead.classList.add('dead');setTimeout(()=>{dead.remove();layoutBosses(420)},420/playSpeed)}const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');crypt?.classList.remove('open','opening');crypt?.classList.add('defeated');tbArenaBurst(id,'death');tbAtmosphere();$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
+ run.activeBosses.delete(id);run.defeated.add(id);run.liveSession?.setMechanicInterval?.(Math.max(2400,4300-run.activeBosses.size*180));const dead=$('[data-tb-boss="'+id+'"]');if(dead){dead.classList.add('dead');setTimeout(()=>{dead.remove();layoutBosses(420)},420/combatRate(playSpeed))}const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');crypt?.classList.remove('open','opening');crypt?.classList.add('defeated');tbArenaBurst(id,'death');tbAtmosphere();$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
 }
 function setPartyHp(id,pct){
  const value=clamp(Number(pct)||0,0,100),u=$('[data-tb-unit="'+id+'"]');if(u){u.querySelector('em i').style.width=value+'%';u.classList.toggle('dead',value<=0)}const bar=$('[data-tb-side-hp="'+id+'"]'),txt=$('[data-tb-side-text="'+id+'"]');if(bar)bar.style.width=value+'%';if(txt)txt.textContent=Math.round(value)+' HP'
@@ -508,10 +511,10 @@ function queueMeterRender(){
  }),wait)
 }
 function mechanicFlash(e){
- const root=$('#tbTelegraphs');if(!root)return;const x=document.createElement('i'),type=e.payload?.mechanicType||'circle';x.className='tb-telegraph '+type;root.appendChild(x);setTimeout(()=>x.remove(),Math.max(500,Number(e.payload?.duration)||1200)/playSpeed)
+ const root=$('#tbTelegraphs');if(!root)return;const x=document.createElement('i'),type=e.payload?.mechanicType||'circle';x.className='tb-telegraph '+type;root.appendChild(x);setTimeout(()=>x.remove(),Math.max(500,Number(e.payload?.duration)||1200)/combatRate(playSpeed))
 }
 function castStart(e){
- const p=$('#tbCast'),name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#tbCastFill'),duration=Number(e.payload?.duration)||1200;if(p)p.hidden=false;if(name)name.textContent=e.ability||'Enemy Cast';if(time)time.textContent=(duration/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+Math.max(.1,duration/1000/playSpeed)+'s linear';fill.style.width='100%'}))}
+ const p=$('#tbCast'),name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#tbCastFill'),duration=Number(e.payload?.duration)||1200;if(p)p.hidden=false;if(name)name.textContent=e.ability||'Enemy Cast';if(time)time.textContent=(duration/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+Math.max(.1,duration/1000/combatRate(playSpeed))+'s linear';fill.style.width='100%'}))}
 }
 function castClear(){const name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#tbCastFill');if(name)name.textContent='—';if(time)time.textContent='—';if(fill){fill.style.transition='none';fill.style.width='0%'}}
 function tbStatusTargets(id){
@@ -527,8 +530,8 @@ function tbStatusTargets(id){
 }
 function handleEvent(e){
  run.elapsed=Math.max(run.elapsed,Number(e.timestamp)||0);
- window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tbArena'),resolve:id=>tbStatusTargets(id)?.[0]?.el||tbStatusTargets(id)?.[0]||null,speed:()=>playSpeed});
- if(window.CellboundCombatStatuses?.handle(e,{resolve:tbStatusTargets,speed:()=>playSpeed}))return;
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tbArena'),resolve:id=>tbStatusTargets(id)?.[0]?.el||tbStatusTargets(id)?.[0]||null,speed:()=>combatRate(playSpeed)});
+ if(window.CellboundCombatStatuses?.handle(e,{resolve:tbStatusTargets,speed:()=>combatRate(playSpeed)}))return;
  if(e.type==='TOMB_OPEN'){spawnBoss(e.payload?.bossId);return}
  if(e.type==='PARTY_COMMAND'){if(e.result!=='cooldown')feed('Party executes '+String(e.ability||'command').replace(/-/g,' ')+'.','good');return}
  if(e.type==='MOVEMENT_START'&&e.payload?.to){if(window.CellboundCombatFX?.ownsMovement)return;const el=String(e.source||'').startsWith('tb-')?$('[data-tb-boss="'+String(e.source).slice(3)+'"]'):$('[data-tb-unit="'+e.source+'"]');tbSetPos(el,e.payload.to.x,e.payload.to.y,e.payload.duration||420);return}
@@ -560,7 +563,7 @@ function handleEvent(e){
 function resetClockAnchor(){playBaseMs=run?.elapsed||0;playStartedAt=Date.now()}
 function startClock(){
  stopClock();resetClockAnchor();clockTimer=setInterval(()=>{
-  if(!run)return;const sim=playBaseMs+(Date.now()-playStartedAt)*playSpeed;run.elapsed=Math.max(run.elapsed,sim);
+  if(!run)return;const sim=playBaseMs+(Date.now()-playStartedAt)*combatRate(playSpeed);run.elapsed=Math.max(run.elapsed,sim);
   const nextIndex=Math.floor(sim/SPAWN_MS)+1,nextAt=nextIndex*SPAWN_MS,left=Math.max(0,nextAt-sim),el=$('#tbCountdown');if(el)el.textContent=nextIndex>=12?'ALL TOMBS OPEN':formatTime(left);
  },250)
 }
@@ -582,7 +585,7 @@ async function playTimeline(events){
   const frame=()=>{
    if(finished)return;
    if(token!==playToken||!run){finish();return}
-   simTime=Math.max(simTime,playBaseMs+Math.max(0,Date.now()-playStartedAt)*Math.max(1,Number(playSpeed)||1));
+   simTime=Math.max(simTime,playBaseMs+Math.max(0,Date.now()-playStartedAt)*combatRate(playSpeed));
    run.elapsed=Math.max(Number(run.elapsed)||0,simTime);
    const frameStarted=performance.now();let handled=0;
    while(index<timeline.length&&(Number(timeline[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){

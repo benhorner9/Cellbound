@@ -1,5 +1,8 @@
 (()=>{
 'use strict';
+const combatRate=value=>window.CellboundCombatStandard?.playbackRate?.(value)??Math.max(.25,(Number(value)||1)*.7);
+const combatLabel=value=>window.CellboundCombatStandard?.playbackLabel?.(value)||Number(combatRate(value).toFixed(2))+'×';
+
 window.CellboundCombatStandard?.register?.('quest-encounters',{kind:'quest-combat',execution:'local',ui:'shared-cb2d'});
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -794,9 +797,9 @@ function qDraw(config,finish){
   partyLabel,partyMarkup:qRows(),
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commandMarkup,
   theme:dungeonPresentation?'fractured':'quest',battleClass:'quest-cb2d-shell '+(dungeonPresentation?'dungeon-presentation ':'')+visualClass,partySize:qCombatants().length,
-  speedAttribute:'data-q-speed',closeAttribute:'data-q-close',endId:'q2dEnd'
+  speedAttribute:'data-q-speed',closeAttribute:'data-q-close',speedLabel:combatLabel(questFight?.speed||1),endId:'q2dEnd'
  });
- root.querySelector('[data-q-speed]').onclick=e=>{if(!questFight)return;questFight.speed=questFight.speed===2?1:2;e.currentTarget.textContent=questFight.speed+'×'};
+ root.querySelector('[data-q-speed]').onclick=e=>{if(!questFight)return;questFight.speed=questFight.speed===2?1:2;e.currentTarget.textContent=combatLabel(questFight.speed)};
  root.querySelectorAll('[data-q-target]').forEach(b=>b.onclick=()=>qSelectTarget(Number(b.dataset.qTarget)));qRefreshTargetControls();
  root.querySelectorAll('[data-q-command]').forEach(b=>b.onclick=()=>qIssueDungeonCommand(b.dataset.qCommand,b));
  root.querySelector('[data-q-potion]')?.addEventListener('click',e=>qUseCombatPotion(e.currentTarget));
@@ -896,8 +899,8 @@ function qStatusTargets(id){
 }
 function qRenderRebornEvent(e){
   if(!questFight||!e)return;const eventTime=(Number(questFight.eventOffset)||0)+(Number(e.timestamp)||0);questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,eventTime);
-  window.CellboundCombatFX?.combatEvent?.(e,{arena:document.querySelector('.quest-cb2d-arena'),resolve:qUnit,speed:()=>questFight?.speed||1});
-  if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>questFight?.speed||1}))return;
+  window.CellboundCombatFX?.combatEvent?.(e,{arena:document.querySelector('.quest-cb2d-arena'),resolve:qUnit,speed:()=>combatRate(questFight?.speed||1)});
+  if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>combatRate(questFight?.speed||1)}))return;
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
   switch(e.type){
     case'COMBAT_START':{const arena=document.querySelector('.quest-cb2d-arena');window.CellboundCombatFX?.mount?.(arena);if(String(questFight?.presentationKind||'')==='dungeon')window.CellboundCombatFX?.boss?.(arena,questFight?.title||'Boss');qStatus('Combat underway');qLog('Combat begins.');break;}
@@ -966,7 +969,7 @@ async function qPlayReborn(result,tok){
   const frame=now=>{
    if(finished)return;if(tok!==encounterToken||!questFight){finish(false);return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
-   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(questFight.speed)||1);lastWall=now;
+   const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(questFight.speed);lastWall=now;
    const step=session.advance(delta);questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,Number(step.timeMs)||0);
    if(questFight.presentationKind==='dungeon')window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-q-command]','qCommand');
    if(step.events?.length)renderEvents(step.events);
@@ -1097,7 +1100,7 @@ async function runInteractiveQuest2DFight(config){
         const frame=async now=>{
           if(settled||tok!==encounterToken||!questFight){finish(false);return}
           if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
-          const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(questFight.speed)||1);lastWall=now;
+          const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(questFight.speed);lastWall=now;
           const step=session.advance(delta);elapsed=Number(step.timeMs)||elapsed;questFight.elapsedMs=elapsed;
           if(step.events?.length)renderEvents(step.events);
           if(step.finished){questFight.result=step.result||session.snapshot?.();await showEnd(false);return}
