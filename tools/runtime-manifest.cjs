@@ -12,7 +12,8 @@ const groups=Object.freeze({
   "index.html",
   "styles.css",
   "auth.js",
-  "guild.html"
+  "guild.html",
+  "highscores.html"
 ]),
   core:Object.freeze([
   "guild.css",
@@ -23,6 +24,7 @@ const groups=Object.freeze({
   "foundations.css",
   "presentation-fx-v1.css",
   "economy-v2.css",
+  "highscores-v1.css",
   "trading-post-v3.css",
   "social-v3.css",
   "pvp-v1.css",
@@ -83,6 +85,7 @@ const groups=Object.freeze({
   "character-foundations-patch.js",
   "blacksmith-forge-v1.js",
   "economy-v2.js",
+  "highscores-v1.js",
   "trading-post-v3.js",
   "social-v3.js",
   "pvp-v1.js",

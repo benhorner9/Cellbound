@@ -570,3 +570,8 @@ button,input{font:inherit}
 @media(prefers-reduced-motion:reduce){
   .enter-button:after{display:none}
 }
+/* Public leaderboard link from the login / gate page. */
+.public-highscores-entrance{margin:17px 0 0!important}
+.public-highscores-entrance a{display:inline-flex;gap:11px;align-items:center;padding:10px 15px;border:1px solid rgba(204,162,99,.55);border-radius:5px;color:#f1cf9e!important;background:rgba(10,18,20,.72);font:700 12px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-decoration:none}
+.public-highscores-entrance a:hover{border-color:#f5d397;background:#25302e}
+.public-highscores-entrance a:focus-visible{outline:3px solid #f5d397;outline-offset:3px}

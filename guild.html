@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="./combat-polish-v3.css?v=1">
 <link rel="stylesheet" href="./combat-physical-v4.css?v=9">
 <link rel="stylesheet" href="./economy-v2.css?v=9">
+<link rel="stylesheet" href="./highscores-v1.css?v=1">
 <link rel="stylesheet" href="./trading-post-v3.css?v=3">
 <link rel="stylesheet" href="./social-v3.css?v=5">
 <link rel="stylesheet" href="./pvp-v1.css?v=1">
@@ -101,6 +102,7 @@
 
       <div class="nav-section-label">SOCIAL</div>
       <button class="nav-btn" data-hub="social" data-view="chat"><span>◌</span><b>Social</b><em id="chatNavBadge"></em></button>
+      <button class="nav-btn" data-hub="social" data-view="highscores"><span>♛</span><b>High Scores</b></button>
       <button class="nav-btn" data-hub="support" data-view="support"><span>!</span><b>Beta Support</b></button>
 
       <button id="adminNav" class="nav-btn" data-hub="admin" data-view="admin" hidden><span>⚙</span><b>Admin</b><em>DEV</em></button>
@@ -497,6 +499,11 @@
       </div>
     </section>
 
+    <section id="highscores" class="view">
+      <div class="section-intro"><div><small>THE GUILDS OF ZELTIRA</small><h2>High Scores</h2><p>Profession mastery rankings across every guild. Higher skill levels rank first; XP breaks ties within a level.</p></div><a class="ghost-btn" href="./highscores.html" target="_blank" rel="noopener">PUBLIC HIGH SCORES ↗</a></div>
+      <div id="guildHighScores" aria-label="Guild High Scores">Open High Scores to see the leading artisans.</div>
+    </section>
+
     <section id="support" class="view">
       <div class="section-intro"><div><small>FOUNDING BETA</small><h2>Beta Support</h2><p>Found something wrong? Send it straight to the Cellbound beta queue with the build and screen details attached automatically.</p></div><div class="content-status"><span>Build</span><b id="betaSupportBuild">Checking…</b></div></div>
       <div class="beta-support-grid">
@@ -695,6 +702,7 @@
 <script src="./combat-physical-v4.js?v=14"></script>
 <script src="./combat-cinematic-v1.js?v=2"></script>
 <script src="./guild-v4.js?v=88"></script>
+<script src="./highscores-v1.js?v=1"></script>
 <script src="./analytics-v1.js?v=2"></script>
 <script src="./beta-ops-v1.js?v=2"></script>
 <script src="./pvp-ruleset-v1.js?v=1"></script>

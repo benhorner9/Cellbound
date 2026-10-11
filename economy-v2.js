@@ -92,7 +92,7 @@ async function claimProceeds(){
 function professionLevelUp(p,xp){
   if(!p)return; p.xp=(Number(p.xp)||0)+Math.max(0,xp);
   while(p.level<100){const need=P.skillThreshold(p.level);if(p.xp<need)break;p.xp-=need;p.level++;}
-  if(p.level>=100){p.level=100;p.xp=0;}
+  if(p.level>=100){p.level=100;/* At max skill, retain earned XP so high-score ties remain meaningful. */}
 }
 function canCraft(recipe,prof){
   if(!prof||prof.level<recipe.level)return false;

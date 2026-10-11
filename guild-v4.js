@@ -512,7 +512,7 @@ const WORKSPACES={
   adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['world','Activities'],['raids','Raids']]},
   market:{label:'Market',views:[['trading','Trading Post']]},
   pvp:{label:'Combat',views:[['pvp','PvP']]},
-  social:{label:'Social',views:[['chat','Social']]},
+  social:{label:'Social',views:[['chat','Social'],['highscores','High Scores']]},
   support:{label:'Support',views:[['support','Beta Support']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };
@@ -532,6 +532,7 @@ function switchView(id){
   if(id==='party')renderParty();
   if(id==='bank')renderBank();
   if(id==='professions')window.CellboundEconomy?.renderProfessions?.();
+  if(id==='highscores')window.CellboundHighScores?.mount?.('#guildHighScores');
   if(id==='trading')window.CellboundEconomy?.renderTrading?.();
   if(id==='content'){safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.())}
   if(id==='raids')window.CellboundManorRaid?.refresh?.();
