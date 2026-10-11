@@ -58,7 +58,6 @@ const groups=Object.freeze({
   "ui-readability-v2.css",
   "ui-polish-v3.css",
   "home-v2.css",
-  "immersive-hub-v1.css",
   "roster-v2.css",
   "character-portraits-v1.css",
   "bank-v2.css",
