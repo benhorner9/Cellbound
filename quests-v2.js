@@ -289,8 +289,8 @@ const QUEST_COMIC_STORY_ART={
  'Bram’s Professional Opinion':[
   './assets/comics/story-composites-2026/bram-hollow-report.svg',
   './assets/comics/story-composites-2026/bram-underground-warning.svg',
-  './assets/comics/story-composites-2026/bram-hollow-report.svg',
-  './assets/comics/story-composites-2026/bram-underground-warning.svg'
+  './assets/comics/story-composites-2026/bram-council-report.svg',
+  './assets/comics/story-composites-2026/bram-final-warning.svg'
  ]
 };
 function questComicArtSet(title,speaker){

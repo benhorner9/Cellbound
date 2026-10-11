@@ -20,6 +20,7 @@ for(const scene of expected){
  const end=scene.script.indexOf(']',at);
  const entries=[...scene.script.slice(at,end+1).matchAll(/'([^']+\.svg)'/g)].map(m=>m[1]);
  assert.equal(entries.length,scene.count,'Art panel count incorrect: '+scene.title);
+ if(scene.title==='Bram’s Professional Opinion')assert.equal(new Set(entries).size,4,'Bram needs four different illustrated compositions');
  for(const asset of entries){
   assert(asset.startsWith('./assets/comics/story-composites-2026/'),'Old dungeon or boss art still in '+scene.title);
   const filename=path.join(root,asset.slice(2));
@@ -38,7 +39,7 @@ for(const scene of expected){
   all.add(asset);
  }
 }
-assert.equal(all.size,8,'All eight new compositions must appear in gameplay');
+assert.equal(all.size,10,'All ten scene compositions must appear in gameplay');
 assert(fourfold.includes('FOURFOLD_STORY_ART.journey:FOURFOLD_STORY_ART.box'),'Fourfold must use its own story art');
 assert(inspector.includes("const artKey=title.toLowerCase().includes('journey through the ages')?'journey':'box';"),'Comic inspector must read Fourfold art definitions');
-console.log('Comic artwork block 5: Bram and two Fourfold strips, 10/10 illustrated panels; eight packaged 16:9 art compositions validated.');
+console.log('Comic artwork block 5: Bram and two Fourfold strips, 10/10 illustrated panels; ten packaged 16:9 art compositions validated.');
