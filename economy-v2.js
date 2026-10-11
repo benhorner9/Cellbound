@@ -26,6 +26,7 @@ function normalise(){
     craftProject.quantity=Math.max(1,Number(craftProject.quantity)||1);
     craftProject.totalMs=Math.max(1000,Number(craftProject.totalMs)||1000);
     craftProject.remainingMs=Math.max(0,Number(craftProject.remainingMs)||0);
+     if(craftProject.forge)craftProject.forgeHeatPct=Math.max(25,Math.min(100,Number(craftProject.forgeHeatPct)||100));
     craftProject.reservedInputs=craftProject.reservedInputs&&typeof craftProject.reservedInputs==='object'?craftProject.reservedInputs:{};
     craftProject.paused=true;
   }else if(craftProject&&s.workshopCraftProject!==craftProject)s.workshopCraftProject=craftProject;
@@ -191,7 +192,8 @@ function maxCraftable(recipe,prof){
   if(!prof||prof.level<recipe.level)return 0;
   if(recipe.requiresDiscovery&&!state().discoveredRecipes.includes(recipe.id))return 0;
   const caps=Object.entries(recipe.inputs).map(([k,q])=>Math.floor((Number(state().materials[k])||0)/Math.max(1,Number(q)||1)));
-  return Math.max(0,Math.min(99,caps.length?Math.min(...caps):99));
+  const limit=prof.name==='Blacksmithing'?5:99;
+   return Math.max(0,Math.min(limit,caps.length?Math.min(...caps):limit));
 }
 function craftSecondsPerUnit(recipe){
   const band=Math.floor(Math.max(0,(Number(recipe.level)||1)-1)/20);
@@ -237,7 +239,7 @@ async function beginCraft(recipeId){
   const max=maxCraftable(recipe,prof),quantity=craftQuantity(recipe.id,max);if(max<1||quantity>max)return;
   const forging=prof.name==='Blacksmithing'&&Boolean(Forge?.create);
   const totalMs=craftBatchDurationMs(recipe,quantity,prof.name),reservedInputs=reserveCraftInputs(recipe,quantity);
-  setCraftProject({version:forging?3:2,charId:c.id,slot:selectedSlot,profession:prof.name,recipeId:recipe.id,quantity,totalMs,remainingMs:totalMs,reservedInputs,forge:forging?Forge.create():null,startedAt:new Date().toISOString(),paused:!craftFocusActive()});
+  setCraftProject({version:forging?3:2,charId:c.id,slot:selectedSlot,profession:prof.name,recipeId:recipe.id,quantity,totalMs,remainingMs:totalMs,reservedInputs,forge:forging?Forge.create():null,forgeHeatPct:forging?100:null,forgeReheats:0,startedAt:new Date().toISOString(),paused:!craftFocusActive()});
   forgeFeedback=null;if(forgeFeedbackTimer){clearTimeout(forgeFeedbackTimer);forgeFeedbackTimer=null}
   craftLastTick=0;craftSaveAt=0;lastCraftMessage='';
   s.activity.push(c.name+' started a '+recipe.name+' work order ×'+quantity+'.');
@@ -255,6 +257,7 @@ async function finishTimedCraft(){
   if(craftCompleting||!craftProject)return;
   // An active forge must finish its three skill actions before any reward.
   if(craftProject.forge&&!Forge?.isComplete?.(craftProject.forge))return;
+  if(craftProject.forge&&craftProject.remainingMs>0&&Forge?.needsReheat?.(craftProject.forgeHeatPct))return;
   craftCompleting=true;
   const project=craftProject,s=state(),c=s.roster.find(x=>x.id===project.charId),prof=c?.professions?.[project.slot],def=professionDef(project.profession),recipe=def?.recipes.find(r=>r.id===project.recipeId);
   if(!c||!prof||!recipe){
@@ -285,7 +288,11 @@ function updateCraftTimerUI(){
   const remaining=$('[data-craft-remaining]'),fill=$('[data-craft-progress]'),status=$('[data-craft-status]'),pct=Math.max(0,Math.min(100,(1-(craftProject.remainingMs/Math.max(1,craftProject.totalMs)))*100));
   if(remaining)remaining.textContent=craftTime(craftProject.remainingMs);
   if(fill)fill.style.width=pct.toFixed(2)+'%';
-  if(status)status.textContent=!craftFocusActive()?'PAUSED · RETURN TO PROFESSIONS':craftProject.forge&&!Forge?.isComplete?.(craftProject.forge)&&craftProject.remainingMs<=0?'AWAITING YOUR FORGE ACTIONS':'WORKSHOP ACTIVE';
+  if(status)status.textContent=!craftFocusActive()?'PAUSED · RETURN TO PROFESSIONS':craftProject.forge&&craftProject.remainingMs>0&&Forge?.needsReheat?.(craftProject.forgeHeatPct)?'FORGE COLD · REHEAT TO CONTINUE':craftProject.forge&&!Forge?.isComplete?.(craftProject.forge)&&craftProject.remainingMs<=0?'AWAITING YOUR FORGE ACTIONS':'WORKSHOP ACTIVE';
+  const heat=$('[data-forge-heat]'),heatFill=$('[data-forge-heat-fill]');
+  const heatPct=Math.max(0,Math.min(100,Number(craftProject.forgeHeatPct)||0));
+  if(heat)heat.textContent=Math.round(heatPct)+'%';
+  if(heatFill)heatFill.style.width=heatPct.toFixed(1)+'%';
 }
 function pauseCraftTimer(){
   if(!craftProject)return;
@@ -298,7 +305,13 @@ function tickCraft(){
   if(!craftFocusActive()){pauseCraftTimer();return}
   const now=Date.now();
   if(!craftLastTick){craftLastTick=now;craftProject.paused=false;updateCraftTimerUI();return}
-  const delta=Math.max(0,now-craftLastTick);craftLastTick=now;craftProject.paused=false;craftProject.remainingMs=Math.max(0,(Number(craftProject.remainingMs)||0)-delta);
+  const delta=Math.max(0,now-craftLastTick);craftLastTick=now;craftProject.paused=false;
+  if(craftProject.forge&&Forge?.advance&&craftProject.remainingMs>0){
+    const wasCold=Forge.needsReheat(craftProject.forgeHeatPct),progress=Forge.advance(craftProject.forgeHeatPct,delta);
+    craftProject.forgeHeatPct=progress.heatPct;
+    craftProject.remainingMs=Math.max(0,craftProject.remainingMs-progress.activeMs);
+    if(!wasCold&&progress.needsReheat&&craftProject.remainingMs>0)renderProfessions();
+  }else craftProject.remainingMs=Math.max(0,(Number(craftProject.remainingMs)||0)-delta);
   if(now-craftSaveAt>5000){craftSaveAt=now;Game?.save?.()}
   updateCraftTimerUI();
   if(craftProject.remainingMs<=0&&(!craftProject.forge||Forge?.isComplete?.(craftProject.forge)))finishTimedCraft()
@@ -317,7 +330,7 @@ function forgeArtisanMarkup(character,prof){
  const model=character&&CP?.paperDollHTML?.(character,{size:'creator',label:label+' working at the forge'});
  const fallback=character&&CP?.portraitHTML?.(character,{size:'hero',label:label+' blacksmith portrait'});
  return '<div class="forge-artisan" data-forge-artisan-id="'+forgeEscape(character?.id||'')+'">'+
-  '<div class="forge-artisan-model">'+(model||fallback||'<span class="forge-artisan-silhouette" aria-hidden="true">⚒</span>')+'</div>'+
+  '<div class="forge-artisan-model">'+(model||fallback||'<span class="forge-artisan-silhouette" aria-hidden="true">⚒</span>')+'<i class="forge-artisan-tool" aria-hidden="true"></i></div>'+
   '<span class="forge-artisan-shadow"></span>'+
   '</div><div class="forge-artisan-identity"><b>'+forgeEscape(label)+'</b><small>'+forgeEscape(character?.race||'Adventurer')+' · '+forgeEscape(character?.class||'Artisan')+' · BLACKSMITH '+Math.max(1,Math.min(100,Number(prof?.level)||1))+'</small></div>';
 }
@@ -331,6 +344,9 @@ function forgeReactionMarkup(active){
 function forgeProjectMarkup(prof){
  const f=craftProject?.forge;if(!f||!Forge)return'';
  const stages=Forge.STAGES,complete=Forge.isComplete(f),stage=stages[Math.min(2,f.stage)];
+  const heatPct=Math.max(Forge.HEAT_THRESHOLD||25,Math.min(100,Number(craftProject.forgeHeatPct)||100));
+  const reheat=complete&&craftProject.remainingMs>0&&Forge.needsReheat(heatPct);
+  const challenge=reheat?stages[0]:stage;
  const gaugeManual=forgeManual?' manual':'';
  const quality=Forge.quality(f);
  const smith=state()?.roster?.find(c=>String(c.id)===String(craftProject.charId));
@@ -340,22 +356,26 @@ function forgeProjectMarkup(prof){
   const result=f.results[i],state=result?'done':i===f.stage?'current':'upcoming';
   return '<div class="forge-phase '+state+'"><span class="forge-step-icon">'+step.icon+'</span><span><small>0'+(i+1)+'</small><b>'+step.label+'</b></span><em>'+(result?result.label+' · '+result.points+'%':state==='current'?'ACTIVE':'UP NEXT')+'</em></div>'
  }).join('');
- return '<section class="forge-workshop'+gaugeManual+'" data-forge-stage="'+f.stage+'" aria-label="Blacksmithing forge mini game">'+
-  '<div class="forge-scene'+reactionClass+'" role="group" aria-label="Blacksmith forge scene" data-forge-effect="'+(reaction?.key||'idle')+'"><div class="forge-heat-glow"></div><div class="forge-furnace"></div>'+forgeArtisanMarkup(smith,prof)+'<div class="forge-anvil"><i class="forge-anvil-horn"></i><i class="forge-hot-steel"></i><i class="forge-anvil-leg"></i></div><div class="forge-sparks"></div>'+forgeReactionMarkup(reaction)+'<span class="forge-scene-label">THE ZELTIRAN FORGE</span></div>'+
-  '<div class="forge-challenge"><div class="forge-challenge-head"><div><small>ARTISAN CHALLENGE · BLACKSMITHING</small><h4>'+(complete?'FORGING COMPLETE':stage.label)+'</h4><p>'+(complete?'Your workmanship determines the quality of all '+Math.max(1,Number(craftProject.quantity)||1)+' items. Complete the focused workshop time to claim them.':stage.instruction)+'</p></div><span class="forge-result" data-forge-quality>'+(complete?'QUALITY '+quality+'%':f.stage+' / 3 FINISHED')+'</span></div>'+
+ return '<section class="forge-workshop'+gaugeManual+'" data-forge-stage="'+f.stage+'" data-forge-reheat="'+(reheat?'true':'false')+'" aria-label="Blacksmithing forge mini game">'+
+  '<div class="forge-scene'+reactionClass+(complete&&!reheat?' is-working':'')+'" role="group" aria-label="Blacksmith forge scene" data-forge-effect="'+(reaction?.key||'idle')+'"><div class="forge-heat-glow"></div><div class="forge-furnace"></div>'+forgeArtisanMarkup(smith,prof)+'<div class="forge-anvil"><i class="forge-anvil-horn"></i><i class="forge-hot-steel"></i><i class="forge-anvil-leg"></i></div><div class="forge-sparks"></div>'+forgeReactionMarkup(reaction)+'<span class="forge-scene-label">THE ZELTIRAN FORGE</span></div>'+
+  '<div class="forge-challenge"><div class="forge-challenge-head"><div><small>ARTISAN CHALLENGE · BLACKSMITHING</small><h4>'+(reheat?'REHEAT THE FURNACE':complete?'FORGING COMPLETE':stage.label)+'</h4><p>'+(reheat?'The forge has cooled. Set the heat again to restart production; your original item quality is safe.':complete?'Your workmanship determines the quality of all '+Math.max(1,Number(craftProject.quantity)||1)+' items. Keep the furnace hot while the batch finishes.':stage.instruction)+'</p></div><span class="forge-result" data-forge-quality>'+(complete?'QUALITY '+quality+'%':f.stage+' / 3 FINISHED')+'</span></div>'+
+  '<div class="forge-heat-status"><span>FURNACE HEAT <b data-forge-heat>'+Math.round(heatPct)+'%</b></span><div class="forge-heat-track"><i data-forge-heat-fill style="width:'+heatPct.toFixed(1)+'%"></i></div><small>'+(reheat?'COLD · STOKE NOW':'Production stops at '+Forge.HEAT_THRESHOLD+'% · Reheats '+(Number(craftProject.forgeReheats)||0))+'</small></div>'+
   '<div class="forge-stages">'+attempts+'</div>'+
-  (complete?
+  (complete&&!reheat?
     '<div class="forge-complete" role="status"><b>'+((quality>=90)?'MASTERWORK':quality>=65?'FINE FINISH':'STANDARD FINISH')+' · '+quality+'%</b><small>'+(craftProject.remainingMs>0?'Cooling and finishing time: '+craftTime(craftProject.remainingMs):'Finalising your work order…')+'</small></div>':
-    '<div class="forge-gauge"><div class="forge-gauge-legend"><span>ROUGH</span><strong>PRECISION WINDOW</strong><span>ROUGH</span></div><div class="forge-timing-track" data-forge-track style="--forge-target:'+stage.target+'%;--forge-period:'+stage.period+'ms"><span class="forge-target-band"></span><span class="forge-target-core"></span><i class="forge-needle" data-forge-needle aria-hidden="true"></i></div>'+
-    '<label class="forge-manual-control">Position the marker<input type="range" min="0" max="100" value="'+stage.target+'" step="1" data-forge-position aria-label="Position precision marker"></label>'+
+    '<div class="forge-gauge"><div class="forge-gauge-legend"><span>ROUGH</span><strong>PRECISION WINDOW</strong><span>ROUGH</span></div><div class="forge-timing-track" data-forge-track style="--forge-target:'+challenge.target+'%;--forge-period:'+challenge.period+'ms"><span class="forge-target-band"></span><span class="forge-target-core"></span><i class="forge-needle" data-forge-needle aria-hidden="true"></i></div>'+
+    '<label class="forge-manual-control">Position the marker<input type="range" min="0" max="100" value="'+challenge.target+'" step="1" data-forge-position aria-label="Position precision marker"></label>'+
     '<div class="forge-instructions"><span>Watch the glowing marker sweep across the bar. Tap when it meets the bright centre.</span><button type="button" data-forge-toggle aria-pressed="'+(forgeManual?'true':'false')+'">'+(forgeManual?'USE TIMING MODE':'USE PRECISION SLIDER')+'</button></div>'+
-    '<button type="button" class="forge-strike" data-forge-strike '+(!craftFocusActive()?'disabled':'')+'>'+stage.icon+' '+stage.action+' <span>→</span></button></div>')+
+    '<button type="button" class="forge-strike" data-forge-strike '+(!craftFocusActive()?'disabled':'')+'>'+challenge.icon+' '+(reheat?'STOKE THE FURNACE':stage.action)+' <span>→</span></button></div>')+
   '</div></section>'
 }
 async function strikeForge(){
  const project=craftProject;
- if(!project?.forge||!Forge||!craftFocusActive()||Forge.isComplete(project.forge)||craftCompleting)return;
- const stage=Forge.STAGES[project.forge.stage],track=$('[data-forge-track]'),needle=$('[data-forge-needle]');
+ if(!project?.forge||!Forge||!craftFocusActive()||craftCompleting)return;
+  const completed=Forge.isComplete(project.forge);
+  const reheating=completed&&project.remainingMs>0&&Forge.needsReheat(project.forgeHeatPct);
+  if(completed&&!reheating)return;
+ const stage=reheating?Forge.STAGES[0]:Forge.STAGES[project.forge.stage],track=$('[data-forge-track]'),needle=$('[data-forge-needle]');
  if(!stage||!track||!needle)return;
  let position;
  if(forgeManual)position=Number($('[data-forge-position]')?.value);
@@ -366,10 +386,11 @@ async function strikeForge(){
  }
  const character=state()?.roster?.find(x=>x.id===project.charId),prof=character?.professions?.[project.slot];
  if(prof?.name!=='Blacksmithing')return;
- const next=Forge.record(project.forge,position,prof.level);
+ const next=reheating?Forge.reheat(position,prof.level):Forge.record(project.forge,position,prof.level);
  if(!next)return;
- project.forge=next;
- const result=next.results.at(-1);
+ if(reheating){project.forgeHeatPct=next.heatPct;project.forgeReheats=(Number(project.forgeReheats)||0)+1;craftLastTick=Date.now()}
+  else project.forge=next;
+ const result=reheating?{...next,key:'heat',label:'REHEATED'}:next.results.at(-1);
  forgeFeedback={project,key:result.key,points:result.points,label:result.label,grade:result.points>=90?'perfect':result.points>=65?'fine':'standard'};
  if(forgeFeedbackTimer)clearTimeout(forgeFeedbackTimer);
  // Show the action on the real character immediately, without delaying combat or saving.
@@ -381,11 +402,11 @@ async function strikeForge(){
    const scene=document.querySelector('#professionWorkshop .forge-scene.is-reacting');
    scene?.classList.remove('is-reacting','forge-action-heat','forge-action-strike','forge-action-temper','forge-grade-perfect','forge-grade-fine','forge-grade-standard');
    scene?.querySelector('.forge-action-popup')?.remove();
- },950);
+ },1400);
  // Persist the current mini-game progress before the next tap/refresh.
  try{await Game.persistState()}catch(err){console.warn('Forge progress cloud save failed',err)}
 
- if(next.stage===3&&project.remainingMs<=0)finishTimedCraft()
+ if(!reheating&&next.stage===3&&project.remainingMs<=0)finishTimedCraft()
 }
 
 function craftProjectMarkup(c,prof,recipe){
@@ -393,7 +414,7 @@ function craftProjectMarkup(c,prof,recipe){
   const quantity=Math.max(1,Number(craftProject.quantity)||1),outQty=(Number(recipe.output.quantity)||1)*quantity,pct=Math.max(0,Math.min(100,(1-(craftProject.remainingMs/Math.max(1,craftProject.totalMs)))*100));
   return '<section class="craft-project timed-craft-project">'+
     '<header><div><small>ACTIVE WORK ORDER · BATCH ×'+quantity+'</small><h3>'+recipe.name+'</h3><p>Focused crafting only. The timer advances while Professions is open and the app is active; leaving the workshop pauses it.</p></div><button type="button" class="craft-abandon" data-craft-abandon>CANCEL ORDER</button></header>'+
-    '<div class="craft-timer-head"><span><b data-craft-status>'+(craftFocusActive()?'WORKSHOP ACTIVE':'PAUSED · RETURN TO PROFESSIONS')+'</b><small>OUTPUT ×'+outQty+' · '+craftSecondsPerUnit(recipe)+'s PER CRAFT</small></span><strong data-craft-remaining>'+craftTime(craftProject.remainingMs)+'</strong></div>'+
+    '<div class="craft-timer-head"><span><b data-craft-status>'+(craftFocusActive()?'WORKSHOP ACTIVE':'PAUSED · RETURN TO PROFESSIONS')+'</b><small>OUTPUT ×'+outQty+' · '+(craftProject.forge?'22':craftSecondsPerUnit(recipe))+'s PER CRAFT</small></span><strong data-craft-remaining>'+craftTime(craftProject.remainingMs)+'</strong></div>'+
     '<div class="craft-timer-track"><i data-craft-progress style="width:'+pct.toFixed(2)+'%"></i></div>'+ 
     (craftProject.forge?forgeProjectMarkup(prof):'')+
     '<div class="craft-batch-rules"><span><b>FOCUS REQUIRED</b><small>Switching to another game screen pauses progress.</small></span><span><b>REAGENTS RESERVED</b><small>Materials are held for the whole batch and returned if cancelled.</small></span><span><b>NO OFFLINE PROGRESS</b><small>Closing or backgrounding the app pauses the timer.</small></span></div>'+
@@ -464,7 +485,7 @@ function renderProfessions(){
     const visible=def.recipes.filter(r=>recipeMatchesFilter(r,prof,s));
     const recipes=visible.map(r=>recipeCardMarkup(r,prof,s)).join('');
     const activeRecipe=craftProject&&craftProject.charId===c.id&&craftProject.slot===selectedSlot?def.recipes.find(r=>r.id===craftProject.recipeId):null;
-    body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make and how many.</h3></div><p>${prof.name==='Blacksmithing'?'Forge a batch in one work order. Your three precise actions set the batch quality and the focused crafting time increases by the number of items (5 items take 5 times as long).':'Batch crafting uses focused workshop time. Leave Professions or background the app and the timer pauses until you return.'}</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
+    body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make and how many.</h3></div><p>${prof.name==='Blacksmithing'?'Craft up to five at once. Complete three precision actions, then stoke the furnace whenever its heat falls to 25% to keep production moving.':'Batch crafting uses focused workshop time. Leave Professions or background the app and the timer pauses until you return.'}</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
   }
   work.innerHTML=`<div class="profession-slot-grid">${slotHtml}</div>${body}`;
   work.querySelectorAll('[data-prof-slot]').forEach(b=>b.onclick=()=>{if(craftProject)return;selectedSlot=Number(b.dataset.profSlot);lastCraftMessage='';renderProfessions();});

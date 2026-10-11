@@ -1125,3 +1125,47 @@
  .forge-scene.is-reacting .forge-fx-steam{display:none!important}
  .forge-action-popup{opacity:1!important}
 }
+
+
+/* Job 12C — forge temperature, repeated stoking and active worker motion. */
+.forge-heat-status{margin:14px 0 1px;display:flex;align-items:center;flex-wrap:wrap;gap:9px 12px;color:#dca976;font:800 11px/1.3 system-ui,sans-serif;letter-spacing:.07em}
+.forge-heat-status b{font-size:15px;color:#ffddaa}
+.forge-heat-status small{flex-basis:100%;font:600 10px/1.25 system-ui,sans-serif;color:#bc9b7b;letter-spacing:0}
+.forge-heat-track{flex:1 1 170px;height:13px;border:1px solid #95623f;border-radius:9px;overflow:hidden;background:linear-gradient(90deg,#35252b,#201e23);box-shadow:inset 0 2px 5px #090809}
+.forge-heat-track i{display:block;height:100%;min-width:0;border-radius:9px;background:linear-gradient(90deg,#b34727,#f09b40 65%,#ffda8a);box-shadow:0 0 12px #e47a39;transition:width .25s linear}
+.forge-workshop[data-forge-reheat="true"] .forge-heat-status b,.forge-workshop[data-forge-reheat="true"] .forge-heat-status small{color:#ff9380}
+.forge-workshop[data-forge-reheat="true"] .forge-heat-track{border-color:#c25947;box-shadow:0 0 12px rgba(234,67,47,.22)}
+.forge-workshop[data-forge-reheat="true"] .forge-strike{box-shadow:0 0 18px rgba(255,125,65,.25);animation:forgeStokePrompt 1.35s ease-in-out infinite alternate}
+.forge-artisan-model{transform-origin:50% 83%}
+.forge-artisan-tool{position:absolute;z-index:5;left:90%;top:34%;width:8px;height:66px;border:1px solid #493123;border-radius:3px;background:linear-gradient(90deg,#322320,#bd7b47,#513223);transform-origin:50% 87%;transform:rotate(-50deg);opacity:0;filter:drop-shadow(0 3px 5px #000);pointer-events:none}
+.forge-artisan-tool:before{content:"";position:absolute;width:33px;height:17px;top:-10px;left:-13px;border:1px solid #252d2b;border-radius:3px;background:linear-gradient(180deg,#d9d7ca,#646d69,#293333)}
+.forge-scene.is-reacting.forge-action-heat .forge-artisan{animation:forgeSmithLeanHeat 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-heat .forge-artisan-model{animation:forgeSmithReach 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-heat .forge-artisan-tool{opacity:1;animation:forgeStokeTool 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-artisan{animation:forgeSmithSwing 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-artisan-model{animation:forgeSmithHammerMotion 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-artisan-tool{opacity:1;animation:forgeSmithHammer 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-temper .forge-artisan{animation:forgeSmithDip 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-temper .forge-artisan-model{animation:forgeSmithQuench 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-temper .forge-artisan-tool{opacity:1;animation:forgeSmithTongs 1.28s ease-in-out both}
+.forge-scene.is-working .forge-artisan{animation:forgeArtisanLabour 2.7s ease-in-out infinite}
+.forge-scene.is-working .forge-artisan-tool{animation:forgeLabourHammer 2.7s ease-in-out infinite}
+@keyframes forgeStokePrompt{from{filter:brightness(1)}to{filter:brightness(1.23)}}
+@keyframes forgeSmithLeanHeat{0%,100%{translate:0 0;rotate:0deg}34%,58%{translate:-9px 1px;rotate:-9deg}}
+@keyframes forgeSmithReach{0%,100%{transform:rotate(0deg)}36%,63%{transform:rotate(-12deg) translateX(-6px)}}
+@keyframes forgeStokeTool{0%,100%{opacity:0;transform:rotate(-60deg)}16%,70%{opacity:1}35%,58%{transform:rotate(-135deg) translateY(-7px)}}
+@keyframes forgeSmithSwing{0%,100%{translate:0 0;rotate:0deg}18%{rotate:-7deg;translate:-5px -1px}48%{rotate:12deg;translate:8px 5px}64%{rotate:-3deg;translate:0 0}}
+@keyframes forgeSmithHammerMotion{0%,100%{transform:rotate(0)}28%{transform:rotate(-9deg)}52%{transform:rotate(9deg)}}
+@keyframes forgeSmithHammer{0%{opacity:0;transform:rotate(-60deg)}12%,68%{opacity:1}27%{transform:rotate(-100deg) translateY(-5px)}51%{transform:rotate(75deg) translateY(14px)}100%{opacity:0;transform:rotate(75deg)}}
+@keyframes forgeSmithDip{0%,100%{rotate:0deg;translate:0 0}40%,68%{rotate:8deg;translate:7px 5px}}
+@keyframes forgeSmithQuench{0%,100%{transform:rotate(0)}45%,69%{transform:rotate(10deg) translateY(7px)}}
+@keyframes forgeSmithTongs{0%{opacity:0;transform:rotate(-40deg)}15%,80%{opacity:1}45%,70%{transform:rotate(46deg) translateY(20px)}100%{opacity:0;transform:rotate(46deg)}}
+@keyframes forgeArtisanLabour{0%,100%{translate:0 0;rotate:0}28%{translate:0 -3px;rotate:-2deg}56%{translate:1px 3px;rotate:4deg}}
+@keyframes forgeLabourHammer{0%,8%,100%{opacity:0;transform:rotate(-75deg)}20%,60%{opacity:.9}34%{transform:rotate(38deg)}68%{opacity:0;transform:rotate(38deg)}}
+@media(prefers-reduced-motion:reduce){
+ .forge-scene.is-working .forge-artisan,.forge-scene.is-working .forge-artisan-tool,
+ .forge-scene.is-reacting .forge-artisan-model,.forge-scene.is-reacting .forge-artisan-tool,
+ .forge-workshop[data-forge-reheat="true"] .forge-strike{animation:none!important}
+ .forge-artisan-tool{display:none!important}
+ .forge-heat-track i{transition:none}
+}

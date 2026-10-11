@@ -20,8 +20,24 @@ let rough=F.create();for(const step of F.STAGES)rough=F.record(rough,step.target
 assert.equal(F.quality(rough),35,'poor timing still yields basic quality');
 let near=F.create();for(const step of F.STAGES)near=F.record(near,step.target+11,1);
 assert(F.quality(near)>=65&&F.quality(near)<90,'fine quality is distinct');
+// Production consumes heat but never reduces workshop time past the 25% threshold.
+const cool=F.advance(100,10000);
+assert(Math.abs(cool.heatPct-81)<.01);
+assert.equal(cool.activeMs,10000);
+const cold=F.advance(100,120000);
+assert.equal(cold.heatPct,25);
+assert.equal(cold.needsReheat,true);
+assert(cold.activeMs>39000&&cold.activeMs<40000,'cold forge must stall focused time');
+assert.equal(F.advance(25,2000).activeMs,0,'cold forge makes no work progress');
+assert.equal(F.reheat(F.STAGES[0].target,50).heatPct,100,'mini-game success restores full heat');
+assert.equal(F.reheat(NaN,50),null,'invalid heating markers are rejected');
+assert.equal(F.quality(f),100,'reheating never changes finished batch quality');
 const economy=source('economy-v2.js'),css=source('economy-v2.css'),html=source('guild.html');
 for(const term of ["craftProject.forge&&!Forge?.isComplete?.(craftProject.forge)","if(craftProject.forge&&!Forge?.isComplete?.(craftProject.forge))return;","project.forge?Forge.quality(project.forge):timedCraftQuality(recipe,prof)","22000*Math.max(1,Math.floor(Number(quantity)||1))","function returnReservedInputs(project)","workshopCraftProject","forgeProjectMarkup(prof)","data-forge-strike","data-forge-position"])assert(economy.includes(term),'integration missing '+term);
+assert(economy.includes("prof.name==='Blacksmithing'?5:99"),'only blacksmithing limited to five');
+assert(economy.includes('Forge.advance(craftProject.forgeHeatPct,delta)'),'timing must respect furnace heat');
+assert(economy.includes('Forge.reheat(position,prof.level)'),'reheat action required');
+assert(economy.includes("data-forge-reheat="),'reheat challenge visible');
 assert(html.includes('blacksmith-forge-v1.js?v=1'));
 assert(css.includes('.forge-timing-track')&&css.includes('@media(prefers-reduced-motion:reduce)'));
 assert(manifest.files.includes('blacksmith-forge-v1.js'));
