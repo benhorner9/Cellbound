@@ -38,10 +38,11 @@ assert(view.includes('if(progressive)revealNext();else updateProgressiveControls
 assert(view.includes("querySelectorAll('.cbcomic-reveal-caption')"),'Progressive scenes must not pile old dialogue captions');
 assert(view.includes("classList.add('art-unavailable')"),'Missing illustration must not show a broken-image glyph');
 assert(onboarding.includes('CellboundCombatStandard')&&onboarding.includes('CellboundDungeon2D')&&onboarding.includes('playSharedEncounter'),'Introductory encounters must use canonical Combat Reborn and shared dungeon viewer');
-assert(quests.includes('function comicLineReveals(speaker,beats)'),'First story quest uses stable three-frame dialogue');
+assert(quests.includes('function comicLineReveals(speaker,beats)'),'Quest story dialogue must retain a reveal per beat');
+assert(quests.includes('return Array.from({length:Math.max(1,lines.length)}'),'One painting per story beat');
+assert(view.includes('if(cinematicSequence)x.hidden=x!==panel'),'Only one cinematic painting is visible at a time');
 
-// Evaluate the actual quest frame mapping: every amount of dialogue is
-// distributed across three illustrated frames without dropping spoken lines.
+// Verify every dialogue beat is preserved and receives its own illustrated panel.
 const start=quests.indexOf('function comicLineReveals(speaker,beats){'),end=quests.indexOf('async function showDialogue(',start);
 assert(start>=0&&end>start,'Quest reveal helper exists');
 const ctx={};
@@ -51,7 +52,7 @@ for(const total of [1,2,3,4,7,11]){
  ctx.beats=Array.from({length:total},(_,i)=>'Line '+i);
  const r=vm.runInContext('comicLineReveals("Elara",beats)',ctx);
  assert.equal(r.length,total);
- assert(r.every(x=>x.panel>=0&&x.panel<=2),'All quest beats map into three panels');
+ assert(r.every((x,i)=>x.panel===i),'Each quest beat maps to its own illustrated panel');
  assert.equal(r.map(x=>x.text).join('|'),ctx.beats.join('|'),'Every quest dialogue beat is preserved');
 }
-console.log('Chapter 0 contracts passed: loot → shock → profession → craft → use → first quest, Combat Reborn and three-frame progressive comics.');
+console.log('Chapter 0 contracts passed: loot → shock → profession → craft → use → first quest, Combat Reborn and sequential illustrated comics.');
