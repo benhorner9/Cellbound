@@ -1427,6 +1427,7 @@ console.log('Build verification passed: scripts parse and required UI hooks/asse
 
 require('./tests/beta-balance.cjs');
 require('./tests/beta-ui-polish.cjs');
+require('./tests/player-copy-voice.cjs');
 require('./tests/beta-operations.cjs');
 require('./tests/beta-analytics.cjs');
 require('./tests/admin-ux.cjs');
