@@ -35,7 +35,7 @@ const SLOTS=[
 ];
 const ROLE_LABEL={tank:'Tank',healer:'Healer',dps:'Damage'};
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
-let draft=[],activeSlot=0,builderStep='form',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
+let draft=[],activeSlot=0,builderStep='form',introPage='guild',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
@@ -95,6 +95,7 @@ function ensureRoot(){
 }
 function stageTitle(stage){
   const labels={
+    'guild-introduction':'The Guild Master’s Charter',
     'party-builder':'Build Your Party',
     'zeltira-arrival':'The Gate at Dusk',
     'first-expedition':'The First Resonance',
@@ -113,6 +114,7 @@ function stageTitle(stage){
 }
 function chrome(body,stage){
   const steps=[
+    ['guild-introduction','Begin'],
     ['party-builder','Charter'],
     ['first-expedition','Mystery'],
     ['gear','Loadout'],
@@ -120,8 +122,9 @@ function chrome(body,stage){
     ['loot-review','Spoils'],
     ['quest-lesson','Contract']
   ];
-  const order={'party-builder':0,'zeltira-arrival':1,'first-expedition':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'loot-review':4,'recovery-lesson':4,'profession-choice':4,'craft':4,'profession-use':4,'quest-lesson':5,'departure':5};
+  const order={'guild-introduction':0,'party-builder':1,'zeltira-arrival':2,'first-expedition':2,'gear':3,'dungeon-briefing':4,'dungeon-running':4,'loot-review':5,'recovery-lesson':5,'profession-choice':5,'craft':5,'profession-use':5,'quest-lesson':6,'departure':6};
   const objectives={
+    'guild-introduction':['YOUR ROLE','You lead a guild of five adventurers. Their decisions are yours to make.'],
     'party-builder':['FORM THE FIVE','Build a Tank, Healer and three Damage adventurers.'],
     'zeltira-arrival':['WRONG NIGHT TO ARRIVE','Meet Warden Elara at Zeltira’s gate.'],
     'first-expedition':['READ THE RESONANCE','Inspect the west wall and make a field deduction.'],
@@ -137,7 +140,21 @@ function chrome(body,stage){
     'departure':['CHAPTER 0 COMPLETE','Leave Zeltira with a guild that is actually yours.']
   };
   const at=order[stage]??0,obj=objectives[stage]||['FIRST EXPEDITION','Follow the trail beneath Zeltira.'];
-  return '<section class="onboard-shell onboard-v4"><header class="onboard-head"><div><small>CHAPTER 0 · THE FIRST RESONANCE</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header><div class="onboard-objective"><span>'+esc(obj[0])+'</span><b>'+esc(obj[1])+'</b><em>PATHFINDER WARD · TRAINING SAFETY ACTIVE</em></div>'+body+'</section>';
+  const lesson={
+    'party-builder':'Every fighter has a job. One Tank protects, one Healer keeps the party alive, and three Damage dealers finish the battle.',
+    'first-expedition':'Look at the world, gather the evidence, then decide. That same approach will matter in quests and dungeons.',
+    'gear':'More powerful equipment helps, but a good item still has to suit the character who wears it.',
+    'dungeon-briefing':'Your party fights automatically. You command its strategy, respond to danger, and decide when to change tactics.',
+    'dungeon-running':'Watch enemy casts, threat and health. Your commands are not decorative—they can change the outcome.',
+    'loot-review':'Boss rewards go into your Guild Bank. You decide which adventurer benefits most.',
+    'recovery-lesson':'A defeat leaves a consequence. Recovery, supplies and preparation are part of being a Guild Master.',
+    'profession-choice':'Each character can learn a profession. Crafting turns materials found on adventures into useful preparation.',
+    'craft':'Gather ingredients, learn recipes and craft. Professions grow alongside your characters.',
+    'profession-use':'Equipment is long-term progress. Potions, flasks and enhancements help you tackle the next difficult encounter.',
+    'quest-lesson':'Quests reveal the story and unlock new places. Dungeons test your party and reward better equipment.',
+    'departure':'The training ends here. Your next decisions, character growth and discoveries continue in the main game.'
+  }[stage];
+  return '<section class="onboard-shell onboard-v5"><header class="onboard-head"><div><small>CHAPTER 0 · THE FIRST RESONANCE</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header><div class="onboard-objective"><span>'+esc(obj[0])+'</span><b>'+esc(obj[1])+'</b><em>CHAPTER 0 · GUIDED EXPEDITION</em></div>'+(lesson?'<div class="onboard-lesson" role="note"><span>WHY THIS MATTERS</span><p>'+esc(lesson)+'</p></div>':'')+body+'</section>';
 }
 function show(){
   const root=ensureRoot();root.hidden=false;document.documentElement.dataset.onboarding='1';
@@ -146,13 +163,70 @@ function hide(){
   const root=ensureRoot();root.hidden=true;delete document.documentElement.dataset.onboarding;
 }
 
+
+const INTRO_PAGES=[
+  {
+    id:'guild',tab:'Your Role',eyebrow:'YOU ARE THE GUILD MASTER',title:'Five adventurers. One direction.',
+    copy:'You are not a lone hero swinging a sword. You lead the guild: recruit the people, choose their equipment and training, and make the decisions that take them from unknown recruits to a formidable party.',
+    detail:'You make the calls. Your adventurers carry them out.',art:'./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp',
+    bullets:['Create and manage your own roster.','Put together a balanced five-person party.','Build each adventurer through gear, talents and professions.']
+  },
+  {
+    id:'combat',tab:'How Combat Works',eyebrow:'REAL-TIME TACTICAL COMBAT',title:'Give the order. Read the fight.',
+    copy:'The five fight on their own, using their class abilities. You are their commander, not a button-masher. Direct targets, protect the Healer, interrupt dangerous casts and change tactics when the battlefield turns against you.',
+    detail:'Watch health, threat, enemy casts and the Command Centre. React at the right moment.',art:'./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp',
+    bullets:['Tank holds attention and keeps danger away.','Healer keeps the group standing.','Three Damage dealers defeat enemies while you issue commands.']
+  },
+  {
+    id:'journey',tab:'Why You Return',eyebrow:'A WORLD THAT OPENS UP',title:'Every run builds the guild.',
+    copy:'Take story contracts, push through dungeons, beat bosses and earn equipment with different rolls. Bring your loot home, craft preparation, recover from defeats and come back stronger. New challenges open as your guild progresses.',
+    detail:'Quest → fight → earn loot → improve the five → face harder challenges.',art:'./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp',
+    bullets:['Follow quests to uncover the mystery of the Cells.','Collect, equip and improve gear, then learn professions.','Work towards difficult dungeons, raids and other challenges.']
+  }
+];
+function renderGuildIntroduction(){
+  show();
+  const selected=INTRO_PAGES.find(p=>p.id===introPage)||INTRO_PAGES[0];
+  const body='<div class="onboard-intro">'+
+    '<div class="onboard-intro__hero">'+
+      '<img src="./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp" alt="The illuminated city of Zeltira at dusk" decoding="async">'+
+      '<div class="onboard-intro__hero-shade"></div>'+
+      '<div class="onboard-intro__hero-copy"><small>THE WORLD OF CELLBOUND · YOUR STORY BEGINS HERE</small>'+
+        '<h2>You don’t play one hero.<br>You lead the guild.</h2>'+
+        '<p>A fantasy guild-management RPG where five adventurers fight, grow and survive on the strength of your decisions.</p>'+
+        '<span class="onboard-intro__crest">◇ &nbsp; THE CHARTER AWAITS &nbsp; ◇</span>'+
+      '</div></div>'+
+    '<div class="onboard-intro__below">'+
+      '<section class="onboard-intro__lesson"><div class="onboard-intro__tabs" role="group" aria-label="Discover Cellbound">'+
+      INTRO_PAGES.map((p,i)=>'<button type="button" data-intro-page="'+p.id+'" aria-pressed="'+(p.id===selected.id)+'" class="'+(p.id===selected.id?'active':'')+'"><span>0'+(i+1)+'</span>'+p.tab+'</button>').join('')+
+      '</div><div class="onboard-intro__lesson-body"><div class="onboard-intro__lesson-copy"><small>'+esc(selected.eyebrow)+'</small>'+
+      '<h3>'+esc(selected.title)+'</h3><p>'+esc(selected.copy)+'</p><div class="onboard-intro__insight">'+esc(selected.detail)+'</div></div>'+
+      '<img src="'+selected.art+'" alt="" decoding="async"></div></section>'+
+      '<aside class="onboard-intro__charter"><small>THE GUILD MASTER’S ROAD</small>'+
+      '<h3>What will you actually do?</h3>'+
+      '<ul>'+selected.bullets.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>'+
+      '<div class="onboard-intro__roles" aria-label="Your five-person party"><span>TANK × 1</span><span>HEALER × 1</span><span>DAMAGE × 3</span></div>'+
+      '<p>You’ll learn by doing: create your party, make a choice in the field, fight, equip a drop and craft your first item.</p>'+
+      '<button type="button" id="startGuildCharter" class="on-primary">BUILD MY GUILD →</button>'+
+      '<small class="onboard-intro__footnote">Your choices and progress are saved. No need to memorise everything now.</small>'+
+      '</aside></div></div>';
+  const root=ensureRoot();root.innerHTML=chrome(body,'guild-introduction');
+  root.querySelectorAll('[data-intro-page]').forEach(button=>button.addEventListener('click',()=>{
+    introPage=button.dataset.introPage;renderGuildIntroduction();
+    root.querySelector('[data-intro-page="'+introPage+'"]')?.focus({preventScroll:true});
+  }));
+  root.querySelector('#startGuildCharter')?.addEventListener('click',()=>{
+    setStage('party-builder',{introSeen:true,introVersion:1});
+  });
+}
+
 function renderPartyBuilder(){
   show();restoreDraft();
   const d=draft[activeSlot],slot=SLOTS[activeSlot];
   const valid=()=>draft.every(x=>x.name.trim().length>=2&&x.name.trim().length<=24)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
   const root=ensureRoot();root.innerHTML=chrome('<div data-creation-mount></div>','party-builder');
   window.CellboundCharacterForge.render({mount:root.querySelector('[data-creation-mount]'),draft:d,step:builderStep,
-    races:RACES,classes:roleOptions(slot.role),title:'Build your founding party',confirmTitle:'Confirm your party',confirmLabel:'CONFIRM PARTY & ENTER ZELTIRA →',
+    races:RACES,classes:roleOptions(slot.role),title:'Assemble your five adventurers',confirmTitle:'Confirm your founding guild',confirmLabel:'CONFIRM THE FIVE & ENTER ZELTIRA →',
     partyHTML:'<div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+forgeAvatar(x)+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div>',
     confirmHTML:'<div class="creator-confirm-grid">'+draft.map((x,i)=>'<button class="creator-confirm-member" data-slot="'+i+'">'+forgeAvatar(x)+'<span><b>'+esc(x.name)+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('')+'</div>',
     hint:valid()?'Your charter is ready.':'All five characters need unique names of at least 2 characters.',valid:valid(),isValid:valid,
@@ -1186,7 +1260,7 @@ function renderQuestLesson(){
 }
 function renderDeparture(){
   if(maybeTutorialComic('departure'))return;
-  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>CHAPTER 0 · COMPLETE</small><h2>Your guild is ready. The world is not waiting.</h2><p class="guide-quote">“You know enough to make your own mistakes now. That is the useful kind of ready.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>You built the active five</b><small>Tank · Healer · three Damage roles</small></span></div><div><i>✓</i><span><b>You read a live fight</b><small>Threat · healing · interrupts · telegraphs</small></span></div><div><i>✓</i><span><b>You made a gear decision</b><small>Item Level matters, but the roll and the character matter too</small></span></div><div><i>✓</i><span><b>You assigned your first drop</b><small>Loot belongs to the guild until you decide who wears it</small></span></div></div><div class="first-expedition-hook"><span>NEXT</span><b>Ashes on the East Road</b><small>Your first real quest begins the moment you leave this screen.</small></div><button id="beginAdventure" class="on-primary">BEGIN CELLBOUND →</button></aside></div>';
+  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>CHAPTER 0 · COMPLETE</small><h2>Your guild is ready. The world is not waiting.</h2><p class="guide-quote">“You know enough to make your own mistakes now. That is the useful kind of ready.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>You built the active five</b><small>Tank · Healer · three Damage roles</small></span></div><div><i>✓</i><span><b>You read a live fight</b><small>Threat · healing · interrupts · telegraphs</small></span></div><div><i>✓</i><span><b>You made a gear decision</b><small>Item Level matters, but the roll and the character matter too</small></span></div><div><i>✓</i><span><b>You assigned your first drop</b><small>Loot belongs to the guild until you decide who wears it</small></span></div></div><div class="first-expedition-hook"><span>NEXT · QUEST JOURNAL</span><b>Ashes on the East Road</b><small>Follow the story quest to unlock your next dungeon. The rest of your guild is waiting in the main menu.</small></div><div class="onboard-next-steps"><div><b>01 · QUEST JOURNAL</b><span>Take contracts, solve mysteries and unlock new places.</span></div><div><b>02 · PARTY & BANK</b><span>Equip loot, improve your characters and plan a stronger team.</span></div><div><b>03 · PROFESSIONS</b><span>Turn materials from adventures into useful items.</span></div><div><b>04 · DUNGEONS & BEYOND</b><span>Challenge bosses, collect better rolls and prepare for harder content.</span></div></div><button id="beginAdventure" class="on-primary">BEGIN CELLBOUND →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'departure');
   $('#beginAdventure')?.addEventListener('click',completeOnboarding);
 }
@@ -1210,7 +1284,8 @@ function render(){
     stage=!s.onboarding.shockLessonComplete?'recovery-lesson':!s.onboarding.professionComplete?'profession-choice':'profession-use';
     s.onboarding.stage=stage;Game.save();
   }
-  if(stage==='party-builder')renderPartyBuilder();
+  if(stage==='guild-introduction')renderGuildIntroduction();
+  else if(stage==='party-builder')renderPartyBuilder();
   else if(stage==='zeltira-arrival')renderArrival();
   else if(stage==='first-expedition')renderFirstExpedition();
   else if(stage==='gear')renderGear();
@@ -1223,7 +1298,7 @@ function render(){
   else if(stage==='profession-use')renderProfessionUse();
   else if(stage==='quest-lesson')renderQuestLesson();
   else if(stage==='departure')renderDeparture();
-  else{s.onboarding.stage='party-builder';Game.save();renderPartyBuilder()}
+  else{s.onboarding.stage=Array.isArray(s.roster)&&s.roster.length?'zeltira-arrival':'guild-introduction';Game.save();render()}
 }
 async function init(){
   Game=window.CellboundGame;
@@ -1232,7 +1307,7 @@ async function init(){
   if(!G||!P)return;
   window.CellboundCombatStandard?.register?.('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-cb2d'});
   render();
-  window.CellboundOnboarding={render,RACES,previewTutorialComics,tutorialComicConfig};
+  window.CellboundOnboarding={render,RACES,previewTutorialComics,tutorialComicConfig,introductionPages:INTRO_PAGES.map(({id,tab})=>({id,tab}))};
 }
 init();
 })();

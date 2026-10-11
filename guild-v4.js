@@ -163,7 +163,7 @@ function initialState(){
     roster:[],party:{tank:null,healer:null,dps:[null,null,null]},
     bossKills:{ashwarden:false,embermaw:false,vaultheart:false},progression:{ashenVaultUnlocked:false},reports:[],bank:[],materials:{},
     consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],collectionHistory:[],
-    onboarding:{version:3,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()},
+    onboarding:{version:4,complete:false,stage:'guild-introduction',zone:'zeltira',startedAt:new Date().toISOString()},
     activity:['A new charter awaits. Build your first party to begin.']
   };
 }
@@ -342,11 +342,11 @@ function migrateState(raw){
   s.saveVersion=SAVE_VERSION;s.gearVersion=3;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';
   s.roster=Array.isArray(s.roster)?s.roster.map(normalizeCharacter):[];
   s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?Object.fromEntries(Object.entries(s.materials).map(([k,v])=>[k,Math.max(0,Math.floor(Number(v)||0))])):{};s.consumables=(Array.isArray(s.consumables)?s.consumables:[]).map(x=>({...x,quantity:Math.max(0,Math.floor(Number(x?.quantity)||0))})).filter(x=>x.quantity>0);s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
-  if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:3,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()};
+  if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:4,complete:false,stage:'guild-introduction',zone:'zeltira',startedAt:new Date().toISOString()};
   else if(!s.onboarding&&hadRoster)s.onboarding={version:3,complete:true,stage:'complete',zone:'zeltira',legacy:true};
   // A populated roster and the party-builder stage cannot both be authoritative.
   // This repairs saves created while cloud persistence was unavailable.
-  if(hadRoster&&s.onboarding?.stage==='party-builder'){
+  if(hadRoster&&['party-builder','guild-introduction'].includes(s.onboarding?.stage)){
     s.onboarding={...s.onboarding,complete:false,stage:'zeltira-arrival',zone:s.onboarding.zone||'zeltira',partyCreatedAt:s.onboarding.partyCreatedAt||new Date().toISOString()};
     delete s.onboarding.draft;
   }

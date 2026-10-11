@@ -166,7 +166,16 @@ async function mount(page,seedState=null,owner=false,options={}){
 async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
   const page=await browser.newPage({viewport});
   const errors=await mount(page,null);
+  await page.waitForSelector('#cellboundOnboarding:not([hidden]) #startGuildCharter');
+  assert.equal(await page.locator('.onboard-intro__tabs button').count(),3,'Introduction explains guild, combat and long-term progression');
+  assert.match(await page.locator('.onboard-intro__hero-copy h2').innerText(),/lead the guild/i,'New players learn who they are before creating characters');
+  await page.locator('[data-intro-page="combat"]').click();
+  assert.match(await page.locator('.onboard-intro__lesson-body').innerText(),/commander/i,'Combat tab explains the player’s role');
+  await page.locator('[data-intro-page="journey"]').click();
+  assert.match(await page.locator('.onboard-intro__lesson-body').innerText(),/gear/i,'Progression tab explains why players return');
+  await page.locator('#startGuildCharter').click();
   await page.waitForSelector('#cellboundOnboarding:not([hidden]) .cellbound-character-forge');
+  assert.equal(await page.evaluate(()=>CellboundGame.getState().onboarding.stage),'party-builder','Intro transitions into the existing creator without skipping the tutorial');
   assert.equal(await page.locator('.creator-party-dots button').count(),5,'Character Forge shows all five party roles');
   // Equipment remains on the existing rig while base character artwork migrates.
   const plateFit=await page.evaluate(()=>{
