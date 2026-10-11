@@ -237,7 +237,7 @@ async function completion(){
     eyebrow:'QUEST COMPLETE',title:'The Fourfold Lock',subtitle:'The map is ash. The road through time is open.',page:'COMPLETE',theme:'fourfold',
     panels:[
      {kind:'npc',artwork:FOURFOLD_STORY_ART.oldMan,eyebrow:'THE STRANGE OLD MAN',title:'He kept his promise.',text:'The lockbox is empty. The living map is gone. Only the route remains.'},
-     {kind:'location',artwork:FOURFOLD_STORY_ART.hero,eyebrow:'PERMANENT UNLOCK',title:'THE FRACTURED AGES',text:'A fifth dungeon now exists beyond the normal roads of the world.'},
+     {kind:'location',artwork:FOURFOLD_STORY_ART.hero,eyebrow:'PERMANENT UNLOCK',title:'THE FRACTURED AGES',text:'The Fractured Ages is now available in Dungeons.'},
      {kind:'location',artwork:FOURFOLD_STORY_ART.funhouse,eyebrow:'REWARDS',title:'+400 Gold · +250 Renown · +'+(BAL?.CAMPAIGN_XP?.fourfoldLock||3800)+' XP',text:'The active five are rewarded and the Fractured Ages is permanently unlocked.'}
     ],
     progressive:true,panelOnly:true,allowSkip:false,nextLabel:'NEXT →',continueLabel:'OPEN DUNGEON JOURNAL →'
@@ -246,11 +246,11 @@ async function completion(){
   }catch(error){console.warn('Fourfold completion comic recovered',error)}
  }
  const root=document.createElement('div');root.className='fourfold-complete-backdrop';
- root.innerHTML='<section class="fourfold-complete"><small>QUEST COMPLETE</small><h2>The Fourfold Lock</h2><p>The box is empty. The map is ash. Somewhere beyond the marketplace, history has stopped behaving.</p><div><article><span>GOLD</span><b>+400</b></article><article><span>RENOWN</span><b>+250</b></article><article><span>PARTY XP</span><b>+'+(BAL?.CAMPAIGN_XP?.fourfoldLock||3800)+'</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><section><small>PERMANENT UNLOCK</small><h3>The Fractured Ages</h3><p>Follow the Strange Old Man through a western shootout, an iron kingdom, an ancient temple, the lunar frontier and whatever waits at the end of time.</p></section><button>OPEN DUNGEON JOURNAL →</button></section>';
+ root.innerHTML='<section class="fourfold-complete"><small>QUEST COMPLETE</small><h2>The Fourfold Lock</h2><p>The box is empty. The map is ash. Somewhere beyond the marketplace, history has stopped behaving.</p><div><article><span>GOLD</span><b>+400</b></article><article><span>RENOWN</span><b>+250</b></article><article><span>PARTY XP</span><b>+'+(BAL?.CAMPAIGN_XP?.fourfoldLock||3800)+'</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><section><small>PERMANENT UNLOCK</small><h3>The Fractured Ages</h3><p>Clear High Noon, Iron Kingdom, First Kingdom and Silent Frontier, then enter the Funhouse.</p></section><button>OPEN DUNGEON JOURNAL →</button></section>';
  document.body.appendChild(root);root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content');setTimeout(()=>window.CellboundDungeonBrowser?.open?.('fractured-ages'),50)}
 }
 function stageCopy(q){
- if(q.complete)return['The Fractured Ages','The old man kept his promise. A fifth dungeon now waits beyond the normal world.'];
+ if(q.complete)return['The Fractured Ages','The old man’s lockbox revealed The Fractured Ages. The dungeon is unlocked.'];
  if(!q.started)return['The Man in the Marketplace','A strange old man has been watching your guild from beside the exchange.'];
  if(q.stage==='keys')return['Find What Fits','The lockbox has four keyholes. Its keys appear to have been scattered through four very different dungeons.'];
  if(q.stage==='box')return['Four Locks, One Box','Every required key has been found. Insert them into the lockbox.'];

@@ -254,7 +254,7 @@ function repairStatus(){
 function renderRepairs(){
   const n=ensure(),ready=repairStatus()===3;
   root.innerHTML=chrome('SILAS’S BOAT · HARBOUR','Make Her Seaworthy',
-    '<div class="nwb-boat-hero"><div class="nwb-boat-art"><div class="nwb-sail '+(n.sailRepaired?'fixed':'torn')+'"></div><div class="nwb-hull '+(n.repairKit?'fixed':'holed')+'"></div><span class="nwb-mast"></span><span class="nwb-water"></span></div><div><small>REPAIRS '+repairStatus()+' / 3</small><h3>The island is still out of reach.</h3><p>Everything needed for the crossing can be solved from here. The route chart, once recovered, will remain known even if the boat is later lost at sea.</p></div></div>'+
+    '<div class="nwb-boat-hero"><div class="nwb-boat-art"><div class="nwb-sail '+(n.sailRepaired?'fixed':'torn')+'"></div><div class="nwb-hull '+(n.repairKit?'fixed':'holed')+'"></div><span class="nwb-mast"></span><span class="nwb-water"></span></div><div><small>REPAIRS '+repairStatus()+' / 3</small><h3>The island is still out of reach.</h3><p>Repair the hull, rebuild the sail and find the route chart. The chart remains recorded if the crossing fails.</p></div></div>'+
     '<div class="nwb-repair-grid">'+
       repairCard('hull','HULL','Timber & Nails',n.repairKit,'The hull is taking water. A Shipwright’s Repair Kit is permanently stocked at the Trading Post for '+SHIPWRIGHT_KIT_COST_LABEL+' gold.',n.repairKit?'HULL REPAIRED':'BUY AT TRADING POST')+
       repairCard('sail','SAIL','Torn Canvas',n.sailRepaired,'Rebuild the torn sail before the wind tears it apart completely.',n.sailRepaired?'SAIL REPAIRED':'STITCH THE SAIL')+
@@ -711,7 +711,7 @@ async function completeQuest(){
   const r=ensureRoot();r.hidden=false;document.body.classList.add('nwb-open');renderComplete()
 }
 function renderComplete(){
-  root.innerHTML='<section class="nwb-complete"><div class="nwb-key">⚿</div><small>QUEST COMPLETE</small><h2>No Way Back</h2><p>The windows of the Manor ignite all at once. Its front doors open into darkness. Whatever Silas needed to wake is now awake.</p><div class="nwb-complete-rewards"><article><span>QUEST ITEM</span><b>THE MANOR KEY</b></article><article><span>ATTUNEMENT</span><b>PERMANENT</b></article></div><section><small>RAID UNLOCKED</small><h3>The Manor</h3><p>The black iron key is bound to your guild. Beyond the opened doors, the Manor is waiting.</p></section><button data-nwb-complete-close>RETURN TO QUEST JOURNAL →</button></section>';
+  root.innerHTML='<section class="nwb-complete"><div class="nwb-key">⚿</div><small>QUEST COMPLETE</small><h2>No Way Back</h2><p>The windows of the Manor ignite all at once. Its front doors open into darkness. Whatever Silas needed to wake is now awake.</p><div class="nwb-complete-rewards"><article><span>QUEST ITEM</span><b>THE MANOR KEY</b></article><article><span>ATTUNEMENT</span><b>PERMANENT</b></article></div><section><small>RAID UNLOCKED</small><h3>The Manor</h3><p>The black iron key now belongs to your guild. The Manor raid is unlocked.</p></section><button data-nwb-complete-close>RETURN TO QUEST JOURNAL →</button></section>';
   root.hidden=false;document.body.classList.add('nwb-open');root.querySelector('[data-nwb-complete-close]').onclick=()=>{close();Game.switchView?.('quests')}
 }
 function renderDetail(main,side){
