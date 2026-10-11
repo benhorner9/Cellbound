@@ -25,7 +25,7 @@ const BOSS_BRIEFS={
  },
  maids:{
   eyebrow:'DINING ROOM / KITCHEN · LINKED BOSSES',title:'The Maids',art:'./assets/manor/manor-maids.webp',
-  tagline:'Two rooms. Two parties. One mistake can punish the other team.',
+  tagline:'Both parties fight separately. Mistakes in one room can affect the other.',
   mechanics:[
    ['SCREECH','Read the WORD, not the ink colour, and choose the matching answer before the timer expires.'],
    ['LINKED PUNISHMENT','A wrong answer heals the other party’s Maid by 15% and gives her +10% damage. A timeout applies the penalty to both Maids.'],
@@ -55,7 +55,7 @@ const BOSS_BRIEFS={
  },
  housebound:{
   eyebrow:'THE ATTIC · FINAL BOSS',title:'The Master of the Manor',art:'./assets/manor/manor-master.webp',
-  tagline:'Everything the Manor taught you returns in one fight.',
+  tagline:'The Master combines mechanics from earlier rooms.',
   mechanics:[
    ['SHATTERED FLOOR / SCREECH','Movement pressure returns alongside Servant’s Screech. Failed Screeches heal the Master and increase damage across the raid.'],
    ['MARK / CHOSEN SERVANT','From 60%, tanks must swap through Mark of the Manor while Chosen Servant forces players to spread.'],
@@ -299,7 +299,7 @@ function renderError(e){
 }
 function raidHeader(){
  const used=Number(lockout?.runsUsed)||0,remain=Math.max(0,Number(lockout?.runsRemaining??3));
- return '<section class="mr-hero"><div class="mr-hero-copy"><small>10-CHARACTER RAID · 2 PLAYERS</small><h2>The Manor</h2><p>Silas is dead. The black iron key turns anyway. Ten Cellbound cross the threshold to face what he woke inside.</p><div class="mr-tags"><span>LEVEL 15</span><span>RECOMMENDED iLVL '+RAID_RECOMMENDED_ILVL+'</span><span>≈15 MIN</span><span>TIER 5</span></div></div><div class="mr-lockout"><small>RAID WINDOW</small><strong>'+remain+' / 3</strong><span>runs remaining</span><em>'+(lockout?.resetAt?'Reset in '+formatReset(lockout.resetAt):'48-hour reset')+'</em><i>'+used+' used this window</i></div></section>';
+ return '<section class="mr-hero"><div class="mr-hero-copy"><small>10-CHARACTER RAID · 2 PLAYERS</small><h2>The Manor</h2><p>Silas is dead, but his key opens the Manor. Two five-person parties enter together.</p><div class="mr-tags"><span>LEVEL 15</span><span>RECOMMENDED iLVL '+RAID_RECOMMENDED_ILVL+'</span><span>≈15 MIN</span><span>TIER 5</span></div></div><div class="mr-lockout"><small>RAID WINDOW</small><strong>'+remain+' / 3</strong><span>runs remaining</span><em>'+(lockout?.resetAt?'Reset in '+formatReset(lockout.resetAt):'48-hour reset')+'</em><i>'+used+' used this window</i></div></section>';
 }
 function encounterStrip(){
  return '<div class="mr-route"><span><b>01</b>Butler</span><i>›</i><span><b>02</b>Maids</span><i>›</i><span><b>03</b>Engineer</span><i>›</i><span><b>04</b>Bedroom</span><i>›</i><span class="final"><b>05</b>Master</span></div>'
@@ -316,10 +316,10 @@ function renderHub(){
  const mine=myMembership(),mineRows=myGroup?groupMembers(myGroup.id):[],comp=roleSummary(mineRows),recommended=compositionClass(mineRows)==='recommended';
  let body='';
  if(session?.status==='active'){
-   body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>Combat Reborn is resolving the ten-character fight inside the Manor.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
+   body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>Both parties are fighting. Watch the mechanics and your partner’s status.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
  }else if(session?.status==='failed'){
    const leader=myGroup?.leader_id===user.id,count=mineRows.length,canRetry=leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
-   body='<section class="mr-card mr-current mr-failed"><div><small>RAID WIPE · ATTEMPT SPENT</small><h3>'+esc(session.state?.failureReason||'The Manor claimed the raid')+'</h3><p>This raid attempt is over. There is no checkpoint recovery after a wipe; starting again begins from The Butler and consumes another raid charge.</p></div><div class="mr-current-actions">'+(canRetry?'<button data-mr-rerun>START A NEW RAID ATTEMPT →</button>':'<span>'+(leader?'No runs remain this reset.':'Raid group closing…')+'</span>')+'</div></section>';
+   body='<section class="mr-card mr-current mr-failed"><div><small>RAID WIPE · ATTEMPT SPENT</small><h3>'+esc(session.state?.failureReason||'Raid failed')+'</h3><p>This raid attempt is over. There is no checkpoint recovery after a wipe; starting again begins from The Butler and consumes another raid charge.</p></div><div class="mr-current-actions">'+(canRetry?'<button data-mr-rerun>START A NEW RAID ATTEMPT →</button>':'<span>'+(leader?'No runs remain this reset.':'Raid group closing…')+'</span>')+'</div></section>';
  }else if(session?.status==='completed'){
    const claimed=Boolean(state()?.raidRewardClaims?.[session.id]),leader=myGroup?.leader_id===user.id,count=mineRows.length,canRerun=claimed&&leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
    const followup=canRerun?'<button data-mr-rerun>RUN THE MANOR AGAIN →</button>':(!leader&&count===2&&Number(lockout?.runsRemaining??0)>0?'<span>Waiting for the group leader to begin another run.</span>':'');
