@@ -106,7 +106,7 @@ if(file==='quests-v2.js'){
     }
   }
   if(file==='null-complex-v1.js'){
-    for(const hook of ['function unlocked()','Complete Signal From Nowhere','BEGIN SIGNAL FROM NOWHERE','3 × 3 facility'])if(!contents.includes(hook))throw new Error('Null Complex quest gate is missing '+hook);
+    for(const hook of ['function unlocked()','Complete Signal From Nowhere','BEGIN SIGNAL FROM NOWHERE',"SIZE=3","PARTS.forEach("])if(!contents.includes(hook))throw new Error('Null Complex quest gate is missing '+hook);
   }
   if(file==='economy-v2.js'){
     if(!contents.includes("document.querySelectorAll('#professionRecipeFilters [data-prof-recipe-filter]').forEach"))throw new Error('Profession recipe filters must bind as a collection');
