@@ -704,7 +704,7 @@ function renderOverview(){
 
   const dungeonImages={
     'ashen-vault':'./assets/dungeons/ashen-vault.webp',
-    'hollow-sanctum':'./assets/dungeons/hollow-sanctum.webp',
+    'hollow-sanctum':'./assets/hollow-sanctum/rooms/gallery-void-v2.webp',
     'chaos-canyon':'./assets/dungeons/chaos-canyon.webp',
     'blackout-station':'./assets/dungeons/blackout-station.webp',
     'fractured-ages':'./assets/dungeons/fractured-ages.webp'

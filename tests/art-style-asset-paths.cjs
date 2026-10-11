@@ -9,7 +9,7 @@ function walk(dir){
   if(ignores.has(item.name))continue;
   const full=path.join(dir,item.name);
   if(item.isDirectory()){walk(full);continue}
-  if(!item.name.endsWith('.css'))continue;
+  if(!/\.(?:css|js)$/.test(item.name)||path.relative(root,full)==='build.js'||path.relative(root,full).startsWith('tools'+path.sep)||path.relative(root,full).startsWith('server'+path.sep))continue;
   checked++;
   const text=fs.readFileSync(full,'utf8');
   const refs=[...text.matchAll(/(?:\.\/)?(assets\/[A-Za-z0-9_./-]+\.(?:webp|png|jpg|jpeg|svg|avif))/gi)];
@@ -18,4 +18,4 @@ function walk(dir){
 }
 walk(root);
 assert.deepEqual(errors,[],'A CSS background points to a missing game image');
-console.log('Art path audit: '+count+' background references in '+checked+' stylesheets resolve.');
+console.log('Art source path audit: '+count+' image references in '+checked+' game scripts and stylesheets resolve.');
