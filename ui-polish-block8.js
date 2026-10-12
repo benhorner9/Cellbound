@@ -128,10 +128,11 @@
       summary=true;running=false;
       orderKey='';
     }
-    // Existing renderProfessions() already attached all native action
-    // handlers to the node. Reparent it only after that render returns.
-    live.replaceChildren(node);
+    // Leave the reopen control in the original WORKSHOP location, then
+    // move the native, already-bound work order into our focused window.
+    // Moving before adding the reopen control would put it inside the modal.
     makeReopen(node,isSummary);
+    live.replaceChildren(node);
     const c=game()?.roster?.find(x=>String(x.id)===String(p?.charId||result?.characterId));
     heading.textContent=result?.recipeName||node.querySelector('.craft-project h3')?.textContent||
       node.querySelector('h3')?.textContent||'Work Order';
