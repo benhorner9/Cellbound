@@ -1970,122 +1970,207 @@ html body.cb-top-nav-enabled #admin .dbo-tabs button.active{
 }
 
 
-/* =======================================================================
-   CELLBOUND TWILIGHT BALANCE V7 — one step darker, without losing the art.
-   A tonal pass only: no layout, interaction or semantic combat recolouring.
-   ======================================================================= */
-html body.cb-top-nav-enabled{
-  --cb-uni-bg:#0e1b29;--cb-uni-navy:#182735;
-  --cb-uni-panel:#1a2b39;--cb-uni-card:#20313f;--cb-uni-hover:#2a3f4f;
-  --cb-uni-line:#405465;--cb-uni-line-soft:#364856;
-  --cb-uni-gold:#c2a377;--cb-uni-ivory:#eee6d8;
-  --cb-uni-muted:#b2c0c9;--cb-uni-sky:#a6bdcf;
-  --cb-uni-shadow:0 9px 21px rgba(0,7,15,.27);
-  --cb-v3-gold:#c2a377;--cb-v3-blue:#a6bdcf;
-  --surface-1:#152736;--surface-2:#1d2e3d;
-  --surface-raised:#253b4b;--surface-outline:#465a68;
-  --surface-highlight:#c2a377;
+/* ======================================================================
+   CELLBOUND DEEP SLATE V8 — decisive but welcoming navy/charcoal balance.
+   Presentation only. No changes to geometry, mechanics or combat statuses.
+   ====================================================================== */
+html body.cb-top-nav-enabled {
+  --cb-uni-bg:#0a1723;
+  --cb-uni-navy:#132432;
+  --cb-uni-panel:#152837;
+  --cb-uni-card:#1b2f3f;
+  --cb-uni-hover:#294354;
+  --cb-uni-line:#405463;
+  --cb-uni-line-soft:#334858;
+  --cb-uni-gold:#bd9f75;
+  --cb-uni-ivory:#eee6d9;
+  --cb-uni-text:#dce3e8;
+  --cb-uni-muted:#b1c0cc;
+  --cb-uni-sky:#a3c0d2;
+  --cb-uni-shadow:0 10px 23px rgba(1,8,17,.31);
+  --cb-v3-gold:#bd9f75;--cb-v3-blue:#a3c0d2;
+  --surface-1:#112536;--surface-2:#1a2e3d;
+  --surface-raised:#253c4e;--surface-outline:#405666;
+  --surface-highlight:#bd9f75;
 }
-html body.cb-top-nav-enabled .app-shell{
-  background:radial-gradient(ellipse at 50% 0,#1f3343 0%,#142532 45%,#0c1b29 100%)!important;
+html body.cb-top-nav-enabled .app-shell {
+  background:radial-gradient(ellipse at 50% 0%,#192f40 0%,#101f2d 45%,#091724 100%)!important;
 }
-html body.cb-top-nav-enabled .cb-global-header{
-  background:linear-gradient(#172634,#101e2b)!important;
-  border-bottom-color:#7d705d!important;box-shadow:0 5px 16px #0006!important;
+html body.cb-top-nav-enabled .cb-global-header {
+  background:linear-gradient(180deg,#152535,#0c1927)!important;
+  border-bottom-color:#7a6a54!important;
+  box-shadow:0 5px 17px rgba(0,6,12,.57)!important;
 }
-html body.cb-top-nav-enabled .cb-subnav{
-  background:rgba(20,35,48,.98)!important;border-color:#3c5060!important;
-  box-shadow:0 4px 12px #0005!important;
+html body.cb-top-nav-enabled .cb-global-brand,
+html body.cb-top-nav-enabled .cb-global-links button {color:#e9e8e5}
+html body.cb-top-nav-enabled .cb-global-links .cb-global-link-icon {color:#adc1ce}
+html body.cb-top-nav-enabled .cb-global-links button:is(.is-active,:hover) {
+  color:#ead4b3!important;
+  border-bottom-color:#bd9f75!important;
+  background:linear-gradient(#bd9f7508,#bd9f751d)!important;
 }
-html body.cb-top-nav-enabled .cb-subnav__links button{
-  background:#203443!important;border-color:#435969!important;
+html body.cb-top-nav-enabled .cb-global-links button.is-active .cb-global-link-icon{color:#d4bd97}
+html body.cb-top-nav-enabled .cb-global-brand-mark {
+  border-color:#758b9a!important;color:#ddc9a7!important;
+  background:radial-gradient(circle at 40% 25%,#435f74,#172c3e 67%)!important;
+  box-shadow:none!important;
 }
-html body.cb-top-nav-enabled .cb-global-links button:is(.is-active,:hover){
-  background:linear-gradient(#c2a3770b,#c2a3771c)!important;
+html body.cb-top-nav-enabled .cb-global-gold,
+html body.cb-top-nav-enabled .cb-global-gold>span {color:#d3b88e}
+html body.cb-top-nav-enabled :is(.cb-global-more,.cb-global-account>summary) {
+  background:#172b3d!important;border-color:#496274!important;color:#e6e7e7!important;
 }
-html body.cb-top-nav-enabled .cb-global-account-panel{
-  background:linear-gradient(150deg,#1e3342,#132534)!important;border-color:#526a79!important;
+html body.cb-top-nav-enabled .cb-global-account-panel {
+  background:linear-gradient(145deg,#1a3040,#0f2232)!important;
+  border-color:#506a79!important;
 }
-html body.cb-top-nav-enabled :is(.cb-global-more,.cb-global-account>summary){
-  background:#1c3040!important;border-color:#4d6272!important;
+html body.cb-top-nav-enabled .cb-global-resource-slot .resource-strip>div {
+  background:#122636!important;border-color:#476273!important;
 }
-/* City artwork remains colourful: darken the UI framing rather than desaturating art. */
-html body.cb-top-nav-enabled .cb-hub-hero:before{
-  background:linear-gradient(90deg,rgba(10,24,37,.85),rgba(18,34,48,.53) 30%,rgba(21,38,49,.10) 63%,rgba(10,23,36,.65)),
-    linear-gradient(0deg,rgba(11,24,37,.3),transparent 51%)!important;
+html body.cb-top-nav-enabled .cb-subnav {
+  background:rgba(13,29,43,.97)!important;
+  border-color:#344c60!important;box-shadow:0 5px 14px #0006!important;
 }
-html body.cb-top-nav-enabled .cb-hub-watch{
-  background:rgba(17,30,43,.95)!important;border-color:#455b6b!important;
+html body.cb-top-nav-enabled .cb-subnav__links button {
+  color:#cad6df!important;background:#1c3244!important;border-color:#405b70!important;
 }
-html body.cb-top-nav-enabled .cb-hub-watch-row{
-  background:linear-gradient(145deg,#1d3140,#142534)!important;border-color:#3d5364!important;
+html body.cb-top-nav-enabled .cb-subnav__links button[aria-current="page"] {
+  color:#e5ceb0!important;background:#373a3c!important;border-color:#a08a6b!important;
 }
-html body.cb-top-nav-enabled .cb-hub-watch-row:hover{background:#253c4c!important}
-html body.cb-top-nav-enabled .cb-hub-watch-art{
+/* Let Zeltira glow against the darkened chrome; don't flatten the artwork. */
+html body.cb-top-nav-enabled .cb-hub-hero {
+  border-bottom-color:#a48b65!important;
+  box-shadow:0 11px 28px #0007!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero:before {
+  background:linear-gradient(90deg,rgba(9,22,34,.79) 0%,rgba(14,29,44,.49) 29%,
+    rgba(18,40,55,.07) 61%,rgba(9,23,36,.56) 100%),
+    linear-gradient(0deg,rgba(9,21,35,.18),transparent 50%)!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-copy h2 {color:#f2e7d4}
+html body.cb-top-nav-enabled .cb-hub-hero-copy p,
+html body.cb-top-nav-enabled .cb-hub-eyebrow {color:#e9eced}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button:first-child,
+html body.cb-top-nav-enabled #overview .home-continue-actions button:first-child {
+  background:linear-gradient(#d9be96,#b49364)!important;
+  border-color:#e2cdaa!important;color:#23323e!important;
+  box-shadow:0 4px 13px #0007!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button+button {
+  background:#1b3143e6!important;color:#ebe7dc!important;border-color:#748899!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch {
+  background:rgba(11,26,39,.95)!important;
+  border-color:#405769!important;box-shadow:0 11px 27px #0009!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-head {border-color:#395064!important}
+html body.cb-top-nav-enabled .cb-hub-watch-head small,
+html body.cb-top-nav-enabled .cb-hub-watch-row span:not(.cb-hub-watch-art) {color:#c4a77b!important}
+html body.cb-top-nav-enabled .cb-hub-watch-row {
+  background:linear-gradient(130deg,#192f40,#102437)!important;
+  border-color:#35516a!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row:hover {
+  background:#244154!important;border-color:#718a9b!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-art {
   background-color:transparent;background-blend-mode:normal;
 }
 html body.cb-top-nav-enabled #overview :is(.panel,.cb-hub-actions),
 html body.cb-top-nav-enabled .main>.view:not(#overview)
   :is(.panel,.admin-card,.tp-panel,.pvp-panel,.beta-panel,.dungeon-episode,
-      .dungeon-episode-empty,.quest-journal-nav,.quest-journal-detail,.quest-journal-side){
-  background:linear-gradient(150deg,#1d2f3e,#142636)!important;
-  border-color:#415667!important;box-shadow:var(--cb-uni-shadow)!important;
+      .dungeon-episode-empty,.quest-journal-nav,.quest-journal-detail,.quest-journal-side) {
+  background:linear-gradient(155deg,#172c3b,#102335)!important;
+  border-color:#3a5265!important;box-shadow:var(--cb-uni-shadow)!important;
 }
 html body.cb-top-nav-enabled #overview .panel-head,
 html body.cb-top-nav-enabled .main>.view:not(#overview)
-  :is(.panel,.tp-panel,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head){
-  background:linear-gradient(90deg,#223747,#192d3d)!important;border-color:#405466!important;
+  :is(.panel,.tp-panel,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head) {
+  background:linear-gradient(90deg,#1c3344,#142a3b)!important;
+  border-color:#334e63!important;
 }
-html body.cb-top-nav-enabled #overview .home-party-member{
-  background:linear-gradient(165deg,#263b49,#162939)!important;border-color:#405a6c!important;
+html body.cb-top-nav-enabled #overview .panel-head h3,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head) h3 {color:#f0e8dd!important}
+html body.cb-top-nav-enabled #overview .panel-head small,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head) small {color:#c4a983!important}
+html body.cb-top-nav-enabled #overview .home-party-member {
+  background:linear-gradient(165deg,#1e3646,#0f2435)!important;
+  border-color:#365569!important;box-shadow:0 5px 12px #0005!important;
 }
-html body.cb-top-nav-enabled #overview .cb-hub-action-grid button{
-  background:linear-gradient(140deg,#213746,#162838)!important;border-color:#425e70!important;
+html body.cb-top-nav-enabled #overview .home-objective {
+  background:#102638!important;border-bottom-color:#355064!important;
 }
-html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:hover{
-  background:#294356!important;border-color:#ab987b!important;
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button {
+  background:linear-gradient(150deg,#1a3244,#112839)!important;
+  border-color:#405c70!important;color:#e9ebe9!important;
 }
-html body.cb-top-nav-enabled #overview .cb-v3-update{
-  background:#152939!important;border-color:#435a69!important;
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button span {color:#acc2d4!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:hover {
+  background:#25445a!important;border-color:#ad9574!important;
 }
-html body.cb-top-nav-enabled #overview .cb-v3-update-copy{
-  background:linear-gradient(135deg,#263a49,#172938)!important;
+html body.cb-top-nav-enabled #overview .cb-v3-objective {border-bottom-color:#334c61!important}
+html body.cb-top-nav-enabled #overview .cb-v3-update {
+  background:#102639!important;border-color:#40596b!important;
+  box-shadow:0 7px 19px #0005!important;
 }
-html body.cb-top-nav-enabled #overview .cb-hub-dungeon{
-  border-color:#4a6071!important;
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy {
+  background:linear-gradient(140deg,#1f3649,#0f2435)!important;
 }
-html body.cb-top-nav-enabled #overview .cb-hub-dungeon:before{
-  background:linear-gradient(0deg,#0e1c2dea 0%,#172e418e 43%,rgba(25,48,65,.09) 100%)!important;
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy small{color:#c4a578!important}
+html body.cb-top-nav-enabled #overview .cb-v3-news-link{color:#a9c3d5!important}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon {
+  border-color:#3f596a!important;box-shadow:0 8px 20px #0006!important;
 }
-html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
-  background-color:#253b4c!important;
-  background-image:linear-gradient(90deg,rgba(12,27,41,.92),rgba(16,34,48,.74) 42%,rgba(17,37,51,.13)),var(--cb-place-art)!important;
-  border-color:#506779!important;
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon:before {
+  background:linear-gradient(0deg,#0a1a2be8,#152e4688 42%,rgba(16,41,65,.08))!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro {
+  background-color:#1b3a4e!important;
+  background-image:linear-gradient(90deg,rgba(9,25,39,.91),rgba(12,32,48,.73) 42%,
+    rgba(15,35,54,.09) 100%),var(--cb-place-art)!important;
+  border-color:#435f75!important;box-shadow:0 9px 24px #0007!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro:after {
+  background:linear-gradient(90deg,#a9916a,#a9916a50 42%,transparent)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro h2 {color:#f1e7d8!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro small {color:#c9af87!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,
+      .tp-filter-actions button,.admin-workspace-nav button) {
+  background:#1b3345!important;border-color:#426071!important;color:#dce6eb!important;
 }
 html body.cb-top-nav-enabled .main>.view:not(#overview)
-  :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,.tp-filter-actions button,.admin-workspace-nav button){
-  background:#223747!important;border-color:#495e6e!important;
-}
-html body.cb-top-nav-enabled .main>.view:not(#overview)
-  :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,.admin-workspace-nav button.active,.chat-tabs button.active,.quest-tabs button.active,.pvp-tabs button.active){
-  background:#393c3b!important;border-color:#9e886b!important;
+  :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,
+      .admin-workspace-nav button.active,.chat-tabs button.active,.quest-tabs button.active,.pvp-tabs button.active) {
+  background:#343a3e!important;border-color:#a08966!important;color:#e6cfac!important;
 }
 html body.cb-top-nav-enabled #roster .roster-character-card,
 html body.cb-top-nav-enabled #bank .bank-card-v2,
 html body.cb-top-nav-enabled #trading :is(.tp-result-card,.tp-category-list button,.tp-watch-card),
 html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card,.profession-slot-card),
-html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card,.quest-objective-card){
-  background:#1c2e3e!important;border-color:#42596a!important;
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card,.quest-objective-card) {
+  background:#182f40!important;border-color:#3c5669!important;
 }
 html body.cb-top-nav-enabled #roster .roster-character-card:hover,
 html body.cb-top-nav-enabled #bank .bank-card-v2:hover,
 html body.cb-top-nav-enabled #trading .tp-result-card:hover,
-html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card):hover{
-  background:#283f50!important;border-color:#aa9678!important;
+html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card):hover {
+  background:#254359!important;border-color:#aa916e!important;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-market-bar,.tp-delivery,.tp-tabs,.tp-market-stats>div),
+html body.cb-top-nav-enabled #chat :is(.chat-tabs,.chat-form,.chat-messages,.party-finder-listings) {
+  background-color:#122839!important;border-color:#3c5667!important;
 }
 html body.cb-top-nav-enabled #pvp :is(.pvp-panel,.pvp-rank-card,.pvp-rule-card),
 html body.cb-top-nav-enabled #support :is(.beta-panel,.beta-ticket,.beta-note),
-html body.cb-top-nav-enabled #admin .dbo-shell{
-  background-color:#192c3c!important;border-color:#445c6c!important;
+html body.cb-top-nav-enabled #admin .dbo-shell {
+  background-color:#132a3a!important;border-color:#3d5668!important;
+  box-shadow:0 9px 22px #0005!important;
 }
-/* Navigation and content dimensions, font sizes, status colours and z-index are unchanged. */
+html body.cb-top-nav-enabled #admin :is(.dbo-master-head,.dbo-builder-top) {
+  background:linear-gradient(110deg,#1e384a,#102839)!important;
+}
+/* Characters, encounter scenes, progress states and accessibility remain independent. */
