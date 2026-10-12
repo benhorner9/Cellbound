@@ -94,6 +94,39 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
     await page.locator('#cbGlobalNavigation [data-cb-nav="quests"]').click();
     assert.equal(await page.locator('#quests').evaluate(el=>el.classList.contains('active')),true,'top navigation must use the canonical game router');
     await page.evaluate(()=>CellboundGame.switchView('overview'));
+    // Dark-fantasy screen parity regression: sample actual computed colours,
+    // not only a stylesheet string, across representative destinations.
+    const styledScreens=[
+      ['overview','#overview .home-party-panel'],
+      ['roster','#roster .roster-character-card'],
+      ['bank','#bank .bank-card-v2'],
+      ['professions','#professions .recipe-card'],
+      ['quests','#quests .quest-v2-list-card'],
+      ['trading','#trading .tp-panel'],
+      ['chat','#chat .chat-panel'],
+      ['pvp','#pvp .pvp-panel']
+    ];
+    let themedCount=0;
+    for(const [view,selector] of styledScreens){
+      await page.evaluate(v=>CellboundGame.switchView(v),view);
+      const result=await page.evaluate(selector=>{
+        const node=document.querySelector(selector);
+        const theme=getComputedStyle(document.body).getPropertyValue('--cb-theme-panel').trim();
+        if(!node)return {theme,rendered:false};
+        const style=getComputedStyle(node);
+        const rgba=style.backgroundColor.match(/[\d.]+/g)?.map(Number)||[];
+        return {theme,rendered:true,bg:style.backgroundColor,
+          dark:rgba.length>=3&&rgba[0]<85&&rgba[1]<95&&rgba[2]<95};
+      },selector);
+      assert.equal(result.theme,'#101f25','dark-fantasy theme must load on '+view);
+      if(result.rendered){
+        assert.equal(result.dark,true,view+' uses a bright panel outside the unified dark-fantasy palette: '+result.bg);
+        themedCount++;
+      }
+    }
+    assert(themedCount>=5,'theme check must sample at least five game screens');
+    await page.evaluate(()=>CellboundGame.switchView('overview'));
+
     const focusRuleLoaded=await page.evaluate(()=>{
       for(const sheet of [...document.styleSheets]){
         let rules;
