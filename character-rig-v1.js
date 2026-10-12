@@ -188,6 +188,9 @@ function bodyProfile(subject,appearanceOverride){
 function weaponKind(subject){
   const item=subject?.equipment?.Weapon;
   if(!item)return '';
+  // The catalog's older Rogue T4/T5 Blades were tagged as generic swords.
+  // Use their visual identity even when old save data still has that tag.
+  if(String(subject?.class||'')==='Rogue'&&/\bblades?\b/i.test(String(item.name||'')))return'dagger';
   const raw=String(item.weaponType||item.type||item.subtype||item.name||item.itemId||'').toLowerCase();
   if(raw.includes('crossbow'))return'crossbow';
   if(raw.includes('bow'))return'bow';
