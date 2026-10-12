@@ -100,7 +100,15 @@ function isOwner(){return Boolean(window.CellboundAdmin?.isAdmin)&&String(window
 function manorRoomScene(stage,side=0){
  const room=stage==='maids'?(side===0?'dining':'kitchen'):stage;
  const roomId={butler:'entrance-hall',dining:'dining-room',kitchen:'kitchen',engineer:'workshop',bedroom:'bedroom',housebound:'attic'}[room];
- const fallback='./assets/manor/manor-raid-hero.webp';
+ const fallbackByRoom={
+  'entrance-hall':'./assets/manor/rooms/entrance-hall.svg',
+  'dining-room':'./assets/manor/rooms/dining-room.svg',
+  'kitchen':'./assets/manor/rooms/kitchen.svg',
+  'workshop':'./assets/manor/rooms/workshop.svg',
+  'bedroom':'./assets/manor/rooms/bedroom.svg',
+  'attic':'./assets/manor/rooms/attic.svg'
+ };
+ const fallback=fallbackByRoom[roomId]||'./assets/manor/manor-raid-hero.webp';
  const art=window.CellboundRoomLayouts?.artFor?.('the-manor',roomId,fallback)||fallback;
  // New room paintings are complete combat backgrounds. Do not put the legacy
  // CSS furniture, fake perspective floor or darkening layers over published art.
