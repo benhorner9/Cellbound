@@ -349,9 +349,12 @@ async function mainGamePlaythrough(browser){
   const craft=page.locator('#professionWorkshop [data-craft]:not([disabled])').first();
   if(await craft.count()){
     await craft.click();
-    await page.waitForTimeout(40);
-    assert(await page.locator('#professionWorkshop .craft-project').count()>0,'craft project can start');
-    const abandon=page.locator('#professionWorkshop [data-craft-abandon]');
+    await page.locator('#cbCraftModal:not([hidden]) .craft-project').waitFor({timeout:7000});
+    assert(await page.locator('#cbCraftModal .craft-project').count()>0,'craft project starts in the focused work window');
+    assert.equal(await page.evaluate(()=>window.CellboundCraftOverlay.isReady()),false,'recipe selection reserves materials without spending focused time');
+    await page.locator('#cbCraftModalBegin').click();
+    assert.equal(await page.evaluate(()=>window.CellboundCraftOverlay.isReady()),true,'Begin Work activates the existing craft clock');
+    const abandon=page.locator('#cbCraftModal [data-craft-abandon]');
     if(await abandon.count())await abandon.click();
   }
 
@@ -479,6 +482,9 @@ async function coreGameplayLoopPlaythrough(browser){
   assert.equal(craftReady.disabled,false,'dismantled materials must make the first Alchemy recipe craftable: '+JSON.stringify(craftReady));
   await page.locator('#professionWorkshop [data-craft="alc-field-potion"]').click();
   await page.waitForFunction(()=>Boolean(CellboundGame.getState().workshopCraftProject),{},{timeout:5000,polling:50});
+  await page.locator('#cbCraftModal:not([hidden]) .craft-project').waitFor({timeout:7000});
+  await page.locator('#cbCraftModalBegin').click();
+  assert.equal(await page.evaluate(()=>window.CellboundCraftOverlay.isReady()),true,'focused crafting must be started intentionally');
   await page.evaluate(()=>{CellboundGame.getState().workshopCraftProject.remainingMs=1});
   await page.waitForFunction(()=>{
     const s=CellboundGame.getState();

@@ -185,8 +185,12 @@
       target?.focus({preventScroll:true});
     });
   });
+  // Escape must also work when focus momentarily falls back to body during
+  // the native forge rerender (or when a mobile keyboard dismisses).
+  document.addEventListener('keydown',e=>{
+    if(open&&e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}
+  },true);
   dialog.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){e.preventDefault();close();return;}
     if(e.key!=='Tab')return;
     const tabbables=[...dialog.querySelectorAll('button:not([disabled]):not([hidden]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')]
       .filter(el=>!el.closest('[hidden]')&&!el.closest('[inert]')&&el.getClientRects().length);
