@@ -69,6 +69,7 @@ const groups=Object.freeze({
   "accessibility-polish-v1.css",
   "layout-safety-v1.css",
   "top-navigation-v1.css",
+  "ui-foundation-v1.css",
   "class-build-v1.js",
   "gear-data.js",
   "profession-data.js",

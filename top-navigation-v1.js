@@ -8,16 +8,15 @@
   if (!shell || !oldDock || !oldMore || !originalNav || document.querySelector('#cbGlobalNavigation')) return;
 
   // Each entry points at an existing route; no new gameplay pages are invented.
+  // Six stable destinations. Existing navigation still owns every route.
+  // Secondary activities, trading and developer tools remain in "More".
   const destinations = [
-    ['overview', '⌂', 'Guild Hall'],
-    ['roster', '♟', 'Roster'],
-    ['content', '▱', 'Dungeons'],
-    ['quests', '⌁', 'Quests'],
-    ['pvp', '⚔', 'PvP'],
+    ['overview', '⌂', 'Guild'],
+    ['content', '⚔', 'Adventure'],
+    ['roster', '♟', 'Heroes'],
     ['professions', '⚒', 'Professions'],
-    ['chat', '◌', 'Social'],
-    ['admin', '⚙', 'Design Booth'],
-    ['trading', '⇄', 'Trading Post']
+    ['pvp', '⚑', 'PvP'],
+    ['chat', '◌', 'Social']
   ];
   const original = id => originalNav.querySelector('.nav-btn[data-view="' + id + '"]');
   const available = id => {
@@ -77,7 +76,7 @@
   }
   const groupViews = {
     roster: ['roster', 'party', 'bank'],
-    content: ['content', 'world', 'raids', 'endgame'],
+    content: ['content', 'quests', 'world', 'raids', 'endgame'],
     chat: ['chat', 'highscores']
   };
   function sync() {
@@ -92,16 +91,16 @@
     });
     const hall = header.querySelector('.cb-global-brand');
     hall.classList.toggle('is-active', activeView === 'overview');
-    const moreActive = ['world', 'raids', 'endgame', 'party', 'bank', 'highscores', 'support'].includes(activeView);
+    const moreActive = ['trading', 'support', 'admin'].includes(activeView);
     moreButton.classList.toggle('is-active', moreActive || oldMore.getAttribute('aria-expanded') === 'true');
     moreButton.setAttribute('aria-expanded', oldMore.getAttribute('aria-expanded') || 'false');
   }
   moreButton.addEventListener('click', () => { account.open = false; oldMore.click(); sync(); });
   new MutationObserver(sync).observe(oldMore, { attributes: true, attributeFilter: ['aria-expanded'] });
-  const admin = original('admin');
-  if (admin) new MutationObserver(sync).observe(admin, { attributes: true, attributeFilter: ['hidden', 'class', 'disabled'] });
-  const pvp = original('pvp');
-  if (pvp) new MutationObserver(sync).observe(pvp, { attributes: true, attributeFilter: ['hidden', 'class', 'disabled'] });
+  // Permissions and beta unlocks may change after authentication.
+  new MutationObserver(sync).observe(originalNav, {
+    attributes: true, subtree: true, attributeFilter: ['hidden', 'class', 'disabled']
+  });
 
   document.addEventListener('click', event => {
     if (account.open && !account.contains(event.target)) account.open = false;

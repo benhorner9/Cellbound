@@ -3,7 +3,7 @@
   'use strict';
   if(document.querySelector('#cbImmersiveDock'))return;
   const GROUPS={
-    guild:{label:'Guild',routes:[['roster','Roster'],['party','Active Party'],['bank','Bank'],['professions','Professions']]},
+    guild:{label:'Heroes',routes:[['roster','Roster'],['party','Active Party'],['bank','Bank']]},
     adventure:{label:'Adventure',routes:[['quests','Quests'],['content','Dungeons'],['world','Activities'],['raids','Raids'],['endgame','Endgame']]},
     social:{label:'Social',routes:[['chat','Guild & Chat'],['highscores','High Scores']]},
     market:{label:'Market',routes:[['trading','Trading Post']]},
@@ -17,7 +17,7 @@
     ['pvp','⚔','PvP'],
     ['chat','❖','Social']
   ];
-  const HUB_OF={overview:'overview',roster:'guild',party:'guild',bank:'guild',professions:'guild',quests:'adventure',content:'adventure',world:'adventure',raids:'adventure',endgame:'adventure',trading:'market',pvp:'pvp',chat:'social',highscores:'social',support:'support',admin:'admin'};
+  const HUB_OF={overview:'overview',roster:'guild',party:'guild',bank:'guild',professions:'professions',quests:'adventure',content:'adventure',world:'adventure',raids:'adventure',endgame:'adventure',trading:'market',pvp:'pvp',chat:'social',highscores:'social',support:'support',admin:'admin'};
   const $=s=>document.querySelector(s);
   const clean=s=>String(s==null?'':s);
   const original=view=>$('.sidebar .nav-btn[data-view="'+view+'"]');
