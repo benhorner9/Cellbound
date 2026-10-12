@@ -657,12 +657,14 @@ if(file==='quests-v2.js'){
     const uiFoundationLink=(contents.match(/<link rel="stylesheet" href="\.\/ui-foundation-v1\.css\?v=[0-9]+">/)||[])[0]||'';
     const guildHallLink=(contents.match(/<link rel="stylesheet" href="\.\/guild-hall-v2\.css\?v=[0-9]+">/)||[])[0]||'';
     const heroesLink=(contents.match(/<link rel="stylesheet" href="\.\/heroes-workspace-v1\.css\?v=[0-9]+">/)||[])[0]||'';
-    if(!layoutSafetyLink||!topNavigationLink||!uiFoundationLink||!guildHallLink||!heroesLink||
+    const adventureLink=(contents.match(/<link rel="stylesheet" href="\.\/adventure-combat-v1\.css\?v=[0-9]+">/)||[])[0]||'';
+    if(!layoutSafetyLink||!topNavigationLink||!uiFoundationLink||!guildHallLink||!heroesLink||!adventureLink||
       contents.indexOf(layoutSafetyLink)>contents.indexOf(topNavigationLink)||
       contents.indexOf(topNavigationLink)>contents.indexOf(uiFoundationLink)||
       contents.indexOf(uiFoundationLink)>contents.indexOf(guildHallLink)||
       contents.indexOf(guildHallLink)>contents.indexOf(heroesLink)||
-      contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(heroesLink))throw new Error('Heroes stylesheet must follow Guild Hall and remain the final CSS layer in guild.html');
+      contents.indexOf(heroesLink)>contents.indexOf(adventureLink)||
+      contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(adventureLink))throw new Error('Adventure and Combat stylesheet must follow Heroes and remain final in guild.html');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     for(const asset of ['combat-data-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js'])if(!contents.includes(asset))throw new Error('Canonical combat stack is not linked from guild.html: '+asset);
     if(!contents.includes('expedition-presentation-v1.css')||!contents.includes('expedition-presentation-v1.js'))throw new Error('Shared PvE expedition presentation assets are not linked from guild.html');
@@ -744,7 +746,7 @@ const UI_BUNDLE_SOURCES=[
   'readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css',
   'roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','bank-v2.css','character-command-v1.css',
   'character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','character-forge-v1.css',
-  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','combat-cinematic-v1.css','layout-safety-v1.css','highscores-v1.css','top-navigation-v1.css','ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css'
+  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','combat-cinematic-v1.css','layout-safety-v1.css','highscores-v1.css','top-navigation-v1.css','ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css','adventure-combat-v1.css'
 ];
 {
   const bundle=UI_BUNDLE_SOURCES.map(file=>'/* ===== '+file+' ===== */\n'+fs.readFileSync(sourcePath(file),'utf8')).join('\n\n');

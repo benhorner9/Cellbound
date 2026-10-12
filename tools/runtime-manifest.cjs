@@ -74,6 +74,8 @@ const groups=Object.freeze({
   "guild-hall-v2.js",
   "heroes-workspace-v1.css",
   "heroes-workspace-v1.js",
+  "adventure-combat-v1.css",
+  "adventure-combat-v1.js",
   "class-build-v1.js",
   "gear-data.js",
   "profession-data.js",
