@@ -1066,3 +1066,25 @@
 }
 #characterModal .cb-equip-slot:hover{border-color:#bda889}
 #characterModal .cb-slot-icon{background:#1d3240}
+
+
+/* Cellbound Deep Slate V8 — character window frame, not class/rarity colours. */
+#characterModal .character-modal{
+ background:linear-gradient(#1d3547,#102839)!important;
+ border-color:#536d7d!important;box-shadow:0 25px 57px #000a!important;
+}
+#characterModal .cb-sheet{
+ background:radial-gradient(circle at 50% 25%,color-mix(in srgb,var(--cb-accent) 9%,transparent),transparent 45%),
+ linear-gradient(#1a3346,#0f2639)!important;
+}
+#characterModal .cb-sheet-header{
+ background:linear-gradient(90deg,#243e4f,#1a3142 65%,#1d3647)!important;
+ border-color:#4e6677!important;
+}
+#characterModal .cb-character-tabs{
+ background:rgba(17,36,52,.98)!important;border-color:#486274!important;
+}
+#characterModal .cb-equip-slot{
+ background:linear-gradient(#223a4a,#152d3e)!important;border-color:#4b6576!important;
+}
+#characterModal .cb-slot-icon{background:#122a3b!important}
