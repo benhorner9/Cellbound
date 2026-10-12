@@ -875,3 +875,29 @@ linear-gradient(180deg,#142019,#09110e)}
 }
 .onboard-root :is(.creator-steps,.creator-step){background-color:#243948;border-color:#526876}
 .onboard-root .creator-step.active{color:#e9d4b0;border-color:#b29c79}
+
+
+/* Cellbound Deep Slate V8 — darker frame; tutorial character art untouched. */
+.onboard-root{background:#0b1c2b!important}
+.onboard-shell{
+ background:radial-gradient(ellipse at 78% 4%,#24405069,transparent 52%),
+ linear-gradient(#162b3b,#0d2131 75%)!important;
+}
+.onboard-head{background:rgba(17,34,48,.98)!important;border-color:#435c6d!important}
+.onboard-root :is(.race-card,.class-choice,.party-draft-card,.tutorial-item,.tutorial-recipe,
+ .tutorial-loot-card,.tutorial-learning-list span){
+ background:#172f40!important;border-color:#405b6d!important;
+}
+.onboard-root :is(.race-card,.class-choice,.party-draft-card).active{
+ background:#343e48!important;border-color:#a9916c!important;
+ box-shadow:inset 2px 0 #a9916c!important;
+}
+.onboard-root :is(.z-guide,.profession-tutorial>aside,.craft-character,.party-draft-list,.formation-preview){
+ background:#142b3c!important;border-color:#415e70!important;
+}
+.onboard-root .character-creator{
+ background:radial-gradient(ellipse at 50% 20%,#2d4355,#102839 68%)!important;
+}
+.onboard-root :is(.creator-steps,.creator-step){
+ background-color:#182f41!important;border-color:#425e70!important;
+}
