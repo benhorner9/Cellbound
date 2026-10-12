@@ -1593,3 +1593,194 @@ html body.cb-top-nav-enabled .main>.view .ui-search input:focus-visible{
   html body.cb-top-nav-enabled #roster .roster-overview-strip,
   html body.cb-top-nav-enabled #bank .bank-overview-strip{overflow-x:auto}
 }
+
+
+/* ======================================================================
+   CELLBOUND UI COMPLETION V5 — overlooked nested page surfaces
+   Keep encounter viewers, spell effects, minigames and rarity states intact.
+   ====================================================================== */
+html body.cb-top-nav-enabled {
+  --surface-1:#14283b;
+  --surface-2:#1b3146;
+  --surface-raised:#223a50;
+  --surface-outline:#4c6579;
+  --surface-text:#e9eef0;
+  --surface-soft:#b7c9d7;
+  --surface-highlight:#e3bd7e;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview){
+  color:var(--surface-text);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.roster-command-bar,.bank-command-bar,.bank-category-tabs,.tp-market-bar,.tp-delivery,
+      .chat-panel,.identity-panel,.party-finder-panel,.profession-roster-panel,.workshop-panel,
+      .pvp-hero,.mr-hero,.quest-journal-shell,.dungeon-episode,.admin-card){
+  border-radius:6px;border-color:var(--surface-outline)!important;
+  box-shadow:0 9px 25px rgba(0,6,16,.28);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.roster-filter-primary,.roster-filter-secondary,.bank-filter-row,
+      .tp-filters,.tp-market-stats,.pvp-grid,.profession-layout){
+  gap:clamp(7px,.85vw,13px);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ui-select,.ui-search,.tp-filters select,.tp-filters input,
+      .tp-search,.tp-action-form input,.tp-action-form select){
+  min-height:40px;
+  box-shadow:inset 0 1px 1px #0005;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ui-select,.ui-search,.tp-filters select,.tp-filters input,
+      .tp-search,.tp-action-form input,.tp-action-form select):focus-within{
+  border-color:#e0bc77!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ui-select,.tp-filters select,.tp-action-form select){
+  color-scheme:dark;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.tp-panel,.admin-card,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head){
+  background:linear-gradient(90deg,#1c3549,#182c3e)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.tp-panel,.admin-card,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head) h3{
+  font-family:Georgia,serif;color:#f4e7d5!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.tp-panel,.admin-card,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head) small{
+  color:#dfbc82!important;
+}
+/* Roster: cards and class accents remain individual but their neutral text is consistent. */
+html body.cb-top-nav-enabled #roster :is(.roster-card-identity p,.roster-card-identity small,
+    .roster-card-metrics span,.roster-shock-line span){
+  color:#b9c9d4!important;
+}
+html body.cb-top-nav-enabled #roster .roster-card-metrics b{color:#f5e9dc}
+html body.cb-top-nav-enabled #roster .roster-filter-meta,
+html body.cb-top-nav-enabled #bank .bank-filter-meta{color:#a9bdc9}
+html body.cb-top-nav-enabled #roster .roster-filter-meta span,
+html body.cb-top-nav-enabled #bank .bank-filter-meta span{color:#eac88a}
+html body.cb-top-nav-enabled #roster .roster-card-actions button:not(:disabled),
+html body.cb-top-nav-enabled #bank .bank-card-action:not(:disabled){
+  border-color:#64809a;background:#243e53;color:#f2e8dc;
+}
+html body.cb-top-nav-enabled #roster .roster-card-actions button:hover:not(:disabled),
+html body.cb-top-nav-enabled #bank .bank-card-action:hover:not(:disabled){
+  border-color:#d7b87d;background:#304e63;color:#ffe5b4;
+}
+/* Bank / trading: item contrast without changing rarity indicators or prices. */
+html body.cb-top-nav-enabled #bank :is(.bank-card-v2 .bank-copy small,.bank-card-v2 .bank-card-foot){
+  color:#aec1d0;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-tabs,.tp-panel,.tp-inspector,.tp-market-stats>div){
+  box-shadow:0 8px 20px #0003;
+}
+html body.cb-top-nav-enabled #trading .tp-tabs{
+  padding:5px;background:#12273b!important;
+}
+html body.cb-top-nav-enabled #trading .tp-tabs button:not(.active):hover,
+html body.cb-top-nav-enabled #trading .tp-category-list button:not(.active):hover{
+  background:#2a4154!important;color:#f9e4c1!important;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-empty,.tp-inspector-empty,.tp-saved h4,
+    .tp-result-card p,.tp-market-stats span){color:#b2c3cf!important}
+html body.cb-top-nav-enabled #trading :is(.tp-market-stats b,.tp-quote-grid b){color:#efc984!important}
+/* Professions: workshop, recipe list and material vault read like one station. */
+html body.cb-top-nav-enabled #professions :is(.profession-character-list,.reagent-grid,
+    .profession-workshop,.profession-slot-grid){background:transparent}
+html body.cb-top-nav-enabled #professions :is(.profession-char,.recipe-card,.reagent-card,
+    .profession-slot-card){box-shadow:inset 0 1px #ffffff0b}
+html body.cb-top-nav-enabled #professions :is(.profession-char,.recipe-card,.reagent-card):hover{
+  background:#273e51!important;border-color:#698ca0!important;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-char.active,.recipe-card.active,.profession-slot-card.active){
+  border-color:#e1bb7d!important;
+}
+/* Quests: journal copy should not fade to unreadable muddy brown. */
+html body.cb-top-nav-enabled #quests :is(.quest-detail-hero p,.quest-v2-hero p,
+    .quest-v3-hero p,.quest-stage-track small,.quest-requirement span,
+    .quest-objective-card p,.quest-journal-side p){
+  color:#b9cbd6!important;
+}
+html body.cb-top-nav-enabled #quests .quest-current-step{
+  background:#21354a;border-color:#4b647a;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-detail-action>button,.quest-dialogue button,
+    .quest-unlock button):not(:disabled){
+  color:#f7e8d2;border-color:#a78958;background:#37404a;
+}
+/* Dungeon journal: readable access status and choice panels. */
+html body.cb-top-nav-enabled #content :is(.dungeon-browser-copy,.dungeon-journal-layout,
+    .dungeon-episode-grid){color:#dce6ed}
+html body.cb-top-nav-enabled #content :is(.dungeon-browser-meta,.dungeon-journal-art p){
+  color:#c6d5df;
+}
+html body.cb-top-nav-enabled #content .dungeon-detail-toolbar{
+  background:#1e3548;border-color:#4c6476;
+}
+html body.cb-top-nav-enabled #content .journal-entry-panel{
+  border-color:#4f6777;background:linear-gradient(150deg,#1e3548,#112337);
+}
+html body.cb-top-nav-enabled #content .journal-entry-panel :is(b,p,small){color:#e3e5df}
+/* Social: message region and composer, not the chat data itself. */
+html body.cb-top-nav-enabled #chat :is(.chat-panel,.social-side .panel){background:#162b40!important}
+html body.cb-top-nav-enabled #chat .chat-messages{background:#0f2234!important}
+html body.cb-top-nav-enabled #chat .chat-form{
+  background:#1c3144;border-top:1px solid #526b7f;
+}
+html body.cb-top-nav-enabled #chat .chat-form :is(input,button){
+  min-height:44px;
+}
+html body.cb-top-nav-enabled #chat :is(.social-empty,.pf-card p,.guild-name-form p){
+  color:#b9c9d5;
+}
+/* PvP menus, rank card and progression. Never touch live battleground viewport. */
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel,.pvp-rank-card,.pvp-rule-card){
+  border-color:#4c6679;background:linear-gradient(#21384c,#132638);
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel>header,.pvp-leader-head){border-color:#496277}
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel>header h3,.pvp-rank-card>b){
+  color:#ffebd4;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-rule-card>p,.pvp-rule-card>ul,
+    .pvp-mode-grid button>small){color:#bdd0dc}
+/* Admin toolbox: keep all editor controls and original permissions untouched. */
+html body.cb-top-nav-enabled #admin :is(.admin-shell,.dbo-editor-layout,
+    .dbo-project-editor,.dbo-projects){min-width:0}
+html body.cb-top-nav-enabled #admin :is(.dbo-project-list button,.dbo-stage-list button){
+  background:#1c3348;border-color:#476073;color:#e6edf0;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-project-list button.active,.dbo-stage-list button.active){
+  background:#364455;border-color:#d8b778;color:#fff0d6;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-field>span,.dbo-projects h4,.dbo-builder-top small){
+  color:#e0bf86!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell :is(.dbo-footer,.dbo-stage-actions,.dbo-builder-top){
+  border-color:#4c6376;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell :is(input,select,textarea)::placeholder{
+  color:#9db7c7;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell button:not(:disabled):focus-visible{
+  outline:3px solid #f0d391!important;outline-offset:2px;
+}
+/* All app-owned forms and section tabs should be usable by keyboard/touch. */
+html body.cb-top-nav-enabled .main>.view :is(button,summary,a,input,textarea,select){
+  -webkit-tap-highlight-color:rgba(226,187,116,.22);
+}
+html body.cb-top-nav-enabled .main>.view :is(input,textarea,select):focus-visible{
+  outline:2px solid #f5d591!important;outline-offset:1px;
+}
+html body.cb-top-nav-enabled .main>.view :is(button,summary):disabled{cursor:not-allowed}
+/* Full screen encounters and character creation intentionally have their own layout. */
+@media(max-width:950px){
+  html body.cb-top-nav-enabled #admin .dbo-editor-layout{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled #trading .tp-shell{min-width:0}
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.panel-head,.tp-panel-head){
+    gap:8px;flex-wrap:wrap;
+  }
+  html body.cb-top-nav-enabled #admin .dbo-master-head{flex-wrap:wrap}
+}
