@@ -24,7 +24,7 @@ assert(js.indexOf('makeReopen(node,isSummary);')<js.indexOf('live.replaceChildre
 assert(js.includes("workshop.querySelector('.timed-craft-project')")&&js.includes("workshop.querySelector('[data-forge-job-summary]')"),'Both live minigame and completed result must move into window');
 assert(js.includes('new MutationObserver(sync)'),'Forge phase rerenders must remain in focused modal');
 assert(js.includes("window.dispatchEvent(new Event('blur'))"),'Closing modal must pause existing craft timer');
-assert(js.includes('if(e.key===\'Escape\')'),'Escape must close and pause');
+assert(js.includes('if(open&&e.key===\'Escape\')')&&js.includes("document.addEventListener('keydown'"),'Escape must close and pause even if forge rerender moves focus');
 assert(js.includes('role')&&js.includes('aria-modal'),'Overlay requires dialog semantics');
 assert(!js.includes('Game.save(')&&!js.includes('materials[')&&!js.includes('workshopCraftProject='),'Overlay cannot mutate game currencies, XP or saves');
 assert(css.includes('.dungeon-browser-heading h3')&&css.includes('.dungeon-browser-art'),'Long dungeon titles must use a consistent full-width card');
