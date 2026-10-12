@@ -846,7 +846,7 @@ function paperArms(c,skin,highlighted){
       handY=fit.handY||279,rightY=fit.rightHandY??handY,aw=Math.max(5.2,p.arm*.44),held=!!itemForSlot(c,'Weapon');
   var wristY=handY-19,rightWristY=rightY-19;
   var left='M'+(ls-aw)+' 148 Q'+(ls-aw-7)+' 185 '+(lh-aw)+' 229 Q'+(lh-aw*.65)+' 249 '+(lh-aw*.28)+' '+wristY+' L'+(lh+aw*.28)+' '+wristY+' Q'+(lh+aw*.65)+' 249 '+(ls+aw)+' 148Z';
-  var elbowX=rs+Math.max(9,p.arm*.48),elbowY=Math.min(277,Math.max(rightY+38,263));
+  var elbowX=rs+Math.max(9,p.arm*.48),elbowY=Math.min(250,Math.max(rightY+24,236));
   // Upper-arm silhouette ends at the elbow; the front forearm is painted once.
   var right=held?
     'M'+(rs-aw)+' 148 Q'+rs+' 151 '+(rs+aw)+' 164 '+
@@ -884,7 +884,7 @@ function paperWeaponForearm(c){
       skin=raceDef(a.race).skin[a.skinTone],fill=tier?pal.base:skin,
       trim=tier?pal.trim:'#4d4034',x=fit.weaponX,y=fit.weaponY,
       elbowX=fit.rightShoulder+Math.max(9,p.arm*.48),
-      elbowY=Math.min(277,Math.max(y+38,263)),
+      elbowY=Math.min(250,Math.max(y+24,236)),
       dx=elbowX-x,dy=elbowY-y,len=Math.hypot(dx,dy),
       nx=-dy/len,ny=dx/len,
       et=Math.max(6.2,p.arm*.38),wt=Math.max(4.4,p.hand*4.6),
@@ -1210,9 +1210,9 @@ function classicGearFitProfile(subject){
   var pole=['staff','spear','rod','wand','scepter','focus'].includes(type),
       ranged=type==='bow'||type==='crossbow',close=type==='dagger',
       heavy=['greatsword','hammer','axe'].includes(type),
-      rightHand=weapon?rightShoulder-p.shoulder*(ranged?.38:pole?.51:close?.47:heavy?.39:.44):baseRightHand,
-      weaponY=weapon?(type==='bow'?224:type==='crossbow'?232:pole?222:close?227:heavy?235:230):279,
-      angle=weapon?(type==='bow'?14:type==='crossbow'?-15:pole?(type==='spear'?4:2):close?-18:heavy?-10:-14):0,
+      rightHand=weapon?rightShoulder-p.shoulder*(ranged?.29:pole?.31:close?.31:heavy?.29:.31):baseRightHand,
+      weaponY=weapon?(type==='bow'?215:type==='crossbow'?214:pole?(type==='spear'?224:type==='staff'?209:213):close?219:heavy?216:214):279,
+      angle=weapon?(type==='bow'?10:type==='crossbow'?-10:pole?(type==='spear'?1:2):close?18:heavy?6:8):0,
       sideMin=weapon?120+p.shoulder*.22:rightShoulder;
   return {race,gender:Number(subject?.appearance?.gender)||0,frame:Number(subject?.appearance?.frame)||1,p,
     centerX:120,leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,
