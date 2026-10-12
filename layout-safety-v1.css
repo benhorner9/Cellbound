@@ -4817,8 +4817,8 @@ body.cb-immersive-ui:has(.recruit-modal-backdrop:not([hidden])) .cb-dock{
   .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live)
   .cbcombat-battle-panel > .cbcombat-arena-wrap {
     box-sizing:border-box!important;
-    flex:0 1 auto!important;
-    width:min(100%, max(220px, calc(177.7778dvh - 702.2223px)))!important;
+    flex:0 0 auto!important;
+    width:min(100%, max(220px, calc(177.7778dvh - 790px)))!important;
     height:auto!important;
     max-width:100%!important;
     max-height:none!important;
@@ -4853,6 +4853,6 @@ body.cb-immersive-ui:has(.recruit-modal-backdrop:not([hidden])) .cb-dock{
   }
   .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live)
   .cbcombat-battle-panel > .cbcombat-arena-wrap {
-    width:min(100%, max(180px, calc(177.7778dvh - 613.3334px)))!important;
+    width:min(100%, max(180px, calc(177.7778dvh - 790px)))!important;
   }
 }
