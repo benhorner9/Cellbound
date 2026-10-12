@@ -9,11 +9,17 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   const page=await browser.newPage({viewport:{width:1366,height:900},hasTouch:true});
   const errors=[];
   page.on('pageerror',e=>errors.push(String(e)));
-  await page.setContent('<section id="professions" class="view active"><div id="professionWorkshop"><section class="craft-project timed-craft-project"><header><h3>Braced Armour Kit</h3></header><button id="qaForgeStrike">STRIKE</button></section></div></section>');
+  await page.setContent('<section id="professions" class="view active"><div id="professionWorkshop"><section class="craft-project timed-craft-project"><header><h3>Braced Armour Kit</h3></header><button id="qaForgeStrike" disabled>STRIKE</button></section></div></section>');
   await page.addStyleTag({content:fs.readFileSync(path.join(root,'ui-polish-block8.css'),'utf8')});
   await page.evaluate(()=>{
     window.demoState={workshopCraftProject:{charId:'hero1',recipeId:'kit',profession:'Blacksmithing',quantity:2,remainingMs:44000,totalMs:44000,startedAt:'qa-craft'},workshopCraftSummary:null,roster:[{id:'hero1',name:'Orik Stone'}]};
     window.CellboundGame={getState:()=>window.demoState};
+    window.CellboundEconomy={renderProfessions:()=>{
+      window.qaRenders=(window.qaRenders||0)+1;
+      const work=document.querySelector('#professionWorkshop');
+      work.innerHTML='<section class="craft-project timed-craft-project"><header><h3>Braced Armour Kit</h3></header><button id="qaForgeStrike">STRIKE</button></section>';
+      work.querySelector('#qaForgeStrike').addEventListener('click',()=>{window.qaStrikes=(window.qaStrikes||0)+1});
+    }};
     window.qaFocusCalls=0;window.qaBlurCalls=0;
     window.addEventListener('focus',()=>window.qaFocusCalls++);
     window.addEventListener('blur',()=>window.qaBlurCalls++);
@@ -29,6 +35,8 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await page.locator('#cbCraftModalBegin').click();
   assert.equal(await page.evaluate(()=>window.CellboundCraftOverlay.isReady()),true,'Begin enables focused crafting');
   assert.equal(await page.evaluate(()=>window.qaFocusCalls),1,'begin delegates timing to original focus handler');
+  await page.locator('#cbCraftModal #qaForgeStrike:not([disabled])').waitFor();
+  assert.equal(await page.evaluate(()=>window.qaRenders),1,'Begin re-renders native forge controls enabled');
   await page.locator('#qaForgeStrike').click();
   assert.equal(await page.evaluate(()=>window.qaStrikes),1,'native craft handlers survive DOM move');
   // Existing engine fully rewrites workshop after strike/reheat; the same
