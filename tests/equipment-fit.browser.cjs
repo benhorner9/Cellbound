@@ -72,7 +72,7 @@ const engine=engineName==='webkit'?webkit:chromium;
           if(item.slot==='Hands'){
             const lb=childBox(svg,'.cb-paper-glove-left'),rb=childBox(svg,'.cb-paper-glove-right');
             if(!contains(lb,fit.leftHand,fit.handY-4,2))fail(item,race,gender,'left glove does not wrap left hand',lb);
-            if(!contains(rb,fit.rightHand,fit.handY-4,2))fail(item,race,gender,'right glove does not wrap right hand',rb);
+            if(!contains(rb,fit.rightHand,fit.rightHandY-4,2))fail(item,race,gender,'right glove does not wrap right hand',rb);
             if(lb&&lb.w>fit.p.hand*17+8)fail(item,race,gender,'left glove is oversized for hand',lb);
             if(rb&&rb.w>fit.p.hand*17+8)fail(item,race,gender,'right glove is oversized for hand',rb);
           }
@@ -91,6 +91,20 @@ const engine=engineName==='webkit'?webkit:chromium;
               fail(item,race,gender,'weapon handle does not touch the hand socket',b);
             if(!svg.querySelector('.cb-paper-held-grip-main .cb-paper-weapon-grip-hand'))
               fail(item,race,gender,'front fingers do not wrap the weapon handle',b);
+
+            const forearm=svg.querySelector('.cb-paper-weapon-forearm');
+            if(!forearm||forearm.getAttribute('data-weapon-forearm')!=='bent'){
+              fail(item,race,gender,'main hand is not supported by a visibly bent forearm',b);
+            }else{
+              const armBox=modelBox(svg,forearm);
+              if(distance(armBox,fit.weaponX,fit.weaponY)>3)
+                fail(item,race,gender,'forearm does not connect to the raised wrist',armBox);
+              if(!(fit.weaponY<=251&&fit.weaponY<fit.handY-20))
+                fail(item,race,gender,'weapon hand is still down beside the hip',armBox);
+              const rightGlove=childBox(svg,'.cb-paper-glove-right');
+              if(!contains(rightGlove,fit.weaponX,fit.weaponY,2))
+                fail(item,race,gender,'glove and weapon have different wrist positions',rightGlove);
+            }
             const type=P.weaponType(item,c);
             if(type==='sword'||type==='greatsword'){
               const guard=childBox(svg,'.cb-paper-hilt-guard'),blade=childBox(svg,'.cb-paper-held-blade');
@@ -156,6 +170,8 @@ const engine=engineName==='webkit'?webkit:chromium;
         const weapon=svg.querySelector('.cb-paper-side-weapon');
         if(!weapon||weapon.getAttribute('data-weapon-pose')!=='side-held')fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout missing side-held weapon');
         if(fit.weaponX<fit.weaponSideMin)fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout weapon crosses torso');
+        if(!svg.querySelector('.cb-paper-weapon-forearm')||!contains(childBox(svg,'.cb-paper-glove-right'),fit.weaponX,fit.weaponY,2))
+          fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout raised wrist or bent arm missing');
         if(weapon){
           const type=weapon.getAttribute('data-weapon-type');
           if(['sword','greatsword'].includes(type)){

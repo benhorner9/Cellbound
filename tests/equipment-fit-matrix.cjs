@@ -51,6 +51,11 @@ for(const item of G.items){
       assert(html.includes('cb-paper-held-grip-main'),item.itemId+' missing front fingers over the weapon');
       assert(near(num(html,'data-hand-x'),fit.weaponX),item.itemId+' drawn hand does not meet weapon');
       assert(near(num(html,'data-hand-y'),fit.weaponY),item.itemId+' drawn hand height mismatch');
+      assert(fit.weaponY<fit.handY-20,item.itemId+' is still carried at the hip');
+      assert(near(num(html,'data-right-hand-y'),fit.weaponY),item.itemId+' right glove does not reach raised wrist');
+      assert(html.includes('data-weapon-forearm="bent"'),item.itemId+' main-hand lacks visible bent forearm');
+      assert(near(num(html,'data-forearm-hand-x'),fit.weaponX)&&near(num(html,'data-forearm-hand-y'),fit.weaponY),
+        item.itemId+' elbow/forearm does not connect to gripping hand');
       if(['sword','greatsword'].includes(P.weaponType(item,c))){
         assert(html.includes('cb-paper-hilt-guard'),item.itemId+' sword lacks visible crossguard');
         assert(html.includes('cb-paper-held-blade'),item.itemId+' sword blade not drawn above the hand');
@@ -107,6 +112,9 @@ for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of
   assert(weaponAt>=0,klass+' '+race+' frame '+frame+' missing side-held weapon');
   assert(near(num(weaponHtml,'data-grip-x'),fit.weaponX),klass+' '+race+' frame '+frame+' weapon mismatch');
   assert(near(num(weaponHtml,'data-grip-y'),fit.weaponY),klass+' '+race+' frame '+frame+' weapon Y mismatch');
+  assert(fit.weaponY<fit.handY-20,klass+' '+race+' frame '+frame+' weapon hand was not lifted');
+  assert(near(num(html,'data-right-hand-y'),fit.weaponY),klass+' '+race+' frame '+frame+' glove is not on weapon wrist');
+  assert(html.includes('data-weapon-forearm="bent"'),klass+' '+race+' frame '+frame+' forearm does not bend');
   assert(fit.weaponX>=fit.weaponSideMin,klass+' '+race+' frame '+frame+' weapon moved across body instead of to side');
   assert(html.includes('cb-paper-held-grip-main'),klass+' '+race+' frame '+frame+' hand not visibly gripping weapon');
   assert(html.includes('data-weapon-pose-version="2"'),klass+' '+race+' frame '+frame+' old floating pose');
