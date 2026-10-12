@@ -62,7 +62,7 @@ for(const item of G.items){
         item.itemId+' elbow/forearm does not connect to gripping hand');
       if(['sword','greatsword'].includes(P.weaponType(item,c))){
         assert(html.includes('cb-paper-hilt-guard'),item.itemId+' sword lacks visible crossguard');
-        assert(html.includes('cb-paper-held-blade'),item.itemId+' sword blade not drawn above the hand');
+        assert(html.includes('cb-paper-held-blade'),item.itemId+' sword missing its blade silhouette');
         assert(html.includes('cb-paper-handle'),item.itemId+' sword handle not drawn through palm');
       }
     }else if(item.slot==='OffHand'){

@@ -202,6 +202,7 @@ function weaponKind(subject){
   if(raw.includes('mace'))return'mace';
   if(raw.includes('axe'))return'axe';
   if(raw.includes('great')||raw.includes('2h'))return'greatsword';
+  if(String(subject?.class||'')==='Rogue'&&/\bblades?\b/.test(raw))return'dagger';
   return'sword';
 }
 function weaponPose(subject,baseRightHand,p,shoulderX){
@@ -217,7 +218,9 @@ function weaponPose(subject,baseRightHand,p,shoulderX){
   const heavy=['greatsword','hammer','axe'].includes(kind);
   const x=shoulderX-p.shoulder*(ranged?.29:pole?.31:close?.31:heavy?.29:.31);
   const y=bow?215:crossbow?214:pole?(kind==='spear'?224:kind==='staff'?209:213):close?219:heavy?216:214;
-  const angle=bow?10:crossbow?-10:pole?(kind==='spear'?1:2):close?18:heavy?6:8;
+  const angle=bow?7:crossbow?-9:pole?(kind==='spear'?2:5):
+    kind==='dagger'?145:kind==='sword'?151:kind==='greatsword'?154:
+    kind==='hammer'||kind==='mace'||kind==='axe'?17:kind==='wand'?14:7;
   return {active:true,kind,x,y,angle,side:'right',
     sideMin:120+p.shoulder*.22,stance:ranged?'ranged-ready':pole?'caster-ready':'guard-ready'};
 }

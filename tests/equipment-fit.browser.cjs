@@ -116,10 +116,10 @@ const engine=engineName==='webkit'?webkit:chromium;
               if(!guard||!blade)fail(item,race,gender,'missing physical hilt or blade geometry',b);
               else{
                 const guardY=guard.y+guard.h/2;
-                if(Math.abs(guardY-(fit.weaponY-17))>13)
-                  fail(item,race,gender,'sword crossguard floats away from gripping fist',guard);
-                if(blade.y>fit.weaponY-80||blade.y+blade.h>fit.weaponY-6)
-                  fail(item,race,gender,'sword blade no longer points up from the hand',blade);
+                if(Math.abs(guardY-fit.weaponY)>17)
+                  fail(item,race,gender,'sword crossguard detached from the gripping fist',guard);
+                if(blade.y<fit.weaponY-11||blade.y+blade.h<fit.weaponY+35)
+                  fail(item,race,gender,'lowered guard blade does not extend down from hand',blade);
               }
             }
           }
@@ -183,7 +183,7 @@ const engine=engineName==='webkit'?webkit:chromium;
           const type=weapon.getAttribute('data-weapon-type');
           if(['sword','greatsword'].includes(type)){
             const guard=childBox(svg,'.cb-paper-hilt-guard');
-            if(!guard||Math.abs(guard.y+guard.h/2-(fit.weaponY-17))>13)
+            if(!guard||Math.abs(guard.y+guard.h/2-fit.weaponY)>17)
               fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout sword hilt does not meet hand',guard);
           }
         }

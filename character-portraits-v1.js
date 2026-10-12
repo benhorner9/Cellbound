@@ -574,6 +574,8 @@ function paperSlotClass(slot,highlighted,item){
   return 'cb-paper-slot cb-paper-slot-'+String(slot||'').toLowerCase()+(highlighted===slot?' is-highlighted':'')+set;
 }
 function weaponType(item,c){
+  if(c?.class==='Rogue'&&/(^|\s)(blades?|sword)(\s|$)/i.test(String(item?.name||''))&&
+      !/(greatsword|claymore|greatblade)/i.test(String(item?.name||'')))return'dagger';
   if(item?.weaponType)return String(item.weaponType).toLowerCase();
   var n=(' '+itemIdentity(item,'Weapon')+' '+String(item?.name||'')+' ').toLowerCase();
   if(/(spear|pike|lance|glaive|halberd|polearm)/.test(n))return'spear';
@@ -1014,7 +1016,7 @@ function weaponMarkup(type,pal,v,tier,item){
       '<path d="M182 163 Q193 142 205 161 L200 180 L188 180Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.5"/>';
     ornamentY=221;
   }else if(type==='staff'){
-    g='<path d="M193 111 L205 351" stroke="'+pal.base+'" stroke-width="8" stroke-linecap="round"/>'+
+    g='<path d="M193 111 L207 382" stroke="'+pal.base+'" stroke-width="8" stroke-linecap="round"/>'+
       (v%3===0?'<circle cx="193" cy="105" r="14" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="193" cy="105" r="5" fill="'+pal.glow+'"/>':
       v%3===1?'<path d="M193 112 Q174 95 184 82 M195 110 Q213 96 208 81" fill="none" stroke="'+pal.trim+'" stroke-width="5" stroke-linecap="round"/><circle cx="194" cy="96" r="4" fill="'+pal.glow+'"/>':
       '<path d="M183 111 L193 82 L204 111 L193 122Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="193" cy="101" r="4" fill="'+pal.glow+'"/>');
@@ -1045,7 +1047,7 @@ function weaponMarkup(type,pal,v,tier,item){
 const PAPER_WEAPON_GRIPS=Object.freeze({
   sword:[200,279],greatsword:[200,279],axe:[204,279],
   hammer:[205,279],mace:[205,279],dagger:[202,279],
-  staff:[201,279],spear:[201,279],
+  staff:[201,220],spear:[201,220],
   bow:[209,212],crossbow:[200,219],
   wand:[203,279],focus:[200,279],scepter:[202,279],rod:[202,279]
 });
@@ -1090,15 +1092,21 @@ function paperWeapon(c,highlighted){
       stance=PAPER_WEAPON_STANCES[type]||'one-handed';
   // Rotation is around the physical handle, not the old weapon sprite's
   // arbitrary origin. Main-hand glove lies below; fingers paint over the grip.
+  // Keep the asset's HANDLE on the wrist while giving every family an idle
+  // silhouette: daggers/swords point down, staves plant at the floor, heavy
+  // weapons sit at a restrained scale. Size is independent of body sockets.
+  var scale=type==='dagger'?.88:type==='sword'?.77:type==='greatsword'?.70:
+    type==='hammer'||type==='axe'||type==='mace'?.82:
+    type==='staff'||type==='spear'?.98:type==='bow'?.89:type==='crossbow'?.88:.84;
   var transform='translate('+gx.toFixed(2)+' '+gy.toFixed(2)+') rotate('+angle.toFixed(2)+
-    ') translate(-'+local[0]+' -'+local[1]+')';
+    ') scale('+scale.toFixed(2)+') translate(-'+local[0]+' -'+local[1]+')';
   return '<g class="'+paperSlotClass('Weapon',highlighted,item)+' cb-paper-side-weapon" data-weapon-type="'+esc(type)+
     '" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'" data-render-layer="mainhand-side"'+
     ' data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-weapon-pose="side-held" data-weapon-pose-layout="across-body"'+
     ' data-weapon-pose-version="'+WEAPON_POSE_VERSION+'" data-weapon-stance="'+stance+
     '" data-grip-local-x="'+local[0]+'" data-grip-local-y="'+local[1]+
     '" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+
-    '" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+
+    '" data-weapon-visual-scale="'+scale.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+
     '" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+
     weaponMarkup(type,pal,v,tier,item)+'</g>'+paperHeldGrip(c,fit,item,'main');
 }
@@ -1110,7 +1118,7 @@ function offHandBaseMarkup(type,pal,v,tier,item){
   if(type==='quiver')return '<path d="M31 164 L65 174 L58 263 L35 257Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.5"/><path d="M38 164 L33 130 M46 167 L45 128 M55 168 L59 132" stroke="'+pal.light+'" stroke-width="3"/>';
   if(type==='tome')return '<g transform="rotate(-8 48 216)"><rect x="28" y="187" width="42" height="57" rx="4" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M49 189 V242" stroke="'+pal.trim+'" stroke-width="2"/>'+itemRune(item,'OffHand',pal,49,215,.7)+'</g>';
   if(type==='idol')return '<path d="M32 238 Q48 182 64 238 L58 258 H38Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="48" cy="221" r="7" fill="'+pal.glow+'" opacity=".7"/>';
-  if(type==='dagger')return '<path d="M52 236 L26 307" stroke="'+pal.light+'" stroke-width="5.5"/><path d="M29 304 L19 325 L33 316Z" fill="'+pal.trim+'"/><path d="M45 242 L60 248" stroke="'+pal.trim+'" stroke-width="4"/>';
+  if(type==='dagger')return '<path d="M52 236 L32 280" stroke="'+pal.light+'" stroke-width="5.5"/><path d="M34 277 L29 287 L40 281Z" fill="'+pal.trim+'"/><path d="M45 242 L60 248" stroke="'+pal.trim+'" stroke-width="4"/>';
   return '<circle cx="49" cy="216" r="'+(v%2?18:21)+'" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+itemRune(item,'OffHand',pal,49,216,1)+(tier>=4?'<circle cx="49" cy="216" r="6" fill="'+pal.glow+'" opacity=".65" class="cb-paper-glow"/>':'');
 }
 function offHandMarkup(type,pal,v,tier,item){
@@ -1219,7 +1227,9 @@ function classicGearFitProfile(subject){
       heavy=['greatsword','hammer','axe'].includes(type),
       rightHand=weapon?rightShoulder-p.shoulder*(ranged?.29:pole?.31:close?.31:heavy?.29:.31):baseRightHand,
       weaponY=weapon?(type==='bow'?215:type==='crossbow'?214:pole?(type==='spear'?224:type==='staff'?209:213):close?219:heavy?216:214):279,
-      angle=weapon?(type==='bow'?10:type==='crossbow'?-10:pole?(type==='spear'?1:2):close?18:heavy?6:8):0,
+      angle=weapon?(type==='bow'?7:type==='crossbow'?-9:pole?(type==='spear'?2:5):
+        type==='dagger'?145:type==='sword'?151:type==='greatsword'?154:
+        ['hammer','mace','axe'].includes(type)?17:type==='wand'?14:7):0,
       sideMin=weapon?120+p.shoulder*.22:rightShoulder;
   return {race,gender:Number(subject?.appearance?.gender)||0,frame:Number(subject?.appearance?.frame)||1,p,
     centerX:120,leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,
