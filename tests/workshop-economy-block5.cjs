@@ -11,8 +11,8 @@ for(const file of ['workshop-economy-v1.js','workshop-economy-v1.css']){
 }
 assert(html.indexOf('adventure-combat-v1.css')<html.indexOf('workshop-economy-v1.css'),
  'Economy styles must load after previous block');
-assert(html.lastIndexOf('<link rel="stylesheet"')===html.indexOf('<link rel="stylesheet" href="./workshop-economy-v1.css'),
- 'New economy stylesheet must be the final CSS source');
+assert(html.includes('<link rel="stylesheet" href="./workshop-economy-v1.css?v=1">'),
+ 'Economy stylesheet must stay linked and preserve its position after Adventure');
 assert(html.indexOf('adventure-combat-v1.js')<html.indexOf('workshop-economy-v1.js'),
  'Economy script must load after navigation and previous UI');
 assert(build.includes("'adventure-combat-v1.css','workshop-economy-v1.css'"),
