@@ -207,16 +207,16 @@ function weaponKind(subject){
 function weaponPose(subject,baseRightHand,p,shoulderX){
   const kind=weaponKind(subject);
   if(!kind)return {active:false,kind:'none',x:baseRightHand,y:279,angle:0,side:'right',sideMin:shoulderX};
-  // The grip itself follows the wrist; do not push a separate weapon to the
-  // edge of the silhouette. The SVG weapon's local handle socket is aligned
-  // to this anatomical hand anchor by the shared renderer.
-  const long=['staff','spear','bow','crossbow'].includes(kind);
-  const compact=['dagger','wand','focus','scepter','rod'].includes(kind);
-  const sideMin=Math.min(194,shoulderX+Math.max(5,p.arm*.30));
-  const natural=baseRightHand+(long?2:compact?0:1);
-  const x=Math.max(sideMin,Math.min(194,natural));
-  const angle=kind==='bow'?4:kind==='crossbow'?5:kind==='staff'||kind==='spear'?3:kind==='dagger'?8:5;
-  return {active:true,kind,x,y:279,angle,side:'right',sideMin};
+  // An equipped hand is raised and brought inside the outer shoulder line.
+  // A bent elbow supports the wrist: all classes use the same anatomy.
+  const pole=['staff','spear','rod','wand','scepter','focus'].includes(kind);
+  const ranged=['bow','crossbow'].includes(kind);
+  const close=kind==='dagger';
+  const y=ranged?229:pole?231:close?250:245;
+  const x=shoulderX-Math.max(2,p.arm*(ranged?.20:pole?.17:.12));
+  const angle=ranged?-5:pole?1:close?12:8;
+  return {active:true,kind,x,y,angle,side:'right',
+    sideMin:shoulderX-Math.max(5,p.arm*.28)};
 }
 function gearFitProfile(subject){
   const race=raceOf(subject),p=bodyProfile(subject),sex=sexName(subject),gender=p.gender,frame=p.frame;
@@ -225,12 +225,12 @@ function gearFitProfile(subject){
   const handReach=Math.max(5.2,p.arm*.46);
   const leftHand=leftShoulder-handReach,baseRightHand=rightShoulder+handReach;
   const pose=weaponPose(subject,baseRightHand,p,rightShoulder);
-  const rightHand=pose.x,handY=279;
+  const rightHand=pose.x,handY=279,rightHandY=pose.y;
   const hipHalf=p.hip,waistHalf=Math.max(p.waist*1.02,p.hip*.64);
   const legOffset=p.hip*.38,legHalf=Math.max(8.5,p.leg*.62);
   return {
     race,gender,frame,p,centerX:120,shoulderY,
-    leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,handY,
+    leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,handY,rightHandY,
     leftPad:120-p.shoulder*.82,rightPad:120+p.shoulder*.82,
     waistY:247,waistHalf,hipHalf,
     leftLeg:120-legOffset,rightLeg:120+legOffset,
@@ -247,7 +247,7 @@ function anchors(subject){
   const a=Object.fromEntries(Object.entries(m.anchors).map(([k,v])=>[k,{x:x(v.x),y:v.y}]));
   const shoulderY=rigY(race==='Stoneborn'?130:sex==='female'?133:131);
   a.leftShoulder={x:f.leftShoulder,y:shoulderY};a.rightShoulder={x:f.rightShoulder,y:shoulderY};
-  a.leftHand={x:f.leftHand,y:rigY(f.handY)};a.rightHand={x:f.rightHand,y:rigY(f.handY)};
+  a.leftHand={x:f.leftHand,y:rigY(f.handY)};a.rightHand={x:f.rightHand,y:rigY(f.rightHandY)};
   a.mainHand={x:f.weaponX,y:rigY(f.weaponY)};a.offHand={x:f.offhandX,y:rigY(f.offhandY)};
   a.leftHip={x:f.leftLeg,y:rigY(257)};a.rightHip={x:f.rightLeg,y:rigY(257)};
   a.leftKnee={x:a.leftHip.x,y:rigY(322)};a.rightKnee={x:a.rightHip.x,y:rigY(322)};
