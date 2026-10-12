@@ -833,3 +833,372 @@ html body.cb-top-nav-enabled :is(.cb-global-header,.cb-subnav) :is(button,summar
               var(--route-art,none) center/cover no-repeat!important;
  }
 }
+
+
+/* ==========================================================================
+   Cellbound Premium City Hub v3 — bright fantasy ART + deep navy GAME chrome
+   Inspired by the approved image; never display fabricated live events.
+   ========================================================================= */
+html body.cb-top-nav-enabled {
+  --cb-v3-navy:#0c1927;
+  --cb-v3-panel:#132231;
+  --cb-v3-panel-hi:#1a2c3c;
+  --cb-v3-edge:#405568;
+  --cb-v3-cream:#f3e9dc;
+  --cb-v3-text:#d6e1e8;
+  --cb-v3-muted:#a3b4bf;
+  --cb-v3-gold:#e7c077;
+  --cb-v3-blue:#71b4ed;
+}
+html body.cb-top-nav-enabled .app-shell {
+  background:radial-gradient(ellipse at 50% 0,#1e3547 0%,#102235 48%,#0a1726 100%)!important;
+}
+html body.cb-top-nav-enabled .app-shell>.main {
+  max-width:1720px!important;
+  background:none!important;
+  color:var(--cb-v3-text);
+}
+html body.cb-top-nav-enabled .cb-global-header {
+  background:linear-gradient(180deg,#121d2a,#0b1521)!important;
+  border-bottom:1px solid #8a7150ab!important;
+  box-shadow:0 6px 20px #0008!important;
+}
+html body.cb-top-nav-enabled .cb-global-links button {
+  font-family:Georgia,serif;
+  font-size:clamp(11px,.85vw,14px);
+  color:#e9eced;
+}
+html body.cb-top-nav-enabled .cb-global-links .cb-global-link-icon {color:#a2bbdb}
+html body.cb-top-nav-enabled .cb-global-links button:is(.is-active,:hover) {
+  color:#ffe4ac;background:linear-gradient(#e7c07712,#e7c07724);
+  border-bottom-color:#edc876;
+}
+html body.cb-top-nav-enabled .cb-global-brand {font:normal 18px Georgia,serif;color:#f2e9de}
+html body.cb-top-nav-enabled .cb-global-brand-mark {
+  border-color:#9bc8e0;color:#f7e5a4;
+  background:radial-gradient(circle at 40% 25%,#53759e,#1a2941 67%);
+}
+html body.cb-top-nav-enabled .cb-global-more,
+html body.cb-top-nav-enabled .cb-global-account>summary {
+  color:#eaeef3;background:#18293b;border:1px solid #526879;
+}
+html body.cb-top-nav-enabled .cb-global-account-panel {
+  background:linear-gradient(150deg,#1c3041,#111f30)!important;border-color:#8b9aa6;
+}
+html body.cb-top-nav-enabled .cb-global-resource-slot .resource-strip>div {
+  background:#132334;border-color:#53697c;
+}
+html body.cb-top-nav-enabled .cb-global-more:is(.is-active,:hover),
+html body.cb-top-nav-enabled .cb-global-account[open]>summary{
+  background:#2c3c45;border-color:#e7c077;
+}
+html body.cb-top-nav-enabled .cb-subnav {
+  color:#d5e0eb;background:rgba(14,26,40,.97)!important;
+  border-color:#364c5e!important;
+  box-shadow:0 6px 15px #0006!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__label {color:#d7bd8d}
+html body.cb-top-nav-enabled .cb-subnav__links button {
+  color:#c9d7e4;background:#1b2c3d;border-color:#3b5468;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button[aria-current="page"],
+html body.cb-top-nav-enabled .cb-subnav__links button:hover {
+  color:#ffe2ad;background:#35402f;border-color:#bba065;
+}
+/* Wide, colourful city art is the welcoming element — not pale page chrome. */
+html body.cb-top-nav-enabled .cb-hub-hero {
+  min-height:clamp(350px,32vw,450px);
+  background-color:#284969;
+  background-image:url('./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp');
+  background-position:center 47%;
+  border-bottom:2px solid #c5a36c;
+  box-shadow:0 12px 34px #0008;
+}
+html body.cb-top-nav-enabled .cb-hub-hero:before {
+  background:linear-gradient(90deg,rgba(7,20,34,.86) 0%,rgba(11,28,44,.51) 27%,rgba(12,36,59,.07) 59%,rgba(8,20,34,.62) 100%),
+             linear-gradient(0deg,rgba(5,16,30,.26),transparent 48%)!important;
+}
+html body.cb-top-nav-enabled .cb-hub-eyebrow{font:normal 12px Georgia,serif;letter-spacing:.25em;color:#fff8e5}
+html body.cb-top-nav-enabled .cb-hub-hero-copy h2 {
+  font-size:clamp(4.1rem,7.3vw,7.6rem);color:#ffedca;
+  text-shadow:0 4px 15px #081a34;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-copy p {max-width:405px;color:#fff3e3}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button:first-child {
+  border-color:#fff3d0;background:linear-gradient(#f9dc9f,#ca994e);
+  color:#302519;box-shadow:0 4px 15px #0007;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button+button {
+  color:#f0ece6;background:#172a40d9;border-color:#a9bcce;
+}
+html body.cb-top-nav-enabled .cb-hub-watch {
+  max-width:362px;justify-self:end;width:100%;
+  padding:12px;border:1px solid #6c8196;
+  border-radius:5px;background:rgba(12,23,35,.94)!important;
+  box-shadow:0 15px 31px #000a;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-head {padding:4px 5px 12px;border-color:#435569}
+html body.cb-top-nav-enabled .cb-hub-watch-head strong {font:normal 21px Georgia,serif;color:#fff4e6}
+html body.cb-top-nav-enabled .cb-hub-watch-head small {color:#c7bb9e;font:normal 11px Georgia,serif;letter-spacing:0}
+html body.cb-top-nav-enabled .cb-hub-watch-row {
+  grid-template-columns:93px minmax(0,1fr);
+  gap:11px;min-height:83px;margin-top:8px;padding:5px;
+  border-color:#334c62;
+  background:linear-gradient(130deg,#1a2a3d,#101d2d)!important;
+  border-radius:4px;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row:hover{border-color:#a8bcd0;background:#203a52!important}
+html body.cb-top-nav-enabled .cb-hub-watch-art {min-height:72px;font-size:0;color:transparent}
+html body.cb-top-nav-enabled .cb-hub-watch-art.mission {
+  background-image:url('./assets/dungeons/ashen-vault.webp');
+}
+html body.cb-top-nav-enabled .cb-hub-watch-art.quest {
+  background-image:url('./assets/comics/tutorial-2026/arcane-trail.webp');
+}
+html body.cb-top-nav-enabled .cb-hub-watch-art.event {
+  background-image:url('./assets/world/twelve-below-key-art.webp');
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row b {color:#faf0e7;font:normal 16px/1.2 Georgia,serif}
+html body.cb-top-nav-enabled .cb-hub-watch-row span:not(.cb-hub-watch-art){
+  color:#dfbb7a;font-size:10px;letter-spacing:.06em;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row small {color:#b7c8d2;font-size:10px}
+
+/* Rows of premium blue cards, not parchment white. */
+html body.cb-top-nav-enabled #overview .home-command {gap:17px}
+html body.cb-top-nav-enabled #overview .home-command-grid{
+  display:grid;grid-template-columns:minmax(0,1.13fr) minmax(0,1.03fr) minmax(0,.95fr);gap:12px;
+}
+html body.cb-top-nav-enabled #overview :is(.panel,.cb-hub-actions){
+  color:#dbe5ed!important;
+  background:linear-gradient(180deg,#162635,#101e2d)!important;
+  border:1px solid #3c5063!important;
+  border-radius:5px;
+  box-shadow:0 9px 22px #0005!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head {
+  min-height:51px;
+  background:linear-gradient(90deg,#182b3b,#152637)!important;
+  border-bottom:1px solid #3d5061!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head h3 {
+  color:#f4eee6!important;font:normal clamp(17px,1.3vw,22px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head small {color:#dec080!important}
+html body.cb-top-nav-enabled #overview .panel-head .panel-head-note {color:#adbac7!important}
+html body.cb-top-nav-enabled #overview .home-panel-action {
+  color:#9bc8f4!important;border:0!important;background:transparent!important;
+  font-size:11px!important;
+}
+html body.cb-top-nav-enabled #overview .home-panel-action:hover {color:#f5d58d!important}
+html body.cb-top-nav-enabled #overview .home-party-roster {
+  display:flex;align-items:stretch;gap:6px;padding:12px 10px;
+  background:transparent;
+}
+html body.cb-top-nav-enabled #overview .home-party-member {
+  min-width:0;min-height:178px;flex:1 1 0;padding:9px 4px 10px;
+  border:1px solid #3b5365!important;
+  border-top:2px solid color-mix(in srgb,var(--party-class) 70%,#c5c8d0)!important;
+  background:linear-gradient(170deg,#2a4151,#122333)!important;
+  border-radius:5px;
+  box-shadow:0 3px 11px #0005!important;
+}
+html body.cb-top-nav-enabled #overview .home-party-member:after{opacity:.75}
+html body.cb-top-nav-enabled #overview .home-party-portrait {
+  width:clamp(47px,4.6vw,76px);height:clamp(47px,4.6vw,76px);
+  background:#102031;border-radius:5px;
+  box-shadow:0 5px 15px #0008!important;
+}
+html body.cb-top-nav-enabled #overview .home-party-copy b{color:#fff0e0!important}
+html body.cb-top-nav-enabled #overview .home-party-copy small{color:#becbd7!important}
+html body.cb-top-nav-enabled #overview .home-party-copy span{color:#a6c0cd!important}
+html body.cb-top-nav-enabled #overview .home-party-member>em{color:#86d4af}
+html body.cb-top-nav-enabled #overview .home-party-member.recovering>em{color:#e4a592}
+html body.cb-top-nav-enabled #overview .home-party-empty{background:#17283a;color:#e9edf0}
+html body.cb-top-nav-enabled #overview .home-party-empty :is(b,span){color:#d7e2e9}
+html body.cb-top-nav-enabled #overview .home-objective {
+  display:flex;min-height:59px;max-height:none;align-items:stretch;
+  justify-content:flex-start;gap:4px;margin:0;padding:10px 14px!important;
+  background:#132538!important;border-bottom:1px solid #364d60;
+}
+html body.cb-top-nav-enabled #overview .home-objective>span {color:#d8bb83}
+html body.cb-top-nav-enabled #overview .home-objective>b{
+  margin:3px 0;color:#f4e8d6!important;font:normal 15px/1.32 Georgia,serif!important;
+}
+html body.cb-top-nav-enabled #overview .home-objective button {
+  align-self:flex-start;min-height:25px!important;margin:1px 0 0!important;
+  padding:3px 8px!important;color:#a0c6e8!important;border-color:#41647e!important;
+  background:#1e3448!important;font-size:10px;
+}
+.cb-v3-objectives {display:grid;gap:0}
+.cb-v3-objective {
+  display:grid;grid-template-columns:22px minmax(0,1fr) 13px;
+  align-items:center;gap:10px;min-height:56px;
+  width:100%;padding:9px 13px;
+  background:transparent;color:#e0e8ec;text-align:left;
+  border:0;border-bottom:1px solid #36485b;cursor:pointer;
+}
+.cb-v3-objective:hover{background:#223548}
+.cb-v3-task-icon{font-size:19px;color:#93b8d9}
+.cb-v3-task-content{min-width:0;display:block}
+.cb-v3-task-content b{display:block;color:#e6ecee;font:normal 12px Georgia,serif}
+.cb-v3-task-content small{display:block;margin-top:3px;color:#adbfcf;font-size:10px}
+.cb-v3-task-arrow{font-size:20px;color:#b2c4d1}
+.cb-v3-progress{display:block;max-width:200px;height:4px;overflow:hidden;margin-top:6px;background:#091522;border-radius:5px}
+.cb-v3-progress>i{display:block;height:100%;width:0;background:#64aef2;border-radius:5px;transition:width .2s}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:11px;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button{
+  min-height:86px;padding:9px 4px;gap:9px;
+  background:linear-gradient(140deg,#1b3044,#101f30)!important;
+  border:1px solid #49647b!important;border-radius:4px;
+  color:#f1eee9;font:normal 11px Georgia,serif;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:nth-child(3n + 1) {border-color:#587cb2!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:nth-child(3n + 2) {border-color:#806b58!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:nth-child(3n + 3) {border-color:#547c78!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button span{color:#9dc5fc;font-size:24px}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:hover{
+  border-color:#e6bf76!important;background:#273f55!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button[hidden],
+html body.cb-top-nav-enabled #overview .cb-v3-update[hidden]{display:none!important}
+
+/* Four image-led destinations, with progress badges driven by the real campaign. */
+html body.cb-top-nav-enabled #overview .cb-hub-heading h3{color:#f3ede4;font:normal clamp(21px,2vw,29px) Georgia,serif}
+html body.cb-top-nav-enabled #overview .cb-hub-heading p {color:#adbcc9;font-size:12px}
+html body.cb-top-nav-enabled #overview .cb-hub-heading>button{color:#91c8f2;font:normal 12px Georgia,serif}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-grid{gap:11px}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon {
+  min-height:164px;border:1px solid #51677b!important;border-radius:6px;
+  box-shadow:0 8px 19px #0006;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon:before{
+  background:linear-gradient(0deg,#070e19f0 0%,#0b1d31a8 40%,#1220360d 100%);
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-status{
+  border-color:#5c987d;background:#153b30df;color:#c9f1d7;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon[disabled] .cb-hub-dungeon-status{
+  border-color:#62707b;background:#1b2738df;color:#c2ccd6;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-content b{color:#f7ecdf;font:normal clamp(16px,1.3vw,21px) Georgia,serif}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-content small{color:#b8c7d7}
+
+/* The update row is linked to actual beta notes and existing adventures. */
+.cb-v3-updates{min-width:0}
+.cb-v3-update-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.cb-v3-update{
+  position:relative;display:flex;min-width:0;min-height:184px;
+  overflow:hidden;align-items:stretch;
+  padding:0;border:1px solid #46596e;border-radius:6px;
+  background:#142333;text-align:left;
+  color:#eee8de;
+  box-shadow:0 6px 22px #0005;cursor:pointer;
+}
+.cb-v3-update-picture{
+  display:block;flex:0 0 39%;background-size:cover;background-position:center;
+  border-right:1px solid #435769;
+}
+.cb-v3-update-beta .cb-v3-update-picture{background-image:url('./assets/comics/tutorial-2026/twilight-siege.webp')}
+.cb-v3-update-professions .cb-v3-update-picture{background-image:url('./assets/comics/tutorial-2026/arcane-armory.webp')}
+.cb-v3-update-manor .cb-v3-update-picture{background-image:url('./assets/manor/manor-raid-hero.webp')}
+.cb-v3-update-copy{
+  min-width:0;padding:14px 14px 12px;display:flex;flex-direction:column;align-items:flex-start;
+  background:linear-gradient(135deg,#243448,#101e2d);
+}
+.cb-v3-update-copy small{color:#e1bf7f;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.cb-v3-update-copy b{display:block;margin-top:7px;color:#fff0dc;font:normal clamp(16px,1.35vw,23px)/1.18 Georgia,serif}
+.cb-v3-update-copy em{display:block;margin-top:7px;color:#b8c7d3;font:normal 11px/1.4 system-ui,sans-serif}
+.cb-v3-news-link{margin-top:auto;padding-top:10px;font-size:11px;color:#99c8f3}
+.cb-v3-update:hover{border-color:#d8b77f;box-shadow:0 8px 25px #0008}
+.cb-v3-update:focus-visible{outline:2px solid #ffda98;outline-offset:3px}
+
+/* Leave combat itself dark, and unify normal game screens with premium navy. */
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+  background-color:#203c53;
+  border-color:#4b6377!important;
+  background-image:linear-gradient(90deg,rgba(8,22,36,.9),rgba(9,28,47,.65) 45%,rgba(12,31,47,.14)),
+    linear-gradient(0deg,rgba(8,22,39,.41),transparent),
+    var(--cb-place-art);
+  box-shadow:0 11px 27px #0006!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.panel,.tp-panel,.pvp-panel,.quest-journal-shell,.admin-card,.dungeon-episode,.dungeon-browser-card){
+  background-color:#162a3a!important;border-color:#44586b!important;
+  box-shadow:0 7px 20px #0005!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) .panel {
+  background-image:linear-gradient(160deg,#1b3143,#132434)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.panel-head,.tp-panel-head) h3{color:#f2eadd!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.ghost-btn,.filter,.home-panel-action){
+  color:#e1ebf3!important;background:#20364b!important;border-color:#506a7f!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.ghost-btn,.filter):hover:not(:disabled){
+  color:#ffe5bc!important;background:#2c465a!important;
+}
+html body.cb-top-nav-enabled #overview .home-continue-card {
+  border-color:#526478!important;box-shadow:0 8px 24px #0007!important;
+}
+html body.cb-top-nav-enabled #overview .home-continue-art:after{
+  background:linear-gradient(90deg,#0a1724ea 0%,#112538cc 39%,#10243745 79%,transparent)!important;
+}
+html body.cb-top-nav-enabled #overview .home-readiness-panel,
+html body.cb-top-nav-enabled #overview .home-progression-panel {background:#152838!important}
+html body.cb-top-nav-enabled #overview .home-readiness-score :is(small,span){color:#aec2ca}
+html body.cb-top-nav-enabled #overview .home-readiness-score strong{color:#e7e9e5}
+html body.cb-top-nav-enabled #overview .home-readiness-ring{
+  background:radial-gradient(circle at center,#102234 57%,transparent 58%),
+    conic-gradient(#c0a262 calc(var(--ready)*1%),#24374a 0);
+}
+html body.cb-top-nav-enabled #overview .home-readiness-ring b{color:#f3e8d2}
+html body.cb-top-nav-enabled #overview .home-role-check {background:#1b2c3d;border-color:#435668}
+html body.cb-top-nav-enabled #overview .home-role-check i{color:#afbeca}
+html body.cb-top-nav-enabled #overview .home-role-check b{color:#f0e5db}
+html body.cb-top-nav-enabled #overview .home-ready-list {background:#263d4c}
+html body.cb-top-nav-enabled #overview .home-ready-row{background:#192c3d}
+html body.cb-top-nav-enabled #overview .home-ready-row span{color:#bbc6ce}
+html body.cb-top-nav-enabled #overview .home-ready-row b{color:#e7e5de}
+html body.cb-top-nav-enabled #overview .home-readiness-action {
+  color:#ffe3ab;background:linear-gradient(#344150,#202d3d);border-color:#977c53;
+}
+html body.cb-top-nav-enabled #overview .home-progress-stage .node{color:#e6d7ba;background:#1e3343;border-color:#667883}
+html body.cb-top-nav-enabled #overview .home-progress-stage :is(small,b,em){color:#b4c5d0}
+html body.cb-top-nav-enabled #overview .home-progress-stage.current b{color:#f5e8d7}
+html body.cb-top-nav-enabled #overview .home-objective-panel{min-height:0}
+html body.cb-top-nav-enabled #overview .home-pulse-grid {background:#2c4050}
+html body.cb-top-nav-enabled #overview .home-pulse-grid button{background:#1a3040;color:#e8e7e0}
+html body.cb-top-nav-enabled #overview .home-pulse-grid button:hover{background:#264355}
+html body.cb-top-nav-enabled #overview .home-pulse-grid :is(b,small,span){color:#dce5ea}
+html body.cb-top-nav-enabled #overview .home-activity-panel .activity-entry :is(b,span){color:#d2e3eb}
+html body.cb-top-nav-enabled #overview .home-activity-empty{color:#bbcad2}
+
+/* iPad: a recognisable 3-panel overview on landscape, readable stacked layout on portrait. */
+@media(max-width:1300px){
+  html body.cb-top-nav-enabled #overview .home-command-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  html body.cb-top-nav-enabled #overview .cb-hub-actions{grid-column:1/-1}
+  html body.cb-top-nav-enabled #overview .cb-hub-action-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+@media(max-width:950px){
+  html body.cb-top-nav-enabled #overview .home-command-grid{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled #overview .cb-hub-actions{grid-column:auto}
+  html body.cb-top-nav-enabled #overview .cb-hub-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  html body.cb-top-nav-enabled .cb-hub-watch{max-width:none;justify-self:stretch}
+  html body.cb-top-nav-enabled .cb-hub-watch-row{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled .cb-hub-watch-art{display:none}
+  .cb-v3-update-grid{grid-template-columns:1fr 1fr}
+  .cb-v3-update:last-child{grid-column:1/-1}
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled .cb-hub-hero{background-position:62% center}
+  html body.cb-top-nav-enabled #overview .home-party-roster{overflow-x:auto;scroll-snap-type:x proximity}
+  html body.cb-top-nav-enabled #overview .home-party-member{flex:0 0 132px;scroll-snap-align:start}
+  html body.cb-top-nav-enabled .cb-hub-watch-row{grid-template-columns:72px minmax(0,1fr)}
+  html body.cb-top-nav-enabled .cb-hub-watch-art{display:block;min-height:57px}
+  .cb-v3-update-grid{grid-template-columns:1fr}
+  .cb-v3-update:last-child{grid-column:auto}
+  .cb-v3-update{min-height:145px}
+  .cb-v3-update-picture{flex-basis:36%}
+  html body.cb-top-nav-enabled #overview .cb-hub-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}

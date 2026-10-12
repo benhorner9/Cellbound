@@ -222,3 +222,140 @@
   new MutationObserver(updateDungeons).observe(progress,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled']});
   updateGlance();updateDungeons();
 })();
+
+
+/* Cellbound Premium City Hub v3 — real content, existing gameplay, no invented event timers. */
+(function(){
+  'use strict';
+  const home=document.querySelector('#overview .home-command');
+  const hero=document.querySelector('#cbHubHero');
+  const mainRow=home?.querySelector('.home-command-grid');
+  const featured=home?.querySelector('.cb-hub-featured');
+  const missionRow=home?.querySelector('.cb-hub-mission-row');
+  const party=home?.querySelector('.home-party-panel');
+  const objectives=home?.querySelector('.home-objective-panel');
+  const actions=home?.querySelector('.cb-hub-actions');
+  if(!home||!hero||!mainRow||!featured||!missionRow||!party||!objectives||!actions||document.querySelector('#cbLatestUpdates'))return;
+  document.body.classList.add('cb-premium-hub-v3');
+
+  // Keep core party, dungeon, quest and account components. Only reorder their existing panels.
+  mainRow.replaceChildren(party,objectives,actions);
+  const title=hero.querySelector('.cb-hub-hero-copy');
+  if(title){
+    title.querySelector('.cb-hub-eyebrow').textContent='WELCOME TO THE GUILD CITY';
+    title.querySelector('h2').textContent='ZELTIRA';
+    title.querySelector('p').textContent='The home of your guild. Gather your party, follow the story and prepare for the next adventure.';
+    title.querySelector('[data-cb-go="content"]').firstChild.textContent='Explore Dungeons ';
+    title.querySelector('[data-cb-go="quests"]').textContent='View Quest Journal';
+  }
+  hero.querySelector('.cb-hub-watch-head small').textContent=new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short'}).format(new Date());
+  hero.querySelector('.cb-hub-watch-row[data-cb-go="content"]>div>span').textContent='Your next dungeon';
+  hero.querySelector('.cb-hub-watch-row[data-cb-go="quests"]>div>span').textContent='Current quest';
+  hero.querySelector('.cb-hub-watch-row[data-cb-go="world"]>div>span').textContent='The Twelve Below';
+
+  // Compact, actionable objectives. The first objective is the genuine quest widget.
+  const questWidget=objectives.querySelector('#questHomeObjective');
+  const questButton=questWidget?.querySelector('button[data-jump="quests"]');
+  if(questButton)questButton.textContent='Open Journal →';
+  const objectiveExtras=document.createElement('div');
+  objectiveExtras.className='cb-v3-objectives';
+  objectiveExtras.innerHTML=
+    '<button type="button" data-cb-go="party" class="cb-v3-objective">'+
+      '<span class="cb-v3-task-icon" aria-hidden="true">♟</span><span class="cb-v3-task-content"><b>Build your active party</b><small id="cbV3PartyCount">Checking your party…</small><i class="cb-v3-progress"><i id="cbV3PartyBar"></i></i></span><span class="cb-v3-task-arrow" aria-hidden="true">›</span></button>'+
+    '<button type="button" data-cb-go="content" class="cb-v3-objective">'+
+      '<span class="cb-v3-task-icon" aria-hidden="true">⚔</span><span class="cb-v3-task-content"><b>Prepare your next expedition</b><small id="cbV3Readiness">Checking readiness…</small><i class="cb-v3-progress"><i id="cbV3ReadyBar"></i></i></span><span class="cb-v3-task-arrow" aria-hidden="true">›</span></button>'+
+    '<button type="button" data-cb-go="content" class="cb-v3-objective">'+
+      '<span class="cb-v3-task-icon" aria-hidden="true">✦</span><span class="cb-v3-task-content"><b>Episode One campaign</b><small id="cbV3Campaign">Checking progress…</small></span><span class="cb-v3-task-arrow" aria-hidden="true">›</span></button>';
+  objectives.append(objectiveExtras);
+  const write=(selector,value)=>{
+    const el=objectives.querySelector(selector);
+    if(el&&el.textContent!==value)el.textContent=value;
+  };
+  function syncObjectives(){
+    const partyCount=document.querySelectorAll('#overviewRoster .home-party-member').length;
+    write('#cbV3PartyCount',partyCount+'/5 adventurers selected');
+    const partyBar=document.querySelector('#cbV3PartyBar');
+    if(partyBar)partyBar.style.width=Math.min(100,partyCount*20)+'%';
+    const ringText=document.querySelector('#overviewReadiness .home-readiness-ring b')?.textContent?.trim();
+    const badge=document.querySelector('#homeReadinessBadge')?.textContent?.trim();
+    write('#cbV3Readiness',(ringText?ringText+' ready':'Check party readiness')+(badge?' · '+badge.toLowerCase():''));
+    const readyBar=document.querySelector('#cbV3ReadyBar');
+    const pct=Number.parseFloat(ringText);
+    if(readyBar)readyBar.style.width=(Number.isFinite(pct)?Math.max(0,Math.min(100,pct)):0)+'%';
+    const stages=document.querySelectorAll('#overviewProgress .home-progress-stage');
+    const cleared=document.querySelectorAll('#overviewProgress .home-progress-stage.done');
+    write('#cbV3Campaign',stages.length?cleared.length+' of '+stages.length+' stages cleared':'View the dungeon journal');
+  }
+  const sources=['#overviewRoster','#overviewReadiness','#homeReadinessBadge','#overviewProgress'];
+  const observer=new MutationObserver(syncObjectives);
+  sources.forEach(selector=>{
+    const element=document.querySelector(selector);
+    if(element)observer.observe(element,{childList:true,subtree:true,characterData:true,attributes:false});
+  });
+  syncObjectives();
+
+  // Visibility respects existing admin unlocks, not mockup-only features.
+  const original=id=>document.querySelector('.sidebar .nav-btn[data-view="'+id+'"]');
+  const allowed=id=>{
+    const el=original(id);
+    return !!el&&!el.hidden&&!el.disabled&&!el.classList.contains('locked');
+  };
+  const fastActions=actions.querySelector('.cb-hub-action-grid');
+  if(fastActions){
+    const admin=document.createElement('button');
+    admin.type='button';admin.dataset.cbGo='admin';admin.className='cb-v3-admin-action';
+    admin.innerHTML='<span aria-hidden="true">⚙</span>Design Booth';
+    fastActions.append(admin);
+    function permissions(){
+      fastActions.querySelectorAll('[data-cb-go]').forEach(button=>{
+        const ok=allowed(button.dataset.cbGo);
+        button.hidden=!ok;
+        button.disabled=!ok;
+      });
+    }
+    const a=original('admin');
+    if(a)new MutationObserver(permissions).observe(a,{attributes:true,attributeFilter:['hidden','class','disabled']});
+    window.addEventListener('cellbound:view-changed',permissions);
+    permissions();
+  }
+
+  const updates=document.createElement('section');
+  updates.id='cbLatestUpdates';updates.className='cb-v3-updates';
+  updates.setAttribute('aria-label','Cellbound news and features');
+  updates.innerHTML=
+    '<div class="cb-hub-heading"><div><h3>Latest News & Updates</h3><p>From the founding beta and the world of Cellbound.</p></div>'+
+      '<button type="button" data-cb-go="support">Beta patch notes →</button></div>'+
+    '<div class="cb-v3-update-grid">'+
+      '<button class="cb-v3-update cb-v3-update-beta" data-cb-go="support" type="button"><span class="cb-v3-update-picture" aria-hidden="true"></span><span class="cb-v3-update-copy"><small id="cbV3NoteTag1">BETA NOTES</small><b id="cbV3NoteTitle1">Founding Beta</b><em id="cbV3NoteDesc1">Read the latest beta notes and improvements.</em><span class="cb-v3-news-link">Read notes →</span></span></button>'+
+      '<button class="cb-v3-update cb-v3-update-professions" data-cb-go="professions" type="button"><span class="cb-v3-update-picture" aria-hidden="true"></span><span class="cb-v3-update-copy"><small>GUILD CRAFTING</small><b>Master Your Profession</b><em>Choose an artisan and prepare for tougher adventures.</em><span class="cb-v3-news-link">Visit Workshop →</span></span></button>'+
+      '<button class="cb-v3-update cb-v3-update-manor" data-cb-go="raids" type="button"><span class="cb-v3-update-picture" aria-hidden="true"></span><span class="cb-v3-update-copy"><small>RAID SPOTLIGHT</small><b>The Manor</b><em>Prepare your party for the challenges that lie within.</em><span class="cb-v3-news-link">View Raid →</span></span></button>'+
+    '</div>';
+  home.insertBefore(updates,missionRow);
+  function syncNews(){
+    const notes=window.CellboundBetaOps?.patchNotes;
+    if(Array.isArray(notes)&&notes.length){
+      const latest=notes[0];
+      const tag=document.querySelector('#cbV3NoteTag1');
+      const heading=document.querySelector('#cbV3NoteTitle1');
+      const description=document.querySelector('#cbV3NoteDesc1');
+      if(tag)tag.textContent=[latest.label,latest.date].filter(Boolean).join(' · ');
+      if(heading)heading.textContent=latest.title||'Founding Beta';
+      if(description)description.textContent=Array.isArray(latest.items)?(latest.items[0]||'Read the latest beta notes.'):'Read the latest beta notes.';
+      return true;
+    }
+    return false;
+  }
+  if(!syncNews()){
+    let attempts=0;
+    const timer=setInterval(()=>{if(syncNews()||++attempts>=30)clearInterval(timer)},500);
+  }
+  function syncNewsRoutes(){
+    const support=allowed('support');
+    updates.querySelectorAll('[data-cb-go="support"]').forEach(el=>{el.hidden=!support});
+    const raid=allowed('raids');
+    const tile=updates.querySelector('[data-cb-go="raids"]');
+    if(tile){tile.hidden=!raid;tile.disabled=!raid}
+  }
+  syncNewsRoutes();
+  window.addEventListener('cellbound:view-changed',syncNewsRoutes);
+})();
