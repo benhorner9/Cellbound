@@ -110,7 +110,10 @@ for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of
   assert(fit.weaponX>=fit.weaponSideMin,klass+' '+race+' frame '+frame+' weapon moved across body instead of to side');
   assert(html.includes('cb-paper-held-grip-main'),klass+' '+race+' frame '+frame+' hand not visibly gripping weapon');
   assert(html.includes('data-weapon-pose-version="2"'),klass+' '+race+' frame '+frame+' old floating pose');
-  assert(near(num(weaponHtml,'data-grip-local-y'),279),klass+' '+race+' frame '+frame+' grip no longer on shaft');
+  const kind=P.weaponType(equipment.Weapon,c);
+  const expectedLocalY=kind==='bow'?212:kind==='crossbow'?219:279;
+  assert(near(num(weaponHtml,'data-grip-local-y'),expectedLocalY),
+    klass+' '+race+' frame '+frame+' handle socket misses the actual '+kind+' grip');
   bodyChecks++;
 }
 assert.equal(bodyChecks,G.CLASS_ORDER.length*5*6*2*3);
