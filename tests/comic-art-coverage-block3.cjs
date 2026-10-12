@@ -21,7 +21,7 @@ for(const [title,count] of Object.entries(expected)){
  const images=[...quest.slice(at,end+1).matchAll(/'([^']+\.(?:webp|svg))'/g)].map(m=>m[1]);
  assert.equal(images.length,count,title+' must illustrate each live dialogue line');
  for(const img of images){
-  assert(img.startsWith('./assets/comics/main-quests-2026/'),title+' uses older/generic scene art: '+img);
+  assert(img.match(/^\.\/assets\/comics\/(?:main-quests-2026|story-composites-2026)\//),title+' uses older/generic scene art: '+img);
   const filename=path.join(root,img.replace(/^\.\//,''));
   assert(fs.existsSync(filename),'Missing new image: '+img);
   const data=fs.readFileSync(filename);
