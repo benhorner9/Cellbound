@@ -1,0 +1,269 @@
+/* Cellbound UI Block 2 — guild hall. Home-only; combat and admin untouched. */
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .home-command {
+  display:flex;flex-direction:column;gap:clamp(13px,1.4vw,19px);
+  margin-inline:auto;max-width:1680px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero {
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(280px,370px);
+  gap:clamp(15px,2vw,28px);align-items:center;
+  min-height:clamp(245px,21vw,320px)!important;
+  margin:0 calc(-1 * clamp(12px,2.5vw,38px));
+  padding:clamp(22px,3vw,41px) clamp(23px,4.3vw,65px);
+  background-color:#101b1b!important;
+  background-image:url('./assets/comics/tutorial-2026/sunset-briefing.webp')!important;
+  background-size:cover!important;background-position:center 45%!important;
+  border-bottom:1px solid #8d7756!important;
+  box-shadow:0 13px 32px #0009!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero::before {
+  background:linear-gradient(90deg,#050a0df5 0%,#090f11db 26%,#0a10127a 57%,#070e10e6 100%),
+    linear-gradient(0deg,#050a0dbb,transparent 55%)!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-eyebrow {
+  color:#d4b782!important;font:700 11px/1.4 system-ui,sans-serif;
+  letter-spacing:.19em;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero-copy h2 {
+  margin:9px 0 10px;color:#f1e5d2!important;
+  font:normal clamp(2.3rem,4.2vw,4.5rem)/1.02 Georgia,serif!important;
+  letter-spacing:-.025em;overflow-wrap:anywhere;
+  text-shadow:0 4px 22px #000d;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero-copy p {
+  max-width:465px;color:#c6cfc6!important;
+  font:400 clamp(12px,1vw,15px)/1.58 system-ui,sans-serif!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero-actions {
+  margin-top:20px;gap:8px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero-actions button {
+  min-height:44px;padding:10px 17px;font-size:12px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero-actions button:first-child {
+  color:#271d14!important;border-color:#c4a372!important;
+  background:linear-gradient(#d9bd8a,#a58759)!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero-actions button+button {
+  color:#f0e2cc!important;border-color:#978464!important;
+  background:#182525ed!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch {
+  width:100%;max-width:none;padding:12px;border-radius:5px;
+  background:#0f1b1be8!important;border:1px solid #827252a3!important;
+  box-shadow:0 12px 25px #0009!important;backdrop-filter:blur(5px);
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-head {
+  padding:3px 4px 10px;border-color:#c9ad7d30!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-head strong {
+  color:#f1e4d0!important;font:normal 19px Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-head small {
+  color:#bea982!important;font-size:10px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-row {
+  grid-template-columns:52px minmax(0,1fr);min-height:64px;
+  gap:9px;margin-top:6px;padding:5px;
+  border:1px solid #907e594b!important;border-radius:4px;
+  background:#172424e8!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-row:hover {
+  background:#2a3530!important;border-color:#c5a374!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-art {
+  min-height:51px;filter:saturate(.75) brightness(.8);
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-row span:not(.cb-hub-watch-art) {
+  color:#c6a878!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-row b {
+  color:#f0e6d9!important;font-size:13px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-row small {
+  color:#aebbaf!important;font-size:10px;
+}
+/* Active five + genuine next mission are equal first-class destinations. */
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guild-hall-stage {
+  display:grid;grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);
+  gap:13px;min-width:0;align-items:stretch;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guild-hall-stage>* {min-width:0}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party {
+  background:linear-gradient(#1c2a28,#101b1c)!important;
+  border:1px solid #82745477!important;overflow:hidden;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .panel-head {
+  min-height:57px;flex-wrap:wrap;justify-content:flex-start;gap:9px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .panel-head h3 {
+  color:#f0e5d4!important;font:normal clamp(18px,1.5vw,23px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-panel-action {
+  order:3;margin-left:auto;min-height:37px!important;
+  background:#2b332c!important;border:1px solid #92805f!important;
+  color:#e9dac1!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party-count {
+  order:2;color:#d4b886;font:11px system-ui,sans-serif;
+  white-space:nowrap;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-party-roster {
+  display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:7px!important;padding:13px!important;min-height:218px;
+  overflow:visible!important;background:transparent!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-party-member {
+  min-height:210px!important;min-width:0;padding:13px 4px!important;
+  flex:initial;background:linear-gradient(#293935,#142021)!important;
+  border:1px solid #82745470!important;
+  border-top:2px solid color-mix(in srgb,var(--party-class) 60%,#a98b61)!important;
+  border-radius:4px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-party-portrait {
+  width:clamp(49px,5.2vw,87px)!important;
+  height:clamp(49px,5.2vw,87px)!important;
+  background:#152323!important;border-color:#a18b6566!important;
+  border-radius:4px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-party-copy b {
+  color:#f2e9db!important;font-size:clamp(10px,.83vw,13px)!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-party-copy small,
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-party-copy span {
+  color:#adbaae!important;font-size:10px!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-expedition {
+  min-height:290px!important;overflow:hidden;
+  border:1px solid #9a82599c!important;box-shadow:0 11px 26px #0008!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-expedition .home-continue-art:after {
+  background:linear-gradient(90deg,#080e10f4,#111b1acf 43%,#0b14134d 100%)!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-expedition .home-continue-copy {
+  width:min(590px,89%)!important;padding:27px!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-expedition .home-continue-copy h2 {
+  color:#f4e9d8!important;font-size:clamp(1.9rem,2.5vw,2.85rem)!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-expedition .home-continue-actions button:first-child {
+  color:#fff0e8!important;border-color:#d28f7a!important;
+  background:linear-gradient(#a95148,#652e2b)!important;
+}
+/* Quests, party readiness and a very small set of useful secondary actions. */
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-noticeboard {
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.86fr)!important;
+  align-items:stretch;gap:13px!important;margin:0;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-noticeboard>*{
+  min-width:0;grid-column:auto!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview :is(.home-objective-panel,.home-readiness-panel,.cb-hub-actions){
+  background:linear-gradient(#1b2928,#111c1e)!important;
+  border:1px solid #82745477!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .home-objective{
+  min-height:83px!important;background:#172425!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions .cb-hub-action-grid {
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px;padding:12px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions .cb-hub-action-grid button {
+  min-height:77px!important;color:#efe2d0!important;
+  font:normal 12px Georgia,serif!important;
+  background:linear-gradient(#273633,#152222)!important;
+  border:1px solid #88734fa0!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions .cb-hub-action-grid button span {
+  color:#d7b881!important;font-size:22px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions .cb-hub-action-grid button:hover {
+  background:#303d36!important;border-color:#d3b587!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions .cb-hub-action-grid button[hidden] {
+  display:none!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview :is(.home-routes-panel,#cbLatestUpdates),
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-mission-row:empty {
+  display:none!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-featured{
+  padding-top:0;margin-top:4px;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-dungeon {
+  border-color:#88775294!important;filter:saturate(.78);
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-dungeon:before {
+  background:linear-gradient(0deg,#081011f1,#10201eb5 51%,transparent 100%)!important;
+}
+html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-dungeon:hover:not(:disabled){
+  filter:saturate(.95) brightness(1.05);
+}
+@media(max-width:1300px){
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-noticeboard{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions{grid-column:1/-1!important}
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions .cb-hub-action-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:980px){
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero{
+    grid-template-columns:1fr!important;min-height:0!important;gap:14px;
+    padding:30px 24px;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-head{grid-column:1/-1}
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-row{
+    display:block;min-height:75px;padding:9px;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-art{display:none}
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guild-hall-stage{
+    grid-template-columns:1fr;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-noticeboard{
+    grid-template-columns:1fr 1fr!important;
+  }
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero{
+    margin:0 -12px;padding:24px 16px;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-hero-copy h2{
+    font-size:clamp(2.3rem,8vw,3.3rem)!important;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch{display:block}
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-row{
+    display:grid;grid-template-columns:52px minmax(0,1fr);min-height:63px;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-watch-art{display:grid}
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-party-roster{
+    display:flex!important;overflow-x:auto!important;scroll-snap-type:x proximity;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-party .home-party-member{
+    flex:0 0 128px!important;scroll-snap-align:start;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-expedition{
+    min-height:315px!important;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-expedition .home-continue-copy{
+    width:100%!important;min-height:315px;padding:110px 15px 18px!important;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-guildhall-noticeboard{
+    grid-template-columns:1fr!important;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions{
+    grid-column:auto!important;
+  }
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-actions .cb-hub-action-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html body.cb-top-nav-enabled.cb-guildhall-v2 #overview .cb-hub-dungeon{
+    transition:none!important;
+  }
+}
