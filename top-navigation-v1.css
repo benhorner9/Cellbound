@@ -1784,3 +1784,187 @@ html body.cb-top-nav-enabled .main>.view :is(button,summary):disabled{cursor:not
   }
   html body.cb-top-nav-enabled #admin .dbo-master-head{flex-wrap:wrap}
 }
+
+
+/* =======================================================================
+   CELLBOUND RESTRAINED PALETTE V6
+   Lower saturation and contrast slightly. All layout, combat/rarity status
+   colours, navigation behaviour, accessibility remain unchanged.
+   ======================================================================= */
+html body.cb-top-nav-enabled{
+ --cb-uni-bg:#111f2b;--cb-uni-navy:#1c2d3b;
+ --cb-uni-panel:#20313f;--cb-uni-card:#243746;--cb-uni-hover:#2d4554;
+ --cb-uni-line:#4a5c6a;--cb-uni-line-soft:#40505c;
+ --cb-uni-gold:#c5a77a;--cb-uni-ivory:#eee5d8;
+ --cb-uni-muted:#b6c3ca;--cb-uni-sky:#a7c4d3;
+ --cb-uni-shadow:0 9px 21px rgba(4,12,21,.24);
+ --cb-v3-gold:#c5a77a;--cb-v3-blue:#a7c4d3;
+ --surface-1:#1d2f3e;--surface-2:#243747;
+ --surface-raised:#2c4352;--surface-outline:#50626f;
+ --surface-highlight:#c5a77a;
+}
+html body.cb-top-nav-enabled .app-shell{
+ background:radial-gradient(ellipse at 50% 0,#273a48 0%,#192a38 49%,#10202e 100%)!important;
+}
+html body.cb-top-nav-enabled .cb-global-header{
+ background:linear-gradient(#1b2a38,#152432)!important;
+ border-bottom-color:#8f806b!important;
+ box-shadow:0 5px 15px rgba(4,12,22,.42)!important;
+}
+html body.cb-top-nav-enabled .cb-global-brand,
+html body.cb-top-nav-enabled .cb-global-links button{color:#e1e6e7}
+html body.cb-top-nav-enabled .cb-global-links .cb-global-link-icon{color:#acbfcc}
+html body.cb-top-nav-enabled .cb-global-links button:is(.is-active,:hover){
+ color:#e5d0ad!important;background:linear-gradient(#c5a77a0c,#c5a77a1f)!important;
+ border-bottom-color:#bfa27b!important;
+}
+html body.cb-top-nav-enabled .cb-global-links button.is-active .cb-global-link-icon{color:#dbc39d}
+html body.cb-top-nav-enabled .cb-global-brand-mark{
+ color:#ddd0b5!important;border-color:#788d9a!important;
+ background:radial-gradient(circle at 40% 25%,#586d7c,#253949 67%)!important;
+ box-shadow:0 0 9px #6a869833!important;
+}
+html body.cb-top-nav-enabled .cb-global-gold,
+html body.cb-top-nav-enabled .cb-global-gold>span{color:#d2b98e}
+html body.cb-top-nav-enabled :is(.cb-global-more,.cb-global-account>summary){
+ background:#253745!important;border-color:#586b78!important;color:#dfe5e7!important;
+}
+html body.cb-top-nav-enabled .cb-global-account-panel{
+ background:linear-gradient(150deg,#253a49,#192b39)!important;border-color:#657b85!important;
+}
+html body.cb-top-nav-enabled .cb-subnav{
+ background:rgba(26,41,53,.97)!important;border-color:#495e6b!important;
+ box-shadow:0 5px 12px #0004!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button{
+ color:#cbd6da!important;background:#283c49!important;border-color:#516674!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button[aria-current="page"]{
+ color:#e8d3b1!important;background:#43423f!important;border-color:#a28c6d!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero{
+ border-bottom-color:#b09c79!important;box-shadow:0 9px 23px #0005!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero:before{
+ background:linear-gradient(90deg,rgba(15,30,43,.8),rgba(21,39,52,.48) 29%,rgba(21,38,49,.09) 63%,rgba(14,28,40,.60)),
+ linear-gradient(0deg,rgba(17,33,44,.25),transparent 50%)!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-copy h2{color:#f2e8d9}
+html body.cb-top-nav-enabled .cb-hub-hero-copy p,
+html body.cb-top-nav-enabled .cb-hub-eyebrow{color:#e8e9e8}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button:first-child,
+html body.cb-top-nav-enabled #overview .home-continue-actions button:first-child{
+ background:linear-gradient(#dfc59d,#bc9e71)!important;
+ border-color:#e7d6bb!important;color:#283641!important;box-shadow:0 3px 10px #0005!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button+button{
+ background:#2b4150d9!important;color:#eee9df!important;border-color:#8c9ba3!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch{
+ background:rgba(26,43,56,.94)!important;border-color:#576c7b!important;
+ box-shadow:0 10px 25px #0005!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row{
+ background:linear-gradient(145deg,#293c4a,#1e2e3d)!important;border-color:#506575!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row:hover{
+ background:#304958!important;border-color:#8195a0!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-head small,
+html body.cb-top-nav-enabled .cb-hub-watch-row span:not(.cb-hub-watch-art){color:#c9ae86!important}
+html body.cb-top-nav-enabled .cb-hub-watch-art{
+ background-color:#b6bdb8;background-blend-mode:multiply;
+}
+/* Unify main card surfaces while leaving class and item rarity cues intact. */
+html body.cb-top-nav-enabled #overview :is(.panel,.cb-hub-actions),
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+ :is(.panel,.admin-card,.tp-panel,.pvp-panel,.beta-panel,.dungeon-episode,
+ .dungeon-episode-empty,.quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+ background:linear-gradient(150deg,#243745,#1a2c39)!important;
+ border-color:#4c6070!important;box-shadow:var(--cb-uni-shadow)!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+ :is(.panel,.tp-panel,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head){
+ background:linear-gradient(90deg,#2a3e4c,#213442)!important;border-color:#4c6070!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head small,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+ :is(.panel-head,.tp-panel-head,.beta-panel-head) small{color:#c5ab82!important}
+html body.cb-top-nav-enabled #overview .panel-head h3,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+ :is(.panel-head,.tp-panel-head,.beta-panel-head) h3{color:#eee6dc!important}
+html body.cb-top-nav-enabled #overview .home-panel-action,
+html body.cb-top-nav-enabled #overview .cb-hub-heading>button{color:#adcad8!important}
+html body.cb-top-nav-enabled #overview .home-party-member{
+ background:linear-gradient(165deg,#304350,#1e303e)!important;
+ border-color:#516675!important;box-shadow:0 3px 8px #0003!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button{
+ background:linear-gradient(140deg,#2a3f4d,#1d2f3d)!important;
+ border-color:#566b79!important;color:#ebe8e1!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button span{color:#b5c8d1!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:hover{
+ background:#314756!important;border-color:#b09b7b!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-heading h3{color:#e9e6df!important}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon{
+ border-color:#617381!important;box-shadow:0 6px 14px #0004!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon:before{
+ background:linear-gradient(0deg,#152433e9,#2439498b 44%,rgba(29,50,65,.1))!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-status{
+ color:#d5e1d6!important;background:#2d473ddd!important;border-color:#647d70!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-update{
+ background:#20323f!important;border-color:#526574!important;box-shadow:0 5px 14px #0004!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy{
+ background:linear-gradient(135deg,#2f4250,#1e303d)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy small{color:#ceb28a!important}
+html body.cb-top-nav-enabled #overview .cb-v3-news-link{color:#b5cbd6!important}
+html body.cb-top-nav-enabled #overview .cb-v3-update:hover{border-color:#b7a184!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+ background-color:#314e60!important;
+ background-image:linear-gradient(90deg,rgba(20,36,48,.9),rgba(24,44,58,.72) 42%,rgba(23,42,56,.15)),var(--cb-place-art)!important;
+ border-color:#6c7d88!important;box-shadow:0 8px 23px #0005!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro:after{
+ background:linear-gradient(90deg,#b7a07e,#b7a07e52 42%,transparent)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro :is(small,h2){
+ color:#e6ceaa!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro h2{color:#f2e9dd!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+ :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,.tp-filter-actions button,.admin-workspace-nav button){
+ background:#2b4050!important;border-color:#5b7080!important;color:#dfe4e5!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+ :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,.admin-workspace-nav button.active,.chat-tabs button.active,.quest-tabs button.active,.pvp-tabs button.active){
+ background:#454541!important;border-color:#ac9677!important;color:#e6d2b3!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card,
+html body.cb-top-nav-enabled #bank .bank-card-v2,
+html body.cb-top-nav-enabled #trading :is(.tp-result-card,.tp-category-list button,.tp-watch-card),
+html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card,.profession-slot-card),
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card,.quest-objective-card){
+ background:#253846!important;border-color:#536875!important;box-shadow:0 5px 14px #0003!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card:hover,
+html body.cb-top-nav-enabled #bank .bank-card-v2:hover,
+html body.cb-top-nav-enabled #trading .tp-result-card:hover,
+html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card):hover{
+ background:#304756!important;border-color:#bba581!important;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel,.pvp-rank-card,.pvp-rule-card),
+html body.cb-top-nav-enabled #support :is(.beta-panel,.beta-ticket,.beta-note),
+html body.cb-top-nav-enabled #admin .dbo-shell{
+ background-color:#203442!important;border-color:#536a79!important;box-shadow:0 8px 20px #0003!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs button.active{
+ background:#434642!important;border-color:#b4a07f!important;color:#e7d7ba!important;
+}
