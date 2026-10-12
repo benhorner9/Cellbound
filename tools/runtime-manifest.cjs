@@ -78,6 +78,8 @@ const groups=Object.freeze({
   "adventure-combat-v1.js",
   "workshop-economy-v1.css",
   "workshop-economy-v1.js",
+  "community-workspace-v1.css",
+  "community-workspace-v1.js",
   "class-build-v1.js",
   "gear-data.js",
   "profession-data.js",
