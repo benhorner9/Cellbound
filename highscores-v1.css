@@ -127,3 +127,19 @@
 .hs-bar button{background:linear-gradient(#d1bd9b,#b49b77);border-color:#ddc7a4;color:#243a47}
 .hs-site-brand{color:#ede0cf}
 .hs-site-nav{color:#d6bd96;border-bottom-color:#b19b7c}
+
+
+/* Cellbound Deep Slate V8 — standings skin; rankings and highlights unchanged. */
+.hs-site{background:radial-gradient(ellipse at 50% 0,#1e374a,#102638 61%,#0b1b29)!important}
+.hs-board{--hs-ink:#102436;--hs-edge:#41596a;--hs-gold:#c2a377}
+.hs-bar,.hs-rule,.hs-state,.hs-podium,.hs-table-wrap,.hs-board-footer,.hs-empty{
+ background:#182e40!important;border-color:#3b566a!important;
+}
+.hs-podium-card{background:linear-gradient(150deg,#22394b,#142c3d)!important;border-color:#536979!important}
+.hs-table thead{background:#21374a!important}
+.hs-table td{border-color:#374e60!important}
+.hs-masthead{
+ background:linear-gradient(90deg,rgba(10,28,42,.92),rgba(12,34,49,.51)),
+ url('./assets/comics/tutorial-2026/wardstone-twilight.webp') center 50%/cover!important;
+ border-color:#4b6575!important;border-bottom-color:#ae9570!important;
+}
