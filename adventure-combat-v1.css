@@ -1,0 +1,274 @@
+/* Cellbound UI Block 4 — Adventure + Combat Reborn, shared dark fantasy
+   presentation. Gameplay, room geometry and Design Booth controls untouched. */
+html body.cb-top-nav-enabled.cb-adventure-v4{
+ --cb-av-ink:#eee5d7;--cb-av-muted:#b8c5b9;
+ --cb-av-edge:rgba(193,158,103,.33);
+ --cb-av-gold:#c7a775;
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#raids,#endgame){
+ max-width:1680px;margin-inline:auto
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#endgame)>.section-intro{
+ min-height:clamp(170px,17vw,215px)!important;margin:2px 0 13px!important;
+ border-color:var(--cb-av-edge)!important;border-radius:5px!important;
+ background-color:#121d1f!important;
+ background-image:linear-gradient(90deg,#080e11f5,#0a1316d5 40%,#0b151898),
+   var(--cb-place-art)!important;
+ background-size:cover!important;background-position:center,center 45%!important;
+ box-shadow:0 13px 36px #0008!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#endgame)>.section-intro h2{
+ color:#f2e7d4!important;font:normal clamp(2rem,3.4vw,3.5rem)/1.1 Georgia,serif!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#endgame)>.section-intro p{
+ color:#bbcabd!important;font-size:clamp(12px,1.1vw,15px)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#endgame)>.section-intro small{
+ color:#d7b987!important;font-size:10px!important;letter-spacing:.16em!important
+}
+/* Actual party iLvl/readiness/dungeon status; original combat rules own them. */
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .cb-adventure-brief{
+ display:grid;grid-template-columns:minmax(0,1.3fr) minmax(285px,.8fr);
+ align-items:center;gap:15px;margin:0 0 14px;padding:17px 19px;
+ background:linear-gradient(110deg,#1f302b,#111f20);
+ border:1px solid var(--cb-av-edge);border-radius:5px;
+ box-shadow:0 10px 27px #0006
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__copy small{
+ color:#d4b787;font:700 10px system-ui,sans-serif;letter-spacing:.13em
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__copy h3{
+ margin:5px 0 7px;color:#f2e6d2;
+ font:normal clamp(19px,1.85vw,26px) Georgia,serif
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__copy p{
+ max-width:650px;margin:0;color:#b8c7b9;font:400 12px/1.5 system-ui,sans-serif
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__tools{min-width:0}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__figures{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__figures>div{
+ min-width:0;padding:9px 7px;background:#101d1e;
+ border:1px solid rgba(193,160,110,.2);border-radius:4px
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__figures small{
+ display:block;color:#bdc9bd;font:700 9px system-ui,sans-serif
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__figures b{
+ display:block;overflow:hidden;margin-top:4px;
+ color:#eee1ce;font:normal clamp(12px,1.1vw,18px) Georgia,serif;
+ white-space:nowrap;text-overflow:ellipsis
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons{
+ display:flex;gap:7px;margin-top:8px
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons button{
+ flex:1 1 0;min-height:44px;padding:8px 9px;
+ border:1px solid #a48b61;border-radius:4px;
+ background:#29352e;color:#ead9be;
+ font:700 11px system-ui,sans-serif
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons button:first-child{
+ color:#2b2117;background:linear-gradient(#d9bc8a,#ad8a56)
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons button:hover:not(:disabled){
+ background:#453b2d;border-color:#dfbd85;color:#fff0d6
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons button[hidden]{display:none!important}
+/* Dungeon routes: art and difficulty badges remain authored by the game. */
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode{
+ border:1px solid var(--cb-av-edge)!important;
+ border-radius:5px;background:#152122!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-summary{
+ background:linear-gradient(90deg,#23312c,#172322)!important;
+ border-color:var(--cb-av-edge)!important;padding:17px!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-summary h3{
+ color:#f4e9d7!important;font:normal clamp(19px,2vw,27px) Georgia,serif!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-summary p{
+ color:#b7c6ba!important;font-size:12px!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-grid{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;padding:13px
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card{
+ min-width:0;border:1px solid rgba(185,152,104,.4)!important;
+ border-radius:5px;background:linear-gradient(#21302d,#121d20)!important;
+ box-shadow:0 9px 24px #0007!important;overflow:hidden
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card:hover{
+ border-color:#d0ad79!important;background:#2b3731!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card :is(h3,b){
+ color:#f1e6d6!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card p{
+ color:#b6c7bb!important;font-size:12px!important;line-height:1.5
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-actions button{
+ min-height:44px;border-color:#a1875d!important;
+ background:#2c352c!important;color:#e9dcc2!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-actions button:hover:not(:disabled){
+ background:#45402f!important;border-color:#d2ad75!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content :is(.dungeon-detail-panel,.dungeon-journal-hero){
+ background-color:#182826!important;border-color:var(--cb-av-edge)!important
+}
+/* Story journal: legible selected objectives without inventing quest content. */
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-journal-shell{gap:12px}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests :is(.quest-journal-nav,.quest-journal-list,.quest-journal-detail,.quest-journal-side){
+ min-width:0;background:#152324!important;border-color:var(--cb-av-edge)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-tabs{
+ background:#1a2b2a!important;border-color:var(--cb-av-edge)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-tabs button{
+ min-height:44px;color:#c6cec0!important;background:#1d2c2b!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-tabs button.active{
+ background:#453626!important;color:#f8e7c8!important;
+ box-shadow:inset 0 -3px #c09e6b
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests :is(.quest-list-item,.quest-v2-list-card,.quest-chain-card,.quest-objective-card,.quest-current-step){
+ background:#1b2b2a!important;border-color:#8173548a!important;color:#eae6db!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests :is(.quest-list-item.selected,.quest-list-item:hover,.quest-v2-list-card.selected){
+ background:#323b30!important;border-color:#d0ae7b!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests :is(.quest-detail-hero,.quest-v2-hero,.quest-v3-hero){
+ background-color:#24322e!important;border-color:var(--cb-av-edge)!important
+}
+/* Existing raids, activities, endgame screens keep their original controls. */
+html body.cb-top-nav-enabled.cb-adventure-v4 #raids :is(.mr-card,.mr-current,.mr-group,.mr-finder,.mr-lockout){
+ background-color:#172423!important;border-color:rgba(195,161,104,.35)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #raids .mr-hero{
+ border:1px solid #b18e57a6!important;border-radius:5px;
+ box-shadow:0 15px 38px #0008!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #raids :is(.mr-hero p,.mr-card p){
+ color:#b7c2b4!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #world :is(.tb-world-card,.null-entry-card,.world-boss-card){
+ background-color:#192828!important;border-color:var(--cb-av-edge)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #endgame :is(.eg-card,.eg-dungeon-card,.endgame-panel,.endgame-run-history){
+ background-color:#192727!important;border-color:var(--cb-av-edge)!important
+}
+/* Canonical Combat Reborn chrome only. Saved layout geometry, arena pixels,
+   animations, PvP and editor controls retain their own engines. */
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode){
+ background-color:#0c1719!important;
+ border-color:rgba(198,160,103,.34)!important;color:#ede8da
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ :is(.cbcombat-header,.cbcombat-route,.cbcombat-battle-topbar,.cbcombat-party-panel,
+ .cbcombat-command-panel,.cbcombat-meters-panel,.cbcombat-chat){
+ background-color:#142224!important;border-color:rgba(192,157,104,.34)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-party-rows>.cb2d-party-row{
+ background:#122123!important;border-color:rgba(190,158,105,.22)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cb2d-meter-panel{
+ background:#162628!important;border-color:rgba(187,155,107,.2)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cb2d-meter-label b{
+ color:#e8e5d8!important;font-size:max(9px,.62rem)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command-group{
+ background:#142526!important;border-color:rgba(190,154,106,.23)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command-group>small{color:#d2b585!important;letter-spacing:.07em}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command{
+ background:#1b2c2d!important;border-color:rgba(193,153,103,.37)!important;
+ color:#eee7da!important;border-radius:4px
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command b{
+ color:#e9e4da!important;font-size:max(10px,.68rem)!important;line-height:1.2!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command small{
+ color:#b8c6ba!important;font-size:max(9px,.58rem)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command.recommended:not(:disabled){
+ background:#3f3425!important;border-color:#d0ad77!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command.active:not(:disabled){
+ background:#254438!important;border-color:#84bb9b!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command:disabled{opacity:.47!important;filter:saturate(.7)}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat{
+ background:linear-gradient(#16292b,#101d1f)!important;border-color:#a18d654f!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-tabs{background:#1a2a2b!important}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-tabs button{color:#c0cbbd!important}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-tabs button[aria-pressed="true"]{
+ color:#f4dcb5!important;background:#403325!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-messages{
+ background:#101f20!important;color:#bfcbbe!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-form input{
+ background:#101d1f!important;color:#eee8dc!important;font-size:12px!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-form button{
+ background:#594529!important;color:#f7e8c9!important;border-color:#af9164!important
+}
+/* Keep native 16:9 paintings, but allow a less cramped default iPad
+   battlefield. Owner-edited .cbe-live view is exempt from this sizing. */
+@media(min-width:850px) and (min-height:700px) and (max-width:1500px){
+ html body.cb-top-nav-enabled
+ .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live)
+ .cbcombat-battle-panel>.cbcombat-arena-wrap{
+ width:min(100%,max(220px,calc(177.7778dvh - 590px)))!important;
+ aspect-ratio:16 / 9!important
+ }
+}
+@media(max-width:1100px){
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-grid{
+ grid-template-columns:repeat(2,minmax(0,1fr))
+ }
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .cb-adventure-brief{
+ grid-template-columns:1fr
+ }
+}
+@media(max-width:650px){
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-grid{
+ grid-template-columns:1fr
+ }
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .cb-adventure-brief{
+ padding:13px;gap:12px
+ }
+ html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons{
+ flex-direction:column
+ }
+ html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-journal-shell{
+ grid-template-columns:1fr!important
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card{
+ transition:none!important
+ }
+}
