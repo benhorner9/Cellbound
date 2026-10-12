@@ -846,7 +846,7 @@ function paperArms(c,skin,highlighted){
       handY=fit.handY||279,rightY=fit.rightHandY??handY,aw=Math.max(5.2,p.arm*.44),held=!!itemForSlot(c,'Weapon');
   var wristY=handY-19,rightWristY=rightY-19;
   var left='M'+(ls-aw)+' 148 Q'+(ls-aw-7)+' 185 '+(lh-aw)+' 229 Q'+(lh-aw*.65)+' 249 '+(lh-aw*.28)+' '+wristY+' L'+(lh+aw*.28)+' '+wristY+' Q'+(lh+aw*.65)+' 249 '+(ls+aw)+' 148Z';
-  var elbowX=rs+Math.max(9,p.arm*.48),elbowY=Math.min(250,Math.max(rightY+24,236));
+  var elbowX=rs+Math.max(2,p.arm*.14),elbowY=Math.min(242,Math.max(rightY+16,223));
   // Upper-arm silhouette ends at the elbow; the front forearm is painted once.
   var right=held?
     'M'+(rs-aw)+' 148 Q'+rs+' 151 '+(rs+aw)+' 164 '+
@@ -883,8 +883,8 @@ function paperWeaponForearm(c){
       a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),
       skin=raceDef(a.race).skin[a.skinTone],fill=skin,
       trim=tier?pal.trim:'#4d4034',x=fit.weaponX,y=fit.weaponY,
-      elbowX=fit.rightShoulder+Math.max(9,p.arm*.48),
-      elbowY=Math.min(250,Math.max(y+24,236)),
+      elbowX=fit.rightShoulder+Math.max(2,p.arm*.14),
+      elbowY=Math.min(242,Math.max(y+16,223)),
       dx=elbowX-x,dy=elbowY-y,len=Math.hypot(dx,dy),
       nx=-dy/len,ny=dx/len,
       et=Math.max(6.2,p.arm*.38),wt=Math.max(4.4,p.hand*4.6),
