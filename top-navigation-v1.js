@@ -181,6 +181,8 @@
   const missionRow=document.createElement('div');missionRow.className='cb-hub-mission-row';
   root.insertBefore(missionRow,mission);
   missionRow.append(mission,readiness);
+  // Keep the visual story in order: hero, party, featured fights, expedition.
+  root.insertBefore(grid,featured);
 
   // The campaign and destination panels remain in place below the featured adventures.
   const missionTitle=document.querySelector('#cbHubNextMission');

@@ -482,3 +482,8 @@ html body.cb-top-nav-enabled #overview .home-pulse-grid b{color:#f5e6d3}
   .cb-hub-dungeon{flex-basis:85%}
 }
 @media(prefers-reduced-motion:reduce){.cb-hub-hero button,.cb-hub-dungeon{transition:none!important}}
+
+/* Supersede the earlier Guild Hall hero: no duplicate banners. */
+html body.cb-hub-v2 #overview > .cb-guild-hall{display:none!important}
+html body.cb-hub-v2 .cb-hub-hero::before{z-index:0}
+html body.cb-hub-v2 .cb-hub-hero > *{position:relative;z-index:1}
