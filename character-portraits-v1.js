@@ -1193,12 +1193,18 @@ function classicBodyProfile(subject){return bodyProfile(classicRace(subject),typ
 function classicGearFitProfile(subject){
   if(RIG?.gearFitProfile)return RIG.gearFitProfile(subject||{});
   var p=classicBodyProfile(subject),race=classicRace(subject),reach=Math.max(5.5,p.arm*.5),leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder,leftHand=leftShoulder-reach,baseRightHand=rightShoulder+reach;
-  var weapon=subject?.equipment?.Weapon,type=weapon?weaponType(weapon,subject):'',long=['staff','spear','bow','crossbow'].includes(type),compact=['dagger','wand','focus','scepter','rod'].includes(type),offset=weapon?Math.max(long?22:compact?15:18,p.arm*(long?1.05:compact?.72:.86)):0;
-  var sideMin=Math.min(194,rightShoulder+Math.max(4,p.arm*.15)),rightHand=weapon?Math.max(sideMin,Math.min(194,baseRightHand+offset)):baseRightHand,angle=weapon?(type==='bow'?6:type==='crossbow'?8:type==='staff'||type==='spear'?5:type==='dagger'?11:7):0;
+  var weapon=subject?.equipment?.Weapon,type=weapon?weaponType(weapon,subject):'';
+  var pole=['staff','spear','rod','wand','scepter','focus'].includes(type),ranged=['bow','crossbow'].includes(type),
+      weaponY=weapon?(ranged?229:pole?231:type==='dagger'?250:245):279,
+      rightHand=weapon?rightShoulder-Math.max(2,p.arm*(ranged?.20:pole?.17:.12)):baseRightHand,
+      sideMin=weapon?rightShoulder-Math.max(5,p.arm*.28):rightShoulder,
+      angle=weapon?(ranged?-5:pole?1:type==='dagger'?12:8):0;
   return {race,gender:Number(subject?.appearance?.gender)||0,frame:Number(subject?.appearance?.frame)||1,p,
     centerX:120,leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,
-    waistHalf:p.waist||28,hipHalf:p.hip||32,leftLeg:120-p.hip*.38,rightLeg:120+p.hip*.38,legHalf:Math.max(8.5,(p.leg||14)*.62),calfHalf:Math.max(7.4,(p.leg||14)*.52),
-    footHalf:(p.leg||14)*.8,weaponX:rightHand,weaponY:279,weaponAngle:angle,weaponPose:weapon?'side-held':'rest',weaponSideMin:sideMin,offhandX:leftHand,offhandY:279,handY:279};
+    waistHalf:p.waist||28,hipHalf:p.hip||32,leftLeg:120-p.hip*.38,rightLeg:120+p.hip*.38,
+    legHalf:Math.max(8.5,(p.leg||14)*.62),calfHalf:Math.max(7.4,(p.leg||14)*.52),
+    footHalf:(p.leg||14)*.8,weaponX:rightHand,weaponY,weaponAngle:angle,
+    weaponPose:weapon?'side-held':'rest',weaponSideMin:sideMin,offhandX:leftHand,offhandY:279,handY:279,rightHandY:weaponY};
 }
 function classicWeaponFitProfile(subject,item){
   var copy=subject&&typeof subject==='object'?Object.assign({},subject,{equipment:Object.assign({},subject.equipment||{},{Weapon:item||subject?.equipment?.Weapon})}):subject;
