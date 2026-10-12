@@ -53,3 +53,9 @@ Inspect visual quality, aspect ratios, layering and old art overrides for Manor 
 7. Move on to the next unmatched panel without asking for permission. Report verified completion and outstanding work, not optimistic totals.
 
 Important: mockup boards and generated pictures that have not been committed and displayed in their intended scenes are **not** finished game artwork.
+
+## PvP arena composition batch — 12 October 2026
+
+Three distinct 1600×900 illustrated ruined-arena compositions were added for Arena, Capture the Flag and King of the Hill, replacing built-in fallback dungeon backgrounds. Each includes two existing painted sources, a playable stone floor, ruined arena architecture and mode-specific landmarks. They are **composites of existing paintings**, not three newly painted source illustrations. Files: `assets/pvp/maps/arena-shattered-crucible.svg`, `capture-the-flag-ruined-causeway.svg`, `king-of-the-hill-fivefold-ruins.svg`. The map runtime retains published owner-uploaded artwork priority. The appearance test suite now includes `tests/pvp-art-coverage.cjs`.
+
+**Deployment status: artwork branch only, pending staging merge and deployment QA.** Do not count these three as deployed until the staging head includes the commit and its deployment succeeds.

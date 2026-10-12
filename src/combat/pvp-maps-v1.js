@@ -5,9 +5,9 @@
 const MODES=['arena','capture-the-flag','king-of-the-hill'];
 const ART='cellbound-design-art',TEST_KEY='cellbound-pvp-map-owner-test-v1';
 const fallbackArt={
- arena:'./assets/ashen-vault/rooms/broken-gate.webp',
- 'capture-the-flag':'./assets/chaos-canyon/rooms/canyon-mouth.webp',
- 'king-of-the-hill':'./assets/chaos-canyon/rooms/crossing.webp'
+ arena:'./assets/pvp/maps/arena-shattered-crucible.svg',
+ 'capture-the-flag':'./assets/pvp/maps/capture-the-flag-ruined-causeway.svg',
+ 'king-of-the-hill':'./assets/pvp/maps/king-of-the-hill-fivefold-ruins.svg'
 };
 const HILL_IDS=['centre','north','east','south','west'];
 const pt=(x,y)=>({x,y});
