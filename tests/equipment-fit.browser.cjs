@@ -79,7 +79,18 @@ const engine=engineName==='webkit'?webkit:chromium;
           if(item.slot==='Weapon'){
             if(!svg.outerHTML.includes('cb-paper-side-weapon')||!svg.outerHTML.includes('data-weapon-pose="side-held"'))fail(item,race,gender,'weapon is not using side-held presentation',b);
             if(fit.weaponX<fit.weaponSideMin)fail(item,race,gender,'weapon grip moved inward over torso',b);
-            if(distance(b,fit.weaponX,fit.weaponY)>8)fail(item,race,gender,'weapon misses side-held grip',b);
+            if(distance(b,fit.weaponX,fit.weaponY)>8)fail(item,race,gender,'weapon misses the held grip',b);
+            if(el.getAttribute('data-weapon-pose-version')!=='2')fail(item,race,gender,'old floating weapon pose',b);
+            const localX=Number(el.getAttribute('data-grip-local-x')),localY=Number(el.getAttribute('data-grip-local-y'));
+            const matrix=el.getScreenCTM(),svgPoint=svg.createSVGPoint();
+            svgPoint.x=localX;svgPoint.y=localY;
+            const aligned=matrix?svgPoint.matrixTransform(matrix):null;
+            const screenPoint=svg.createSVGPoint();screenPoint.x=fit.weaponX;screenPoint.y=fit.weaponY;
+            const target=svg.getScreenCTM()?screenPoint.matrixTransform(svg.getScreenCTM()):null;
+            if(!aligned||!target||Math.hypot(aligned.x-target.x,aligned.y-target.y)>2)
+              fail(item,race,gender,'weapon handle does not touch the hand socket',b);
+            if(!svg.querySelector('.cb-paper-held-grip-main .cb-paper-weapon-grip-hand'))
+              fail(item,race,gender,'front fingers do not wrap the weapon handle',b);
           }
           if(item.slot==='Shoulders'){
             const lb=childBox(svg,'.cb-paper-pad-left'),rb=childBox(svg,'.cb-paper-pad-right');
