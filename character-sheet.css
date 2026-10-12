@@ -1041,3 +1041,28 @@
 #characterModal :is(button,input,select,textarea):focus-visible{
   outline:2px solid #f5d38c;outline-offset:2px;
 }
+
+
+/* Muted navy character sheet. Class, item rarity and stat semantics stay unchanged. */
+#characterModal .character-modal{
+ background:linear-gradient(#273e4d,#172c3b)!important;
+ border-color:#677e8b!important;box-shadow:0 20px 50px #0008;
+}
+#characterModal .cb-sheet{
+ background:radial-gradient(circle at 50% 25%,color-mix(in srgb,var(--cb-accent) 9%,transparent),transparent 45%),
+ linear-gradient(#233a48,#152b3a)!important;
+}
+#characterModal .cb-sheet-header{
+ background:linear-gradient(90deg,#324956,#233b4a 65%,#273e4d)!important;
+ border-color:#5a7180!important;
+}
+#characterModal .cb-character-tabs{background:rgba(30,47,61,.97)!important;border-color:#5d7280!important}
+#characterModal .cb-character-tabs button.active{
+ color:#e3d1b3!important;background:#474e50!important;box-shadow:inset 0 -2px #b7a483;
+}
+#characterModal .cb-equip-slot{
+ background:linear-gradient(#2d4250,#203441)!important;
+ border-color:#586f7d;box-shadow:inset 0 0 10px #10223368;
+}
+#characterModal .cb-equip-slot:hover{border-color:#bda889}
+#characterModal .cb-slot-icon{background:#1d3240}
