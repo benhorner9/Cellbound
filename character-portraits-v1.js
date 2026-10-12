@@ -961,22 +961,22 @@ function weaponMarkup(type,pal,v,tier,item){
       (v%3===0?'<circle cx="193" cy="105" r="14" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="193" cy="105" r="5" fill="'+pal.glow+'"/>':
       v%3===1?'<path d="M193 112 Q174 95 184 82 M195 110 Q213 96 208 81" fill="none" stroke="'+pal.trim+'" stroke-width="5" stroke-linecap="round"/><circle cx="194" cy="96" r="4" fill="'+pal.glow+'"/>':
       '<path d="M183 111 L193 82 L204 111 L193 122Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="193" cy="101" r="4" fill="'+pal.glow+'"/>');
-    ornamentY=205;
+    ornamentY=105;
   }else{
     // Sword and greatsword: blade above the hand, crossguard just above the
     // fist, short leather grip beneath the fist. No 180px "floating handle".
     var great=type==='greatsword',bladeTop=great?93:119,bladeWidth=great?18:12;
-    g='<path d="M200 262 L'+(200-bladeWidth*.58)+' 251 L'+(200-bladeWidth*.54)+' '+(bladeTop+18)+
+    g='<path class="cb-paper-held-blade" d="M200 262 L'+(200-bladeWidth*.58)+' 251 L'+(200-bladeWidth*.54)+' '+(bladeTop+18)+
       ' L200 '+bladeTop+' L'+(200+bladeWidth*.54)+' '+(bladeTop+18)+' L'+(200+bladeWidth*.58)+' 251Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.6"/>'+
       '<path d="M200 '+(bladeTop+21)+' L200 245" stroke="'+pal.base+'" stroke-width="1.7" opacity=".65"/>'+
-      '<path d="M177 263 Q200 257 222 261" fill="none" stroke="'+pal.trim+'" stroke-width="'+(great?8:6)+'" stroke-linecap="round"/>'+
-      '<path d="M199 267 L202 311" stroke="'+pal.dark+'" stroke-width="'+(great?10:8)+'" stroke-linecap="round"/>'+
+      '<path class="cb-paper-hilt-guard" d="M177 263 Q200 257 222 261" fill="none" stroke="'+pal.trim+'" stroke-width="'+(great?8:6)+'" stroke-linecap="round"/>'+
+      '<path class="cb-paper-handle" d="M199 267 L202 311" stroke="'+pal.dark+'" stroke-width="'+(great?10:8)+'" stroke-linecap="round"/>'+
       '<circle cx="203" cy="313" r="'+(great?6:5)+'" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2"/>';
     ornamentY=216;
   }
   // Class/tier engraving belongs to the head or blade, never the disconnected
   // old shoulder-height handle position.
-  g+='<g transform="translate(0 '+(ornamentY-176)+')">'+betaWeaponDetail(item,pal,tier,type)+'</g>';
+  g+='<g transform="translate(0 '+(type==='staff'?0:ornamentY-176)+')">'+betaWeaponDetail(item,pal,tier,type)+'</g>';
   if(pal.set)g+=motifMarkup(pal.set.motif,199,ornamentY,.65,pal.glow);
   else g+=itemRune(item,'Weapon',pal,199,ornamentY,.5);
   if(tier>=4&&!pal.set)g+='<circle cx="199" cy="'+ornamentY+'" r="2.4" fill="'+pal.glow+'" opacity=".6" class="cb-paper-glow"/>';
@@ -989,7 +989,7 @@ const PAPER_WEAPON_GRIPS=Object.freeze({
   sword:[200,279],greatsword:[200,279],axe:[204,279],
   hammer:[205,279],mace:[205,279],dagger:[202,279],
   staff:[201,279],spear:[201,279],
-  bow:[204,212],crossbow:[200,219],
+  bow:[209,212],crossbow:[200,219],
   wand:[203,279],focus:[200,279],scepter:[202,279],rod:[202,279]
 });
 const PAPER_WEAPON_STANCES=Object.freeze({
