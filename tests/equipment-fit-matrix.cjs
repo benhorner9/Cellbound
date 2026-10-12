@@ -50,7 +50,8 @@ for(const item of G.items){
       assert(html.includes('data-weapon-pose-version="2"'),item.itemId+' missing held weapon contract');
       assert(html.includes('cb-paper-held-grip-main'),item.itemId+' missing front fingers over the weapon');
       assert(near(num(html,'data-hand-x'),fit.weaponX),item.itemId+' drawn hand does not meet weapon');
-      assert(near(num(html,'data-hand-y'),fit.weaponY),item.itemId+' drawn hand height mismatch');
+      const grippingHand=html.slice(html.indexOf('cb-paper-held-grip-main'));
+      assert(near(num(grippingHand,'data-hand-y'),fit.weaponY),item.itemId+' raised gripping hand height mismatch');
       assert(fit.weaponY<fit.handY-20,item.itemId+' is still carried at the hip');
       assert(near(num(html,'data-right-hand-y'),fit.weaponY),item.itemId+' right glove does not reach raised wrist');
       assert(html.includes('data-weapon-forearm="bent"'),item.itemId+' main-hand lacks visible bent forearm');
