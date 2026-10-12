@@ -2100,3 +2100,29 @@ html body.cb-top-nav-enabled :is(.main>.view,.modal-card,.dbo-shell,.onboard-roo
   :is(button,summary,a,input,select,textarea):focus-visible{
   outline:2px solid #e8c98b!important;outline-offset:2px!important;
 }
+
+
+/* V10 semantic display protections — keep rarity, active team and recovery cues. */
+html body.cb-top-nav-enabled #trading .tp-result-card.rarity-uncommon{
+  border-left:2px solid #49c864!important;
+}
+html body.cb-top-nav-enabled #trading .tp-result-card.rarity-rare{
+  border-left:2px solid #3e9fff!important;
+}
+html body.cb-top-nav-enabled #trading .tp-result-card.rarity-epic{
+  border-left:2px solid #a45cff!important;
+}
+html body.cb-top-nav-enabled #trading .tp-result-card.rarity-legendary{
+  border-left:2px solid #f0a13f!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card.is-active{
+  border-color:color-mix(in srgb,var(--roster-accent,#54bca4) 54%,#d8b976)!important;
+  box-shadow:inset 0 0 0 1px #54bca450,0 9px 21px #0007!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card.is-recovering{
+  background:radial-gradient(circle at 92% -5%,rgba(176,73,59,.15),transparent 37%),
+   linear-gradient(180deg,#221d1c,#0c171b 68%)!important;
+}
+html body.cb-top-nav-enabled #bank .bank-card-v2.bank-item-selected{
+  border-color:#c6a572!important;
+}
