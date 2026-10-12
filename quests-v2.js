@@ -230,12 +230,12 @@ const QUEST_COMIC_STORY_ART={
   './assets/comics/tutorial-2026/lost-crystal-vault.webp',
   './assets/comics/main-quests-2026/glass-recognition.svg',
   './assets/comics/tutorial-2026/arcane-relic.webp',
-  './assets/comics/tutorial-2026/lost-crystal-vault.webp'
+  './assets/comics/main-quests-2026/dead-glass-responds.svg'
  ],
  'The Bearer':[
   './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
   './assets/comics/main-quests-2026/echoes-violet-shard.webp',
-  './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
+  './assets/comics/main-quests-2026/bearer-fragment-temperature.svg',
   './assets/comics/main-quests-2026/heroes-against-arcane-storm.webp',
   './assets/comics/main-quests-2026/ghostly-violet-wardens.webp',
   './assets/comics/main-quests-2026/arcane-passage-revealed.webp'
@@ -243,7 +243,7 @@ const QUEST_COMIC_STORY_ART={
  'The Fragment Remembers':[
   './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
   './assets/comics/main-quests-2026/echoes-violet-shard.webp',
-  './assets/comics/main-quests-2026/echoes-violet-shard.webp',
+  './assets/comics/main-quests-2026/fragment-memory-echo.svg',
   './assets/comics/main-quests-2026/ghostly-violet-wardens.webp',
   './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
   './assets/comics/main-quests-2026/arcane-passage-revealed.webp',
@@ -283,7 +283,7 @@ const QUEST_COMIC_STORY_ART={
   './assets/comics/main-quests-2026/awakening-arcane-seal.webp',
   './assets/comics/main-quests-2026/arcane-gate-awakening.webp',
   './assets/comics/main-quests-2026/heroes-before-cosmic-gateway.webp',
-  './assets/comics/main-quests-2026/heroes-before-cosmic-gateway.webp',
+  './assets/comics/main-quests-2026/seal-pressure-equalises.svg',
   './assets/comics/main-quests-2026/adventurers-before-arcane-abyss.webp'
  ],
  'Bram’s Professional Opinion':[

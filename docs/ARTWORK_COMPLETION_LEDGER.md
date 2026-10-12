@@ -15,18 +15,18 @@ Last audit: 12 October 2026. Branch: `staging`. This is a working checklist, not
 
 ### Main campaign comic art
 
-`QUEST_COMIC_STORY_ART` in `quests-v2.js`: **69 panel image assignments from 44 distinct asset paths** across 11 dialogue strips. This is not 69 individual paintings.
+`QUEST_COMIC_STORY_ART` in `quests-v2.js`: **69 panel image assignments from 48 distinct asset paths** across 11 dialogue strips. This is not 69 individual paintings.
 
-Priority panels needing original scene-specific art to remove *within-strip* duplication:
+Campaign story asset assignments: one unique path per beat. New SVG compositions reuse existing painted sources; further original paintings and visual review remain outstanding:
 
 1. **Bram's Professional Opinion**: four panels, four distinct painted-source compositions now assigned.
 2. **A Different Kind of Pressure**: six panels, six distinct assets now assigned.
 3. **The Old Surveyor**: nine panels, nine distinct assets now assigned.
 4. **The Door That Breathed**: seven panels, seven distinct assets now assigned.
-5. **Something That Should Be Dead**: six panels, five distinct images.
-6. **The Bearer**: six panels, five distinct images.
-7. **The Fragment Remembers**: seven panels, six distinct images.
-8. **The Seal Opens**: seven panels, six distinct images.
+5. **Something That Should Be Dead**: six panels, six distinct assets.
+6. **The Bearer**: six panels, six distinct assets.
+7. **The Fragment Remembers**: seven panels, seven distinct assets.
+8. **The Seal Opens**: seven panels, seven distinct assets.
 
 A Road Gone Quiet, The Old Forge Key and The Letter in Glass have no within-strip repeats, though some artwork is shared across different quests. Keep scene accuracy and continuity more important than an arbitrary unique-image count.
 

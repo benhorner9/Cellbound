@@ -39,7 +39,7 @@ for(const [title,count] of Object.entries(expected)){
   all.add(img);
  }
 }
-assert.equal(all.size,14,'All ten newly generated illustrations must be used in the quests');
+assert.equal(all.size,16,'All sixteen scene assets must appear in the quests');
 assert(editor.includes("const scripted=name==='showDialogue'&&bracketed"),'Inspector must retain dynamic dialogue panel counts');
 assert(editor.includes("const dedicatedAt=src.indexOf('const QUEST_COMIC_STORY_ART=');"),'Inspector must share live artwork definitions');
-console.log('Comic art block 3: '+Object.keys(expected).length+' quests, '+Object.values(expected).reduce((a,b)=>a+b,0)+' panels, 10 painted WebPs + 4 new composites, all referenced and shipped.');
+console.log('Comic art block 3: '+Object.keys(expected).length+' quests, '+Object.values(expected).reduce((a,b)=>a+b,0)+' panels, 10 painted WebPs + 6 new composites, all referenced and shipped.');

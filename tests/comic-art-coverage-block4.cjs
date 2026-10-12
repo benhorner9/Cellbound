@@ -34,6 +34,6 @@ for(const [title,count] of Object.entries(expected)){
   newArt.add(art);
  }
 }
-assert.equal(newArt.size,8,'Every one of the six commissioned paintings must appear in the comics');
+assert.equal(newArt.size,9,'All nine scene assets must appear in the comics');
 assert(editor.includes("const dedicatedAt=src.indexOf('const QUEST_COMIC_STORY_ART=');"),'Comic Scene Editor must inspect dedicated story-art assignments');
-console.log('Comic art block 4: 2 Hollow Seal story quests, 14/14 illustrated panels, six painted WebPs + two new composites verified.');
+console.log('Comic art block 4: 2 Hollow Seal story quests, 14/14 illustrated panels, six painted WebPs + three new composites verified.');
