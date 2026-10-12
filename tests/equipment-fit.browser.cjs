@@ -191,7 +191,7 @@ const engine=engineName==='webkit'?webkit:chromium;
         const lp=childBox(svg,'.cb-paper-pad-left'),rp=childBox(svg,'.cb-paper-pad-right');
         if(!contains(lp,fit.leftPad,151,4)||!contains(rp,fit.rightPad,151,4))fail({itemId:klass+'-T'+tier+'-Shoulders'},race,gender,'full loadout pads float from body',{left:lp,right:rp});
         const lg=childBox(svg,'.cb-paper-glove-left'),rg=childBox(svg,'.cb-paper-glove-right');
-        if(!contains(lg,fit.leftHand,fit.handY-4,2)||!contains(rg,fit.rightHand,fit.handY-4,2))fail({itemId:klass+'-T'+tier+'-Hands'},race,gender,'full loadout gloves miss hands',{left:lg,right:rg});
+        if(!contains(lg,fit.leftHand,fit.handY-4,2)||!contains(rg,fit.rightHand,fit.rightHandY-4,2))fail({itemId:klass+'-T'+tier+'-Hands'},race,gender,'full loadout gloves miss hands',{left:lg,right:rg});
         const lb=childBox(svg,'.cb-paper-boot-left'),rb=childBox(svg,'.cb-paper-boot-right');
         if(!contains(lb,fit.leftLeg,370,3)||!contains(rb,fit.rightLeg,370,3))fail({itemId:klass+'-T'+tier+'-Feet'},race,gender,'full loadout boots miss ankles',{left:lb,right:rb});
         loadoutChecks++;

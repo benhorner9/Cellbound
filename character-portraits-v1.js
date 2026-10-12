@@ -1199,7 +1199,7 @@ function classicGearFitProfile(subject){
       heavy=['greatsword','hammer','axe'].includes(type),
       rightHand=weapon?rightShoulder-p.shoulder*(ranged?.38:pole?.51:close?.47:heavy?.39:.44):baseRightHand,
       weaponY=weapon?(type==='bow'?224:type==='crossbow'?232:pole?222:close?227:heavy?235:230):279,
-      angle=weapon?(type==='bow'?48:type==='crossbow'?-23:pole?(type==='spear'?12:10):close?30:heavy?23:20):0,
+      angle=weapon?(type==='bow'?48:type==='crossbow'?-23:pole?(type==='spear'?12:10):close?30:heavy?17:20):0,
       sideMin=weapon?120+p.shoulder*.22:rightShoulder;
   return {race,gender:Number(subject?.appearance?.gender)||0,frame:Number(subject?.appearance?.frame)||1,p,
     centerX:120,leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,
