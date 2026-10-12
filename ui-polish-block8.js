@@ -174,7 +174,16 @@
   start.addEventListener('click',()=>{
     if(!project()||!open)return;
     setRunning(true);
-    dialog.querySelector('[data-forge-strike]')?.focus({preventScroll:true});
+    // The native forge was deliberately rendered with its controls disabled
+    // while the preparation screen held the timer. Re-render it under the
+    // now-active focus state so STRIKE / REHEAT enable immediately.
+    window.CellboundEconomy?.renderProfessions?.();
+    requestAnimationFrame(()=>{
+      if(!open)return;
+      const target=dialog.querySelector('[data-forge-strike]:not([disabled])')||
+        dialog.querySelector('.cb-craft-modal__close');
+      target?.focus({preventScroll:true});
+    });
   });
   dialog.addEventListener('keydown',e=>{
     if(e.key==='Escape'){e.preventDefault();close();return;}
