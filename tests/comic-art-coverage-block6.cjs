@@ -17,6 +17,7 @@ for(const [title,count] of Object.entries(expected)){
  const end=quest.indexOf(']',at);
  const artworks=[...quest.slice(at,end+1).matchAll(/'([^']+\.svg)'/g)].map(m=>m[1]);
  assert.equal(artworks.length,count,'Panel count mismatch: '+title);
+ assert.equal(new Set(artworks).size,count,'Each No Way Back dialogue beat needs its own art composition: '+title);
  for(const art of artworks){
   assert(art.startsWith('./assets/comics/no-way-back-2026/'),'Not a comic illustration: '+art);
   const filename=path.join(root,art.slice(2));
@@ -37,5 +38,5 @@ for(const [title,count] of Object.entries(expected)){
   assets.add(art);
  }
 }
-assert.equal(assets.size,8,'Every commissioned scene-specific composite must be used');
-console.log('No Way Back comic block 6 passed: 4 stories, 19 panels, 8 embedded 16:9 illustrations.');
+assert.equal(assets.size,13,'All thirteen scene-specific compositions must be used');
+console.log('No Way Back comic block 6 passed: 4 stories, 19 panels, 13 embedded 16:9 illustrations.');

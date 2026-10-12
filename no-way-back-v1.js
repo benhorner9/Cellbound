@@ -108,15 +108,15 @@ const NWB_COMIC_STORY_ART={
  'A Sailor With A Story':[
   './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
   './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
-  './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
-  './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
+  './assets/comics/no-way-back-2026/sailor-trusted-crew.svg',
+  './assets/comics/no-way-back-2026/sailor-black-buoy.svg',
   './assets/comics/no-way-back-2026/manor-island-landing.svg'
  ],
  'More Than A Crew':[
   './assets/comics/no-way-back-2026/boat-weathered-hull.svg',
-  './assets/comics/no-way-back-2026/boat-weathered-hull.svg',
+  './assets/comics/no-way-back-2026/boat-hull-inspection.svg',
   './assets/comics/no-way-back-2026/boat-missing-chart.svg',
-  './assets/comics/no-way-back-2026/boat-missing-chart.svg',
+  './assets/comics/no-way-back-2026/boat-lost-chart.svg',
   './assets/comics/no-way-back-2026/return-damaged-sail.svg'
  ],
  'Washed Back To Harbour':[
@@ -130,7 +130,7 @@ const NWB_COMIC_STORY_ART={
   './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
   './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
   './assets/comics/no-way-back-2026/silas-manor-master.svg',
-  './assets/comics/no-way-back-2026/silas-manor-master.svg'
+  './assets/comics/no-way-back-2026/silas-trap-closes.svg'
  ]
 };
 function nwbStoryArt(label,title){

@@ -32,7 +32,7 @@ A Road Gone Quiet, The Old Forge Key and The Letter in Glass have no within-stri
 
 ### No Way Back
 
-Four strips have **19 panels assigned to 8 distinct composite assets**. Each panel is illustrated, but many illustrations repeat. Prioritise individual illustrations for the sailor's harbour story, the damaged boat, the failed voyage and the Manor homecoming.
+Four strips have **19 panels assigned to 13 distinct composite assets**. No image path repeats within an individual strip. Five new 16:9 painted-source composites now cover the sailor's crew, Black Buoy, hull inspection, lost chart and Silas closing the gate. Further original paintings and visual review remain outstanding.
 
 ### The Thirteenth Bell
 
