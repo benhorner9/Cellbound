@@ -2,6 +2,10 @@
 
 Last audit: 12 October 2026. Branch: `staging`. This is a working checklist, not a claim that the whole game's art is finished.
 
+## Audit status — comic art NOT finished
+
+The prior labels “finished and integrated” below mean paths were packaged, not that every illustration is original, visually correct, or checked in the actual comic reader. Main campaign: 69 assigned beats / 48 distinct paths. No Way Back: 19 beats / 13 paths. Both contain reused source paintings or composites; neither is approved as fully illustrated. Tutorial, Fourfold Lock, Thirteenth Bell and any other comic sequences also require a beat-by-beat visual audit. Do not mark a strip complete until each scene has a finished scene-accurate illustration, no unintended repeats or baked text, and staging reader/browser verification. Comic work takes priority over Manor boss portraits.
+
 ## Finished and integrated
 
 - Tutorial scenes: nine illustrated strips, three panels per strip. Existing artwork block 1 checks filenames and content.
@@ -58,14 +62,14 @@ Important: mockup boards and generated pictures that have not been committed and
 
 Three distinct 1600×900 illustrated ruined-arena compositions were added for Arena, Capture the Flag and King of the Hill, replacing built-in fallback dungeon backgrounds. Each includes two existing painted sources, a playable stone floor, ruined arena architecture and mode-specific landmarks. They are **composites of existing paintings**, not three newly painted source illustrations. Files: `assets/pvp/maps/arena-shattered-crucible.svg`, `capture-the-flag-ruined-causeway.svg`, `king-of-the-hill-fivefold-ruins.svg`. The map runtime retains published owner-uploaded artwork priority. The appearance test suite now includes `tests/pvp-art-coverage.cjs`.
 
-**Deployment status:** Merged to staging at 2e48d6f, but CI failed before FTP deployment on a stale comic-editor test; live deployment unconfirmed.
+**Deployment status:** Subsequently deployed in staging commit `0060d590523aedf87394048d1602149cea352b4e`; FTP and deployed-SHA verification passed in Actions run `38205860260`. iPad visual approval outstanding.
 
 ## Manor raid room fallback batch — 12 October 2026
 
 Six 1600×900 room-specific SVG compositions are committed for the **Entrance Hall (Butler), Dining Room (Maid A), Kitchen (Maid B), Workshop (Engineer), Bedroom, and Attic (Master)**. Each includes a custom architectural and room-prop composition over two softly blended existing painted Manor image sources, without captions or interface elements. These are **painted-source compositions**, not six newly commissioned original paintings. They replace the previous single, tiny `manor-raid-hero.webp` local fallback for all six combat environments. The runtime still uses the approved owner-published room image first through `CellboundRoomLayouts.artFor`; the bundled room art is fallback only. A dedicated `tests/manor-art-coverage.cjs` check validates asset dimensions, painted layers, build packaging, and override precedence.
 
-**Deployment status:** Merged to staging at 2e48d6f, but CI failed before FTP deployment on a stale comic-editor test. Not confirmed live; visual iPad QA remains outstanding. Real iPad visual approval and original scene paintings remain outstanding.
+**Deployment status:** Subsequently deployed in staging commit `0060d590523aedf87394048d1602149cea352b4e`; FTP and deployed-SHA verification passed in Actions run `38205860260`. Visual iPad QA remains outstanding. Real iPad visual approval and original scene paintings remain outstanding.
 
 ## Blackout Station grid control art
 
-Prepared `assets/blackout-station/rooms/grid-distribution-board.svg`: 1600x900 dark industrial control-room composite, using two existing WebP paintings with newly arranged switchgear, cables, perspective steel floor and emergency lighting. No text or UI baked in. The owner cloud-art override takes precedence; the Calder reactor art is unchanged. `tests/blackout-art-coverage.cjs` validates packaging and runtime wiring. The grid scene now includes an absolutely positioned, touch-safe decorative image layer (`src/dungeons/blackout-station-v1.css`) with the controls above the art. This corrects an image that otherwise occupied normal page flow and could displace the puzzle. Static checks were added for CSS layering and object-fit. Campaign coverage blocks 3 and 4 and the comic scene editor test now accept the valid SVG composites. **Still pending staging deployment, CI and browser/iPad visual approval.**
+Prepared `assets/blackout-station/rooms/grid-distribution-board.svg`: 1600x900 dark industrial control-room composite, using two existing WebP paintings with newly arranged switchgear, cables, perspective steel floor and emergency lighting. No text or UI baked in. The owner cloud-art override takes precedence; the Calder reactor art is unchanged. `tests/blackout-art-coverage.cjs` validates packaging and runtime wiring. The grid scene now includes an absolutely positioned, touch-safe decorative image layer (`src/dungeons/blackout-station-v1.css`) with the controls above the art. This corrects an image that otherwise occupied normal page flow and could displace the puzzle. Static checks were added for CSS layering and object-fit. Campaign coverage blocks 3 and 4 and the comic scene editor test now accept the valid SVG composites. **Deployed to staging** in `0060d590` (Actions `38205860260`); browser/iPad visual approval remains outstanding.
