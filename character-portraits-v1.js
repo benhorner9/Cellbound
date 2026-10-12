@@ -881,7 +881,7 @@ function paperWeaponForearm(c){
   var fit=paperFit(c),p=fit.p,hands=itemForSlot(c,'Hands'),tier=clampTier(hands&&hands.tier),
       pal=gearPalette(c,hands,tier||1,'Hands'),race=c.race||c.appearance?.race||'Veyren',
       a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),
-      skin=raceDef(a.race).skin[a.skinTone],fill=tier?pal.base:skin,
+      skin=raceDef(a.race).skin[a.skinTone],fill=skin,
       trim=tier?pal.trim:'#4d4034',x=fit.weaponX,y=fit.weaponY,
       elbowX=fit.rightShoulder+Math.max(9,p.arm*.48),
       elbowY=Math.min(250,Math.max(y+24,236)),
@@ -896,13 +896,20 @@ function paperWeaponForearm(c){
   var contour='M'+pt(a1x,a1y)+' Q'+pt((a1x+a2x)/2,(a1y+a2y)/2-2)+' '+pt(a2x,a2y)+
     ' Q'+pt(x,y-2)+' '+pt(b2x,b2y)+
     ' Q'+pt((b1x+b2x)/2,(b1y+b2y)/2+1)+' '+pt(b1x,b1y)+'Z';
+  // Bare joint meets upper arm; the last portion wears a short bracer.
+  // A solid gauntlet from elbow to fist read as a detached dark bar.
+  var joinX=x+dx*.44,joinY=y+dy*.44,bracerWidth=wt*.94;
+  var bracer='M'+pt(a2x,a2y)+' L'+pt(joinX+nx*bracerWidth,joinY+ny*bracerWidth)+
+    ' L'+pt(joinX-nx*bracerWidth,joinY-ny*bracerWidth)+' L'+pt(b2x,b2y)+'Z';
   return '<g class="cb-paper-weapon-forearm" data-weapon-forearm="across-body" data-forearm-hand-x="'+x.toFixed(2)+
     '" data-forearm-hand-y="'+y.toFixed(2)+'" data-forearm-elbow-x="'+elbowX.toFixed(2)+
     '" data-forearm-elbow-y="'+elbowY.toFixed(2)+'" data-forearm-slope="'+(elbowY-y).toFixed(2)+'">'+
-    '<path class="cb-paper-anatomical-forearm" d="'+contour+'" fill="'+fill+'" stroke="#101c1b" stroke-width="1.8"/>'+
+    '<ellipse class="cb-paper-elbow-joint" cx="'+elbowX+'" cy="'+elbowY+'" rx="'+et+'" ry="'+(et*.93)+'" fill="'+skin+'" stroke="#101c1b" stroke-width="1.6"/>'+
+    '<path class="cb-paper-anatomical-forearm" d="'+contour+'" fill="'+skin+'" stroke="#101c1b" stroke-width="1.8"/>'+
+    '<path class="cb-paper-weapon-bracer" d="'+bracer+'" fill="'+(tier?pal.base:skin)+'" stroke="'+trim+'" stroke-width="1.6"/>'+
     '<path d="M'+pt(a2x,a2y)+' Q'+pt(x,y+2)+' '+pt(b2x,b2y)+
-    '" fill="none" stroke="'+trim+'" stroke-width="1.7"/>'+
-    '<ellipse cx="'+x+'" cy="'+y+'" rx="'+Math.max(5.3,p.hand*5.6)+'" ry="'+Math.max(6.7,p.hand*6.7)+'" fill="'+fill+'" stroke="'+trim+'" stroke-width="1.3"/>'+
+    '" fill="none" stroke="'+trim+'" stroke-width="1.5"/>'+
+    '<ellipse cx="'+x+'" cy="'+y+'" rx="'+Math.max(5.3,p.hand*5.6)+'" ry="'+Math.max(6.7,p.hand*6.7)+'" fill="'+(tier?pal.base:skin)+'" stroke="'+trim+'" stroke-width="1.3"/>'+
     '</g>';
 }
 function paperChest(c,highlighted,skin){

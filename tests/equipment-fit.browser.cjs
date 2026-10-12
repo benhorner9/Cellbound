@@ -207,6 +207,34 @@ const engine=engineName==='webkit'?webkit:chromium;
     assert.deepEqual(result.failures,[],'Rendered equipment fit failures: '+JSON.stringify(result.failures,null,2));
     console.log(engineName+' equipment fit v4 passed '+result.checked+' individual item/body combinations plus '+result.loadoutChecks+' complete loadouts: shoulders, gloves, torso/waist, legs, boots and side-held weapons all body-fitted.');
     await page.screenshot({path:'/tmp/cellbound-equipment-fit-'+engineName+'.png'});
+    // Human-readable visual acceptance sheet alongside numeric fit checks.
+    // Six classes using their actual full T5 sets, rendered by the same SVG.
+    await page.setViewportSize({width:1050,height:1050});
+    await page.evaluate(()=>{
+      const G=window.CellboundGear,P=window.CellboundPortraits;
+      const classes=['Warrior','Paladin','Rogue','Hunter','Priest','Druid'];
+      const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'];
+      const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
+      document.body.style.cssText='margin:0;background:#071016;color:#e4d3ae;font:15px Georgia,serif';
+      document.body.innerHTML='<div style="padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'+
+        classes.map((klass,i)=>{
+          const race=races[i],equipment={};
+          for(const pos of G.EQUIPMENT_POSITION_ORDER){
+            const item=G.items.find(item=>item.class===klass&&Number(item.tier)===5&&item.slot===slotFor(pos));
+            if(item)equipment[pos]=item;
+          }
+          const c={id:'held-pose-sheet-'+klass,race,class:klass,appearance:{
+            race,gender:0,frame:1,skinTone:1,face:0,hair:0,hairColor:0,facialHair:0,
+            marking:0,eyes:0,feature:0},equipment};
+          return '<div style="height:484px;background:#102027;border:1px solid #3f594a;text-align:center">'+
+            '<div style="padding:8px 0;color:#e4c18d;font-weight:bold">'+klass+' — '+race+'</div>'+
+            '<svg viewBox="0 0 240 410" style="display:none"></svg>'+
+            '<div style="width:290px;height:420px;margin:auto">'+P.paperDollSVG(c).replace(
+              '<svg viewBox=','<svg style="width:290px;height:420px;overflow:visible" viewBox=')+'</div></div>';
+        }).join('')+'</div>';
+    });
+    await page.screenshot({path:'/tmp/cellbound-equipment-fit-poses-'+engineName+'.png',fullPage:true});
+
   }finally{
     await browser.close();
   }
