@@ -2126,3 +2126,114 @@ html body.cb-top-nav-enabled #roster .roster-character-card.is-recovering{
 html body.cb-top-nav-enabled #bank .bank-card-v2.bank-item-selected{
   border-color:#c6a572!important;
 }
+
+
+/* ========================================================================
+   CELLBOUND DARK FANTASY COMPLETION V11
+   Portaled windows and nested editors use the same charcoal, patinated-teal
+   and bronze surfaces as every destination. Visuals/status are unchanged.
+   ======================================================================== */
+html body.cb-top-nav-enabled{
+  --cb-theme-bg:#081318;
+  --cb-theme-panel:#101f25;
+  --cb-theme-raised:#182b2e;
+  --cb-theme-border:#48645a;
+  --cb-theme-gold:#c6a572;
+  --cb-theme-muted:#a3b6af;
+  --cb-theme-text:#e3e9e2;
+}
+/* Account recruitment and equipment panels are mounted at the body level.
+   Scoping solely inside #roster/#bank had missed these modal windows. */
+html body.cb-top-nav-enabled
+  :is(#recruitAdventurerModal .recruit-modal,
+      #bankModal .bank-modal,#characterModal .character-modal,
+      .modal-backdrop .modal-card,
+      .quest-puzzle,.quest-dialogue,.quest-gear-card,.quest-complete-card,
+      .quest-continuation-card,.cb-slot-drawer){
+  border-color:#695c43!important;
+  color:var(--cb-theme-text)!important;
+  background-color:#101d21!important;
+  box-shadow:0 24px 55px #000b!important;
+}
+html body.cb-top-nav-enabled #recruitAdventurerModal .cellbound-character-forge{
+  background:#0e1d22!important;color:#dce7df!important;
+  border-color:var(--cb-theme-border)!important;
+}
+html body.cb-top-nav-enabled #recruitAdventurerModal
+  :is(.cf-steps,.cf-step-head,.cf-race-card,.cf-name-card,
+      .cf-confirm-card,.cf-class-grid button,.cf-sex button){
+  background-color:#142629!important;
+  border-color:#456257!important;
+}
+html body.cb-top-nav-enabled #recruitAdventurerModal
+  :is(.cf-steps button.active,.cf-race-card.active,
+      .cf-class-grid button.active,.cf-sex button.active){
+  background:#2e2a22!important;
+  border-color:#b79b6c!important;
+  color:#f0dfbf!important;
+}
+html body.cb-top-nav-enabled
+  :is(#recruitAdventurerModal,#bankModal,.modal-backdrop,
+      .quest-gear-card,.quest-complete-card,.quest-continuation-card,.cb-slot-drawer)
+  :is(input:not([type=checkbox]):not([type=radio]),select,textarea){
+  color:#e8eee8!important;background:#0c191e!important;
+  border-color:#4c665a!important;color-scheme:dark;
+}
+/* Parent-independent editor styling: room/map/comic tools can be mounted
+   inside #admin or temporarily moved to an overlay without changing theme. */
+html body.cb-top-nav-enabled
+  :is(.rqe-shell,.cse-shell,.pme-shell){
+  color:#e1e9e1!important;background:#0b1b20!important;
+  border-color:#4d6659!important;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-head,.rqe-toolbar,.rqe-inspector,.rqe-audit,.rqe-audit-item,
+      .rqe-room-nav,.rqe-art-upload,.rqe-room-meta,
+      .cse-shell>header,.cse-panel,.cse-filters,.cse-controls,
+      .pme-head,.pme-toolbar,.pme-settings,.pme-create,.pme-stage-column){
+  background-color:#112228!important;border-color:#3e5b50!important;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-head,.cse-shell>header,.pme-head){
+  background-image:linear-gradient(110deg,#1b302b,#0a1a20)!important;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-shell,.cse-shell,.pme-shell)
+  :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){
+  background:#09191e!important;color:#e8e8df!important;
+  border-color:#4d675c!important;color-scheme:dark;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-shell,.cse-shell,.pme-shell)
+  button:not(:disabled):not(.rqe-marker):not(.pme-marker){
+  border-color:#47665a;color:#e3e9df;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-toolbar,.rqe-inspector,.rqe-room-nav,.cse-actions,.cse-controls,.pme-toolbar)
+  button:not(:disabled):hover{
+  border-color:#bda06f!important;background-color:#244037!important;
+}
+/* Design Booth's deeply nested catalogs, reviews and release controls. */
+html body.cb-top-nav-enabled .dbo-shell
+  :is(.dbo-catalog-scroll,.dbo-catalog-table,.dbo-catalog-filters,.dbo-catalog-pager,
+      .dbo-loot-table-head,.dbo-loot-table-row,.dbo-drops-picker,.dbo-drop-grid,
+      .dbo-review-list,.dbo-library-actions,.dbo-template-library,.dbo-quick-actions,
+      .dbo-public-grid,.dbo-library-header,.dbo-stage-editor-header){
+  background-color:#13252a!important;border-color:#3f5a50!important;
+}
+html body.cb-top-nav-enabled .dbo-shell
+  :is(.dbo-project-list button.active,.dbo-stage-list button.active,.dbo-tabs button.active){
+  background:#332d23!important;border-color:#ac9467!important;color:#ead9b7!important;
+}
+/* More/secondary menus are part of the game interface too. */
+html body.cb-top-nav-enabled #cbMorePanel :is(.cb-more__panel,.cb-more__head){
+  background-color:#0e2024!important;border-color:#405c51!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button{
+  background:#15282b!important;border-color:#476255!important;color:#dde6de!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button:hover{
+  background:#243930!important;border-color:#b39b73!important;
+}
+/* Only frames and neutral surfaces change. No battlefield art, cooldowns,
+   telegraphs, markers, HP/mana, rarity or state-dependent colours are restyled. */
