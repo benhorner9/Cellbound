@@ -668,3 +668,25 @@ html,body,.login-shell{background:#142330}
 .world-intro__eyebrow,.gate-panel__kicker{color:#d1b98f}
 .public-highscores-entrance a{color:#ddc59f!important;border-color:#b59b74;background:#213544bf}
 @media(max-width:780px){.login-world img{filter:saturate(.91) brightness(.8) contrast(1.02)}}
+
+
+/* Cellbound Deep Slate V8 — sign-in matches the richer in-game navy. */
+html,body,.login-shell{background:#0b1b29!important}
+.login-world{background:#182e3e!important}
+.login-world img{filter:saturate(1.02) brightness(.88) contrast(1.04)!important}
+.login-world__wash{
+  background:linear-gradient(90deg,rgba(10,27,40,.47),rgba(10,28,41,.48) 45%,rgba(8,23,37,.8) 75%,rgba(7,19,31,.95)),
+  linear-gradient(180deg,rgba(9,25,40,.22),transparent 24%,rgba(8,23,37,.39) 68%,rgba(7,19,32,.9))!important;
+}
+.login-shell .topbar{background:linear-gradient(180deg,rgba(13,30,44,.90),transparent)!important}
+.gate-panel{
+ background:linear-gradient(160deg,rgba(25,45,61,.98),rgba(13,29,43,.99))!important;
+ border-color:#566e7c!important;box-shadow:0 20px 50px #0008!important;
+}
+.gate-panel .field{background:#11293c!important;border-color:#4a6576!important}
+.enter-button{background:linear-gradient(#d9be96,#b49364)!important;border-color:#dfcaa7!important}
+.create-button{background:#1a3449!important;border-color:#5e7788!important}
+.public-highscores-entrance a{background:#122d40df!important;border-color:#927e62!important}
+@media(max-width:780px){
+  .login-world img{filter:saturate(.96) brightness(.78) contrast(1.03)!important}
+}
