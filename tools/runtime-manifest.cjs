@@ -68,6 +68,7 @@ const groups=Object.freeze({
   "home-loop-v1.css",
   "accessibility-polish-v1.css",
   "layout-safety-v1.css",
+  "top-navigation-v1.css",
   "class-build-v1.js",
   "gear-data.js",
   "profession-data.js",
@@ -128,6 +129,7 @@ const groups=Object.freeze({
   "mobile-v1.js",
   "game-feel-v1.js",
   "immersive-hub-v1.js",
+  "top-navigation-v1.js",
   "character-forge-v1.js",
   "character-forge-v1.css"
 ]),
