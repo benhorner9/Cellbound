@@ -894,52 +894,103 @@ function paperShoulders(c,highlighted){
     (pal.set?'<path d="M'+lc+' '+(top-2)+' L'+lc+' '+(top-10)+' M'+rc+' '+(top-2)+' L'+rc+' '+(top-10)+'" stroke="'+pal.glow+'" stroke-width="2.2" opacity=".65" class="cb-paper-set-glow"/>':'')+
     betaShoulderDetail(item,pal,tier,localFit,rise)+'</g>';
 }
+/* Held weapon silhouettes V3. The handle is deliberately drawn at wrist
+   height (y=279), not at the shoulder as in the former floating-sword art.
+   The hand overlay is drawn after this group, visibly gripping the handle. */
 function weaponMarkup(type,pal,v,tier,item){
-  var g='';
+  var g='',headY=192,ornamentY=224;
   if(type==='bow'){
-    g='<path d="M190 116 Q225 206 188 316" fill="none" stroke="'+pal.base+'" stroke-width="'+(7+v%3)+'"/><path d="M190 116 L188 316" stroke="'+pal.trim+'" stroke-width="2"/><path d="M188 205 L220 195" stroke="'+pal.light+'" stroke-width="3"/><path d="M220 195 L213 192 L216 201Z" fill="'+pal.trim+'"/>';
+    // Bow is gripped at its waist, NOT at the string or lower limb.
+    g='<path d="M190 112 Q229 200 190 314" fill="none" stroke="'+pal.base+'" stroke-width="'+(7+v%3)+'"/>'+
+      '<path d="M190 112 L190 314" stroke="'+pal.trim+'" stroke-width="1.7"/>'+
+      '<path d="M199 210 L217 201" stroke="'+pal.light+'" stroke-width="3"/>'+
+      '<path d="M217 201 L211 200 L214 207Z" fill="'+pal.trim+'"/>';
+    ornamentY=211;
   }else if(type==='crossbow'){
-    g='<path d="M188 180 L204 322" stroke="'+pal.dark+'" stroke-width="7"/><path d="M165 171 Q193 150 221 171" fill="none" stroke="'+pal.base+'" stroke-width="8"/><path d="M168 171 L219 171 M193 160 L206 198" stroke="'+pal.trim+'" stroke-width="2.5"/>';
+    g='<path d="M198 205 L205 311" stroke="'+pal.dark+'" stroke-width="8" stroke-linecap="round"/>'+
+      '<path d="M164 199 Q199 182 226 201" fill="none" stroke="'+pal.base+'" stroke-width="9"/>'+
+      '<path d="M166 200 L224 201 M197 190 L200 219 M188 212 L218 212" stroke="'+pal.trim+'" stroke-width="2.5"/>';
+    ornamentY=211;
   }else if(type==='spear'){
-    g='<path d="M188 92 L205 345" stroke="'+pal.dark+'" stroke-width="7" stroke-linecap="round"/><path d="M183 91 L190 57 L202 89 L192 107Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.5"/><path d="M188 116 L204 113" stroke="'+pal.trim+'" stroke-width="4"/>';
+    g='<path d="M195 89 L204 354" stroke="'+pal.dark+'" stroke-width="7" stroke-linecap="round"/>'+
+      '<path d="M194 98 L193 54 L208 92 L200 114Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.5"/>'+
+      '<path d="M192 118 L204 115" stroke="'+pal.trim+'" stroke-width="4"/>';
+    ornamentY=205;
   }else if(type==='axe'){
-    g='<path d="M193 151 L207 339" stroke="'+pal.dark+'" stroke-width="8" stroke-linecap="round"/><path d="M190 144 Q203 111 225 123 L215 158 Q202 166 188 153Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M198 127 L217 134" stroke="'+pal.light+'" stroke-width="2"/>';
+    g='<path d="M196 182 L208 316" stroke="'+pal.dark+'" stroke-width="8" stroke-linecap="round"/>'+
+      '<path d="M193 184 Q198 156 228 166 L215 207 Q201 214 193 199Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
+      '<path d="M198 172 L218 179" stroke="'+pal.light+'" stroke-width="2"/>';
+    ornamentY=214;
   }else if(type==='hammer'){
-    g='<path d="M194 161 L207 339" stroke="'+pal.dark+'" stroke-width="9" stroke-linecap="round"/><path d="M173 131 L211 124 L220 163 L181 172Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M180 145 L215 138" stroke="'+pal.light+'" stroke-width="3"/>';
+    g='<path d="M197 186 L208 316" stroke="'+pal.dark+'" stroke-width="9" stroke-linecap="round"/>'+
+      '<path d="M178 168 L214 163 L222 201 L182 209Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
+      '<path d="M183 183 L217 178" stroke="'+pal.light+'" stroke-width="3"/>';
+    ornamentY=217;
   }else if(type==='mace'){
-    g='<path d="M194 165 L207 339" stroke="'+pal.dark+'" stroke-width="8" stroke-linecap="round"/><circle cx="191" cy="143" r="17" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M191 119 V128 M167 143 H176 M206 143 H215 M175 127 L181 133 M207 127 L201 133" stroke="'+pal.trim+'" stroke-width="4"/>';
+    g='<path d="M195 193 L209 318" stroke="'+pal.dark+'" stroke-width="8" stroke-linecap="round"/>'+
+      '<circle cx="194" cy="183" r="19" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
+      '<path d="M194 159 V168 M169 183 H178 M211 183 H222 M180 169 L186 175 M209 169 L202 175" stroke="'+pal.trim+'" stroke-width="4"/>';
+    ornamentY=214;
   }else if(type==='dagger'){
-    g='<path d="M182 236 L210 316" stroke="'+pal.light+'" stroke-width="5.5" stroke-linecap="round"/><path d="M207 313 L219 337 L204 327Z" fill="'+pal.trim+'"/><path d="M179 235 L197 241" stroke="'+pal.trim+'" stroke-width="5"/>';
+    g='<path d="M200 270 L190 209 L204 223 L207 269Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.1"/>'+
+      '<path d="M185 267 L215 263" stroke="'+pal.trim+'" stroke-width="5" stroke-linecap="round"/>'+
+      '<path d="M201 270 L207 308" stroke="'+pal.dark+'" stroke-width="7" stroke-linecap="round"/>'+
+      '<circle cx="207" cy="308" r="4" fill="'+pal.trim+'"/>';
+    ornamentY=247;
   }else if(type==='wand'){
-    g='<path d="M190 190 L207 329" stroke="'+pal.base+'" stroke-width="6" stroke-linecap="round"/><path d="M187 188 L194 165 L202 187Z" fill="'+pal.glow+'" stroke="'+pal.trim+'" stroke-width="2"/>';
+    g='<path d="M194 177 L206 319" stroke="'+pal.base+'" stroke-width="6" stroke-linecap="round"/>'+
+      '<path d="M189 185 L195 152 L206 180Z" fill="'+pal.glow+'" stroke="'+pal.trim+'" stroke-width="2"/>';
+    ornamentY=218;
   }else if(type==='focus'){
-    g='<path d="M191 217 L202 331" stroke="'+pal.dark+'" stroke-width="6" stroke-linecap="round"/><circle cx="189" cy="194" r="18" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="189" cy="194" r="8" fill="'+pal.glow+'" opacity=".78" class="cb-paper-glow"/><path d="M170 194 H208 M189 175 V213" stroke="'+pal.light+'" stroke-width="1.8" opacity=".65"/>';
+    g='<path d="M194 219 L206 318" stroke="'+pal.dark+'" stroke-width="6" stroke-linecap="round"/>'+
+      '<circle cx="191" cy="194" r="18" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
+      '<circle cx="191" cy="194" r="8" fill="'+pal.glow+'" opacity=".78" class="cb-paper-glow"/>'+
+      '<path d="M172 194 H210 M191 175 V213" stroke="'+pal.light+'" stroke-width="1.8" opacity=".65"/>';
+    ornamentY=218;
   }else if(type==='scepter'){
-    g='<path d="M191 175 L206 336" stroke="'+pal.base+'" stroke-width="7" stroke-linecap="round"/><circle cx="189" cy="165" r="11" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="189" cy="165" r="4" fill="'+pal.glow+'"/>';
+    g='<path d="M193 177 L206 321" stroke="'+pal.base+'" stroke-width="7" stroke-linecap="round"/>'+
+      '<circle cx="191" cy="167" r="12" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
+      '<circle cx="191" cy="167" r="4" fill="'+pal.glow+'"/>';
+    ornamentY=211;
   }else if(type==='rod'){
-    g='<path d="M191 160 L206 338" stroke="'+pal.base+'" stroke-width="7" stroke-linecap="round"/><path d="M181 151 Q191 133 201 151 L197 168 L185 168Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.5"/>';
+    g='<path d="M194 166 L206 318" stroke="'+pal.base+'" stroke-width="7" stroke-linecap="round"/>'+
+      '<path d="M182 163 Q193 142 205 161 L200 180 L188 180Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.5"/>';
+    ornamentY=221;
   }else if(type==='staff'){
-    g='<path d="M191 111 L203 346" stroke="'+pal.base+'" stroke-width="8" stroke-linecap="round"/>'+
-      (v%3===0?'<circle cx="191" cy="105" r="14" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="191" cy="105" r="5" fill="'+pal.glow+'"/>':v%3===1?'<path d="M191 112 Q174 95 183 82 M193 110 Q211 96 207 81" fill="none" stroke="'+pal.trim+'" stroke-width="5" stroke-linecap="round"/><circle cx="193" cy="96" r="4" fill="'+pal.glow+'"/>':'<path d="M181 111 L191 82 L201 111 L191 122Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="191" cy="101" r="4" fill="'+pal.glow+'"/>');
+    g='<path d="M193 111 L205 351" stroke="'+pal.base+'" stroke-width="8" stroke-linecap="round"/>'+
+      (v%3===0?'<circle cx="193" cy="105" r="14" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="193" cy="105" r="5" fill="'+pal.glow+'"/>':
+      v%3===1?'<path d="M193 112 Q174 95 184 82 M195 110 Q213 96 208 81" fill="none" stroke="'+pal.trim+'" stroke-width="5" stroke-linecap="round"/><circle cx="194" cy="96" r="4" fill="'+pal.glow+'"/>':
+      '<path d="M183 111 L193 82 L204 111 L193 122Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="193" cy="101" r="4" fill="'+pal.glow+'"/>');
+    ornamentY=205;
   }else{
-    var great=type==='greatsword',bladeTop=great?72:94,bladeWidth=great?14:10;
-    g='<path d="M191 149 L207 337" stroke="'+pal.dark+'" stroke-width="'+(great?10:8)+'" stroke-linecap="round"/><path d="M'+(196-bladeWidth/2)+' 147 L196 '+bladeTop+' L'+(196+bladeWidth/2)+' 147Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.4"/><path d="M178 158 L211 155" stroke="'+pal.trim+'" stroke-width="'+(great?6:5)+'"/>';
+    // Sword and greatsword: blade above the hand, crossguard just above the
+    // fist, short leather grip beneath the fist. No 180px "floating handle".
+    var great=type==='greatsword',bladeTop=great?93:119,bladeWidth=great?18:12;
+    g='<path d="M200 262 L'+(200-bladeWidth*.58)+' 251 L'+(200-bladeWidth*.54)+' '+(bladeTop+18)+
+      ' L200 '+bladeTop+' L'+(200+bladeWidth*.54)+' '+(bladeTop+18)+' L'+(200+bladeWidth*.58)+' 251Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.6"/>'+
+      '<path d="M200 '+(bladeTop+21)+' L200 245" stroke="'+pal.base+'" stroke-width="1.7" opacity=".65"/>'+
+      '<path d="M177 263 Q200 257 222 261" fill="none" stroke="'+pal.trim+'" stroke-width="'+(great?8:6)+'" stroke-linecap="round"/>'+
+      '<path d="M199 267 L202 311" stroke="'+pal.dark+'" stroke-width="'+(great?10:8)+'" stroke-linecap="round"/>'+
+      '<circle cx="203" cy="313" r="'+(great?6:5)+'" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2"/>';
+    ornamentY=216;
   }
-  g+=betaWeaponDetail(item,pal,tier,type);
-  if(pal.set)g+=motifMarkup(pal.set.motif,196,176,.7,pal.glow);
-  else g+=itemRune(item,'Weapon',pal,196,176,.55);
-  if(tier>=4&&!pal.set)g+='<circle cx="196" cy="176" r="2.4" fill="'+pal.glow+'" opacity=".6" class="cb-paper-glow"/>';
+  // Class/tier engraving belongs to the head or blade, never the disconnected
+  // old shoulder-height handle position.
+  g+='<g transform="translate(0 '+(ornamentY-176)+')">'+betaWeaponDetail(item,pal,tier,type)+'</g>';
+  if(pal.set)g+=motifMarkup(pal.set.motif,199,ornamentY,.65,pal.glow);
+  else g+=itemRune(item,'Weapon',pal,199,ornamentY,.5);
+  if(tier>=4&&!pal.set)g+='<circle cx="199" cy="'+ornamentY+'" r="2.4" fill="'+pal.glow+'" opacity=".6" class="cb-paper-glow"/>';
   return g;
 }
 /* Local coordinates are taken from the handle/stave pixels of weaponMarkup,
    not the old arbitrary (191,244) point. Each rendered handle now passes
    through the actual wrist. Adding a weapon type only requires one socket. */
 const PAPER_WEAPON_GRIPS=Object.freeze({
-  sword:[202,279],greatsword:[202,279],axe:[203,279],
-  hammer:[203,279],mace:[202,279],dagger:[197,279],
-  staff:[200,279],spear:[201,279],
-  bow:[197,279],crossbow:[200,279],
-  wand:[200,279],focus:[198,279],scepter:[201,279],rod:[201,279]
+  sword:[200,279],greatsword:[200,279],axe:[204,279],
+  hammer:[205,279],mace:[205,279],dagger:[202,279],
+  staff:[201,279],spear:[201,279],
+  bow:[204,212],crossbow:[200,219],
+  wand:[203,279],focus:[200,279],scepter:[202,279],rod:[202,279]
 });
 const PAPER_WEAPON_STANCES=Object.freeze({
   sword:'one-handed',greatsword:'heavy',axe:'one-handed',
