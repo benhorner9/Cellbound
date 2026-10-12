@@ -108,3 +108,22 @@
 .hs-site-brand small{color:#afc6d6}
 .hs-site-nav{color:#e8c27e;border-bottom-color:#c49b59}
 .hs-site-footer{color:#a8bdc8}
+
+
+/* Muted gold/blue public High Scores skin; ranking semantics unchanged. */
+.hs-board{--hs-gold:#c5aa83;--hs-edge:#536978;--hs-ink:#1b2d3b}
+.hs-site{background:radial-gradient(ellipse at 50% 0,#2c4353,#182d3b 60%,#11222f)}
+.hs-masthead{
+ background:linear-gradient(90deg,rgba(24,42,56,.94),rgba(25,44,59,.57)),
+ url('./assets/comics/tutorial-2026/wardstone-twilight.webp') center 50%/cover!important;
+ border-color:#6c818e;border-bottom-color:#b7a17f;
+}
+.hs-bar,.hs-rule,.hs-state,.hs-podium,.hs-table-wrap,.hs-board-footer,.hs-empty{
+ background:#223645;border-color:#536977;
+}
+.hs-podium-card{background:linear-gradient(150deg,#344856,#213747);border-color:#6b7d89}
+.hs-table thead{background:#2b4151}
+.hs-table td{border-color:#455a69}
+.hs-bar button{background:linear-gradient(#d1bd9b,#b49b77);border-color:#ddc7a4;color:#243a47}
+.hs-site-brand{color:#ede0cf}
+.hs-site-nav{color:#d6bd96;border-bottom-color:#b19b7c}
