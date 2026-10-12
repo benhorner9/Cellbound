@@ -207,16 +207,19 @@ function weaponKind(subject){
 function weaponPose(subject,baseRightHand,p,shoulderX){
   const kind=weaponKind(subject);
   if(!kind)return {active:false,kind:'none',x:baseRightHand,y:279,angle:0,side:'right',sideMin:shoulderX};
-  // An equipped hand is raised and brought inside the outer shoulder line.
-  // A bent elbow supports the wrist: all classes use the same anatomy.
+  // Across-body ready stance: a weapon is HELD in front of the chest.
+  // The elbow remains outside the chest, while the wrist folds inward.
+  // Distinct pose families keep blades, bows and staves readable.
   const pole=['staff','spear','rod','wand','scepter','focus'].includes(kind);
-  const ranged=['bow','crossbow'].includes(kind);
+  const bow=kind==='bow',crossbow=kind==='crossbow';
+  const ranged=bow||crossbow;
   const close=kind==='dagger';
-  const y=ranged?229:pole?231:close?250:245;
-  const x=shoulderX-Math.max(2,p.arm*(ranged?.20:pole?.17:.12));
-  const angle=ranged?-5:pole?1:close?12:8;
+  const heavy=['greatsword','hammer','axe'].includes(kind);
+  const x=shoulderX-p.shoulder*(ranged?.38:pole?.51:close?.47:heavy?.39:.44);
+  const y=bow?224:crossbow?232:pole?222:close?227:heavy?235:230;
+  const angle=bow?48:crossbow?-23:pole?(kind==='spear'?12:10):close?30:heavy?23:20;
   return {active:true,kind,x,y,angle,side:'right',
-    sideMin:shoulderX-Math.max(5,p.arm*.28)};
+    sideMin:120+p.shoulder*.22,stance:ranged?'ranged-ready':pole?'caster-ready':'guard-ready'};
 }
 function gearFitProfile(subject){
   const race=raceOf(subject),p=bodyProfile(subject),sex=sexName(subject),gender=p.gender,frame=p.frame;

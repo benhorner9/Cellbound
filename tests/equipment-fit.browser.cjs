@@ -79,6 +79,10 @@ const engine=engineName==='webkit'?webkit:chromium;
           if(item.slot==='Weapon'){
             if(!svg.outerHTML.includes('cb-paper-side-weapon')||!svg.outerHTML.includes('data-weapon-pose="side-held"'))fail(item,race,gender,'weapon is not using side-held presentation',b);
             if(fit.weaponX<fit.weaponSideMin)fail(item,race,gender,'weapon grip moved inward over torso',b);
+            if(fit.weaponX>=fit.rightShoulder-fit.p.shoulder*.25)
+              fail(item,race,gender,'weapon hand must visibly cross inside the shoulder',b);
+            if(!svg.outerHTML.includes('data-weapon-pose-layout="across-body"'))
+              fail(item,race,gender,'model still uses floating-side weapon stance',b);
             if(distance(b,fit.weaponX,fit.weaponY)>8)fail(item,race,gender,'weapon misses the held grip',b);
             if(el.getAttribute('data-weapon-pose-version')!=='2')fail(item,race,gender,'old floating weapon pose',b);
             const localX=Number(el.getAttribute('data-grip-local-x')),localY=Number(el.getAttribute('data-grip-local-y'));
@@ -93,7 +97,7 @@ const engine=engineName==='webkit'?webkit:chromium;
               fail(item,race,gender,'front fingers do not wrap the weapon handle',b);
 
             const forearm=svg.querySelector('.cb-paper-weapon-forearm');
-            if(!forearm||forearm.getAttribute('data-weapon-forearm')!=='bent'){
+            if(!forearm||forearm.getAttribute('data-weapon-forearm')!=='across-body'){
               fail(item,race,gender,'main hand is not supported by a visibly bent forearm',b);
             }else{
               const armBox=modelBox(svg,forearm);
@@ -170,6 +174,8 @@ const engine=engineName==='webkit'?webkit:chromium;
         const weapon=svg.querySelector('.cb-paper-side-weapon');
         if(!weapon||weapon.getAttribute('data-weapon-pose')!=='side-held')fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout missing side-held weapon');
         if(fit.weaponX<fit.weaponSideMin)fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout weapon crosses torso');
+        if(fit.weaponX>=fit.rightShoulder-fit.p.shoulder*.25)
+          fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout wrist hangs outside the torso');
         if(!svg.querySelector('.cb-paper-weapon-forearm')||!contains(childBox(svg,'.cb-paper-glove-right'),fit.weaponX,fit.weaponY,2))
           fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout raised wrist or bent arm missing');
         if(weapon){

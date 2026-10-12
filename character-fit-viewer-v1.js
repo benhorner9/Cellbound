@@ -151,8 +151,10 @@ function validateCharacter(c,{highlight='',requireFull=false}={}){
     const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
     if(weaponAt<0||weaponAt<headAt||!html.includes('data-weapon-pose="side-held"'))throw new Error('main-hand weapon is not using the side-held pose');
     const weaponHtml=html.slice(weaponAt);if(!closeTo(svgNumber(weaponHtml,'data-grip-x'),fit.weaponX)||!closeTo(svgNumber(weaponHtml,'data-grip-y'),fit.weaponY))throw new Error('main-hand side grip is not attached to the posed right hand');
-    if(fit.weaponX<fit.weaponSideMin)throw new Error('main-hand weapon crossed inward over the torso');
-    if(!(fit.weaponY<fit.handY-20)||!html.includes('data-weapon-forearm="bent"')||!closeTo(svgNumber(html,'data-forearm-hand-y'),fit.weaponY))
+    if(fit.weaponX<fit.weaponSideMin)throw new Error('main-hand weapon moved past safe torso limit');
+    if(fit.weaponX>=fit.rightShoulder-fit.p.shoulder*.25)
+      throw new Error('weapon hand is still beside the torso rather than holding it across the body');
+    if(!(fit.weaponY<fit.handY-20)||!html.includes('data-weapon-forearm="across-body"')||!closeTo(svgNumber(html,'data-forearm-hand-y'),fit.weaponY))
       throw new Error('weapon arm is not bent into a visible gripping position');
   }
   if(c.equipment?.OffHand){
