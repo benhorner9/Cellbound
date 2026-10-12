@@ -1968,3 +1968,124 @@ html body.cb-top-nav-enabled #admin .dbo-shell{
 html body.cb-top-nav-enabled #admin .dbo-tabs button.active{
  background:#434642!important;border-color:#b4a07f!important;color:#e7d7ba!important;
 }
+
+
+/* =======================================================================
+   CELLBOUND TWILIGHT BALANCE V7 — one step darker, without losing the art.
+   A tonal pass only: no layout, interaction or semantic combat recolouring.
+   ======================================================================= */
+html body.cb-top-nav-enabled{
+  --cb-uni-bg:#0e1b29;--cb-uni-navy:#182735;
+  --cb-uni-panel:#1a2b39;--cb-uni-card:#20313f;--cb-uni-hover:#2a3f4f;
+  --cb-uni-line:#405465;--cb-uni-line-soft:#364856;
+  --cb-uni-gold:#c2a377;--cb-uni-ivory:#eee6d8;
+  --cb-uni-muted:#b2c0c9;--cb-uni-sky:#a6bdcf;
+  --cb-uni-shadow:0 9px 21px rgba(0,7,15,.27);
+  --cb-v3-gold:#c2a377;--cb-v3-blue:#a6bdcf;
+  --surface-1:#152736;--surface-2:#1d2e3d;
+  --surface-raised:#253b4b;--surface-outline:#465a68;
+  --surface-highlight:#c2a377;
+}
+html body.cb-top-nav-enabled .app-shell{
+  background:radial-gradient(ellipse at 50% 0,#1f3343 0%,#142532 45%,#0c1b29 100%)!important;
+}
+html body.cb-top-nav-enabled .cb-global-header{
+  background:linear-gradient(#172634,#101e2b)!important;
+  border-bottom-color:#7d705d!important;box-shadow:0 5px 16px #0006!important;
+}
+html body.cb-top-nav-enabled .cb-subnav{
+  background:rgba(20,35,48,.98)!important;border-color:#3c5060!important;
+  box-shadow:0 4px 12px #0005!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button{
+  background:#203443!important;border-color:#435969!important;
+}
+html body.cb-top-nav-enabled .cb-global-links button:is(.is-active,:hover){
+  background:linear-gradient(#c2a3770b,#c2a3771c)!important;
+}
+html body.cb-top-nav-enabled .cb-global-account-panel{
+  background:linear-gradient(150deg,#1e3342,#132534)!important;border-color:#526a79!important;
+}
+html body.cb-top-nav-enabled :is(.cb-global-more,.cb-global-account>summary){
+  background:#1c3040!important;border-color:#4d6272!important;
+}
+/* City artwork remains colourful: darken the UI framing rather than desaturating art. */
+html body.cb-top-nav-enabled .cb-hub-hero:before{
+  background:linear-gradient(90deg,rgba(10,24,37,.85),rgba(18,34,48,.53) 30%,rgba(21,38,49,.10) 63%,rgba(10,23,36,.65)),
+    linear-gradient(0deg,rgba(11,24,37,.3),transparent 51%)!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch{
+  background:rgba(17,30,43,.95)!important;border-color:#455b6b!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row{
+  background:linear-gradient(145deg,#1d3140,#142534)!important;border-color:#3d5364!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row:hover{background:#253c4c!important}
+html body.cb-top-nav-enabled .cb-hub-watch-art{
+  background-color:transparent;background-blend-mode:normal;
+}
+html body.cb-top-nav-enabled #overview :is(.panel,.cb-hub-actions),
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.admin-card,.tp-panel,.pvp-panel,.beta-panel,.dungeon-episode,
+      .dungeon-episode-empty,.quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+  background:linear-gradient(150deg,#1d2f3e,#142636)!important;
+  border-color:#415667!important;box-shadow:var(--cb-uni-shadow)!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.tp-panel,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head){
+  background:linear-gradient(90deg,#223747,#192d3d)!important;border-color:#405466!important;
+}
+html body.cb-top-nav-enabled #overview .home-party-member{
+  background:linear-gradient(165deg,#263b49,#162939)!important;border-color:#405a6c!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button{
+  background:linear-gradient(140deg,#213746,#162838)!important;border-color:#425e70!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:hover{
+  background:#294356!important;border-color:#ab987b!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-update{
+  background:#152939!important;border-color:#435a69!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy{
+  background:linear-gradient(135deg,#263a49,#172938)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon{
+  border-color:#4a6071!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon:before{
+  background:linear-gradient(0deg,#0e1c2dea 0%,#172e418e 43%,rgba(25,48,65,.09) 100%)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+  background-color:#253b4c!important;
+  background-image:linear-gradient(90deg,rgba(12,27,41,.92),rgba(16,34,48,.74) 42%,rgba(17,37,51,.13)),var(--cb-place-art)!important;
+  border-color:#506779!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,.tp-filter-actions button,.admin-workspace-nav button){
+  background:#223747!important;border-color:#495e6e!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,.admin-workspace-nav button.active,.chat-tabs button.active,.quest-tabs button.active,.pvp-tabs button.active){
+  background:#393c3b!important;border-color:#9e886b!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card,
+html body.cb-top-nav-enabled #bank .bank-card-v2,
+html body.cb-top-nav-enabled #trading :is(.tp-result-card,.tp-category-list button,.tp-watch-card),
+html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card,.profession-slot-card),
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card,.quest-objective-card){
+  background:#1c2e3e!important;border-color:#42596a!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card:hover,
+html body.cb-top-nav-enabled #bank .bank-card-v2:hover,
+html body.cb-top-nav-enabled #trading .tp-result-card:hover,
+html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card):hover{
+  background:#283f50!important;border-color:#aa9678!important;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel,.pvp-rank-card,.pvp-rule-card),
+html body.cb-top-nav-enabled #support :is(.beta-panel,.beta-ticket,.beta-note),
+html body.cb-top-nav-enabled #admin .dbo-shell{
+  background-color:#192c3c!important;border-color:#445c6c!important;
+}
+/* Navigation and content dimensions, font sizes, status colours and z-index are unchanged. */
