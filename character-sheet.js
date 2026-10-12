@@ -1300,7 +1300,7 @@ function equipClassBuff(buffId){
 function openCharacter(id){
   document.body.classList.add('character-sheet-open');
   returnView=document.querySelector('.view.active')?.id||'roster';
-  currentId=id;currentTab='overview';activeSlot=null;armouryModelMode='base';activeSkillSlot=0;activeLoadoutSlot='skill';selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()
+  currentId=id;currentTab='overview';activeSlot=null;armouryModelMode='equipped';activeSkillSlot=0;activeLoadoutSlot='skill';selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()
 }
 function closeCharacter(targetView=returnView){
   modal.hidden=true;document.body.classList.remove('character-sheet-open');activeSlot=null;
@@ -1313,6 +1313,8 @@ function closeCharacter(targetView=returnView){
 }
 
 document.addEventListener('click',event=>{
+  const equipmentButton=event.target.closest('[data-char-equip]');
+  if(equipmentButton){event.preventDefault();event.stopImmediatePropagation();openCharacter(equipmentButton.dataset.charEquip);currentTab='equipment';armouryModelMode='equipped';renderSheet();return}
   const charBtn=event.target.closest('[data-char]');
   if(charBtn){event.preventDefault();event.stopImmediatePropagation();openCharacter(charBtn.dataset.char);return}
   if(!modal.hidden){
