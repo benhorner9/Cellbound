@@ -654,7 +654,11 @@ if(file==='quests-v2.js'){
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const layoutSafetyLink=(contents.match(/<link rel="stylesheet" href="\.\/layout-safety-v1\.css\?v=[0-9]+">/)||[])[0]||'';
     const topNavigationLink=(contents.match(/<link rel="stylesheet" href="\.\/top-navigation-v1\.css\?v=[0-9]+">/)||[])[0]||'';
-    if(!layoutSafetyLink||!topNavigationLink||contents.indexOf(layoutSafetyLink)>contents.indexOf(topNavigationLink)||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(topNavigationLink))throw new Error('Top navigation stylesheet must follow layout safety and remain the final CSS layer in guild.html');
+    const uiFoundationLink=(contents.match(/<link rel="stylesheet" href="\.\/ui-foundation-v1\.css\?v=[0-9]+">/)||[])[0]||'';
+    if(!layoutSafetyLink||!topNavigationLink||!uiFoundationLink||
+      contents.indexOf(layoutSafetyLink)>contents.indexOf(topNavigationLink)||
+      contents.indexOf(topNavigationLink)>contents.indexOf(uiFoundationLink)||
+      contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(uiFoundationLink))throw new Error('UI foundation must follow top navigation and remain the final CSS layer in guild.html');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     for(const asset of ['combat-data-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js'])if(!contents.includes(asset))throw new Error('Canonical combat stack is not linked from guild.html: '+asset);
     if(!contents.includes('expedition-presentation-v1.css')||!contents.includes('expedition-presentation-v1.js'))throw new Error('Shared PvE expedition presentation assets are not linked from guild.html');
