@@ -14,8 +14,8 @@ assert(html.indexOf('workshop-economy-v1.css?v=1')<html.indexOf('community-works
  'Block 6 stylesheet must follow Block 5');
 assert(html.indexOf('workshop-economy-v1.js?v=1')<html.indexOf('community-workspace-v1.js?v=1'),
  'Community script must follow previous UI');
-assert(html.lastIndexOf('<link rel="stylesheet"')===html.indexOf('<link rel="stylesheet" href="./community-workspace-v1.css'),
- 'Community stylesheet must be final authored CSS layer');
+assert(html.includes('<link rel="stylesheet" href="./community-workspace-v1.css?v=1">'),
+ 'Community stylesheet must remain authored after Block 5 even when later blocks add polish');
 assert(build.includes("'workshop-economy-v1.css','community-workspace-v1.css'"),'New CSS must be part of the UI bundle');
 for(const view of ['pvp','chat','highscores','support','admin']){
  assert(js.includes("'"+view+"'"),'Missing page: '+view);

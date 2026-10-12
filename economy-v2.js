@@ -224,7 +224,13 @@ function craftTime(ms){
   return m?m+':'+String(s).padStart(2,'0'):s+'s';
 }
 function craftFocusActive(){
-  return document.visibilityState==='visible'&&Boolean(document.querySelector('#professions.view.active'));
+  // When the dedicated Block 8 work window is installed, the focused timer
+  // cannot advance until the player presses Begin/Resume inside that window.
+  // Standalone engine and tutorial fixtures without the window keep the same
+  // legacy focus behaviour.
+  return document.visibilityState==='visible'&&
+    Boolean(document.querySelector('#professions.view.active'))&&
+    (!window.CellboundCraftOverlay||window.CellboundCraftOverlay.isReady());
 }
 function craftQuantity(recipeId,max){
   const raw=Math.max(1,Math.floor(Number(craftQtyDraft[recipeId])||1));

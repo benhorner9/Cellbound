@@ -660,7 +660,8 @@ if(file==='quests-v2.js'){
     const adventureLink=(contents.match(/<link rel="stylesheet" href="\.\/adventure-combat-v1\.css\?v=[0-9]+">/)||[])[0]||'';
     const economyLink=(contents.match(/<link rel="stylesheet" href="\.\/workshop-economy-v1\.css\?v=[0-9]+">/)||[])[0]||'';
     const communityLink=(contents.match(/<link rel="stylesheet" href="\.\/community-workspace-v1\.css\?v=[0-9]+">/)||[])[0]||'';
-    if(!layoutSafetyLink||!topNavigationLink||!uiFoundationLink||!guildHallLink||!heroesLink||!adventureLink||!economyLink||!communityLink||
+    const polish8Link=(contents.match(/<link rel="stylesheet" href="\.\/ui-polish-block8\.css\?v=[0-9]+">/)||[])[0]||'';
+    if(!layoutSafetyLink||!topNavigationLink||!uiFoundationLink||!guildHallLink||!heroesLink||!adventureLink||!economyLink||!communityLink||!polish8Link||
       contents.indexOf(layoutSafetyLink)>contents.indexOf(topNavigationLink)||
       contents.indexOf(topNavigationLink)>contents.indexOf(uiFoundationLink)||
       contents.indexOf(uiFoundationLink)>contents.indexOf(guildHallLink)||
@@ -668,7 +669,8 @@ if(file==='quests-v2.js'){
       contents.indexOf(heroesLink)>contents.indexOf(adventureLink)||
       contents.indexOf(adventureLink)>contents.indexOf(economyLink)||
       contents.indexOf(economyLink)>contents.indexOf(communityLink)||
-      contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(communityLink))throw new Error('Community stylesheet must follow Workshop and remain final in guild.html');
+      contents.indexOf(communityLink)>contents.indexOf(polish8Link)||
+      contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(polish8Link))throw new Error('Block 8 polish stylesheet must follow Community and remain final in guild.html');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     for(const asset of ['combat-data-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js'])if(!contents.includes(asset))throw new Error('Canonical combat stack is not linked from guild.html: '+asset);
     if(!contents.includes('expedition-presentation-v1.css')||!contents.includes('expedition-presentation-v1.js'))throw new Error('Shared PvE expedition presentation assets are not linked from guild.html');
@@ -750,7 +752,7 @@ const UI_BUNDLE_SOURCES=[
   'readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css',
   'roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','bank-v2.css','character-command-v1.css',
   'character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','character-forge-v1.css',
-  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','combat-cinematic-v1.css','layout-safety-v1.css','highscores-v1.css','top-navigation-v1.css','ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css','adventure-combat-v1.css','workshop-economy-v1.css','community-workspace-v1.css'
+  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','combat-cinematic-v1.css','layout-safety-v1.css','highscores-v1.css','top-navigation-v1.css','ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css','adventure-combat-v1.css','workshop-economy-v1.css','community-workspace-v1.css','ui-polish-block8.css'
 ];
 {
   const bundle=UI_BUNDLE_SOURCES.map(file=>'/* ===== '+file+' ===== */\n'+fs.readFileSync(sourcePath(file),'utf8')).join('\n\n');
