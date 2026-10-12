@@ -91,6 +91,18 @@ const engine=engineName==='webkit'?webkit:chromium;
               fail(item,race,gender,'weapon handle does not touch the hand socket',b);
             if(!svg.querySelector('.cb-paper-held-grip-main .cb-paper-weapon-grip-hand'))
               fail(item,race,gender,'front fingers do not wrap the weapon handle',b);
+            const type=P.weaponType(item,c);
+            if(type==='sword'||type==='greatsword'){
+              const guard=childBox(svg,'.cb-paper-hilt-guard'),blade=childBox(svg,'.cb-paper-held-blade');
+              if(!guard||!blade)fail(item,race,gender,'missing physical hilt or blade geometry',b);
+              else{
+                const guardY=guard.y+guard.h/2;
+                if(Math.abs(guardY-(fit.weaponY-17))>13)
+                  fail(item,race,gender,'sword crossguard floats away from gripping fist',guard);
+                if(blade.y>fit.weaponY-80||blade.y+blade.h>fit.weaponY-6)
+                  fail(item,race,gender,'sword blade no longer points up from the hand',blade);
+              }
+            }
           }
           if(item.slot==='Shoulders'){
             const lb=childBox(svg,'.cb-paper-pad-left'),rb=childBox(svg,'.cb-paper-pad-right');
@@ -144,6 +156,14 @@ const engine=engineName==='webkit'?webkit:chromium;
         const weapon=svg.querySelector('.cb-paper-side-weapon');
         if(!weapon||weapon.getAttribute('data-weapon-pose')!=='side-held')fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout missing side-held weapon');
         if(fit.weaponX<fit.weaponSideMin)fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout weapon crosses torso');
+        if(weapon){
+          const type=weapon.getAttribute('data-weapon-type');
+          if(['sword','greatsword'].includes(type)){
+            const guard=childBox(svg,'.cb-paper-hilt-guard');
+            if(!guard||Math.abs(guard.y+guard.h/2-(fit.weaponY-17))>13)
+              fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout sword hilt does not meet hand',guard);
+          }
+        }
         const chest=childBox(svg,'.cb-paper-chest-shell'),belt=childBox(svg,'.cb-paper-waist-belt');
         if(chest&&belt&&belt.y-(chest.y+chest.h)>5)fail({itemId:klass+'-T'+tier+'-Chest/Waist'},race,gender,'visible chest-to-waist gap',{chest,belt});
         const lp=childBox(svg,'.cb-paper-pad-left'),rp=childBox(svg,'.cb-paper-pad-right');

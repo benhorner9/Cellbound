@@ -51,6 +51,11 @@ for(const item of G.items){
       assert(html.includes('cb-paper-held-grip-main'),item.itemId+' missing front fingers over the weapon');
       assert(near(num(html,'data-hand-x'),fit.weaponX),item.itemId+' drawn hand does not meet weapon');
       assert(near(num(html,'data-hand-y'),fit.weaponY),item.itemId+' drawn hand height mismatch');
+      if(['sword','greatsword'].includes(P.weaponType(item,c))){
+        assert(html.includes('cb-paper-hilt-guard'),item.itemId+' sword lacks visible crossguard');
+        assert(html.includes('cb-paper-held-blade'),item.itemId+' sword blade not drawn above the hand');
+        assert(html.includes('cb-paper-handle'),item.itemId+' sword handle not drawn through palm');
+      }
     }else if(item.slot==='OffHand'){
       assert(near(num(html,'data-grip-x'),fit.offhandX),item.itemId+' off-hand X not on hand for '+race+'/'+gender);
       assert(near(num(html,'data-grip-y'),fit.offhandY),item.itemId+' off-hand Y not on hand for '+race+'/'+gender);
