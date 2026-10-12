@@ -36,41 +36,17 @@ for(const item of G.items){
     if(item.slot==='Legs'&&P.clothLowerStyle(item)==='trousers')assert(html.includes('cb-paper-leg-left')&&html.includes('cb-paper-leg-right'),item.itemId+' leg geometry must follow leg centres');
     if(item.slot==='Feet')assert(html.includes('cb-paper-boot-left')&&html.includes('cb-paper-boot-right'),item.itemId+' boots must follow ankle centres');
 
-    if(item.slot==='Weapon'){
-      assert(near(num(html,'data-grip-x'),fit.weaponX),item.itemId+' main-hand X not on side-held grip for '+race+'/'+gender);
-      assert(near(num(html,'data-grip-y'),fit.weaponY),item.itemId+' main-hand Y not on side-held grip for '+race+'/'+gender);
-      assert(fit.weaponX>=fit.weaponSideMin,item.itemId+' side-held weapon must not move inward');
-      const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
-      assert(weaponAt>headAt,item.itemId+' side-held main-hand must render above body/head');
-      assert(html.includes('data-weapon-pose="side-held"'),item.itemId+' missing side-held weapon pose');
-      // The local shaft/socket and the anatomical wrist must be coincident.
-      const lx=num(html,'data-grip-local-x'),ly=num(html,'data-grip-local-y');
-      assert(Number.isFinite(lx)&&Number.isFinite(ly),item.itemId+' has no weapon grip socket');
-      assert(html.includes('translate(-'+lx+' -'+ly+')'),item.itemId+' handle not rotated around its grip');
-      assert(html.includes('data-weapon-pose-version="2"'),item.itemId+' missing held weapon contract');
-      assert(html.includes('cb-paper-held-grip-main'),item.itemId+' missing front fingers over the weapon');
-      assert(near(num(html,'data-hand-x'),fit.weaponX),item.itemId+' drawn hand does not meet weapon');
-      const grippingHand=html.slice(html.indexOf('cb-paper-held-grip-main'));
-      assert(near(num(grippingHand,'data-hand-y'),fit.weaponY),item.itemId+' raised gripping hand height mismatch');
-      assert(fit.weaponY<fit.handY-20,item.itemId+' is still carried at the hip');
-      assert(fit.weaponX<fit.rightShoulder-fit.p.shoulder*.25,item.itemId+' wrist is still outside the torso');
-      assert(html.includes('data-weapon-pose-layout="across-body"'),item.itemId+' is missing cross-body holding stance');
-      assert(near(num(html,'data-right-hand-y'),fit.weaponY),item.itemId+' right glove does not reach raised wrist');
-      assert(html.includes('data-weapon-forearm="across-body"'),item.itemId+' main-hand lacks visible bent forearm');
-      assert(num(html,'data-forearm-slope')>=14&&num(html,'data-forearm-slope')<=28,item.itemId+' forearm is not a compact anatomical bend');
-      assert(near(num(html,'data-forearm-hand-x'),fit.weaponX)&&near(num(html,'data-forearm-hand-y'),fit.weaponY),
-        item.itemId+' elbow/forearm does not connect to gripping hand');
-      if(['sword','greatsword'].includes(P.weaponType(item,c))){
-        assert(html.includes('cb-paper-hilt-guard'),item.itemId+' sword lacks visible crossguard');
-        assert(html.includes('cb-paper-held-blade'),item.itemId+' sword missing its blade silhouette');
-        assert(html.includes('cb-paper-handle'),item.itemId+' sword handle not drawn through palm');
+    if(item.slot==='Weapon'||item.slot==='OffHand'){
+      const pose=R.equipmentPose(c),part=item.slot==='Weapon'?pose.main:pose.off;
+      const slotHtml=html.slice(html.indexOf('cb-paper-slot-'+pos.toLowerCase()));
+      assert(near(num(slotHtml,'data-grip-x'),part.x)&&near(num(slotHtml,'data-grip-y'),part.y),item.itemId+' attachment mismatch');
+      assert(slotHtml.includes('transform="'+R.attachmentTransform(part)+'"'),item.itemId+' does not use shared grip transform');
+      if(item.slot==='Weapon'){
+        assert.equal(P.weaponType(item,c),R.weaponKind(c));
+        assert.equal(P.weaponPoseVersion,3);
+        assert(html.includes('cb-paper-held-grip-main'));
+        assert(near(R.anchors(c).rightHand.x,fit.weaponX)&&near(R.anchors(c).rightHand.y,fit.weaponY),'public anchors are in another coordinate space');
       }
-    }else if(item.slot==='OffHand'){
-      assert(near(num(html,'data-grip-x'),fit.offhandX),item.itemId+' off-hand X not on hand for '+race+'/'+gender);
-      assert(near(num(html,'data-grip-y'),fit.offhandY),item.itemId+' off-hand Y not on hand for '+race+'/'+gender);
-      const type=P.offHandType(item,c),offAt=html.indexOf('data-offhand-type="'+type+'"'),armsAt=html.indexOf('cb-paper-arms'),headAt=html.indexOf('cb-paper-head');
-      if(type==='shield')assert(offAt>=0&&offAt<armsAt,item.itemId+' shield must stay behind body');
-      else assert(offAt>headAt,item.itemId+' front off-hand must render above body/head');
     }else if(item.slot==='Hands'){
       assert(near(num(html,'data-left-hand-x'),fit.leftHand),item.itemId+' left glove anchor mismatch');
       assert(near(num(html,'data-right-hand-x'),fit.rightHand),item.itemId+' right glove anchor mismatch');
@@ -116,18 +92,19 @@ for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of
   assert(weaponAt>=0,klass+' '+race+' frame '+frame+' missing side-held weapon');
   assert(near(num(weaponHtml,'data-grip-x'),fit.weaponX),klass+' '+race+' frame '+frame+' weapon mismatch');
   assert(near(num(weaponHtml,'data-grip-y'),fit.weaponY),klass+' '+race+' frame '+frame+' weapon Y mismatch');
-  assert(fit.weaponY<fit.handY-20,klass+' '+race+' frame '+frame+' weapon hand was not lifted');
-  assert(fit.weaponX<fit.rightShoulder-fit.p.shoulder*.25,
-    klass+' '+race+' frame '+frame+' weapon still hangs next to the model');
-  assert(near(num(html,'data-right-hand-y'),fit.weaponY),klass+' '+race+' frame '+frame+' glove is not on weapon wrist');
-  assert(html.includes('data-weapon-forearm="across-body"'),klass+' '+race+' frame '+frame+' forearm does not bend');
-  assert(fit.weaponX>=fit.weaponSideMin,klass+' '+race+' frame '+frame+' weapon moved across body instead of to side');
-  assert(html.includes('cb-paper-held-grip-main'),klass+' '+race+' frame '+frame+' hand not visibly gripping weapon');
-  assert(html.includes('data-weapon-pose-version="2"'),klass+' '+race+' frame '+frame+' old floating pose');
-  const kind=P.weaponType(equipment.Weapon,c);
-  const expectedLocalY=kind==='bow'?213:kind==='crossbow'?219:(kind==='staff'||kind==='spear')?220:279;
-  assert(near(num(weaponHtml,'data-grip-local-y'),expectedLocalY),
-    klass+' '+race+' frame '+frame+' handle socket misses the actual '+kind+' grip');
+  const pose=R.equipmentPose(c),before=JSON.stringify(c);
+  for(const arm of [pose.left,pose.right]){
+    assert(Math.abs(Math.hypot(arm.elbow.x-arm.shoulder.x,arm.elbow.y-arm.shoulder.y)-arm.upper)<.01,'upper arm stretched');
+    assert(Math.abs(Math.hypot(arm.hand.x-arm.elbow.x,arm.hand.y-arm.elbow.y)-arm.lower)<.01,klass+' '+race+' forearm stretched');
+  }
+  if(pose.twoHanded){
+    const support=R.transformPoint(pose.main,pose.main.support);
+    assert(near(support.x,pose.left.hand.x)&&near(support.y,pose.left.hand.y),'second hand not constrained to handle');
+    assert.equal(pose.off.mode,'stowed','two-handed pose cannot hold a third object');
+  }
+  if(pose.off.kind==='quiver')assert.equal(pose.off.layer,'equipment-back');
+  if(pose.off.kind==='shield'&&!pose.twoHanded)assert.equal(pose.off.layer,'shield-front');
+  P.paperDollSVG(c,{mirrored:true});assert.equal(JSON.stringify(c),before,'rendering mutated loadout');
   bodyChecks++;
 }
 assert.equal(bodyChecks,G.CLASS_ORDER.length*5*6*2*3);
@@ -140,4 +117,4 @@ for(const klass of ['Mage','Priest','Warlock','Druid']){
  assert(styles.includes('trousers'),klass+' must retain at least one trouser tier');
  assert(styles.some(x=>x!=='trousers'),klass+' must include at least one robe/skirt tier');
 }
-console.log('Equipment fit v4: '+itemChecks+' item/body checks across all 12 master models; '+bodyChecks+' complete loadouts across all 36 race/sex/frame bodies; side-held weapons and varied cloth lowers verified.');
+console.log('Equipment fit v4: '+itemChecks+' item/body checks across all 12 master models; '+bodyChecks+' complete loadouts across all 36 race/sex/frame bodies; joint lengths, shared sockets, two-handed grips, non-mutating stowage and varied cloth lowers verified.');

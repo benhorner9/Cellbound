@@ -9,7 +9,7 @@
  * Lean/Balanced/Strong remain appearance choices, but are lightweight
  * deformations of a canonical race/sex rig rather than extra body masters.
  */
-const VERSION=2;
+const VERSION=3;
 const FIT_VERSION=4;
 const CONTRACT='master-rig-v1';
 const CANVAS=Object.freeze({width:240,height:410,viewBox:'0 0 240 410',centerX:120});
@@ -22,7 +22,7 @@ const REQUIRED_ANCHORS=Object.freeze([
   'leftKnee','rightKnee','leftAnkle','rightAnkle','leftFoot','rightFoot'
 ]);
 const LAYER_ORDER=Object.freeze([
-  'base','markings','hair-back','shield-back','armour','hair-front','front-offhand','mainhand-front','effects'
+  'equipment-back','base','markings','hair-back','armour','forearms','hair-front','shield-front','front-offhand','mainhand-side','fingers','effects'
 ]);
 
 const RACE_GEOMETRY=Object.freeze({
@@ -46,7 +46,8 @@ const FRAME_DEFORM=Object.freeze([
   Object.freeze({id:'strong',label:'Strong',shoulder:1.10,waist:1.06,hip:1.04,leg:1.08,arm:1.16,neck:1.07,headScale:.99,hand:1.07,x:1.06})
 ]);
 
-// Measurements taken from the approved painted base images in the final 240 x 410 canvas.
+// Legacy head/armour calibration retained for compatibility; active hand sockets
+// come only from equipmentPose in the renderer canvas below.
 const CALIBRATION=Object.freeze({
   // V13 master-vector bodies are authored from the same anatomy formula used by the
   // rig. Hand/helmet anchors therefore follow the actual illustrated silhouette
@@ -185,83 +186,133 @@ function bodyProfile(subject,appearanceOverride){
 
 // Compatibility fit profile used by the renderer. X is anatomical; legacy Y values
 // remain available to older slot code while final-canvas anchors come from anchors().
-function weaponKind(subject){
-  const item=subject?.equipment?.Weapon;
+// All equipment sockets use the active SVG's 240 x 410 coordinates. The old
+// rigY/unrigY mapping remains only for legacy armour bounds, never attachments.
+const WEAPON_PROFILES=Object.freeze({
+  sword:{grip:[199.82,279],scale:.78,angle:12},
+  greatsword:{grip:[199.82,279],support:[201.18,299],scale:.88,angle:28,twoHanded:true},
+  axe:{grip:[204.69,279],scale:.82,angle:-10},
+  hammer:{grip:[204.87,279],scale:.82,angle:-8},
+  mace:{grip:[204.63,279],scale:.82,angle:-10},
+  dagger:{grip:[202.42,279],scale:.9,angle:-18},
+  staff:{grip:[198.63,220],support:[200.18,250],scale:.98,angle:0},
+  spear:{grip:[199.02,220],support:[200.14,250],scale:.96,angle:22,twoHanded:true},
+  bow:{grip:[213,213],scale:.9,angle:0},
+  crossbow:{grip:[201.04,251],support:[199,220],scale:.88,angle:65,twoHanded:true},
+  wand:{grip:[202.62,279],scale:.64,angle:-10},
+  focus:{grip:[201.27,279],scale:.72,angle:-8},
+  scepter:{grip:[202.21,279],scale:.78,angle:-8},
+  rod:{grip:[202.92,279],scale:.78,angle:-8}
+});
+const OFFHAND_PROFILES=Object.freeze({
+  shield:{grip:[48,216],scale:1.08,angle:0},
+  quiver:{grip:[49,200],scale:.88,angle:20},
+  tome:{grip:[46,242],scale:.82,angle:-8},
+  idol:{grip:[48,252],scale:.78,angle:0},
+  focus:{grip:[49,235],scale:.78,angle:0},
+  dagger:{...WEAPON_PROFILES.dagger,angle:18}
+});
+function weaponKind(subject,item=subject?.equipment?.Weapon){
   if(!item)return '';
-  // The catalog's older Rogue T4/T5 Blades were tagged as generic swords.
-  // Use their visual identity even when old save data still has that tag.
-  if(String(subject?.class||'')==='Rogue'&&/\bblades?\b/i.test(String(item.name||'')))return'dagger';
-  const raw=String(item.weaponType||item.type||item.subtype||item.name||item.itemId||'').toLowerCase();
-  if(raw.includes('crossbow'))return'crossbow';
-  if(raw.includes('bow'))return'bow';
-  if(raw.includes('staff'))return'staff';
-  if(raw.includes('spear')||raw.includes('polearm'))return'spear';
-  if(raw.includes('dagger'))return'dagger';
-  if(raw.includes('wand'))return'wand';
-  if(raw.includes('focus'))return'focus';
-  if(raw.includes('scepter'))return'scepter';
-  if(raw.includes('rod'))return'rod';
-  if(raw.includes('hammer'))return'hammer';
-  if(raw.includes('mace'))return'mace';
-  if(raw.includes('axe'))return'axe';
-  if(raw.includes('great')||raw.includes('2h'))return'greatsword';
-  if(String(subject?.class||'')==='Rogue'&&/\bblades?\b/.test(raw))return'dagger';
-  return'sword';
+  // Migration compatibility for legacy Rogue blades tagged as swords.
+  if((item.class||subject?.class)==='Rogue'&&/\b(blades?|sword)\b/i.test(item.name||'')&&!/great/i.test(item.name||''))return'dagger';
+  const declared=String(item.weaponType||'').toLowerCase();
+  if(WEAPON_PROFILES[declared])return declared;
+  const raw=[item.weaponType,item.type,item.subtype,item.name,item.itemId].join(' ').toLowerCase();
+  for(const [pattern,kind] of [
+    [/crossbow/,'crossbow'],[/bow/,'bow'],[/warglaive/,'sword'],
+    [/spear|pike|lance|halberd|polearm/,'spear'],[/staff|stave|branch/,'staff'],
+    [/greatblade|greatsword|claymore|2h/,'greatsword'],[/dagger|kniv|knife|shiv|stiletto/,'dagger'],
+    [/axe|cleaver|hatchet/,'axe'],[/maul|hammer/,'hammer'],[/mace|morningstar/,'mace'],
+    [/wand/,'wand'],[/focus|orb|crystal/,'focus'],[/scept[er][er]/,'scepter'],[/rod/,'rod']
+  ])if(pattern.test(raw))return kind;
+  return 'sword';
 }
-function weaponPose(subject,baseRightHand,p,shoulderX){
-  const kind=weaponKind(subject);
-  if(!kind)return {active:false,kind:'none',x:baseRightHand,y:279,angle:0,side:'right',sideMin:shoulderX};
-  // Across-body ready stance: a weapon is HELD in front of the chest.
-  // The elbow remains outside the chest, while the wrist folds inward.
-  // Distinct pose families keep blades, bows and staves readable.
-  const pole=['staff','spear','rod','wand','scepter','focus'].includes(kind);
-  const bow=kind==='bow',crossbow=kind==='crossbow';
-  const ranged=bow||crossbow;
-  const close=kind==='dagger';
-  const heavy=['greatsword','hammer','axe'].includes(kind);
-  const x=shoulderX-p.shoulder*(ranged?.29:pole?.31:close?.31:heavy?.29:.31);
-  const y=bow?207:crossbow?211:pole?(kind==='spear'?224:kind==='staff'?207:211):close?207:heavy?216:203;
-  const angle=bow?7:crossbow?-9:pole?(kind==='spear'?2:5):
-    kind==='dagger'?145:kind==='sword'?151:kind==='greatsword'?154:
-    kind==='hammer'||kind==='mace'||kind==='axe'?17:kind==='wand'?14:7;
-  return {active:true,kind,x,y,angle,side:'right',
-    sideMin:120+p.shoulder*.22,stance:ranged?'ranged-ready':pole?'caster-ready':'guard-ready'};
+function offHandKind(item){
+  if(!item)return '';
+  const declared=String(item.offHandType||'').toLowerCase();
+  if(OFFHAND_PROFILES[declared])return declared;
+  const raw=[item.name,item.itemId].join(' ').toLowerCase();
+  for(const [pattern,kind] of [[/shield|bulwark|buckler|aegis/,'shield'],[/quiver/,'quiver'],[/scripture|tome|book|grimoire/,'tome'],[/idol|totem/,'idol'],[/blade|dagger|knife|shiv|glaive/,'dagger']])if(pattern.test(raw))return kind;
+  return 'focus';
 }
+function transformPoint(attachment,point){
+  const r=attachment.angle*Math.PI/180,dx=(point[0]-attachment.grip[0])*attachment.scale,dy=(point[1]-attachment.grip[1])*attachment.scale;
+  return {x:attachment.x+dx*Math.cos(r)-dy*Math.sin(r),y:attachment.y+dx*Math.sin(r)+dy*Math.cos(r)};
+}
+function attachmentTransform(a){return 'translate('+a.x+' '+a.y+') rotate('+a.angle+') scale('+a.scale+') translate('+(-a.grip[0])+' '+(-a.grip[1])+')'}
+function armLengths(p){return {upper:53+p.shoulder*.1,lower:49+p.shoulder*.18}}
+function armJoints(shoulder,hand,p,side){
+  // Two-bone solve: choose the outside elbow, keeping bone lengths fixed for
+  // a given body. Art, gloves and equipment consume these same joints.
+  const {upper,lower}=armLengths(p),dx=hand.x-shoulder.x,dy=hand.y-shoulder.y,d=Math.hypot(dx,dy),safe=Math.max(.001,d);
+  const along=(upper*upper-lower*lower+d*d)/(2*safe),height=Math.sqrt(Math.max(0,upper*upper-along*along));
+  return {shoulder,hand,elbow:{x:shoulder.x+dx/safe*along+side*dy/safe*height,y:shoulder.y+dy/safe*along-side*dx/safe*height},upper,lower};
+}
+function equipmentPose(subject){
+  const p=bodyProfile(subject),ls=120-p.shoulder,rs=120+p.shoulder;
+  const kind=weaponKind(subject),offItem=subject?.equipment?.OffHand;
+  const offKind=offItem&&(!offItem.slot||offItem.slot==='OffHand')?offHandKind(offItem):'';
+  const profile=WEAPON_PROFILES[kind],explicit=subject?.equipment?.Weapon;
+  const twoHanded=Boolean(profile&&(profile.twoHanded||explicit?.twoHanded===true||Number(explicit?.hands)===2));
+  const lengths=armLengths(p),restY=148+lengths.upper+lengths.lower-2;
+  let right={x:rs+5,y:restY},left={x:ls-5,y:restY};
+  let main=null,off=null;
+  if(profile){
+    right={x:twoHanded?120+p.shoulder*.28:rs-p.shoulder*.28,y:twoHanded?214:kind==='staff'?217:234};
+    main={...profile,x:right.x,y:right.y,kind,layer:'mainhand-side',mode:twoHanded?'two-handed':kind==='bow'?'bow-rest':'one-handed'};
+    if(twoHanded){
+      main.support=profile.support||[profile.grip[0]+1.5,profile.grip[1]+22];
+      left=transformPoint(main,main.support);
+    }
+  }
+  if(offKind){
+    const op=OFFHAND_PROFILES[offKind];
+    if(offKind==='quiver'||twoHanded){
+      // A two-hand stance frees neither hand. Display the owned off-hand
+      // stowed (no equipment/stat mutation); quivers always mount to the back.
+      off={...op,kind:offKind,x:offKind==='shield'?ls+7:ls+10,y:offKind==='quiver'?180:offKind==='shield'?207:256,layer:'equipment-back',mode:'stowed',scale:offKind==='shield'?.86:op.scale};
+    }else{
+      left={x:ls+p.shoulder*.20,y:offKind==='shield'?226:offKind==='dagger'?239:249};
+      off={...op,kind:offKind,x:left.x,y:left.y,layer:offKind==='shield'?'shield-front':'front-offhand',mode:'held'};
+    }
+  }
+  return {main,off,twoHanded,right:armJoints({x:rs,y:148},right,p,1),left:armJoints({x:ls,y:148},left,p,-1)};
+}
+function weaponPose(subject){const a=equipmentPose(subject).main;return a?{...a,active:true,side:'right',sideMin:120,stance:a.mode}:{active:false,kind:'none',...equipmentPose(subject).right.hand,angle:0,side:'right',sideMin:120}}
 function gearFitProfile(subject){
   const race=raceOf(subject),p=bodyProfile(subject),sex=sexName(subject),gender=p.gender,frame=p.frame;
   const shoulderY=race==='Stoneborn'?130:gender===1?133:131;
   const leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
   const handReach=Math.max(5.2,p.arm*.46);
   const leftHand=leftShoulder-handReach,baseRightHand=rightShoulder+handReach;
-  const pose=weaponPose(subject,baseRightHand,p,rightShoulder);
-  const rightHand=pose.x,handY=279,rightHandY=pose.y;
+  const attachments=equipmentPose(subject),pose=attachments.main?{...attachments.main,active:true,sideMin:120}:{...attachments.right.hand,angle:0,kind:'none',active:false};
+  const rightHand=attachments.right.hand.x,handY=attachments.left.hand.y,rightHandY=attachments.right.hand.y;
   const hipHalf=p.hip,waistHalf=Math.max(p.waist*1.02,p.hip*.64);
   const legOffset=p.hip*.38,legHalf=Math.max(8.5,p.leg*.62);
   return {
     race,gender,frame,p,centerX:120,shoulderY,
-    leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,handY,rightHandY,
+    leftShoulder,rightShoulder,leftHand:attachments.left.hand.x,rightHand,baseRightHand,handY,rightHandY,attachments,
     leftPad:120-p.shoulder*.82,rightPad:120+p.shoulder*.82,
     waistY:247,waistHalf,hipHalf,
     leftLeg:120-legOffset,rightLeg:120+legOffset,
     legHalf,calfHalf:Math.max(7.4,p.leg*.52),footHalf:Math.max(8.6,p.leg*.66),
     chestTop:gender===1?140:138,chestBottom:244,
     weaponX:pose.x,weaponY:pose.y,weaponAngle:pose.angle,weaponPose:pose.active?'side-held':'rest',weaponKind:pose.kind,weaponSideMin:pose.sideMin??rightShoulder,
-    offhandX:leftHand,offhandY:handY,
+    offhandX:attachments.off?.x??attachments.left.hand.x,offhandY:attachments.off?.y??handY,
     headGearScaleX:(gender===1?.94:1)*([.94,1,1.05,.98][subject?.appearance?.face]||1)
   };
 }
 function anchors(subject){
-  const race=raceOf(subject),sex=sexName(subject),frame=frameIndex(subject),m=masterRig(subject),p=bodyProfile(subject),d=FRAME_DEFORM[frame],f=gearFitProfile(subject);
-  const x=x=>120+(x-120)*d.x;
-  const a=Object.fromEntries(Object.entries(m.anchors).map(([k,v])=>[k,{x:x(v.x),y:v.y}]));
-  const shoulderY=rigY(race==='Stoneborn'?130:sex==='female'?133:131);
-  a.leftShoulder={x:f.leftShoulder,y:shoulderY};a.rightShoulder={x:f.rightShoulder,y:shoulderY};
-  a.leftHand={x:f.leftHand,y:rigY(f.handY)};a.rightHand={x:f.rightHand,y:rigY(f.rightHandY)};
-  a.mainHand={x:f.weaponX,y:rigY(f.weaponY)};a.offHand={x:f.offhandX,y:rigY(f.offhandY)};
-  a.leftHip={x:f.leftLeg,y:rigY(257)};a.rightHip={x:f.rightLeg,y:rigY(257)};
-  a.leftKnee={x:a.leftHip.x,y:rigY(322)};a.rightKnee={x:a.rightHip.x,y:rigY(322)};
-  a.leftAnkle={x:a.leftHip.x,y:rigY(365)};a.rightAnkle={x:a.rightHip.x,y:rigY(365)};
-  a.leftFoot={x:a.leftHip.x,y:rigY(380)};a.rightFoot={x:a.rightHip.x,y:rigY(380)};
+  const f=gearFitProfile(subject),m=masterRig(subject),a={...m.anchors};
+  for(const [key,value] of Object.entries(a))a[key]={x:value.x,y:unrigY(value.y)};
+  a.leftShoulder=f.attachments.left.shoulder;a.rightShoulder=f.attachments.right.shoulder;
+  a.leftElbow=f.attachments.left.elbow;a.rightElbow=f.attachments.right.elbow;
+  a.leftHand=f.attachments.left.hand;a.rightHand=f.attachments.right.hand;
+  a.mainHand=a.rightHand;a.offHand=a.leftHand;
+  a.leftHip={x:f.leftLeg,y:257};a.rightHip={x:f.rightLeg,y:257};
+  a.leftFoot={x:f.leftLeg,y:380};a.rightFoot={x:f.rightLeg,y:380};
+  a.waist={x:120,y:247};a.back={x:120,y:150};
   return a;
 }
 function anchor(subject,name){return anchors(subject)[name]||null}
@@ -303,8 +354,8 @@ function fitSlot(subject,slot,options){
     return{leftX:f.leftLeg-width/2,rightX:f.rightLeg-width/2,y,w:width,h:bottom-y};
   }
   if(slot==='Hands'){
-    const width=Math.max(13,p.hand*13)+(family==='warrior'||family==='paladin'||family==='death-knight'?3:0),y=rigY(f.handY)-30;
-    return{leftX:f.leftHand-width/2,rightX:f.rightHand-width/2,y,w:width,h:39,leftCenter:f.leftHand,rightCenter:f.rightHand};
+    const width=p.hand*12.4+2,h=p.hand*14+2,leftY=f.handY-h/2,rightY=f.rightHandY-h/2;
+    return{leftX:f.leftHand-width/2,rightX:f.rightHand-width/2,y:Math.min(leftY,rightY),leftY,rightY,w:width,h,leftCenter:f.leftHand,rightCenter:f.rightHand};
   }
   if(slot==='Head'){
     const h=headRig(subject),face=[.94,1,1.05,.98][subject?.appearance?.face]||1,w=h.width*1.28*face;
@@ -352,7 +403,8 @@ window.CellboundCharacterRig=Object.freeze({
   version:VERSION,fitVersion:FIT_VERSION,contract:CONTRACT,canvas:CANVAS,races:RACES,sexes:SEXES,
   requiredAnchors:REQUIRED_ANCHORS,layerOrder:LAYER_ORDER,frameDeform:FRAME_DEFORM,
   masterRigCount:12,masterRigs:MASTER_RIGS,
-  masterKey,masterRig,resolve,bodyProfile,gearFitProfile,weaponPose,weaponKind,anchors,anchor,
+  masterKey,masterRig,resolve,bodyProfile,gearFitProfile,weaponPose,weaponKind,offHandKind,anchors,anchor,
+  equipmentPose,weaponProfiles:WEAPON_PROFILES,offhandProfiles:OFFHAND_PROFILES,transformPoint,attachmentTransform,
   rigY,unrigY,headRig,hairFit,fitSlot,equipmentCoverage,validateAll
 });
 })();

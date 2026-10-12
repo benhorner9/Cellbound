@@ -4,7 +4,7 @@ const sandbox={window:{}};sandbox.window=sandbox;vm.createContext(sandbox);
 for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../'+file),'utf8'),sandbox);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../character-portraits-v1.js'),'utf8'),sandbox);
 const P=sandbox.CellboundPortraits;
-assert.equal(P.version,15);
+assert.equal(P.version,16);
 assert.equal(P.modelContract,'classic-paper-doll-v1');
 assert.equal(P.baseArtContract,'classic-paper-doll-v1');
 assert.equal(P.rigContract,'master-rig-v1');

@@ -80,7 +80,7 @@ function character(overrides={}){
 }
 function anchorSVG(c){
   if(!state.anchors||!CR()?.anchors)return'';
-  const a=CR().anchors(c),marks=[
+  const a=CP().anatomicalAnchors(c),marks=[
     [a.leftShoulder,'SH'],[a.rightShoulder,'SH'],
     [a.leftHand,'H'],[a.rightHand,'H'],
     [a.leftHip,'HIP'],[a.rightHip,'HIP'],
@@ -151,20 +151,21 @@ function validateCharacter(c,{highlight='',requireFull=false}={}){
     const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
     if(weaponAt<0||weaponAt<headAt||!html.includes('data-weapon-pose="side-held"'))throw new Error('main-hand weapon is not using the side-held pose');
     const weaponHtml=html.slice(weaponAt);if(!closeTo(svgNumber(weaponHtml,'data-grip-x'),fit.weaponX)||!closeTo(svgNumber(weaponHtml,'data-grip-y'),fit.weaponY))throw new Error('main-hand side grip is not attached to the posed right hand');
-    if(fit.weaponX<fit.weaponSideMin)throw new Error('main-hand weapon moved past safe torso limit');
-    if(fit.weaponX>=fit.rightShoulder-fit.p.shoulder*.25)
-      throw new Error('weapon hand is still beside the torso rather than holding it across the body');
-    if(!(fit.weaponY<fit.handY-20)||!html.includes('data-weapon-forearm="across-body"')||!closeTo(svgNumber(html,'data-forearm-hand-y'),fit.weaponY))
-      throw new Error('weapon arm is not bent into a visible gripping position');
+    const pose=R.equipmentPose(c),hand=R.anchors(c).rightHand;
+    if(!closeTo(hand.x,fit.weaponX)||!closeTo(hand.y,fit.weaponY))throw new Error('weapon and hand coordinate spaces disagree');
+    if(pose.twoHanded){
+      const second=R.transformPoint(pose.main,pose.main.support);
+      if(!closeTo(second.x,pose.left.hand.x)||!closeTo(second.y,pose.left.hand.y))throw new Error('second hand misses handle');
+    }
   }
   if(c.equipment?.OffHand){
-    const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"'),armsAt=html.indexOf('cb-paper-arms'),headAt=html.indexOf('cb-paper-head'),weaponAt=html.indexOf('cb-paper-side-weapon');
+    const part=R.equipmentPose(c).off,offAt=html.indexOf('data-offhand-type="'+part.kind+'"'),armsAt=html.indexOf('cb-paper-arms');
     if(offAt<0)throw new Error('off-hand layer missing');
-    if(!closeTo(svgNumber(html.slice(offAt),'data-grip-x'),fit.offhandX)||!closeTo(svgNumber(html.slice(offAt),'data-grip-y'),fit.offhandY))throw new Error('off-hand grip is not attached to the left hand');
-    if(type==='shield'&&offAt>armsAt)throw new Error('shield must remain behind the body');
-    if(type!=='shield'&&offAt<headAt)throw new Error('front off-hand must remain above the body');
-    if(c.equipment?.Weapon&&type!=='shield'&&weaponAt<offAt)throw new Error('main-hand must remain above front off-hand');
+    if(!closeTo(svgNumber(html.slice(offAt),'data-grip-x'),part.x)||!closeTo(svgNumber(html.slice(offAt),'data-grip-y'),part.y))throw new Error('off-hand misses its attachment');
+    if(part.mode==='stowed'&&offAt>armsAt)throw new Error('stowed equipment must be behind the body');
+    if(part.layer==='shield-front'&&offAt<armsAt)throw new Error('held shield must cover the forearm');
   }
+
   if(c.equipment?.Ring1&&!closeTo(svgNumber(html,'data-ring-x'),fit.leftHand))throw new Error('Ring1 is not attached to the left hand');
 
   if(requireFull){

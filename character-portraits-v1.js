@@ -2,13 +2,13 @@
 'use strict';
 
 const RIG=window.CellboundCharacterRig||null;
-const CHARACTER_MODEL_VERSION=15;
+const CHARACTER_MODEL_VERSION=16;
 const CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1';
 const BASE_ART_CONTRACT='classic-paper-doll-v1';
-const EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-side';
+const EQUIPMENT_LAYER_CONTRACT='equipment-back|body|armour|forearms|shield-front|front-offhand|mainhand-side|fingers';
 const RACE_IDENTITY_VERSION=2;
 const EQUIPMENT_FIT_VERSION=4;
-const WEAPON_POSE_VERSION=2;
+const WEAPON_POSE_VERSION=3;
 const ITEM_VISUALS_VERSION=2;
 
 const CLASS_COLORS={
@@ -461,21 +461,11 @@ function bodyProfile(race,appearance){
   if(Number(appearance?.gender)===1){p.shoulder*=.95;p.waist*=.94;p.hip*=1.04;p.arm*=.94;p.hand*=.96;p.neck*=.94}
   return p;
 }
-function paperFit(c){
-  if(RIG?.gearFitProfile)return RIG.gearFitProfile(c||{});
-  var race=c?.race||c?.appearance?.race||'Veyren',p=bodyProfile(race,c?.appearance),reach=Math.max(5.2,p.arm*.46);
-  var leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder,leftHand=leftShoulder-reach,baseRightHand=rightShoulder+reach;
-  var weapon=itemForSlot(c,'Weapon'),type=weapon?weaponType(weapon,c):'',long=['staff','spear','bow','crossbow'].includes(type),compact=['dagger','wand','focus','scepter','rod'].includes(type);
-  var sideMin=Math.min(194,rightShoulder+Math.max(5,p.arm*.30)),natural=baseRightHand+(long?2:compact?0:1);
-  var rightHand=weapon?Math.max(sideMin,Math.min(194,natural)):baseRightHand,angle=weapon?(type==='bow'?4:type==='crossbow'?5:type==='staff'||type==='spear'?3:type==='dagger'?8:5):0;
-  var legOffset=p.hip*.38;
-  return {race,gender:Number(c?.appearance?.gender)||0,frame:Number(c?.appearance?.frame)||1,p,centerX:120,
-    leftShoulder,rightShoulder,leftPad:120-p.shoulder*.82,rightPad:120+p.shoulder*.82,leftHand,rightHand,baseRightHand,handY:279,
-    waistY:247,waistHalf:Math.max(p.waist*1.02,p.hip*.64),hipHalf:p.hip,
-    leftLeg:120-legOffset,rightLeg:120+legOffset,legHalf:Math.max(8.5,p.leg*.62),calfHalf:Math.max(7.4,p.leg*.52),footHalf:Math.max(8.6,p.leg*.66),
-    weaponX:rightHand,weaponY:279,weaponAngle:angle,weaponPose:weapon?'side-held':'rest',weaponKind:type||'none',weaponSideMin:sideMin,
-    offhandX:leftHand,offhandY:279};
+function modelSubject(c={}){
+  var race=c.race||c.appearance?.race||'Veyren';
+  return {...c,race,appearance:normalizeAppearance(c.appearance||c,c.id||c.name||race,race)};
 }
+function paperFit(c){return RIG.gearFitProfile(modelSubject(c))}
 function fitFamily(klass){
   return String(klass||'Warrior').toLowerCase().replace(/\s+/g,'-');
 }
@@ -573,38 +563,8 @@ function paperSlotClass(slot,highlighted,item){
   var set=item&&(item.setId||item.setName||item.visualSet||/(?:^|-)t[45](?:-|$)/.test(id)||Number(item.tier)>=5)?' is-set-item':'';
   return 'cb-paper-slot cb-paper-slot-'+String(slot||'').toLowerCase()+(highlighted===slot?' is-highlighted':'')+set;
 }
-function weaponType(item,c){
-  if(c?.class==='Rogue'&&/(^|\s)(blades?|sword)(\s|$)/i.test(String(item?.name||''))&&
-      !/(greatsword|claymore|greatblade)/i.test(String(item?.name||'')))return'dagger';
-  if(item?.weaponType)return String(item.weaponType).toLowerCase();
-  var n=(' '+itemIdentity(item,'Weapon')+' '+String(item?.name||'')+' ').toLowerCase();
-  if(/(spear|pike|lance|glaive|halberd|polearm)/.test(n))return'spear';
-  if(/(bow|longbow|shortbow)/.test(n))return'bow';
-  if(/(crossbow)/.test(n))return'crossbow';
-  if(/(axe|cleaver|hatchet)/.test(n))return'axe';
-  if(/(maul|hammer)/.test(n))return'hammer';
-  if(/(mace|morningstar)/.test(n))return'mace';
-  if(/(dagger|knife|shiv|shivs|knives|stiletto)/.test(n))return'dagger';
-  if(/(wand)/.test(n))return'wand';
-  if(/(focus|orb|crystal)/.test(n))return'focus';
-  if(/(scepter|sceptre)/.test(n))return'scepter';
-  if(/(staff|stave|branch)/.test(n))return'staff';
-  if(/(rod)/.test(n))return'rod';
-  if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
-  if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
-  return'sword';
-}
-function offHandType(item,c){
-  if(item?.offHandType)return String(item.offHandType).toLowerCase();
-  var n=(' '+itemIdentity(item,'OffHand')+' '+String(item?.name||'')+' ').toLowerCase();
-  if(/\b(shield|bulwark|buckler|aegis)\b/.test(n))return'shield';
-  if(/\b(quiver)\b/.test(n))return'quiver';
-  if(/\b(scripture|tome|book|grimoire)\b/.test(n))return'tome';
-  if(/\b(idol|totem)\b/.test(n))return'idol';
-  if(/\b(orb|focus|crystal)\b/.test(n))return'focus';
-  if(/\b(blade|dagger|knife|shiv)\b/.test(n))return'dagger';
-  return'focus';
-}
+function weaponType(item,c){return RIG.weaponKind(c,item)}
+function offHandType(item,c){return RIG.offHandKind(item)}
 function motifMarkup(motif,x,y,scale,color){
   scale=scale||1;color=color||'#f0dfad';
   if(motif==='sun')return '<g transform="translate('+x+' '+y+') scale('+scale+')"><circle r="5" fill="none" stroke="'+color+'" stroke-width="1.8"/><path d="M0-10V-7 M0 7V10 M-10 0H-7 M7 0H10 M-7-7L-5-5 M7-7L5-5 M-7 7L-5 5 M7 7L5 5" stroke="'+color+'" stroke-width="1.7"/></g>';
@@ -842,77 +802,44 @@ function paperFeet(c,skin,highlighted){
   if(pal.set)gear+='<path d="M'+(lc-fh*.9)+' 382 H'+(lc+fh*.9)+' M'+(rc-fh*.9)+' 382 H'+(rc+fh*.9)+'" stroke="'+pal.glow+'" stroke-width="2" opacity=".75" class="cb-paper-set-glow"/>';
   return base+gear+'</g>';
 }
-function paperArms(c,skin,highlighted){
-  var hands=itemForSlot(c,'Hands'),tier=clampTier(hands&&hands.tier),pal=gearPalette(c,hands,tier||1,'Hands');
-  var fit=paperFit(c),p=fit.p,ls=fit.leftShoulder,rs=fit.rightShoulder,lh=fit.leftHand,rh=fit.rightHand,
-      handY=fit.handY||279,rightY=fit.rightHandY??handY,aw=Math.max(5.2,p.arm*.44),held=!!itemForSlot(c,'Weapon');
-  var wristY=handY-19,rightWristY=rightY-19;
-  var left='M'+(ls-aw)+' 148 Q'+(ls-aw-7)+' 185 '+(lh-aw)+' 229 Q'+(lh-aw*.65)+' 249 '+(lh-aw*.28)+' '+wristY+' L'+(lh+aw*.28)+' '+wristY+' Q'+(lh+aw*.65)+' 249 '+(ls+aw)+' 148Z';
-  var elbowX=rs+Math.max(2,p.arm*.14),elbowY=Math.min(242,Math.max(rightY+16,223));
-  // Upper-arm silhouette ends at the elbow; the front forearm is painted once.
-  var right=held?
-    'M'+(rs-aw)+' 148 Q'+rs+' 151 '+(rs+aw)+' 164 '+
-    'L'+(elbowX+aw*.7)+' '+(elbowY-aw*.65)+
-    ' Q'+(elbowX+aw)+' '+elbowY+' '+(elbowX+aw*.45)+' '+(elbowY+aw*.7)+
-    ' L'+(elbowX-aw*.48)+' '+(elbowY+aw*.64)+
-    ' Q'+(rs-aw*.45)+' '+(elbowY-32)+' '+(rs-aw)+' 148Z':
-    'M'+(rs+aw)+' 148 Q'+(rs+aw+7)+' 185 '+(rh+aw)+' 229 Q'+(rh+aw*.65)+' 249 '+(rh+aw*.28)+' '+rightWristY+' L'+(rh-aw*.28)+' '+rightWristY+' Q'+(rh-aw*.65)+' 249 '+(rs-aw)+' 148Z';
-  var details=paperRaceArmDetails(c,p,ls,rs),scale=p.hand||1,klass=gearClass(hands),heavy=['Warrior','Paladin','Death Knight'].includes(klass);
-  var hw=Math.max(6.5,scale*6.5)+(heavy?1.6:0),top=handY-27,bottom=handY+10,rtop=rightY-27,rbottom=rightY+10;
-  var gloves='<path class="cb-paper-glove-left" d="M'+(lh-hw)+' '+top+' Q'+lh+' '+(top-4)+' '+(lh+hw)+' '+top+' L'+(lh+hw*.78)+' '+bottom+' Q'+lh+' '+(bottom+5)+' '+(lh-hw*.78)+' '+bottom+'Z" fill="'+(tier?pal.base:skin)+'" stroke="#111820" stroke-width="2"/>'+
-    '<path class="cb-paper-glove-right" d="M'+(rh-hw)+' '+rtop+' Q'+rh+' '+(rtop-4)+' '+(rh+hw)+' '+rtop+' L'+(rh+hw*.78)+' '+rbottom+' Q'+rh+' '+(rbottom+5)+' '+(rh-hw*.78)+' '+rbottom+'Z" fill="'+(tier?pal.base:skin)+'" stroke="#111820" stroke-width="2"/>';
-  return '<g class="cb-paper-arms" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-weapon-arm-pose="'+(held?'across-body':'rest')+'">'+
-    '<path d="'+left+'" fill="'+skin+'" stroke="#182027" stroke-width="2.2"/>'+
-    '<path d="'+right+'" fill="'+skin+'" stroke="#182027" stroke-width="2.2"/>'+
-    '<ellipse cx="'+lh+'" cy="'+(handY-3)+'" rx="'+Math.max(4.5,aw*.68)+'" ry="'+Math.max(6.5,aw*.9)+'" fill="'+skin+'"/>'+
-    '<ellipse cx="'+rh+'" cy="'+(rightY-3)+'" rx="'+Math.max(4.5,aw*.68)+'" ry="'+Math.max(6.5,aw*.9)+'" fill="'+skin+'"/>'+details+'</g>'+
-    '<g class="'+paperSlotClass('Hands',highlighted,hands)+'" data-item-key="'+esc(itemIdentity(hands,'Hands'))+
-    '" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-left-hand-x="'+lh.toFixed(2)+'" data-right-hand-x="'+rh.toFixed(2)+
-    '" data-hand-y="'+handY.toFixed(2)+'" data-right-hand-y="'+rightY.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+
-    '" data-class-visual="'+esc(gearClassSlug(hands))+'">'+gloves+
-    (hands&&heavy?'<path d="M'+(lh-hw*.92)+' '+(top+7)+' H'+(lh+hw*.92)+' M'+(rh-hw*.92)+' '+(rtop+7)+' H'+(rh+hw*.92)+'" stroke="'+pal.trim+'" stroke-width="1.8"/>':'')+
-    (hands?itemRune(hands,'Hands',pal,lh,handY-4,.4)+itemRune(hands,'Hands',pal,rh,rightY-4,.4)+betaHandDetail(hands,pal,tier,lh,rh,handY,hw,rightY):'')+'</g>';
+// Draw arm segments in the SAME canvas as the equipment sockets. A single
+// pose solver supplies both elbows and wrists; there is no overpainted old arm.
+function armSegment(a,b,wa,wb,fill,stroke,extra=''){
+  var dx=b.x-a.x,dy=b.y-a.y,len=Math.max(.001,Math.hypot(dx,dy)),nx=-dy/len,ny=dx/len;
+  return '<path '+extra+' d="M'+(a.x+nx*wa)+' '+(a.y+ny*wa)+' L'+(b.x+nx*wb)+' '+(b.y+ny*wb)+
+    ' Q'+(b.x+dx/len*wb)+' '+(b.y+dy/len*wb)+' '+(b.x-nx*wb)+' '+(b.y-ny*wb)+
+    ' L'+(a.x-nx*wa)+' '+(a.y-ny*wa)+'Z" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.8" stroke-linejoin="round"/>';
 }
-/* In front of the chest armour, before the weapon. The hand now has a
-   visible bent forearm from elbow to wrist, so a floating staff beside a
-   straight arm is impossible in the equipped model. */
-/* Anatomical arm ready pose: elbow hangs below the inward, raised grip,
-   rather than stretching an extra horizontal bar across the waist. */
-function paperWeaponForearm(c){
-  if(!itemForSlot(c,'Weapon'))return '';
-  var fit=paperFit(c),p=fit.p,hands=itemForSlot(c,'Hands'),tier=clampTier(hands&&hands.tier),
-      pal=gearPalette(c,hands,tier||1,'Hands'),race=c.race||c.appearance?.race||'Veyren',
-      a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),
-      skin=raceDef(a.race).skin[a.skinTone],fill=skin,
-      trim=tier?pal.trim:'#4d4034',x=fit.weaponX,y=fit.weaponY,
-      elbowX=fit.rightShoulder+Math.max(2,p.arm*.14),
-      elbowY=Math.min(242,Math.max(y+16,223)),
-      dx=elbowX-x,dy=elbowY-y,len=Math.hypot(dx,dy),
-      nx=-dy/len,ny=dx/len,
-      et=Math.max(6.2,p.arm*.38),wt=Math.max(4.4,p.hand*4.6),
-      a1x=elbowX+nx*et,a1y=elbowY+ny*et,
-      a2x=x+nx*wt,a2y=y+ny*wt,
-      b1x=elbowX-nx*et,b1y=elbowY-ny*et,
-      b2x=x-nx*wt,b2y=y-ny*wt;
-  function pt(x,y){return x.toFixed(2)+' '+y.toFixed(2)}
-  var contour='M'+pt(a1x,a1y)+' Q'+pt((a1x+a2x)/2,(a1y+a2y)/2-2)+' '+pt(a2x,a2y)+
-    ' Q'+pt(x,y-2)+' '+pt(b2x,b2y)+
-    ' Q'+pt((b1x+b2x)/2,(b1y+b2y)/2+1)+' '+pt(b1x,b1y)+'Z';
-  // Bare joint meets upper arm; the last portion wears a short bracer.
-  // A solid gauntlet from elbow to fist read as a detached dark bar.
-  var joinX=x+dx*.44,joinY=y+dy*.44,bracerWidth=wt*.94;
-  var bracer='M'+pt(a2x,a2y)+' L'+pt(joinX+nx*bracerWidth,joinY+ny*bracerWidth)+
-    ' L'+pt(joinX-nx*bracerWidth,joinY-ny*bracerWidth)+' L'+pt(b2x,b2y)+'Z';
-  return '<g class="cb-paper-weapon-forearm" data-weapon-forearm="across-body" data-forearm-hand-x="'+x.toFixed(2)+
-    '" data-forearm-hand-y="'+y.toFixed(2)+'" data-forearm-elbow-x="'+elbowX.toFixed(2)+
-    '" data-forearm-elbow-y="'+elbowY.toFixed(2)+'" data-forearm-slope="'+(elbowY-y).toFixed(2)+'">'+
-    '<ellipse class="cb-paper-elbow-joint" cx="'+elbowX+'" cy="'+elbowY+'" rx="'+et+'" ry="'+(et*.93)+'" fill="'+skin+'" stroke="#101c1b" stroke-width="1.6"/>'+
-    '<path class="cb-paper-anatomical-forearm" d="'+contour+'" fill="'+skin+'" stroke="#101c1b" stroke-width="1.8"/>'+
-    '<path class="cb-paper-weapon-bracer" d="'+bracer+'" fill="'+(tier?pal.base:skin)+'" stroke="'+trim+'" stroke-width="1.6"/>'+
-    '<path d="M'+pt(a2x,a2y)+' Q'+pt(x,y+2)+' '+pt(b2x,b2y)+
-    '" fill="none" stroke="'+trim+'" stroke-width="1.5"/>'+
-    '<ellipse cx="'+x+'" cy="'+y+'" rx="'+Math.max(5.3,p.hand*5.6)+'" ry="'+Math.max(6.7,p.hand*6.7)+'" fill="'+(tier?pal.base:skin)+'" stroke="'+trim+'" stroke-width="1.3"/>'+
-    '</g>';
+function paperArms(c,skin,highlighted){
+  var fit=paperFit(c),p=fit.p,pose=fit.attachments,aw=Math.max(5.2,p.arm*.44);
+  var arms=[pose.left,pose.right].map(a=>armSegment(a.shoulder,a.elbow,aw,aw*.8,skin,'#182027')).join('');
+  // Clip the existing race markings to the solved upper arms. Previously the
+  // old straight-arm decorations remained in space after the arm bent.
+  var clip='arms'+hash(JSON.stringify([c.id,c.race,c.appearance,c.equipment])).toString(36);
+  return '<g class="cb-paper-arms" data-fit-version="4" data-alignment="v4" data-weapon-arm-pose="joint-solved">'+
+    '<defs><clipPath id="'+clip+'">'+arms+'</clipPath></defs>'+arms+
+    '<g clip-path="url(#'+clip+')">'+paperRaceArmDetails(c,p,fit.leftShoulder,fit.rightShoulder)+'</g></g>';
+}
+function paperWeaponForearm(c,highlighted){
+  var fit=paperFit(c),p=fit.p,pose=fit.attachments,hands=itemForSlot(c,'Hands'),tier=clampTier(hands?.tier),
+    pal=gearPalette(c,hands,tier||1,'Hands'),race=c.race||c.appearance?.race||'Veyren',
+    a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),skin=raceDef(a.race).skin[a.skinTone];
+  var out='';
+  for(var side of ['left','right']){
+    var arm=pose[side],e=arm.elbow,h=arm.hand,et=Math.max(5.2,p.arm*.36),wt=Math.max(3.8,p.hand*4),
+      joint={x:h.x+(e.x-h.x)*.38,y:h.y+(e.y-h.y)*.38};
+    out+='<g class="cb-paper-weapon-forearm cb-paper-forearm-'+side+'" data-weapon-forearm="joint-solved" data-arm-side="'+side+
+      '" data-forearm-hand-x="'+h.x+'" data-forearm-hand-y="'+h.y+'" data-forearm-elbow-x="'+e.x+'" data-forearm-elbow-y="'+e.y+'">'+
+      '<circle cx="'+e.x+'" cy="'+e.y+'" r="'+et+'" fill="'+skin+'"/>'+armSegment(e,h,et,wt,skin,'#182027')+
+      armSegment(joint,h,wt*1.15,wt,tier?pal.base:skin,tier?pal.trim:'#4d4034')+'</g>';
+  }
+  out+='<g class="'+paperSlotClass('Hands',highlighted,hands)+'" data-item-key="'+esc(itemIdentity(hands,'Hands'))+'" data-fit-version="4" data-alignment="v4"'+
+    ' data-left-hand-x="'+fit.leftHand.toFixed(2)+'" data-right-hand-x="'+fit.rightHand.toFixed(2)+'" data-hand-y="'+fit.handY.toFixed(2)+'" data-right-hand-y="'+fit.rightHandY.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(hands))+'">';
+  for(var side of ['left','right']){
+    var h=pose[side].hand;
+    out+='<ellipse class="cb-paper-glove-'+side+'" cx="'+h.x+'" cy="'+h.y+'" rx="'+(p.hand*6.2)+'" ry="'+(p.hand*7)+'" fill="'+(tier?pal.base:skin)+'" stroke="#182027" stroke-width="1.5"/>';
+  }
+  return out+'</g>';
 }
 function paperChest(c,highlighted,skin){
   var item=itemForSlot(c,'Chest'),fit=paperFit(c),p=fit.p,top=fit.race==='Stoneborn'?139:fit.gender===1?143:141,bottom=244;
@@ -999,8 +926,8 @@ function weaponMarkup(type,pal,v,tier,item){
   }else if(type==='dagger'){
     g='<path d="M200 270 L190 209 L204 223 L207 269Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.1"/>'+
       '<path d="M185 267 L215 263" stroke="'+pal.trim+'" stroke-width="5" stroke-linecap="round"/>'+
-      '<path d="M201 270 L207 308" stroke="'+pal.dark+'" stroke-width="7" stroke-linecap="round"/>'+
-      '<circle cx="207" cy="308" r="4" fill="'+pal.trim+'"/>';
+      '<path d="M201 270 L205.26 297" stroke="'+pal.dark+'" stroke-width="7" stroke-linecap="round"/>'+
+      '<circle cx="205.26" cy="297" r="4" fill="'+pal.trim+'"/>';
     ornamentY=247;
   }else if(type==='wand'){
     g='<path d="M194 177 L206 319" stroke="'+pal.base+'" stroke-width="6" stroke-linecap="round"/>'+
@@ -1030,13 +957,13 @@ function weaponMarkup(type,pal,v,tier,item){
   }else{
     // Sword and greatsword: blade above the hand, crossguard just above the
     // fist, short leather grip beneath the fist. No 180px "floating handle".
-    var great=type==='greatsword',bladeTop=great?93:119,bladeWidth=great?18:12;
+    var great=type==='greatsword',bladeTop=great?93:119,bladeWidth=great?18:12,handleEnd=great?311:296;
     g='<path class="cb-paper-held-blade" d="M200 262 L'+(200-bladeWidth*.58)+' 251 L'+(200-bladeWidth*.54)+' '+(bladeTop+18)+
       ' L200 '+bladeTop+' L'+(200+bladeWidth*.54)+' '+(bladeTop+18)+' L'+(200+bladeWidth*.58)+' 251Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.6"/>'+
       '<path d="M200 '+(bladeTop+21)+' L200 245" stroke="'+pal.base+'" stroke-width="1.7" opacity=".65"/>'+
       '<path class="cb-paper-hilt-guard" d="M177 263 Q200 257 222 261" fill="none" stroke="'+pal.trim+'" stroke-width="'+(great?8:6)+'" stroke-linecap="round"/>'+
-      '<path class="cb-paper-handle" d="M199 267 L202 311" stroke="'+pal.dark+'" stroke-width="'+(great?10:8)+'" stroke-linecap="round"/>'+
-      '<circle cx="203" cy="313" r="'+(great?6:5)+'" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2"/>';
+      '<path class="cb-paper-handle" d="M199 267 L'+(199+(handleEnd-267)*3/44)+' '+handleEnd+'" stroke="'+pal.dark+'" stroke-width="'+(great?10:8)+'" stroke-linecap="round"/>'+
+      '<circle cx="'+(great?203:201)+'" cy="'+(handleEnd+2)+'" r="'+(great?6:5)+'" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2"/>';
     ornamentY=216;
   }
   // Class/tier engraving belongs to the head or blade, never the disconnected
@@ -1050,22 +977,9 @@ function weaponMarkup(type,pal,v,tier,item){
 /* Local coordinates are taken from the handle/stave pixels of weaponMarkup,
    not the old arbitrary (191,244) point. Each rendered handle now passes
    through the actual wrist. Adding a weapon type only requires one socket. */
-const PAPER_WEAPON_GRIPS=Object.freeze({
-  sword:[200,279],greatsword:[200,279],axe:[204,279],
-  hammer:[205,279],mace:[205,279],dagger:[202,279],
-  staff:[201,220],spear:[201,220],
-  bow:[213,213],crossbow:[200,219],
-  wand:[203,279],focus:[200,279],scepter:[202,279],rod:[202,279]
-});
-const PAPER_WEAPON_STANCES=Object.freeze({
-  sword:'one-handed',greatsword:'heavy',axe:'one-handed',
-  hammer:'heavy',mace:'one-handed',dagger:'close',
-  staff:'caster',spear:'polearm',bow:'ranged',crossbow:'ranged',
-  wand:'caster',focus:'caster',scepter:'caster',rod:'caster'
-});
 function paperHeldGrip(c,fit,item,side){
-  var isMain=side==='main',x=isMain?fit.weaponX:fit.offhandX,
-      y=isMain?fit.weaponY:fit.offhandY,
+  var isMain=side==='main',x=isMain?fit.weaponX:fit.leftHand,
+      y=isMain?fit.weaponY:fit.handY,
       gloves=itemForSlot(c,'Hands'),pal=gloves&&gearPalette(c,gloves,clampTier(gloves.tier)||1,'Hands'),
       race=c.race||c.appearance?.race||'Veyren',
       a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),
@@ -1075,7 +989,7 @@ function paperHeldGrip(c,fit,item,side){
   // The underlying wrist/glove is behind the weapon; this is the front
   // thumb-and-finger layer. This overlap creates an actual visible grip.
   return '<g class="cb-paper-held-grip cb-paper-held-grip-'+side+'" data-hand-socket="'+(isMain?'mainHand':'offHand')+
-    '" data-hand-x="'+x.toFixed(2)+'" data-hand-y="'+y.toFixed(2)+'">'+
+    '" data-hand-x="'+x.toFixed(2)+'" data-hand-y="'+y.toFixed(2)+'" transform="rotate('+((isMain||fit.attachments.twoHanded?fit.attachments.main?.angle:fit.attachments.off?.angle)||0)+' '+x+' '+y+')">'+
     '<path class="cb-paper-weapon-grip-hand" d="M'+(x-r).toFixed(2)+' '+(y-6*scale).toFixed(2)+
     ' Q'+(x-8*scale).toFixed(2)+' '+(y-2*scale).toFixed(2)+' '+(x-6*scale).toFixed(2)+' '+(y+4*scale).toFixed(2)+
     ' Q'+x.toFixed(2)+' '+(y+9*scale).toFixed(2)+' '+(x+5*scale).toFixed(2)+' '+(y+5*scale).toFixed(2)+
@@ -1089,32 +1003,14 @@ function paperHeldGrip(c,fit,item,side){
     '" fill="none" stroke="'+shade+'" stroke-width="1" opacity=".7"/></g>';
 }
 function paperWeapon(c,highlighted){
-  var item=itemForSlot(c,'Weapon'),tier=clampTier(item&&item.tier);
-  if(!item)return'';
-  var pal=gearPalette(c,item,tier,'Weapon'),type=weaponType(item,c),v=pal.variant,fit=paperFit(c);
-  var gx=fit.weaponX??fit.rightHand??191,gy=fit.weaponY??fit.handY??279,
-      angle=Number(fit.weaponAngle)||0,
-      local=PAPER_WEAPON_GRIPS[type]||PAPER_WEAPON_GRIPS.sword,
-      stance=PAPER_WEAPON_STANCES[type]||'one-handed';
-  // Rotation is around the physical handle, not the old weapon sprite's
-  // arbitrary origin. Main-hand glove lies below; fingers paint over the grip.
-  // Keep the asset's HANDLE on the wrist while giving every family an idle
-  // silhouette: daggers/swords point down, staves plant at the floor, heavy
-  // weapons sit at a restrained scale. Size is independent of body sockets.
-  var scale=type==='dagger'?.88:type==='sword'?.77:type==='greatsword'?.70:
-    type==='hammer'||type==='axe'||type==='mace'?.82:
-    type==='staff'||type==='spear'?.98:type==='bow'?.89:type==='crossbow'?.88:.84;
-  var transform='translate('+gx.toFixed(2)+' '+gy.toFixed(2)+') rotate('+angle.toFixed(2)+
-    ') scale('+scale.toFixed(2)+') translate(-'+local[0]+' -'+local[1]+')';
-  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+' cb-paper-side-weapon" data-weapon-type="'+esc(type)+
-    '" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'" data-render-layer="mainhand-side"'+
-    ' data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-weapon-pose="side-held" data-weapon-pose-layout="across-body"'+
-    ' data-weapon-pose-version="'+WEAPON_POSE_VERSION+'" data-weapon-stance="'+stance+
-    '" data-grip-local-x="'+local[0]+'" data-grip-local-y="'+local[1]+
-    '" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+
-    '" data-weapon-visual-scale="'+scale.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+
-    '" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+
-    weaponMarkup(type,pal,v,tier,item)+'</g>'+paperHeldGrip(c,fit,item,'main');
+  var item=itemForSlot(c,'Weapon');if(!item)return'';
+  var tier=clampTier(item.tier),pal=gearPalette(c,item,tier,'Weapon'),fit=paperFit(c),a=fit.attachments.main;
+  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+' cb-paper-side-weapon" data-weapon-type="'+a.kind+
+    '" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'" data-render-layer="mainhand-side" data-fit-version="4" data-alignment="v4" data-weapon-pose="side-held" data-weapon-pose-layout="joint-solved"'+
+    ' data-weapon-pose-version="'+WEAPON_POSE_VERSION+'" data-weapon-stance="'+a.mode+'" data-grip-local-x="'+a.grip[0]+'" data-grip-local-y="'+a.grip[1]+
+    '" data-grip-x="'+a.x+'" data-grip-y="'+a.y+'" data-weapon-visual-scale="'+a.scale+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+
+    '" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+RIG.attachmentTransform(a)+'">'+weaponMarkup(a.kind,pal,pal.variant,tier,item)+'</g>'+
+    paperHeldGrip(c,fit,item,'main')+(fit.attachments.twoHanded?paperHeldGrip(c,fit,item,'off'):'');
 }
 function offHandBaseMarkup(type,pal,v,tier,item){
   if(type==='shield'){
@@ -1131,23 +1027,27 @@ function offHandMarkup(type,pal,v,tier,item){
   return offHandBaseMarkup(type,pal,v,tier,item)+betaOffhandDetail(item,pal,tier,type);
 }
 function paperOffHand(c,highlighted,layer){
-  var item=itemForSlot(c,'OffHand'),tier=clampTier(item&&item.tier);if(!item)return'';
-  if(item.slot&&item.slot!=='OffHand')return'';
-  var pal=gearPalette(c,item,tier,'OffHand'),type=offHandType(item,c),v=pal.variant,isBack=type==='shield';
-  if(layer==='back'&&!isBack)return'';if(layer==='front'&&isBack)return'';
-  var fit=paperFit(c),gx=fit.offhandX||fit.leftHand||49,gy=fit.offhandY||fit.handY||279;
-  var scale=type==='shield'?.86:type==='quiver'?.84:type==='dagger'?.90:type==='tome'?.82:type==='idol'?.78:.74;
-  var transform='translate('+gx.toFixed(2)+' '+gy.toFixed(2)+') scale('+scale+') translate(-49 -244)';
-  var art='<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'" data-render-layer="'+(isBack?'shield-back':'front-offhand')+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+'" data-offhand-scale="'+scale.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+offHandMarkup(type,pal,v,tier,item)+'</g>';
-  // Shield stays on the forearm behind the wrist. For a front off-hand,
-  // the visible palm closes over the object's handle instead of floating.
-  return art+(isBack?'':paperHeldGrip(c,fit,item,'off'));
+  var item=itemForSlot(c,'OffHand'),fit=paperFit(c),a=fit.attachments.off;if(!item||!a)return'';
+  var back=a.layer==='equipment-back';if((layer==='back')!==back)return'';
+  var tier=clampTier(item.tier),pal=gearPalette(c,item,tier,'OffHand'),type=a.kind;
+  var art=type==='dagger'?weaponMarkup('dagger',pal,pal.variant,tier,item):offHandMarkup(type,pal,pal.variant,tier,item);
+  return '<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+type+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+
+    '" data-render-layer="'+a.layer+'" data-attachment-mode="'+a.mode+'" data-fit-version="4" data-alignment="v4" data-grip-x="'+a.x+'" data-grip-y="'+a.y+
+    '" data-grip-local-x="'+a.grip[0]+'" data-grip-local-y="'+a.grip[1]+'" data-offhand-scale="'+a.scale+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+
+    '" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+RIG.attachmentTransform(a)+'">'+art+'</g>'+
+    (!back&&type!=='shield'?paperHeldGrip(c,fit,item,'off'):'');
+}
+function paperCarryStrap(c){
+  var fit=paperFit(c),a=fit.attachments.off;if(!a||a.mode!=='stowed')return'';
+  var back=a.kind==='shield'||a.kind==='quiver',x=120-fit.p.waist;
+  var path=back?'M'+fit.leftShoulder+' 150 L'+(120+fit.p.waist)+' 246':'M'+x+' 244 L'+a.x+' '+a.y;
+  return '<g class="cb-paper-carry-strap"><path d="'+path+'" stroke="#302d27" stroke-width="5" fill="none"/><path d="'+path+'" stroke="#a39470" stroke-width="1.2" fill="none"/></g>';
 }
 function paperAccessories(c,highlighted){
   var out='',fit=paperFit(c),lh=fit.leftHand||69,rh=fit.rightHand||171,hy=fit.handY||283,rhy=fit.rightHandY??hy,
       ring1=itemForSlot(c,'Ring1'),ring2=itemForSlot(c,'Ring2'),tr1=itemForSlot(c,'Trinket1'),tr2=itemForSlot(c,'Trinket2'),relic=itemForSlot(c,'Relic');
   if(ring1){var p1=gearPalette(c,ring1,clampTier(ring1.tier),'Ring1');out+='<g class="'+paperSlotClass('Ring1',highlighted,ring1)+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-ring-x="'+lh.toFixed(2)+'" data-ring-y="'+(hy-1).toFixed(2)+'"><circle cx="'+lh+'" cy="'+(hy-1)+'" r="3.7" fill="none" stroke="'+p1.trim+'" stroke-width="2"/><circle cx="'+lh+'" cy="'+(hy-3)+'" r="1.2" fill="'+p1.glow+'"/></g>'}
-  if(ring2){var p2=gearPalette(c,ring2,clampTier(ring2.tier),'Ring2');out+='<g class="'+paperSlotClass('Ring2',highlighted,ring2)+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-ring-x="'+rh.toFixed(2)+'" data-ring-y="'+(rhy-1).toFixed(2)+'"><circle cx="'+rh+'" cy="'+(rhy-1)+'" r="3.7" fill="none" stroke="'+p2.trim+'" stroke-width="2"/><circle cx="'+rh+'" cy="'+(hy-3)+'" r="1.2" fill="'+p2.glow+'"/></g>'}
+  if(ring2){var p2=gearPalette(c,ring2,clampTier(ring2.tier),'Ring2');out+='<g class="'+paperSlotClass('Ring2',highlighted,ring2)+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-ring-x="'+rh.toFixed(2)+'" data-ring-y="'+(rhy-1).toFixed(2)+'"><circle cx="'+rh+'" cy="'+(rhy-1)+'" r="3.7" fill="none" stroke="'+p2.trim+'" stroke-width="2"/><circle cx="'+rh+'" cy="'+(rhy-3)+'" r="1.2" fill="'+p2.glow+'"/></g>'}
   var p=fit.p,waistHalf=Math.max(p.waist,p.hip*.70);
   if(tr1){var t1=gearPalette(c,tr1,clampTier(tr1.tier),'Trinket1'),tx=120-waistHalf*.48;out+='<g class="'+paperSlotClass('Trinket1',highlighted,tr1)+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4"><path d="M'+tx+' 252 L'+(tx-3)+' 278" stroke="'+t1.trim+'" stroke-width="2"/>'+itemRune(tr1,'Trinket1',t1,tx-4,282,.55)+'</g>'}
   if(tr2){var t2=gearPalette(c,tr2,clampTier(tr2.tier),'Trinket2'),tx2=120+waistHalf*.48;out+='<g class="'+paperSlotClass('Trinket2',highlighted,tr2)+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4"><path d="M'+tx2+' 252 L'+(tx2+3)+' 278" stroke="'+t2.trim+'" stroke-width="2"/>'+itemRune(tr2,'Trinket2',t2,tx2+4,282,.55)+'</g>'}
@@ -1184,6 +1084,7 @@ function paperTierAura(c){
 function paperDollSVG(c,opts){
   opts=opts||{};
   var showGear=opts.showGear!==false;
+  c=modelSubject(c);
   c=showGear?c:Object.assign({},c,{equipment:{}});
   var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
@@ -1195,18 +1096,18 @@ function paperDollSVG(c,opts){
   var hip=profile.hip||32;
   var under='<path d="M'+(120-hip)+' 236 Q120 250 '+(120+hip)+' 236 L'+(120+hip+1)+' 268 Q120 282 '+(120-hip-1)+' 268Z" fill="#162126" stroke="#10171b" stroke-width="3"/><path d="M'+(120-hip+6)+' 252 Q120 261 '+(120+hip-6)+' 252" fill="none" stroke="#526065" stroke-width="1.3" opacity=".36"/>';
   var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=29+(50*(1-headScale));
-  return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v4" data-item-visuals="v2" data-palette-mode="gear-owned" data-weapon-pose="held-v2" role="img" aria-hidden="true" focusable="false">'+
+  return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v4" data-item-visuals="v2" data-palette-mode="gear-owned" data-weapon-pose="held-v3" role="img" aria-hidden="true" focusable="false">'+
     '<defs><radialGradient id="'+uid+'a" cx="50%" cy="46%" r="54%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".13"/><stop offset="70%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient></defs>'+
     '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
     '<ellipse cx="120" cy="392" rx="'+Math.max(66,profile.shoulder+23)+'" ry="10" fill="#000" opacity=".38"/>'+
-    paperTierAura(c)+
+    '<g class="cb-paper-actor" transform="'+(opts.mirrored?'translate(240 0) scale(-1 1)':'translate(0 0)')+'">'+paperTierAura(c)+
     paperLegs(c,skin,highlighted)+paperFeet(c,skin,highlighted)+
     paperOffHand(c,highlighted,'back')+
-    paperRaceSilhouette(c,profile,skin)+paperArms(c,skin,highlighted)+under+paperChest(c,highlighted,skin)+paperWaist(c,highlighted)+paperShoulders(c,highlighted)+paperAccessories(c,highlighted)+paperWeaponForearm(c)+
+    paperRaceSilhouette(c,profile,skin)+paperArms(c,skin,highlighted)+under+paperChest(c,highlighted,skin)+paperWaist(c,highlighted)+paperCarryStrap(c)+paperShoulders(c,highlighted)+paperWeaponForearm(c,highlighted)+paperAccessories(c,highlighted)+
     neck+
     '<g transform="translate('+headX+' '+headY+') scale('+headScale+')">'+paperHeadMarkup(c,a,skin,eye,hair,highlighted)+'</g>'+
     paperOffHand(c,highlighted,'front')+paperWeapon(c,highlighted)+
-    '</svg>';
+    '</g></svg>';
 }
 function paperDollHTML(subject,opts){
   opts=opts||{};
@@ -1224,37 +1125,17 @@ function visualProfile(subject,item,slot){
 
 function classicRace(subject){return typeof subject==='string'?subject:(subject?.race||subject?.appearance?.race||'Veyren')}
 function classicBodyProfile(subject){return bodyProfile(classicRace(subject),typeof subject==='object'?subject.appearance:null)}
-function classicGearFitProfile(subject){
-  if(RIG?.gearFitProfile)return RIG.gearFitProfile(subject||{});
-  var p=classicBodyProfile(subject),race=classicRace(subject),reach=Math.max(5.5,p.arm*.5),leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder,leftHand=leftShoulder-reach,baseRightHand=rightShoulder+reach;
-  var weapon=subject?.equipment?.Weapon,type=weapon?weaponType(weapon,subject):'';
-  var pole=['staff','spear','rod','wand','scepter','focus'].includes(type),
-      ranged=type==='bow'||type==='crossbow',close=type==='dagger',
-      heavy=['greatsword','hammer','axe'].includes(type),
-      rightHand=weapon?rightShoulder-p.shoulder*(ranged?.29:pole?.31:close?.31:heavy?.29:.31):baseRightHand,
-      weaponY=weapon?(type==='bow'?207:type==='crossbow'?211:pole?(type==='spear'?224:type==='staff'?207:211):close?207:heavy?216:203):279,
-      angle=weapon?(type==='bow'?7:type==='crossbow'?-9:pole?(type==='spear'?2:5):
-        type==='dagger'?145:type==='sword'?151:type==='greatsword'?154:
-        ['hammer','mace','axe'].includes(type)?17:type==='wand'?14:7):0,
-      sideMin=weapon?120+p.shoulder*.22:rightShoulder;
-  return {race,gender:Number(subject?.appearance?.gender)||0,frame:Number(subject?.appearance?.frame)||1,p,
-    centerX:120,leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,
-    waistHalf:p.waist||28,hipHalf:p.hip||32,leftLeg:120-p.hip*.38,rightLeg:120+p.hip*.38,
-    legHalf:Math.max(8.5,(p.leg||14)*.62),calfHalf:Math.max(7.4,(p.leg||14)*.52),
-    footHalf:(p.leg||14)*.8,weaponX:rightHand,weaponY,weaponAngle:angle,
-    weaponPose:weapon?'side-held':'rest',weaponSideMin:sideMin,offhandX:leftHand,offhandY:279,handY:279,rightHandY:weaponY};
-}
+function classicGearFitProfile(subject){return paperFit(subject)}
 function classicWeaponFitProfile(subject,item){
-  var copy=subject&&typeof subject==='object'?Object.assign({},subject,{equipment:Object.assign({},subject.equipment||{},{Weapon:item||subject?.equipment?.Weapon})}):subject;
-  var f=classicGearFitProfile(copy),t=weaponType(item,subject),long=['staff','spear','greatsword','bow','crossbow'].includes(t);
-  return {anchorX:f.weaponX,anchorY:f.weaponY,pivotX:f.weaponX,pivotY:f.weaponY,rotate:f.weaponAngle||0,scale:long?1.04:1,pose:'side-held'};
+  var copy={...subject,equipment:{...subject?.equipment,Weapon:item||subject?.equipment?.Weapon}},a=paperFit(copy).attachments.main;
+  return a?{anchorX:a.x,anchorY:a.y,pivotX:a.x,pivotY:a.y,rotate:a.angle,scale:a.scale,pose:a.mode}:null;
 }
 function classicTierVisualProfile(value){
   var t=Math.max(1,Math.min(5,Math.round(Number(value?.tier||value)||1)));
   return {tier:t,shoulder:1+t*.08,chest:1+t*.06,collar:1+t*.05,weapon:1+t*.08};
 }
 function classicEquipmentCoverage(subject){return {hair:Boolean(itemForSlot(subject,'Head')),growth:Boolean(itemForSlot(subject,'Head'))}}
-function classicAnchors(subject){return RIG?.anchors?RIG.anchors(subject||{}):{}}
+function classicAnchors(subject){return RIG.anchors(modelSubject(subject))}
 
 window.CellboundPortraits={
   version:CHARACTER_MODEL_VERSION,raceIdentityVersion:RACE_IDENTITY_VERSION,equipmentFitVersion:EQUIPMENT_FIT_VERSION,weaponPoseVersion:WEAPON_POSE_VERSION,itemVisualsVersion:ITEM_VISUALS_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,baseArtContract:BASE_ART_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,

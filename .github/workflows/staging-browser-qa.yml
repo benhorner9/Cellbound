@@ -64,6 +64,7 @@ jobs:
           path: |
             /tmp/cellbound-living-combat.png
             /tmp/cellbound-equipment-fit-*.png
+            /tmp/cellbound-weapon-*.png
             /tmp/cellbound-race-identity-v2-*.png
             /tmp/cellbound-item-visuals-v2-*.png
             /tmp/cellbound-full-playthrough.png
