@@ -4799,3 +4799,60 @@ body.cb-immersive-ui:has(.modal-backdrop:not([hidden])) .cb-dock,
 body.cb-immersive-ui:has(.recruit-modal-backdrop:not([hidden])) .cb-dock{
   visibility:hidden;pointer-events:none
 }
+
+
+/* COMBAT DESKTOP CHAT VISIBILITY V23
+ * Reserve space for real Social chat in the canonical PC encounter HUD.
+ * Previously the 16:9 arena used all available width, grew taller than the
+ * centre column and was clipped with chat beneath it. Size the art by BOTH
+ * viewport width and height; retain the uncropped 16:9 scene.
+ */
+@media (min-width:850px) {
+  .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live)
+  .cbcombat-battle-panel {
+    min-height:0!important;
+    height:100%!important;
+    overflow:hidden!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live)
+  .cbcombat-battle-panel > .cbcombat-arena-wrap {
+    box-sizing:border-box!important;
+    flex:0 1 auto!important;
+    width:min(100%, max(220px, calc((100dvh - 395px) * 1.777778)))!important;
+    height:auto!important;
+    max-width:100%!important;
+    max-height:none!important;
+    min-width:0!important;
+    aspect-ratio:16 / 9!important;
+    margin-inline:auto!important;
+    align-self:center!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+  .cbcombat-battle-panel > .cbcombat-chat {
+    display:flex!important;
+    flex:1 1 165px!important;
+    min-height:165px!important;
+    width:100%!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+    background:linear-gradient(180deg,#101f23,#08161c)!important;
+    border-color:rgba(141,170,155,.35)!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-chat-messages {
+    flex:1 1 auto!important;
+    min-height:36px!important;
+    overflow-y:auto!important;
+  }
+}
+/* Short desktop windows: keep the text entry bar usable before enlarging art. */
+@media (min-width:850px) and (max-height:650px) {
+  .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+  .cbcombat-battle-panel > .cbcombat-chat {
+    min-height:136px!important;
+    flex-basis:136px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live)
+  .cbcombat-battle-panel > .cbcombat-arena-wrap {
+    width:min(100%, max(180px, calc((100dvh - 345px) * 1.777778)))!important;
+  }
+}
