@@ -846,12 +846,14 @@ function paperArms(c,skin,highlighted){
       handY=fit.handY||279,rightY=fit.rightHandY??handY,aw=Math.max(5.2,p.arm*.44),held=!!itemForSlot(c,'Weapon');
   var wristY=handY-19,rightWristY=rightY-19;
   var left='M'+(ls-aw)+' 148 Q'+(ls-aw-7)+' 185 '+(lh-aw)+' 229 Q'+(lh-aw*.65)+' 249 '+(lh-aw*.28)+' '+wristY+' L'+(lh+aw*.28)+' '+wristY+' Q'+(lh+aw*.65)+' 249 '+(ls+aw)+' 148Z';
-  var elbowX=rs+Math.max(15,p.arm*.80),elbowY=Math.min(237,rightY+1);
+  var elbowX=rs+Math.max(9,p.arm*.48),elbowY=Math.min(277,Math.max(rightY+38,263));
+  // Upper-arm silhouette ends at the elbow; the front forearm is painted once.
   var right=held?
-    'M'+(rs-aw)+' 148 Q'+rs+' 148 '+(rs+aw)+' 156 L'+(elbowX+aw*.7)+' '+(elbowY-6)+
-    ' Q'+(elbowX+aw)+' '+(elbowY+aw*.5)+' '+elbowX+' '+(elbowY+aw*.7)+
-    ' L'+(rh-aw*.2)+' '+(rightWristY+aw*.8)+' L'+(rh-aw*.4)+' '+(rightWristY-aw*.6)+
-    ' L'+(elbowX-aw*.45)+' '+(elbowY-aw*.7)+' Q'+(rs-aw*.85)+' 191 '+(rs-aw)+' 148Z':
+    'M'+(rs-aw)+' 148 Q'+rs+' 151 '+(rs+aw)+' 164 '+
+    'L'+(elbowX+aw*.7)+' '+(elbowY-aw*.65)+
+    ' Q'+(elbowX+aw)+' '+elbowY+' '+(elbowX+aw*.45)+' '+(elbowY+aw*.7)+
+    ' L'+(elbowX-aw*.48)+' '+(elbowY+aw*.64)+
+    ' Q'+(rs-aw*.45)+' '+(elbowY-32)+' '+(rs-aw)+' 148Z':
     'M'+(rs+aw)+' 148 Q'+(rs+aw+7)+' 185 '+(rh+aw)+' 229 Q'+(rh+aw*.65)+' 249 '+(rh+aw*.28)+' '+rightWristY+' L'+(rh-aw*.28)+' '+rightWristY+' Q'+(rh-aw*.65)+' 249 '+(rs-aw)+' 148Z';
   var details=paperRaceArmDetails(c,p,ls,rs),scale=p.hand||1,klass=gearClass(hands),heavy=['Warrior','Paladin','Death Knight'].includes(klass);
   var hw=Math.max(6.5,scale*6.5)+(heavy?1.6:0),top=handY-27,bottom=handY+10,rtop=rightY-27,rbottom=rightY+10;
@@ -872,24 +874,35 @@ function paperArms(c,skin,highlighted){
 /* In front of the chest armour, before the weapon. The hand now has a
    visible bent forearm from elbow to wrist, so a floating staff beside a
    straight arm is impossible in the equipped model. */
+/* Anatomical arm ready pose: elbow hangs below the inward, raised grip,
+   rather than stretching an extra horizontal bar across the waist. */
 function paperWeaponForearm(c){
   if(!itemForSlot(c,'Weapon'))return '';
   var fit=paperFit(c),p=fit.p,hands=itemForSlot(c,'Hands'),tier=clampTier(hands&&hands.tier),
       pal=gearPalette(c,hands,tier||1,'Hands'),race=c.race||c.appearance?.race||'Veyren',
       a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),
       skin=raceDef(a.race).skin[a.skinTone],fill=tier?pal.base:skin,
-      trim=tier?pal.trim:'#4d4034',th=Math.max(7.5,p.arm*.48),
-      x=fit.weaponX,y=fit.weaponY,elbowX=fit.rightShoulder+Math.max(15,p.arm*.80),elbowY=Math.min(237,y+1),
-      cuffX=x+1,cuffY=y-5;
+      trim=tier?pal.trim:'#4d4034',x=fit.weaponX,y=fit.weaponY,
+      elbowX=fit.rightShoulder+Math.max(9,p.arm*.48),
+      elbowY=Math.min(277,Math.max(y+38,263)),
+      dx=elbowX-x,dy=elbowY-y,len=Math.hypot(dx,dy),
+      nx=-dy/len,ny=dx/len,
+      et=Math.max(6.2,p.arm*.38),wt=Math.max(4.4,p.hand*4.6),
+      a1x=elbowX+nx*et,a1y=elbowY+ny*et,
+      a2x=x+nx*wt,a2y=y+ny*wt,
+      b1x=elbowX-nx*et,b1y=elbowY-ny*et,
+      b2x=x-nx*wt,b2y=y-ny*wt;
+  function pt(x,y){return x.toFixed(2)+' '+y.toFixed(2)}
+  var contour='M'+pt(a1x,a1y)+' Q'+pt((a1x+a2x)/2,(a1y+a2y)/2-2)+' '+pt(a2x,a2y)+
+    ' Q'+pt(x,y-2)+' '+pt(b2x,b2y)+
+    ' Q'+pt((b1x+b2x)/2,(b1y+b2y)/2+1)+' '+pt(b1x,b1y)+'Z';
   return '<g class="cb-paper-weapon-forearm" data-weapon-forearm="across-body" data-forearm-hand-x="'+x.toFixed(2)+
     '" data-forearm-hand-y="'+y.toFixed(2)+'" data-forearm-elbow-x="'+elbowX.toFixed(2)+
-    '" data-forearm-elbow-y="'+elbowY.toFixed(2)+'">'+
-    '<path d="M'+(elbowX+th*.52)+' '+(elbowY-th)+' Q'+(elbowX+th*1.15)+' '+elbowY+' '+(elbowX+th*.42)+' '+(elbowY+th*.74)+
-    ' L'+(cuffX+th*.54)+' '+(cuffY+th*.76)+' Q'+(cuffX-th*.44)+' '+(cuffY+th*.65)+' '+(cuffX-th*.62)+' '+(cuffY-th*.55)+
-    ' L'+(elbowX-th*.58)+' '+(elbowY-th*.75)+'Z" fill="'+fill+'" stroke="#101c1b" stroke-width="2.2"/>'+
-    '<path d="M'+(cuffX-th*.56)+' '+(cuffY-th*.32)+' Q'+cuffX+' '+(cuffY-3)+' '+(cuffX+th*.56)+' '+(cuffY-th*.32)+
-    '" fill="none" stroke="'+trim+'" stroke-width="2.2"/>'+
-    '<ellipse cx="'+x+'" cy="'+y+'" rx="'+Math.max(5.3,p.hand*5.6)+'" ry="'+Math.max(7,p.hand*7)+'" fill="'+fill+'" stroke="'+trim+'" stroke-width="1.5"/>'+
+    '" data-forearm-elbow-y="'+elbowY.toFixed(2)+'" data-forearm-slope="'+(elbowY-y).toFixed(2)+'">'+
+    '<path class="cb-paper-anatomical-forearm" d="'+contour+'" fill="'+fill+'" stroke="#101c1b" stroke-width="1.8"/>'+
+    '<path d="M'+pt(a2x,a2y)+' Q'+pt(x,y+2)+' '+pt(b2x,b2y)+
+    '" fill="none" stroke="'+trim+'" stroke-width="1.7"/>'+
+    '<ellipse cx="'+x+'" cy="'+y+'" rx="'+Math.max(5.3,p.hand*5.6)+'" ry="'+Math.max(6.7,p.hand*6.7)+'" fill="'+fill+'" stroke="'+trim+'" stroke-width="1.3"/>'+
     '</g>';
 }
 function paperChest(c,highlighted,skin){
@@ -949,8 +962,8 @@ function weaponMarkup(type,pal,v,tier,item){
       '<path d="M166 200 L224 201 M197 190 L200 219 M188 212 L218 212" stroke="'+pal.trim+'" stroke-width="2.5"/>';
     ornamentY=211;
   }else if(type==='spear'){
-    g='<path d="M195 89 L204 354" stroke="'+pal.dark+'" stroke-width="7" stroke-linecap="round"/>'+
-      '<path d="M194 98 L193 54 L208 92 L200 114Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.5"/>'+
+    g='<path d="M195 112 L204 354" stroke="'+pal.dark+'" stroke-width="7" stroke-linecap="round"/>'+
+      '<path d="M194 114 L193 84 L208 108 L200 128Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.5"/>'+
       '<path d="M192 118 L204 115" stroke="'+pal.trim+'" stroke-width="4"/>';
     ornamentY=205;
   }else if(type==='axe'){
@@ -1199,7 +1212,7 @@ function classicGearFitProfile(subject){
       heavy=['greatsword','hammer','axe'].includes(type),
       rightHand=weapon?rightShoulder-p.shoulder*(ranged?.38:pole?.51:close?.47:heavy?.39:.44):baseRightHand,
       weaponY=weapon?(type==='bow'?224:type==='crossbow'?232:pole?222:close?227:heavy?235:230):279,
-      angle=weapon?(type==='bow'?48:type==='crossbow'?-23:pole?(type==='spear'?12:10):close?30:heavy?17:20):0,
+      angle=weapon?(type==='bow'?14:type==='crossbow'?-15:pole?(type==='spear'?4:2):close?-18:heavy?-10:-14):0,
       sideMin=weapon?120+p.shoulder*.22:rightShoulder;
   return {race,gender:Number(subject?.appearance?.gender)||0,frame:Number(subject?.appearance?.frame)||1,p,
     centerX:120,leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,

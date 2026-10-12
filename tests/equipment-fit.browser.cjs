@@ -97,7 +97,8 @@ const engine=engineName==='webkit'?webkit:chromium;
               fail(item,race,gender,'front fingers do not wrap the weapon handle',b);
 
             const forearm=svg.querySelector('.cb-paper-weapon-forearm');
-            if(!forearm||forearm.getAttribute('data-weapon-forearm')!=='across-body'){
+            if(!forearm||forearm.getAttribute('data-weapon-forearm')!=='across-body'||
+                Number(forearm.getAttribute('data-forearm-slope'))<36){
               fail(item,race,gender,'main hand is not supported by a visibly bent forearm',b);
             }else{
               const armBox=modelBox(svg,forearm);

@@ -57,6 +57,7 @@ for(const item of G.items){
       assert(html.includes('data-weapon-pose-layout="across-body"'),item.itemId+' is missing cross-body holding stance');
       assert(near(num(html,'data-right-hand-y'),fit.weaponY),item.itemId+' right glove does not reach raised wrist');
       assert(html.includes('data-weapon-forearm="across-body"'),item.itemId+' main-hand lacks visible bent forearm');
+      assert(num(html,'data-forearm-slope')>=36,item.itemId+' elbow is not below the weapon grip');
       assert(near(num(html,'data-forearm-hand-x'),fit.weaponX)&&near(num(html,'data-forearm-hand-y'),fit.weaponY),
         item.itemId+' elbow/forearm does not connect to gripping hand');
       if(['sword','greatsword'].includes(P.weaponType(item,c))){
