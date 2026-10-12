@@ -1202,3 +1202,394 @@ html body.cb-top-nav-enabled #overview .home-activity-empty{color:#bbcad2}
   .cb-v3-update-picture{flex-basis:36%}
   html body.cb-top-nav-enabled #overview .cb-hub-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+
+
+/* ======================================================================
+   CELLBOUND UNIFIED PREMIUM THEME V4
+   App-wide game chrome: navy, warm ivory, gold and bright key art.
+   Scoped to page surfaces. Combat arenas / editors / tutorials keep their
+   dedicated mechanics, health cues, rarity colours and focus behaviour.
+   ====================================================================== */
+html body.cb-top-nav-enabled{
+  --cb-uni-bg:#0b1928;
+  --cb-uni-navy:#122537;
+  --cb-uni-panel:#182b3e;
+  --cb-uni-card:#1c3044;
+  --cb-uni-hover:#26425a;
+  --cb-uni-line:#455c72;
+  --cb-uni-line-soft:#344a5d;
+  --cb-uni-ivory:#f6ebda;
+  --cb-uni-text:#d7e0e9;
+  --cb-uni-muted:#adbfcf;
+  --cb-uni-gold:#e2bb74;
+  --cb-uni-sky:#a1cdf1;
+  --cb-uni-positive:#8fdeb6;
+  --cb-uni-shadow:0 12px 28px rgba(1,9,19,.28);
+  color:var(--cb-uni-text);
+}
+/* Give each main destination a different piece of Cellbound's real art. */
+html body.cb-top-nav-enabled #roster,
+html body.cb-top-nav-enabled #party{--cb-place-art:url('./assets/comics/tutorial-2026/sunset-briefing.webp')}
+html body.cb-top-nav-enabled #bank{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-armory.webp')}
+html body.cb-top-nav-enabled #professions{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-relic.webp')}
+html body.cb-top-nav-enabled #trading{--cb-place-art:url('./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp')}
+html body.cb-top-nav-enabled #quests{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-trail.webp')}
+html body.cb-top-nav-enabled #content{--cb-place-art:url('./assets/dungeons/ashen-vault.webp')}
+html body.cb-top-nav-enabled #world{--cb-place-art:url('./assets/world/twelve-below-key-art.webp')}
+html body.cb-top-nav-enabled #chat{--cb-place-art:url('./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp')}
+html body.cb-top-nav-enabled #pvp{--cb-place-art:url('./assets/pvp/maps/arena-shattered-crucible.svg')}
+html body.cb-top-nav-enabled #admin{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-armory.webp')}
+html body.cb-top-nav-enabled #highscores{--cb-place-art:url('./assets/comics/tutorial-2026/wardstone-twilight.webp')}
+html body.cb-top-nav-enabled #support{--cb-place-art:url('./assets/comics/tutorial-2026/sunset-briefing.webp')}
+/* All non-home section intros use this layout and preserve their original copy/actions. */
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:clamp(178px,17vw,244px);
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  border:1px solid #6a8396!important;border-radius:6px;
+  background-color:#23415b;
+  background-image:linear-gradient(90deg,rgba(9,26,41,.95),rgba(14,34,51,.82) 42%,rgba(14,34,51,.12) 100%),var(--cb-place-art)!important;
+  background-size:cover,cover!important;
+  background-position:center,center 45%!important;
+  box-shadow:var(--cb-uni-shadow)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro:after{
+  content:"";position:absolute;inset:auto 0 0;height:3px;
+  background:linear-gradient(90deg,#eac784 0%,rgba(234,199,132,.45) 40%,transparent);
+  pointer-events:none;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro :is(h2,p,small){
+  text-shadow:0 2px 9px rgba(1,9,18,.65);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro small{
+  font-size:clamp(10px,.84vw,12px)!important;letter-spacing:.16em;color:#f4cf91!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro h2{
+  font:normal clamp(29px,3.1vw,48px)/1.06 Georgia,serif!important;
+  color:#fff0d7!important;margin:7px 0;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro p{
+  color:#e2e7e8!important;font-size:clamp(12px,1.05vw,15px)!important;line-height:1.5;
+}
+/* Common panels and secondary card surfaces. No gameplay canvas or modal overrides. */
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.admin-card,.tp-panel,.pvp-panel,.beta-panel,.dungeon-episode,
+      .dungeon-browser-card,.dungeon-detail-panel,.dungeon-episode-empty,
+      .quest-journal-nav,.quest-journal-detail,.quest-journal-side,.roster-character-card,
+      .bank-card-v2,.mr-card,.mr-party-panel,.report-card){
+  border-color:var(--cb-uni-line)!important;
+  border-radius:6px;
+  box-shadow:var(--cb-uni-shadow)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.admin-card,.tp-panel,.pvp-panel,.beta-panel,.dungeon-episode,.dungeon-episode-empty,.quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+  background:linear-gradient(145deg,#1c3043,#112334)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header,.dungeon-browser-heading){
+  border-bottom-color:var(--cb-uni-line-soft)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) :is(h2,h3){
+  color:var(--cb-uni-ivory)!important;font-family:Georgia,serif;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) small{
+  color:var(--cb-uni-gold)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) .panel-head-note{color:var(--cb-uni-muted)}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.ui-search,.tp-search){
+  background:#102032!important;
+  border:1px solid #516e86!important;border-radius:4px;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.ui-search,.tp-search) input{
+  color:#f2f1e9!important;caret-color:#f4d28d;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ui-select,.tp-filters input,.tp-filters select,.tp-action-form input,.tp-action-form select,
+      .beta-form input,.beta-form select,.beta-form textarea,
+      .party-finder-form input,.party-finder-form select,.guild-name-form input){
+  border-color:#537088!important;background:#102134!important;color:#f0ece5!important;
+  border-radius:4px;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) input::placeholder,
+html body.cb-top-nav-enabled .main>.view:not(#overview) textarea::placeholder{color:#a6b8c6!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.roster-role-filters,.filters,.roster-filter-primary,.bank-filter-row,.tp-filters,.tp-market-bar){
+  min-width:0;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.filter,.roster-clear-filters,.bank-clear-filters,.tp-filter-actions button,
+      .tp-refresh,.admin-workspace-nav button,.ghost-btn){
+  color:#e5eaf1!important;background:#20364b!important;
+  border:1px solid #536b82!important;border-radius:4px;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,
+      .admin-workspace-nav button.active,.chat-tabs button.active,.quest-tabs button.active,
+      .pvp-tabs button.active){
+  color:#ffdfa4!important;
+  border-color:#bf9a5f!important;
+  background:linear-gradient(180deg,#3a3832,#242d38)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ghost-btn,.tp-refresh,.roster-clear-filters,.bank-clear-filters,
+      .tp-filter-actions button):hover:not(:disabled){
+  color:#ffe2a8!important;background:#314b5f!important;border-color:#d3b06d!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(button,summary,a):focus-visible{
+  outline:3px solid #f6d89a!important;outline-offset:2px!important;
+}
+/* Roster and bank: coherent status bars, card frames and visible controls. */
+html body.cb-top-nav-enabled #roster .roster-overview-strip,
+html body.cb-top-nav-enabled #bank .bank-overview-strip{
+  border:1px solid var(--cb-uni-line)!important;border-radius:6px;
+  background:#182c3e!important;box-shadow:var(--cb-uni-shadow);
+  overflow:hidden;
+}
+html body.cb-top-nav-enabled #roster .roster-overview-strip article,
+html body.cb-top-nav-enabled #bank .bank-overview-strip article{
+  background:linear-gradient(180deg,#1f3548,#152739)!important;
+  border-right:1px solid var(--cb-uni-line-soft);
+}
+html body.cb-top-nav-enabled :is(#roster .roster-overview-strip,#bank .bank-overview-strip) span{
+  color:var(--cb-uni-gold)!important;
+}
+html body.cb-top-nav-enabled :is(#roster .roster-overview-strip,#bank .bank-overview-strip) b{
+  color:#f4ebdc!important;
+}
+html body.cb-top-nav-enabled :is(#roster .roster-overview-strip,#bank .bank-overview-strip) small{
+  color:#b7c9d6!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card,
+html body.cb-top-nav-enabled #bank .bank-card-v2{
+  background:linear-gradient(145deg,#1b3044,#102235)!important;
+  border:1px solid var(--cb-uni-line)!important;border-radius:6px;
+  box-shadow:0 9px 21px #0005!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card:hover,
+html body.cb-top-nav-enabled #bank .bank-card-v2:hover{
+  background:linear-gradient(145deg,#28445b,#142a3e)!important;border-color:#bd9a60!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card.is-active{
+  border-color:#4aab91!important;box-shadow:inset 0 0 0 1px #4aab9160,0 9px 21px #0005!important;
+}
+html body.cb-top-nav-enabled #roster .roster-card-identity h3,
+html body.cb-top-nav-enabled #bank .bank-card-v2 .bank-copy h3{
+  color:#faf0df!important;
+}
+html body.cb-top-nav-enabled :is(#roster .roster-card-metrics,#bank .bank-card-foot){
+  border-color:#3d556b!important;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs{
+  border:1px solid var(--cb-uni-line)!important;background:#14283b!important;
+  border-radius:6px;overflow-x:auto;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs button{
+  background:#182d40!important;color:#c9d9e2!important;border-color:#324a5f!important;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs button.active{
+  color:#ffdda0!important;background:#373a35!important;border-bottom-color:#e9bf71!important;
+}
+/* Party formation and the next-run route share the same blue steel look. */
+html body.cb-top-nav-enabled #party :is(.party-slot,.party-dungeon-cta,.readiness,.party-roster button){
+  border-color:#445b70!important;background-color:#172b3c!important;
+}
+html body.cb-top-nav-enabled #party :is(.party-dungeon-cta,.readiness) :is(b,span,h3){color:#e9e5dd}
+html body.cb-top-nav-enabled #party .readiness-bar{background:#0d1d2f}
+html body.cb-top-nav-enabled #party .readiness-bar i{background:linear-gradient(90deg,#5aa5dd,#c7ac73)}
+/* Quest journal: readable tabs, active quest cues and artwork remain untouched. */
+html body.cb-top-nav-enabled #quests .quest-journal-shell{
+  gap:12px;background:transparent!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-tabs,.quest-journal-list){
+  background:#102235!important;border-color:#354e64!important;
+}
+html body.cb-top-nav-enabled #quests .quest-tabs button{color:#aebfcf;background:#182c3f}
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-chain-card,.quest-v2-list-card,
+      .quest-objective-card,.quest-requirement,.quest-item){
+  background:#192d40!important;border-color:#42586d!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-list-item.selected,.quest-list-item:hover,.quest-v2-list-card.selected){
+  border-color:#caaa72!important;background:#273a4d!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card) b{color:#ece6d9!important}
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card) :is(small,em){
+  color:#acbfcb!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-detail-hero,.quest-v2-hero,.quest-v3-hero){
+  background-color:#1c3348!important;border-color:#516c7e!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-objective-card,.quest-current-step) :is(h3,b){
+  color:#f2e7d7!important;
+}
+/* Dungeon journal and activity choices: fantasy illustration first. */
+html body.cb-top-nav-enabled #content .dungeon-episode-summary{
+  background:linear-gradient(90deg,#21394b,#16283a)!important;border-color:#4b6173!important;
+}
+html body.cb-top-nav-enabled #content .dungeon-episode-summary :is(h3,b){
+  color:#f7e8d1!important;
+}
+html body.cb-top-nav-enabled #content .dungeon-episode-summary p{color:#b7c7d1!important}
+html body.cb-top-nav-enabled #content .dungeon-browser-card{
+  background:#1a2b3d!important;border-color:#465f76!important;
+}
+html body.cb-top-nav-enabled #content .dungeon-browser-card :is(h3,b){color:#f2e7d6!important}
+html body.cb-top-nav-enabled #content .dungeon-browser-card:hover{border-color:#d3b06e!important}
+html body.cb-top-nav-enabled #content .dungeon-browser-copy p{color:#b8c9d7!important}
+html body.cb-top-nav-enabled #world :is(.tb-world-card,.world-boss-card,.null-entry-card){
+  border-color:#475e74!important;background-color:#192d40!important;
+}
+/* Workshop: artisan selection, crafting recipes, reagents and progress. */
+html body.cb-top-nav-enabled #professions :is(.profession-char,.profession-slot-card,.reagent-card,
+      .recipe-card,.craft-project,.profession-recipe-card){
+  background:#1a2f42!important;border-color:#445c71!important;
+  border-radius:5px;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-char.active,.profession-slot-card.active,
+      .recipe-card.selected,.profession-recipe-card.selected){
+  background:#2a3b46!important;border-color:#c5a56b!important;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-char,.recipe-card,.reagent-card) :is(b,strong,h4){
+  color:#f1e8db!important;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-char,.recipe-card,.reagent-card) small{
+  color:#afc5d1;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-recipe-filters button,.recipe-filter){
+  background:#1c3246;color:#cedde5;border-color:#445e74;
+}
+html body.cb-top-nav-enabled #professions .profession-recipe-filters button.active{
+  background:#383731;color:#f6d79b;border-color:#b99a66;
+}
+/* Market: matching tabs, listings, inspector and search. */
+html body.cb-top-nav-enabled #trading :is(.tp-market-bar,.tp-delivery,.tp-tabs,.tp-market-stats>div){
+  background:#172b3e!important;border:1px solid #455f77!important;border-radius:5px;
+}
+html body.cb-top-nav-enabled #trading .tp-tabs button{color:#bdcbd6!important}
+html body.cb-top-nav-enabled #trading :is(.tp-category-list button,.tp-result-card,.tp-watch-card,
+      .tp-saved-item button,.tp-quote-grid>div){
+  background:#1b3043!important;border-color:#435d71!important;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-category-list button.active,.tp-result-card:hover,
+      .tp-result-card.selected,.tp-category-list button:hover){
+  background:#2b4353!important;border-color:#bb985e!important;color:#f4e6cd!important;
+}
+html body.cb-top-nav-enabled #trading .tp-panel-head h3{color:#f4e9dc!important}
+html body.cb-top-nav-enabled #trading .tp-result-copy :is(h3,b),
+html body.cb-top-nav-enabled #trading .tp-inspector-hero h3{color:#f6eadb!important}
+/* Social channels, guild identity and group finder. */
+html body.cb-top-nav-enabled #chat :is(.chat-tabs,.chat-form,.chat-messages,.guild-name-locked,
+      .party-finder-listings,.pf-card){
+  border-color:#435b70!important;background-color:#172c40!important;
+}
+html body.cb-top-nav-enabled #chat .chat-tabs button{color:#adbfce;background:#172b3e}
+html body.cb-top-nav-enabled #chat .chat-tabs button.active{color:#f3d296!important;background:#343a3d!important}
+html body.cb-top-nav-enabled #chat .chat-form input{color:#e9edf1!important;background:#112437}
+html body.cb-top-nav-enabled #chat :is(.guild-name-locked b,.pf-card h4){color:#f5e7d5!important}
+/* PvP framing only. The actual Combat Reborn battleground stays independent. */
+html body.cb-top-nav-enabled #pvp .pvp-hero{
+  background:linear-gradient(90deg,rgba(11,27,43,.90),rgba(15,34,51,.46)),
+    url('./assets/pvp/maps/arena-shattered-crucible.svg') center/cover!important;
+  border:1px solid #526f86;border-radius:6px;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-tabs,.pvp-mode-grid button,.pvp-size-grid button,
+      .pvp-rank-card,.pvp-rule-card,.pvp-unlock-grid>div){
+  background:#1b3044!important;border-color:#455e73!important;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-mode-grid button.active,.pvp-size-grid button.active){
+  background:#384048!important;border-color:#dbaf69!important;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-mode-grid button,.pvp-size-grid button) b{
+  color:#f5e9db!important;
+}
+/* Raid and endgame base screens; do not override room artwork/encounters. */
+html body.cb-top-nav-enabled #raids :is(.mr-card,.mr-party-panel,.mr-locked,.mr-list article){
+  background-color:#162b3d!important;border-color:#4e6479!important;
+}
+html body.cb-top-nav-enabled #raids .mr-hero{border-color:#607287!important}
+html body.cb-top-nav-enabled #endgame :is(.endgame-panel,.eg-card,.endgame-run-history,.report-card){
+  background-color:#162b3f!important;border-color:#405a70!important;
+}
+/* High scores and beta support follow the same framing. */
+html body.cb-top-nav-enabled #support :is(.beta-panel,.beta-ticket,.beta-note){
+  background-color:#1a3043!important;border-color:#435e74!important;
+}
+html body.cb-top-nav-enabled #support :is(.beta-panel-head h3,.beta-ticket b,.beta-note b){
+  color:#f6e7d6!important;
+}
+html body.cb-top-nav-enabled #highscores .hs-board{--hs-edge:#486077;--hs-gold:#edc27e}
+html body.cb-top-nav-enabled #highscores .hs-masthead{
+  background:linear-gradient(90deg,rgba(12,32,48,.9),rgba(16,40,58,.53)),
+  url('./assets/comics/tutorial-2026/wardstone-twilight.webp') center/cover!important;
+}
+/* Admin and Design Booth: retain all role gates and editor interactions. */
+html body.cb-top-nav-enabled #admin .admin-workspace-nav{
+  top:clamp(62px,calc(64px + 8px),74px);
+  border-color:#4e6576;background:rgba(17,33,48,.97)!important;
+  box-shadow:0 7px 17px #0005;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav button{
+  background:#182d40!important;color:#cbd9e1!important;border-color:#374e63!important;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav button.active{
+  color:#ffe1ad!important;background:#3b3b37!important;border-color:#bf9a5f!important;
+}
+html body.cb-top-nav-enabled #admin :is(.admin-status-grid div,.admin-market-top div,
+      .admin-workspace-meta>span){
+  border-color:#3e596f!important;background:#192e42!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell{
+  color:#e8eef1;background:#112437!important;border:1px solid #537086!important;
+  border-radius:8px;box-shadow:0 15px 38px #0007;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-master-head,.dbo-builder-top){
+  background:linear-gradient(115deg,#2c485e,#162d42)!important;border-color:#526b7b!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs{background:#10263b!important;border-color:#486075!important}
+html body.cb-top-nav-enabled #admin .dbo-tabs button{background:#193147!important;border-color:#374f65!important}
+html body.cb-top-nav-enabled #admin .dbo-tabs button.active{
+  color:#ffe5ba!important;background:#354554!important;border-bottom-color:#e2bc7b!important;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-projects,.dbo-project-editor){
+  background-color:#152c41!important;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-image-control,.dbo-comic-panel,.dbo-player-panel){
+  border-color:#4c697a!important;background-color:#1c3449!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell :is(input,select,textarea){
+  background:#102438!important;border-color:#536b83!important;color:#f6efe3!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell :is(input,select,textarea):focus-visible{
+  outline:2px solid #f2d18a!important;outline-offset:2px;
+}
+/* Supplemental 'More' menu shares the fixed navy navigation's visual hierarchy. */
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__panel{
+  background:#122639!important;border:1px solid #597285!important;
+  box-shadow:0 21px 45px #000a!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__head{
+  background:#1d354a!important;border-bottom:1px solid #4b6379!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button{
+  border-color:#445e73!important;background:#1b3246!important;color:#edf0e9!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button:hover{
+  border-color:#d6b77f!important;background:#2b4658!important;
+}
+/* Keyboard, iPad scroll, and small-screen spacing */
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.panel,.tp-panel,.dungeon-episode){
+  min-width:0;
+}
+html body.cb-top-nav-enabled .main>.view .ui-search input:focus-visible{
+  outline:2px solid #f5d591!important;outline-offset:-2px;
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+    min-height:158px;padding:20px 17px!important;gap:10px;
+    background-image:linear-gradient(90deg,rgba(9,26,41,.96),rgba(14,34,51,.61) 60%,rgba(14,34,51,.38)),var(--cb-place-art)!important;
+  }
+  html body.cb-top-nav-enabled #admin .admin-workspace-nav{top:60px}
+  html body.cb-top-nav-enabled #roster .roster-overview-strip,
+  html body.cb-top-nav-enabled #bank .bank-overview-strip{overflow-x:auto}
+}

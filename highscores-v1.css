@@ -74,3 +74,37 @@
  .hs-site-header{padding:20px 12px 10px}
 }
 @media(prefers-reduced-motion:reduce){.hs-board *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+
+/* Premium standings v4 — matches Cellbound's unified navy-and-gold game chrome. */
+.hs-board{--hs-gold:#e2bb74;--hs-ink:#102235;--hs-edge:#475f74;color:#e7edf2}
+.hs-masthead{
+  background:linear-gradient(90deg,rgba(10,27,43,.95),rgba(13,34,52,.55)),
+    url('./assets/comics/tutorial-2026/wardstone-twilight.webp') center 50%/cover!important;
+  border-color:#62788c;border-bottom:2px solid #d5b577;
+}
+.hs-masthead h2{color:#ffe9c7}
+.hs-bar,.hs-rule,.hs-state,.hs-podium,.hs-table-wrap,.hs-board-footer,.hs-empty{
+  background:#14283b;border-color:#445c72;color:#c3d0d8;
+}
+.hs-bar select{color:#f6efe5;background:#102238;border-color:#59758a}
+.hs-bar button{background:linear-gradient(#b99156,#86653a);border-color:#e1b86f;color:#fff3dc}
+.hs-podium-card{
+  background:linear-gradient(150deg,#233b50,#152b3d);border-color:#5e6f7d;
+}
+.hs-podium-card.hs-pos-1{border-color:#e0b67a}
+.hs-podium-card h3{color:#f4eadc}
+.hs-table thead{background:#1e3449}
+.hs-table td{border-color:#344b5e;color:#c5d0d9}
+.hs-table td strong{color:#f6ead8}
+.hs-table tr:nth-child(2n){background:#20374a55}
+.hs-own{background:#2d51477a!important}
+.hs-site{
+  background:radial-gradient(ellipse at 50% 0,#1b354e,#0d1d30 60%,#091624);
+  color:#e6edf0;
+}
+.hs-site-header{border-bottom:1px solid #3e586e}
+.hs-site-brand{color:#f7e3bc}
+.hs-site-brand small{color:#afc6d6}
+.hs-site-nav{color:#e8c27e;border-bottom-color:#c49b59}
+.hs-site-footer{color:#a8bdc8}
