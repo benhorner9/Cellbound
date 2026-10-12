@@ -810,3 +810,129 @@ linear-gradient(180deg,#142019,#09110e)}
   .onboard-next-steps{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.onboard-intro *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* Block 7 — Chapter 0 guided introduction: readable nine-step map,
+ * tap-friendly controls and clear continuity with the dark-fantasy game. */
+html[data-onboarding="1"] #cellboundOnboarding.onboard-root{
+ color:#ebe4d7;
+ background:#080f11;
+ overscroll-behavior:contain;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-head{
+ min-height:76px;gap:13px;
+ border-bottom:1px solid rgba(191,160,111,.36);
+ background:#0d191add;backdrop-filter:blur(10px);
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-head h1{
+ font:normal clamp(21px,1.95vw,29px)/1.1 Georgia,serif;
+ color:#f2e8d7;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress{
+ display:flex;flex-wrap:nowrap;align-items:stretch;
+ min-width:0;max-width:100%;gap:5px;
+ overflow-x:auto;overflow-y:hidden;
+ scrollbar-color:#a68857 #132021;
+ scroll-snap-type:x proximity;
+ padding:3px 1px 7px;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span{
+ display:flex;flex:0 0 auto;align-items:center;
+ min-width:75px;min-height:42px;
+ padding:7px 9px;gap:6px;
+ border:1px solid rgba(180,150,108,.18);
+ border-radius:4px;
+ background:#162224;
+ color:#9daea4;
+ font:700 10px/1.35 system-ui,sans-serif;
+ text-transform:none;
+ scroll-snap-align:start;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span i{
+ flex:0 0 20px;min-width:20px;width:20px;height:20px;
+ font-size:10px;background:#28302b;border-radius:50%;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span.done{
+ color:#bdd9c1;background:#1a3028;border-color:#5d8b6480;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span.done i{
+ background:#2b5439;color:#d1edca;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span[aria-current="step"]{
+ border-color:#d0aa71;
+ background:#483927;
+ color:#f8e3c0;
+ box-shadow:inset 0 -2px #d2aa73;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span[aria-current="step"] i{
+ background:#c5a36f;color:#191814;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-objective{
+ background:linear-gradient(90deg,#26322a,#121e20)!important;
+ border-bottom:1px solid rgba(194,161,112,.36)!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-objective>b{
+ font:600 13px/1.5 system-ui,sans-serif!important;
+ color:#efe7d8!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-lesson{
+ background:#121f20!important;
+ border-bottom:1px solid rgba(190,159,111,.25)!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-lesson span{
+ font-size:10px;color:#d7b584!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-lesson p{
+ font:400 12px/1.55 system-ui,sans-serif!important;color:#c6d2c5!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 :is(.on-primary,button,select,input):focus-visible{
+ outline:2px solid #efce90!important;
+ outline-offset:3px!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 :is(.on-primary,button){
+ touch-action:manipulation;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .on-primary{
+ min-height:48px;color:#f7e6c8!important;
+ border-color:#cbac79!important;
+ background:linear-gradient(#6c5130,#422f1f)!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps{
+ grid-template-columns:repeat(3,minmax(0,1fr));
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps>div{
+ background:#182627!important;border:1px solid #a68c6266!important;
+ border-radius:4px;padding:13px;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps b{
+ color:#e9c88f!important;font-size:11px!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps span{
+ color:#becbbf!important;font-size:12px!important;
+}
+@media(max-width:1200px){
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-head{
+  grid-template-columns:1fr!important;
+ }
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress{
+  max-width:calc(100vw - 42px);
+ }
+}
+@media(max-width:700px){
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-head{
+  position:relative;padding:13px!important;
+ }
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress{
+  max-width:calc(100vw - 26px);
+ }
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-objective{
+  grid-template-columns:1fr;gap:4px;
+ }
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps{
+  grid-template-columns:1fr;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 *{
+  scroll-behavior:auto!important;
+ }
+}

@@ -91,8 +91,11 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
     assert.equal(await page.locator('#cbMorePanel').isVisible(),true,'More destination panel must open');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#cbMorePanel').isVisible(),false,'Escape must dismiss the destination panel');
-    await page.locator('#cbGlobalNavigation [data-cb-nav="quests"]').click();
-    assert.equal(await page.locator('#quests').evaluate(el=>el.classList.contains('active')),true,'top navigation must use the canonical game router');
+    // Quests now belongs to the Adventure context, not the six-item primary bar.
+    await page.locator('#cbGlobalNavigation [data-cb-nav="content"]').click();
+    assert.equal(await page.locator('#content').evaluate(el=>el.classList.contains('active')),true,'top navigation must open Adventure via the canonical game router');
+    await page.locator('#cbContextNav [data-cb-go="quests"]').click();
+    assert.equal(await page.locator('#quests').evaluate(el=>el.classList.contains('active')),true,'Adventure subnavigation must open the Quest Journal');
     await page.evaluate(()=>CellboundGame.switchView('overview'));
     // Dark-fantasy screen parity regression: sample actual computed colours,
     // not only a stylesheet string, across representative destinations.

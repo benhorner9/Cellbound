@@ -113,16 +113,19 @@ function stageTitle(stage){
   return labels[stage]||'Zeltira';
 }
 function chrome(body,stage){
+  // The actual Chapter 0 learning milestones, not only its story chapters.
   const steps=[
-    ['guild-introduction','Begin'],
-    ['party-builder','Charter'],
-    ['first-expedition','Mystery'],
-    ['gear','Loadout'],
-    ['dungeon-briefing','Descent'],
-    ['loot-review','Spoils'],
+    ['guild-introduction','Guild'],
+    ['party-builder','Party'],
+    ['first-expedition','Investigate'],
+    ['gear','Equipment'],
+    ['dungeon-briefing','Combat'],
+    ['loot-review','Loot'],
+    ['recovery-lesson','Recovery'],
+    ['profession-choice','Crafting'],
     ['quest-lesson','Contract']
   ];
-  const order={'guild-introduction':0,'party-builder':1,'zeltira-arrival':2,'first-expedition':2,'gear':3,'dungeon-briefing':4,'dungeon-running':4,'loot-review':5,'recovery-lesson':5,'profession-choice':5,'craft':5,'profession-use':5,'quest-lesson':6,'departure':6};
+  const order={'guild-introduction':0,'party-builder':1,'zeltira-arrival':2,'first-expedition':2,'gear':3,'dungeon-briefing':4,'dungeon-running':4,'loot-review':5,'recovery-lesson':6,'profession-choice':7,'craft':7,'profession-use':7,'quest-lesson':8,'departure':8};
   const objectives={
     'guild-introduction':['YOUR ROLE','You lead a guild of five adventurers. Their decisions are yours to make.'],
     'party-builder':['BUILD THE PARTY','Choose one Tank, one Healer and three Damage adventurers.'],
@@ -148,13 +151,13 @@ function chrome(body,stage){
     'dungeon-running':'Watch enemy casts, threat and health. Use commands to interrupt, change targets and keep the party alive.',
     'loot-review':'Boss drops go into the Guild Bank. Choose who gets the item.',
     'recovery-lesson':'Losing a fight adds Cell Shock. You may need to recover or change the party before trying again.',
-    'profession-choice':'Each character can learn a profession. Crafting turns materials found on adventures into useful preparation.',
+    'profession-choice':'Each adventurer has one profession slot. Learn a trade to turn materials from your adventures into useful items.',
     'craft':'Gather ingredients, learn recipes and craft. Professions grow alongside your characters.',
     'profession-use':'Equipment is long-term progress. Potions, flasks and enhancements help you tackle the next difficult encounter.',
     'quest-lesson':'Complete quests to unlock locations. Run dungeons to earn equipment and test your party.',
-    'departure':'Open the Quest Journal to start Ashes on the East Road. Check your party and Bank between fights.'
+    'departure':'You’ll arrive in the Quest Journal for Ashes on the East Road. Use Adventure for quests and dungeons, Heroes for your party and bank, and Professions for crafting.'
   }[stage];
-  return '<section class="onboard-shell onboard-v5"><header class="onboard-head"><div><small>CHAPTER 0 · THE FIRST RESONANCE</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header><div class="onboard-objective"><span>'+esc(obj[0])+'</span><b>'+esc(obj[1])+'</b><em>CHAPTER 0 · GUIDED EXPEDITION</em></div>'+(lesson?'<div class="onboard-lesson" role="note"><span>WHY THIS MATTERS</span><p>'+esc(lesson)+'</p></div>':'')+body+'</section>';
+  return '<section class="onboard-shell onboard-v5"><header class="onboard-head"><div><small>CHAPTER 0 · THE FIRST RESONANCE</small><h1>'+esc(stageTitle(stage))+'</h1></div><nav class="onboard-progress" aria-label="Chapter 0 lesson progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"'+(i===at?' aria-current="step"':'')+'><i aria-hidden="true">'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</nav></header><div class="onboard-objective"><span>'+esc(obj[0])+'</span><b>'+esc(obj[1])+'</b><em>CHAPTER 0 · GUIDED EXPEDITION</em></div>'+(lesson?'<div class="onboard-lesson" role="note"><span>WHY THIS MATTERS</span><p>'+esc(lesson)+'</p></div>':'')+body+'</section>';
 }
 function show(){
   const root=ensureRoot();root.hidden=false;document.documentElement.dataset.onboarding='1';
@@ -1266,7 +1269,7 @@ function renderQuestLesson(){
 }
 function renderDeparture(){
   if(maybeTutorialComic('departure'))return;
-  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>CHAPTER 0 · COMPLETE</small><h2>Training is finished. Take the east-road contract.</h2><p class="guide-quote">“You know enough to make your own mistakes now. That is the useful kind of ready.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>You built the active five</b><small>Tank · Healer · three Damage roles</small></span></div><div><i>✓</i><span><b>You read a live fight</b><small>Threat · healing · interrupts · telegraphs</small></span></div><div><i>✓</i><span><b>You made a gear decision</b><small>Item Level matters, but the roll and the character matter too</small></span></div><div><i>✓</i><span><b>You assigned your first drop</b><small>Loot belongs to the guild until you decide who wears it</small></span></div></div><div class="first-expedition-hook"><span>NEXT · QUEST JOURNAL</span><b>Ashes on the East Road</b><small>Follow the story quest to unlock your next dungeon. The rest of your guild is waiting in the main menu.</small></div><div class="onboard-next-steps"><div><b>01 · QUEST JOURNAL</b><span>Take contracts, solve mysteries and unlock new places.</span></div><div><b>02 · PARTY & BANK</b><span>Equip loot, improve your characters and plan a stronger team.</span></div><div><b>03 · PROFESSIONS</b><span>Turn materials from adventures into useful items.</span></div><div><b>04 · DUNGEONS & BEYOND</b><span>Challenge bosses, collect better rolls and prepare for harder content.</span></div></div><button id="beginAdventure" class="on-primary">BEGIN CELLBOUND →</button></aside></div>';
+  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>CHAPTER 0 · COMPLETE</small><h2>Training is finished. Take the east-road contract.</h2><p class="guide-quote">“You know enough to make your own mistakes now. That is the useful kind of ready.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>You built the active five</b><small>Tank · Healer · three Damage roles</small></span></div><div><i>✓</i><span><b>You read a live fight</b><small>Threat · healing · interrupts · telegraphs</small></span></div><div><i>✓</i><span><b>You made a gear decision</b><small>Item Level matters, but the roll and the character matter too</small></span></div><div><i>✓</i><span><b>You assigned your first drop</b><small>Loot belongs to the guild until you decide who wears it</small></span></div></div><div class="first-expedition-hook"><span>NEXT · QUEST JOURNAL</span><b>Ashes on the East Road</b><small>Follow the story quest to unlock your next dungeon. The rest of your guild is waiting in the main menu.</small></div><div class="onboard-next-steps"><div><b>01 · QUEST JOURNAL</b><span>Take contracts, solve mysteries and unlock new places.</span></div><div><b>02 · PARTY & BANK</b><span>Equip loot, improve your characters and plan a stronger team.</span></div><div><b>03 · PROFESSIONS</b><span>Turn materials from adventures into useful items.</span></div><div><b>04 · DUNGEONS & BEYOND</b><span>Challenge bosses, collect better rolls and prepare for harder content.</span></div></div><button id="beginAdventure" class="on-primary">OPEN QUEST JOURNAL →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'departure');
   $('#beginAdventure')?.addEventListener('click',completeOnboarding);
 }

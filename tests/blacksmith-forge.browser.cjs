@@ -45,8 +45,17 @@ const root=path.resolve(__dirname,'..');
  for(let step=0;step<3;step++){await page.click('[data-forge-strike]');await page.waitForSelector('.forge-workshop[data-forge-stage="'+(step+1)+'"]');assert.equal(await page.locator('.forge-scene.forge-action-'+['heat','strike','temper'][step]+'.is-reacting').count(),1,'stage-specific effects run for '+step)}
  assert.equal(await page.locator('.forge-complete').count(),1,'three forge actions finish workpiece');
  assert.equal(await page.evaluate(()=>window.mockState.consumables.length),0,'quality alone cannot skip timer');
- await page.evaluate(()=>{const now=Date.now.bind(Date);Date.now=()=>now()+30000;window.dispatchEvent(new Event('focus'))});
- await page.waitForFunction(()=>window.mockState.consumables.length===1,null,{timeout:5000});
+ // Force two focused-time ticks even when the first focus just initialises
+ // the timer baseline; don't rely on runner event-loop scheduling.
+ await page.evaluate(()=>{
+  const realNow=Date.now.bind(Date);
+  window.__forgeQATime=30000;
+  Date.now=()=>realNow()+window.__forgeQATime;
+  window.dispatchEvent(new Event('focus'));
+  window.__forgeQATime=60000;
+  window.dispatchEvent(new Event('focus'));
+ });
+ await page.waitForFunction(()=>window.mockState.consumables.length===1,null,{timeout:10000});
  assert.equal(await page.evaluate(()=>window.mockState.consumables[0].quantity),1,'one work order delivers one item');
  assert.equal(await page.evaluate(()=>window.mockState.roster[0].professions[0].projectsCompleted),1,'one completed project');
  assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject),null,'project cleared after claim');
@@ -93,7 +102,10 @@ const root=path.resolve(__dirname,'..');
  assert.equal(await page.evaluate(()=>window.mockState.consumables[0]?.quantity),1,'cold forge cannot deliver items');
  await page.click('[data-forge-strike]');
  await page.waitForSelector('.forge-workshop[data-forge-reheat="false"]');
- assert.deepEqual(await page.evaluate(()=>({reheats:window.mockState.workshopCraftProject.forgeReheats,heat:window.mockState.workshopCraftProject.forgeHeatPct,saved:window.mockState.workshopCraftProject.forgeBonusMs})),{reheats:1,heat:100,saved:8000},'perfect reheat saves 8 seconds and restores full heat');
+ const perfect=await page.evaluate(()=>({reheats:window.mockState.workshopCraftProject.forgeReheats,heat:window.mockState.workshopCraftProject.forgeHeatPct,saved:window.mockState.workshopCraftProject.forgeBonusMs}));
+ assert.equal(perfect.reheats,1);
+ assert.equal(perfect.saved,8000,'perfect reheat saves eight seconds');
+ assert(perfect.heat>98&&perfect.heat<=100,'full heat is restored before ordinary background cooling resumes');
  assert.equal(await page.evaluate(()=>window.mockState.workshopCraftProject.forge.results.map(x=>x.points).join(',')),qualityBefore,'reheat leaves the original three scores untouched');
  await page.evaluate(()=>{const now=Date.now.bind(Date);Date.now=()=>now()+45000;window.dispatchEvent(new Event('focus'))});
  await page.waitForSelector('.forge-workshop[data-forge-reheat="true"]');
@@ -102,7 +114,10 @@ const root=path.resolve(__dirname,'..');
  await page.locator('[data-forge-position]').evaluate(el=>{el.value='0';el.dispatchEvent(new Event('input',{bubbles:true}))});
  await page.click('[data-forge-strike]');
  await page.waitForSelector('.forge-workshop[data-forge-reheat="false"]');
- assert.deepEqual(await page.evaluate(()=>({reheats:window.mockState.workshopCraftProject.forgeReheats,heat:window.mockState.workshopCraftProject.forgeHeatPct,saved:window.mockState.workshopCraftProject.forgeBonusMs})),{reheats:2,heat:51,saved:8000},'rough reheat restores only 51% and grants no time bonus');
+ const rough=await page.evaluate(()=>({reheats:window.mockState.workshopCraftProject.forgeReheats,heat:window.mockState.workshopCraftProject.forgeHeatPct,saved:window.mockState.workshopCraftProject.forgeBonusMs}));
+ assert.equal(rough.reheats,2);
+ assert.equal(rough.saved,8000,'rough reheat cannot grant time bonuses');
+ assert(rough.heat>=49&&rough.heat<=51,'rough reheat restores about 51%, before ordinary cooling resumes');
  await page.evaluate(()=>{const now=Date.now.bind(Date);Date.now=()=>now()+45000;window.dispatchEvent(new Event('focus'))});
  await page.waitForSelector('.forge-workshop[data-forge-reheat="true"]');
  assert.equal(await page.evaluate(()=>window.mockState.consumables[0]?.quantity),1,'poor reheat causes another cooling interruption');
