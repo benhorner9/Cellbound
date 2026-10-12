@@ -16,7 +16,7 @@ for(const [title,count] of Object.entries(expected)){
  const paths=[...quest.slice(start,end+1).matchAll(/'([^']+\.(?:webp|svg))'/g)].map(x=>x[1]);
  assert.equal(paths.length,count,'Wrong illustrated panel count for '+title);
  for(const art of paths){
-  assert(art.startsWith('./assets/comics/main-quests-2026/'),'Non-comic artwork: '+art);
+  assert(art.match(/^\.\/assets\/comics\/(?:main-quests-2026|story-composites-2026)\//),'Non-comic artwork: '+art);
   const abs=path.join(root,art.replace(/^\.\//,''));
   assert(fs.existsSync(abs),'Missing art file: '+art);
   const data=fs.readFileSync(abs);
