@@ -643,3 +643,28 @@ html,body,.login-shell{background:#0b1c2d;color:#f2ece2}
     radial-gradient(circle at 50% 15%,transparent,rgba(7,23,37,.3) 60%);
   }
 }
+
+
+/* Cellbound restrained colour pass: entry keeps its illustration and layout. */
+:root{--cell:#a5bec9;--cell-soft:#c2d3dd;--brass:#b69b74;--brass-soft:#d9bf94}
+html,body,.login-shell{background:#142330}
+.login-world{background:#304654}
+.login-world img{filter:saturate(.94) brightness(.95) contrast(1.02)}
+.login-world__wash{
+ background:linear-gradient(90deg,rgba(15,30,43,.43),rgba(15,30,43,.46) 45%,rgba(14,28,41,.76) 75%,rgba(12,26,39,.92)),
+ linear-gradient(180deg,rgba(16,31,43,.21),transparent 24%,rgba(14,29,41,.34) 68%,rgba(12,25,39,.86));
+}
+.login-shell .topbar{background:linear-gradient(180deg,#1b2c3bcc,transparent)}
+.gate-panel{
+ background:linear-gradient(155deg,rgba(39,56,68,.97),rgba(24,40,53,.99))!important;
+ border-color:#72858f!important;box-shadow:0 15px 36px #05152183;
+}
+.gate-panel .field{background:#1d2f3d;border-color:#647783}
+.enter-button{
+ background:linear-gradient(#e1cba5,#bba077)!important;
+ border-color:#e6d5bb!important;color:#2c3840!important;
+}
+.create-button{background:#2d4251;border-color:#788e9c}
+.world-intro__eyebrow,.gate-panel__kicker{color:#d1b98f}
+.public-highscores-entrance a{color:#ddc59f!important;border-color:#b59b74;background:#213544bf}
+@media(max-width:780px){.login-world img{filter:saturate(.91) brightness(.8) contrast(1.02)}}
