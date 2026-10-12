@@ -1690,3 +1690,413 @@ html body.cb-top-nav-enabled .main>.view :is(button,summary,a,input,textarea,sel
   outline:2px solid #e9cf92!important;outline-offset:2px!important;
 }
 /* Deliberately no font, size, position, z-index, visibility or navigation rules. */
+
+
+/* ========================================================================
+   CELLBOUND COMPLETE DARK FANTASY SKIN V10
+   Every game-facing chrome surface shares the original charcoal/teal/bronze
+   theme; gameplay visuals, rarity classes, ability/status state are excluded.
+   This is a visual layer only; no sizing, positioning, or routing changes.
+   ======================================================================== */
+html body.cb-top-nav-enabled{
+  --cb-fantasy-black:#081318;
+  --cb-fantasy-panel:#101f25;
+  --cb-fantasy-surface:#182b2e;
+  --cb-fantasy-highlight:#203638;
+  --cb-fantasy-border:rgba(128,161,149,.28);
+  --cb-fantasy-border-soft:rgba(128,161,149,.16);
+  --cb-fantasy-ivory:#f0e8db;
+  --cb-fantasy-muted:#a3b6af;
+  --cb-fantasy-teal:#96ccbd;
+  --cb-fantasy-bronze:#c6a572;
+  --cb-fantasy-shadow:0 12px 30px rgba(0,0,0,.42);
+  accent-color:#81b9a8;
+}
+/* Shared page chrome: the same depth and warmth throughout the Guild Hall. */
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel,.tp-panel,.pvp-panel,.beta-panel,.admin-card,.dungeon-episode,
+      .dungeon-detail-panel,.dungeon-browser-card,.mr-card,.mr-party-panel,
+      .eg-dungeon-card,.eg-weekly,.eg-leaderboards,.world-boss-card,
+      .null-card,.profession-roster-panel,.profession-workshop,
+      .quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+  border-color:var(--cb-fantasy-border)!important;
+  background-color:var(--cb-fantasy-panel)!important;
+  box-shadow:var(--cb-fantasy-shadow)!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel,.tp-panel,.pvp-panel,.beta-panel,.admin-card,.mr-card,.mr-party-panel,
+      .eg-dungeon-card,.eg-weekly,.eg-leaderboards,.profession-roster-panel,
+      .profession-workshop,.quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+  background-image:linear-gradient(155deg,#192a2e,#0a171d)!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.dungeon-browser-heading,.pvp-panel>header){
+  background-color:#142429!important;border-bottom-color:1px solid var(--cb-fantasy-border-soft)!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header)
+  :is(h2,h3){color:var(--cb-fantasy-ivory)!important}
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) small{
+  color:var(--cb-fantasy-bronze)!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,
+      .tp-filter-actions button,.bank-card-action,.roster-card-actions button){
+  background-color:#172b2d!important;color:#e3e9e4!important;
+  border-color:#4c7163!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,
+      .tp-filter-actions button,.bank-card-action,.roster-card-actions button):hover:not(:disabled){
+  background-color:#24413e!important;border-color:#ad9774!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.ui-search,.ui-select,.tp-search,.tp-filters input,.tp-filters select,
+      .tp-action-form input,.tp-action-form select,.beta-form input,.beta-form select,
+      .beta-form textarea,.guild-name-form input,.party-finder-form select,
+      .party-finder-form input){
+  background-color:#0b1b21!important;color:#e6ede7!important;
+  border-color:#486c61!important;color-scheme:dark;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.ui-search,.ui-select,.tp-search,.tp-filters input,.tp-filters select,
+      .beta-form input,.beta-form select,.beta-form textarea):focus-within{
+  border-color:#bca578!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,
+      .quest-tabs button.active,.chat-tabs button.active,.pvp-tabs button.active){
+  background:#2f2a21!important;color:#e9d5ac!important;border-color:#aa905f!important;
+}
+/* Roster, active party and bank inventories. Portraits/rank status untouched. */
+html body.cb-top-nav-enabled #roster :is(.roster-overview-strip,.roster-command-bar),
+html body.cb-top-nav-enabled #bank :is(.bank-overview-strip,.bank-command-bar,.bank-category-tabs){
+  background-color:#111f25!important;border-color:var(--cb-fantasy-border)!important;
+}
+html body.cb-top-nav-enabled #roster .roster-overview-strip article,
+html body.cb-top-nav-enabled #bank .bank-overview-strip article{
+  background:linear-gradient(#192b2f,#102126)!important;
+  border-color:var(--cb-fantasy-border-soft)!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card,
+html body.cb-top-nav-enabled #bank .bank-card-v2{
+  background:linear-gradient(#192c2f,#0c1b21)!important;
+  border-color:#456058!important;box-shadow:0 9px 20px #0007!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card:hover,
+html body.cb-top-nav-enabled #bank .bank-card-v2:hover{
+  background:linear-gradient(#223a39,#10282b)!important;border-color:#b49c70!important;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs button{
+  background-color:#14272b!important;color:#c5d6cd!important;border-color:#3e5b52!important;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs button.active{
+  background-color:#322d22!important;color:#e8d2a8!important;border-color:#ab9365!important;
+}
+html body.cb-top-nav-enabled #party :is(.party-slot,.party-choice,.party-dungeon-cta){
+  background-color:#112226!important;border-color:#3f6055!important;
+}
+html body.cb-top-nav-enabled #party :is(.party-slot,.party-choice):hover:not(:disabled){
+  background-color:#1c3433!important;
+}
+/* Quests, expedition board, world bosses and raid lobby chrome. */
+html body.cb-top-nav-enabled #quests
+  :is(.quest-tabs,.quest-journal-list,.quest-v2-list-card,.quest-list-item,
+      .quest-chain-card,.quest-objective-card,.quest-requirement,.quest-item,
+      .quest-stage-panel,.quest-current-step,.quest-v3-known,.quest-v3-clue){
+  background-color:#112329!important;border-color:#436057!important;
+}
+html body.cb-top-nav-enabled #quests
+  :is(.quest-v2-list-card.selected,.quest-list-item.selected,.quest-list-item:hover,
+      .quest-v2-list-card:hover,.quest-current-step){
+  background-color:#21352f!important;border-color:#a18a60!important;
+}
+html body.cb-top-nav-enabled #quests
+  :is(.quest-v2-hero,.quest-v3-hero,.quest-detail-hero){
+  border-color:#5c7360!important;
+}
+html body.cb-top-nav-enabled #content
+  :is(.dungeon-episode-summary,.dungeon-browser-card,.dungeon-detail-toolbar,
+      .journal-entry-panel,.dungeon-journal-layout){
+  background-color:#122429!important;border-color:#4a6256!important;
+}
+html body.cb-top-nav-enabled #content :is(.dungeon-episode-summary,.dungeon-detail-toolbar){
+  background-image:linear-gradient(110deg,#1b302e,#102026)!important;
+}
+html body.cb-top-nav-enabled #content .dungeon-browser-card:hover{
+  border-color:#b39b6c!important;
+}
+html body.cb-top-nav-enabled #world
+  :is(.world-boss-card,.tb-world-card,.null-entry-card,.world-actions){
+  background-color:#122427!important;border-color:#425d53!important;
+}
+html body.cb-top-nav-enabled #raids
+  :is(.mr-card,.mr-party-panel,.mr-locked,.mr-list article,.mr-group,.mr-finder){
+  background-color:#112328!important;border-color:#445c52!important;
+}
+html body.cb-top-nav-enabled #raids .mr-stage-tabs{
+  background-color:#13272b!important;border-color:#4a6253!important;
+}
+html body.cb-top-nav-enabled #endgame
+  :is(.eg-mode-tabs,.eg-tier-picker,.eg-tier-strip button,.eg-dungeon-card,
+      .eg-leaderboards,.eg-leader-list>div,.eg-achievement-grid>div,
+      .eg-collection-list>div,.eg-prep-tabs){
+  background-color:#14272b!important;border-color:#496357!important;
+}
+html body.cb-top-nav-enabled #endgame
+  :is(.eg-mode-tabs button.active,.eg-tier-strip button.active,.eg-prep-tabs button.active){
+  background-color:#332b23!important;border-color:#b49668!important;color:#e6d2ad!important;
+}
+/* Professions: give the workshop and recipe selection original slate-metal framing.
+   Never override heat/timing tracks or gameplay reward indicators. */
+html body.cb-top-nav-enabled #professions
+  :is(.profession-command-hero,.profession-command-stats,.profession-char,.profession-slot-card,
+      .profession-choice,.profession-recipe-card,.recipe-card,.reagent-card,
+      .recipe-history,.profession-recipe-filters,.profession-result-message){
+  background-color:#13262b!important;border-color:#456157!important;
+}
+html body.cb-top-nav-enabled #professions
+  :is(.profession-char.active,.profession-slot-card.active,.profession-choice.active,
+      .recipe-card.selected,.profession-recipe-card.selected){
+  background-color:#2a3028!important;border-color:#a88f60!important;
+}
+html body.cb-top-nav-enabled #professions
+  :is(.profession-recipe-filters button,.recipe-filter){
+  background:#172c2b!important;color:#d2e0d8!important;border-color:#486b5c!important;
+}
+html body.cb-top-nav-enabled #professions
+  :is(.profession-recipe-filters button.active,.recipe-filter.active){
+  background:#342c23!important;color:#e8d1a4!important;border-color:#b79a69!important;
+}
+html body.cb-top-nav-enabled #professions .forge-workshop{
+  border-color:#576553!important;background-color:#0b1b20!important;
+}
+html body.cb-top-nav-enabled #professions
+  :is(.forge-challenge,.forge-challenge-head,.forge-stages,.forge-phase,.forge-job-summary){
+  background-color:#14242a!important;border-color:#526b5e!important;
+}
+/* Trading Post: browse, save, inspect, sell, watch and deliveries. */
+html body.cb-top-nav-enabled #trading
+  :is(.tp-shell,.tp-market-bar,.tp-tabs,.tp-delivery,.tp-market-stats>div,
+      .tp-category-list button,.tp-result-card,.tp-watch-card,.tp-saved-item button,
+      .tp-inspector,.tp-inspector-section,.tp-quote-grid>div,
+      .tp-sell-choice,.tp-sell-selected,.tp-history-row,.tp-my-row,.tp-order-row,
+      .tp-filter-actions,.tp-gear-compare){
+  background-color:#13252a!important;border-color:#426155!important;
+}
+html body.cb-top-nav-enabled #trading .tp-tabs button:not(.active){
+  color:#bfd1c7!important;background-color:#15282c!important;
+}
+html body.cb-top-nav-enabled #trading
+  :is(.tp-result-card:hover,.tp-result-card.selected,.tp-category-list button.active,
+      .tp-category-list button:hover,.tp-sell-choice:hover,.tp-sell-choice.selected){
+  background-color:#263930!important;border-color:#aa946a!important;
+}
+html body.cb-top-nav-enabled #trading
+  :is(.tp-inspector-hero,.tp-panel-head,.tp-market-bar){
+  background-image:linear-gradient(110deg,#1b302e,#0d1d24)!important;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-panel-head h3,.tp-result-copy h3){
+  color:#f0e8db!important;
+}
+/* Social messaging, guild, group finder and public rankings. */
+html body.cb-top-nav-enabled #chat
+  :is(.chat-panel,.chat-tabs,.chat-messages,.chat-form,.guild-name-locked,
+      .party-finder-listings,.pf-card,.social-side .panel){
+  background-color:#101f25!important;border-color:#416156!important;
+}
+html body.cb-top-nav-enabled #chat .chat-tabs button:not(.active){
+  background:#15292a!important;color:#bbd0c5!important;
+}
+html body.cb-top-nav-enabled #chat .chat-form input{
+  background:#09171c!important;color:#e4eae3!important;border-color:#436459!important;
+}
+html body.cb-top-nav-enabled #highscores .hs-board{
+  --hs-ink:#111a1d;--hs-edge:rgba(187,153,98,.23);--hs-gold:#c5a674;
+}
+html body.cb-top-nav-enabled #support :is(.beta-panel,.beta-ticket,.beta-note,.beta-form){
+  background-color:#112128!important;border-color:#455e53!important;
+}
+/* PvP setup + shop/rank. The tactical battlefield itself is excluded. */
+html body.cb-top-nav-enabled #pvp
+  :is(.pvp-panel,.pvp-tabs,.pvp-rank-card,.pvp-mode-grid button,
+      .pvp-size-grid button,.pvp-rule-card,.pvp-equipped-grid>div,.pvp-shop-grid button,
+      .pvp-unlock-grid>div,.pvp-queue-summary,.pvp-party-mini>div,
+      .pvp-reward-card,.pvp-season-summary,.pvp-stat-strip){
+  background-color:#12262a!important;border-color:#435e53!important;
+}
+html body.cb-top-nav-enabled #pvp
+  :is(.pvp-tabs button.active,.pvp-mode-grid button.active,.pvp-size-grid button.active){
+  background-color:#352e24!important;border-color:#b29666!important;
+}
+html body.cb-top-nav-enabled #pvp .pvp-hero{
+  border-color:#786447!important;
+  background-image:linear-gradient(90deg,rgba(7,16,19,.9),rgba(11,24,26,.58)),
+    url('./assets/pvp/maps/arena-shattered-crucible.svg')!important;
+}
+/* Admin, Design Booth, Room/Comic/PvP editor chrome, publishing UI. */
+html body.cb-top-nav-enabled #admin :is(.admin-shell,.admin-card,.admin-status-grid>div,
+   .admin-market-top>div,.admin-workspace-meta>span,.admin-workspace-nav){
+  background-color:#102226!important;border-color:#40594e!important;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav{
+  background:rgba(10,22,25,.97)!important;box-shadow:0 8px 20px #0008!important;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav button{
+  background:#15282d!important;color:#cbdcd3!important;border-color:#405e54!important;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav button.active{
+  background:#352e24!important;border-color:#b89c6c!important;color:#efdbb8!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell{
+  color:#e5e9e2!important;background:#0c191e!important;border-color:#526759!important;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-master-head,.dbo-builder-top,.dbo-public-head,.dbo-stage-editor-header){
+  background:linear-gradient(110deg,#1a302f,#0d1c22)!important;
+  border-color:#3c594d!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs{
+  background:#101e23!important;border-color:#445e52!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs button{
+  background:#15292b!important;color:#ceddd4!important;border-color:#395347!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs button.active{
+  background:#322b22!important;color:#e8d7ba!important;border-color:#b59a6d!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.dbo-projects,.dbo-project-editor,.dbo-project-list button,.dbo-stage-list button,
+      .dbo-image-control,.dbo-comic-panel,.dbo-player-panel,.dbo-template-library,
+      .dbo-public-grid>div,.dbo-review,.dbo-loot-overview,.dbo-loot-edit-panel,
+      .dbo-catalog,.dbo-library-shell,.dbo-library-panel,.dbo-quickstart,.dbo-tool-guide,
+      .dbo-drops-main,.dbo-drop-row){
+  background-color:#11242a!important;border-color:#3c5a4d!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.dbo-project-list button.active,.dbo-stage-list button.active,.dbo-more button.active){
+  background-color:#2c3027!important;border-color:#b29865!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell
+  :is(input,textarea,select){
+  background:#0b1a20!important;color:#e5e9e2!important;border-color:#4a675c!important;
+  color-scheme:dark;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.dbo-master-head button,.dbo-builder-top button,.dbo-footer button,.dbo-stage-actions button,
+      .dbo-add button,.dbo-quick-actions button){
+  background:#19302d!important;color:#e7e9db!important;border-color:#537365!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.dbo-master-head button,.dbo-builder-top button,.dbo-footer button,.dbo-stage-actions button,
+      .dbo-add button,.dbo-quick-actions button):hover:not(:disabled){
+  background:#274338!important;border-color:#b39c70!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.rqe-shell,.rqe-toolbar,.rqe-room-nav,.rqe-inspector,.rqe-audit,.rqe-audit-item,
+      .rqe-art-upload,.cse-shell,.cse-panel,.cse-shell>header,.cse-filters,
+      .pme-shell,.pme-toolbar,.pme-stage-column,.pme-settings,.pme-create){
+  color:#dbe6de!important;background-color:#101f25!important;border-color:#426153!important;
+}
+html body.cb-top-nav-enabled #admin :is(.rqe-head,.cse-shell>header,.pme-head){
+  background:linear-gradient(100deg,#1b302c,#0a1a20)!important;
+  border-color:#4d6654!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.rqe-shell input,.rqe-shell select,.rqe-shell textarea,
+      .cse-shell input,.cse-shell select,.cse-shell textarea,
+      .pme-shell input,.pme-shell select,.pme-shell textarea){
+  background-color:#0b1a1f!important;color:#ebeee6!important;border-color:#4e6a5d!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.rqe-head button,.rqe-toolbar button,.rqe-inspector button,.rqe-room-nav button,
+      .cse-actions button,.cse-controls button,.cse-right footer button,
+      .pme-shell button){
+  background-color:#1b322e!important;color:#e6ece1!important;border-color:#547466!important;
+}
+/* Portal dialogs: opened outside the .view tree must still match the game. */
+html body.cb-top-nav-enabled :is(.modal-card,.bank-modal,.modal-content,.modal-body,
+   .quest-puzzle,.quest-gear-card,.quest-complete-card,.quest-dialogue,
+   .quest-continuation-card,.cb-slot-drawer){
+  color:#e3e7df!important;
+  background-color:#101e23!important;border-color:#55664e!important;
+}
+html body.cb-top-nav-enabled :is(.modal-card,.bank-modal,.quest-puzzle,.quest-gear-card,
+   .quest-complete-card,.quest-dialogue,.quest-continuation-card,.cb-slot-drawer){
+  box-shadow:0 18px 55px #000c!important;
+}
+html body.cb-top-nav-enabled :is(.bank-modal,.modal-card,.quest-gear-card,
+   .quest-continuation-card,.cb-slot-drawer) :is(input,select,textarea){
+  background:#0a181e!important;border-color:#4c6a60!important;color:#e9ede6!important;
+}
+html body.cb-top-nav-enabled #characterModal .character-modal{
+  background:linear-gradient(#182528,#0a151c)!important;border-color:#786743!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-sheet{
+  background:radial-gradient(circle at 50% 28%,color-mix(in srgb,var(--cb-accent) 12%,transparent),transparent 34%),
+    linear-gradient(#202a28,#09161b)!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-sheet-header{
+  background:linear-gradient(90deg,#2a251e,#111e21 55%,#192522)!important;
+  border-color:#735e38!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-character-tabs{
+  background:#0f2023!important;border-color:#415a4d!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-character-tabs button.active{
+  background:#342d24!important;color:#ead5aa!important;border-color:#af9566!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-equip-slot{
+  background:linear-gradient(#1e2f2e,#101e22)!important;border-color:#4e6758!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-slot-icon{background:#0b1b1c!important}
+html body.cb-top-nav-enabled #bankModal :is(.bank-manage,.bank-character-list,.bank-modal){
+  background:#0c1c20!important;border-color:#4a6658!important;
+}
+/* Story comic frame + shared combat UI chrome. Keep all room art, telemetry
+   bars, VFX, skills, cooldowns and combat outcome colours untouched. */
+html body.cb-top-nav-enabled .cbcomic-shell{
+  background:linear-gradient(#192525,#0a1419)!important;border-color:#8b7954!important;
+}
+html body.cb-top-nav-enabled :is(.cbcomic-head,.cbcomic-controls,.cbcomic-dialogue){
+  background-color:#122425!important;border-color:#4b6657!important;
+}
+html body.cb-top-nav-enabled .cbcomic-party-member{
+  background:#192c29!important;border-color:#446554!important;
+}
+html body.cb-top-nav-enabled .cbcombat-shell{
+  background-color:#081419!important;border-color:#405d55!important;
+}
+html body.cb-top-nav-enabled .cbcombat-shell
+  :is(.cbcombat-header,.cbcombat-party-panel,.cbcombat-command-panel,
+      .cbcombat-meters-panel,.cbcombat-chat,.cbcombat-chat-tabs,
+      .cbcombat-chat-form){
+  background-color:#112126!important;border-color:#425f57!important;
+}
+html body.cb-top-nav-enabled .cbcombat-shell
+  :is(.cbcombat-chat-tabs button.active,.cbcombat-header-actions button){
+  border-color:#8f7950!important;
+}
+html body.cb-top-nav-enabled .cbcombat-shell .cbcombat-chat-messages{
+  background-color:#0b191e!important;
+}
+/* Tutorial already uses this historic palette; tighten its secondary chrome. */
+html body.cb-top-nav-enabled .onboard-root :is(.onboard-shell,.onboard-head){
+  border-color:#4c5b45!important;
+}
+html body.cb-top-nav-enabled .onboard-root
+  :is(.party-draft-card,.race-card,.class-choice,.profession-slot-card,
+      .tutorial-loot-card,.tutorial-recipe,.formation-preview){
+  background-color:#111f24!important;border-color:#486155!important;
+}
+html body.cb-top-nav-enabled .onboard-root
+  :is(.party-draft-card.active,.race-card.active,.class-choice.active){
+  background-color:#2b2b21!important;border-color:#a88e5b!important;
+}
+/* Standard feedback and focus retain their state-specific colours. */
+html body.cb-top-nav-enabled :is(.main>.view,.modal-card,.dbo-shell,.onboard-root)
+  :is(input,select,textarea)::placeholder{color:#91a59e}
+html body.cb-top-nav-enabled :is(.main>.view,.modal-card,.dbo-shell,.onboard-root)
+  :is(button,summary,a,input,select,textarea):focus-visible{
+  outline:2px solid #e8c98b!important;outline-offset:2px!important;
+}
