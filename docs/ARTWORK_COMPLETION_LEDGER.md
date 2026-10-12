@@ -1,6 +1,6 @@
 # Cellbound Artwork Completion Ledger
 
-Last audit: 11 October 2026. Branch: `staging`. This is a working checklist, not a claim that the whole game's art is finished.
+Last audit: 12 October 2026. Branch: `staging`. This is a working checklist, not a claim that the whole game's art is finished.
 
 ## Finished and integrated
 
@@ -15,14 +15,14 @@ Last audit: 11 October 2026. Branch: `staging`. This is a working checklist, not
 
 ### Main campaign comic art
 
-`QUEST_COMIC_STORY_ART` in `quests-v2.js`: **69 panel image assignments from 36 distinct source illustrations** across 11 dialogue strips. This is not 69 individual paintings.
+`QUEST_COMIC_STORY_ART` in `quests-v2.js`: **69 panel image assignments from 44 distinct asset paths** across 11 dialogue strips. This is not 69 individual paintings.
 
 Priority panels needing original scene-specific art to remove *within-strip* duplication:
 
-1. **Bram's Professional Opinion**: four panels, only two source compositions. Two new distinctive scene paintings or compositions needed.
-2. **A Different Kind of Pressure**: six panels, four distinct images; two repeated images.
-3. **The Old Surveyor**: nine panels, seven distinct images.
-4. **The Door That Breathed**: seven panels, five distinct images.
+1. **Bram's Professional Opinion**: four panels, four distinct painted-source compositions now assigned.
+2. **A Different Kind of Pressure**: six panels, six distinct assets now assigned.
+3. **The Old Surveyor**: nine panels, nine distinct assets now assigned.
+4. **The Door That Breathed**: seven panels, seven distinct assets now assigned.
 5. **Something That Should Be Dead**: six panels, five distinct images.
 6. **The Bearer**: six panels, five distinct images.
 7. **The Fragment Remembers**: seven panels, six distinct images.

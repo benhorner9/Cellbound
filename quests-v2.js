@@ -253,8 +253,8 @@ const QUEST_COMIC_STORY_ART={
   './assets/comics/main-quests-2026/heroes-against-arcane-storm.webp',
   './assets/comics/main-quests-2026/shattered-crystal-ritual.webp',
   './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
-  './assets/comics/main-quests-2026/heroes-against-arcane-storm.webp',
-  './assets/comics/main-quests-2026/shattered-crystal-ritual.webp',
+  './assets/comics/main-quests-2026/pressure-before-three.svg',
+  './assets/comics/main-quests-2026/pressure-shard-moves.svg',
   './assets/comics/main-quests-2026/adventurers-beyond-violet-portal.webp'
  ],
  'The Old Surveyor':[
@@ -262,19 +262,19 @@ const QUEST_COMIC_STORY_ART={
   './assets/comics/main-quests-2026/arcane-shard-war-room.webp',
   './assets/comics/main-quests-2026/ghostly-violet-wardens.webp',
   './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
-  './assets/comics/main-quests-2026/surveyors-violet-depths.webp',
+  './assets/comics/main-quests-2026/surveyor-cut-marks.svg',
   './assets/comics/main-quests-2026/arcane-passage-revealed.webp',
   './assets/comics/main-quests-2026/into-molten-citadel.webp',
   './assets/comics/main-quests-2026/adventurers-beyond-violet-portal.webp',
-  './assets/comics/main-quests-2026/cartographers-council.webp'
+  './assets/comics/main-quests-2026/surveyor-ledger-handoff.svg'
  ],
  'The Door That Breathed':[
   './assets/comics/main-quests-2026/adventurers-before-breathing-gate.webp',
   './assets/comics/main-quests-2026/breathing-gate-awakens.webp',
   './assets/comics/main-quests-2026/awakening-arcane-seal.webp',
-  './assets/comics/main-quests-2026/awakening-arcane-seal.webp',
+  './assets/comics/main-quests-2026/breathing-door-three-rings.svg',
   './assets/comics/main-quests-2026/arcane-gate-awakening.webp',
-  './assets/comics/main-quests-2026/breathing-gate-awakens.webp',
+  './assets/comics/main-quests-2026/breathing-door-heart-pulse.svg',
   './assets/comics/main-quests-2026/adventurers-before-arcane-abyss.webp'
  ],
  'The Seal Opens':[

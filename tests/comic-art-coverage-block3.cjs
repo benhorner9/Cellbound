@@ -18,21 +18,28 @@ for(const [title,count] of Object.entries(expected)){
  const at=quest.indexOf(marker);
  assert(at>=0,'Missing dedicated comic art for '+title);
  const end=quest.indexOf(']',at);
- const images=[...quest.slice(at,end+1).matchAll(/'([^']+\.webp)'/g)].map(m=>m[1]);
+ const images=[...quest.slice(at,end+1).matchAll(/'([^']+\.(?:webp|svg))'/g)].map(m=>m[1]);
  assert.equal(images.length,count,title+' must illustrate each live dialogue line');
  for(const img of images){
   assert(img.startsWith('./assets/comics/main-quests-2026/'),title+' uses older/generic scene art: '+img);
   const filename=path.join(root,img.replace(/^\.\//,''));
   assert(fs.existsSync(filename),'Missing new image: '+img);
-  const b=fs.readFileSync(filename);
-  assert(b.length>55000,'Possible blank/placeholder comic artwork: '+img);
-  assert.equal(b.toString('ascii',0,4),'RIFF','Invalid WebP image: '+img);
-  assert.equal(b.toString('ascii',8,12),'WEBP','Invalid WebP image: '+img);
+  const data=fs.readFileSync(filename);
+  assert(data.length>55000,'Artwork unexpectedly small: '+img);
+  if(img.endsWith('.svg')){
+   const svg=data.toString('utf8');
+   assert(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"'),'Invalid SVG: '+img);
+   assert(svg.includes('viewBox="0 0 1600 900"'),'Art must be 16:9: '+img);
+   assert.equal(svg.split('href="data:image/webp;base64,').length-1,2,'Two embedded painted layers required: '+img);
+  }else{
+   assert.equal(data.toString('ascii',0,4),'RIFF','Invalid WebP: '+img);
+   assert.equal(data.toString('ascii',8,12),'WEBP','Invalid WebP container: '+img);
+  }
   assert(build.includes(img.slice(2)),'New art missing from production build: '+img);
   all.add(img);
  }
 }
-assert.equal(all.size,10,'All ten newly generated illustrations must be used in the quests');
+assert.equal(all.size,14,'All ten newly generated illustrations must be used in the quests');
 assert(editor.includes("const scripted=name==='showDialogue'&&bracketed"),'Inspector must retain dynamic dialogue panel counts');
 assert(editor.includes("const dedicatedAt=src.indexOf('const QUEST_COMIC_STORY_ART=');"),'Inspector must share live artwork definitions');
-console.log('Comic art block 3: '+Object.keys(expected).length+' quests, '+Object.values(expected).reduce((a,b)=>a+b,0)+' panels, 10 new WebPs, all referenced and shipped.');
+console.log('Comic art block 3: '+Object.keys(expected).length+' quests, '+Object.values(expected).reduce((a,b)=>a+b,0)+' panels, 10 painted WebPs + 4 new composites, all referenced and shipped.');
