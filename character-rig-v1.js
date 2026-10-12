@@ -249,6 +249,16 @@ function armJoints(shoulder,hand,p,side){
   const along=(upper*upper-lower*lower+d*d)/(2*safe),height=Math.sqrt(Math.max(0,upper*upper-along*along));
   return {shoulder,hand,elbow:{x:shoulder.x+dx/safe*along+side*dy/safe*height,y:shoulder.y+dy/safe*along-side*dx/safe*height},upper,lower};
 }
+function constrainTwoHanded(attachment,p,leftShoulder,rightShoulder){
+  const a={...attachment},{upper,lower}=armLengths(p),limit=upper+lower-.5;
+  // Project the shared handle into both arms' reachable discs. Translation of
+  // the weapon moves both grips together; fingers never detach to fake reach.
+  for(let i=0;i<16;i++)for(const [s,h] of [[rightShoulder,{x:a.x,y:a.y}],[leftShoulder,transformPoint(a,a.support)]]){
+    const dx=h.x-s.x,dy=h.y-s.y,d=Math.hypot(dx,dy);
+    if(d>limit){a.x-=dx*(1-limit/d);a.y-=dy*(1-limit/d)}
+  }
+  return a;
+}
 function equipmentPose(subject){
   const p=bodyProfile(subject),ls=120-p.shoulder,rs=120+p.shoulder;
   const kind=weaponKind(subject),offItem=subject?.equipment?.OffHand;
@@ -263,6 +273,7 @@ function equipmentPose(subject){
     main={...profile,x:right.x,y:right.y,kind,layer:'mainhand-side',mode:twoHanded?'two-handed':kind==='bow'?'bow-rest':'one-handed'};
     if(twoHanded){
       main.support=profile.support||[profile.grip[0]+1.5,profile.grip[1]+22];
+      main=constrainTwoHanded(main,p,{x:ls,y:148},{x:rs,y:148});right={x:main.x,y:main.y};
       left=transformPoint(main,main.support);
     }
   }
@@ -280,6 +291,27 @@ function equipmentPose(subject){
   return {main,off,twoHanded,right:armJoints({x:rs,y:148},right,p,1),left:armJoints({x:ls,y:148},left,p,-1)};
 }
 function weaponPose(subject){const a=equipmentPose(subject).main;return a?{...a,active:true,side:'right',sideMin:120,stance:a.mode}:{active:false,kind:'none',...equipmentPose(subject).right.hand,angle:0,side:'right',sideMin:120}}
+// Animation channels are body-relative wrist goals, not another equipment fit.
+// The same sockets, support grip and two-bone solve remain authoritative.
+function animatedEquipmentPose(base,p,channels={}){
+  const out={...base},reach=armLengths(p),limit=reach.upper+reach.lower-.5;
+  const solve=(side,goal)=>{
+    const shoulder=base[side].shoulder,dx=goal.x-shoulder.x,dy=goal.y-shoulder.y,d=Math.hypot(dx,dy)||1;
+    const length=Math.max(Math.abs(reach.upper-reach.lower)+.5,Math.min(limit,d));
+    return armJoints(shoulder,{x:shoulder.x+dx*length/d,y:shoulder.y+dy*length/d},p,side==='right'?1:-1);
+  };
+  for(const [side,key] of [['right','main'],['left','off']]){
+    const h=base[side].hand;
+    out[side]=solve(side,{x:h.x+(channels[key+'X']||0)*p.shoulder,y:h.y+(channels[key+'Y']||0)*reach.lower});
+    const a=base[key];
+    if(a)out[key]=a.mode==='stowed'?a:{...a,...out[side].hand,angle:a.angle+(channels[key+'Angle']||0)};
+  }
+  if(out.twoHanded&&out.main){
+    out.main=constrainTwoHanded(out.main,p,base.left.shoulder,base.right.shoulder);
+    out.right=solve('right',out.main);out.left=solve('left',transformPoint(out.main,out.main.support));
+  }
+  return out;
+}
 function gearFitProfile(subject){
   const race=raceOf(subject),p=bodyProfile(subject),sex=sexName(subject),gender=p.gender,frame=p.frame;
   const shoulderY=race==='Stoneborn'?130:gender===1?133:131;
@@ -404,7 +436,7 @@ window.CellboundCharacterRig=Object.freeze({
   requiredAnchors:REQUIRED_ANCHORS,layerOrder:LAYER_ORDER,frameDeform:FRAME_DEFORM,
   masterRigCount:12,masterRigs:MASTER_RIGS,
   masterKey,masterRig,resolve,bodyProfile,gearFitProfile,weaponPose,weaponKind,offHandKind,anchors,anchor,
-  equipmentPose,weaponProfiles:WEAPON_PROFILES,offhandProfiles:OFFHAND_PROFILES,transformPoint,attachmentTransform,
+  equipmentPose,animatedEquipmentPose,weaponProfiles:WEAPON_PROFILES,offhandProfiles:OFFHAND_PROFILES,transformPoint,attachmentTransform,
   rigY,unrigY,headRig,hairFit,fitSlot,equipmentCoverage,validateAll
 });
 })();

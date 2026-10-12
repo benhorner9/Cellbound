@@ -195,7 +195,7 @@ function center(el){const r=actor(el).getBoundingClientRect();return{x:r.left+r.
 function direction(a,b){const x=b.x-a.x,y=b.y-a.y,len=Math.hypot(x,y)||1;return{x:x/len,y:y/len,angle:Math.atan2(y,x)*180/Math.PI,len}}
 function face(u,target){if(!u||!target||u.dead)return;u.target=target;const d=direction(center(u.el),center(target));u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.el.style.setProperty('--face-angle',d.angle+'deg')}
 function motion(u,frames,duration,scene){
- if(!u||reduce())return;u.animation?.cancel();
+ if(!u||reduce()||u.el.dataset.animationOwned==='1')return;u.animation?.cancel();
  const easing=u.p.motion==='dart'||u.p.motion==='rush'?'cubic-bezier(.18,.82,.22,1)':u.p.motion==='heavy'||u.p.motion==='brutal'?'cubic-bezier(.22,.66,.28,1)':'cubic-bezier(.2,.72,.24,1)';
  u.animation=actor(u.el)?.animate?.(frames,{duration:Math.max(70,duration/scene.speed),easing,fill:'none'});
 }
@@ -232,6 +232,7 @@ function family(e,u){
  return u?.p.projectile||'hostile'
 }
 function anchorPoint(scene,el,bounds=scene.arena.getBoundingClientRect()){
+ const socket=window.CellboundCombatAnimation?.socket(el);if(socket)return socket;
  if(!el?.isConnected)return null;
  const tracked=scene.units.get(el),p=tracked?.position;
  if(Number.isFinite(Number(p?.x))&&Number.isFinite(Number(p?.y))){
@@ -426,7 +427,12 @@ function frame(){
  }
  if(active)wake()
 }
-function combatEvent(e,opts={}){try{livingEvent(e,opts)}catch(error){console.warn('Living combat visual skipped',e?.type,error)}}
+function combatEvent(e,opts={}){try{
+ const animation=window.CellboundCombatAnimation,arena=mount(opts.arena||opts.root?.querySelector?.(ARENA));
+ if(animation&&arena)animation.route(e,{...opts,arena,source:resolve(e.source,opts,arena),target:resolve(e.target,opts,arena)},()=>livingEvent(e,{...opts,arena}));
+ else livingEvent(e,opts);
+}catch(error){console.warn('Living combat visual skipped',e?.type,error)}}
+FX.presentImpact=(e,fn)=>window.CellboundCombatAnimation?window.CellboundCombatAnimation.present(e,fn):fn();
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
 FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.5.0';FX.living=true;
 // Legacy public entry points remain callable but no longer duplicate shared reactions.

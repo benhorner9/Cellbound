@@ -812,13 +812,13 @@ function armSegment(a,b,wa,wb,fill,stroke,extra=''){
 }
 function paperArms(c,skin,highlighted){
   var fit=paperFit(c),p=fit.p,pose=fit.attachments,aw=Math.max(5.2,p.arm*.44);
-  var arms=[pose.left,pose.right].map(a=>armSegment(a.shoulder,a.elbow,aw,aw*.8,skin,'#182027')).join('');
-  // Clip the existing race markings to the solved upper arms. Previously the
-  // old straight-arm decorations remained in space after the arm bent.
   var clip='arms'+hash(JSON.stringify([c.id,c.race,c.appearance,c.equipment])).toString(36);
+  var details=paperRaceArmDetails(c,p,fit.leftShoulder,fit.rightShoulder);
   return '<g class="cb-paper-arms" data-fit-version="4" data-alignment="v4" data-weapon-arm-pose="joint-solved">'+
-    '<defs><clipPath id="'+clip+'">'+arms+'</clipPath></defs>'+arms+
-    '<g clip-path="url(#'+clip+')">'+paperRaceArmDetails(c,p,fit.leftShoulder,fit.rightShoulder)+'</g></g>';
+    ['left','right'].map(function(side){
+      var arm=pose[side],shape=armSegment(arm.shoulder,arm.elbow,aw,aw*.8,skin,'#182027'),id=clip+side;
+      return '<g class="cb-paper-upper-'+side+'"><defs><clipPath id="'+id+'">'+shape+'</clipPath></defs>'+shape+'<g clip-path="url(#'+id+')">'+details+'</g></g>';
+    }).join('')+'</g>';
 }
 function paperWeaponForearm(c,highlighted){
   var fit=paperFit(c),p=fit.p,pose=fit.attachments,hands=itemForSlot(c,'Hands'),tier=clampTier(hands?.tier),
@@ -1096,18 +1096,18 @@ function paperDollSVG(c,opts){
   var hip=profile.hip||32;
   var under='<path d="M'+(120-hip)+' 236 Q120 250 '+(120+hip)+' 236 L'+(120+hip+1)+' 268 Q120 282 '+(120-hip-1)+' 268Z" fill="#162126" stroke="#10171b" stroke-width="3"/><path d="M'+(120-hip+6)+' 252 Q120 261 '+(120+hip-6)+' 252" fill="none" stroke="#526065" stroke-width="1.3" opacity=".36"/>';
   var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=29+(50*(1-headScale));
-  return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v4" data-item-visuals="v2" data-palette-mode="gear-owned" data-weapon-pose="held-v3" role="img" aria-hidden="true" focusable="false">'+
+  return '<svg viewBox="0 0 240 410" data-rig-pose="'+esc(JSON.stringify({pose:paperFit(c).attachments,p:paperFit(c).p}))+'" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v4" data-item-visuals="v2" data-palette-mode="gear-owned" data-weapon-pose="held-v3" role="img" aria-hidden="true" focusable="false">'+
     '<defs><radialGradient id="'+uid+'a" cx="50%" cy="46%" r="54%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".13"/><stop offset="70%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient></defs>'+
     '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
     '<ellipse cx="120" cy="392" rx="'+Math.max(66,profile.shoulder+23)+'" ry="10" fill="#000" opacity=".38"/>'+
     '<g class="cb-paper-actor" transform="'+(opts.mirrored?'translate(240 0) scale(-1 1)':'translate(0 0)')+'">'+paperTierAura(c)+
     paperLegs(c,skin,highlighted)+paperFeet(c,skin,highlighted)+
-    paperOffHand(c,highlighted,'back')+
+    '<g class="cb-paper-upper-body">'+paperOffHand(c,highlighted,'back')+
     paperRaceSilhouette(c,profile,skin)+paperArms(c,skin,highlighted)+under+paperChest(c,highlighted,skin)+paperWaist(c,highlighted)+paperCarryStrap(c)+paperShoulders(c,highlighted)+paperWeaponForearm(c,highlighted)+paperAccessories(c,highlighted)+
     neck+
     '<g transform="translate('+headX+' '+headY+') scale('+headScale+')">'+paperHeadMarkup(c,a,skin,eye,hair,highlighted)+'</g>'+
     paperOffHand(c,highlighted,'front')+paperWeapon(c,highlighted)+
-    '</g></svg>';
+    '</g></g></svg>';
 }
 function paperDollHTML(subject,opts){
   opts=opts||{};

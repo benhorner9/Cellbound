@@ -1930,7 +1930,7 @@ function setEnemyHp(index,value){
  const unit=$('[data-unit="e-'+index+'"]');
  if(unit){
    unit.classList.toggle('critical',pct<30&&pct>0);
-   if(previous>0&&run.enemyHp[index]<=0){
+   if(previous>0&&run.enemyHp[index]<=0&&!window.CellboundCombatAnimation){
      unit.classList.add('dying');deathBurst('e-'+index);
      setTimeout(()=>{unit.classList.remove('dying');unit.classList.add('dead')},300);
    }
@@ -2470,6 +2470,11 @@ function cbrStatusTargets(id){
  }
  return out
 }
+function presentRebornImpact(e,fn){
+ const activeRun=run,arena=$('#cb2dArena');
+ const present=()=>{if(run===activeRun&&arena?.isConnected)fn()};
+ if(window.CellboundCombatFX?.presentImpact)window.CellboundCombatFX.presentImpact(e,present);else present();
+}
 function renderRebornEvent(e,result,replayMode=false){
  if(!run||!e)return;
  rebornDebugEvent(e,result);
@@ -2524,13 +2529,18 @@ function renderRebornEvent(e,result,replayMode=false){
    }
    if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||0);setCond(targetChar.id,cond(targetChar.id)-Math.max(1,Math.round((Number(e.amount)||0)/8)));updateRows()}
    if(srcChar){setCombatHudState(srcChar,e.target,e.ability||'Attack');recordDamage(srcChar,Number(e.amount)||0)}
-   if(e.target){hitReact(e.target,'hit');floating(e.target,'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':targetChar?'incoming':'damage');window.CellboundCombatFX?.impact?.($('[data-unit="'+e.target+'"]'),{critical:e.result==='critical'})}
+   if(e.target)presentRebornImpact(e,()=>{
+    const avoided=/miss|dodg|immune/.test(e.result||'');
+    if(!avoided)hitReact(e.target,'hit');
+    floating(e.target,avoided?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':targetChar?'incoming':'damage');
+    window.CellboundCombatFX?.impact?.($('[data-unit="'+e.target+'"]'),{critical:e.result==='critical'});
+   });
    if(e.payload?.avoidable){log((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.')}
    break;
   }
   case'HEAL_RECEIVED':
    if(srcChar&&e.target){setCombatHudState(srcChar,e.target,e.ability||'Healing');projectile(e.source,e.target,'heal',240)}
-   if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-unit="'+e.target+'"]'))}
+   if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();presentRebornImpact(e,()=>{hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-unit="'+e.target+'"]'))})}
    if(srcChar)recordRebornHealing(srcChar,Number(e.amount)||0,Number(e.payload?.overhealing)||0);
    break;
   case'PLAYER_REVIVED':
@@ -2617,13 +2627,13 @@ function renderRebornEvent(e,result,replayMode=false){
    if(!$('[data-unit="'+e.target+'"]')){const p=e.position||{x:76,y:50};addUnit(e.target,e.payload?.name||'Add','enemy small',p.x,p.y,'small','Lv. '+(e.payload?.level||currentStageDef()?.level||1)+' · '+(e.payload?.classificationLabel||'ADD'));const bar=$('[data-unit="'+e.target+'"] .cb2d-unit-hp i');if(bar)bar.style.width='100%'}
    flash('ADDS SPAWN',true);window.CellboundCombatFX?.spawn?.($('[data-unit="'+e.target+'"]')||$('#cb2dArena'));log((e.payload?.name||'Adds')+' enter the fight.');break;
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
-   const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);window.CellboundCombatFX?.death?.(u,{boss:e.type==='ENEMY_DEFEATED'&&['boss','final'].includes(String(currentStageDef()?.kind||''))});setTimeout(()=>u.classList.add('dead'),240)}
+   const u=$('[data-unit="'+e.target+'"]');if(u&&!window.CellboundCombatAnimation){u.classList.add('dying');deathBurst(e.target);window.CellboundCombatFX?.death?.(u,{boss:e.type==='ENEMY_DEFEATED'&&['boss','final'].includes(String(currentStageDef()?.kind||''))});setTimeout(()=>u.classList.add('dead'),240)}
    if(run?.commandTargetId===e.target){run.commandTargetId=null;refreshCommanderTarget()}
    clearCombatHudTarget(e.target);
    if(e.type==='ADD_DEFEATED')log('An add is defeated.');break;
   }
   case'PLAYER_DEFEATED':
-   if(targetChar){run.hudTargets=run.hudTargets||{};run.hudActions=run.hudActions||{};run.hudTargets[targetChar.id]=null;run.hudActions[targetChar.id]='DEAD';setHp(targetChar.id,0);updateRows();const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');window.CellboundCombatFX?.death?.(u);setTimeout(()=>u.classList.add('dead'),220)}deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
+   if(targetChar){run.hudTargets=run.hudTargets||{};run.hudActions=run.hudActions||{};run.hudTargets[targetChar.id]=null;run.hudActions[targetChar.id]='DEAD';setHp(targetChar.id,0);updateRows();const u=$('[data-unit="'+e.target+'"]');if(u&&!window.CellboundCombatAnimation){u.classList.add('dying');window.CellboundCombatFX?.death?.(u);setTimeout(()=>u.classList.add('dead'),220)}deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
   case'CAST_FINISH':
    rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
   case'COMBAT_END':

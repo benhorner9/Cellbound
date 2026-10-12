@@ -722,3 +722,8 @@
 .cb-appearance-preview{background:radial-gradient(ellipse at center,#49405144,transparent 70%)}
 @media(max-width:700px){.creator-stage{grid-template-columns:1fr}.creator-hero>.cb-paper-doll--creator{height:260px}.creator-choice-grid .race-card{grid-template-columns:70px minmax(0,1fr);min-height:140px}.cb-paper-doll--race-choice{width:70px;height:130px}.cb-appearance-controls{min-width:0}}
 @media(prefers-reduced-motion:reduce){.cb-paper-doll *,.cb-portrait *{animation:none!important;transition:none!important}}
+/* Held artwork uses the rig's canvas-space pivot, never its painted bounding box. */
+.cb-paper-slot-weapon,.cb-paper-slot-offhand{
+ transform-box:view-box;transform-origin:0 0;
+ transition:filter .18s ease,opacity .18s ease;
+}

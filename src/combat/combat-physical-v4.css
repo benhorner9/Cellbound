@@ -327,3 +327,26 @@
     animation:none!important;
   }
 }
+
+/* One motion owner. Transform only artwork; never unit positions, bars or UI. */
+.cbl-scene [data-animation-owned="1"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot,.cb-paper-actor,.cb-paper-upper-body){animation:none!important;transition:none!important;scale:1;rotate:0deg}
+.cbl-scene [data-animation-owned="1"] :is(.cb-paper-doll,.cb-paper-doll svg){overflow:visible}
+.cbl-scene [data-animation-owned="1"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait){transform-origin:50% 90%}
+.cbl-scene [data-animation-state="idle"] .cb-paper-upper-body{animation:cbaBreathe 4.8s ease-in-out var(--cba-phase,0s) infinite!important;transform-origin:120px 257px}
+.cbl-scene [data-animation-state="idle"] :is(.cb-combat-boss-portrait,.cb-combat-monster-portrait,.cbl-pet-body){animation:cbaCreatureBreathe 5.4s ease-in-out var(--cba-phase,0s) infinite!important}
+.cbl-scene [data-animation-state="death"],.cbl-scene [data-animation-state="dead"]{opacity:1!important;filter:grayscale(.8)}
+.cbl-scene [data-animation-owned="1"][data-combat-state="dead"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){opacity:.65;scale:1;rotate:0deg}
+.cbl-scene [data-animation-state="control"] .cb-paper-upper-body{filter:saturate(.65)}
+@keyframes cbaBreathe{0%,100%{translate:0 0;scale:1 1}50%{translate:0 -.7px;scale:1.003 1.006}}
+@keyframes cbaCreatureBreathe{0%,100%{scale:1}50%{scale:1.008 1.012}}
+@media(prefers-reduced-motion:reduce){
+ .cbl-scene [data-animation-owned="1"] :is(.cb-paper-upper-body,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.cbl-pet-body){animation:none!important}
+}
+.cbl-scene [data-animation-owned="1"] .cb-paper-slot{transition:none!important;transform-box:view-box;transform-origin:0 0}
+.cbl-scene [data-animation-owned="1"] .cb-paper-upper-body{transform-origin:0 0}
+.cb2d-unit>.cb-combat-rigged-enemy{width:48px!important;height:82px!important;top:50%;transform:translate(-50%,-75%);border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;overflow:visible!important}
+.cb-combat-rigged-enemy .cb-paper-doll--combat{display:block;width:48px;height:82px;background:none;filter:saturate(.65)}
+.cb-combat-rigged-enemy .cb-paper-doll--combat svg{width:100%;height:100%;overflow:visible}
+/* Gameplay may mark a unit dead before the queued visual killing blow lands. */
+.cbl-scene.cbl-scene .cb2d-unit[data-animation-owned="1"]{opacity:1!important;filter:none}
+.cbl-scene [data-animation-state="idle"] .cb-paper-upper-body{transform-origin:120px 257px}

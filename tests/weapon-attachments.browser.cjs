@@ -7,6 +7,7 @@ const root=path.resolve(__dirname,'..'),name=process.env.CELLBOUND_TEST_ENGINE==
  try{
   const page=await browser.newPage({viewport:{width:1440,height:1000}});
   await page.setContent('<style>body{margin:0;background:#172027;color:#e5dcc8;font:14px sans-serif}h1{font-size:19px;margin:18px}main{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:12px}article{text-align:center;min-width:0}article svg{display:block;width:100%;height:auto}h2{font-size:14px}small{color:#acb8b8}#host{position:absolute;left:0;top:0;width:240px}#host>svg{width:240px;height:410px}</style><h1>Shared equipment attachments</h1><main></main><div id="host"></div>');
+  await page.addStyleTag({path:path.join(root,'character-portraits-v1.css')});
   for(const f of ['gear-data.js','item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js','character-portraits-v1.js'])await page.addScriptTag({path:path.join(root,f)});
   await page.evaluate(()=>{
    window.qaCharacter=(i,race='Veyren',gender=0,frame=1)=>{

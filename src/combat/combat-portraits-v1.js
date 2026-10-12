@@ -111,6 +111,16 @@ function mountMonster(el){
  const entry=Object.entries(MONSTERS).find(([,v])=>v.match.test(name.toLowerCase()));const [key,m]=entry;
  const n=document.createElement('div');n.className='cb-combat-monster-portrait';n.setAttribute('aria-label',name+' portrait');
  n.style.setProperty('--monster-color',m.color);n.dataset.monster=key;
+ // First rigged enemy profile: reuse the game's armour and character cutouts.
+ // This is visual metadata only; no character or item enters the combat model.
+ if(/^ash guardian$/i.test(name)){
+  const equipment={};
+  for(const slot of ['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand'])equipment[slot]={slot,class:'Warrior',tier:1,name:slot==='Weapon'?'Guardian Sword':slot==='OffHand'?'Guardian Shield':'Ashen '+slot};
+  const model={id:'visual-ash-guardian',name,race:'Veyren',class:'Warrior',appearance:{gender:0,frame:2,skinTone:3,hair:0,hairColor:0,eyes:2,facialHair:0},equipment};
+  n.classList.add('cb-combat-rigged-enemy');n.innerHTML=CP.paperDollHTML(model,{size:'combat',mirrored:true,accent:'#d18d58',label:name});
+  el.classList.add('cb-combat-has-monster-portrait');el.appendChild(n);return;
+ }
+
  n.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true"><g fill="var(--monster-color)" stroke="#172128" stroke-width="2.5" stroke-linejoin="round">'+m.body+'<path d="'+m.path+'" fill="none" stroke="var(--monster-color)" stroke-width="3"/></g></svg>';
  el.classList.add('cb-combat-has-monster-portrait');el.appendChild(n);
 }
