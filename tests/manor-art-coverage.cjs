@@ -15,7 +15,8 @@ for(const id of ids){
  assert(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"'),'Invalid SVG '+file);
  assert(svg.includes('viewBox="0 0 1600 900"'),'Wrong 16:9 dimensions '+file);
  assert.equal((svg.match(new RegExp('data:image/webp;base64,','g'))||[]).length,2,'Room must include two painted source layers '+file);
- assert(!/<text\\b/i.test(svg),'No baked captions or labels allowed '+file);
+ assert(!svg.includes('<text'),'No baked captions or labels allowed '+file);
+ assert(svg.includes('fill="url(#walls)" stroke="none" stroke-width="0" opacity=".72"'),'Painted layers must remain visible beneath the room wall colour '+file);
  for(const m of svg.matchAll(new RegExp('data:image/webp;base64,([A-Za-z0-9+/=]+)','g'))){
   const header=Buffer.from(m[1].slice(0,48),'base64');
   assert.equal(header.toString('ascii',0,4),'RIFF','Malformed painted source '+file);
