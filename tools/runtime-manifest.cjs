@@ -70,6 +70,8 @@ const groups=Object.freeze({
   "layout-safety-v1.css",
   "top-navigation-v1.css",
   "ui-foundation-v1.css",
+  "guild-hall-v2.css",
+  "guild-hall-v2.js",
   "class-build-v1.js",
   "gear-data.js",
   "profession-data.js",
