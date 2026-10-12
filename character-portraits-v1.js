@@ -960,10 +960,15 @@ function weaponMarkup(type,pal,v,tier,item){
   var g='',headY=192,ornamentY=224;
   if(type==='bow'){
     // Bow is gripped at its waist, NOT at the string or lower limb.
-    g='<path d="M190 112 Q229 200 190 314" fill="none" stroke="'+pal.base+'" stroke-width="'+(7+v%3)+'"/>'+
-      '<path d="M190 112 L190 314" stroke="'+pal.trim+'" stroke-width="1.7"/>'+
-      '<path d="M199 210 L217 201" stroke="'+pal.light+'" stroke-width="3"/>'+
-      '<path d="M217 201 L211 200 L214 207Z" fill="'+pal.trim+'"/>';
+    // Recurve silhouette: luminous outer limbs + visibly separated string.
+    // Unlike the former near-straight dark line, reads as a bow at roster size.
+    g='<path class="cb-paper-bow-limb" d="M190 113 Q219 144 224 176 Q229 199 213 213 Q227 245 221 277 Q212 306 190 325"'+
+      ' fill="none" stroke="'+pal.trim+'" stroke-width="10" stroke-linecap="round"/>'+
+      '<path d="M190 113 Q219 144 224 176 Q229 199 213 213 Q227 245 221 277 Q212 306 190 325"'+
+      ' fill="none" stroke="'+pal.base+'" stroke-width="5.3" stroke-linecap="round"/>'+
+      '<path class="cb-paper-bow-string" d="M190 113 L190 325" fill="none" stroke="'+pal.light+'" stroke-width="2.3"/>'+
+      '<path d="M207 209 L220 211 L207 217" fill="none" stroke="'+pal.light+'" stroke-width="3" stroke-linecap="round"/>'+
+      '<path d="M190 113 L196 129 M190 325 L196 309" stroke="'+pal.glow+'" stroke-width="2.5"/>';
     ornamentY=211;
   }else if(type==='crossbow'){
     g='<path d="M198 205 L205 311" stroke="'+pal.dark+'" stroke-width="8" stroke-linecap="round"/>'+
@@ -982,6 +987,7 @@ function weaponMarkup(type,pal,v,tier,item){
     ornamentY=214;
   }else if(type==='hammer'){
     g='<path d="M197 186 L208 316" stroke="'+pal.dark+'" stroke-width="9" stroke-linecap="round"/>'+
+      '<path d="M198 207 L205 302" stroke="'+pal.trim+'" stroke-width="2.2" opacity=".74"/>'+
       '<path d="M178 168 L214 163 L222 201 L182 209Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
       '<path d="M183 183 L217 178" stroke="'+pal.light+'" stroke-width="3"/>';
     ornamentY=217;
@@ -1048,7 +1054,7 @@ const PAPER_WEAPON_GRIPS=Object.freeze({
   sword:[200,279],greatsword:[200,279],axe:[204,279],
   hammer:[205,279],mace:[205,279],dagger:[202,279],
   staff:[201,220],spear:[201,220],
-  bow:[209,212],crossbow:[200,219],
+  bow:[213,213],crossbow:[200,219],
   wand:[203,279],focus:[200,279],scepter:[202,279],rod:[202,279]
 });
 const PAPER_WEAPON_STANCES=Object.freeze({
@@ -1226,7 +1232,7 @@ function classicGearFitProfile(subject){
       ranged=type==='bow'||type==='crossbow',close=type==='dagger',
       heavy=['greatsword','hammer','axe'].includes(type),
       rightHand=weapon?rightShoulder-p.shoulder*(ranged?.29:pole?.31:close?.31:heavy?.29:.31):baseRightHand,
-      weaponY=weapon?(type==='bow'?215:type==='crossbow'?214:pole?(type==='spear'?224:type==='staff'?209:213):close?219:heavy?216:214):279,
+      weaponY=weapon?(type==='bow'?207:type==='crossbow'?211:pole?(type==='spear'?224:type==='staff'?207:211):close?207:heavy?216:203):279,
       angle=weapon?(type==='bow'?7:type==='crossbow'?-9:pole?(type==='spear'?2:5):
         type==='dagger'?145:type==='sword'?151:type==='greatsword'?154:
         ['hammer','mace','axe'].includes(type)?17:type==='wand'?14:7):0,

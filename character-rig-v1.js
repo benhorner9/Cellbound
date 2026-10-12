@@ -220,7 +220,7 @@ function weaponPose(subject,baseRightHand,p,shoulderX){
   const close=kind==='dagger';
   const heavy=['greatsword','hammer','axe'].includes(kind);
   const x=shoulderX-p.shoulder*(ranged?.29:pole?.31:close?.31:heavy?.29:.31);
-  const y=bow?215:crossbow?214:pole?(kind==='spear'?224:kind==='staff'?209:213):close?219:heavy?216:214;
+  const y=bow?207:crossbow?211:pole?(kind==='spear'?224:kind==='staff'?207:211):close?207:heavy?216:203;
   const angle=bow?7:crossbow?-9:pole?(kind==='spear'?2:5):
     kind==='dagger'?145:kind==='sword'?151:kind==='greatsword'?154:
     kind==='hammer'||kind==='mace'||kind==='axe'?17:kind==='wand'?14:7;
