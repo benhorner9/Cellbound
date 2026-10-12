@@ -43,6 +43,14 @@ for(const item of G.items){
       const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
       assert(weaponAt>headAt,item.itemId+' side-held main-hand must render above body/head');
       assert(html.includes('data-weapon-pose="side-held"'),item.itemId+' missing side-held weapon pose');
+      // The local shaft/socket and the anatomical wrist must be coincident.
+      const lx=num(html,'data-grip-local-x'),ly=num(html,'data-grip-local-y');
+      assert(Number.isFinite(lx)&&Number.isFinite(ly),item.itemId+' has no weapon grip socket');
+      assert(html.includes('translate(-'+lx+' -'+ly+')'),item.itemId+' handle not rotated around its grip');
+      assert(html.includes('data-weapon-pose-version="2"'),item.itemId+' missing held weapon contract');
+      assert(html.includes('cb-paper-held-grip-main'),item.itemId+' missing front fingers over the weapon');
+      assert(near(num(html,'data-hand-x'),fit.weaponX),item.itemId+' drawn hand does not meet weapon');
+      assert(near(num(html,'data-hand-y'),fit.weaponY),item.itemId+' drawn hand height mismatch');
     }else if(item.slot==='OffHand'){
       assert(near(num(html,'data-grip-x'),fit.offhandX),item.itemId+' off-hand X not on hand for '+race+'/'+gender);
       assert(near(num(html,'data-grip-y'),fit.offhandY),item.itemId+' off-hand Y not on hand for '+race+'/'+gender);
@@ -95,6 +103,9 @@ for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of
   assert(near(num(weaponHtml,'data-grip-x'),fit.weaponX),klass+' '+race+' frame '+frame+' weapon mismatch');
   assert(near(num(weaponHtml,'data-grip-y'),fit.weaponY),klass+' '+race+' frame '+frame+' weapon Y mismatch');
   assert(fit.weaponX>=fit.weaponSideMin,klass+' '+race+' frame '+frame+' weapon moved across body instead of to side');
+  assert(html.includes('cb-paper-held-grip-main'),klass+' '+race+' frame '+frame+' hand not visibly gripping weapon');
+  assert(html.includes('data-weapon-pose-version="2"'),klass+' '+race+' frame '+frame+' old floating pose');
+  assert(near(num(weaponHtml,'data-grip-local-y'),279),klass+' '+race+' frame '+frame+' grip no longer on shaft');
   bodyChecks++;
 }
 assert.equal(bodyChecks,G.CLASS_ORDER.length*5*6*2*3);

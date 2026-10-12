@@ -8,7 +8,7 @@ const BASE_ART_CONTRACT='classic-paper-doll-v1';
 const EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-side';
 const RACE_IDENTITY_VERSION=2;
 const EQUIPMENT_FIT_VERSION=4;
-const WEAPON_POSE_VERSION=1;
+const WEAPON_POSE_VERSION=2;
 const ITEM_VISUALS_VERSION=2;
 
 const CLASS_COLORS={
@@ -466,8 +466,8 @@ function paperFit(c){
   var race=c?.race||c?.appearance?.race||'Veyren',p=bodyProfile(race,c?.appearance),reach=Math.max(5.2,p.arm*.46);
   var leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder,leftHand=leftShoulder-reach,baseRightHand=rightShoulder+reach;
   var weapon=itemForSlot(c,'Weapon'),type=weapon?weaponType(weapon,c):'',long=['staff','spear','bow','crossbow'].includes(type),compact=['dagger','wand','focus','scepter','rod'].includes(type);
-  var sideMin=Math.min(196,rightShoulder+Math.max(10,p.arm*.55)),natural=baseRightHand+(long?7:compact?4:6);
-  var rightHand=weapon?Math.max(sideMin,Math.min(198,natural)):baseRightHand,angle=weapon?(type==='bow'?4:type==='crossbow'?6:type==='staff'||type==='spear'?3:type==='dagger'?9:6):0;
+  var sideMin=Math.min(194,rightShoulder+Math.max(5,p.arm*.30)),natural=baseRightHand+(long?2:compact?0:1);
+  var rightHand=weapon?Math.max(sideMin,Math.min(194,natural)):baseRightHand,angle=weapon?(type==='bow'?4:type==='crossbow'?5:type==='staff'||type==='spear'?3:type==='dagger'?8:5):0;
   var legOffset=p.hip*.38;
   return {race,gender:Number(c?.appearance?.gender)||0,frame:Number(c?.appearance?.frame)||1,p,centerX:120,
     leftShoulder,rightShoulder,leftPad:120-p.shoulder*.82,rightPad:120+p.shoulder*.82,leftHand,rightHand,baseRightHand,handY:279,
@@ -931,20 +931,68 @@ function weaponMarkup(type,pal,v,tier,item){
   if(tier>=4&&!pal.set)g+='<circle cx="196" cy="176" r="2.4" fill="'+pal.glow+'" opacity=".6" class="cb-paper-glow"/>';
   return g;
 }
+/* Local coordinates are taken from the handle/stave pixels of weaponMarkup,
+   not the old arbitrary (191,244) point. Each rendered handle now passes
+   through the actual wrist. Adding a weapon type only requires one socket. */
+const PAPER_WEAPON_GRIPS=Object.freeze({
+  sword:[202,279],greatsword:[202,279],axe:[203,279],
+  hammer:[203,279],mace:[202,279],dagger:[197,279],
+  staff:[200,279],spear:[201,279],
+  bow:[197,279],crossbow:[200,279],
+  wand:[200,279],focus:[198,279],scepter:[201,279],rod:[201,279]
+});
+const PAPER_WEAPON_STANCES=Object.freeze({
+  sword:'one-handed',greatsword:'heavy',axe:'one-handed',
+  hammer:'heavy',mace:'one-handed',dagger:'close',
+  staff:'caster',spear:'polearm',bow:'ranged',crossbow:'ranged',
+  wand:'caster',focus:'caster',scepter:'caster',rod:'caster'
+});
+function paperHeldGrip(c,fit,item,side){
+  var isMain=side==='main',x=isMain?fit.weaponX:fit.offhandX,
+      y=isMain?fit.weaponY:fit.offhandY,
+      gloves=itemForSlot(c,'Hands'),pal=gloves&&gearPalette(c,gloves,clampTier(gloves.tier)||1,'Hands'),
+      race=c.race||c.appearance?.race||'Veyren',
+      a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),
+      skin=raceDef(a.race).skin[a.skinTone],
+      fill=pal?pal.base:skin,shade=pal?pal.dark:'#46372e',
+      scale=Math.max(.86,Math.min(1.35,Number(fit.p.hand)||1)),r=5.4*scale;
+  // The underlying wrist/glove is behind the weapon; this is the front
+  // thumb-and-finger layer. This overlap creates an actual visible grip.
+  return '<g class="cb-paper-held-grip cb-paper-held-grip-'+side+'" data-hand-socket="'+(isMain?'mainHand':'offHand')+
+    '" data-hand-x="'+x.toFixed(2)+'" data-hand-y="'+y.toFixed(2)+'">'+
+    '<path class="cb-paper-weapon-grip-hand" d="M'+(x-r).toFixed(2)+' '+(y-6*scale).toFixed(2)+
+    ' Q'+(x-8*scale).toFixed(2)+' '+(y-2*scale).toFixed(2)+' '+(x-6*scale).toFixed(2)+' '+(y+4*scale).toFixed(2)+
+    ' Q'+x.toFixed(2)+' '+(y+9*scale).toFixed(2)+' '+(x+5*scale).toFixed(2)+' '+(y+5*scale).toFixed(2)+
+    ' L'+(x+5*scale).toFixed(2)+' '+(y-4*scale).toFixed(2)+
+    ' Q'+(x+1*scale).toFixed(2)+' '+(y-9*scale).toFixed(2)+' '+(x-r).toFixed(2)+' '+(y-6*scale).toFixed(2)+
+    'Z" fill="'+fill+'" stroke="'+shade+'" stroke-width="1.5"/>'+
+    '<path d="M'+(x-4*scale).toFixed(2)+' '+(y-1*scale).toFixed(2)+' Q'+x.toFixed(2)+' '+(y+1*scale).toFixed(2)+
+    ' '+(x+4*scale).toFixed(2)+' '+(y-1*scale).toFixed(2)+
+    ' M'+(x-4*scale).toFixed(2)+' '+(y+3*scale).toFixed(2)+' Q'+x.toFixed(2)+' '+(y+5*scale).toFixed(2)+
+    ' '+(x+4*scale).toFixed(2)+' '+(y+3*scale).toFixed(2)+
+    '" fill="none" stroke="'+shade+'" stroke-width="1" opacity=".7"/></g>';
+}
 function paperWeapon(c,highlighted){
   var item=itemForSlot(c,'Weapon'),tier=clampTier(item&&item.tier);
   if(!item)return'';
   var pal=gearPalette(c,item,tier,'Weapon'),type=weaponType(item,c),v=pal.variant,fit=paperFit(c);
-  var gx=fit.weaponX||fit.rightHand||191,gy=fit.weaponY||fit.handY||283,angle=Number(fit.weaponAngle)||0;
-  var hand=itemForSlot(c,'Hands'),handFill,handStroke='#111820';
-  if(hand)handFill=gearPalette(c,hand,clampTier(hand.tier)||1,'Hands').base;
-  else{
-    var race=c.race||c.appearance?.race||'Veyren',a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
-    handFill=raceDef(a.race).skin[a.skinTone];
-  }
-  var transform='translate('+gx.toFixed(2)+' '+gy.toFixed(2)+') rotate('+angle.toFixed(2)+') translate(-191 -244)';
-  var grip='<ellipse class="cb-paper-weapon-grip-hand" cx="'+gx.toFixed(2)+'" cy="'+gy.toFixed(2)+'" rx="6.2" ry="7.4" fill="'+handFill+'" stroke="'+handStroke+'" stroke-width="1.8"/>';
-  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+' cb-paper-side-weapon" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'" data-render-layer="mainhand-side" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-weapon-pose="side-held" data-weapon-angle="'+angle.toFixed(2)+'" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+weaponMarkup(type,pal,v,tier,item)+'</g>'+grip;
+  var gx=fit.weaponX??fit.rightHand??191,gy=fit.weaponY??fit.handY??279,
+      angle=Number(fit.weaponAngle)||0,
+      local=PAPER_WEAPON_GRIPS[type]||PAPER_WEAPON_GRIPS.sword,
+      stance=PAPER_WEAPON_STANCES[type]||'one-handed';
+  // Rotation is around the physical handle, not the old weapon sprite's
+  // arbitrary origin. Main-hand glove lies below; fingers paint over the grip.
+  var transform='translate('+gx.toFixed(2)+' '+gy.toFixed(2)+') rotate('+angle.toFixed(2)+
+    ') translate(-'+local[0]+' -'+local[1]+')';
+  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+' cb-paper-side-weapon" data-weapon-type="'+esc(type)+
+    '" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'" data-render-layer="mainhand-side"'+
+    ' data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-weapon-pose="side-held"'+
+    ' data-weapon-pose-version="'+WEAPON_POSE_VERSION+'" data-weapon-stance="'+stance+
+    '" data-grip-local-x="'+local[0]+'" data-grip-local-y="'+local[1]+
+    '" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+
+    '" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+
+    '" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+
+    weaponMarkup(type,pal,v,tier,item)+'</g>'+paperHeldGrip(c,fit,item,'main');
 }
 function offHandBaseMarkup(type,pal,v,tier,item){
   if(type==='shield'){
@@ -968,7 +1016,10 @@ function paperOffHand(c,highlighted,layer){
   var fit=paperFit(c),gx=fit.offhandX||fit.leftHand||49,gy=fit.offhandY||fit.handY||279;
   var scale=type==='shield'?.86:type==='quiver'?.84:type==='dagger'?.90:type==='tome'?.82:type==='idol'?.78:.74;
   var transform='translate('+gx.toFixed(2)+' '+gy.toFixed(2)+') scale('+scale+') translate(-49 -244)';
-  return '<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'" data-render-layer="'+(isBack?'shield-back':'front-offhand')+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+'" data-offhand-scale="'+scale.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+offHandMarkup(type,pal,v,tier,item)+'</g>';
+  var art='<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'" data-render-layer="'+(isBack?'shield-back':'front-offhand')+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+'" data-offhand-scale="'+scale.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+offHandMarkup(type,pal,v,tier,item)+'</g>';
+  // Shield stays on the forearm behind the wrist. For a front off-hand,
+  // the visible palm closes over the object's handle instead of floating.
+  return art+(isBack?'':paperHeldGrip(c,fit,item,'off'));
 }
 function paperAccessories(c,highlighted){
   var out='',fit=paperFit(c),lh=fit.leftHand||69,rh=fit.rightHand||171,hy=fit.handY||283,
@@ -1022,7 +1073,7 @@ function paperDollSVG(c,opts){
   var hip=profile.hip||32;
   var under='<path d="M'+(120-hip)+' 236 Q120 250 '+(120+hip)+' 236 L'+(120+hip+1)+' 268 Q120 282 '+(120-hip-1)+' 268Z" fill="#162126" stroke="#10171b" stroke-width="3"/><path d="M'+(120-hip+6)+' 252 Q120 261 '+(120+hip-6)+' 252" fill="none" stroke="#526065" stroke-width="1.3" opacity=".36"/>';
   var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=29+(50*(1-headScale));
-  return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v4" data-item-visuals="v2" data-palette-mode="gear-owned" data-weapon-pose="side-held-v1" role="img" aria-hidden="true" focusable="false">'+
+  return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v4" data-item-visuals="v2" data-palette-mode="gear-owned" data-weapon-pose="held-v2" role="img" aria-hidden="true" focusable="false">'+
     '<defs><radialGradient id="'+uid+'a" cx="50%" cy="46%" r="54%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".13"/><stop offset="70%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient></defs>'+
     '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
     '<ellipse cx="120" cy="392" rx="'+Math.max(66,profile.shoulder+23)+'" ry="10" fill="#000" opacity=".38"/>'+

@@ -207,12 +207,15 @@ function weaponKind(subject){
 function weaponPose(subject,baseRightHand,p,shoulderX){
   const kind=weaponKind(subject);
   if(!kind)return {active:false,kind:'none',x:baseRightHand,y:279,angle:0,side:'right',sideMin:shoulderX};
+  // The grip itself follows the wrist; do not push a separate weapon to the
+  // edge of the silhouette. The SVG weapon's local handle socket is aligned
+  // to this anatomical hand anchor by the shared renderer.
   const long=['staff','spear','bow','crossbow'].includes(kind);
   const compact=['dagger','wand','focus','scepter','rod'].includes(kind);
-  const sideMin=Math.min(196,shoulderX+Math.max(10,p.arm*.55));
-  const natural=baseRightHand+(long?7:compact?4:6);
-  const x=Math.max(sideMin,Math.min(198,natural));
-  const angle=kind==='bow'?4:kind==='crossbow'?6:kind==='staff'||kind==='spear'?3:kind==='dagger'?9:6;
+  const sideMin=Math.min(194,shoulderX+Math.max(5,p.arm*.30));
+  const natural=baseRightHand+(long?2:compact?0:1);
+  const x=Math.max(sideMin,Math.min(194,natural));
+  const angle=kind==='bow'?4:kind==='crossbow'?5:kind==='staff'||kind==='spear'?3:kind==='dagger'?8:5;
   return {active:true,kind,x,y:279,angle,side:'right',sideMin};
 }
 function gearFitProfile(subject){
