@@ -1,5 +1,6 @@
 /* Cellbound sticky top navigation v1 — layered after immersive and layout safety. */
 html body.cb-top-nav-enabled .app-shell {
+  padding-top:64px!important;
   padding-bottom:0!important;
 }
 html body.cb-top-nav-enabled .app-shell > .main {
@@ -13,8 +14,8 @@ body.cb-top-nav-enabled #cbImmersiveDock {
   display:none!important;
 }
 .cb-global-header {
-  position:sticky;
-  top:0;
+  position:fixed;
+  top:0;left:0;right:0;
   z-index:95;
   width:100%;
   min-height:64px;
@@ -178,3 +179,306 @@ body.cb-top-nav-enabled:has(.modal-backdrop:not([hidden])) .cb-global-header,
 body.cb-top-nav-enabled:has(.recruit-modal-backdrop:not([hidden])) .cb-global-header{
   visibility:hidden;pointer-events:none
 }
+
+/* ==========================================================================
+   Cellbound Guild Hall Vision v2 — uses the actual game, not mock data.
+   Single unified fantasy-slate interface for the whole game. 
+   ========================================================================== */
+html body.cb-top-nav-enabled {--cb-v2-gold:#dfbb79;--cb-v2-cream:#f5eadd;--cb-v2-muted:#adbcc7;--cb-v2-edge:rgba(155,178,192,.24)}
+html body.cb-top-nav-enabled .app-shell{
+  background:
+    radial-gradient(ellipse at 51% 0,rgba(46,77,103,.2),transparent 43%),
+    linear-gradient(180deg,#0e1c29 0%,#0d1a24 45%,#08121b 100%)!important;
+}
+html body.cb-top-nav-enabled .app-shell>.main{
+  max-width:1680px!important;
+  width:100%!important;
+  padding:0 clamp(12px,2.5vw,38px) clamp(42px,5vw,72px)!important;
+  background:none;
+}
+body.cb-top-nav-enabled .cb-global-header{
+  height:64px;min-height:64px;
+  background:linear-gradient(180deg,rgba(18,29,44,.99),rgba(11,19,31,.99));
+  border-bottom-color:rgba(211,183,130,.34);
+  box-shadow:0 8px 28px #0009;
+  isolation:isolate;
+}
+body.cb-top-nav-enabled .cb-global-links button{
+  font-size:clamp(10px,.8vw,12px);letter-spacing:.005em;
+}
+body.cb-top-nav-enabled .cb-global-brand-mark{color:#e5c88d;border-color:#9eafc3;background:radial-gradient(circle at 52% 30%,#314f76,#152337 64%);box-shadow:0 0 15px #658bb434}
+body.cb-top-nav-enabled .cb-global-links button:hover,
+body.cb-top-nav-enabled .cb-global-links button.is-active{
+  color:#ffe4b6;background:linear-gradient(180deg,rgba(171,133,71,.1),rgba(190,141,71,.2));
+}
+html body.cb-top-nav-enabled .cb-subnav{
+  min-height:45px;position:sticky;top:64px;z-index:63;
+  margin-inline:0;padding:5px 8px;background:rgba(10,20,31,.96);
+  border:1px solid rgba(175,178,166,.18);
+  box-shadow:0 7px 16px #0004;backdrop-filter:blur(12px);
+}
+html body.cb-top-nav-enabled .cb-subnav[hidden]{display:none!important}
+html body.cb-top-nav-enabled .cb-subnav__links button{
+  border-radius:4px;min-height:32px;padding:7px 11px;
+  background:#111e2d;color:#b9c8d2;border-color:#8b98a53d;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button[aria-current="page"]{
+  color:#ffe6ad;background:#302c27;border-color:#e2bb7a88;
+}
+html body.cb-top-nav-enabled .main>.view{max-width:100%;min-width:0;padding-top:clamp(15px,1.5vw,22px)!important}
+html body.cb-top-nav-enabled #overview{padding-top:0!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+  margin-top:6px;min-height:225px;padding:clamp(22px,3vw,43px)!important;
+  border:1px solid #b4a58768;border-radius:8px;
+  box-shadow:0 15px 43px #0009;
+  background-image:
+    linear-gradient(90deg,rgba(7,15,25,.97) 0%,rgba(8,18,28,.87) 36%,rgba(9,24,36,.35) 100%),
+    linear-gradient(0deg,#09131dbb,transparent 57%),
+    var(--cb-place-art);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro h2{
+  color:#f7e9d4;font-size:clamp(2rem,3.7vw,3.6rem);
+  text-shadow:0 4px 20px #000;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro p{
+  color:#cdd6d9!important;max-width:600px;font-size:clamp(12px,1vw,15px);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro:before{
+  background:linear-gradient(180deg,transparent,#d4b57e,transparent);
+}
+html body.cb-top-nav-enabled .main>.view .panel,
+html body.cb-top-nav-enabled .main>.view :is(.pvp-panel,.tp-panel,.bank-card,.quest-journal-shell,.roster-character-card,.admin-card,.dungeon-browser-card,.dungeon-episode){
+  border:1px solid rgba(146,170,191,.24);
+  border-radius:6px;
+  background-color:#111f2c;
+  box-shadow:0 12px 28px #0005,inset 0 1px #ffffff09;
+}
+html body.cb-top-nav-enabled .main>.view .panel{
+  background-image:linear-gradient(160deg,rgba(20,38,54,.98),rgba(10,20,31,.98));
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head){
+  min-height:55px;border-bottom:1px solid #c4d0de20;
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head) h3{
+  color:#f6eee3;font-size:clamp(1rem,1.24vw,1.35rem)
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head) small{color:#dec58f!important;letter-spacing:.11em}
+html body.cb-top-nav-enabled :is(.ghost-btn,.home-panel-action,.filter,.cb-subnav button):focus-visible{
+  outline:2px solid #f4d493!important;outline-offset:2px!important;
+}
+html body.cb-top-nav-enabled .main>.view button:not(:disabled){touch-action:manipulation}
+html body.cb-top-nav-enabled .main>.view button:disabled{cursor:not-allowed}
+
+/* The illustrated guild hub mirrors the approved mockup's hierarchy. */
+html body.cb-top-nav-enabled #overview .home-command{
+  max-width:none;margin:0;gap:clamp(12px,1.35vw,19px);
+}
+.cb-hub-hero{
+  position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,355px);
+  align-items:center;gap:clamp(18px,3vw,44px);min-height:clamp(350px,33vw,455px);
+  margin:0 calc(-1 * clamp(12px,2.5vw,38px));padding:clamp(30px,4vw,58px) clamp(24px,5vw,75px);
+  background:#132637 url('./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp') center 48%/cover no-repeat;
+  border-bottom:1px solid #be9a5e80;box-shadow:0 14px 40px #0007;overflow:hidden;
+}
+.cb-hub-hero:before{
+  content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,#081523e8 0%,#0c1a29bc 27%,#0e1e2d5e 57%,#0914219c 100%),
+             linear-gradient(0deg,#081522a8,transparent 50%);
+}
+.cb-hub-hero-copy{min-width:0;max-width:740px;align-self:center;text-shadow:0 3px 15px #000b}
+.cb-hub-eyebrow{font-size:12px;letter-spacing:.24em;color:#f4ddb4;font-weight:800}
+.cb-hub-hero-copy h2{
+  margin:9px 0 12px;font:normal clamp(3.8rem,7.5vw,7.5rem)/.93 Georgia,serif;
+  letter-spacing:.014em;color:#f7e6cb;text-shadow:0 5px 35px #000e;
+}
+.cb-hub-hero-copy p{max-width:460px;margin:0;font-size:clamp(13px,1.1vw,16px);line-height:1.6;color:#ecedf0}
+.cb-hub-hero-actions{display:flex;flex-wrap:wrap;gap:11px;margin-top:28px}
+.cb-hub-hero-actions button{
+  display:flex;align-items:center;justify-content:center;gap:11px;min-height:45px;
+  padding:10px 23px;border:1px solid #f4db9f99;border-radius:4px;
+  color:#211a11;background:linear-gradient(#f5d68a,#b58a40);
+  font-size:13px;font-weight:800;box-shadow:0 4px 18px #0008;
+}
+.cb-hub-hero-actions button+button{background:#0e1b2bd9;color:#f3eadc;border-color:#b5cce179}
+.cb-hub-hero-actions button:hover{filter:brightness(1.13)}
+.cb-hub-watch{
+  align-self:center;border:1px solid #809cb770;border-radius:7px;
+  padding:16px;background:rgba(9,19,31,.95);
+  box-shadow:0 17px 45px #0009;backdrop-filter:blur(9px);
+}
+.cb-hub-watch-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;border-bottom:1px solid #dde6ef27}
+.cb-hub-watch-head strong{font:normal 20px Georgia,serif;color:#f5ebdd}
+.cb-hub-watch-head small{color:#d7bd83;font-size:10px;text-transform:uppercase;letter-spacing:.09em}
+.cb-hub-watch-row{
+  display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;
+  align-items:center;width:100%;min-height:76px;margin-top:7px;
+  padding:9px 7px;border:1px solid #768fa435;border-radius:5px;
+  background:#132334ed;color:#e7edf0;text-align:left;
+}
+.cb-hub-watch-row:hover{border-color:#d4b575a8;background:#1c3449}
+.cb-hub-watch-art{display:grid;place-items:center;align-self:stretch;min-height:55px;border-radius:4px;font:30px Georgia,serif;color:#edc783;background-size:cover;background-position:center}
+.cb-hub-watch-art.mission{background-image:linear-gradient(#0b1b2c66,#0b1b2caa),url('./assets/dungeons/ashen-vault.webp')}
+.cb-hub-watch-art.quest{background-image:linear-gradient(#08142377,#081423bb),url('./assets/comics/tutorial-2026/arcane-trail.webp')}
+.cb-hub-watch-art.event{background-image:linear-gradient(#08142377,#081423bb),url('./assets/world/twelve-below-key-art.webp')}
+.cb-hub-watch-row b{display:block;margin:2px 0;color:#f8ede0;font-size:12px}
+.cb-hub-watch-row span:not(.cb-hub-watch-art){display:block;color:#d1b777;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.12em}
+.cb-hub-watch-row small{display:block;color:#adbac4;font-size:10px;line-height:1.3}
+.cb-hub-watch-row b,.cb-hub-watch-row small{overflow:hidden;text-overflow:ellipsis}
+html body.cb-top-nav-enabled #overview .cb-hub-hero+.home-command-grid{margin-top:0}
+html body.cb-top-nav-enabled #overview .home-command-grid{
+  display:grid;grid-template-columns:minmax(0,1.18fr) minmax(0,.98fr) minmax(230px,.8fr);
+  align-items:stretch;gap:12px;margin:0;
+}
+html body.cb-top-nav-enabled #overview .home-party-panel,
+html body.cb-top-nav-enabled #overview .home-objective-panel,
+html body.cb-top-nav-enabled #overview .cb-hub-actions{min-width:0}
+html body.cb-top-nav-enabled #overview .home-party-roster{
+  min-height:194px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;
+  padding:11px;background:transparent;
+}
+html body.cb-top-nav-enabled #overview .home-party-member{
+  min-width:0;min-height:168px;padding:12px 4px;border:1px solid #90a4b453;
+  border-radius:5px;background:linear-gradient(#182f40,#101d2b);
+  box-shadow:0 3px 12px #0003;text-align:center;
+}
+html body.cb-top-nav-enabled #overview .home-party-portrait{
+  width:clamp(47px,5vw,76px);height:clamp(47px,5vw,76px);margin:0 auto 9px;border-radius:5px;
+  background:#0d1b29;overflow:hidden;
+}
+html body.cb-top-nav-enabled #overview .home-party-copy b{font-size:12px;color:#f5ebdf}
+html body.cb-top-nav-enabled #overview .home-party-copy small{font-size:10px!important;color:#aebdc8!important}
+html body.cb-top-nav-enabled #overview .home-party-copy span{font-size:9px;color:#adb7c0}
+html body.cb-top-nav-enabled #overview .home-party-member>em{font-size:9px}
+html body.cb-top-nav-enabled #overview .home-objective{
+  min-height:190px;display:flex;justify-content:flex-start;gap:4px;padding:21px;
+  background:linear-gradient(115deg,#162b3a,#0e1c2a);
+}
+html body.cb-top-nav-enabled #overview .home-objective>b{font:normal 19px/1.4 Georgia,serif;color:#f4ece0;margin:12px 0;overflow-wrap:anywhere}
+.cb-hub-actions .cb-hub-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:11px}
+.cb-hub-actions .cb-hub-action-grid button{
+  min-width:0;min-height:78px;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;
+  border:1px solid #8e9faf6b;border-radius:5px;
+  background:linear-gradient(155deg,#162c40,#0b1928);
+  color:#f0e8dc;font-size:11px;font-weight:750;
+}
+.cb-hub-action-grid button span{color:#dec08e;font:24px/1 Georgia,serif}
+.cb-hub-action-grid button:hover{background:#203a50;border-color:#e3bf8b}
+.cb-hub-action-grid button:disabled{opacity:.4}
+.cb-hub-heading{
+  display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:10px;
+}
+.cb-hub-heading h3{margin:0;font:normal clamp(21px,1.75vw,28px) Georgia,serif;color:#f7e7d1}
+.cb-hub-heading p{margin:5px 0 0;color:#acbac3;font-size:12px}
+.cb-hub-heading>button{
+  min-height:35px;border:0;background:transparent;color:#dfba77;
+  font-size:12px;white-space:nowrap;padding:6px;cursor:pointer;
+}
+.cb-hub-heading>button:hover{text-decoration:underline}
+.cb-hub-featured{min-width:0;padding:2px 0 0}
+.cb-hub-dungeon-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cb-hub-dungeon{
+  display:flex;align-items:end;min-width:0;min-height:165px;position:relative;overflow:hidden;
+  padding:14px;border:1px solid #b8c8d651;border-radius:5px;
+  background-color:#122536;background-position:center;background-size:cover;
+  color:#f7ede0;text-align:left;isolation:isolate;
+}
+.cb-hub-dungeon:before{content:"";z-index:-1;inset:0;position:absolute;background:linear-gradient(0deg,#060e19f2 0%,#0b1726ad 42%,#0b162733 100%)}
+.cb-hub-dungeon[data-dungeon="ashen-vault"]{background-image:url('./assets/dungeons/ashen-vault.webp')}
+.cb-hub-dungeon[data-dungeon="hollow-sanctum"]{background-image:url('./assets/hollow-sanctum/rooms/gallery-void-v2.webp')}
+.cb-hub-dungeon[data-dungeon="chaos-canyon"]{background-image:url('./assets/dungeons/chaos-canyon.webp')}
+.cb-hub-dungeon[data-dungeon="fractured-ages"]{background-image:url('./assets/dungeons/fractured-ages.webp')}
+.cb-hub-dungeon-content{display:block;width:100%;min-width:0;text-shadow:0 3px 14px #000}
+.cb-hub-dungeon-content b{display:block;font:normal clamp(16px,1.4vw,21px) Georgia,serif}
+.cb-hub-dungeon-content small{display:block;margin-top:5px;color:#d7e0e6;font-size:11px}
+.cb-hub-dungeon-status{
+  position:absolute;top:10px;left:10px;padding:5px 9px;
+  border:1px solid #d5b98177;border-radius:4px;
+  background:#102332dc;color:#ecd7ae;font-size:9px;font-weight:900;letter-spacing:.11em;
+}
+.cb-hub-dungeon:hover:not(:disabled){border-color:#f3d19a;filter:brightness(1.12)}
+.cb-hub-dungeon:disabled{opacity:.63;filter:saturate(.55);cursor:not-allowed}
+.cb-hub-mission-row{
+  display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.75fr);
+  gap:12px;align-items:stretch;
+}
+html body.cb-top-nav-enabled #overview .home-continue-card{min-height:315px;margin:0;border-radius:6px}
+html body.cb-top-nav-enabled #overview .home-continue-copy{padding:32px 35px 26px}
+html body.cb-top-nav-enabled #overview .home-continue-copy h2{font-size:clamp(2rem,2.8vw,3.1rem)}
+html body.cb-top-nav-enabled #overview .home-readiness-panel{min-width:0}
+html body.cb-top-nav-enabled #overview .home-secondary-grid{display:block;margin:0}
+html body.cb-top-nav-enabled #overview .home-routes-panel{width:100%;min-width:0}
+html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:repeat(6,minmax(0,1fr));padding:12px;gap:10px}
+html body.cb-top-nav-enabled #overview .home-destination{
+  min-height:140px!important;border:1px solid #869db36b;
+  border-radius:5px;padding:14px!important;background-position:center!important;
+}
+html body.cb-top-nav-enabled #overview .home-destination>b{font-size:clamp(14px,1.12vw,19px)}
+html body.cb-top-nav-enabled #overview .home-destination>em{font-size:10px!important;line-height:1.35;color:#dfded9}
+html body.cb-top-nav-enabled #overview .home-destination>small{color:#e9c88b!important}
+html body.cb-top-nav-enabled #overview .home-progression-panel{min-width:0}
+html body.cb-top-nav-enabled #overview .home-bottom-grid{grid-template-columns:1fr 1fr;gap:12px}
+html body.cb-top-nav-enabled #overview .home-activity-panel .activity-log{max-height:unset;min-height:150px}
+html body.cb-top-nav-enabled #overview .home-panel-action{border-color:#ae9665aa;color:#f1dab1;font-size:11px!important}
+html body.cb-top-nav-enabled #overview .panel-head .panel-head-note{color:#9baab7;font-size:11px}
+html body.cb-top-nav-enabled #overview .home-pulse-grid b{color:#f5e6d3}
+
+/* Make the UI robust on the owner's iPad (portrait and landscape), then phone. */
+@media(max-width:1360px){
+  html body.cb-top-nav-enabled #overview .home-command-grid{grid-template-columns:minmax(0,1fr) minmax(0,.9fr)}
+  html body.cb-top-nav-enabled #overview .cb-hub-actions{grid-column:1/-1}
+  .cb-hub-actions .cb-hub-action-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .cb-hub-dungeon-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:950px){
+  .cb-hub-hero{grid-template-columns:1fr;gap:18px;min-height:0;padding:32px 25px}
+  .cb-hub-hero-copy h2{font-size:clamp(3.5rem,9vw,6rem)}
+  .cb-hub-watch{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .cb-hub-watch-head{grid-column:1/-1}
+  .cb-hub-watch-row{grid-template-columns:1fr;justify-items:start;min-height:92px;gap:5px;margin:0}
+  .cb-hub-watch-art{display:none}
+  html body.cb-top-nav-enabled #overview .home-command-grid{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled #overview .cb-hub-actions{grid-column:auto}
+  .cb-hub-mission-row{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cb-hub-dungeon-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled .app-shell{padding-top:54px!important}
+  body.cb-top-nav-enabled .cb-global-header{height:54px;min-height:54px}
+  html body.cb-top-nav-enabled .cb-subnav{top:54px}
+  html body.cb-top-nav-enabled .app-shell>.main{padding:0 12px 28px!important}
+  .cb-hub-hero{margin:0 -12px;padding:28px 18px;gap:19px}
+  .cb-hub-hero-copy h2{font-size:clamp(3.1rem,14vw,5.1rem)}
+  .cb-hub-hero-copy p{font-size:13px}
+  .cb-hub-hero-actions{gap:7px;margin-top:20px}
+  .cb-hub-hero-actions button{min-height:42px;padding:9px 12px;font-size:11px}
+  .cb-hub-watch{display:block;padding:11px}
+  .cb-hub-watch-row{display:grid;grid-template-columns:51px 1fr;min-height:66px;margin-top:7px}
+  .cb-hub-watch-art{display:grid;min-height:47px}
+  html body.cb-top-nav-enabled #overview .home-party-roster{
+    display:flex;overflow-x:auto;scroll-snap-type:x proximity;gap:7px;padding:10px;
+  }
+  html body.cb-top-nav-enabled #overview .home-party-member{
+    flex:0 0 125px;min-height:168px;scroll-snap-align:start;
+  }
+  .cb-hub-actions .cb-hub-action-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .cb-hub-actions .cb-hub-action-grid button{min-height:72px;font-size:10px}
+  .cb-hub-heading{align-items:flex-start}
+  .cb-hub-heading h3{font-size:21px}
+  .cb-hub-heading p{font-size:11px}
+  .cb-hub-dungeon-grid{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:5px}
+  .cb-hub-dungeon{min-width:220px;flex:0 0 73%;min-height:175px;scroll-snap-align:start}
+  html body.cb-top-nav-enabled #overview .home-continue-card{min-height:340px}
+  html body.cb-top-nav-enabled #overview .home-continue-copy{padding:110px 15px 17px;width:100%}
+  html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px}
+  html body.cb-top-nav-enabled #overview .home-bottom-grid{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{min-height:175px;padding:21px!important}
+}
+@media(max-width:420px){
+  .cb-hub-watch-head strong{font-size:17px}
+  html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:1fr 1fr!important}
+  html body.cb-top-nav-enabled #overview .home-destination{min-height:125px!important}
+  .cb-hub-dungeon{flex-basis:85%}
+}
+@media(prefers-reduced-motion:reduce){.cb-hub-hero button,.cb-hub-dungeon{transition:none!important}}
