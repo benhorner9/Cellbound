@@ -27,7 +27,7 @@ assert(migration.includes('cellbound_internal.refresh_profession_highscores()'),
 assert(migration.includes('old_scores = new_scores'),'unrelated game saves must not rewrite scores');
 const guild=src('guild.html'),publicPage=src('highscores.html'),login=src('index.html');
 assert(guild.includes('data-view="highscores"')&&guild.includes('id="guildHighScores"'));
-assert(guild.includes('./highscores-v1.js?v=1')&&guild.includes('./highscores-v1.css?v=1'));
+assert(guild.includes('./highscores-v1.js?v=1')&&/\.\/highscores-v1\.css\?v=\d+/.test(guild),'guild must load the versioned High Scores stylesheet');
 assert(publicPage.includes('id="publicHighScores"')&&publicPage.includes('./highscores-v1.js?v=1'));
 assert(login.includes('./highscores.html'),'public rankings discoverable without login');
 assert(manifest.files.includes('highscores.html')&&manifest.files.includes('highscores-v1.js'));
