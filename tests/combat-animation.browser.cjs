@@ -114,8 +114,9 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
    window.realHit=events.find(e=>e.type==='DAMAGE_DEALT'&&e.source===realAttack.source&&e.ability===realAttack.ability);
   });
   await page.evaluate(()=>CellboundCombatAnimation.dispose(arena));
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  const reviewTime=new Date('2026-01-01T00:00:00Z');
+  await page.clock.install({time:reviewTime});
+  await page.clock.pauseAt(new Date(reviewTime.getTime()+1000));
   await page.addScriptTag({path:path.join(dist,'combat-animation-v1.js')});
   await page.evaluate(()=>send('COMBAT_START',null,null));
   await page.locator('#poseReview').screenshot({path:dir+'/pose-0-ready.png',animations:'allow'});

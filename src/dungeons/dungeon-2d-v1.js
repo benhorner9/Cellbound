@@ -977,7 +977,7 @@ function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');
 function close(silentExternal=false){
  const shouldAbandon=Boolean(run&&!run.externalMode&&!run.resolved&&!run.done&&run?.endgame?.attemptId);
  if(shouldAbandon)window.CellboundEndgame?.abandonAttempt?.('ashen-vault');
- token++;removeRebornReplayControls();
+ token++;run?.rebornLiveSession?.stop?.();removeRebornReplayControls();
  const callback=run?.externalOnClose,wasExternal=Boolean(run?.externalMode);
  run=null;document.body.classList.remove('cb2d-open');const r=root();
  if(!window.CellboundCombatViewer?.dismiss?.(r)){r.hidden=true;r.innerHTML='';r.remove?.()}
@@ -1083,10 +1083,13 @@ function ashenRestoreRuntime(attempt){
 }
 
 async function start(){
+ const entryToken=token;
  const gate=readiness();if(!gate.ok){briefing();return}
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
- await Game.persistState?.();
+ try{
+ await Game.persistState?.();if(entryToken!==token)return;
  const service=await waitForEndgame(),eg=endgameConfig(),attempt=await service?.beginOrResumeAttempt?.('ashen-vault')||await service?.beginAttempt?.('ashen-vault');
+ if(entryToken!==token)return;
  if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Expedition again.');return}
  const p=party();
  if(attempt.resumed&&attempt.runtimeState?.kind==='ashen-vault'){
@@ -1096,12 +1099,16 @@ async function start(){
    token++;
    run={token:token,stage:0,speed:1,resources,cooldowns,statuses,reviveSickness,expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault · '+(eg.diff?.name||'Normal')+'.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null,runtimeStageStartedAt:Date.now()}
  }
+ const enteringRun=run;
  await window.CellboundExpeditionPresentation?.enter?.('ashen-vault',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
+ if(run!==enteringRun)return;
  drawViewer();
  seamlessFrom(Math.min(STAGES.length-1,Number(run.stage)||0),token)
+ }catch(error){if(startButton?.isConnected){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →';alert(error?.message||'Unable to enter the dungeon. Please try again.')}console.warn('Dungeon entry failed',error)}
 }
 function route(){
  return STAGES.map((s,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(s.title)+'</span>').join('');
+
 }
 function hudInitial(name){
  const parts=String(name||'?').trim().split(/\s+/).filter(Boolean);
@@ -1262,11 +1269,12 @@ function refreshCombatCommandCooldowns(){
  const powerEl=$('#cbrCommandPower');
  if(powerEl&&power){
   const value=Math.max(0,Number(power.value)||0),max=Math.max(1,Number(power.max)||5);
-  powerEl.innerHTML=Array.from({length:max},(_,i)=>'<i class="'+(i<value?'filled':'')+'"></i>').join('')+'<strong>'+value+'/'+max+'</strong>'
+  const key=value+'/'+max;if(powerEl.dataset.power!==key){powerEl.dataset.power=key;powerEl.innerHTML=Array.from({length:max},(_,i)=>'<i class="'+(i<value?'filled':'')+'"></i>').join('')+'<strong>'+value+'/'+max+'</strong>'}
  }
  document.querySelectorAll('[data-combat-command]').forEach(button=>{
   const type=button.dataset.combatCommand,state=playback?.commandState?.(type),small=button.querySelector('small');
   if(!button.dataset.readyHint)button.dataset.readyHint=commandReadyHint(type);
+  const renderKey=JSON.stringify([state?.available,state?.affordable,state?.power,state?.cost,Math.ceil((state?.commandRemainingMs||0)/100),Math.ceil((state?.sharedRemainingMs||0)/100),commandContextReady(type)]);if(button._commandRenderKey===renderKey)return;button._commandRenderKey=renderKey;
   if(!state){button.disabled=true;button.classList.add('waiting-session');if(small)small.textContent='WAITING FOR COMBAT';return}
   button.classList.remove('waiting-session');
   const own=Math.max(0,Number(state.commandRemainingMs)||0),shared=Math.max(0,Number(state.sharedRemainingMs)||0),contextReady=commandContextReady(type);
@@ -1287,11 +1295,12 @@ function refreshExternalCommandCooldowns(session,selector,attribute){
   let badge=container.querySelector('.cbr-inline-power');
   if(!badge){badge=document.createElement('div');badge.className='cbr-inline-power';container.prepend(badge)}
   const value=Math.max(0,Number(power.value)||0),max=Math.max(1,Number(power.max)||5);
-  badge.innerHTML='<span>COMMAND POWER</span><b>'+Array.from({length:max},(_,i)=>'<i class="'+(i<value?'filled':'')+'"></i>').join('')+'</b><strong>'+value+'/'+max+'</strong>'
+  const key=value+'/'+max;if(badge.dataset.power!==key){badge.dataset.power=key;badge.innerHTML='<span>COMMAND POWER</span><b>'+Array.from({length:max},(_,i)=>'<i class="'+(i<value?'filled':'')+'"></i>').join('')+'</b><strong>'+value+'/'+max+'</strong>'}
  }
  document.querySelectorAll(selector).forEach(button=>{
   const type=button.dataset?.[attribute],state=session?.commandState?.(type),small=button.querySelector('small');
   if(!type)return;
+  const renderKey=JSON.stringify([state?.available,state?.affordable,state?.power,state?.cost,Math.ceil((state?.commandRemainingMs||0)/100),Math.ceil((state?.sharedRemainingMs||0)/100)]);if(button._commandRenderKey===renderKey)return;button._commandRenderKey=renderKey;
   if(!state){button.disabled=true;button.classList.add('waiting-session');if(small)small.textContent='WAITING FOR COMBAT';return}
   button.classList.remove('waiting-session');
   if(!button.dataset.readyHint)button.dataset.readyHint=small?.textContent||'Party command';
@@ -1579,7 +1588,7 @@ function addUnit(id,label,cls,x,y,size,meta=''){
  $('#cb2dUnits').appendChild(e);applyUnitPosition(e,x,y,true)
 }
 function move(id,x,y,ms){
- const e=$('[data-unit="'+id+'"]');if(!e)return;
+ const e=$('[data-unit="'+id+'"]');if(!e)return; if(!run?.combatActive&&window.CellboundCombatFX?.movePresentation?.(e,{x,y},ms/((run&&run.speed)||1)))return;
  const ox=Number(e.dataset.x)||x,oy=Number(e.dataset.y)||y,dx=x-ox,dy=y-oy;
  if(Math.hypot(dx,dy)>.8)e.style.setProperty('--face-angle',(Math.atan2(dy,dx)*180/Math.PI)+'deg');
  e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';
@@ -1878,6 +1887,7 @@ function stageEnemyPosition(s,i){
  return{x:Number(p.x),y:Number(p.y)}
 }
 function spawn(s){
+ const next=STAGES[STAGES.findIndex(x=>x.id===s.id)+1];if(next)window.CellboundExpeditionPresentation?.preload?.(ashenRoomConfig(next.id)?.art);
  clearArenaEphemera();renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const arena=$('#cb2dArena'),route=ashenRoute(s);arena?.classList.add('room-entering');
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
@@ -1891,7 +1901,7 @@ function spawn(s){
    const start=routeOffset(entry,entry,inside,i,spread),target=stagePartyPosition(s,c,i);
    addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),start.x,start.y,'');mountRebornResourceBar(c);
    const unit=$('[data-unit="p-'+c.id+'"]');if(unit){unit.dataset.uiSlot=String(i);unit.style.setProperty('--label-shift-x',(i===0?-12:i===1?12:i===2?-20:i===3?20:0)+'px');unit.style.setProperty('--status-shift-x',(i===0?-10:i===1?10:i===2?-18:i===3?18:0)+'px')}
-   setTimeout(()=>{move('p-'+c.id,target.x,target.y,560);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},35+i*18)
+   setTimeout(()=>{if(!unit?.isConnected||unit!==$('[data-unit="p-'+c.id+'"]'))return;move('p-'+c.id,target.x,target.y,560);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},35+i*18)
  });
  // Hostiles belong to the room: they are already waiting when the party enters.
  s.enemies.forEach((n,i)=>{
@@ -1953,6 +1963,7 @@ function projectile(from,to,kind='physical',ms=320){
  setTimeout(()=>e.remove(),Math.round(ms/((run&&run.speed)||1))+120)
 }
 function pctPosition(id){
+ const visual=$('[data-unit="'+id+'"]');if(visual?.dataset.spatialOwned==='1'){const x=parseFloat(visual.style.left),y=parseFloat(visual.style.top);if(Number.isFinite(x)&&Number.isFinite(y))return{x,y}}
  const el=$('[data-unit="'+id+'"]');if(!el)return{x:50,y:50};
  return{x:Number(el.dataset.x)||50,y:Number(el.dataset.y)||50};
 }
@@ -2214,7 +2225,7 @@ async function travelDeeper(currentStage,nextStage,tok){
  }
  run.roomTransitionBlack=true;
  const banner=document.createElement('div');banner.className='cb2d-travel-banner';banner.innerHTML='<small>MOVING DEEPER</small><b>'+esc(nextStage.title)+'</b>';$('#cb2dArena')?.appendChild(banner);
- await delay(150);banner.remove();arena?.classList.remove('travelling')
+ await Promise.all([delay(150),window.CellboundExpeditionPresentation?.preload?.(ashenRoomConfig(nextStage.id)?.art)]);banner.remove();arena?.classList.remove('travelling')
 }
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
 function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};const gain=Math.max(1,Math.round(a*(I?.knowledgeMultiplier?.(c)||1)));c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+gain,0,100)});return a}
@@ -2673,9 +2684,11 @@ function mountRebornReplayControls(){
 }
 async function playLiveRebornSession(result,tok){
  const session=run?.rebornLiveSession;if(!session?.advance||!session?.command)throw new Error('Live Combat Reborn session is unavailable');
+ const playbackRun=run;
  const stageMeta={stageId:result?.stageId,stageTitle:result?.stageTitle,startHp:result?.startHp};
  run.combatActive=true;run.rebornResult=result;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer(false);
  let activeResult=result,finished=false,raf=0,lastWall=performance.now();
+ const resume=()=>{lastWall=performance.now()};document.addEventListener('visibilitychange',resume);
  const renderEvents=events=>{
   for(const event of events||[]){
    if(run?.externalMode&&typeof run.externalOnEvent==='function'){
@@ -2692,14 +2705,14 @@ async function playLiveRebornSession(result,tok){
  run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),commandState:type=>session.commandState?.(type),commandPowerState:()=>session.commandPowerState?.(),now:()=>session.timeMs,result:()=>activeResult};refreshCombatCommandCooldowns();
  return await new Promise(resolve=>{
   const finishPlayback=(value,finalResult=null)=>{
-   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',resume);
    const final=finalResult||session.snapshot?.()||activeResult;
    if(final){
     final.stageId=stageMeta.stageId;final.stageTitle=stageMeta.stageTitle;final.startHp=stageMeta.startHp;
     activeResult=final;if(run&&tok===token)run.rebornResult=final;
     try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}
    }
-   if(run){run.combatActive=false;run.rebornPlayback=null;run.rebornLiveSession=null}
+   if(run===playbackRun){run.combatActive=false;run.rebornPlayback=null;run.rebornLiveSession=null}
    resolve(value)
   };
   const frame=now=>{
@@ -2758,7 +2771,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
    };
    if(!replayMode)run.rebornPlayback={issueCommand,now:readClock,result:()=>activeResult};
    const finishPlayback=value=>{
-     if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+     if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',resume);
      if(run){run.combatActive=false;run.rebornPlayback=null;run.rebornResult=activeResult}
      resolve(value)
    };

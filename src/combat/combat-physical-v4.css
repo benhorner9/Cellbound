@@ -374,3 +374,15 @@
 @media(max-width:480px){.cbl-scene [data-spatial-owned="1"]>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){display:block!important;font-size:9px!important;line-height:12px}}
 
 .cbl-unit>.cbs-label-link{position:absolute;left:50%;top:calc(50% + 23px);height:1px;background:#b7a57d88;transform-origin:left center;pointer-events:none}.cbl-unit>.cbs-label-link[hidden]{display:none}
+
+/* Each moving model has a fixed-size layout box. Rig/label changes must not
+   invalidate the entire command scene; overflow remains visible for swings. */
+.cbl-scene [data-spatial-owned="1"]{contain:layout style}
+/* The battlefield already owns a ground shadow. Re-filtering the complete SVG
+   silhouette (22px blur) on every bone update creates a large offscreen surface. */
+.cbl-scene .cb-paper-doll--combat{filter:none!important}
+/* Authored rooms have their own atmosphere. Do not composite two additional
+   full-arena moving blur layers over them; event warnings remain untouched. */
+.cbl-scene[data-bespoke-battlefield="1"]>.cbvfx-layer,
+.cbl-scene[data-bespoke-battlefield="1"] .cbcin-world-ray,
+.cbl-scene[data-bespoke-battlefield="1"] .cbcin-world-mist{display:none}

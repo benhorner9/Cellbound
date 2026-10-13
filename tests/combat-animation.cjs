@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-const root=path.resolve(__dirname,'..'),sandbox={window:{},document:{documentElement:{}},MutationObserver:class{observe(){}},console};vm.createContext(sandbox);
+const root=path.resolve(__dirname,'..'),sandbox={window:{},document:{documentElement:{},addEventListener(){}},MutationObserver:class{observe(){}},console};vm.createContext(sandbox);
 for(const f of ['character-rig-v1.js','src/combat/combat-animation-catalog-v1.js','src/combat/combat-animation-v1.js'])vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),sandbox);
 const R=sandbox.window.CellboundCharacterRig,A=sandbox.window.CellboundCombatAnimation;
 let cases=0;

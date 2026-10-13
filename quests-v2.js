@@ -690,13 +690,13 @@ function qAddUnit(id,label,cls,x,y,size='',meta=''){
 }
 function qUnit(id){return $('[data-q-unit="'+id+'"]')}
 function qMove(id,x,y,ms=520){const e=qUnit(id);if(!e)return;const ox=parseFloat(e.style.left);const oy=parseFloat(e.style.top);const fromX=Number.isFinite(ox)?ox:x,fromY=Number.isFinite(oy)?oy:y,speed=combatRate(questFight?.speed||1),dur=Math.max(90,Math.round((Number(ms)||520)/speed));e.style.setProperty('--face-angle',(Math.atan2(y-fromY,x-fromX)*180/Math.PI)+'deg');e.style.transitionDuration=dur+'ms';requestAnimationFrame(()=>{if(!e.isConnected||e.dataset.spatialOwned==='1')return;e.style.left=x+'%';e.style.top=y+'%'})}
-function qPoint(id){const a=$('#q2dArena'),u=qUnit(id);if(!a||!u)return null;const ar=a.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left-ar.left+r.width/2,y:r.top-ar.top+r.height/2,w:ar.width,h:ar.height}}
+function qPoint(id){const a=$('#q2dArena'),u=qUnit(id);if(!a||!u)return null;const cached=window.CellboundCombatFX?.visualPoint?.(u);if(cached)return cached;const ar=a.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left-ar.left+r.width/2,y:r.top-ar.top+r.height/2,w:ar.width,h:ar.height}}
 function qFace(id,targetId){const e=qUnit(id),a=qPoint(id),b=qPoint(targetId);if(!e||!a||!b)return;e.style.setProperty('--face-angle',(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI)+'deg')}
 function qProjectile(from,to,kind='physical',ms=320){
  if(window.CellboundCombatFX?.living)return;
 const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const speed=combatRate(questFight?.speed||1),dur=Math.max(1,Math.round(ms/speed)),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=dur+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});setTimeout(()=>e.remove(),dur+130)}
 function qPulseUnit(id,cls,ms=360){
-  const e=qUnit(id);if(!e)return;const speed=combatRate(questFight?.speed||1),dur=Math.max(90,Math.round(ms/speed));
+  const e=qUnit(id);if(!e||e.dataset.animationOwned==='1')return;const speed=combatRate(questFight?.speed||1),dur=Math.max(90,Math.round(ms/speed));
   e.classList.remove(cls);void e.offsetWidth;e.classList.add(cls);setTimeout(()=>e?.classList?.remove(cls),dur)
 }
 function qFloat(id,text,kind='damage'){const arena=$('#q2dArena'),p=qPoint(id);if(!arena||!p)return;const e=document.createElement('div');e.className='cb2d-number '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),850)}
@@ -707,6 +707,11 @@ function qSetEnemyHp(i,value){
 }
 function qSetPartyHp(c,value){if(!questFight)return;const next=Math.max(0,Math.min(100,Math.round(value)));questFight.partyHp[c.id]=next;const bar=$('[data-q-side-hp="'+c.id+'"]');if(bar)bar.style.width=next+'%';const txt=$('[data-q-hp-text="'+c.id+'"]');if(txt)txt.textContent=next+' HP';const overhead=qUnit('p-'+c.id)?.querySelector('.cb2d-unit-hp i');if(overhead)overhead.style.width=next+'%'}
 function qRenderMeters(target=0){
+  if(!questFight)return;
+  const fight=questFight;fight.meterTarget=target;if(fight.meterFrame)return;
+  fight.meterFrame=requestAnimationFrame(()=>{fight.meterFrame=0;if(questFight===fight&&fight.token===encounterToken)qPaintMeters(fight.meterTarget)});
+}
+function qPaintMeters(target=0){
   if(!questFight)return;
   const damageRoot=$('#q2dDamageMeter'),healingRoot=$('#q2dHealingMeter'),threatRoot=$('#q2dThreatMeter'),p=qCombatants(),elapsed=Math.max(1,(Number(questFight.elapsedMs)||0)/1000);
   const rows=p.map(c=>({c,value:Number(questFight.damage?.[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...rows.map(x=>x.value)),total=rows.reduce((n,x)=>n+x.value,0);
@@ -805,7 +810,7 @@ function qDraw(config,finish){
  root.querySelectorAll('[data-q-command]').forEach(b=>b.onclick=()=>qIssueDungeonCommand(b.dataset.qCommand,b));
  root.querySelector('[data-q-potion]')?.addEventListener('click',e=>qUseCombatPotion(e.currentTarget));
  window.CellboundDungeon2D?.refreshCombatPotionButton?.(root.querySelector('[data-q-potion]'),state());
- root.querySelector('[data-q-close]').onclick=()=>{if(!questFight?.finished&&!confirm('Leave this quest fight? It will restart.'))return;encounterToken++;window.CellboundCombatStatuses?.clear?.(root);root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)};
+ root.querySelector('[data-q-close]').onclick=()=>{if(!questFight?.finished&&!confirm('Leave this quest fight? It will restart.'))return;encounterToken++;questFight?.liveSession?.stop?.();window.CellboundCombatStatuses?.clear?.(root);root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)};
 }
 function qEnemyMeta(index){
  const level=Math.max(1,Number(questFight?.enemyLevels?.[index])||Number(questFight?.level)||1);
@@ -957,16 +962,17 @@ function qRenderRebornEvent(e){
   }
 }
 async function qPlayReborn(result,tok){
- const session=questFight?.liveSession;if(!session?.advance)throw new Error('Real-time quest combat session unavailable');
+ const playbackFight=questFight,session=questFight?.liveSession;if(!session?.advance)throw new Error('Real-time quest combat session unavailable');
  if(!questFight)return false;questFight.telegraphs={};
  const renderEvents=events=>{for(const event of events||[]){try{qRenderRebornEvent(event)}catch(error){console.warn('Quest live combat visual recovered',event?.type,event?.ability,error)}}};
  renderEvents(session.drainEvents?.()||[]);
  return await new Promise(resolve=>{
   let finished=false,raf=0,lastWall=performance.now();
+  const resume=()=>{lastWall=performance.now()};document.addEventListener('visibilitychange',resume);
   const finish=(value,finalResult=null)=>{
-   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
-   const final=finalResult||session.snapshot?.()||result;if(final){try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}questFight.result=final}
-   questFight.liveSession=null;resolve(value)
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',resume);
+   const final=finalResult||session.snapshot?.()||result;if(final){try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}playbackFight.result=final}
+   playbackFight.liveSession=null;resolve(value)
   };
   const frame=now=>{
    if(finished)return;if(tok!==encounterToken||!questFight){finish(false);return}

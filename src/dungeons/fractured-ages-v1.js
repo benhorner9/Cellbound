@@ -4,7 +4,7 @@ const BAL=window.CellboundBalance;
 window.CellboundCombatStandard?.register?.('fractured-ages',{kind:'dungeon',execution:'local',ui:'shared-cb2d'});
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const ENTRY_ILVL=38,XP=2500;
-let Game=null,G=null,db=null,run=null;
+let Game=null,G=null,db=null,run=null,entryGeneration=0;
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
 const roleOf=c=>Game?.classes?.[c?.class]?.specs?.[c?.spec]?.role||'dps';
@@ -148,7 +148,7 @@ function renderCard(){
  try{window.CellboundDungeonBrowser?.refresh?.()}catch(e){}
 }
 function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('fractured-ages',options.difficulty,options.tier||1);briefing()}
-function close(){const shouldAbandon=Boolean(run&&!run.done&&run?.endgame?.attemptId);if(shouldAbandon)window.CellboundEndgame?.abandonAttempt?.('fractured-ages');run=null;const r=root();if(!window.CellboundCombatViewer?.dismiss?.(r)){r.hidden=true;r.innerHTML='';r.remove?.()}document.body.classList.remove('fa-open');Game?.switchView?.('content');renderCard()}
+function close(){entryGeneration++;window.CellboundExpeditionPresentation?.leave?.(root());const shouldAbandon=Boolean(run&&!run.done&&run?.endgame?.attemptId);if(shouldAbandon)window.CellboundEndgame?.abandonAttempt?.('fractured-ages');run=null;const r=root();if(!window.CellboundCombatViewer?.dismiss?.(r)){r.hidden=true;r.innerHTML='';r.remove?.()}document.body.classList.remove('fa-open');Game?.switchView?.('content');renderCard()}
 function briefing(){
  const baseGate=readiness(true),gate=readiness(),r=root();r.hidden=false;document.body.classList.add('fa-open');
  if(!baseGate.ok){r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · ENTRY CHECK</small><h2>The timeline will not open.</h2></div><button data-fa-close aria-label="Close dungeon">×</button></header><div class="fa-blocked"><b>NOT READY</b><p>'+esc(baseGate.reason)+'</p><button data-fa-party>OPEN PARTY BUILDER →</button></div></section>';r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-party]').onclick=()=>{close();Game.switchView?.('party')};return}
@@ -180,10 +180,13 @@ function faRestoreRuntime(attempt){
 }
 
 async function startRun(){
+ const generation=++entryGeneration;
  const gate=readiness();if(!gate.ok){briefing();return}
  const startButton=root().querySelector('[data-fa-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
- await Game.persistState?.();
+ try{
+ await Game.persistState?.();if(generation!==entryGeneration)return;
  const service=await faWaitForEndgame(),eg=faEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('fractured-ages')||await service?.beginAttempt?.('fractured-ages');
+ if(generation!==entryGeneration)return;
  if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='STEP THROUGH THE FIRST FRACTURE →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try again.');return}
  if(attempt.resumed&&attempt.runtimeState?.kind==='fractured-ages'){
   faRestoreRuntime(attempt)
@@ -192,7 +195,8 @@ async function startRun(){
   run={stage:0,startedAt:Date.now(),results:[],done:false,combatState,recoveries:0,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},runtimeStageStartedAt:Date.now()}
  }
  await window.CellboundExpeditionPresentation?.enter?.('fractured-ages',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
- await transition()
+ if(generation===entryGeneration&&run)await transition()
+ }catch(error){if(startButton?.isConnected){startButton.disabled=false;startButton.textContent='STEP THROUGH THE FIRST FRACTURE →';alert(error?.message||'Unable to enter the dungeon. Please try again.')}console.warn('Dungeon entry failed',error)}
 }
 function carryCombatState(result){
  if(!run||!result?.finalState?.players)return{ok:false,reason:'Combat state could not be recovered.'};
@@ -232,9 +236,9 @@ function carryCombatState(result){
 }
 async function transition(){
  if(!run)return;
- const stageIndex=run.stage,s=STAGES[stageIndex],r=root();
+ const currentRun=run,stageIndex=run.stage,s=STAGES[stageIndex],r=root();
  const resuming=Boolean(run._restored);if(!resuming||!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Date.now();run._restored=false;
- await faSaveRuntime('stage');
+ await faSaveRuntime('stage');if(run!==currentRun)return;
  r.hidden=true;document.body.classList.add('fa-open');
  if(s.id==='funhouse'){
   if(run.finalDossierPending)return;
@@ -251,6 +255,7 @@ async function transition(){
  return fightStage(s)
 }
 async function fightStage(s){
+ const next=STAGES[run.stage+1];if(next)window.CellboundExpeditionPresentation?.preload?.(window.CellboundRoomLayouts?.artFor?.('fractured-ages',next.id,next.art)||next.art);
  root().hidden=true;
  const Q=window.CellboundQuests;if(!Q?.runQuest2DFight){root().hidden=false;return}
  let combatResult=null;

@@ -7,6 +7,7 @@ const baseMount=FX.mount?.bind(FX), baseEvent=FX.combatEvent?.bind(FX);
 const ARENA='.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena';
 const UNIT='.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit,.cbl-pet';
 const scenes=new Map();
+const now=()=>window.CellboundCombatAnimation?.now?.()??performance.now();
 const reduce=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const PROFILES={
@@ -76,8 +77,8 @@ function room(scene,e){
 }
 function emphasis(scene,kind){
  if(reduce()){scene.camera?.cancel();scene.camera=null;return}
- if(performance.now()<(scene.emphasisUntil||0))return;
- scene.emphasisUntil=performance.now()+2500;scene.camera?.cancel();
+ if(now()<(scene.emphasisUntil||0))return;
+ scene.emphasisUntil=now()+2500;scene.camera?.cancel();
  // A sub-percent emphasis leaves the full arena in frame and never follows a unit.
  scene.camera=scene.arena.animate([{scale:1},{scale:.996,offset:.35},{scale:1}],{duration:kind==='death'?950:650,easing:'ease-out'});
 }
@@ -91,7 +92,7 @@ function hazard(scene,e){
  n.style.left=e.position.x+'%';n.style.top=e.position.y+'%';n.style.width=radius*2+'%';n.style.height=radius*2+'%';
  if(/plate|porcelain/i.test(e.ability||''))n.classList.add('porcelain');
  if(/collapse|beam|debris|floor/i.test(e.ability||''))n.classList.add('rubble');
- scene.arena.appendChild(n);scene.spatialDirty=true;scene.hazards.set(id,{node:n,position:{...e.position},radius,end:performance.now()+(Number(e.payload.duration)||10000)/scene.speed});
+ scene.arena.appendChild(n);scene.spatialDirty=true;scene.hazards.set(id,{node:n,position:{...e.position},radius,end:now()+(Number(e.payload.duration)||10000)/scene.speed});
 }
 function totem(scene,e){
  const id=String(e.payload?.totemId||'');if(!id)return;
@@ -124,7 +125,7 @@ function mechanic(scene,e,opts={}){
  const token=e.payload?.token;if(token==null)return;scene.spatialDirty=true;
  if(e.type==='MECHANIC_TELEGRAPH'){
   const type=String(e.payload?.mechanicType||'mechanic').replace(/[^a-z0-9-]/gi,'-').toLowerCase();
-  const entry={start:performance.now(),duration:Math.max(1,Number(e.payload.duration)||1000)/scene.speed,nodes:[],markers:[],source:e.source,type,callout:null};scene.warnings.set(token,entry);
+  const entry={start:now(),duration:Math.max(1,Number(e.payload.duration)||1000)/scene.speed,nodes:[],markers:[],source:e.source,type,callout:null};scene.warnings.set(token,entry);
   const callout=document.createElement('div');callout.className='cbl-mechanic-callout';callout.dataset.phase='incoming';callout.dataset.mechanicType=type;
   const title=document.createElement('strong');title.textContent=String(e.ability||'Boss mechanic');const kind=document.createElement('span');kind.textContent=type.replace(/-/g,' ').toUpperCase();
   callout.append(title,kind);scene.arena.appendChild(callout);entry.callout=callout;
@@ -162,6 +163,13 @@ function resolve(id,opts,arena){
  (String(id).startsWith('tb-')?arena.querySelector('[data-tb-boss="'+CSS.escape(String(id).slice(3))+'"]'):null)||
  (id==='boss'?arena.querySelector('#wb2dBoss'):null)
 }
+function disposeScene(scene){
+ for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}
+ for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}
+ for(const group of [scene.hazards,scene.warnings,scene.totems,scene.pets])for(const entry of group.values()){entry.node?.remove();entry.callout?.remove();entry.remove?.();for(const n of entry.markers||[])n.remove()}
+ scene.effects.clear();scene.units.clear();scene.resize?.disconnect();scene.camera?.cancel();scene.layer.remove();scene.room?.remove();scenes.delete(scene.arena);
+}
+new MutationObserver(()=>{for(const scene of scenes.values())if(!scene.arena.isConnected||scene.arena.closest('[hidden]'))disposeScene(scene)}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
 function mount(target){
  const arena=typeof target==='string'?document.querySelector(target):target;
  if(!arena?.matches?.(ARENA))return null;
@@ -172,7 +180,7 @@ function mount(target){
   const layer=document.createElement('div');layer.className='cbl-effects';layer.setAttribute('aria-hidden','true');arena.appendChild(layer);
   scenes.set(arena,{arena,layer,units:new Map(),effects:new Set(),hazards:new Map(),warnings:new Map(),totems:new Map(),pets:new Map(),time:0,speed:1,live:true});
   arena.classList.add('cbl-scene');
-  const scene=scenes.get(arena);scene.resize=new ResizeObserver(()=>framing(scene,true));scene.resize.observe(arena);
+  const scene=scenes.get(arena);scene.resize=new ResizeObserver(()=>{scene.bounds=null;framing(scene,true)});scene.resize.observe(arena);
  }
  return arena
 }
@@ -191,7 +199,7 @@ function unit(scene,el){
 function state(u,value,until=0){if(!u)return;u.state=value;u.until=until;u.el.dataset.combatState=value}
 function controlled(u){return [...u.statuses.values()].some(s=>['stun','fear','incapacitate'].includes(s.cc))}
 function canAct(u){return u&&!u.dead&&!controlled(u)}
-function center(el){const r=actor(el).getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
+function center(el){const scene=scenes.get(el?.closest?.(ARENA)),u=scene?.units.get(el);if(u?.spatial?.visual&&scene.bounds)return anchorPoint(scene,el,scene.bounds);const r=actor(el).getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
 function direction(a,b){const x=b.x-a.x,y=b.y-a.y,len=Math.hypot(x,y)||1;return{x:x/len,y:y/len,angle:Math.atan2(y,x)*180/Math.PI,len}}
 function face(u,target){if(!u||!target||u.dead)return;u.target=target;u.facingTarget=target.dataset.cblCombatId||target.dataset.unit||target.dataset.qUnit||target.dataset.tbUnit||target.dataset.pvp2dUnit;const d=direction(center(u.el),center(target));u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.el.style.setProperty('--face-angle',d.angle+'deg')}
 function motion(u,frames,duration,scene){
@@ -222,16 +230,17 @@ function spatialLabels(scene,units,g){
  }
 }
 function spatialFrame(scene,bounds,time){
- const S=window.CellboundCombatSpatial;if(!S)return;
- const width=scene.arena.clientWidth,height=scene.arena.clientHeight;if(width<1||height<1)return;
- scene.arena.dataset.spatialArena='1';scene.arena.closest('.cbcombat-arena-wrap')?.classList.add('cbs-spatial-wrap');scene.arena.closest('.cbcombat-battle-panel')?.classList.add('cbs-spatial-panel');
+ const S=window.CellboundCombatSpatial;if(!S||scene.departing&&!scene.traversing)return;
+ const width=bounds.width,height=bounds.height;if(width<1||height<1)return;
+ if(scene.arena.dataset.spatialArena!=='1'){scene.arena.dataset.spatialArena='1';scene.arena.closest('.cbcombat-arena-wrap')?.classList.add('cbs-spatial-wrap');scene.arena.closest('.cbcombat-battle-panel')?.classList.add('cbs-spatial-panel')}
  const resized=scene.spatialWidth!==width||scene.spatialHeight!==height;
  if(resized){scene.spatialWidth=width;scene.spatialHeight=height;scene.spatialDirty=true}
  const env=scene.spatialEnvironment||{},g=S.geometry(width,height,{...env,...env.presentation,bounds:{...env.bounds,...env.presentation?.bounds}});scene.spatialGeometry=g;
+ if(scene.traversing){let moving=false;for(const [el,u] of scene.units){const t=u.transit;if(!el.isConnected||!t)continue;const f=reduce()?1:clamp((time-t.start)/t.duration,0,1),k=f*f*(3-2*f),p={x:t.from.x+(t.to.x-t.from.x)*k,y:t.from.y+(t.to.y-t.from.y)*k};u.spatial.visual={x:p.x*width/100,y:p.y*height/100};u.position=p;el.dataset.x=String(p.x);el.dataset.y=String(p.y);el.style.setProperty('left',p.x+'%','important');el.style.setProperty('top',p.y+'%','important');el.dataset.spatialState=f<1?'moving':'holding';if(f<1)moving=true;else u.transit=null}scene.traversing=moving;return}
  const list=[];
  for(const [el,u] of scene.units){
   if(!el.isConnected){scene.units.delete(el);scene.spatialDirty=true;continue}if(!u.position)continue;
-  const id=u.spatialMeta?.id||el.dataset.unit||el.dataset.qUnit||el.dataset.tbUnit||el.dataset.pvp2dUnit||el.dataset.unitKey||el.dataset.hs||el.dataset.cc||el.dataset.bs||el.id||'unit-'+list.length;el.dataset.cblCombatId=id;
+  const id=u.spatialMeta?.id||el.dataset.unit||el.dataset.qUnit||el.dataset.tbUnit||el.dataset.pvp2dUnit||el.dataset.unitKey||el.dataset.hs||el.dataset.cc||el.dataset.bs||el.id||'unit-'+list.length;if(el.dataset.cblCombatId!==id)el.dataset.cblCombatId=id;
   const meta=u.spatialMeta||{},pet=el.classList.contains('cbl-pet'),boss=el.classList.contains('boss')||/boss/.test(meta.classification||'');
   const style=meta.rangeStyle||(el.classList.contains('tank')?'tank':el.classList.contains('healer')?'healer':el.classList.contains('profile-melee')||['Warrior','Rogue','Death Knight','Demon Hunter','Monk'].includes(u.p.name)?'melee':u.p.name==='Enemy'&&!['marksman','occult','support'].includes(u.p.motion)?'melee':'ranged');
   let s=u.spatial;if(!s){const a=actor(el),css=getComputedStyle(a),w=parseFloat(css.width)||48,h=parseFloat(css.height)||82;s=u.spatial={id,el,rx:Math.max(pet?14:22,w*.52)+(boss?12:5),ry:Math.max(pet?15:22,h*.42)+(boss?12:3),head:h*.8+10,artTop:pet?h/2:boss?h/2:h*.75,artBottom:pet?h/2:boss?h/2:h*.25,foot:46,visual:null};scene.spatialDirty=true;el.dataset.spatialOwned='1';el.style.setProperty('margin','0','important');el.style.setProperty('transition','none','important');el.style.setProperty('transform','translate(-50%,-50%)','important');el.style.setProperty('--cbs-head',s.head+'px');el.querySelector(':scope > .cb2d-unit-hp')?.style.setProperty('top','calc(50% - '+s.head+'px)','important')}
@@ -255,7 +264,7 @@ function spatialFrame(scene,bounds,time){
   const moving=!s.dead&&!s.locked&&!reduce()&&s.reserved&&S.distance(p,s.reserved)>2;
   const spatialState=s.dead?'dead':s.locked?'controlled':moving?'moving':'holding';if(el.dataset.spatialState!==spatialState)el.dataset.spatialState=spatialState;
   if(!s.drawn||S.distance(p,s.drawn)>.1){el.style.setProperty('left',(p.x/width*100).toFixed(3)+'%','important');el.style.setProperty('top',(p.y/height*100).toFixed(3)+'%','important');s.drawn={...p}}
-  el.dataset.visualX=(p.x/width*100).toFixed(3);el.dataset.visualY=(p.y/height*100).toFixed(3);
+  const vx=(p.x/width*100).toFixed(3),vy=(p.y/height*100).toFixed(3);if(el.dataset.visualX!==vx)el.dataset.visualX=vx;if(el.dataset.visualY!==vy)el.dataset.visualY=vy;
   const target=list.find(t=>t.id===u.facingTarget);if(target?.visual&&Math.abs(target.visual.x-p.x)>18){
    const baseMirrored=el.dataset.team==='red',left=target.visual.x<p.x;el.style.setProperty('--cbs-face',left!==baseMirrored?'-1':'1');
   }
@@ -309,13 +318,13 @@ function anchorPoint(scene,el,bounds=scene.arena.getBoundingClientRect()){
  if(!Number.isFinite(x)||!Number.isFinite(y))return null;
  return{x,y}
 }
-function effectAnchor(scene,el,bounds){return window.CellboundCombatAnimation?.socket(el)||anchorPoint(scene,el,bounds)}
+function effectAnchor(scene,el,bounds){return scene.sockets?.get(el)||anchorPoint(scene,el,bounds)}
 function effect(scene,cls,source,target,life=320,allowUnanchored=false){
  // Anchored FX must receive geometry before they enter the DOM. Previously the
  // browser could paint one frame at 0,0 before the animation loop positioned it.
  if(!allowUnanchored&&!source&&!target)return null;
  if(scene.effects.size>=36)return null;
- const bounds=scene.arena.getBoundingClientRect(),tp=target?effectAnchor(scene,target,bounds):null,sp=source?effectAnchor(scene,source,bounds):null;
+ const bounds=scene.bounds||scene.arena.getBoundingClientRect(),tp=target?effectAnchor(scene,target,bounds):null,sp=source?effectAnchor(scene,source,bounds):null;
  if(!allowUnanchored&&!tp&&!sp)return null;
  const n=document.createElement('i');n.className='cbl-fx '+cls;
  const connection=n.classList.contains('connection'),a=sp||tp,b=tp||sp;
@@ -325,7 +334,7 @@ function effect(scene,cls,source,target,life=320,allowUnanchored=false){
   if(connection){n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg')}
  }
  if(a&&b)n.dataset.cblPositioned='1';
- const ttl=Math.max(60,life/scene.speed),fx={n,source,target,ends:performance.now()+ttl,timer:0};scene.layer.appendChild(n);scene.effects.add(fx);fx.timer=setTimeout(()=>{if(scene.effects.has(fx)){fx.n.remove();scene.effects.delete(fx)}},ttl+80);return fx
+ const ttl=Math.max(60,life/scene.speed),fx={n,source,target,ends:now()+ttl,timer:0};scene.layer.appendChild(n);scene.effects.add(fx);fx.timer=setTimeout(()=>{if(scene.effects.has(fx)){fx.n.remove();scene.effects.delete(fx)}},ttl+80);return fx
 }
 function clearCast(u){
  if(!u)return;
@@ -390,27 +399,27 @@ function livingEvent(e,opts={}){
  case'COMBAT_START':
   for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}scene.effects.clear();
   for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();
-  scene.live=true;scene.spatialEnvironment=e.payload?.environment||{};scene.spatialDirty=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
+  scene.live=true;scene.traversing=false;scene.departing=false;scene.spatialFrameAt=now();scene.spatialEnvironment=e.payload?.environment||{};scene.spatialDirty=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){a.spatialMeta=v;enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
- case'PARTY_COMMAND':{const command=e.payload?.type;if(['spread','stack','regroup','fall-back'].includes(command)){for(const v of scene.units.values())if(v.spatialMeta?.role!=='enemy'){v.spatialCommand=command;v.spatialCommandUntil=performance.now()+(Number(e.payload?.durationMs)||3000)/scene.speed}scene.spatialDirty=true}break;}
+ case'PARTY_COMMAND':{const command=e.payload?.type;if(['spread','stack','regroup','fall-back'].includes(command)){for(const v of scene.units.values())if(v.spatialMeta?.role!=='enemy'){v.spatialCommand=command;v.spatialCommandUntil=now()+(Number(e.payload?.durationMs)||3000)/scene.speed}scene.spatialDirty=true}break;}
  case'MOVEMENT_START':
   if(u&&!u.dead){
    const duration=Number(e.payload?.duration)||420;
-   if(/commander|pvp|fall.back|regroup/.test(e.result||'')){u.spatialCommand=/spread/.test(e.result)?'spread':/stack|group.up/.test(e.result)?'stack':'regroup';u.spatialCommandUntil=performance.now()+3500/scene.speed;scene.spatialDirty=true}
+   if(/commander|pvp|fall.back|regroup/.test(e.result||'')){u.spatialCommand=/spread/.test(e.result)?'spread':/stack|group.up/.test(e.result)?'stack':'regroup';u.spatialCommandUntil=now()+3500/scene.speed;scene.spatialDirty=true}
    u.el.dataset.intent=String(e.result||'moving');
    if(e.position&&e.payload?.to){
     const d=direction(e.position,e.payload.to),strength=clamp(d.len/22,.35,1);
     u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.el.style.setProperty('--cbl-move-angle',d.angle+'deg');u.el.style.setProperty('--cbl-move-strength',String(strength));u.target=null
    }
-   setPosition(scene,u,e.payload?.to,duration);clearCast(u);state(u,['knockback','pull'].includes(e.result)?'displaced':'moving',performance.now()+duration/scene.speed);
+   setPosition(scene,u,e.payload?.to,duration);clearCast(u);state(u,['knockback','pull'].includes(e.result)?'displaced':'moving',now()+duration/scene.speed);
    if(['knockback','pull'].includes(e.result))effect(scene,'force '+e.result,null,u.el,420)
   }break;
  case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position,80);state(u,controlled(u)?'controlled':'idle');delete u.el.dataset.intent;if(t)face(u,t.el);if(arena.dataset.bespokeBattlefield==='1'&&arena.classList.contains('theme-ashen')&&!reduce())effect(scene,'ground-kick',null,u.el,360)}break;
  case'ABILITY_START':
-  if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',performance.now()+560/scene.speed);
+  if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',now()+560/scene.speed);
    if(!(e.payload?.castTime>0))motion(u,[{scale:'.965',translate:'0 1px',offset:0},{scale:'1.035',translate:'0 -1px',offset:.46},{scale:'1',translate:'0 0',offset:1}],300,scene)}break;
  case'CAST_START':
-  if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e)}break;
+  if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
  case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
  case'HEAL_RECEIVED':if(t){
@@ -422,14 +431,14 @@ function livingEvent(e,opts={}){
   if(arena.dataset.bespokeBattlefield==='1'){const floor=effect(scene,'floor-light heal',null,t.el,320);if(floor)floor.n.style.setProperty('--cbl-accent','#76efac')}
  }break;
  case'AGGRO_CHANGED':if(u&&t){face(u,t.el);effect(scene,'aggro',null,t.el,650)}break;
- case'CROWD_CONTROL':if(t){statuses(t,{type:'DEBUFF_APPLIED',statusEffects:[{id:'visual-control',cc:e.payload?.cc||'stun'}]});t.controlUntil=performance.now()+(Number(e.payload?.duration)||900)/scene.speed}break;
+ case'CROWD_CONTROL':if(t){statuses(t,{type:'DEBUFF_APPLIED',statusEffects:[{id:'visual-control',cc:e.payload?.cc||'stun'}]});t.controlUntil=now()+(Number(e.payload?.duration)||900)/scene.speed}break;
  case'BUFF_APPLIED':case'DEBUFF_APPLIED':case'BUFF_REMOVED':case'DEBUFF_REMOVED':statuses(t,e);break;
- case'INTERRUPT':if(e.result==='success'&&t){mechanic(scene,{...e,result:'interrupted'},opts);if(canAct(u))effect(scene,'connection lightning',u.el,t.el,150);clearCast(t);t.animation?.cancel();state(t,'interrupted',performance.now()+500/scene.speed);effect(scene,'interrupt',null,t.el,550)}break;
- case'DEFENSIVE_ACTIVATED':if(t||u)state(t||u,'defending',performance.now()+650/scene.speed);effect(scene,'shield',null,(t||u)?.el,650);break;
+ case'INTERRUPT':if(e.result==='success'&&t){mechanic(scene,{...e,result:'interrupted'},opts);if(canAct(u))effect(scene,'connection lightning',u.el,t.el,150);clearCast(t);t.animation?.cancel();state(t,'interrupted',now()+500/scene.speed);effect(scene,'interrupt',null,t.el,550)}break;
+ case'DEFENSIVE_ACTIVATED':if(t||u)state(t||u,'defending',now()+650/scene.speed);effect(scene,'shield',null,(t||u)?.el,650);break;
  case'PLAYER_DEFEATED':case'ENEMY_DEFEATED':case'ADD_DEFEATED':
   if(t){t.dead=true;framing(scene);if(t.el.classList.contains('boss'))emphasis(scene,'death');clearCast(t);t.animation?.cancel();state(t,'dead');effect(scene,'death',null,t.el,t.el.classList.contains('boss')?1100:650)}break;
  case'PLAYER_REVIVED':case'ENEMY_REVIVED':
-  if(t){t.dead=false;t.statuses.clear();t.el.dataset.control='';t.el.classList.remove('dead','dying');state(t,'reviving',performance.now()+800/scene.speed);effect(scene,'revive',u?.el,t.el,850)}break;
+  if(t){t.dead=false;t.statuses.clear();t.el.dataset.control='';t.el.classList.remove('dead','dying');state(t,'reviving',now()+800/scene.speed);effect(scene,'revive',u?.el,t.el,850)}break;
  case'ADD_SPAWNED':requestAnimationFrame(()=>{const el=resolve(e.target,opts,arena);if(el){const spawned=unit(scene,el);spawned.spatialMeta={id:e.target,role:'enemy',...(e.payload||{})};enemyProfile(spawned,e.payload||{});setPosition(scene,spawned,e.position);framing(scene);effect(scene,'spawn',null,el,650)}});break;
  case'PET_SUMMONED':if(t){effect(scene,'spawn pet-spawn',null,t.el,650);state(t,'idle')}break;
  case'PET_COMMAND':if(t||u)effect(scene,'command',null,(t||u).el,420);break;
@@ -442,46 +451,37 @@ function livingEvent(e,opts={}){
  }
  wake();
 }
-let raf=0,frameWatchdog=0,last=0;
-function wake(){
- if(raf||frameWatchdog)return;
- raf=requestAnimationFrame(frame);
- frameWatchdog=setTimeout(()=>{
-  frameWatchdog=0;
-  if(raf){cancelAnimationFrame(raf);raf=0}
-  frame()
- },80)
-}
+let raf=0;
+function wake(){if(!raf&&!document.hidden)raf=window.CellboundCombatFrame?.request(frame,0)||requestAnimationFrame(frame)}
 function frame(){
- const now=performance.now(); // Same clock as cast starts, effect expiry and state transitions.
- if(frameWatchdog){clearTimeout(frameWatchdog);frameWatchdog=0}
- raf=0;if(now-last<15){wake();return}last=now;
+ const time=now();raf=0;
  let active=false;
  for(const [arena,scene] of scenes){
-  if(!arena.isConnected){for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}scene.effects.clear();scene.resize?.disconnect();scene.camera?.cancel();scenes.delete(arena);continue}
-  if(!arena.getClientRects().length){scene.live=false;for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}continue}
-  for(const entry of scene.warnings.values())if(now-entry.start>=entry.duration*.7){for(const n of entry.nodes)n.dataset.phase='imminent';for(const n of entry.markers||[])n.dataset.phase='imminent';if(entry.callout)entry.callout.dataset.phase='imminent'}
-  for(const h of scene.hazards.values())if(now>=h.end-900/scene.speed)h.node.dataset.phase='expiring';
-  const bounds=arena.getBoundingClientRect(),positions=new Map();spatialFrame(scene,bounds,now);
+  if(!arena.isConnected){disposeScene(scene);continue}
+  if(arena.closest('[hidden]')){disposeScene(scene);continue}
+  for(const entry of scene.warnings.values())if(time-entry.start>=entry.duration*.7){for(const n of entry.nodes)n.dataset.phase='imminent';for(const n of entry.markers||[])n.dataset.phase='imminent';if(entry.callout)entry.callout.dataset.phase='imminent'}
+  for(const h of scene.hazards.values())if(time>=h.end-900/scene.speed)h.node.dataset.phase='expiring';
+  const bounds=scene.bounds||arena.getBoundingClientRect(),positions=new Map();scene.bounds=bounds;
   const pos=el=>{if(!positions.has(el))positions.set(el,anchorPoint(scene,el,bounds)||center(el));return positions.get(el)};
   const sockets=new Map();
   const fxpos=el=>sockets.get(el)||pos(el);
   // Read geometry before any style writes: WebKit otherwise flushes the whole
   // SVG scene once for every beam/effect, repeatedly within a single frame.
   const readSocket=el=>{if(el?.isConnected&&!sockets.has(el))sockets.set(el,window.CellboundCombatAnimation?.socket(el)||pos(el))};
-  for(const u of scene.units.values())if(u.cast){readSocket(u.el);readSocket(u.target)}
+  for(const u of scene.units.values()){if(u.el.dataset.animationOwned==='1')readSocket(u.el);if(u.cast)readSocket(u.target)}
   for(const f of scene.effects){readSocket(f.source);readSocket(f.target)}
+  scene.sockets=sockets;spatialFrame(scene,bounds,time);
   for(const [el,u] of scene.units){if(el.isConnected)pos(el);if(u.target?.isConnected)pos(u.target)}
   for(const [el,u] of scene.units){
    if(!el.isConnected){scene.units.delete(el);continue}
    el.style.zIndex=String(clamp(Math.round((pos(el).y-bounds.top)/Math.max(1,bounds.height)*14)+4,4,18));
-   if(u.controlUntil&&now>=u.controlUntil){u.controlUntil=0;statuses(u,{type:'DEBUFF_REMOVED',statusEffects:[{id:'visual-control'}]})}
-   if(u.until&&now>=u.until&&!u.dead){u.until=0;state(u,controlled(u)?'controlled':'idle')}
+   if(u.controlUntil&&time>=u.controlUntil){u.controlUntil=0;statuses(u,{type:'DEBUFF_REMOVED',statusEffects:[{id:'visual-control'}]})}
+   if(u.until&&time>=u.until&&!u.dead){u.until=0;state(u,controlled(u)?'controlled':'idle')}
    if(u.target?.isConnected&&!u.dead&&u.state!=='moving'){
     const d=direction(pos(el),pos(u.target));el.style.setProperty('--cbl-facing',d.angle+'deg');
    }
    if(u.cast){
-    const progress=clamp((now-u.cast.start)/u.cast.duration,0,1);el.style.setProperty('--cbl-charge',String(progress));u.cast.glyph?.style.setProperty('--cast-progress',String(progress));
+    const progress=clamp((time-u.cast.start)/u.cast.duration,0,1);el.style.setProperty('--cbl-charge',String(progress));u.cast.glyph?.style.setProperty('--cast-progress',String(progress));
     if(u.state==='channeling'&&u.target?.isConnected){
      if(!u.cast.beam){const n=document.createElement('i');n.className='cbl-fx connection channel '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',u.p.accent);scene.layer.appendChild(n);u.cast.beam=n}
      const a=fxpos(el),b=fxpos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');n.dataset.cblPositioned='1';
@@ -494,9 +494,9 @@ function frame(){
    }
   }
   for(const f of scene.effects){
-   if(now>=f.ends||f.target&&!f.target.isConnected){clearTimeout(f.timer);f.n.remove();scene.effects.delete(f);continue}
+   if(time>=f.ends||f.target&&!f.target.isConnected){clearTimeout(f.timer);f.n.remove();scene.effects.delete(f);continue}
    if(f.flight){
-    const end=pos(f.target),fraction=clamp((now-f.started)/f.flight,0,1),n=f.n;
+    const end=pos(f.target),fraction=clamp((time-f.started)/f.flight,0,1),n=f.n;
     n.style.left=(f.origin.x+(end.x-f.origin.x)*fraction-bounds.left)+'px';n.style.top=(f.origin.y+(end.y-f.origin.y)*fraction-bounds.top)+'px';
     n.style.setProperty('--cbl-angle',direction(f.origin,end).angle+'deg');continue;
    }
@@ -505,10 +505,19 @@ function frame(){
     if(connection){f.n.style.width=d.len+'px';f.n.style.setProperty('--cbl-angle',d.angle+'deg')}
    }
   }
-  active=active||scene.live||scene.effects.size>0;
+  active=active||scene.live||scene.traversing||scene.effects.size>0;
  }
  if(active)wake()
 }
+FX.visualPoint=el=>{const scene=scenes.get(el?.closest?.(ARENA)),p=scene?.units.get(el)?.spatial?.visual;return p&&scene.bounds?{x:p.x,y:p.y,w:scene.bounds.width,h:scene.bounds.height}:null};
+FX.movePresentation=(el,p,duration=600)=>{
+ const scene=scenes.get(el?.closest?.(ARENA)),u=scene?.units.get(el);if(!u?.spatial?.visual||scene.live&&!scene.arena.classList.contains('between-stages'))return false;
+ const w=scene.spatialWidth,h=scene.spatialHeight;if(!w||!h)return false;
+ scene.departing=true;scene.traversing=true;u.transit={from:{x:u.spatial.visual.x/w*100,y:u.spatial.visual.y/h*100},to:{x:clamp(Number(p.x),0,100),y:clamp(Number(p.y),0,100)},start:now(),duration:Math.max(1,duration)};wake();return true;
+};
+window.addEventListener('scroll',()=>{for(const scene of scenes.values())scene.bounds=null},{passive:true,capture:true});
+window.addEventListener('resize',()=>{for(const scene of scenes.values())scene.bounds=null},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf){if(window.CellboundCombatFrame)CellboundCombatFrame.cancel(frame);else cancelAnimationFrame(raf)}raf=0}else{for(const scene of scenes.values())scene.spatialFrameAt=now();wake()}});
 function combatEvent(e,opts={}){try{
  const animation=window.CellboundCombatAnimation,arena=mount(opts.arena||opts.root?.querySelector?.(ARENA));
  if(animation&&arena)animation.route(e,{...opts,arena,source:resolve(e.source,opts,arena),target:resolve(e.target,opts,arena)},()=>livingEvent(e,{...opts,arena}));
@@ -519,7 +528,7 @@ FX.launchAction=(e,arena,source,target,profile,flight)=>{
  const scene=scenes.get(arena);if(!scene||!source?.isConnected||!target?.isConnected||reduce())return;
  const u=scene.units.get(source),f=effect(scene,'class-projectile '+(profile.socket==='bow'?'arrow':family(e,u)),source,target,flight*scene.speed);
  if(!f)return;
- f.flight=flight;f.started=performance.now();f.origin=window.CellboundCombatAnimation?.socket(source,profile.socket)||center(source);
+ f.flight=flight;f.started=now();f.origin=window.CellboundCombatAnimation?.socket(source,profile.socket,true)||scene.sockets?.get(source)||center(source);
  const bounds=arena.getBoundingClientRect();f.n.style.left=f.origin.x-bounds.left+'px';f.n.style.top=f.origin.y-bounds.top+'px';
  f.n.style.setProperty('--cbl-accent',/heal/.test(profile.kind)?'#76efac':u?.p.accent||'#ddd');wake();
 };

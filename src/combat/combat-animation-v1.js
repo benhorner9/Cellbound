@@ -2,7 +2,16 @@
 'use strict';
 // Presentation only. No HP, damage, resources, cooldowns or simulation clocks.
 const scenes=new Map(),times=new WeakMap();
-const now=()=>performance.now(),reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+// One presentation RAF: physical geometry/position work runs before rig writes.
+// Callbacks re-enrol only while active; no timer competes with browser paint.
+const frameJobs=new Map();let frameRequest=0,flushing=false;
+function requestFrame(fn,phase=1){frameJobs.set(fn,phase);if(!frameRequest&&!flushing&&!document.hidden)frameRequest=requestAnimationFrame(flushFrame);return 1}
+function flushFrame(){frameRequest=0;flushing=true;const jobs=[...frameJobs].sort((a,b)=>a[1]-b[1]);frameJobs.clear();try{for(const [fn] of jobs)safe(fn)}finally{flushing=false;if(frameJobs.size&&!document.hidden)frameRequest=requestAnimationFrame(flushFrame)}}
+function cancelFrame(fn){frameJobs.delete(fn)}
+window.CellboundCombatFrame={request:requestFrame,cancel:cancelFrame};
+// Presentation time pauses with the existing simulation when the tab is hidden.
+let hiddenAt=document.hidden?performance.now():null,hiddenElapsed=0;
+const now=()=> (hiddenAt??performance.now())-hiddenElapsed,reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const ACTOR='.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot,.cbl-pet-body';
 const PRIORITY={idle:0,heal:15,cast:30,attack:40,hit:50,block:55,dodge:60,interrupt:75,control:85,revive:90,death:100};
@@ -185,13 +194,12 @@ function route(e,opts,deliver){
 }
 // Adapter feedback joins this event's contact frame; gameplay updates stay immediate.
 function present(e,fn){const entry=times.get(e);if(entry&&scenes.get(entry.scene.arena)===entry.scene)defer(entry.scene,entry.due,()=>{if(entry.scene.arena.isConnected)fn()});else fn()}
-let raf=0,watchdog=0,last=0;
-function wake(){if(raf||watchdog)return;raf=requestAnimationFrame(tick);watchdog=setTimeout(()=>{if(raf)cancelAnimationFrame(raf);raf=0;tick()},80)}
+let raf=0;
+function wake(){if(!raf&&!document.hidden)raf=requestFrame(tick,1)}
 function tick(){
- if(watchdog)clearTimeout(watchdog);watchdog=0;raf=0;
- const time=now();if(time-last<30){wake();return}last=time;let active=false;
+ raf=0;const time=now();let active=false;
  for(const scene of scenes.values()){
-  if(!scene.arena.isConnected||!scene.arena.getClientRects().length||scene.closeAt&&time>=scene.closeAt){dispose(scene,scene.arena.isConnected);continue}
+  if(!scene.arena.isConnected||scene.arena.closest('[hidden]')||scene.closeAt&&time>=scene.closeAt){dispose(scene,scene.arena.isConnected);continue}
   const due=scene.pending.filter(p=>p.due<=time).sort((a,b)=>a.due-b.due||a.seq-b.seq);scene.pending=scene.pending.filter(p=>p.due>time);
   for(const entry of due)safe(entry.fn);
   for(const [el,u] of scene.units){
@@ -218,12 +226,12 @@ function tick(){
  if(active)wake();
 }
 // Idle has no JS frame loop. Observe removal so closed arenas cannot retain actors.
-new MutationObserver(records=>{const hiddenChanged=records.some(r=>r.type==='attributes');if(hiddenChanged||records.some(r=>r.removedNodes.length))for(const scene of scenes.values())if(!scene.arena.isConnected||hiddenChanged&&!scene.arena.getClientRects().length)dispose(scene)}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
-function socket(el,type){
+new MutationObserver(records=>{const hiddenChanged=records.some(r=>r.type==='attributes');if(hiddenChanged||records.some(r=>r.removedNodes.length))for(const scene of scenes.values())if(!scene.arena.isConnected||hiddenChanged&&scene.arena.closest('[hidden]'))dispose(scene)}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
+function socket(el,type,cached=false){
  const r=el?._cbAnimationRig||bind(el||{querySelector:()=>null}),profile=type||'main';
  const node=profile==='off'?r?.nodes.leftGlove:profile==='head'?r?.nodes.body:r?.nodes.main,svg=node?.ownerSVGElement;
  if(!node||!svg)return null;
- const matrix=node.getScreenCTM();if(!matrix)return null;
+ r.screenMatrices=r.screenMatrices||new WeakMap();const matrix=cached?r.screenMatrices.get(node):node.getScreenCTM();if(!matrix)return null;if(!cached)r.screenMatrices.set(node,matrix);
  const point=svg.createSVGPoint();
  if(profile==='off'){point.x=Number(node.getAttribute('cx'));point.y=Number(node.getAttribute('cy'))}
  else if(profile==='head'){point.x=120;point.y=85}
@@ -231,5 +239,6 @@ function socket(el,type){
  else{point.x=Number(node.dataset.gripLocalX)||0;point.y=Number(node.dataset.gripLocalY)||0}
  const p=point.matrixTransform(matrix);return{x:p.x,y:p.y};
 }
-window.CellboundCombatAnimation={version:2,isProjectile:e=>!!times.get(e)?.projectile,route,present,socket,sample,clips:CLIPS,dispose:arena=>{const s=scenes.get(arena);if(s)dispose(s)},diagnostics:arena=>{const entries=arena?[scenes.get(arena)].filter(Boolean):[...scenes.values()];return{scenes:entries.length,pending:entries.reduce((n,s)=>n+s.pending.length,0),actors:entries.reduce((n,s)=>n+s.units.size,0)}}};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(frameRequest)cancelAnimationFrame(frameRequest);frameRequest=0;hiddenAt=performance.now();if(raf)cancelFrame(tick);raf=0}else{if(hiddenAt!==null)hiddenElapsed+=performance.now()-hiddenAt;hiddenAt=null;wake()}});
+window.CellboundCombatAnimation={version:3,now,isProjectile:e=>!!times.get(e)?.projectile,route,present,socket,sample,clips:CLIPS,dispose:arena=>{const s=scenes.get(arena);if(s)dispose(s)},diagnostics:arena=>{const entries=arena?[scenes.get(arena)].filter(Boolean):[...scenes.values()];return{scenes:entries.length,pending:entries.reduce((n,s)=>n+s.pending.length,0),actors:entries.reduce((n,s)=>n+s.units.size,0)}}};
 })();

@@ -82,8 +82,8 @@ function addEventNode(arena,className,x=50,y=50,life=800,html=''){
   host.appendChild(n);setTimeout(()=>n.remove(),life);return n
 }
 function pulseClass(el,cls,ms=420){
-  if(!el||reduce())return;
-  el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);setTimeout(()=>el?.classList?.remove(cls),ms)
+  if(!el||reduce()||el.dataset.animationOwned==='1')return;
+  el.classList.remove(cls);requestAnimationFrame(()=>{if(el.isConnected)el.classList.add(cls)});setTimeout(()=>el?.classList?.remove(cls),ms)
 }
 function labelAt(arena,target,text,kind='info'){
   if(!arena||!target||!text||reduce())return;

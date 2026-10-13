@@ -11,7 +11,7 @@ function visible(el){
   if(!el||!el.isConnected||el.hidden)return false;
   const backdrop=el.closest('.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop,.tb-backdrop');
   if(backdrop?.hidden)return false;
-  return getComputedStyle(el).display!=='none'
+  return !el.closest('[hidden]')
 }
 function activeShell(){
   return [...document.querySelectorAll(ACTIVE_SELECTOR)].reverse().find(visible)||null
@@ -215,12 +215,13 @@ window.addEventListener('cellbound:combat-event',e=>combatEvent(e.detail));
 const observer=new MutationObserver(records=>{
   const shells=new Set();
   records.forEach(r=>{
-    const host=r.target?.closest?.(ACTIVE_SELECTOR);if(host)shells.add(host);
+    const structural=[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.('.cb2d-party-row,.cb2d-controls,.cb2d-combat-meters')||n.querySelector?.('.cb2d-party-row,.cb2d-controls,.cb2d-combat-meters')));
+    const host=structural?r.target?.closest?.(ACTIVE_SELECTOR):null;if(host)shells.add(host);
     r.addedNodes.forEach(n=>{
       if(n.nodeType!==1)return;
       if(n.matches?.(ACTIVE_SELECTOR))shells.add(n);
       n.querySelectorAll?.(ACTIVE_SELECTOR).forEach(s=>shells.add(s));
-      const parent=n.closest?.(ACTIVE_SELECTOR);if(parent)shells.add(parent)
+      if(structural){const parent=n.closest?.(ACTIVE_SELECTOR);if(parent)shells.add(parent)}
     })
   });
   shells.forEach(upgrade)

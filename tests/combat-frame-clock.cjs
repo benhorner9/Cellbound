@@ -1,0 +1,17 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+let time=100,seq=0;const frames=new Map(),listeners=new Map();
+const document={hidden:false,documentElement:{},addEventListener:(type,fn)=>listeners.set(type,fn)};
+const context={window:{},document,performance:{now:()=>time},console,MutationObserver:class{observe(){}},requestAnimationFrame:fn=>{frames.set(++seq,fn);return seq},cancelAnimationFrame:id=>frames.delete(id)};
+vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/combat/combat-animation-v1.js'),'utf8'),context);
+const F=context.window.CellboundCombatFrame,A=context.window.CellboundCombatAnimation,order=[];
+const pose=()=>order.push('pose'),physical=()=>order.push('geometry');
+F.request(pose,1);F.request(physical,0);F.request(pose,1);
+assert.equal(frames.size,1,'one RAF regardless of subscribers');
+const flush=()=>{const batch=[...frames.values()];frames.clear();for(const fn of batch)fn()};
+flush();assert.deepEqual(order,['geometry','pose'],'read sockets before rig writes');assert.equal(frames.size,0,'idle has no presentation loop');
+F.request(pose);F.cancel(pose);flush();assert.equal(order.length,2,'cancelled work cannot run');
+let count=0;const repeat=()=>{count++;if(count<3)F.request(repeat)};F.request(repeat);flush();assert.equal(count,1);flush();flush();assert.equal(count,3);assert.equal(frames.size,0);
+const before=A.now();document.hidden=true;listeners.get('visibilitychange')();time+=60000;assert.equal(A.now(),before,'hidden wall time does not finish casts or animations');
+document.hidden=false;listeners.get('visibilitychange')();assert.equal(A.now(),before);time+=16;assert.equal(A.now(),before+16);flush();
+console.log('Shared frame clock: ordered/coalesced RAF, cancellation, idle shutdown and hidden-tab continuity passed.');

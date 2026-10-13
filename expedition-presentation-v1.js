@@ -9,6 +9,13 @@ const PROFILES={
   'fractured-ages':{name:'The Fractured Ages',eyebrow:'TEMPORAL FRACTURE · DUNGEON',tag:'STEP BEYOND THE PRESENT',theme:'fractured',motion:'fracture',entry:'The lockbox tears open a path through time. The party steps through before the fracture can close.'}
 };
 let active=null,token=0;
+// Decode only the next room; a failed image cannot lock dungeon navigation.
+const roomImages=new Map();
+function preload(src){
+ if(!src)return Promise.resolve(false);if(roomImages.has(src))return roomImages.get(src);
+ const job=new Promise(resolve=>{const image=new Image();let done=false;const finish=value=>{if(done)return;done=true;clearTimeout(timeout);image.onload=image.onerror=null;resolve(value)};const timeout=setTimeout(()=>finish(false),1800);image.decoding='async';image.onload=()=>{if(image.decode)image.decode().then(()=>finish(true),()=>finish(true));else finish(true)};image.onerror=()=>finish(false);image.src=src});
+ roomImages.set(src,job);while(roomImages.size>2)roomImages.delete(roomImages.keys().next().value);return job;
+}
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function profile(id){return PROFILES[id]||{name:String(id||'Dungeon'),eyebrow:'CELLBOUND · EXPEDITION',tag:'BEGIN EXPEDITION',theme:'default',motion:'default',entry:'The party moves deeper into the expedition.'}}
@@ -87,5 +94,5 @@ window.addEventListener('pageshow',()=>{
   syncOpenClass()
 });
 window.addEventListener('pagehide',()=>{token++;clearAll()},{once:true});
-window.CellboundExpeditionPresentation={VERSION,enter,room,fullScreen,leave,profiles:PROFILES};
+window.CellboundExpeditionPresentation={VERSION,enter,room,preload,fullScreen,leave,profiles:PROFILES};
 })();
