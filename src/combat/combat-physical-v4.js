@@ -163,8 +163,82 @@ function resolve(id,opts,arena){
  (String(id).startsWith('tb-')?arena.querySelector('[data-tb-boss="'+CSS.escape(String(id).slice(3))+'"]'):null)||
  (id==='boss'?arena.querySelector('#wb2dBoss'):null)
 }
+
+/* Stable battle focus and a short, event-driven explanation of the action.
+ * Does not change targeting, damage, simulation or animation playback. */
+function clarityLabel(u){
+ if(!u?.el)return'';
+ const label=u.el.querySelector(':scope > span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait)');
+ return String(label?.childNodes?.[0]?.textContent||label?.textContent||u.spatialMeta?.name||u.p?.name||'').trim().replace(/\s+/g,' ').slice(0,45);
+}
+function clarityDescriptor(e,u,t){
+ if(!e)return null;
+ const actor=clarityLabel(u)||'Enemy',ability=String(e.ability||'').trim().slice(0,50);
+ if(e.type==='CAST_START'&&u?.el?.classList.contains('enemy'))return{kind:'danger',text:actor+' casting '+(ability||'an ability')};
+ if(e.type==='INTERRUPT'&&e.result==='success')return{kind:'success',text:(clarityLabel(t)||'Enemy')+' interrupted'};
+ if(e.type==='DEFENSIVE_ACTIVATED')return{kind:'defense',text:(ability||'Defensive ability')+' activated'};
+ if(e.type==='PLAYER_DEFEATED')return{kind:'danger',text:(clarityLabel(t)||'Ally')+' down'};
+ if(e.type==='ENEMY_DEFEATED'||e.type==='ADD_DEFEATED')return{kind:'success',text:(clarityLabel(t)||'Enemy')+' defeated'};
+ if(e.type==='ABILITY_START'&&u?.el?.classList.contains('party')&&ability)return{kind:'action',text:actor+' · '+ability};
+ return null;
+}
+function resetClarity(scene){
+ const c=scene.clarity;if(!c)return;
+ for(const u of scene.units.values())u.el.classList.remove('cbl-primary-target','cbl-danger-cast');
+ c.focus=null;c.focusAt=0;c.caster=null;c.lastActionAt=0;
+ if(c.target)c.target.textContent='No target';
+ if(c.action)c.action.textContent='Choose a target and issue commands';
+ if(c.node)delete c.node.dataset.priority;
+}
+function initClarity(scene){
+ if(scene.arena.dataset.pvpMode)return;
+ scene.arena.dataset.combatClarity='1';
+ const shell=scene.arena.closest('.cbcombat-shell'),topbar=shell?.querySelector('.cbcombat-battle-topbar');
+ scene.arena.dataset.clarityHud=topbar?'1':'0';
+ if(!scene.clarity)scene.clarity={node:null,target:null,action:null,focus:null,focusAt:0,caster:null,lastActionAt:0};
+ const c=scene.clarity;
+ if(topbar&&!c.node?.isConnected){
+  const node=document.createElement('div');node.className='cbl-combat-readout';node.setAttribute('role','group');node.setAttribute('aria-label','Current battle focus');
+  const target=document.createElement('strong');target.className='cbl-readout-target';
+  const action=document.createElement('span');action.className='cbl-readout-action';
+  node.append(target,action);topbar.appendChild(node);c.node=node;c.target=target;c.action=action;
+ }
+ resetClarity(scene);
+}
+function updateClarity(scene,e,u,t){
+ const c=scene.clarity;if(!c||scene.arena.dataset.pvpMode)return;
+ const ts=now(),hostile=el=>el?.classList.contains('enemy')||el?.classList.contains('boss');
+ const friendly=el=>el?.classList.contains('party')||el?.classList.contains('own');
+ if(['TARGET_CHANGED','ABILITY_START','DAMAGE_DEALT'].includes(e.type)&&friendly(u?.el)&&hostile(t?.el)&&!t.dead){
+  if(e.type==='TARGET_CHANGED'||!c.focus||!c.focus.isConnected||ts-c.focusAt>1700){
+   if(c.focus!==t.el){
+    c.focus?.classList.remove('cbl-primary-target');c.focus=t.el;c.focus.classList.add('cbl-primary-target');
+    if(c.target)c.target.textContent='Target: '+(clarityLabel(t)||'Enemy');
+   }c.focusAt=ts;
+  }
+ }
+ if(e.type==='CAST_START'&&hostile(u?.el)){
+  c.caster?.classList.remove('cbl-danger-cast');c.caster=u.el;u.el.classList.add('cbl-danger-cast');
+ }else if((['CAST_CANCELLED','CAST_FINISH','ABILITY_FINISH'].includes(e.type)&&c.caster===u?.el)||(e.type==='INTERRUPT'&&c.caster===t?.el)){
+  c.caster?.classList.remove('cbl-danger-cast');c.caster=null;
+  if(e.type!=='INTERRUPT'&&c.action){c.action.textContent='Enemy cast ended';delete c.node.dataset.priority}
+ }
+ if(['PLAYER_DEFEATED','ENEMY_DEFEATED','ADD_DEFEATED'].includes(e.type)){
+  if(c.focus===t?.el){c.focus.classList.remove('cbl-primary-target');c.focus=null;if(c.target)c.target.textContent='No target'}
+  if(c.caster===t?.el){c.caster.classList.remove('cbl-danger-cast');c.caster=null}
+ }
+ if(e.type==='COMBAT_END'){resetClarity(scene);if(c.action)c.action.textContent='Encounter complete';return}
+ const msg=clarityDescriptor(e,u,t);
+ if(!msg||!c.action)return;
+ const urgent=msg.kind!=='action';
+ if(!urgent&&(c.caster||ts-c.lastActionAt<1250))return;
+ c.action.textContent=msg.text;c.node.dataset.priority=msg.kind;
+ if(!urgent)c.lastActionAt=ts;
+}
+
 function disposeScene(scene){
  for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}
+ scene.clarity?.node?.remove();resetClarity(scene);
  for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}
  for(const group of [scene.hazards,scene.warnings,scene.totems,scene.pets])for(const entry of group.values()){entry.node?.remove();entry.callout?.remove();entry.remove?.();for(const n of entry.markers||[])n.remove()}
  scene.effects.clear();scene.units.clear();scene.resize?.disconnect();scene.camera?.cancel();scene.layer.remove();scene.room?.remove();scenes.delete(scene.arena);
@@ -390,7 +464,7 @@ function strike(scene,u,t,e,heal=false){
   const reach=Math.min(u.p.lunge,d.len*.16,12),x=d.x*reach,y=d.y*reach;
   motion(u,[{translate:x+'px '+y+'px',rotate:['flow','fluid'].includes(u.p.motion)?'8deg':u.p.motion==='brutal'?'-6deg':'0deg',scale:heavy?'1.09':'1.04'},{translate:'0px 0px',rotate:'0deg',scale:'1'}],u.p.motion==='dart'?240:380,scene);
   const stroke=/shield|bash/i.test(e.ability||'')?'shield-strike':/thrust|pierce|stab/i.test(e.ability||'')?'thrust':/spin|whirl|sweep/i.test(e.ability||'')?'sweep':/overhead|cleave|crush/i.test(e.ability||'')?'overhead':u.p.motion;
-  const f=effect(scene,'slash '+stroke,u.el,t.el,260);if(f)f.n.style.setProperty('--cbl-accent',u.p.accent);
+  if(heavy||visualSignature(e).major){const f=effect(scene,'slash '+stroke,u.el,t.el,260);if(f)f.n.style.setProperty('--cbl-accent',u.p.accent)}
  }
  if(heal){abilityImpact(scene,e,u,t,'heal');const f=effect(scene,'heal-ring'+(Number(e.payload?.targetHpPct)<40?' emergency':'')+(/HoT/.test(e.ability||'')?' periodic':''),null,t.el,500);return}
  if(['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result))return;
@@ -423,7 +497,7 @@ function livingEvent(e,opts={}){
  case'COMBAT_START':
   for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}scene.effects.clear();
   for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();
-  scene.live=true;scene.traversing=false;scene.departing=false;scene.spatialFrameAt=now();scene.spatialEnvironment=e.payload?.environment||{};scene.spatialDirty=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
+  scene.live=true;scene.traversing=false;scene.departing=false;initClarity(scene);scene.spatialFrameAt=now();scene.spatialEnvironment=e.payload?.environment||{};scene.spatialDirty=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){a.spatialMeta=v;enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
  case'PARTY_COMMAND':{const command=e.payload?.type;if(['spread','stack','regroup','fall-back'].includes(command)){for(const v of scene.units.values())if(v.spatialMeta?.role!=='enemy'){v.spatialCommand=command;v.spatialCommandUntil=now()+(Number(e.payload?.durationMs)||3000)/scene.speed}scene.spatialDirty=true}break;}
  case'MOVEMENT_START':
@@ -446,7 +520,7 @@ function livingEvent(e,opts={}){
  case'CAST_START':
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e);u.el.dataset.vfxSchool=visualSignature(e).school;abilityCharge(scene,e,u)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
- case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)&&!abilityImpact(scene,e,u,t))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
+ case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)&&!abilityImpact(scene,e,u,t))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&(e.result==='critical'||visualSignature(e).major||visualSignature(e).shape==='nova')&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
  case'HEAL_RECEIVED':if(t){
   const visualSource=e.payload?.visualSource?unit(scene,resolve(e.payload.visualSource,opts,arena)):u;
   if(Number(e.payload?.chainBounce)>0&&visualSource){
@@ -474,6 +548,7 @@ function livingEvent(e,opts={}){
   if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650,true);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%';f.n.dataset.cblPositioned='1'}}break;
  case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();for(const w of scene.warnings.values()){w.callout?.remove();for(const n of w.markers||[])n.remove()}scene.warnings.clear();arena.querySelectorAll('.cbl-mechanic-callout,.cbl-mechanic-marker').forEach(n=>n.remove());scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
  }
+ updateClarity(scene,e,u,t);
  wake();
 }
 let raf=0;
@@ -564,7 +639,7 @@ FX.presentImpact=(e,fn)=>window.CellboundCombatAnimation?window.CellboundCombatA
 FX.syncPositions=(arena,units,objectives={})=>{mount(arena);const scene=scenes.get(arena);if(!scene)return;const zones=[];if(objectives.storm)zones.push({position:objectives.storm.centre||{x:50,y:50},radius:objectives.storm.radius});if(objectives.hill?.radius)zones.push({position:objectives.hill,radius:objectives.hill.radius});const signature=JSON.stringify(zones);if(signature!==scene.spatialZoneSignature){scene.spatialZoneSignature=signature;scene.spatialZones=zones;scene.spatialDirty=true}for(const data of units){const u=unit(scene,resolve(data.id,{},arena));if(u){u.spatialMeta={...u.spatialMeta,...data};u.dead=data.alive===false;setPosition(scene,u,data.position,200)}}wake()};
 if(window.CellboundCombatSpatial)window.CellboundCombatSpatial.inspect=arena=>{const s=scenes.get(arena);return s?{checks:s.spatialChecks,unresolved:s.spatialUnresolved,units:(s.spatialUnits||[]).map(u=>({id:u.id,role:u.role,style:u.style,logical:u.logical,visual:u.visual,reserved:u.reserved,rx:u.rx,ry:u.ry,conflict:u.conflict,state:u.el.dataset.spatialState}))}:null};
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
-FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.5.0';FX.living=true;
+FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.clarityDescriptor=clarityDescriptor;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.5.0';FX.living=true;
 // Legacy public entry points remain callable but no longer duplicate shared reactions.
 for(const name of ['impact','heal','death','spawn','interrupt']){const old=FX[name];FX[name]=function(el,...args){if(el?.closest?.('.cbl-scene'))return;return old?.(el,...args)}}
 })();

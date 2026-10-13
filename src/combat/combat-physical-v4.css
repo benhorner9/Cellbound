@@ -454,3 +454,29 @@
 .cbl-casting[data-vfx-school="nature"] .cbl-cast-glyph{border-color:#85d4a3;color:#85d4a3}
 .cbl-casting[data-vfx-school="arcane"] .cbl-cast-glyph{border-color:#a7a8fa;color:#a7a8fa}
 @media(prefers-reduced-motion:reduce){.cbl-fx.ability-charge{display:none!important}}
+
+/* Battlefield clarity: a single focus point; the party's detail is in the HUD. */
+.cbl-scene[data-combat-clarity="1"] .cbl-unit>.cbl-facing{opacity:0!important}
+.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-primary-target>.cbl-facing{opacity:.34!important}
+.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-danger-cast>.cbl-facing{opacity:.85!important}
+.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-primary-target>.cbl-ground:after,.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-danger-cast>.cbl-ground:after{
+ content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #e4bf79;opacity:.95;pointer-events:none
+}
+.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-danger-cast>.cbl-ground:after{border-color:#f08c6c;border-style:dashed}
+.cbl-scene[data-clarity-hud="1"] .cbl-unit.party:not(.boss)>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){opacity:0!important;pointer-events:none}
+.cbl-scene[data-clarity-hud="1"] .cbl-unit.party>.cbs-label-link{display:none!important}
+.cbl-scene[data-clarity-hud="1"] .cbl-unit.enemy:not(.boss):not(.cbl-primary-target):not(.cbl-danger-cast)>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){opacity:.3!important;font-size:9px!important}
+.cbl-scene[data-clarity-hud="1"] .cbl-unit.enemy:not(.boss):not(.cbl-primary-target):not(.cbl-danger-cast)>.cbs-label-link{display:none!important}
+.cbl-scene[data-combat-clarity="1"] .cbl-fx.ability-impact:not(.major){width:33px;height:33px}
+.cbl-scene[data-combat-clarity="1"] .cbl-fx.ability-charge:not(.major){width:30px;height:30px}
+.cbl-combat-readout{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-width:0;max-width:56%;margin-left:auto;padding:4px 8px;border-left:1px solid rgba(205,177,123,.23);background:rgba(6,12,16,.58);pointer-events:none;color:#d7d9d4;line-height:1.25}
+.cbl-readout-target{font:700 11px/1.3 system-ui,sans-serif;color:#edcd95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:175px}
+.cbl-readout-action{font:500 10px/1.3 system-ui,sans-serif;color:#c4d0d1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:225px}
+.cbl-combat-readout[data-priority="danger"] .cbl-readout-action{color:#f3aa87;font-weight:700}
+.cbl-combat-readout[data-priority="success"] .cbl-readout-action{color:#a6deb5}
+@media(max-width:680px){
+ .cbl-combat-readout{gap:5px;padding:3px 5px;max-width:60%}
+ .cbl-readout-target{font-size:10px;max-width:105px}
+ .cbl-readout-action{font-size:9px;max-width:110px}
+ .cbl-scene[data-clarity-hud="1"] .cbl-unit.enemy:not(.boss):not(.cbl-primary-target):not(.cbl-danger-cast)>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){opacity:0!important}
+}
