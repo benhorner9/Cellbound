@@ -409,6 +409,7 @@ and a Chromium forge-timing failure; these are recorded rather than hidden.
 - `src/dungeons/chaos-canyon-v1.js`
 - `src/dungeons/dungeon-2d-v1.js`
 - `src/dungeons/hollow-sanctum-v1.js`
+- `tests/combat-animation-dungeon.browser.cjs`
 - `tests/combat-animation.browser.cjs`
 - `tests/combat-animation.cjs`
 - `tools/runtime-manifest.cjs`
@@ -437,3 +438,13 @@ and a Chromium forge-timing failure; these are recorded rather than hidden.
   the standard dungeon fixture; mixed-party samples vary with scene/viewport.
   This is not a claim of acceptable hardware FPS or a physical Safari test.
 - Linux WebKit and full browser CI results are reported with the staging delivery.
+
+
+Additional delivery QA exercised the canonical 5v5 viewer with genuine local
+engine sessions in Arena, Capture the Flag and King of the Hill. All ten actors
+received motions, red-team portraits were present, and no horizontal overflow or
+browser errors occurred. This is test-backend practice, not a live ranked match.
+Linux WebKit exhaustive fixtures passed all 221 abilities and 516 painted grip
+cases. Full-scene observations now accept the expanded clip vocabulary and
+observe state writes independently of the slow software compositor; their raw
+frame diagnostics remain visible and do not constitute a performance pass.

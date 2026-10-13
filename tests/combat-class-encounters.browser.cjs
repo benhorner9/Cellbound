@@ -13,11 +13,18 @@ const groups=[['Warrior','Paladin','Hunter','Rogue','Mage'],['Death Knight','Dem
    });CellboundGame.renderAll();CellboundDungeon2D.open();
   },classes);
   await page.locator('.cb2d-start[data-start]').click();await page.waitForSelector('#cb2dArena [data-animation-owned="1"]',{timeout:45000});
-  const seen=await page.evaluate(()=>new Promise(resolve=>{
-   const observed={},start=performance.now();let count=0,last=start;const timings=[];
-   function tick(t){count++;timings.push(t-last);last=t;for(const el of document.querySelectorAll('#cb2dArena [data-animation-owned]')){const k=el.querySelector('[data-animation-class]')?.dataset.animationClass;if(k){observed[k]??=[];const a=el.dataset.animationClip;if(a&&!observed[k].includes(a))observed[k].push(a)}}if(t-start<8000)requestAnimationFrame(tick);else{timings.sort((a,b)=>a-b);resolve({observed,frames:count,p95:timings[Math.floor(timings.length*.95)]})}}requestAnimationFrame(tick);
-  }));
-  for(const klass of new Set(classes)){assert(klass in seen.observed,klass+' rendered in actual encounter');assert(seen.observed[klass].length>0,klass+' receives genuine engine actions')}
+  const seen=await page.evaluate(classes=>new Promise(resolve=>{
+   const observed={},start=performance.now();let count=0,last=start,done=false;const timings=[];
+   function observe(){for(const el of document.querySelectorAll('#cb2dArena [data-animation-owned]')){const k=el.querySelector('[data-animation-class]')?.dataset.animationClass;if(k){observed[k]??=[];const a=el.dataset.animationClip;if(a&&!observed[k].includes(a))observed[k].push(a)}}}
+   // Capture state writes even if the software WebKit compositor skips paints.
+   // Keep frame timing separate: functional coverage is not a performance pass.
+   const watcher=new MutationObserver(observe);watcher.observe(document.querySelector('#cb2dArena'),{subtree:true,attributes:true,attributeFilter:['data-animation-clip']});
+   function finish(){if(done)return;const elapsed=performance.now()-start;if(elapsed<8000||elapsed<35000&&!classes.every(k=>observed[k]?.some(a=>!['hit','block','dodge','heal','interrupt','control','death','revive'].includes(a))))return;done=true;watcher.disconnect();clearInterval(poll);timings.sort((a,b)=>a-b);resolve({observed,frames:count,p95:timings[Math.floor(timings.length*.95)],elapsed})}
+   function tick(t){if(done)return;count++;timings.push(t-last);last=t;observe();finish();if(!done)requestAnimationFrame(tick)}
+   const poll=setInterval(()=>{observe();finish()},100);requestAnimationFrame(tick);
+  }),classes);
+  console.log('All-class frame diagnostics',JSON.stringify(seen));
+  for(const klass of new Set(classes)){assert(klass in seen.observed,klass+' rendered in actual encounter');assert(seen.observed[klass].some(a=>!['hit','block','dodge','heal','interrupt','control','death','revive'].includes(a)),klass+' receives genuine engine actions: '+JSON.stringify(seen))}
   fs.mkdirSync('/tmp/cellbound-class-animation',{recursive:true});await page.screenshot({path:'/tmp/cellbound-class-animation/encounter-'+(process.env.CELLBOUND_TEST_ENGINE||'chromium')+'-'+index+'.png'});
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no page overflow');assert.deepEqual(errors,[]);
   console.log('Actual all-class encounter',classes.join(', '),JSON.stringify(seen));await page.close();
