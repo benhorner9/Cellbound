@@ -893,6 +893,7 @@ function weaponMarkup(type,pal,v,tier,item){
       ' fill="none" stroke="'+pal.trim+'" stroke-width="10" stroke-linecap="round"/>'+
       '<path d="M190 113 Q219 144 224 176 Q229 199 213 213 Q227 245 221 277 Q212 306 190 325"'+
       ' fill="none" stroke="'+pal.base+'" stroke-width="5.3" stroke-linecap="round"/>'+
+      '<g class="cb-paper-arrow" opacity="0"><path d="M135 213 H258 L247 208 M258 213 L247 218 M145 213 L136 207 M145 213 L136 219" fill="none" stroke="'+pal.light+'" stroke-width="2.6"/></g>'+
       '<path class="cb-paper-bow-string" d="M190 113 L190 325" fill="none" stroke="'+pal.light+'" stroke-width="2.3"/>'+
       '<path d="M207 209 L220 211 L207 217" fill="none" stroke="'+pal.light+'" stroke-width="3" stroke-linecap="round"/>'+
       '<path d="M190 113 L196 129 M190 325 L196 309" stroke="'+pal.glow+'" stroke-width="2.5"/>';
@@ -1081,6 +1082,13 @@ function paperTierAura(c){
   if(set&&set.count>=4)out+='<path d="M57 119 Q120 69 183 119" fill="none" stroke="'+accent+'" stroke-width="2.2" opacity=".32" class="cb-paper-set-glow"/>'+motifMarkup(set.visual.motif,120,112,1.15,accent);
   return out;
 }
+// Reuse the authored trouser/boot art as two clipped cutouts; armour and race
+// markings travel with the kicking leg. Robed characters retain their full skirt.
+function paperAnimatedLegs(c,skin,highlighted,uid){
+ var art=paperLegs(c,skin,highlighted)+paperFeet(c,skin,highlighted);
+ if(c.class!=='Monk')return art;
+ return '<defs><clipPath id="'+uid+'legL"><rect x="0" y="240" width="120" height="170"/></clipPath><clipPath id="'+uid+'legR"><rect x="120" y="240" width="120" height="170"/></clipPath></defs>'+['L','R'].map(function(side){return '<g class="cb-paper-kick-'+side+'"><g clip-path="url(#'+uid+'leg'+side+')">'+art+'</g></g>'}).join('');
+}
 function paperDollSVG(c,opts){
   opts=opts||{};
   var showGear=opts.showGear!==false;
@@ -1096,12 +1104,12 @@ function paperDollSVG(c,opts){
   var hip=profile.hip||32;
   var under='<path d="M'+(120-hip)+' 236 Q120 250 '+(120+hip)+' 236 L'+(120+hip+1)+' 268 Q120 282 '+(120-hip-1)+' 268Z" fill="#162126" stroke="#10171b" stroke-width="3"/><path d="M'+(120-hip+6)+' 252 Q120 261 '+(120+hip-6)+' 252" fill="none" stroke="#526065" stroke-width="1.3" opacity=".36"/>';
   var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=29+(50*(1-headScale));
-  return '<svg viewBox="0 0 240 410" data-rig-pose="'+esc(JSON.stringify({pose:paperFit(c).attachments,p:paperFit(c).p}))+'" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v4" data-item-visuals="v2" data-palette-mode="gear-owned" data-weapon-pose="held-v3" role="img" aria-hidden="true" focusable="false">'+
+  return '<svg viewBox="0 0 240 410" data-animation-class="'+esc(c.class||'')+'" data-rig-pose="'+esc(JSON.stringify({pose:paperFit(c).attachments,p:paperFit(c).p}))+'" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v4" data-item-visuals="v2" data-palette-mode="gear-owned" data-weapon-pose="held-v3" role="img" aria-hidden="true" focusable="false">'+
     '<defs><radialGradient id="'+uid+'a" cx="50%" cy="46%" r="54%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".13"/><stop offset="70%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient></defs>'+
     '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
     '<ellipse cx="120" cy="392" rx="'+Math.max(66,profile.shoulder+23)+'" ry="10" fill="#000" opacity=".38"/>'+
     '<g class="cb-paper-actor" transform="'+(opts.mirrored?'translate(240 0) scale(-1 1)':'translate(0 0)')+'">'+paperTierAura(c)+
-    paperLegs(c,skin,highlighted)+paperFeet(c,skin,highlighted)+
+    paperAnimatedLegs(c,skin,highlighted,uid)+
     '<g class="cb-paper-upper-body">'+paperOffHand(c,highlighted,'back')+
     paperRaceSilhouette(c,profile,skin)+paperArms(c,skin,highlighted)+under+paperChest(c,highlighted,skin)+paperWaist(c,highlighted)+paperCarryStrap(c)+paperShoulders(c,highlighted)+paperWeaponForearm(c,highlighted)+paperAccessories(c,highlighted)+
     neck+

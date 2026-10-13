@@ -350,3 +350,10 @@
 /* Gameplay may mark a unit dead before the queued visual killing blow lands. */
 .cbl-scene.cbl-scene .cb2d-unit[data-animation-owned="1"]{opacity:1!important;filter:none}
 .cbl-scene [data-animation-state="idle"] .cb-paper-upper-body{transform-origin:120px 257px}
+
+/* Reuse one lightweight projectile per resolved target; clipped by battlefield. */
+.cbl-fx.class-projectile{width:9px;height:5px;border-radius:50%;background:var(--cbl-accent,#b9dded);rotate:var(--cbl-angle);box-shadow:0 0 5px currentColor;animation:none!important;pointer-events:none}
+.cbl-fx.class-projectile.arrow{width:19px;height:2px;border-radius:0;background:#d9c9a2;box-shadow:none}
+.cbl-fx.class-projectile.arrow:after{content:'';position:absolute;right:-1px;top:-2px;border-left:5px solid #e4d8bf;border-top:3px solid transparent;border-bottom:3px solid transparent}
+.cbl-fx.class-projectile.fire{background:#ffb45f}.cbl-fx.class-projectile.frost{background:#a9e5ff}.cbl-fx.class-projectile.shadow{background:#be92df}
+.cbl-scene [data-animation-owned="1"] .cb-paper-arrow{transition:none!important}

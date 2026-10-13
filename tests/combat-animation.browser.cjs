@@ -18,7 +18,7 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
    window.testParty=[{id:'warrior',name:'Aldren',class:'Warrior',spec:'Protection',role:'tank',race:'Veyren',level:5,power:12,appearance:{gender:0,frame:1,skinTone:1,hair:2,hairColor:2},talents:{Protection:{'Shield Mastery':3}},equipment}];
    window.CellboundGame={ready:true,getState:()=>({roster:testParty}),getPartyCharacters:()=>testParty,characterItemLevel:()=>10,isUnavailable:()=>false};
   });
-  for(const f of ['combat-portraits-v1.js','combat-data-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js','combat-polish-v2.js','combat-polish-v3.js',...(!before?['combat-animation-v1.js']:[]),'combat-physical-v4.js','combat-cinematic-v1.js','dungeon-2d-v1.js'])await page.addScriptTag({path:path.join(dist,f)});
+  for(const f of ['combat-portraits-v1.js','combat-data-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js','combat-polish-v2.js','combat-polish-v3.js',...(!before?['combat-animation-catalog-v1.js','combat-animation-v1.js']:[]),'combat-physical-v4.js','combat-cinematic-v1.js','dungeon-2d-v1.js'])await page.addScriptTag({path:path.join(dist,f)});
   const simulation=await page.evaluate(()=>{
    const encounter={id:'hall-embers',title:'Hall of Embers · Ashen Vault',kind:'trash',level:3,enemies:[{name:'Ash Guardian',classification:'elite'}],enemyHealth:120,mechanics:[]};
    // Choose a deterministic genuine engine encounter containing a block and victory.
@@ -32,8 +32,8 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
   await page.waitForTimeout(1500);
   await page.screenshot({path:dir+'/'+(before?'before':'after')+'-ipad.png'});
   if(!before){
-   await page.waitForFunction(()=>document.querySelector('[data-unit="p-warrior"][data-animation-clip="swing"]'),null,{timeout:12000});
-   await page.waitForFunction(()=>document.querySelector('[data-unit="p-warrior"]')?.dataset.animationState==='swing',null,{timeout:12000});
+   await page.waitForFunction(()=>document.querySelector('[data-unit="p-warrior"][data-animation-clip="cleave"]'),null,{timeout:12000});
+   await page.waitForFunction(()=>document.querySelector('[data-unit="p-warrior"]')?.dataset.animationState==='cleave',null,{timeout:12000});
    await page.waitForTimeout(180);
    await page.screenshot({path:dir+'/after-swing.png'});
   }

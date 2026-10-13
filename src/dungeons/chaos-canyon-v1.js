@@ -347,6 +347,7 @@ function ccStatusTargets(id){
 }
 function ccRenderRebornEvent(e){
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cc2dArena'),resolve:id=>ccStatusTargets(id)?.[0],speed:()=>combatRate(run?.speed||1),position:(el,p,ms)=>move(el.dataset.cc,p.x,p.y,ms)});
+ const present=fn=>{const feedback=window.CellboundCombatFX?.presentImpact;feedback?feedback(e,fn):fn()};
  if(window.CellboundCombatStatuses?.handle(e,{resolve:ccStatusTargets,speed:()=>combatRate(run?.speed||1)}))return;
  const src=ccRenderId(e.source),target=ccRenderId(e.target),srcChar=ccCharacter(e.source),targetChar=ccCharacter(e.target);
  switch(e.type){
@@ -359,7 +360,7 @@ function ccRenderRebornEvent(e){
    break;
   case'DAMAGE_DEALT':
    if(target){
-     const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));ccBar(target,pct);ccFloat(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');window.CellboundCombatFX?.impact?.($('[data-cc="'+target+'"]'),{critical:e.result==='critical'});
+     const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));ccBar(target,pct);present(()=>ccFloat(target,(/miss|dodg|immune|resist/.test(e.result||'')?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0)),targetChar?'incoming':'damage'));window.CellboundCombatFX?.impact?.($('[data-cc="'+target+'"]'),{critical:e.result==='critical'});
      if(targetChar)run.hp[targetChar.id]=pct;
    }
    if(srcChar){run.damageDone[srcChar.id]=(Number(run.damageDone?.[srcChar.id])||0)+(Number(e.amount)||0);ccRenderMeters()}
@@ -367,8 +368,8 @@ function ccRenderRebornEvent(e){
    if(e.payload?.avoidable)feed((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.');
    break;
   case'HEAL_RECEIVED':
-   if(target&&!targetChar&&e.payload?.enemyHeal){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));ccBar(target,pct);ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');feed((e.ability||'The enemy')+' restores health.');}
-   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;ccBar(target,pct);ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-cc="'+target+'"]'));ccUpdateSidebar()}
+   if(target&&!targetChar&&e.payload?.enemyHeal){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));ccBar(target,pct);present(()=>ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal'));feed((e.ability||'The enemy')+' restores health.');}
+   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;ccBar(target,pct);present(()=>ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal'));window.CellboundCombatFX?.heal?.($('[data-cc="'+target+'"]'));ccUpdateSidebar()}
    if(srcChar){run.healingDone[srcChar.id]=(Number(run.healingDone?.[srcChar.id])||0)+(Number(e.amount)||0);run.overhealing[srcChar.id]=(Number(run.overhealing?.[srcChar.id])||0)+(Number(e.payload?.overhealing)||0);ccRenderMeters()}
    break;
   case'PHASE_CHANGE':{const arena=$('#cc2dArena');window.CellboundCombatFX?.phase?.(arena);window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');arena?.classList.add('ambient-surge');setTimeout(()=>arena?.classList.remove('ambient-surge'),1350);if(STAGES[run.stage]?.id==='vorran'){run.vorranShrink=Math.min(3,(Number(run.vorranShrink)||0)+1);if(arena){arena.classList.add('vorran-shrink-'+run.vorranShrink,'vorran-collapse-pulse');setTimeout(()=>arena?.classList.remove('vorran-collapse-pulse'),980)}ccReflowArena(820);window.CellboundFX?.phase?.('The Rootheart floor collapses',e.payload?.healthPct);feed(run.vorranShrink>=3?'The final floor ring breaks away. Only the Rootheart core remains.':'The outer ritual floor cracks and falls into the canyon.');}break;}

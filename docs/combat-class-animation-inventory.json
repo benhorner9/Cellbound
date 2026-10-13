@@ -1,0 +1,2516 @@
+{
+  "classes": [
+    {
+      "class": "Death Knight",
+      "beta": false,
+      "style": {
+        "basic": "reap",
+        "heavy": "execute",
+        "cast": "raise",
+        "heal": "drain",
+        "defense": "runeward",
+        "ready": {
+          "mainAngle": 12,
+          "offY": -0.1
+        }
+      },
+      "weapons": [
+        "Runed Greatsword",
+        "Frostgrave Greatblade",
+        "Ebon Runeblade",
+        "Ebon Oath Runeblade",
+        "Sovereign Runeblade"
+      ],
+      "abilities": [
+        {
+          "id": "heart-strike",
+          "name": "Heart Strike",
+          "spec": "Blood",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "reap"
+        },
+        {
+          "id": "death-strike",
+          "name": "Death Strike",
+          "spec": "Blood",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "reap"
+        },
+        {
+          "id": "dark-command",
+          "name": "Dark Command",
+          "spec": "Blood",
+          "kind": "taunt",
+          "cast": 0,
+          "clip": "warcry"
+        },
+        {
+          "id": "mind-freeze",
+          "name": "Mind Freeze",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        },
+        {
+          "id": "marrowrend",
+          "name": "Marrowrend",
+          "spec": "Blood",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "execute"
+        },
+        {
+          "id": "blood-boil",
+          "name": "Blood Boil",
+          "spec": "Blood",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "runeblast"
+        },
+        {
+          "id": "death-and-decay-blood",
+          "name": "Death and Decay",
+          "spec": "Blood",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "runeblast"
+        },
+        {
+          "id": "rune-tap",
+          "name": "Rune Tap",
+          "spec": "Blood",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "runeward"
+        },
+        {
+          "id": "dancing-rune-weapon",
+          "name": "Dancing Rune Weapon",
+          "spec": "Blood",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "raise"
+        },
+        {
+          "id": "vampiric-blood",
+          "name": "Vampiric Blood",
+          "spec": "Blood",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "runeward"
+        },
+        {
+          "id": "obliterate",
+          "name": "Obliterate",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "execute"
+        },
+        {
+          "id": "frost-strike",
+          "name": "Frost Strike",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "reap"
+        },
+        {
+          "id": "howling-blast",
+          "name": "Howling Blast",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "frost"
+        },
+        {
+          "id": "remorseless-winter",
+          "name": "Remorseless Winter",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "runeblast"
+        },
+        {
+          "id": "frostscythe",
+          "name": "Frostscythe",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "reap"
+        },
+        {
+          "id": "frostwyrms-fury",
+          "name": "Frostwyrm's Fury",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 1000,
+          "clip": "runeblast"
+        },
+        {
+          "id": "breath-of-sindragosa",
+          "name": "Breath of Sindragosa",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "breath"
+        },
+        {
+          "id": "icebound-fortitude",
+          "name": "Icebound Fortitude",
+          "spec": "Frost",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "runeward"
+        },
+        {
+          "id": "festering-strike",
+          "name": "Festering Strike",
+          "spec": "Unholy",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "reap"
+        },
+        {
+          "id": "scourge-strike",
+          "name": "Scourge Strike",
+          "spec": "Unholy",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "reap"
+        },
+        {
+          "id": "death-coil",
+          "name": "Death Coil",
+          "spec": "Unholy",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "hex"
+        },
+        {
+          "id": "outbreak",
+          "name": "Outbreak",
+          "spec": "Unholy",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "hex"
+        },
+        {
+          "id": "death-and-decay-unholy",
+          "name": "Death and Decay",
+          "spec": "Unholy",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "runeblast"
+        },
+        {
+          "id": "dark-transformation",
+          "name": "Dark Transformation",
+          "spec": "Unholy",
+          "kind": "pet-command",
+          "cast": 0,
+          "clip": "commandDark"
+        },
+        {
+          "id": "army-of-the-dead",
+          "name": "Army of the Dead",
+          "spec": "Unholy",
+          "kind": "summon",
+          "cast": 1800,
+          "clip": "raise"
+        },
+        {
+          "id": "apocalypse",
+          "name": "Apocalypse",
+          "spec": "Unholy",
+          "kind": "summon",
+          "cast": 0,
+          "clip": "raise"
+        },
+        {
+          "id": "anti-magic-shell",
+          "name": "Anti-Magic Shell",
+          "spec": "Unholy",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "runeward"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Death Knight",
+          "name": "Horn of Winter",
+          "clip": "raise"
+        }
+      ]
+    },
+    {
+      "class": "Demon Hunter",
+      "beta": false,
+      "style": {
+        "basic": "glaive",
+        "heavy": "dance",
+        "cast": "fel",
+        "heal": "drain",
+        "defense": "metamorph",
+        "ready": {
+          "mainY": -0.2,
+          "offY": -0.2,
+          "lean": 3
+        }
+      },
+      "weapons": [
+        "Training Warglaive",
+        "Riftcarver Warglaive",
+        "Soulrend Warglaive",
+        "Felstalker Warglaive",
+        "Abyssal Warglaive"
+      ],
+      "abilities": [
+        {
+          "id": "demons-bite",
+          "name": "Demon's Bite",
+          "spec": "Havoc",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "glaive"
+        },
+        {
+          "id": "chaos-strike",
+          "name": "Chaos Strike",
+          "spec": "Havoc",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "fel"
+        },
+        {
+          "id": "blade-dance",
+          "name": "Blade Dance",
+          "spec": "Havoc",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "dance"
+        },
+        {
+          "id": "throw-glaive",
+          "name": "Throw Glaive",
+          "spec": "Havoc",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "throwGlaive"
+        },
+        {
+          "id": "eye-beam",
+          "name": "Eye Beam",
+          "spec": "Havoc",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "fel"
+        },
+        {
+          "id": "fel-barrage",
+          "name": "Fel Barrage",
+          "spec": "Havoc",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "dance"
+        },
+        {
+          "id": "havoc-metamorphosis",
+          "name": "Metamorphosis",
+          "spec": "Havoc",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "leap"
+        },
+        {
+          "id": "blur",
+          "name": "Blur",
+          "spec": "Havoc",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "evade"
+        },
+        {
+          "id": "disrupt",
+          "name": "Disrupt",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        },
+        {
+          "id": "shear",
+          "name": "Shear",
+          "spec": "Vengeance",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "glaive"
+        },
+        {
+          "id": "soul-cleave",
+          "name": "Soul Cleave",
+          "spec": "Vengeance",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "fel"
+        },
+        {
+          "id": "infernal-strike",
+          "name": "Infernal Strike",
+          "spec": "Vengeance",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "leap"
+        },
+        {
+          "id": "torment",
+          "name": "Torment",
+          "spec": "Vengeance",
+          "kind": "taunt",
+          "cast": 0,
+          "clip": "warcry"
+        },
+        {
+          "id": "sigil-of-flame",
+          "name": "Sigil of Flame",
+          "spec": "Vengeance",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "fel"
+        },
+        {
+          "id": "demon-spikes",
+          "name": "Demon Spikes",
+          "spec": "Vengeance",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "metamorph"
+        },
+        {
+          "id": "fiery-brand",
+          "name": "Fiery Brand",
+          "spec": "Vengeance",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "metamorph"
+        },
+        {
+          "id": "spirit-bomb",
+          "name": "Spirit Bomb",
+          "spec": "Vengeance",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "fel"
+        },
+        {
+          "id": "vengeance-metamorphosis",
+          "name": "Metamorphosis",
+          "spec": "Vengeance",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "metamorph"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Demon Hunter",
+          "name": "Demonic Momentum",
+          "clip": "fel"
+        }
+      ]
+    },
+    {
+      "class": "Druid",
+      "beta": false,
+      "style": {
+        "basic": "wrath",
+        "heavy": "bloom",
+        "cast": "bloom",
+        "heal": "bloom",
+        "defense": "root",
+        "ready": {
+          "mainAngle": 7,
+          "offX": 0.1
+        }
+      },
+      "weapons": [
+        "Living Branch",
+        "Thornstaff",
+        "Starroot Scepter",
+        "Moonbark Scepter",
+        "Nightbloom Scepter"
+      ],
+      "abilities": [
+        {
+          "id": "rejuvenation",
+          "name": "Rejuvenation",
+          "spec": "Restoration",
+          "kind": "heal",
+          "cast": 0,
+          "clip": "bloom"
+        },
+        {
+          "id": "regrowth",
+          "name": "Regrowth",
+          "spec": "Restoration",
+          "kind": "heal",
+          "cast": 1100,
+          "clip": "bloom"
+        },
+        {
+          "id": "wild-growth",
+          "name": "Wild Growth",
+          "spec": "Restoration",
+          "kind": "group-heal",
+          "cast": 0,
+          "clip": "bloom"
+        },
+        {
+          "id": "skull-bash",
+          "name": "Skull Bash",
+          "spec": "Restoration",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "jab"
+        },
+        {
+          "id": "restoration-wrath",
+          "name": "Wrath",
+          "spec": "Restoration",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "wrath"
+        },
+        {
+          "id": "barkskin",
+          "name": "Barkskin",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "root"
+        },
+        {
+          "id": "tranquility",
+          "name": "Tranquility",
+          "spec": "Restoration",
+          "kind": "group-heal",
+          "cast": 2500,
+          "clip": "bloom"
+        },
+        {
+          "id": "wrath",
+          "name": "Wrath",
+          "spec": "Balance",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "wrath"
+        },
+        {
+          "id": "starfire",
+          "name": "Starfire",
+          "spec": "Balance",
+          "kind": "damage",
+          "cast": 1450,
+          "clip": "wrath"
+        },
+        {
+          "id": "starsurge",
+          "name": "Starsurge",
+          "spec": "Balance",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "wrath"
+        },
+        {
+          "id": "moonfire",
+          "name": "Moonfire",
+          "spec": "Balance",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "wrath"
+        },
+        {
+          "id": "sunfire",
+          "name": "Sunfire",
+          "spec": "Balance",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "wrath"
+        },
+        {
+          "id": "starfall",
+          "name": "Starfall",
+          "spec": "Balance",
+          "kind": "damage",
+          "cast": 700,
+          "clip": "bloom"
+        },
+        {
+          "id": "fury-of-elune",
+          "name": "Fury of Elune",
+          "spec": "Balance",
+          "kind": "damage",
+          "cast": 1600,
+          "clip": "bloom"
+        },
+        {
+          "id": "celestial-alignment",
+          "name": "Celestial Alignment",
+          "spec": "Balance",
+          "kind": "damage",
+          "cast": 900,
+          "clip": "bloom"
+        },
+        {
+          "id": "solar-beam",
+          "name": "Solar Beam",
+          "spec": "Balance",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Druid",
+          "name": "Wild Communion",
+          "clip": "bloom"
+        }
+      ]
+    },
+    {
+      "class": "Evoker",
+      "beta": false,
+      "style": {
+        "basic": "breath",
+        "heavy": "surge",
+        "cast": "surge",
+        "heal": "embrace",
+        "defense": "scales",
+        "ready": {
+          "mainY": -0.12,
+          "offX": 0.2,
+          "offY": -0.25
+        }
+      },
+      "weapons": [
+        "Novice Dragonstaff",
+        "Emberglass Staff",
+        "Chronoflame Staff",
+        "Chronoscale Staff",
+        "Aspectbound Staff"
+      ],
+      "abilities": [
+        {
+          "id": "reversion",
+          "name": "Reversion",
+          "spec": "Preservation",
+          "kind": "heal",
+          "cast": 0,
+          "clip": "embrace"
+        },
+        {
+          "id": "verdant-embrace",
+          "name": "Verdant Embrace",
+          "spec": "Preservation",
+          "kind": "heal",
+          "cast": 700,
+          "clip": "embrace"
+        },
+        {
+          "id": "emerald-blossom",
+          "name": "Emerald Blossom",
+          "spec": "Preservation",
+          "kind": "group-heal",
+          "cast": 1000,
+          "clip": "embrace"
+        },
+        {
+          "id": "dream-breath",
+          "name": "Dream Breath",
+          "spec": "Preservation",
+          "kind": "group-heal",
+          "cast": 1600,
+          "clip": "breath"
+        },
+        {
+          "id": "temporal-anomaly",
+          "name": "Temporal Anomaly",
+          "spec": "Preservation",
+          "kind": "group-heal",
+          "cast": 900,
+          "clip": "embrace"
+        },
+        {
+          "id": "emerald-communion",
+          "name": "Emerald Communion",
+          "spec": "Preservation",
+          "kind": "group-heal",
+          "cast": 1800,
+          "clip": "breath"
+        },
+        {
+          "id": "preservation-living-flame",
+          "name": "Living Flame",
+          "spec": "Preservation",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "surge"
+        },
+        {
+          "id": "quell",
+          "name": "Quell",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        },
+        {
+          "id": "obsidian-scales",
+          "name": "Obsidian Scales",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "scales"
+        },
+        {
+          "id": "living-flame",
+          "name": "Living Flame",
+          "spec": "Devastation",
+          "kind": "damage",
+          "cast": 1300,
+          "clip": "surge"
+        },
+        {
+          "id": "azure-strike",
+          "name": "Azure Strike",
+          "spec": "Devastation",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "surge"
+        },
+        {
+          "id": "disintegrate",
+          "name": "Disintegrate",
+          "spec": "Devastation",
+          "kind": "damage",
+          "cast": 1400,
+          "clip": "breath"
+        },
+        {
+          "id": "fire-breath",
+          "name": "Fire Breath",
+          "spec": "Devastation",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "breath"
+        },
+        {
+          "id": "pyre",
+          "name": "Pyre",
+          "spec": "Devastation",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "surge"
+        },
+        {
+          "id": "eternity-surge",
+          "name": "Eternity Surge",
+          "spec": "Devastation",
+          "kind": "damage",
+          "cast": 1700,
+          "clip": "surge"
+        },
+        {
+          "id": "dragonrage",
+          "name": "Dragonrage",
+          "spec": "Devastation",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "surge"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Evoker",
+          "name": "Draconic Resonance",
+          "clip": "surge"
+        }
+      ]
+    },
+    {
+      "class": "Hunter",
+      "beta": true,
+      "style": {
+        "basic": "draw",
+        "heavy": "aimed",
+        "cast": "command",
+        "heal": "command",
+        "defense": "evade",
+        "ready": {
+          "mainX": 0.3,
+          "mainY": -0.45
+        }
+      },
+      "weapons": [
+        "Ashwood Bow",
+        "Emberstring Bow",
+        "Stormflight Longbow",
+        "Hawkeye Greatbow",
+        "Blackwood Greatbow"
+      ],
+      "abilities": [
+        {
+          "id": "aimed-shot",
+          "name": "Aimed Shot",
+          "spec": "Marksman",
+          "kind": "damage",
+          "cast": 1500,
+          "clip": "aimed"
+        },
+        {
+          "id": "arcane-shot",
+          "name": "Arcane Shot",
+          "spec": "Marksman",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "draw"
+        },
+        {
+          "id": "steady-shot",
+          "name": "Steady Shot",
+          "spec": "Marksman",
+          "kind": "damage",
+          "cast": 900,
+          "clip": "draw"
+        },
+        {
+          "id": "multi-shot",
+          "name": "Multi-Shot",
+          "spec": "Marksman",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "volley"
+        },
+        {
+          "id": "kill-shot",
+          "name": "Kill Shot",
+          "spec": "Marksman",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "aimed"
+        },
+        {
+          "id": "cobra-shot",
+          "name": "Cobra Shot",
+          "spec": "Beast Mastery",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "draw"
+        },
+        {
+          "id": "barbed-shot",
+          "name": "Barbed Shot",
+          "spec": "Beast Mastery",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "draw"
+        },
+        {
+          "id": "kill-command",
+          "name": "Kill Command",
+          "spec": "Beast Mastery",
+          "kind": "pet-command",
+          "cast": 0,
+          "clip": "command"
+        },
+        {
+          "id": "beast-multi-shot",
+          "name": "Multi-Shot",
+          "spec": "Beast Mastery",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "volley"
+        },
+        {
+          "id": "dire-beast",
+          "name": "Dire Beast",
+          "spec": "Beast Mastery",
+          "kind": "summon",
+          "cast": 0,
+          "clip": "command"
+        },
+        {
+          "id": "stampede",
+          "name": "Stampede",
+          "spec": "Beast Mastery",
+          "kind": "summon",
+          "cast": 700,
+          "clip": "command"
+        },
+        {
+          "id": "bestial-wrath",
+          "name": "Bestial Wrath",
+          "spec": "Beast Mastery",
+          "kind": "pet-command",
+          "cast": 0,
+          "clip": "command"
+        },
+        {
+          "id": "counter-shot",
+          "name": "Counter Shot",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "draw"
+        },
+        {
+          "id": "survival-instincts",
+          "name": "Survival Instincts",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "evade"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Hunter",
+          "name": "Predator's Focus",
+          "clip": "command"
+        }
+      ]
+    },
+    {
+      "class": "Mage",
+      "beta": true,
+      "style": {
+        "basic": "arcane",
+        "heavy": "eruption",
+        "cast": "arcane",
+        "heal": "benediction",
+        "defense": "ward",
+        "ready": {
+          "mainAngle": -8,
+          "offY": -0.22
+        }
+      },
+      "weapons": [
+        "Crystal Wand",
+        "Arcglass Rod",
+        "Celestine Staff",
+        "Starweave Focus",
+        "Housebound Focus"
+      ],
+      "abilities": [
+        {
+          "id": "pyroblast",
+          "name": "Pyroblast",
+          "spec": "Arcane",
+          "kind": "damage",
+          "cast": 2200,
+          "clip": "fire"
+        },
+        {
+          "id": "fireball",
+          "name": "Fireball",
+          "spec": "Arcane",
+          "kind": "damage",
+          "cast": 1700,
+          "clip": "fire"
+        },
+        {
+          "id": "fire-blast",
+          "name": "Fire Blast",
+          "spec": "Arcane",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "fire"
+        },
+        {
+          "id": "arcane-barrage",
+          "name": "Arcane Barrage",
+          "spec": "Arcane",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "arcane"
+        },
+        {
+          "id": "arcane-ward",
+          "name": "Arcane Ward",
+          "spec": "Arcane",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "ward"
+        },
+        {
+          "id": "arcane-nova",
+          "name": "Arcane Nova",
+          "spec": "Arcane",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "eruption"
+        },
+        {
+          "id": "frostbolt",
+          "name": "Frostbolt",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 1450,
+          "clip": "frost"
+        },
+        {
+          "id": "ice-lance",
+          "name": "Ice Lance",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "frost"
+        },
+        {
+          "id": "flurry",
+          "name": "Flurry",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 950,
+          "clip": "frost"
+        },
+        {
+          "id": "blizzard",
+          "name": "Blizzard",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 1400,
+          "clip": "eruption"
+        },
+        {
+          "id": "frozen-orb",
+          "name": "Frozen Orb",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 700,
+          "clip": "eruption"
+        },
+        {
+          "id": "glacial-spike",
+          "name": "Glacial Spike",
+          "spec": "Frost",
+          "kind": "damage",
+          "cast": 1800,
+          "clip": "frost"
+        },
+        {
+          "id": "counterspell",
+          "name": "Counterspell",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        },
+        {
+          "id": "ice-barrier",
+          "name": "Ice Barrier",
+          "spec": "Frost",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "ward"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Mage",
+          "name": "Arcane Empowerment",
+          "clip": "arcane"
+        }
+      ]
+    },
+    {
+      "class": "Warrior",
+      "beta": true,
+      "style": {
+        "basic": "swing",
+        "heavy": "cleave",
+        "cast": "warcry",
+        "heal": "salute",
+        "defense": "brace",
+        "ready": {
+          "mainY": -0.12,
+          "offY": -0.12
+        }
+      },
+      "weapons": [
+        "Training Sword",
+        "Embercleaver",
+        "Runic Greatblade",
+        "Warlord Greatblade",
+        "Housebreaker Greatblade"
+      ],
+      "abilities": [
+        {
+          "id": "shield-slam",
+          "name": "Shield Slam",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "bash"
+        },
+        {
+          "id": "revenge",
+          "name": "Revenge",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "cleave"
+        },
+        {
+          "id": "taunt",
+          "name": "Taunt",
+          "spec": "All",
+          "kind": "taunt",
+          "cast": 0,
+          "clip": "warcry"
+        },
+        {
+          "id": "mortal-strike",
+          "name": "Mortal Strike",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "cleave"
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "cleave"
+        },
+        {
+          "id": "execute",
+          "name": "Execute",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "execute"
+        },
+        {
+          "id": "pummel",
+          "name": "Pummel",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "jab"
+        },
+        {
+          "id": "shield-wall",
+          "name": "Shield Wall",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "brace"
+        },
+        {
+          "id": "sweeping-strike",
+          "name": "Sweeping Strike",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "cleave"
+        },
+        {
+          "id": "thunder-clap",
+          "name": "Thunder Clap",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "quake"
+        },
+        {
+          "id": "rallying-guard",
+          "name": "Rallying Guard",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "warcry"
+        },
+        {
+          "id": "overpower",
+          "name": "Overpower",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "cleave"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Warrior",
+          "name": "Battle Fury",
+          "clip": "warcry"
+        }
+      ]
+    },
+    {
+      "class": "Paladin",
+      "beta": true,
+      "style": {
+        "basic": "crusader",
+        "heavy": "consecrate",
+        "cast": "sanctify",
+        "heal": "benediction",
+        "defense": "aegis",
+        "ready": {
+          "mainAngle": -8,
+          "offY": -0.15
+        }
+      },
+      "weapons": [
+        "Blessed Mace",
+        "Sunwarden Hammer",
+        "Dawnkeeper Hammer",
+        "Sunward Maul",
+        "Gilded Vigil Maul"
+      ],
+      "abilities": [
+        {
+          "id": "avengers-shield",
+          "name": "Avenger's Shield",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "shieldCast"
+        },
+        {
+          "id": "judgement",
+          "name": "Judgement",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "crusader"
+        },
+        {
+          "id": "hand-reckoning",
+          "name": "Hand of Reckoning",
+          "spec": "All",
+          "kind": "taunt",
+          "cast": 0,
+          "clip": "warcry"
+        },
+        {
+          "id": "word-of-glory",
+          "name": "Word of Glory",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "benediction"
+        },
+        {
+          "id": "holy-light",
+          "name": "Holy Light",
+          "spec": "All",
+          "kind": "heal",
+          "cast": 1500,
+          "clip": "benediction"
+        },
+        {
+          "id": "holy-shock",
+          "name": "Holy Shock",
+          "spec": "All",
+          "kind": "heal",
+          "cast": 0,
+          "clip": "benediction"
+        },
+        {
+          "id": "light-of-dawn",
+          "name": "Light of Dawn",
+          "spec": "All",
+          "kind": "group-heal",
+          "cast": 0,
+          "clip": "benediction"
+        },
+        {
+          "id": "rebuke",
+          "name": "Rebuke",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "jab"
+        },
+        {
+          "id": "ardent-defender",
+          "name": "Ardent Defender",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "aegis"
+        },
+        {
+          "id": "flash-of-light",
+          "name": "Flash of Light",
+          "spec": "All",
+          "kind": "heal",
+          "cast": 800,
+          "clip": "benediction"
+        },
+        {
+          "id": "divine-protection",
+          "name": "Divine Protection",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "aegis"
+        },
+        {
+          "id": "consecration",
+          "name": "Consecration",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "consecrate"
+        },
+        {
+          "id": "radiant-wave",
+          "name": "Radiant Wave",
+          "spec": "All",
+          "kind": "group-heal",
+          "cast": 1800,
+          "clip": "benediction"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Paladin",
+          "name": "Blessing of Resolve",
+          "clip": "sanctify"
+        }
+      ]
+    },
+    {
+      "class": "Priest",
+      "beta": false,
+      "style": {
+        "basic": "smite",
+        "heavy": "prayer",
+        "cast": "prayer",
+        "heal": "prayer",
+        "defense": "ward",
+        "ready": {
+          "mainY": -0.1,
+          "offY": -0.2
+        }
+      },
+      "weapons": [
+        "Cedar Staff",
+        "Lightwell Rod",
+        "Seraphic Staff",
+        "Ascendant Staff",
+        "Attic Veil Staff"
+      ],
+      "abilities": [
+        {
+          "id": "heal",
+          "name": "Heal",
+          "spec": "Holy",
+          "kind": "heal",
+          "cast": 1400,
+          "clip": "prayer"
+        },
+        {
+          "id": "flash-heal",
+          "name": "Flash Heal",
+          "spec": "Holy",
+          "kind": "heal",
+          "cast": 800,
+          "clip": "prayer"
+        },
+        {
+          "id": "prayer-healing",
+          "name": "Prayer of Healing",
+          "spec": "Holy",
+          "kind": "group-heal",
+          "cast": 1700,
+          "clip": "prayer"
+        },
+        {
+          "id": "smite",
+          "name": "Smite",
+          "spec": "Holy",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "smite"
+        },
+        {
+          "id": "soul-recall",
+          "name": "Soul Recall",
+          "spec": "Holy",
+          "kind": "battle-rez",
+          "cast": 5000,
+          "clip": "prayer"
+        },
+        {
+          "id": "guardian-spirit",
+          "name": "Guardian Spirit",
+          "spec": "Holy",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "ward"
+        },
+        {
+          "id": "divine-hymn",
+          "name": "Divine Hymn",
+          "spec": "Holy",
+          "kind": "group-heal",
+          "cast": 2600,
+          "clip": "prayer"
+        },
+        {
+          "id": "mind-flay",
+          "name": "Mind Flay",
+          "spec": "Shadow",
+          "kind": "damage",
+          "cast": 1250,
+          "clip": "hex"
+        },
+        {
+          "id": "mind-blast",
+          "name": "Mind Blast",
+          "spec": "Shadow",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "hex"
+        },
+        {
+          "id": "devouring-plague",
+          "name": "Devouring Plague",
+          "spec": "Shadow",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "hex"
+        },
+        {
+          "id": "shadow-word-pain",
+          "name": "Shadow Word: Pain",
+          "spec": "Shadow",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "hex"
+        },
+        {
+          "id": "vampiric-touch",
+          "name": "Vampiric Touch",
+          "spec": "Shadow",
+          "kind": "damage",
+          "cast": 1300,
+          "clip": "hex"
+        },
+        {
+          "id": "shadow-crash",
+          "name": "Shadow Crash",
+          "spec": "Shadow",
+          "kind": "damage",
+          "cast": 800,
+          "clip": "eruption"
+        },
+        {
+          "id": "void-torrent",
+          "name": "Void Torrent",
+          "spec": "Shadow",
+          "kind": "damage",
+          "cast": 1900,
+          "clip": "hex"
+        },
+        {
+          "id": "void-eruption",
+          "name": "Void Eruption",
+          "spec": "Shadow",
+          "kind": "damage",
+          "cast": 1100,
+          "clip": "eruption"
+        },
+        {
+          "id": "dispersion",
+          "name": "Dispersion",
+          "spec": "Shadow",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "ward"
+        },
+        {
+          "id": "silence",
+          "name": "Silence",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Priest|Shadow",
+          "name": "Shadow Inspiration",
+          "clip": "prayer"
+        },
+        {
+          "spec": "Priest",
+          "name": "Divine Inspiration",
+          "clip": "prayer"
+        }
+      ]
+    },
+    {
+      "class": "Rogue",
+      "beta": true,
+      "style": {
+        "basic": "jab",
+        "heavy": "crosscut",
+        "cast": "throw",
+        "heal": "salute",
+        "defense": "evade",
+        "ready": {
+          "mainY": -0.28,
+          "offY": -0.32,
+          "lean": 2
+        }
+      },
+      "weapons": [
+        "Twin Knives",
+        "Venomshivs",
+        "Ghostfang Daggers",
+        "Shadecoil Blades",
+        "Silent Service Blades"
+      ],
+      "abilities": [
+        {
+          "id": "mutilate",
+          "name": "Mutilate",
+          "spec": "Assassination",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "crosscut"
+        },
+        {
+          "id": "eviscerate",
+          "name": "Eviscerate",
+          "spec": "Assassination",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "crosscut"
+        },
+        {
+          "id": "garrote",
+          "name": "Garrote",
+          "spec": "Assassination",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "backstab"
+        },
+        {
+          "id": "envenom",
+          "name": "Envenom",
+          "spec": "Assassination",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "crosscut"
+        },
+        {
+          "id": "fan-of-knives",
+          "name": "Fan of Knives",
+          "spec": "Assassination",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "throw"
+        },
+        {
+          "id": "sinister-strike",
+          "name": "Sinister Strike",
+          "spec": "Outlaw",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "jab"
+        },
+        {
+          "id": "pistol-shot",
+          "name": "Pistol Shot",
+          "spec": "Outlaw",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "firearm"
+        },
+        {
+          "id": "dispatch",
+          "name": "Dispatch",
+          "spec": "Outlaw",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "crosscut"
+        },
+        {
+          "id": "roll-the-bones",
+          "name": "Roll the Bones",
+          "spec": "Outlaw",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "salute"
+        },
+        {
+          "id": "blade-flurry",
+          "name": "Blade Flurry",
+          "spec": "Outlaw",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "flurry"
+        },
+        {
+          "id": "between-the-eyes",
+          "name": "Between the Eyes",
+          "spec": "Outlaw",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "firearm"
+        },
+        {
+          "id": "adrenaline-rush",
+          "name": "Adrenaline Rush",
+          "spec": "Outlaw",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "salute"
+        },
+        {
+          "id": "killing-spree",
+          "name": "Killing Spree",
+          "spec": "Outlaw",
+          "kind": "damage",
+          "cast": 800,
+          "clip": "flurry"
+        },
+        {
+          "id": "kick",
+          "name": "Kick",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "jab"
+        },
+        {
+          "id": "feint",
+          "name": "Feint",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "evade"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Rogue",
+          "name": "Killing Tempo",
+          "clip": "throw"
+        }
+      ]
+    },
+    {
+      "class": "Shaman",
+      "beta": false,
+      "style": {
+        "basic": "storm",
+        "heavy": "quake",
+        "cast": "totem",
+        "heal": "tide",
+        "defense": "root",
+        "ready": {
+          "offY": -0.2,
+          "mainAngle": -10
+        }
+      },
+      "weapons": [
+        "Riverstone Mace",
+        "Tempest Mace",
+        "Tidemender Scepter",
+        "Tempestcaller Hammer",
+        "Stormcell Hammer"
+      ],
+      "abilities": [
+        {
+          "id": "healing-wave",
+          "name": "Healing Wave",
+          "spec": "Restoration",
+          "kind": "heal",
+          "cast": 1450,
+          "clip": "tide"
+        },
+        {
+          "id": "riptide",
+          "name": "Riptide",
+          "spec": "Restoration",
+          "kind": "heal",
+          "cast": 0,
+          "clip": "tide"
+        },
+        {
+          "id": "chain-heal",
+          "name": "Chain Heal",
+          "spec": "Restoration",
+          "kind": "group-heal",
+          "cast": 1700,
+          "clip": "tide"
+        },
+        {
+          "id": "windfury-totem",
+          "name": "Windfury Totem",
+          "spec": "Restoration",
+          "kind": "totem",
+          "cast": 0,
+          "clip": "totem"
+        },
+        {
+          "id": "stoneskin-totem",
+          "name": "Stoneskin Totem",
+          "spec": "Restoration",
+          "kind": "totem",
+          "cast": 0,
+          "clip": "totem"
+        },
+        {
+          "id": "healing-stream-totem",
+          "name": "Healing Stream Totem",
+          "spec": "Restoration",
+          "kind": "totem",
+          "cast": 0,
+          "clip": "totem"
+        },
+        {
+          "id": "spirit-link-totem",
+          "name": "Spirit Link Totem",
+          "spec": "Restoration",
+          "kind": "totem",
+          "cast": 0,
+          "clip": "totem"
+        },
+        {
+          "id": "restoration-lightning-bolt",
+          "name": "Lightning Bolt",
+          "spec": "Restoration",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "storm"
+        },
+        {
+          "id": "healing-rain",
+          "name": "Healing Rain",
+          "spec": "Restoration",
+          "kind": "group-heal",
+          "cast": 1200,
+          "clip": "tide"
+        },
+        {
+          "id": "lightning-bolt",
+          "name": "Lightning Bolt",
+          "spec": "Elemental",
+          "kind": "damage",
+          "cast": 1250,
+          "clip": "storm"
+        },
+        {
+          "id": "lava-burst",
+          "name": "Lava Burst",
+          "spec": "Elemental",
+          "kind": "damage",
+          "cast": 1400,
+          "clip": "fire"
+        },
+        {
+          "id": "earth-shock",
+          "name": "Earth Shock",
+          "spec": "Elemental",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "storm"
+        },
+        {
+          "id": "chain-lightning",
+          "name": "Chain Lightning",
+          "spec": "Elemental",
+          "kind": "damage",
+          "cast": 1350,
+          "clip": "storm"
+        },
+        {
+          "id": "flame-shock",
+          "name": "Flame Shock",
+          "spec": "Elemental",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "fire"
+        },
+        {
+          "id": "earthquake",
+          "name": "Earthquake",
+          "spec": "Elemental",
+          "kind": "damage",
+          "cast": 900,
+          "clip": "quake"
+        },
+        {
+          "id": "stormkeeper",
+          "name": "Stormkeeper",
+          "spec": "Elemental",
+          "kind": "damage",
+          "cast": 900,
+          "clip": "storm"
+        },
+        {
+          "id": "ascendance",
+          "name": "Ascendance",
+          "spec": "Elemental",
+          "kind": "damage",
+          "cast": 900,
+          "clip": "storm"
+        },
+        {
+          "id": "wind-shear",
+          "name": "Wind Shear",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        },
+        {
+          "id": "astral-shift",
+          "name": "Astral Shift",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "root"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Shaman",
+          "name": "Bloodlust",
+          "clip": "totem"
+        }
+      ]
+    },
+    {
+      "class": "Warlock",
+      "beta": false,
+      "style": {
+        "basic": "hex",
+        "heavy": "ritual",
+        "cast": "ritual",
+        "heal": "drain",
+        "defense": "pact",
+        "ready": {
+          "mainAngle": 10,
+          "offY": -0.28
+        }
+      },
+      "weapons": [
+        "Ashen Staff",
+        "Demonspine Staff",
+        "Nether Rod",
+        "Felheart Staff",
+        "Tyrant Staff"
+      ],
+      "abilities": [
+        {
+          "id": "shadow-bolt",
+          "name": "Shadow Bolt",
+          "spec": "Demonology",
+          "kind": "damage",
+          "cast": 1450,
+          "clip": "hex"
+        },
+        {
+          "id": "demonbolt",
+          "name": "Demonbolt",
+          "spec": "Demonology",
+          "kind": "damage",
+          "cast": 1800,
+          "clip": "hex"
+        },
+        {
+          "id": "hand-of-guldan",
+          "name": "Hand of Gul'dan",
+          "spec": "Demonology",
+          "kind": "damage",
+          "cast": 1500,
+          "clip": "eruption"
+        },
+        {
+          "id": "axe-toss",
+          "name": "Axe Toss",
+          "spec": "Demonology",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        },
+        {
+          "id": "call-dreadstalkers",
+          "name": "Call Dreadstalkers",
+          "spec": "Demonology",
+          "kind": "summon",
+          "cast": 1200,
+          "clip": "ritual"
+        },
+        {
+          "id": "soul-strike",
+          "name": "Soul Strike",
+          "spec": "Demonology",
+          "kind": "pet-command",
+          "cast": 0,
+          "clip": "commandDark"
+        },
+        {
+          "id": "felstorm",
+          "name": "Felstorm",
+          "spec": "Demonology",
+          "kind": "pet-command",
+          "cast": 0,
+          "clip": "commandDark"
+        },
+        {
+          "id": "implosion",
+          "name": "Implosion",
+          "spec": "Demonology",
+          "kind": "pet-command",
+          "cast": 0,
+          "clip": "commandDark"
+        },
+        {
+          "id": "summon-demonic-tyrant",
+          "name": "Summon Demonic Tyrant",
+          "spec": "Demonology",
+          "kind": "summon",
+          "cast": 1600,
+          "clip": "ritual"
+        },
+        {
+          "id": "incinerate",
+          "name": "Incinerate",
+          "spec": "Destruction",
+          "kind": "damage",
+          "cast": 1450,
+          "clip": "fire"
+        },
+        {
+          "id": "conflagrate",
+          "name": "Conflagrate",
+          "spec": "Destruction",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "fire"
+        },
+        {
+          "id": "chaos-bolt",
+          "name": "Chaos Bolt",
+          "spec": "Destruction",
+          "kind": "damage",
+          "cast": 2100,
+          "clip": "hex"
+        },
+        {
+          "id": "immolate",
+          "name": "Immolate",
+          "spec": "Destruction",
+          "kind": "damage",
+          "cast": 1200,
+          "clip": "fire"
+        },
+        {
+          "id": "rain-of-fire",
+          "name": "Rain of Fire",
+          "spec": "Destruction",
+          "kind": "damage",
+          "cast": 900,
+          "clip": "eruption"
+        },
+        {
+          "id": "channel-demonfire",
+          "name": "Channel Demonfire",
+          "spec": "Destruction",
+          "kind": "damage",
+          "cast": 1800,
+          "clip": "hex"
+        },
+        {
+          "id": "summon-infernal",
+          "name": "Summon Infernal",
+          "spec": "Destruction",
+          "kind": "summon",
+          "cast": 1200,
+          "clip": "ritual"
+        },
+        {
+          "id": "shadowfury",
+          "name": "Shadowfury",
+          "spec": "Destruction",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "dispel"
+        },
+        {
+          "id": "dark-pact",
+          "name": "Dark Pact",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "pact"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Warlock",
+          "name": "Demonic Pact",
+          "clip": "ritual"
+        }
+      ]
+    },
+    {
+      "class": "Monk",
+      "beta": false,
+      "style": {
+        "basic": "palm",
+        "heavy": "kick",
+        "cast": "chi",
+        "heal": "chi",
+        "defense": "brew",
+        "ready": {
+          "mainY": -0.3,
+          "offY": -0.35,
+          "lean": 1
+        }
+      },
+      "weapons": [
+        "Training Staff",
+        "Jadewood Staff",
+        "Cloudpiercer Staff",
+        "Celestial Staff",
+        "Grandmaster Staff"
+      ],
+      "abilities": [
+        {
+          "id": "keg-smash",
+          "name": "Keg Smash",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "staffSweep"
+        },
+        {
+          "id": "brewmaster-blackout-kick",
+          "name": "Blackout Kick",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "kick"
+        },
+        {
+          "id": "provoke",
+          "name": "Provoke",
+          "spec": "All",
+          "kind": "taunt",
+          "cast": 0,
+          "clip": "warcry"
+        },
+        {
+          "id": "purifying-brew",
+          "name": "Purifying Brew",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "brew"
+        },
+        {
+          "id": "celestial-brew",
+          "name": "Celestial Brew",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "brew"
+        },
+        {
+          "id": "breath-of-fire",
+          "name": "Breath of Fire",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "breath"
+        },
+        {
+          "id": "fortifying-brew",
+          "name": "Fortifying Brew",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "brew"
+        },
+        {
+          "id": "soothing-mist",
+          "name": "Soothing Mist",
+          "spec": "All",
+          "kind": "heal",
+          "cast": 950,
+          "clip": "chi"
+        },
+        {
+          "id": "vivify",
+          "name": "Vivify",
+          "spec": "All",
+          "kind": "heal",
+          "cast": 1250,
+          "clip": "chi"
+        },
+        {
+          "id": "renewing-mist",
+          "name": "Renewing Mist",
+          "spec": "All",
+          "kind": "heal",
+          "cast": 0,
+          "clip": "chi"
+        },
+        {
+          "id": "essence-font",
+          "name": "Essence Font",
+          "spec": "All",
+          "kind": "group-heal",
+          "cast": 1500,
+          "clip": "chi"
+        },
+        {
+          "id": "mist-rising-sun-kick",
+          "name": "Rising Sun Kick",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "kick"
+        },
+        {
+          "id": "mist-tiger-palm",
+          "name": "Tiger Palm",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "palm"
+        },
+        {
+          "id": "revival",
+          "name": "Revival",
+          "spec": "All",
+          "kind": "group-heal",
+          "cast": 0,
+          "clip": "chi"
+        },
+        {
+          "id": "tiger-palm",
+          "name": "Tiger Palm",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "palm"
+        },
+        {
+          "id": "windwalker-blackout-kick",
+          "name": "Blackout Kick",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "kick"
+        },
+        {
+          "id": "windwalker-rising-sun-kick",
+          "name": "Rising Sun Kick",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "kick"
+        },
+        {
+          "id": "spinning-crane-kick",
+          "name": "Spinning Crane Kick",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "spin"
+        },
+        {
+          "id": "fists-of-fury",
+          "name": "Fists of Fury",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 1300,
+          "clip": "fists"
+        },
+        {
+          "id": "touch-of-death",
+          "name": "Touch of Death",
+          "spec": "All",
+          "kind": "damage",
+          "cast": 0,
+          "clip": "palm"
+        },
+        {
+          "id": "touch-of-karma",
+          "name": "Touch of Karma",
+          "spec": "All",
+          "kind": "defensive",
+          "cast": 0,
+          "clip": "parry"
+        },
+        {
+          "id": "spear-hand-strike",
+          "name": "Spear Hand Strike",
+          "spec": "All",
+          "kind": "interrupt",
+          "cast": 0,
+          "clip": "jab"
+        }
+      ],
+      "buffs": [
+        {
+          "spec": "Monk",
+          "name": "Mystic Touch",
+          "clip": "chi"
+        }
+      ]
+    }
+  ],
+  "passiveTalentRules": [
+    "Shield Mastery",
+    "Last Stand",
+    "Iron Discipline",
+    "Taunt Mastery",
+    "Hold the Line",
+    "Vengeance",
+    "Bulwark",
+    "Fortress",
+    "Unbroken",
+    "Weapon Mastery",
+    "Deep Wounds",
+    "Battle Rhythm",
+    "Overpower",
+    "Sweeping Blows",
+    "Executioner",
+    "Mortal Strike",
+    "Blood Frenzy",
+    "Bladestorm",
+    "Sacred Shield",
+    "Guardian Oath",
+    "Righteous Guard",
+    "Hammer of Justice",
+    "Consecration",
+    "Divine Ward",
+    "Ardent Defender",
+    "Holy Bastion",
+    "Divine Guardian",
+    "Divine Light",
+    "Grace",
+    "Holy Shock",
+    "Infusion",
+    "Beacon",
+    "Sacred Hands",
+    "Aura Mastery",
+    "Radiance",
+    "Divine Hymn",
+    "Renew",
+    "Serenity",
+    "Prayer of Mending",
+    "Focused Will",
+    "Circle of Healing",
+    "Spirit of Redemption",
+    "Guardian Spirit",
+    "Divine Insight",
+    "Rejuvenation",
+    "Lifebloom",
+    "Wild Growth",
+    "Natural Swiftness",
+    "Living Seed",
+    "Ironbark",
+    "Tree of Life",
+    "Flourish",
+    "Tranquility",
+    "Starlight",
+    "Twin Moons",
+    "Nature's Balance",
+    "Shooting Stars",
+    "Starfall",
+    "Soul of the Forest",
+    "Fury of Elune",
+    "Astral Communion",
+    "Celestial Alignment",
+    "True Aim",
+    "Rapid Fire",
+    "Steady Focus",
+    "Concussive Shot",
+    "Piercing Shots",
+    "Trueshot Aura",
+    "Careful Aim",
+    "Killer Instinct",
+    "Kill Shot",
+    "Pack Leader",
+    "Killer Cobra",
+    "Barbed Wrath",
+    "Wild Call",
+    "Dire Beast",
+    "Beast Cleave",
+    "Stampede",
+    "Thrill of the Hunt",
+    "Bestial Wrath",
+    "Ambush",
+    "Venom",
+    "Garrote",
+    "Quick Recovery",
+    "Mutilate",
+    "Envenom",
+    "Master Poisoner",
+    "Cut to the Chase",
+    "Eviscerate",
+    "Opportunity",
+    "Combat Potency",
+    "Quick Draw",
+    "Ruthlessness",
+    "Blade Flurry",
+    "Between the Eyes",
+    "Adrenaline Rush",
+    "Loaded Dice",
+    "Killing Spree",
+    "Arcane Focus",
+    "Surge",
+    "Clearcasting",
+    "Spell Impact",
+    "Presence of Mind",
+    "Arcane Flows",
+    "Arcane Power",
+    "Nether Precision",
+    "Barrage",
+    "Piercing Cold",
+    "Ice Shards",
+    "Fingers of Frost",
+    "Brain Freeze",
+    "Blizzard",
+    "Shatter",
+    "Frozen Orb",
+    "Thermal Void",
+    "Glacial Spike",
+    "Tidal Focus",
+    "Totemic Mastery",
+    "Riptide",
+    "Ancestral Reach",
+    "Chain Mastery",
+    "Earthen Ward",
+    "Tidal Waves",
+    "Spirit Link Totem",
+    "Ascendant Tide",
+    "Elemental Fury",
+    "Flame Shock",
+    "Lava Surge",
+    "Elemental Equilibrium",
+    "Aftershock",
+    "Earthquake",
+    "Master of the Elements",
+    "Stormkeeper",
+    "Ascendance",
+    "Demonic Bond",
+    "Fel Knowledge",
+    "Soul Strike",
+    "Dread Calling",
+    "Pack Tactics",
+    "Felstorm",
+    "Demonic Core",
+    "Master Summoner",
+    "Demonic Tyrant",
+    "Eradication",
+    "Roaring Blaze",
+    "Backdraft",
+    "Reverse Entropy",
+    "Rain of Fire",
+    "Havoc",
+    "Channel Demonfire",
+    "Soul Conduit",
+    "Summon Infernal",
+    "High Tolerance",
+    "Elusive Brawler",
+    "Purifying Brew",
+    "Keg Mastery",
+    "Gift of the Ox",
+    "Breath of Fire",
+    "Celestial Brew",
+    "Shuffle",
+    "Fortifying Brew",
+    "Mist Wrap",
+    "Lifecycles",
+    "Renewing Mist",
+    "Ancient Teachings",
+    "Enveloping Breath",
+    "Jade Serpent",
+    "Rising Mist",
+    "Mana Tea",
+    "Revival",
+    "Combo Strikes",
+    "Ferocity",
+    "Rising Sun Kick",
+    "Dance of the Wind",
+    "Fists of Fury",
+    "Jade Ignition",
+    "Momentum",
+    "Touch of Death",
+    "Heartbreaker",
+    "Ossuary",
+    "Hemostasis",
+    "Rune Tap",
+    "Blood Shield",
+    "Voracious",
+    "Dancing Rune Weapon",
+    "Red Thirst",
+    "Vampiric Blood",
+    "Killing Machine",
+    "Icy Talons",
+    "Rime",
+    "Obliteration",
+    "Runic Empowerment",
+    "Remorseless Winter",
+    "Avalanche",
+    "Frozen Pulse",
+    "Breath of Sindragosa",
+    "Festering Wounds",
+    "Dark Transformation",
+    "Infected Claws",
+    "Epidemic",
+    "Sudden Doom",
+    "Army of the Dead",
+    "Unholy Pact",
+    "Defile",
+    "Apocalypse",
+    "Demon Blades",
+    "Furious Gaze",
+    "Initiative",
+    "Soul Rending",
+    "First Blood",
+    "Fel Barrage",
+    "Demonic",
+    "Chaos Theory",
+    "Thick Skin",
+    "Soul Cleave",
+    "Fracture",
+    "Sigil of Flame",
+    "Feed the Demon",
+    "Spirit Bomb",
+    "Soul Barrier",
+    "Fiery Demise",
+    "Metamorphosis",
+    "Temporal Mending",
+    "Essence Attunement",
+    "Reversion",
+    "Lifebind",
+    "Echoing Bloom",
+    "Dream Breath",
+    "Time Lord",
+    "Cycle of Life",
+    "Emerald Communion",
+    "Dragonfire",
+    "Azure Mastery",
+    "Essence Burst",
+    "Burnout",
+    "Eternity Surge",
+    "Pyre",
+    "Scintillation",
+    "Power Swell",
+    "Dragonrage",
+    "Dark Thoughts",
+    "Shadow Weaving",
+    "Mind Devourer",
+    "Vampiric Embrace",
+    "Shadow Crash",
+    "Twist of Fate",
+    "Psychic Link",
+    "Void Torrent",
+    "Void Eruption"
+  ],
+  "fallbacks": {
+    "tank": [
+      {
+        "id": "guard-strike",
+        "name": "Guard Strike",
+        "kind": "damage",
+        "range": 5,
+        "damage": 18,
+        "cost": 0,
+        "gcd": 1500,
+        "cd": 0,
+        "threat": 2.6
+      },
+      {
+        "id": "provoke",
+        "name": "Provoke",
+        "kind": "taunt",
+        "range": 30,
+        "cost": 0,
+        "gcd": 0,
+        "cd": 8000,
+        "threat": 5
+      }
+    ],
+    "healer": [
+      {
+        "id": "restore",
+        "name": "Restore",
+        "kind": "heal",
+        "range": 30,
+        "heal": 31,
+        "cost": 10,
+        "gcd": 1500,
+        "cast": 1000,
+        "cd": 0
+      },
+      {
+        "id": "renewing-wave",
+        "name": "Renewing Wave",
+        "kind": "group-heal",
+        "range": 30,
+        "heal": 14,
+        "cost": 18,
+        "gcd": 1500,
+        "cast": 1200,
+        "cd": 8000
+      },
+      {
+        "id": "light-bolt",
+        "name": "Light Bolt",
+        "kind": "damage",
+        "range": 30,
+        "damage": 11,
+        "cost": 3,
+        "gcd": 1500,
+        "cast": 900,
+        "cd": 0
+      }
+    ],
+    "dps": [
+      {
+        "id": "strike",
+        "name": "Strike",
+        "kind": "damage",
+        "range": 5,
+        "damage": 18,
+        "cost": 0,
+        "gcd": 1500,
+        "cd": 0
+      },
+      {
+        "id": "interrupt",
+        "name": "Interrupt",
+        "kind": "interrupt",
+        "range": 10,
+        "cost": 0,
+        "gcd": 0,
+        "cd": 18000
+      }
+    ]
+  }
+}

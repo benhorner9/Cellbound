@@ -126,12 +126,12 @@ function mountMonster(el){
 }
 function mount(el,c){
   if(!el||!c)return;
-  const key=JSON.stringify([c.race,c.appearance,c.equipment,c.pvpEquipment]);
+  const key=JSON.stringify([c.race,c.appearance,c.equipment,c.pvpEquipment,c.class,el.dataset.team]);
   if(el._cbAppearanceKey===key)return;
   el._cbAppearanceKey=key;el.querySelector('.cb-combat-portrait')?.remove();
   const color=CP.CLASS_COLORS?.[c.class]||'#76d7d0';
   const model=el.matches('.pvp2d-unit')&&c.pvpEquipment?{...c,equipment:c.pvpEquipment}:c;
-  const html=CP.paperDollHTML(model,{size:'combat',label:(c.name||'Character')+' combat character'});
+  const html=CP.paperDollHTML(model,{size:'combat',mirrored:el.dataset.team==='red',label:(c.name||'Character')+' combat character'});
   if(!html)return;
 
   el.style.setProperty('--cb-combat-class',color);

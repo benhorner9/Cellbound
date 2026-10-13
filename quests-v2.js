@@ -901,6 +901,7 @@ function qStatusTargets(id){
 function qRenderRebornEvent(e){
   if(!questFight||!e)return;const eventTime=(Number(questFight.eventOffset)||0)+(Number(e.timestamp)||0);questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,eventTime);
   window.CellboundCombatFX?.combatEvent?.(e,{arena:document.querySelector('.quest-cb2d-arena'),resolve:qUnit,speed:()=>combatRate(questFight?.speed||1)});
+ const present=fn=>{const feedback=window.CellboundCombatFX?.presentImpact;feedback?feedback(e,fn):fn()};
   if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>combatRate(questFight?.speed||1)}))return;
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
   switch(e.type){
@@ -917,12 +918,12 @@ function qRenderRebornEvent(e){
       if(enemyIndex>=0){qSetEnemyHp(enemyIndex,Number(e.payload?.targetHp)||0)}
       else if(String(e.target||'').startsWith('add-'))qSetAddHp(e.target,Number(e.payload?.targetHpPct)||0);
       if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0)}
-      if(e.target){qFloat(e.target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':e.result==='critical'?'crit':'damage');qPulseUnit(e.target,'hit',300);window.CellboundCombatFX?.impact?.(qUnit(e.target),{critical:e.result==='critical'})}
+      if(e.target){present(()=>qFloat(e.target,(/miss|dodg|immune|resist/.test(e.result||'')?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0)),targetChar?'incoming':e.result==='critical'?'crit':'damage'));qPulseUnit(e.target,'hit',300);window.CellboundCombatFX?.impact?.(qUnit(e.target),{critical:e.result==='critical'})}
       if(srcChar){questFight.damage[srcChar.id]=(Number(questFight.damage[srcChar.id])||0)+Math.round(Number(e.amount)||0);qRenderMeters(enemyIndex>=0?enemyIndex:0)}
       if(e.payload?.avoidable)qLog((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.');
       break;
     case'HEAL_RECEIVED':
-      if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal');qPulseUnit(e.target,'healed',340);window.CellboundCombatFX?.heal?.(qUnit(e.target))}
+      if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);present(()=>qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal'));qPulseUnit(e.target,'healed',340);window.CellboundCombatFX?.heal?.(qUnit(e.target))}
       if(srcChar){questFight.healing[srcChar.id]=(Number(questFight.healing?.[srcChar.id])||0)+Math.max(0,Math.round(Number(e.amount)||0));questFight.overhealing[srcChar.id]=(Number(questFight.overhealing?.[srcChar.id])||0)+Math.max(0,Math.round(Number(e.payload?.overhealing)||0));qRenderMeters(enemyIndex>=0?enemyIndex:0)}
       break;
     case'UNIQUE_EFFECT_TRIGGER':if(srcChar){qLog(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');qFloat(e.source,e.ability||'UNIQUE','heal')}break;

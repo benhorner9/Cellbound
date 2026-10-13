@@ -277,24 +277,24 @@ function mountCastVisual(u,e){
 function strike(scene,u,t,e,heal=false){
  if(!u||!t)return;
  const d=direction(center(u.el),center(t.el));face(u,t.el);
- if(['miss','missed','dodge','dodged','immune'].includes(e.result)){
+ if(['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){
   if(/dodg/.test(e.result))motion(t,[{translate:(-d.y*5)+'px '+(d.x*5)+'px'},{translate:'0px 0px'}],240,scene);
   const f=effect(scene,'avoid',null,t.el,400);if(f)f.n.textContent=String(e.result).toUpperCase();return
  }
  const k=heal?'heal':kind(u.action||e,u),heavy=e.result==='critical'||Number(e.amount)>Number(e.payload?.targetMax||Infinity)*.15;
  const intensity=clamp(Number(e.payload?.visualIntensity)||(/signature|ultimate/i.test(e.ability||'')?5:e.payload?.majorAbility?4:heavy?3:Number(e.amount)<10?1:2),1,5);u.el.dataset.intensity=String(intensity);
  // Instant engine attacks have no flight interval: connect at contact, never invent a delayed hit.
- if(k!=='melee'){
+ if(k!=='melee'&&!window.CellboundCombatAnimation?.isProjectile(e)){
   const f=effect(scene,'connection '+(heal?'heal':family(e,u)),u.el,t.el,heal?400:210);
   if(f)f.n.style.setProperty('--cbl-accent',heal?'#76efac':u.p.accent);
- }else if(d.len<110){
+ }else if(k==='melee'&&d.len<110){
   const reach=Math.min(u.p.lunge,d.len*.16,12),x=d.x*reach,y=d.y*reach;
   motion(u,[{translate:x+'px '+y+'px',rotate:['flow','fluid'].includes(u.p.motion)?'8deg':u.p.motion==='brutal'?'-6deg':'0deg',scale:heavy?'1.09':'1.04'},{translate:'0px 0px',rotate:'0deg',scale:'1'}],u.p.motion==='dart'?240:380,scene);
   const stroke=/shield|bash/i.test(e.ability||'')?'shield-strike':/thrust|pierce|stab/i.test(e.ability||'')?'thrust':/spin|whirl|sweep/i.test(e.ability||'')?'sweep':/overhead|cleave|crush/i.test(e.ability||'')?'overhead':u.p.motion;
   const f=effect(scene,'slash '+stroke,u.el,t.el,260);if(f)f.n.style.setProperty('--cbl-accent',u.p.accent);
  }
  if(heal){const f=effect(scene,'heal-ring'+(Number(e.payload?.targetHpPct)<40?' emergency':'')+(/HoT/.test(e.ability||'')?' periodic':''),null,t.el,500);return}
- if(['miss','missed','dodge','dodged','immune'].includes(e.result))return;
+ if(['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result))return;
  effect(scene,(e.result==='blocked'?'shield':'contact')+(heavy?' heavy':''),null,t.el,240);
  motion(t,[{translate:(d.x*2*intensity)+'px '+(d.y*2*intensity)+'px',scale:heavy?'.94':'.98'},{translate:'0px 0px',scale:'1'}],280,scene)
 }
@@ -342,7 +342,7 @@ function livingEvent(e,opts={}){
  case'CAST_START':
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
- case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune'].includes(e.result))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&!['miss','missed','dodge','dodged','immune'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
+ case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
  case'HEAL_RECEIVED':if(t){
   const visualSource=e.payload?.visualSource?unit(scene,resolve(e.payload.visualSource,opts,arena)):u;
   if(Number(e.payload?.chainBounce)>0&&visualSource){
@@ -394,7 +394,13 @@ function frame(){
   for(const h of scene.hazards.values())if(now>=h.end-900/scene.speed)h.node.dataset.phase='expiring';
   const bounds=arena.getBoundingClientRect(),positions=new Map();
   const pos=el=>{if(!positions.has(el))positions.set(el,anchorPoint(scene,el,bounds)||center(el));return positions.get(el)};
-  const fxpos=el=>window.CellboundCombatAnimation?.socket(el)||pos(el);
+  const sockets=new Map();
+  const fxpos=el=>sockets.get(el)||pos(el);
+  // Read geometry before any style writes: WebKit otherwise flushes the whole
+  // SVG scene once for every beam/effect, repeatedly within a single frame.
+  const readSocket=el=>{if(el?.isConnected&&!sockets.has(el))sockets.set(el,window.CellboundCombatAnimation?.socket(el)||pos(el))};
+  for(const u of scene.units.values())if(u.cast){readSocket(u.el);readSocket(u.target)}
+  for(const f of scene.effects){readSocket(f.source);readSocket(f.target)}
   for(const [el,u] of scene.units){if(el.isConnected)pos(el);if(u.target?.isConnected)pos(u.target)}
   for(const [el,u] of scene.units){
    if(!el.isConnected){scene.units.delete(el);continue}
@@ -409,7 +415,7 @@ function frame(){
     if(u.state==='channeling'&&u.target?.isConnected){
      if(!u.cast.beam){const n=document.createElement('i');n.className='cbl-fx connection channel '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',u.p.accent);scene.layer.appendChild(n);u.cast.beam=n}
      const a=fxpos(el),b=fxpos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');n.dataset.cblPositioned='1';
-    }else if((u.cast.destination||u.target?.isConnected&&u.target!==el)&&progress>Math.max(0,1-u.p.travel/scene.speed/u.cast.duration)){
+    }else if(!el.dataset.animationOwned&&(u.cast.destination||u.target?.isConnected&&u.target!==el)&&progress>Math.max(0,1-u.p.travel/scene.speed/u.cast.duration)){
      if(!u.cast.orb){const n=document.createElement('i');n.className='cbl-fx cast-orb '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',kind(u.action||u.cast.event,u)==='heal'?'#86f3b7':u.p.accent);scene.layer.appendChild(n);u.cast.orb=n}
      const a=fxpos(el),b=u.cast.destination?{x:bounds.left+u.cast.destination.x/100*bounds.width,y:bounds.top+u.cast.destination.y/100*bounds.height}:fxpos(u.target),travelFraction=Math.min(1,u.p.travel/scene.speed/u.cast.duration),t=reduce()?1:clamp((progress-1+travelFraction)/travelFraction,0,1),n=u.cast.orb;
      n.style.setProperty('--cbl-angle',direction(a,b).angle+'deg');
@@ -419,6 +425,11 @@ function frame(){
   }
   for(const f of scene.effects){
    if(now>=f.ends||f.target&&!f.target.isConnected){clearTimeout(f.timer);f.n.remove();scene.effects.delete(f);continue}
+   if(f.flight){
+    const end=pos(f.target),fraction=clamp((now-f.started)/f.flight,0,1),n=f.n;
+    n.style.left=(f.origin.x+(end.x-f.origin.x)*fraction-bounds.left)+'px';n.style.top=(f.origin.y+(end.y-f.origin.y)*fraction-bounds.top)+'px';
+    n.style.setProperty('--cbl-angle',direction(f.origin,end).angle+'deg');continue;
+   }
    if(f.target){const b=fxpos(f.target),a=f.source?.isConnected?fxpos(f.source):b,d=direction(a,b);
     const connection=f.n.classList.contains('connection');f.n.style.left=(connection?a.x:b.x)-bounds.left+'px';f.n.style.top=(connection?a.y:b.y)-bounds.top+'px';f.n.dataset.cblPositioned='1';
     if(connection){f.n.style.width=d.len+'px';f.n.style.setProperty('--cbl-angle',d.angle+'deg')}
@@ -433,6 +444,15 @@ function combatEvent(e,opts={}){try{
  if(animation&&arena)animation.route(e,{...opts,arena,source:resolve(e.source,opts,arena),target:resolve(e.target,opts,arena)},()=>livingEvent(e,{...opts,arena}));
  else livingEvent(e,opts);
 }catch(error){console.warn('Living combat visual skipped',e?.type,error)}}
+// Flights are presentation-only and owned by the existing bounded FX lifecycle.
+FX.launchAction=(e,arena,source,target,profile,flight)=>{
+ const scene=scenes.get(arena);if(!scene||!source?.isConnected||!target?.isConnected||reduce())return;
+ const u=scene.units.get(source),f=effect(scene,'class-projectile '+(profile.socket==='bow'?'arrow':family(e,u)),source,target,flight*scene.speed);
+ if(!f)return;
+ f.flight=flight;f.started=performance.now();f.origin=window.CellboundCombatAnimation?.socket(source,profile.socket)||center(source);
+ const bounds=arena.getBoundingClientRect();f.n.style.left=f.origin.x-bounds.left+'px';f.n.style.top=f.origin.y-bounds.top+'px';
+ f.n.style.setProperty('--cbl-accent',/heal/.test(profile.kind)?'#76efac':u?.p.accent||'#ddd');wake();
+};
 FX.presentImpact=(e,fn)=>window.CellboundCombatAnimation?window.CellboundCombatAnimation.present(e,fn):fn();
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
 FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.5.0';FX.living=true;

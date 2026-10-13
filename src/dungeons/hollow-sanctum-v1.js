@@ -388,6 +388,7 @@ function hsStatusTargets(id){
 }
 function hsRenderRebornEvent(e){
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#hs2dArena'),resolve:id=>hsStatusTargets(id)?.[0],speed:()=>combatRate(run?.speed||1)});
+ const present=fn=>{const feedback=window.CellboundCombatFX?.presentImpact;feedback?feedback(e,fn):fn()};
  try{
   if(window.CellboundCombatStatuses?.handle(e,{resolve:hsStatusTargets,speed:()=>combatRate(run?.speed||1)}))return;
  }catch(error){console.warn('Hollow Sanctum status visual skipped',e?.type,error)}
@@ -402,7 +403,7 @@ function hsRenderRebornEvent(e){
    break;
   case'DAMAGE_DEALT':
    if(target){
-     const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));hsBar(target,pct);hsFloat(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');window.CellboundCombatFX?.impact?.($('[data-hs="'+target+'"]'),{critical:e.result==='critical'});
+     const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));hsBar(target,pct);present(()=>hsFloat(target,(/miss|dodg|immune|resist/.test(e.result||'')?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0)),targetChar?'incoming':'damage'));window.CellboundCombatFX?.impact?.($('[data-hs="'+target+'"]'),{critical:e.result==='critical'});
      if(targetChar)run.hp[targetChar.id]=pct;
    }
    if(srcChar){run.damageDone[srcChar.id]=(Number(run.damageDone?.[srcChar.id])||0)+(Number(e.amount)||0);hsRenderMeters()}
@@ -410,7 +411,7 @@ function hsRenderRebornEvent(e){
    if(e.payload?.avoidable)feed((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.');
    break;
   case'HEAL_RECEIVED':
-   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;hsBar(target,pct);hsFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-hs="'+target+'"]'));hsUpdateSidebar()}
+   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;hsBar(target,pct);present(()=>hsFloat(target,'+'+Math.round(Number(e.amount)||0),'heal'));window.CellboundCombatFX?.heal?.($('[data-hs="'+target+'"]'));hsUpdateSidebar()}
    if(srcChar){run.healingDone[srcChar.id]=(Number(run.healingDone?.[srcChar.id])||0)+(Number(e.amount)||0);run.overhealing[srcChar.id]=(Number(run.overhealing?.[srcChar.id])||0)+(Number(e.payload?.overhealing)||0);hsRenderMeters()}
    break;
   case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.($('#hs2dArena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');const a=$('#hs2dArena');a?.classList.add('ambient-surge');setTimeout(()=>a?.classList.remove('ambient-surge'),1200);break;

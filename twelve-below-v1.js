@@ -531,6 +531,7 @@ function tbStatusTargets(id){
 function handleEvent(e){
  run.elapsed=Math.max(run.elapsed,Number(e.timestamp)||0);
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tbArena'),resolve:id=>tbStatusTargets(id)?.[0]?.el||tbStatusTargets(id)?.[0]||null,speed:()=>combatRate(playSpeed)});
+ const present=fn=>{const feedback=window.CellboundCombatFX?.presentImpact;feedback?feedback(e,fn):fn()};
  if(window.CellboundCombatStatuses?.handle(e,{resolve:tbStatusTargets,speed:()=>combatRate(playSpeed)}))return;
  if(e.type==='TOMB_OPEN'){spawnBoss(e.payload?.bossId);return}
  if(e.type==='PARTY_COMMAND'){if(e.result!=='cooldown')feed('Party executes '+String(e.ability||'command').replace(/-/g,' ')+'.','good');return}
@@ -542,10 +543,10 @@ function handleEvent(e){
    if(String(e.source||'').startsWith('p-'))run.damage[e.source]=(Number(run.damage[e.source])||0)+(Number(e.amount)||0);
    if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);
    if(String(e.target||'').startsWith('tb-'))setBossHp(String(e.target).slice(3),e.payload?.targetHpPct);
-   tbFloat(e.target,'-'+Math.round(Number(e.amount)||0),String(e.target||'').startsWith('p-')?'incoming':'damage');
+   present(()=>tbFloat(e.target,(/miss|dodg|immune|resist/.test(e.result||'')?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0)),String(e.target||'').startsWith('p-')?'incoming':'damage'));
    queueMeterRender();return
  }
- if(e.type==='HEAL_RECEIVED'){if(String(e.source||'').startsWith('p-'))run.healing[e.source]=(Number(run.healing[e.source])||0)+(Number(e.amount)||0);if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);tbFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal');queueMeterRender();return}
+ if(e.type==='HEAL_RECEIVED'){if(String(e.source||'').startsWith('p-'))run.healing[e.source]=(Number(run.healing[e.source])||0)+(Number(e.amount)||0);if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);present(()=>tbFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal'));queueMeterRender();return}
  if((e.type==='RESOURCE_SPENT'||e.type==='RESOURCE_GAINED'||e.type==='RESOURCE_STATE')&&String(e.source||'').startsWith('p-')){
    const ch=party().find(c=>'p-'+c.id===e.source),fallback=ch?tbResourceDef(ch):{name:'Power',max:100,start:100};
    const previous=run.resources?.[e.source]||{name:fallback.name,max:fallback.max,value:fallback.start};

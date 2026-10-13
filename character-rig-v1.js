@@ -310,6 +310,13 @@ function animatedEquipmentPose(base,p,channels={}){
     out.main=constrainTwoHanded(out.main,p,base.left.shoulder,base.right.shoulder);
     out.right=solve('right',out.main);out.left=solve('left',transformPoint(out.main,out.main.support));
   }
+  if(out.main?.kind==='bow'&&channels.bowDraw!=null){
+    const nock=[190-55*Math.max(0,Math.min(1,channels.bowDraw)),213];
+    out.main=constrainTwoHanded({...out.main,support:nock},p,base.left.shoulder,base.right.shoulder);
+    out.right=solve('right',out.main);out.left=solve('left',transformPoint(out.main,nock));
+    out.bowNock=nock;
+    if(out.off?.mode==='held')out.off={...out.off,...out.left.hand};
+  }
   return out;
 }
 function gearFitProfile(subject){

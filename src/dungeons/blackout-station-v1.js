@@ -427,6 +427,7 @@ function bsStripDirectionBlips(){
 }
 function eventRender(e){
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#bsArena'),resolve:id=>statusTargets(id)?.[0],speed:()=>combatRate(run?.speed||1)});
+ const present=fn=>{const feedback=window.CellboundCombatFX?.presentImpact;feedback?feedback(e,fn):fn()};
  bsStripDirectionBlips();
  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:statusTargets,speed:()=>combatRate(run?.speed||1)}))return}catch(error){console.warn('Blackout Station status UI skipped',e?.type,error)}
 
@@ -441,11 +442,11 @@ function eventRender(e){
    if(srcChar)bsAct(srcChar.role,(e.ability||'Acting')+'…');
    break;
   case'DAMAGE_DEALT':
-   if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);floatText(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');window.CellboundCombatFX?.impact?.($('[data-bs="'+target+'"]'),{critical:e.result==='critical'});if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);if(Number(e.amount)>0&&pct<=35)feed(targetChar.name+' drops to '+Math.round(pct)+'% HP from '+(e.ability||'incoming damage')+'.')}}
+   if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);present(()=>floatText(target,(/miss|dodg|immune|resist/.test(e.result||'')?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0)),targetChar?'incoming':'damage'));window.CellboundCombatFX?.impact?.($('[data-bs="'+target+'"]'),{critical:e.result==='critical'});if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);if(Number(e.amount)>0&&pct<=35)feed(targetChar.name+' drops to '+Math.round(pct)+'% HP from '+(e.ability||'incoming damage')+'.')}}
    if(srcChar){run.damage[srcChar.id]=(Number(run.damage[srcChar.id])||0)+(Number(e.amount)||0);queueMeterRender()}
    break;
   case'HEAL_RECEIVED':
-   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);run.hp[targetChar.id]=pct;floatText(target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-bs="'+target+'"]'));updateSideHp(targetChar,pct)}
+   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);run.hp[targetChar.id]=pct;present(()=>floatText(target,'+'+Math.round(Number(e.amount)||0),'heal'));window.CellboundCombatFX?.heal?.($('[data-bs="'+target+'"]'));updateSideHp(targetChar,pct)}
    if(srcChar){run.healing[srcChar.id]=(Number(run.healing[srcChar.id])||0)+(Number(e.amount)||0);queueMeterRender()}
    break;
   case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':

@@ -992,6 +992,7 @@ function tdRenderCombatEvent(e,telegraphs){
   if(tutorialCombatStats)tutorialCombatStats.elapsed=Math.max(Number(tutorialCombatStats.elapsed)||0,Number(e.timestamp)||0);
   const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
   try{window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tdArena'),resolve:id=>{const sel=tdSelectorFor(id);return sel?$(sel):null},speed:combatRate(1)})}catch(error){console.warn('First Expedition living combat visual skipped',e?.type,error)}
+ const present=fn=>{const feedback=window.CellboundCombatFX?.presentImpact;feedback?feedback(e,fn):fn()};
   try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:combatRate(1)}))return}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
   switch(e.type){
     case'COMBAT_START':tdFeed('The pull begins.');break;
@@ -1002,14 +1003,14 @@ function tdRenderCombatEvent(e,telegraphs){
       break;
     case'DAMAGE_DEALT':
       if(targetSel){
-        const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdFloat(targetSel,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');
+        const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));present(()=>tdFloat(targetSel,(/miss|dodg|immune|resist/.test(e.result||'')?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0)),targetChar?'incoming':'damage'));
         if(targetChar)tdSetPartyHpByEvent(targetChar,p);
         else{const idx=Number(String(e.target||'').slice(2));if(Number.isInteger(idx))setTdHp(idx,(Number(e.payload?.targetHp)||0))}
       }
       if(srcChar&&tutorialCombatStats){tutorialCombatStats.damage[srcChar.id]=(Number(tutorialCombatStats.damage[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
       break;
     case'HEAL_RECEIVED':
-      if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
+      if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);present(()=>tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal'))}
       if(srcChar&&tutorialCombatStats){tutorialCombatStats.healing[srcChar.id]=(Number(tutorialCombatStats.healing[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
       break;
     case'THREAT_GENERATED':

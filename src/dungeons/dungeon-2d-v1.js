@@ -2530,7 +2530,7 @@ function renderRebornEvent(e,result,replayMode=false){
    if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||0);setCond(targetChar.id,cond(targetChar.id)-Math.max(1,Math.round((Number(e.amount)||0)/8)));updateRows()}
    if(srcChar){setCombatHudState(srcChar,e.target,e.ability||'Attack');recordDamage(srcChar,Number(e.amount)||0)}
    if(e.target)presentRebornImpact(e,()=>{
-    const avoided=/miss|dodg|immune/.test(e.result||'');
+    const avoided=/miss|dodg|immune|resist/.test(e.result||'');
     if(!avoided)hitReact(e.target,'hit');
     floating(e.target,avoided?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':targetChar?'incoming':'damage');
     window.CellboundCombatFX?.impact?.($('[data-unit="'+e.target+'"]'),{critical:e.result==='critical'});

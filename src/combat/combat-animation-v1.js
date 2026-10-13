@@ -22,6 +22,7 @@ const CLIPS={
  death:{duration:780,frames:[[0,{}],[.25,{lean:-8,mainY:.15,mainAngle:30}],[.72,{lean:-18,mainY:.25,mainAngle:50,fall:65,sink:7}],[1,{lean:-18,mainY:.25,mainAngle:50,fall:76,sink:9}]]},
  revive:{duration:720,frames:[[0,{lean:-18,fall:76,sink:9}],[.5,{lean:5,fall:12,sink:2}],[1,{}]]}
 };
+Object.assign(CLIPS,window.CellboundCombatAnimationCatalog?.clips||{});
 function sample(name,t){
  const frames=CLIPS[name]?.frames||CLIPS.swing.frames;t=clamp(t,0,1);
  let i=1;while(i<frames.length-1&&frames[i][0]<t)i++;
@@ -35,10 +36,10 @@ function bind(el){
  if(el._cbAnimationRig?.svg===svg)return el._cbAnimationRig;
  let data;try{data=JSON.parse(svg.dataset.rigPose)}catch(_){return null}
  const nodes={},original=new Map();
- for(const [key,selector] of Object.entries({body:'.cb-paper-upper-body',actor:'.cb-paper-actor',main:'.cb-paper-slot-weapon',off:'.cb-paper-slot-offhand',rightUpper:'.cb-paper-upper-right',leftUpper:'.cb-paper-upper-left',rightLower:'.cb-paper-forearm-right',leftLower:'.cb-paper-forearm-left',rightGlove:'.cb-paper-glove-right',leftGlove:'.cb-paper-glove-left',rightGrip:'.cb-paper-held-grip-main',leftGrip:'.cb-paper-held-grip-off',rightRing:'.cb-paper-slot-ring2',leftRing:'.cb-paper-slot-ring1'})){
+ for(const [key,selector] of Object.entries({body:'.cb-paper-upper-body',actor:'.cb-paper-actor',main:'.cb-paper-slot-weapon',off:'.cb-paper-slot-offhand',rightUpper:'.cb-paper-upper-right',leftUpper:'.cb-paper-upper-left',rightLower:'.cb-paper-forearm-right',leftLower:'.cb-paper-forearm-left',rightGlove:'.cb-paper-glove-right',leftGlove:'.cb-paper-glove-left',rightGrip:'.cb-paper-held-grip-main',leftGrip:'.cb-paper-held-grip-off',rightRing:'.cb-paper-slot-ring2',leftRing:'.cb-paper-slot-ring1',leg:'.cb-paper-kick-R',string:'.cb-paper-bow-string',arrow:'.cb-paper-arrow'})){
   nodes[key]=svg.querySelector(selector);if(nodes[key])original.set(nodes[key],nodes[key].getAttribute('transform')||'');
  }
- return el._cbAnimationRig={svg,base:data.pose,p:data.p,nodes,original};
+ return el._cbAnimationRig={svg,klass:svg.dataset.animationClass||'',base:data.pose,p:data.p,nodes,original};
 }
 function apply(u,c){
  if(!u.rig?.svg.isConnected)u.rig=bind(u.el);
@@ -54,6 +55,13 @@ function apply(u,c){
    for(const part of ['Glove','Grip','Ring']){const node=n[side+part];if(node)set(side+part,`translate(${b.hand.x-a.hand.x} ${b.hand.y-a.hand.y}) rotate(${rotation} ${a.hand.x} ${a.hand.y}) `+r.original.get(node))}
   }
   for(const key of ['main','off'])if(pose[key])set(key,R.attachmentTransform(pose[key]));
+  if(n.string)n.string.setAttribute('d',pose.bowNock?`M190 113 L${pose.bowNock[0]} 213 L190 325`:'M190 113 L190 325');
+  if(n.arrow){n.arrow.setAttribute('opacity',String(c.arrow||0));n.arrow.setAttribute('transform',`translate(${pose.bowNock?pose.bowNock[0]-135:0} 0)`)}
+  if(c.prop&&n.leftGrip&&!r.prop){const prop=document.createElementNS('http://www.w3.org/2000/svg','g');prop.setAttribute('class','cb-paper-action-prop');const h=r.base.left.hand;prop.innerHTML=`<path d="M${h.x-2} ${h.y+7} l5 -15 h29 v6 h-24 l-2 11 Z" fill="#68777b" stroke="#1c2529" stroke-width="2"/><path d="M${h.x-2} ${h.y+7} l5 -12 6 3 -5 12 Z" fill="#695040"/>`;n.leftGrip.parentNode.appendChild(prop);r.prop=prop}
+  if(r.prop){r.prop.setAttribute('opacity',String(c.prop||0));r.prop.setAttribute('transform',`translate(${pose.left.hand.x-r.base.left.hand.x} ${pose.left.hand.y-r.base.left.hand.y})`)}
+  if(n.off&&r.base.off?.mode==='held')n.off.style.opacity=c.prop?'0':'';
+  set('leg',`rotate(${c.leg||0} ${120+r.p.hip*.47} 250)`);
+  if(n.actor)n.actor.style.opacity=String(1-(c.shade||0));
   set('body',`rotate(${c.lean||0} 120 257)`);
   // Mirror remains on the outer actor; all bones and sockets share it.
   set('actor',r.original.get(n.actor)+` translate(${c.step||0} ${c.sink||0}) rotate(${c.fall||0} 120 380)`);
@@ -62,20 +70,25 @@ function apply(u,c){
  }
 }
 function reset(u){
+ u.casting=null;u.suspendedCast=null;
+ if(u.rig){u.rig.prop?.remove();u.rig.prop=null;u.rig.nodes.off?.style.removeProperty('opacity');u.rig.nodes.actor?.style.removeProperty('opacity');u.rig.nodes.arrow?.setAttribute('opacity','0');u.rig.nodes.string?.setAttribute('d','M190 113 L190 325')}
  if(u.rig)for(const [node,value] of u.rig.original)value?node.setAttribute('transform',value):node.removeAttribute('transform');
  const node=u.el.querySelector(ACTOR);if(node){node.style.removeProperty('rotate');node.style.removeProperty('translate')}
  u.clip=null;u.priority=0;u.el.dataset.animationState=u.dead?'dead':'idle';
+ if(!u.dead&&!reduced()){const ready=window.CellboundCombatAnimationCatalog?.styles[u.rig?.klass]?.ready;if(ready)apply(u,ready)}
 }
 function play(u,name,priority=PRIORITY[name]||40,duration){
  if(!u||u.dead&&name!=='death'||u.control.size&&priority<PRIORITY.control||priority<u.priority&&now()<u.until)return false;
  const clip=CLIPS[name];if(!clip)return false;
- u.clip=name;u.priority=priority;u.start=now();u.until=u.start+(duration||clip.duration)/u.scene.speed;
+ if(u.casting&&['hit','block','dodge','heal'].includes(name))u.suspendedCast=u.casting;
+ else if(!['hit','block','dodge','heal'].includes(name))u.suspendedCast=null;
+ u.casting=null;u.clip=name;u.priority=priority;u.start=now();u.until=u.start+(duration||clip.duration)/u.scene.speed;
  u.el.dataset.animationState=name;u.el.dataset.animationClip=name;wake();return true;
 }
 function get(scene,el){
  if(!el)return null;
  let u=scene.units.get(el);if(u){if(!u.rig?.svg.isConnected)u.rig=bind(el);return u;}
- u={el,scene,rig:bind(el),priority:0,clip:null,dead:false,control:new Map(),epoch:0,lastImpact:0,action:null};scene.units.set(el,u);
+ u={el,scene,rig:bind(el),priority:0,clip:null,dead:false,control:new Map(),epoch:0,lastImpact:0,action:null,sequence:0,casting:null};scene.units.set(el,u);
  reset(u);el.dataset.animationOwned='1';el.dataset.animationState='idle';el.style.setProperty('--cba-phase',-(scene.units.size*.61)+'s');return u;
 }
 function defer(scene,due,fn){
@@ -91,15 +104,23 @@ function dispose(scene,preserveDead=false){
  scene.pending.length=0;scene.units.clear();scenes.delete(scene.arena);
 }
 function choose(u,e){
- const k=u?.rig?.base.main?.kind||'';
- if(/shield|bash/i.test(e.ability||'')&&u?.rig?.base.off?.kind==='shield')return'bash';
- if(e.payload?.kind==='heal'||e.payload?.kind==='battle-rez'||/staff|wand|focus|rod|scepter|bow/.test(k)||Number(e.payload?.range||e.payload?.attackRange)>7)return'cast';
- return /dagger|spear/.test(k)?'thrust':'swing';
+ const catalogue=window.CellboundCombatAnimationCatalog;
+ if(catalogue)return catalogue.resolve(u?.rig?.klass||u?.el.dataset.animationClass,e,u?.rig?.base.main?.kind,u?.rig?.base.twoHanded,u?.sequence||0);
+ return {clip:/shield|bash/i.test(e.ability||'')?'bash':Number(e.payload?.range)>7?'cast':'swing',kind:e.payload?.kind};
 }
-function attack(u,e){
+function attack(u,e,release=false){
  if(!u||u.dead||u.control.size)return;
- const clip=choose(u,e),duration=CLIPS[clip].duration;
- if(play(u,clip,PRIORITY.attack)){u.action={ability:e.ability,contact:now()+duration*CLIPS[clip].contact/u.scene.speed,expires:now()+duration/u.scene.speed}}
+ const profile=choose(u,e),clip=profile.clip,duration=CLIPS[clip]?.duration||660;
+ if(play(u,clip,PRIORITY.attack)){
+  u.sequence++;const hold=release?(CLIPS[clip]?.hold||.3):0;
+  const contact=Math.min(350,duration*((CLIPS[clip]?.contact||.5)-hold))/u.scene.speed;
+  u.action={ability:e.ability,contact:now()+contact,expires:now()+duration/u.scene.speed,profile};
+  // Scale the presentation segment so its contact and feedback share a clock.
+  const fraction=(CLIPS[clip]?.contact||.5)-hold;
+  const total=contact/Math.max(.01,fraction);u.start=now()-total*hold;u.until=u.start+total;
+  u.el.dataset.animationAbility=profile.abilityId||e.ability||'basic';
+  u.el.dataset.animationClass=profile.style||u.rig?.klass||'';
+ }
 }
 function route(e,opts,deliver){
  const arena=opts.arena;if(!arena?.isConnected){deliver();return}
@@ -112,23 +133,36 @@ function route(e,opts,deliver){
  case'COMBAT_START':
   arena.querySelectorAll('.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit,.cbl-pet').forEach(el=>get(scene,el));break;
  case'ABILITY_START':
-  if(!(e.payload?.castTime>0)&&(!e.payload?.kind||['damage','heal','battle-rez'].includes(e.payload.kind)))attack(u,e);break;
+  if(!(e.payload?.castTime>0))attack(u,e);break;
  case'CAST_START':
-  if(play(u,'cast',PRIORITY.cast,Math.max(300,Number(e.payload?.duration)||1000)))u.action={ability:e.ability,contact:time+(Number(e.payload?.duration)||1000)/scene.speed,expires:time+((Number(e.payload?.duration)||1000)+700)/scene.speed};break;
+  if(u){const profile=choose(u,e),duration=Math.max(1,Number(e.payload?.duration)||1000)/scene.speed;
+   if(play(u,profile.clip,PRIORITY.cast,duration*scene.speed)){u.casting={event:e,profile,start:time,end:time+duration};u.action={ability:e.ability,contact:time+duration,expires:time+duration+1200,profile};u.el.dataset.animationAbility=profile.abilityId||e.ability}}break;
+ case'CAST_FINISH':case'ABILITY_FINISH':
+  if(u?.casting||u?.suspendedCast){if(/^failed/.test(e.result||'')){u.action=null;reset(u)}else attack(u,e,true)}break;
  case'CAST_CANCELLED':case'INTERRUPT':{
   const v=e.type==='CAST_CANCELLED'?u:e.result==='success'?t:null;
+  if(e.type==='INTERRUPT'&&e.result==='success'&&u)attack(u,e);
   if(v){v.action=null;play(v,'interrupt',PRIORITY.interrupt)}break;
  }
  case'DAMAGE_DEALT':case'HEAL_RECEIVED':{
-  const periodic=/\(DoT\)|\(HoT\)|\(Pulse\)|Stagger|bleed|burn tick/i.test(e.ability||'');
-  if(!periodic&&u&&(!u.action||u.action.ability!==e.ability||time>u.action.expires))attack(u,e);
+  const passive=!!u?.rig?.klass&&!choose(u,e).known&&u?.action?.ability!==e.ability;
+  const periodic=passive||/\(DoT\)|\(HoT\)|\(Pulse\)|Stagger|bleed|burn tick/i.test(e.ability||'');
+  if(!periodic&&(u?.casting||u?.suspendedCast))attack(u,e,true);
+  else if(!periodic&&u&&(!u.action||u.action.ability!==e.ability||time>u.action.expires))attack(u,e);
   due=reduced()||periodic?time:Math.max(time,u?.action?.ability===e.ability?u.action.contact:time);
-  due=Math.min(time+350/scene.speed,due); // never accumulate a playback backlog
+  due=Math.min(time+350/scene.speed,due); // bounded release; simulation remains immediate
+  const action=u?.action;
+  if(!periodic&&!reduced()&&action?.profile.projectile&&u!==t&&t){
+   const release=due,flight=120/scene.speed;
+   // One flight per actual result target, including cleaves and chain heals.
+   defer(scene,release,()=>{if(!u.dead&&!u.control.size&&u.action===action){if(u.clip)apply(u,sample(u.clip,clamp((now()-u.start)/(u.until-u.start),0,1)));window.CellboundCombatFX?.launchAction?.(e,scene.arena,u.el,t.el,action.profile,flight)}});
+   due+=flight;
+  }
   if(t)t.lastImpact=Math.max(t.lastImpact,due);
   defer(scene,due,()=>{
    if(!t||t.dead||t.control.size)return;
    const result=String(e.result||'');
-   if(/miss|immune/.test(result))return;
+   if(/miss|immune|resist/.test(result))return;
    play(t,e.type==='HEAL_RECEIVED'?'heal':/block/.test(result)?'block':/dodg/.test(result)?'dodge':'hit');
   });break;
  }
@@ -141,15 +175,16 @@ function route(e,opts,deliver){
  case'BUFF_APPLIED':case'DEBUFF_APPLIED':case'BUFF_REMOVED':case'DEBUFF_REMOVED':
   if(t){for(const s of e.statusEffects||[])if(/REMOVED$/.test(e.type))t.control.delete(s.id);else if(['stun','fear','incapacitate'].includes(s.cc))t.control.set(s.id,Infinity);
    if(t.control.size){t.action=null;play(t,'control',PRIORITY.control)}else if(t.el.dataset.animationState==='control'){reset(t)}}break;
- case'DEFENSIVE_ACTIVATED':play(t||u,'block');break;
+ case'DEFENSIVE_ACTIVATED':attack(u||t,{...e,payload:{...e.payload,kind:'defensive'}});break;
+ case'PET_COMMAND':if(u&&(!u.action||u.action.ability!==e.ability||time>u.action.expires))attack(u,{...e,payload:{...e.payload,kind:'pet-command'}});break;
  case'COMBAT_END':
-  scene.active=false;scene.pending=scene.pending.filter(p=>p.due<=time+350/scene.speed);scene.closeAt=Math.max(time,...scene.pending.map(p=>p.due))+800/scene.speed+100;
+  scene.active=false;scene.pending=scene.pending.filter(p=>p.due<=time+500/scene.speed);scene.closeAt=Math.max(time,...scene.pending.map(p=>p.due))+800/scene.speed+100;
   for(const v of scene.units.values())if(!v.dead&&!v.clip)v.el.dataset.animationState='resting';break;
  }
- times.set(e,{scene,due});defer(scene,due,()=>{if(valid())deliver()});wake();
+ times.set(e,{scene,due,projectile:!!u?.action?.profile.projectile});defer(scene,due,()=>{if(valid())deliver()});wake();
 }
 // Adapter feedback joins this event's contact frame; gameplay updates stay immediate.
-function present(e,fn){const entry=times.get(e);if(entry&&scenes.get(entry.scene.arena)===entry.scene)defer(entry.scene,entry.due,fn);else fn()}
+function present(e,fn){const entry=times.get(e);if(entry&&scenes.get(entry.scene.arena)===entry.scene)defer(entry.scene,entry.due,()=>{if(entry.scene.arena.isConnected)fn()});else fn()}
 let raf=0,watchdog=0,last=0;
 function wake(){if(raf||watchdog)return;raf=requestAnimationFrame(tick);watchdog=setTimeout(()=>{if(raf)cancelAnimationFrame(raf);raf=0;tick()},80)}
 function tick(){
@@ -164,11 +199,18 @@ function tick(){
    for(const [id,end] of u.control)if(time>=end)u.control.delete(id);
    if(u.clip==='control'&&!u.control.size)reset(u);
    if(!u.clip)continue;
+   if(u.casting){
+    if(time>u.casting.end+600/scene.speed){reset(u);continue}
+    const progress=clamp((time-u.casting.start)/Math.max(1,u.casting.end-u.casting.start),0,1);
+    const pose=sample(u.clip,Math.min(CLIPS[u.clip]?.hold||.3,progress*1.4));if(u.casting.profile.channel&&progress>.5)pose.offY=(pose.offY||0)+Math.sin(time/160)*.025;
+    safe(()=>apply(u,reduced()?{}:pose));continue;
+   }
    const t=clamp((time-u.start)/(u.until-u.start),0,1);
    safe(()=>apply(u,reduced()?(u.clip==='death'?{fall:76,sink:9}:{}):sample(u.clip,t)));
    if(t>=1){
     if(u.clip==='control'){u.clip=null}
-    else if(u.clip==='death'){u.clip=null;u.el.dataset.animationState='dead'}else reset(u);
+    else if(u.clip==='death'){u.clip=null;u.el.dataset.animationState='dead'}else if(u.suspendedCast&&time<u.suspendedCast.end){const casting=u.suspendedCast;reset(u);u.clip=casting.profile.clip;u.casting=casting;u.priority=PRIORITY.cast;u.el.dataset.animationState=u.clip}
+    else reset(u);
    }
   }
   active=active||scene.pending.length>0||scene.closeAt>0||[...scene.units.values()].some(u=>u.clip);
@@ -177,12 +219,17 @@ function tick(){
 }
 // Idle has no JS frame loop. Observe removal so closed arenas cannot retain actors.
 new MutationObserver(records=>{const hiddenChanged=records.some(r=>r.type==='attributes');if(hiddenChanged||records.some(r=>r.removedNodes.length))for(const scene of scenes.values())if(!scene.arena.isConnected||hiddenChanged&&!scene.arena.getClientRects().length)dispose(scene)}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
-function socket(el){
- const node=el?.querySelector('.cb-paper-slot-weapon'),svg=node?.ownerSVGElement;
+function socket(el,type){
+ const r=el?._cbAnimationRig||bind(el||{querySelector:()=>null}),profile=type||'main';
+ const node=profile==='off'?r?.nodes.leftGlove:profile==='head'?r?.nodes.body:r?.nodes.main,svg=node?.ownerSVGElement;
  if(!node||!svg)return null;
  const matrix=node.getScreenCTM();if(!matrix)return null;
- const point=svg.createSVGPoint();point.x=Number(node.dataset.gripLocalX)||0;point.y=Number(node.dataset.gripLocalY)||0;
+ const point=svg.createSVGPoint();
+ if(profile==='off'){point.x=Number(node.getAttribute('cx'));point.y=Number(node.getAttribute('cy'))}
+ else if(profile==='head'){point.x=120;point.y=85}
+ else if(profile==='bow'){point.x=240;point.y=213}
+ else{point.x=Number(node.dataset.gripLocalX)||0;point.y=Number(node.dataset.gripLocalY)||0}
  const p=point.matrixTransform(matrix);return{x:p.x,y:p.y};
 }
-window.CellboundCombatAnimation={version:1,route,present,socket,sample,clips:CLIPS,dispose:arena=>{const s=scenes.get(arena);if(s)dispose(s)},diagnostics:arena=>{const entries=arena?[scenes.get(arena)].filter(Boolean):[...scenes.values()];return{scenes:entries.length,pending:entries.reduce((n,s)=>n+s.pending.length,0),actors:entries.reduce((n,s)=>n+s.units.size,0)}}};
+window.CellboundCombatAnimation={version:2,isProjectile:e=>!!times.get(e)?.projectile,route,present,socket,sample,clips:CLIPS,dispose:arena=>{const s=scenes.get(arena);if(s)dispose(s)},diagnostics:arena=>{const entries=arena?[scenes.get(arena)].filter(Boolean):[...scenes.values()];return{scenes:entries.length,pending:entries.reduce((n,s)=>n+s.pending.length,0),actors:entries.reduce((n,s)=>n+s.units.size,0)}}};
 })();
