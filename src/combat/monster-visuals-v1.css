@@ -1,0 +1,15 @@
+/* A full-body atlas, sharing unit position, ground shadow, facing and event clock. */
+.cbl-scene .cb-monster-illustrated>.cb-monster-sprite,
+.cb-monster-illustrated>.cb-monster-sprite{position:absolute;display:block;left:50%;top:50%;width:var(--monster-size,100px)!important;height:var(--monster-size,100px)!important;transform:translate(-50%,-75%);border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;overflow:visible;pointer-events:none;contain:layout style;transform-origin:50% 94%}
+.cb-monster-frame{display:block;position:absolute;inset:0;width:100%;height:100%;background-image:var(--monster-sheet);background-size:300% 200%;background-repeat:no-repeat;pointer-events:none;transform:scaleX(var(--cbs-face,1))}
+.cb-monster-illustrated>i:first-child{opacity:0!important}
+.cbl-scene [data-animation-owned="1"]>.cb-monster-sprite{rotate:0deg;translate:0 0}
+.cbl-scene [data-animation-state="idle"]>.cb-monster-sprite{animation:cbMonsterBreath 4.7s ease-in-out var(--cba-phase,0s) infinite!important;will-change:transform}
+.cbl-scene [data-animation-state="idle"]>.cb-monster-sprite[data-creature="elemental"]{animation:cbMonsterHover 3.6s ease-in-out var(--cba-phase,0s) infinite!important}
+.cbl-scene [data-animation-state="idle"]>.cb-monster-sprite[data-creature="machine"]{animation:cbMonsterHover 5s ease-in-out var(--cba-phase,0s) infinite!important}
+.cbl-scene [data-spatial-state="moving"]>.cb-monster-sprite[data-creature="beast"]{animation:cbMonsterGait .34s ease-in-out infinite!important}
+.cbl-scene [data-spatial-state="moving"]>.cb-monster-sprite[data-creature="humanoid"]{animation:cbMonsterGait .52s ease-in-out infinite!important}
+@keyframes cbMonsterBreath{0%,100%{scale:1}50%{scale:1.005 1.012}}
+@keyframes cbMonsterHover{0%,100%{translate:0 0}50%{translate:0 -2px}}
+@keyframes cbMonsterGait{0%,100%{translate:0 0}50%{translate:0 -1.3px}}
+@media(prefers-reduced-motion:reduce){.cbl-scene .cb-monster-illustrated[data-animation-owned="1"]>.cb-monster-sprite{animation:none!important;will-change:auto}}

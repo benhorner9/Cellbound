@@ -1,0 +1,937 @@
+[
+  {
+    "id": "deadeye-mercer",
+    "sourceFile": "exec-5c8ac7c7-f7a3-404d-b759-fe051633d2ef.png",
+    "sha256": "e96a620ee6110de9f0d636239104e8232906d4fb48949caf21d19b560ec62b14",
+    "prompt": "Six-pose transparent dark fantasy Deadeye Mercer gunslinger atlas; ready, wind-up, gunfire, Wanted Mark preparation, hit, death. Reference existing Cellbound warrior equipment illustration.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 100,
+          "y0": 11,
+          "x1": 469,
+          "y1": 505
+        },
+        {
+          "x0": 592,
+          "y0": 7,
+          "x1": 981,
+          "y1": 505
+        },
+        {
+          "x0": 888,
+          "y0": 49,
+          "x1": 1513,
+          "y1": 505
+        },
+        {
+          "x0": 29,
+          "y0": 514,
+          "x1": 521,
+          "y1": 1007
+        },
+        {
+          "x0": 597,
+          "y0": 540,
+          "x1": 1022,
+          "y1": 994
+        },
+        {
+          "x0": 1067,
+          "y0": 663,
+          "x1": 1523,
+          "y1": 970
+        }
+      ],
+      "scale": 0.3706070287539936,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 69162,
+    "promptRecord": "reconstructed summary"
+  },
+  {
+    "id": "ash-cultist",
+    "sourceFile": "exec-5f2703ab-e693-4e15-ae70-a6a8d1c597fd.png",
+    "sha256": "7be72dcab6672af71d86d86404dfc24f9b2511854d22c84afc1aa0538b626091",
+    "prompt": "Use case: stylized-concept. Production transparent sprite atlas for existing Cellbound enemy Ash Cultist. Reference supplied is material/style reference only: illustrated outlined dark fantasy, worn materials, soft directional highlights, crisp readable silhouette, NOT photo or 3D render. Subject: A hooded fire cultist in charcoal and burnt-orange robes, brass fire sigil, worn leather gloves, ash-pale human face in hood, short iron ritual blade in right hand. Caster with a compact ember in the free hand. Create SAME creature in SIX distinct full-body poses, STRICT 3 columns x 2 rows uniform grid, landscape 1536x1024. Each cell 512x512. IMPORTANT each sprite fits wholly inside inner 360x400 pixels of its own cell with TRANSPARENT space separating all cells; no overlap across cell boundaries. Same scale, centred ground/pivot position, facing LEFT three-quarter view throughout. Top row left to right: combat ready; raises blade and free hand to gather a small ember; thrusts blade left with arm extended. Bottom row left to right: both hands casting an ember spell; struck recoil with body compressed or twisted; defeated collapsed or extinguished on ground. Last pose preserves character identity. Body parts genuinely articulate, do not simply rotate same picture. Entire bodies visible, no crop. Transparent background, no scenery, no floor/shadow, no text, numbers, frames or grid lines. Restrained effects must stay within each cell. Preserve alpha.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 77,
+          "y0": 51,
+          "x1": 481,
+          "y1": 490
+        },
+        {
+          "x0": 617,
+          "y0": 14,
+          "x1": 954,
+          "y1": 497
+        },
+        {
+          "x0": 964,
+          "y0": 101,
+          "x1": 1499,
+          "y1": 496
+        },
+        {
+          "x0": 63,
+          "y0": 542,
+          "x1": 497,
+          "y1": 975
+        },
+        {
+          "x0": 552,
+          "y0": 551,
+          "x1": 946,
+          "y1": 975
+        },
+        {
+          "x0": 1035,
+          "y0": 785,
+          "x1": 1500,
+          "y1": 977
+        }
+      ],
+      "scale": 0.43283582089552236,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 96996,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "cinder-hound",
+    "sourceFile": "exec-f5847728-03ab-4f52-82f8-3ceb4718deea.png",
+    "sha256": "d607b072f69295d6803be09a8bd22ba021a4da6274a1e72913b8e31121993279",
+    "prompt": "Use case: stylized-concept. Production transparent sprite atlas for existing Cellbound enemy Cinder Hound. Reference supplied is material/style reference only: illustrated outlined dark fantasy, worn materials, soft directional highlights, crisp readable silhouette, NOT photo or 3D render. Subject: A lean four-legged hound with charcoal fur, ember-red fissures under its hide, strong wolf anatomy, long soot-black tail, glowing amber eyes and believable canine jaws. No armour, no human limbs. Create SAME creature in SIX distinct full-body poses, STRICT 3 columns x 2 rows uniform grid, landscape 1536x1024. Each cell 512x512. IMPORTANT each sprite fits wholly inside inner 360x400 pixels of its own cell with TRANSPARENT space separating all cells; no overlap across cell boundaries. Same scale, centred ground/pivot position, facing LEFT three-quarter view throughout. Top row left to right: combat ready; crouches with hindquarters loaded and jaws opening; lunges left with forelegs reaching and jaws snapping. Bottom row left to right: head raised in a fiery howl, small embers in jaws; struck recoil with body compressed or twisted; defeated collapsed or extinguished on ground. Last pose preserves character identity. Body parts genuinely articulate, do not simply rotate same picture. Entire bodies visible, no crop. Transparent background, no scenery, no floor/shadow, no text, numbers, frames or grid lines. Restrained effects must stay within each cell. Preserve alpha.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 13,
+          "y0": 71,
+          "x1": 500,
+          "y1": 460
+        },
+        {
+          "x0": 522,
+          "y0": 86,
+          "x1": 1005,
+          "y1": 450
+        },
+        {
+          "x0": 1026,
+          "y0": 72,
+          "x1": 1535,
+          "y1": 400
+        },
+        {
+          "x0": 45,
+          "y0": 519,
+          "x1": 502,
+          "y1": 974
+        },
+        {
+          "x0": 563,
+          "y0": 566,
+          "x1": 995,
+          "y1": 975
+        },
+        {
+          "x0": 1027,
+          "y0": 784,
+          "x1": 1529,
+          "y1": 972
+        }
+      ],
+      "scale": 0.4549019607843137,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 97682,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "furnace-wisp",
+    "sourceFile": "exec-3d350a94-563d-4bb3-8023-e36a9a652547.png",
+    "sha256": "b69a901b43e442355e8417e2966a221c03dff5ddf9a913ae97c0ef8a18add706",
+    "prompt": "Use case: stylized-concept. Production transparent sprite atlas for existing Cellbound enemy Furnace Wisp. Reference supplied is material/style reference only: illustrated outlined dark fantasy, worn materials, soft directional highlights, crisp readable silhouette, NOT photo or 3D render. Subject: A floating ember elemental, distinct compact iron-red furnace core inside curling orange flame ribbons, dark crusted coal plates, two small incandescent eyes. No legs, no human skeleton, no background flame clouds. Create SAME creature in SIX distinct full-body poses, STRICT 3 columns x 2 rows uniform grid, landscape 1536x1024. Each cell 512x512. IMPORTANT each sprite fits wholly inside inner 360x400 pixels of its own cell with TRANSPARENT space separating all cells; no overlap across cell boundaries. Same scale, centred ground/pivot position, facing LEFT three-quarter view throughout. Top row left to right: combat ready; contracts its flame ribbons around the coal core; extends two flame tendrils to the left. Bottom row left to right: core opened and glowing while ribbons form a compact spiral; struck recoil with body compressed or twisted; defeated collapsed or extinguished on ground. Last pose preserves character identity. Body parts genuinely articulate, do not simply rotate same picture. Entire bodies visible, no crop. Transparent background, no scenery, no floor/shadow, no text, numbers, frames or grid lines. Restrained effects must stay within each cell. Preserve alpha.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 50,
+          "y0": 22,
+          "x1": 466,
+          "y1": 505
+        },
+        {
+          "x0": 611,
+          "y0": 94,
+          "x1": 940,
+          "y1": 475
+        },
+        {
+          "x0": 1007,
+          "y0": 96,
+          "x1": 1516,
+          "y1": 493
+        },
+        {
+          "x0": 47,
+          "y0": 533,
+          "x1": 477,
+          "y1": 991
+        },
+        {
+          "x0": 594,
+          "y0": 586,
+          "x1": 988,
+          "y1": 944
+        },
+        {
+          "x0": 1044,
+          "y0": 648,
+          "x1": 1520,
+          "y1": 953
+        }
+      ],
+      "scale": 0.4549019607843137,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 131866,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "ash-guardian",
+    "sourceFile": "exec-90f67bbf-e0e7-462d-8505-e2b56fe6f8a1.png",
+    "sha256": "a92d7f781422c514f89a2ea5b1cd2805a00337591cbd27680073f2ab0587d26c",
+    "prompt": "Use case: stylized-concept. Production transparent sprite atlas for existing Cellbound enemy Ash Guardian. Reference supplied is material/style reference only: illustrated outlined dark fantasy, worn materials, soft directional highlights, crisp readable silhouette, NOT photo or 3D render. Subject: A broad human ash guardian in worn grey steel plate and scorched brown leather, fully enclosed angular helmet with narrow amber visor, short iron sword and round scarred shield. Stern military silhouette, no horns or wings. Create SAME creature in SIX distinct full-body poses, STRICT 3 columns x 2 rows uniform grid, landscape 1536x1024. Each cell 512x512. IMPORTANT each sprite fits wholly inside inner 360x400 pixels of its own cell with TRANSPARENT space separating all cells; no overlap across cell boundaries. Same scale, centred ground/pivot position, facing LEFT three-quarter view throughout. Top row left to right: combat ready; braces shield and draws sword behind shoulder; genuine sword swing to left with sword arm extended and shield protecting torso. Bottom row left to right: shield raised defensively, sword ready at waist; struck recoil with body compressed or twisted; defeated collapsed or extinguished on ground. Last pose preserves character identity. Body parts genuinely articulate, do not simply rotate same picture. Entire bodies visible, no crop. Transparent background, no scenery, no floor/shadow, no text, numbers, frames or grid lines. Restrained effects must stay within each cell. Preserve alpha.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 26,
+          "y0": 76,
+          "x1": 468,
+          "y1": 514
+        },
+        {
+          "x0": 583,
+          "y0": 42,
+          "x1": 957,
+          "y1": 522
+        },
+        {
+          "x0": 945,
+          "y0": 124,
+          "x1": 1518,
+          "y1": 516
+        },
+        {
+          "x0": 65,
+          "y0": 554,
+          "x1": 536,
+          "y1": 969
+        },
+        {
+          "x0": 587,
+          "y0": 581,
+          "x1": 965,
+          "y1": 971
+        },
+        {
+          "x0": 1029,
+          "y0": 751,
+          "x1": 1517,
+          "y1": 969
+        }
+      ],
+      "scale": 0.40418118466898956,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 76174,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "ember-acolyte",
+    "sourceFile": "exec-bfb2b331-6412-4f43-8c22-b2521b596b96.png",
+    "sha256": "8501f89ec2ed71efb163ee4fecaa5b98f28042d18b1c5bff4e220b4d7b125344",
+    "prompt": "Use case: stylized-concept. Production transparent sprite atlas, existing Cellbound enemy Ember Acolyte. Reference is STYLE only: illustrated outlined dark fantasy, worn materials, crisp silhouettes and controlled detail matching reference equipment. Subject: A young ash-pale fire adept in a short burnt-red hooded robe, charcoal leather belt, small iron prayer censer and carved wooden wand. Slender silhouette, amber eyes. No armour plate. SIX full-body poses of EXACT SAME individual in STRICT 3 columns x 2 rows, landscape 1536x1024. Every sprite fully isolated inside its own 512x512 cell, generous 50px TRANSPARENT margins. Same size across poses, facing LEFT, ground contact centered on each cell baseline. Top row: ready stance; draws wand back gathering embers; projects a compact bolt left from outstretched wand. Bottom row: lifts censer and channels a controlled flame; hit recoil distinct compressed/twisted anatomy; defeated collapsed body. Preserve clothing/anatomy/materials across poses. Genuine limb/body changes, never merely rotating same picture. No background, scenery, floor, shadows, text, numbers or grid lines. Real alpha transparency.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 22,
+          "y0": 21,
+          "x1": 404,
+          "y1": 485
+        },
+        {
+          "x0": 546,
+          "y0": 7,
+          "x1": 931,
+          "y1": 485
+        },
+        {
+          "x0": 949,
+          "y0": 58,
+          "x1": 1508,
+          "y1": 485
+        },
+        {
+          "x0": 40,
+          "y0": 508,
+          "x1": 490,
+          "y1": 990
+        },
+        {
+          "x0": 586,
+          "y0": 583,
+          "x1": 971,
+          "y1": 991
+        },
+        {
+          "x0": 1026,
+          "y0": 833,
+          "x1": 1530,
+          "y1": 1003
+        }
+      ],
+      "scale": 0.4142857142857143,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 93032,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "soul-binder",
+    "sourceFile": "exec-646d030b-cacc-4611-8c0a-6aba3b4b4a9d.png",
+    "sha256": "23f80752db80adb7a337712a5da8d6dcdf3963d4a37901901fe7c1b03c6b2800",
+    "prompt": "Use case: stylized-concept. Production transparent sprite atlas, existing Cellbound enemy Soul Binder. Reference is STYLE only: illustrated outlined dark fantasy, worn materials, crisp silhouettes and controlled detail matching reference equipment. Subject: A gaunt pale necromancer with charcoal hood, dark violet layered robes, brass chains around shoulders and a bone-tipped staff bearing a small violet crystal. Strong narrow silhouette, no wings. SIX full-body poses of EXACT SAME individual in STRICT 3 columns x 2 rows, landscape 1536x1024. Every sprite fully isolated inside its own 512x512 cell, generous 50px TRANSPARENT margins. Same size across poses, facing LEFT, ground contact centered on each cell baseline. Top row: ready stance; pulls staff back and gathers violet energy; staff extended left, fingers releasing a small purple soul tether. Bottom row: both hands and staff raised in a binding ritual; hit recoil distinct compressed/twisted anatomy; defeated collapsed body. Preserve clothing/anatomy/materials across poses. Genuine limb/body changes, never merely rotating same picture. No background, scenery, floor, shadows, text, numbers or grid lines. Real alpha transparency.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 93,
+          "y0": 20,
+          "x1": 452,
+          "y1": 495
+        },
+        {
+          "x0": 519,
+          "y0": 8,
+          "x1": 968,
+          "y1": 494
+        },
+        {
+          "x0": 875,
+          "y0": 81,
+          "x1": 1525,
+          "y1": 496
+        },
+        {
+          "x0": 22,
+          "y0": 493,
+          "x1": 503,
+          "y1": 1011
+        },
+        {
+          "x0": 524,
+          "y0": 604,
+          "x1": 956,
+          "y1": 990
+        },
+        {
+          "x0": 970,
+          "y0": 871,
+          "x1": 1524,
+          "y1": 1006
+        }
+      ],
+      "scale": 0.3563748079877112,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 87588,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "ash-warden-kael",
+    "sourceFile": "exec-0bf41dd2-f339-4114-9a3f-ff2687236597.png",
+    "sha256": "a0b0f6068eb37a97a02161d1d48f704e5bb99571bcced020ee6918b1a1a0770b",
+    "prompt": "Use case: stylized-concept. Production transparent sprite atlas, existing Cellbound enemy Ash Warden Kael. Reference is STYLE only: illustrated outlined dark fantasy, worn materials, crisp silhouettes and controlled detail matching reference equipment. Subject: A unique imposing broad armoured male warden boss, blackened steel plate with bronze ash-sun crest, distinctive swept-back angular helmet crest, torn red waist cloth, a heavy broad cleaver sword held two handed. Smouldering narrow visor, disciplined silhouette. Larger and more ornate than ordinary guardian, no shield. SIX full-body poses of EXACT SAME individual in STRICT 3 columns x 2 rows, landscape 1536x1024. Every sprite fully isolated inside its own 512x512 cell, generous 50px TRANSPARENT margins. Same size across poses, facing LEFT, ground contact centered on each cell baseline. Top row: ready stance; both hands lift heavy cleaver high above shoulder; weighty two-handed downward cleave to LEFT, bent leading knee. Bottom row: braces planted cleaver and raises command hand to summon guards; hit recoil distinct compressed/twisted anatomy; defeated collapsed body. Preserve clothing/anatomy/materials across poses. Genuine limb/body changes, never merely rotating same picture. No background, scenery, floor, shadows, text, numbers or grid lines. Real alpha transparency.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 30,
+          "y0": 16,
+          "x1": 547,
+          "y1": 513
+        },
+        {
+          "x0": 549,
+          "y0": 12,
+          "x1": 1067,
+          "y1": 513
+        },
+        {
+          "x0": 992,
+          "y0": 142,
+          "x1": 1513,
+          "y1": 517
+        },
+        {
+          "x0": 38,
+          "y0": 518,
+          "x1": 522,
+          "y1": 987
+        },
+        {
+          "x0": 605,
+          "y0": 598,
+          "x1": 978,
+          "y1": 989
+        },
+        {
+          "x0": 990,
+          "y0": 746,
+          "x1": 1526,
+          "y1": 988
+        }
+      ],
+      "scale": 0.43202979515828677,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 110212,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "embermaw",
+    "sourceFile": "exec-d5377c6c-0363-48bc-bd9f-4f5ab70104eb.png",
+    "sha256": "d6d6cdc5e092b6a1d90a3b995638c6fe5c8fd7a321f8b1e89598fac2b5f5dc42",
+    "prompt": "Use case: stylized-concept. Production transparent sprite atlas, existing Cellbound enemy Embermaw. Reference is STYLE only: illustrated outlined dark fantasy, worn materials, crisp silhouettes and controlled detail matching reference equipment. Subject: A unique massive squat furnace salamander boss with FOUR thick reptilian legs, heavy black basalt scales, ember-orange glowing throat and underbelly, broad toothed crocodilian head, powerful long armoured tail with furnace vents. No wings, no humanoid hands. Readable beast silhouette. SIX full-body poses of EXACT SAME individual in STRICT 3 columns x 2 rows, landscape 1536x1024. Every sprite fully isolated inside its own 512x512 cell, generous 50px TRANSPARENT margins. Same size across poses, facing LEFT, ground contact centered on each cell baseline. Top row: ready stance; crouches low and opens broad jaws; lunges head left with jaws snapping and forelegs planted. Bottom row: rears head in a furnace roar, visible short controlled flame inside jaws; hit recoil distinct compressed/twisted anatomy; defeated collapsed body. Preserve clothing/anatomy/materials across poses. Genuine limb/body changes, never merely rotating same picture. No background, scenery, floor, shadows, text, numbers or grid lines. Real alpha transparency.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 9,
+          "y0": 146,
+          "x1": 501,
+          "y1": 474
+        },
+        {
+          "x0": 526,
+          "y0": 133,
+          "x1": 999,
+          "y1": 476
+        },
+        {
+          "x0": 1031,
+          "y0": 153,
+          "x1": 1523,
+          "y1": 476
+        },
+        {
+          "x0": 10,
+          "y0": 530,
+          "x1": 488,
+          "y1": 976
+        },
+        {
+          "x0": 537,
+          "y0": 643,
+          "x1": 1005,
+          "y1": 971
+        },
+        {
+          "x0": 1008,
+          "y0": 754,
+          "x1": 1532,
+          "y1": 973
+        }
+      ],
+      "scale": 0.4419047619047619,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 100642,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "the-hollow-knight",
+    "sourceFile": "exec-337ce601-51c9-45c8-9f94-3bbf418392b9.png",
+    "sha256": "692b82312b6aff04044da519a63dd7b5013a508923fe3af9b5dfbecc68d84d51",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound The Hollow Knight. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. Unique tall haunted medieval knight boss, imposing black iron armour, empty narrow teal-lit visor, crenellated crown-like helmet, shredded midnight-blue cape, long two-handed black iron executioner sword. No shield. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; raises sword in execution wind-up; heavy sword cleave to left with torso and knees following. Bottom row: braced guard while fractured armour glows teal; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 9,
+          "y0": 99,
+          "x1": 505,
+          "y1": 542
+        },
+        {
+          "x0": 582,
+          "y0": 11,
+          "x1": 1017,
+          "y1": 535
+        },
+        {
+          "x0": 1010,
+          "y0": 156,
+          "x1": 1522,
+          "y1": 535
+        },
+        {
+          "x0": 17,
+          "y0": 556,
+          "x1": 503,
+          "y1": 1005
+        },
+        {
+          "x0": 505,
+          "y0": 566,
+          "x1": 1036,
+          "y1": 1007
+        },
+        {
+          "x0": 1029,
+          "y0": 738,
+          "x1": 1527,
+          "y1": 1018
+        }
+      ],
+      "scale": 0.43609022556390975,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 109546,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "the-vaultheart",
+    "sourceFile": "exec-98f4ac47-f1c6-4c59-ae4b-8a8279f633b6.png",
+    "sha256": "889f60acfa55d6986289cc27eff248ce779be3a1d6b6893a06240fc21670629d",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound The Vaultheart. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. A unique floating living furnace core: blazing orange vertical eye suspended within a broken circular black basalt and bronze ring, two massive floating jagged claw arms, dangling stone shards below, no legs. Preserve the existing boss reference identity, simplify into readable illustrated game character. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; ring contracts and claws draw back; left claw sweeps out while core flashes. Bottom row: both claws raised, ring opens for core pulse; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 14,
+          "y0": 9,
+          "x1": 519,
+          "y1": 473
+        },
+        {
+          "x0": 570,
+          "y0": 31,
+          "x1": 975,
+          "y1": 443
+        },
+        {
+          "x0": 1005,
+          "y0": 37,
+          "x1": 1525,
+          "y1": 457
+        },
+        {
+          "x0": 14,
+          "y0": 512,
+          "x1": 542,
+          "y1": 890
+        },
+        {
+          "x0": 547,
+          "y0": 538,
+          "x1": 979,
+          "y1": 1004
+        },
+        {
+          "x0": 977,
+          "y0": 714,
+          "x1": 1523,
+          "y1": 996
+        }
+      ],
+      "scale": 0.42413162705667273,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 160990,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "cave-spawn",
+    "sourceFile": "exec-31287627-6df0-493c-81c4-35c6b022e6dd.png",
+    "sha256": "b5180b06ac0329577fb785ba3d8c99b3d9c73eebb20641fb4b49f27154c1e09c",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound Cave Spawn. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. A small hostile cavern creature, squat pale-grey stone-skinned crawling imp with four limbs, jagged obsidian ridges on back, two amber eyes, blunt claws and small toothy mouth, no equipment. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; crouches with forelimbs drawn in; snaps and swipes left with front claws. Bottom row: rises and opens jaws in threatening shriek; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 27,
+          "y0": 109,
+          "x1": 521,
+          "y1": 499
+        },
+        {
+          "x0": 590,
+          "y0": 169,
+          "x1": 1000,
+          "y1": 466
+        },
+        {
+          "x0": 1002,
+          "y0": 121,
+          "x1": 1527,
+          "y1": 500
+        },
+        {
+          "x0": 27,
+          "y0": 547,
+          "x1": 527,
+          "y1": 967
+        },
+        {
+          "x0": 582,
+          "y0": 582,
+          "x1": 960,
+          "y1": 948
+        },
+        {
+          "x0": 989,
+          "y0": 737,
+          "x1": 1525,
+          "y1": 965
+        }
+      ],
+      "scale": 0.43202979515828677,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 77158,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "amun-rael",
+    "sourceFile": "exec-ebfd19a7-3d4e-42c1-a985-8e783586cd0e.png",
+    "sha256": "9e552d15ba1c18509ab7044a85e298da203a16f32f6d0a1742d9536b0bfbeae5",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound Amun-Rael. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. Unique ancient solar priest-king boss, dark bronze skin, angular golden sun crown and small sun disc behind head, ivory and deep teal layered robes, gold scale chest armour, long golden solar staff with amber crystal. No modern clothing. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; gathers golden light in raised staff; staff points left to release solar beam. Bottom row: both hands lifted in sunfall ritual; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 49,
+          "y0": 27,
+          "x1": 407,
+          "y1": 510
+        },
+        {
+          "x0": 493,
+          "y0": 3,
+          "x1": 948,
+          "y1": 509
+        },
+        {
+          "x0": 917,
+          "y0": 111,
+          "x1": 1530,
+          "y1": 508
+        },
+        {
+          "x0": 40,
+          "y0": 510,
+          "x1": 489,
+          "y1": 982
+        },
+        {
+          "x0": 596,
+          "y0": 573,
+          "x1": 905,
+          "y1": 957
+        },
+        {
+          "x0": 975,
+          "y0": 771,
+          "x1": 1521,
+          "y1": 1004
+        }
+      ],
+      "scale": 0.3778501628664495,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 104422,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "commander-veyra",
+    "sourceFile": "exec-f7462be9-ccbc-4a3f-978e-2ac0c257a4e8.png",
+    "sha256": "3d8d2fe1769aa229ab8d2d09e6d4bc90065c8b21eade189e2b4038aa9346f2a4",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound Commander Veyra. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. Unique adult female lunar commander boss, silver cropped hair, dark navy and silver sci-fantasy fitted plated armour, asymmetric shoulder antenna, half cape, compact blue-energy pulse rifle. No helmet obscuring face, no modern logos. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; braces rifle at shoulder; fires rifle left with arms genuinely extended and bent front knee. Bottom row: free hand commands hovering devices, rifle held down; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 134,
+          "y0": 13,
+          "x1": 472,
+          "y1": 515
+        },
+        {
+          "x0": 550,
+          "y0": 24,
+          "x1": 952,
+          "y1": 508
+        },
+        {
+          "x0": 988,
+          "y0": 24,
+          "x1": 1514,
+          "y1": 504
+        },
+        {
+          "x0": 26,
+          "y0": 529,
+          "x1": 492,
+          "y1": 990
+        },
+        {
+          "x0": 582,
+          "y0": 537,
+          "x1": 974,
+          "y1": 979
+        },
+        {
+          "x0": 1039,
+          "y0": 737,
+          "x1": 1519,
+          "y1": 1000
+        }
+      ],
+      "scale": 0.44022770398481975,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 107530,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "the-old-man-keeper-of-ages",
+    "sourceFile": "exec-2821c944-8525-477b-afa8-aa4e4728ee13.png",
+    "sha256": "5c110b37553ebdf28d798795d4b1aae5045abe396b4c5e7991deef094aa96bea",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound The Old Man \u2014 Keeper of Ages. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. Existing boss reference identity: stooped ancient humanoid with long white hair, cracked gold smiling theatrical mask, thin spiked clockwork halo, tattered plum and black embroidered robes, brass pendulum in one hand. Full body STANDING, no throne or scenery. Distinct eerie silhouette. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; draws pendulum back and lifts bony hand; extends hand left releasing time magic. Bottom row: both hands weave compact clockwork rings; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 20,
+          "y0": 2,
+          "x1": 507,
+          "y1": 511
+        },
+        {
+          "x0": 497,
+          "y0": 37,
+          "x1": 1020,
+          "y1": 513
+        },
+        {
+          "x0": 930,
+          "y0": 24,
+          "x1": 1528,
+          "y1": 523
+        },
+        {
+          "x0": 18,
+          "y0": 515,
+          "x1": 507,
+          "y1": 1001
+        },
+        {
+          "x0": 496,
+          "y0": 538,
+          "x1": 999,
+          "y1": 993
+        },
+        {
+          "x0": 1001,
+          "y0": 682,
+          "x1": 1531,
+          "y1": 998
+        }
+      ],
+      "scale": 0.38731218697829717,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 139744,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "sunbound-servant",
+    "sourceFile": "exec-79ebb972-ff63-425c-be05-8e0f7876a03d.png",
+    "sha256": "0d8b7d430a4f56015253deac2aed037199d207d21fc3e65d3dfaf32880c69107",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound Sunbound Servant. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. Ancient solar temple guardian summoned creature, slim animated sand-coloured stone body wrapped in ivory linen bands, golden jackal-like face mask, short bronze spear, teal cloth belt. Distinct from priest boss. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; pulls spear back; lunges spear left with bent knee. Bottom row: holds spear upright and gathers a small amber orb; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 77,
+          "y0": 24,
+          "x1": 491,
+          "y1": 499
+        },
+        {
+          "x0": 520,
+          "y0": 28,
+          "x1": 957,
+          "y1": 502
+        },
+        {
+          "x0": 901,
+          "y0": 76,
+          "x1": 1535,
+          "y1": 471
+        },
+        {
+          "x0": 95,
+          "y0": 506,
+          "x1": 480,
+          "y1": 995
+        },
+        {
+          "x0": 517,
+          "y0": 557,
+          "x1": 964,
+          "y1": 981
+        },
+        {
+          "x0": 965,
+          "y0": 748,
+          "x1": 1521,
+          "y1": 959
+        }
+      ],
+      "scale": 0.3653543307086614,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 88398,
+    "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "lunar-drone",
+    "sourceFile": "exec-9cc716d4-9edb-4661-a8d2-e88b8e1cd9a1.png",
+    "sha256": "ea42b9c2121120c22e4dd39039d0dfb5e436e70021da8b1e7fb1d074cd713421",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound Lunar Drone. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. Small hovering mechanical lunar combat drone, dark navy and silver angular metal shell, single cyan sensor eye, two hinged side stabiliser fins, short underslung pulse cannon. No humanoid body or legs. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; fins fold backward and cannon charges; cannon extends left firing short cyan flash. Bottom row: fins spread while cyan core pulses; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 26,
+          "y0": 110,
+          "x1": 508,
+          "y1": 414
+        },
+        {
+          "x0": 588,
+          "y0": 98,
+          "x1": 957,
+          "y1": 419
+        },
+        {
+          "x0": 985,
+          "y0": 99,
+          "x1": 1534,
+          "y1": 432
+        },
+        {
+          "x0": 39,
+          "y0": 571,
+          "x1": 539,
+          "y1": 910
+        },
+        {
+          "x0": 573,
+          "y0": 595,
+          "x1": 1009,
+          "y1": 915
+        },
+        {
+          "x0": 1017,
+          "y0": 702,
+          "x1": 1529,
+          "y1": 933
+        }
+      ],
+      "scale": 0.4218181818181818,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 77664,
+    "promptRecord": "verbatim generation prompt"
+  }
+]

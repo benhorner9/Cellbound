@@ -1036,6 +1036,7 @@ function bindEndgamePrep(){
 }
 
 function briefing(){
+ window.CellboundMonsterVisuals?.preload?.([...STAGES[0].enemies,'Cave Spawn']);
  const baseGate=readiness(true),gate=readiness(),r=root();document.body.classList.add('cb2d-open');r.hidden=false;
  if(!baseGate.ok){
    r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · ENTRY CHECK</small><h2>Dungeon entry is currently blocked.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-blocked"><b>NOT READY</b><p>'+esc(baseGate.reason)+'</p><button data-party>OPEN PARTY BUILDER →</button></div></section>';
@@ -1887,7 +1888,7 @@ function stageEnemyPosition(s,i){
  return{x:Number(p.x),y:Number(p.y)}
 }
 function spawn(s){
- const next=STAGES[STAGES.findIndex(x=>x.id===s.id)+1];if(next)window.CellboundExpeditionPresentation?.preload?.(ashenRoomConfig(next.id)?.art);
+ window.CellboundMonsterVisuals?.preload?.([...s.enemies,'Cave Spawn']);const next=STAGES[STAGES.findIndex(x=>x.id===s.id)+1];if(next)window.CellboundMonsterVisuals?.preload?.(next.enemies);if(next)window.CellboundExpeditionPresentation?.preload?.(ashenRoomConfig(next.id)?.art);
  clearArenaEphemera();renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const arena=$('#cb2dArena'),route=ashenRoute(s);arena?.classList.add('room-entering');
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;

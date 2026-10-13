@@ -84,7 +84,7 @@ function bossProfile(el){
   return BOSS_ART.find(b=>b.match.some(alias=>name.includes(alias)))||null;
 }
 function mountBoss(el,boss){
-  if(!el||!boss||el.classList.contains('cb-combat-has-boss-portrait'))return;
+  if(!el||!boss||window.CellboundMonsterVisuals?.mount(el)||el.classList.contains('cb-combat-has-boss-portrait'))return;
   el.querySelector('.cb-combat-monster-portrait')?.remove();el.classList.remove('cb-combat-has-monster-portrait');
   el.classList.add('cb-combat-has-boss-portrait');
   const wrap=document.createElement('div');
@@ -106,6 +106,7 @@ const MONSTERS={
  brute:{match:/.*/,color:'#b9a18a',path:'M18 28L27 31M46 28L37 31M22 42L27 46H37L42 42M23 46V39M41 46V39',body:'<path d="M13 23L23 10H41L51 23L48 46L39 57H25L16 46Z"/>'}
 };
 function mountMonster(el){
+ if(window.CellboundMonsterVisuals?.mount(el))return;
  if(!el||el.querySelector('.cb-combat-boss-portrait,.cb-combat-monster-portrait,img,svg'))return;
  const name=unitName(el)||el.getAttribute('aria-label')||'Creature';
  const entry=Object.entries(MONSTERS).find(([,v])=>v.match.test(name.toLowerCase()));const [key,m]=entry;

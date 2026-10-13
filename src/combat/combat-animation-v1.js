@@ -11,7 +11,8 @@ function cancelFrame(fn){frameJobs.delete(fn)}
 window.CellboundCombatFrame={request:requestFrame,cancel:cancelFrame};
 // Presentation time pauses with the existing simulation when the tab is hidden.
 let hiddenAt=document.hidden?performance.now():null,hiddenElapsed=0;
-const now=()=> (hiddenAt??performance.now())-hiddenElapsed,reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+const motionPreference=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+const now=()=> (hiddenAt??performance.now())-hiddenElapsed,reduced=()=>motionPreference?.matches;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const ACTOR='.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot,.cbl-pet-body';
 const PRIORITY={idle:0,heal:15,cast:30,attack:40,hit:50,block:55,dodge:60,interrupt:75,control:85,revive:90,death:100};
@@ -51,6 +52,7 @@ function bind(el){
  return el._cbAnimationRig={svg,klass:svg.dataset.animationClass||'',base:data.pose,p:data.p,nodes,original};
 }
 function apply(u,c){
+ if(window.CellboundMonsterVisuals?.apply(u.el,{clip:u.clip,progress:clamp((now()-u.start)/Math.max(1,u.until-u.start),0,1),casting:!!u.casting,dead:u.dead,reduced:reduced(),contact:CLIPS[u.clip]?.contact||.44}))return;
  if(!u.rig?.svg.isConnected)u.rig=bind(u.el);
  const r=u.rig,R=window.CellboundCharacterRig;
  if(r&&R?.animatedEquipmentPose){
@@ -79,6 +81,7 @@ function apply(u,c){
  }
 }
 function reset(u){
+ window.CellboundMonsterVisuals?.reset(u.el,u.dead);
  u.casting=null;u.suspendedCast=null;
  if(u.rig){u.rig.prop?.remove();u.rig.prop=null;u.rig.nodes.off?.style.removeProperty('opacity');u.rig.nodes.actor?.style.removeProperty('opacity');u.rig.nodes.arrow?.setAttribute('opacity','0');u.rig.nodes.string?.setAttribute('d','M190 113 L190 325')}
  if(u.rig)for(const [node,value] of u.rig.original)value?node.setAttribute('transform',value):node.removeAttribute('transform');
@@ -113,12 +116,16 @@ function dispose(scene,preserveDead=false){
  scene.pending.length=0;scene.units.clear();scenes.delete(scene.arena);
 }
 function choose(u,e){
+ const monster=window.CellboundMonsterVisuals?.profile(u?.el,e);if(monster)return monster;
  const catalogue=window.CellboundCombatAnimationCatalog;
  if(catalogue)return catalogue.resolve(u?.rig?.klass||u?.el.dataset.animationClass,e,u?.rig?.base.main?.kind,u?.rig?.base.twoHanded,u?.sequence||0);
  return {clip:/shield|bash/i.test(e.ability||'')?'bash':Number(e.payload?.range)>7?'cast':'swing',kind:e.payload?.kind};
 }
 function attack(u,e,release=false){
  if(!u||u.dead||u.control.size)return;
+ // Ordinary damage is not an interrupt: an illustrated enemy can begin its
+ // genuine attack while recovering from a light hit. Control/death still win.
+ if(u.el.dataset.monsterId&&u.clip==='hit')u.priority=0;
  const profile=choose(u,e),clip=profile.clip,duration=CLIPS[clip]?.duration||660;
  if(play(u,clip,PRIORITY.attack)){
   u.sequence++;const hold=release?(CLIPS[clip]?.hold||.3):0;
@@ -172,7 +179,8 @@ function route(e,opts,deliver){
    if(!t||t.dead||t.control.size)return;
    const result=String(e.result||'');
    if(/miss|immune|resist/.test(result))return;
-   play(t,e.type==='HEAL_RECEIVED'?'heal':/block/.test(result)?'block':/dodg/.test(result)?'dodge':'hit');
+   const reaction=e.type==='HEAL_RECEIVED'?'heal':/block/.test(result)?'block':/dodg/.test(result)?'dodge':'hit';
+   if(reaction==='hit'&&t.el.dataset.monsterId&&(t.casting||t.action&&now()<t.action.expires)&&t.clip!=='hit'){if(!reduced())window.CellboundMonsterVisuals?.react(t.el)}else play(t,reaction);
   });break;
  }
  case'PLAYER_DEFEATED':case'ENEMY_DEFEATED':case'ADD_DEFEATED':
@@ -228,6 +236,7 @@ function tick(){
 // Idle has no JS frame loop. Observe removal so closed arenas cannot retain actors.
 new MutationObserver(records=>{const hiddenChanged=records.some(r=>r.type==='attributes');if(hiddenChanged||records.some(r=>r.removedNodes.length))for(const scene of scenes.values())if(!scene.arena.isConnected||hiddenChanged&&scene.arena.closest('[hidden]'))dispose(scene)}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
 function socket(el,type,cached=false){
+ if(el?.dataset.monsterId)return window.CellboundMonsterVisuals?.socket(el)||null;
  const r=el?._cbAnimationRig||bind(el||{querySelector:()=>null}),profile=type||'main';
  const node=profile==='off'?r?.nodes.leftGlove:profile==='head'?r?.nodes.body:r?.nodes.main,svg=node?.ownerSVGElement;
  if(!node||!svg)return null;

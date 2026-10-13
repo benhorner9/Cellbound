@@ -1,0 +1,3098 @@
+{
+  "auditedAt": "2026-10-13",
+  "scope": "Shipped runtime content including locked quest/class-trial definitions; read-only Supabase world_bosses and published design template/blueprint audit (both published catalogues empty). Source IDs are recorded where stable; id is a visual identity slug, not the per-session combat unit ID.",
+  "enemies": [
+    {
+      "id": "amun-rael",
+      "name": "Amun-Rael",
+      "aliases": [],
+      "encounters": [
+        "first-kingdom"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:54"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "amun-rael",
+      "asset": "assets/monsters/v1/amun-rael.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "amun-rael-echo",
+      "name": "Amun-Rael — Echo",
+      "aliases": [],
+      "encounters": [
+        "funhouse"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:86"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "amun-rael",
+      "asset": "assets/monsters/v1/amun-rael.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "ancient-echo",
+      "name": "Ancient Echo",
+      "aliases": [],
+      "encounters": [
+        "Evoker class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1268"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "evoker-ancient-vitality",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "ancient-echo",
+      "asset": null
+    },
+    {
+      "id": "arcane-aberration",
+      "name": "Arcane Aberration",
+      "aliases": [],
+      "encounters": [
+        "Mage class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1262"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "mage-arcane-empowerment",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "arcane-aberration",
+      "asset": null
+    },
+    {
+      "id": "archdruid-vorran",
+      "name": "Archdruid Vorran",
+      "aliases": [],
+      "encounters": [
+        "Archdruid Vorran"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:15"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/bosses/chaos-canyon-vorran.webp",
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "archdruid-vorran",
+      "asset": null
+    },
+    {
+      "id": "ash-cultist",
+      "name": "Ash Cultist",
+      "aliases": [],
+      "encounters": [
+        "The Broken Gate"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:9"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "ash-cultist",
+      "asset": "assets/monsters/v1/ash-cultist.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "ash-guardian",
+      "name": "Ash Guardian",
+      "aliases": [],
+      "encounters": [
+        "Hall of Embers",
+        "The Vault Depths"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:10",
+        "src/dungeons/dungeon-2d-v1.js:14"
+      ],
+      "classification": "elite",
+      "existingRendering": "layered-SVG-paper-doll",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Armoured humanoid SVG rig",
+      "visualId": "ash-guardian",
+      "asset": "assets/monsters/v1/ash-guardian.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "ash-warden-kael",
+      "name": "Ash Warden Kael",
+      "aliases": [],
+      "encounters": [
+        "Ash Warden Kael"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:11"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "ash-warden-kael",
+      "asset": "assets/monsters/v1/ash-warden-kael.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "ashfang-alpha",
+      "name": "Ashfang Alpha",
+      "aliases": [],
+      "encounters": [
+        "Hunter class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1260"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "hunter-predators-focus",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "ashfang-alpha",
+      "asset": null
+    },
+    {
+      "id": "briarheart-beast",
+      "name": "Briarheart Beast",
+      "aliases": [],
+      "encounters": [
+        "Druid class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1259"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "druid-wild-communion",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "briarheart-beast",
+      "asset": null
+    },
+    {
+      "id": "bulwark-specimen",
+      "name": "Bulwark Specimen",
+      "aliases": [],
+      "encounters": [
+        "null-complex-v1",
+        "Containment Wing"
+      ],
+      "sources": [
+        "null-complex-v1.js:22",
+        "quests-v2.js:1491"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "bulwark-specimen",
+      "asset": null
+    },
+    {
+      "id": "canyon-keeper",
+      "name": "Canyon Keeper",
+      "aliases": [],
+      "encounters": [
+        "Wildheart Passage"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:14"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "canyon-keeper",
+      "asset": null
+    },
+    {
+      "id": "canyon-mauler",
+      "name": "Canyon Mauler",
+      "aliases": [],
+      "encounters": [
+        "Canyon Mouth"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:10"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "canyon-mauler",
+      "asset": null
+    },
+    {
+      "id": "cave-spawn",
+      "name": "Cave Spawn",
+      "aliases": [],
+      "encounters": [
+        "Default summoned adds (multiple encounters)"
+      ],
+      "sources": [
+        "src/combat/combat-reborn-v1.js:3270"
+      ],
+      "classification": "add",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "cave-spawn",
+      "asset": "assets/monsters/v1/cave-spawn.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "cell-sick-marauder",
+      "name": "Cell-Sick Marauder",
+      "aliases": [],
+      "encounters": [
+        "collapsed-gallery"
+      ],
+      "sources": [
+        "onboarding-v1.js:640"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "cell-sick-marauder",
+      "asset": null
+    },
+    {
+      "id": "chaos-shapeshifter",
+      "name": "Chaos Shapeshifter",
+      "aliases": [],
+      "encounters": [
+        "Wildheart Passage"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:14"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "chaos-shapeshifter",
+      "asset": null
+    },
+    {
+      "id": "chaos-thorncaster",
+      "name": "Chaos Thorncaster",
+      "aliases": [],
+      "encounters": [
+        "Canyon Mouth",
+        "Thorn Trail"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:10",
+        "src/dungeons/chaos-canyon-v1.js:11"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "chaos-thorncaster",
+      "asset": null
+    },
+    {
+      "id": "cinder-hound",
+      "name": "Cinder Hound",
+      "aliases": [],
+      "encounters": [
+        "The Broken Gate",
+        "The Furnace Passage"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:9",
+        "src/dungeons/dungeon-2d-v1.js:12"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "cinder-hound",
+      "asset": "assets/monsters/v1/cinder-hound.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "commander-veyra",
+      "name": "Commander Veyra",
+      "aliases": [],
+      "encounters": [
+        "silent-frontier"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:68"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "commander-veyra",
+      "asset": "assets/monsters/v1/commander-veyra.webp",
+      "animationFamily": "ranged",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "commander-veyra-echo",
+      "name": "Commander Veyra — Echo",
+      "aliases": [],
+      "encounters": [
+        "funhouse"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:87"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "commander-veyra",
+      "asset": "assets/monsters/v1/commander-veyra.webp",
+      "animationFamily": "ranged",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "cowardice-the-buried-prince",
+      "name": "Cowardice, the Buried Prince",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:24"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "cowardice",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "cowardice-the-buried-prince",
+      "asset": null
+    },
+    {
+      "id": "cruelty-the-bone-torturer",
+      "name": "Cruelty, the Bone Torturer",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:25"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "cruelty",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "cruelty-the-bone-torturer",
+      "asset": null
+    },
+    {
+      "id": "deadeye-mercer",
+      "name": "Deadeye Mercer",
+      "aliases": [],
+      "encounters": [
+        "high-noon"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:28"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "deadeye-mercer",
+      "asset": "assets/monsters/v1/deadeye-mercer.webp",
+      "animationFamily": "ranged",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "deadeye-mercer-echo",
+      "name": "Deadeye Mercer — Echo",
+      "aliases": [],
+      "encounters": [
+        "funhouse"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:84"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "deadeye-mercer",
+      "asset": "assets/monsters/v1/deadeye-mercer.webp",
+      "animationFamily": "ranged",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "deceit-the-masked-priest",
+      "name": "Deceit, the Masked Priest",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:23"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "deceit",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "deceit-the-masked-priest",
+      "asset": null
+    },
+    {
+      "id": "despair-the-last-mourner",
+      "name": "Despair, the Last Mourner",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:27"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "despair",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "despair-the-last-mourner",
+      "asset": null
+    },
+    {
+      "id": "dr-vex-calder",
+      "name": "Dr. Vex Calder",
+      "aliases": [],
+      "encounters": [
+        "Dr. Vex Calder"
+      ],
+      "sources": [
+        "src/dungeons/blackout-station-v1.js:288"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/bosses/blackout-station-calder.webp",
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "dr-vex-calder",
+      "asset": null
+    },
+    {
+      "id": "edrin-vale",
+      "name": "Edrin Vale",
+      "aliases": [],
+      "encounters": [
+        "Edrin, Keeper of the Thirteenth Hour"
+      ],
+      "sources": [
+        "thirteenth-bell-v1.js:388"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "edrin-vale",
+      "asset": null
+    },
+    {
+      "id": "ember-acolyte",
+      "name": "Ember Acolyte",
+      "aliases": [],
+      "encounters": [
+        "Hall of Embers"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:10"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "ember-acolyte",
+      "asset": "assets/monsters/v1/ember-acolyte.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "embermaw",
+      "name": "Embermaw",
+      "aliases": [],
+      "encounters": [
+        "Embermaw"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:13"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "embermaw",
+      "asset": "assets/monsters/v1/embermaw.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "envy-the-mirror-queen",
+      "name": "Envy, the Mirror Queen",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:19"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "envy",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "envy-the-mirror-queen",
+      "asset": null
+    },
+    {
+      "id": "faithless-echo",
+      "name": "Faithless Echo",
+      "aliases": [],
+      "encounters": [
+        "Priest class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1258"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "priest-divine-inspiration",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "faithless-echo",
+      "asset": null
+    },
+    {
+      "id": "fallen-justicar",
+      "name": "Fallen Justicar",
+      "aliases": [],
+      "encounters": [
+        "Paladin class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1257"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "paladin-radiant-purpose",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "fallen-justicar",
+      "asset": null
+    },
+    {
+      "id": "fang",
+      "name": "Fang",
+      "aliases": [],
+      "encounters": [
+        "The Three Hounds"
+      ],
+      "sources": [
+        "no-way-back-v1.js:602"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "fang",
+      "asset": null
+    },
+    {
+      "id": "fel-pursuer",
+      "name": "Fel Pursuer",
+      "aliases": [],
+      "encounters": [
+        "Demon Hunter class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1267"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "demon-hunter-momentum",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "fel-pursuer",
+      "asset": null
+    },
+    {
+      "id": "frostbound-revenant",
+      "name": "Frostbound Revenant",
+      "aliases": [],
+      "encounters": [
+        "Death Knight class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1266"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "death-knight-frozen-will",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "frostbound-revenant",
+      "asset": null
+    },
+    {
+      "id": "furnace-wisp",
+      "name": "Furnace Wisp",
+      "aliases": [],
+      "encounters": [
+        "The Furnace Passage"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:12"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "furnace-wisp",
+      "asset": "assets/monsters/v1/furnace-wisp.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "glass-mite",
+      "name": "Glass Mite",
+      "aliases": [],
+      "encounters": [
+        "Gallery of Echoes"
+      ],
+      "sources": [
+        "src/dungeons/hollow-sanctum-v1.js:10"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "glass-mite",
+      "asset": null
+    },
+    {
+      "id": "glassjaw-sentinel",
+      "name": "Glassjaw Sentinel",
+      "aliases": [],
+      "encounters": [
+        "Glassjaw Sentinel"
+      ],
+      "sources": [
+        "src/dungeons/hollow-sanctum-v1.js:11"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "glassjaw-sentinel",
+      "asset": null
+    },
+    {
+      "id": "glassweb-crawler",
+      "name": "Glassweb Crawler",
+      "aliases": [],
+      "encounters": [
+        "Gallery of Echoes"
+      ],
+      "sources": [
+        "src/dungeons/hollow-sanctum-v1.js:10"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "glassweb-crawler",
+      "asset": null
+    },
+    {
+      "id": "gloamhide-behemoth",
+      "name": "Gloamhide Behemoth",
+      "aliases": [],
+      "encounters": [
+        "World boss"
+      ],
+      "sources": [
+        "database:world_bosses:0"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "gloamhide",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "gloamhide-behemoth",
+      "asset": null
+    },
+    {
+      "id": "gluttony-the-devourer",
+      "name": "Gluttony, the Devourer",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:20"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "gluttony",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "gluttony-the-devourer",
+      "asset": null
+    },
+    {
+      "id": "greed-the-gilded-miser",
+      "name": "Greed, the Gilded Miser",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:17"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "greed",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "greed-the-gilded-miser",
+      "asset": null
+    },
+    {
+      "id": "grim",
+      "name": "Grim",
+      "aliases": [],
+      "encounters": [
+        "The Three Hounds"
+      ],
+      "sources": [
+        "no-way-back-v1.js:601"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "grim",
+      "asset": null
+    },
+    {
+      "id": "guild-enforcer",
+      "name": "Guild Enforcer",
+      "aliases": [],
+      "encounters": [
+        "Rogue class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1261"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "rogue-killing-tempo",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "guild-enforcer",
+      "asset": null
+    },
+    {
+      "id": "hollow-confessor",
+      "name": "Hollow Confessor",
+      "aliases": [],
+      "encounters": [
+        "Priest class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1258"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "priest-inner-fire",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "hollow-confessor",
+      "asset": null
+    },
+    {
+      "id": "hollow-scavenger",
+      "name": "Hollow Scavenger",
+      "aliases": [],
+      "encounters": [
+        "The Road Under the Road"
+      ],
+      "sources": [
+        "quests-v2.js:1144"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "hollow-scavenger",
+      "asset": null
+    },
+    {
+      "id": "hollow-sentinel",
+      "name": "Hollow Sentinel",
+      "aliases": [],
+      "encounters": [
+        "Guardian of the Seal"
+      ],
+      "sources": [
+        "quests-v2.js:1168"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "hollow-sentinel",
+      "asset": null
+    },
+    {
+      "id": "hollowed-surveyor",
+      "name": "Hollowed Surveyor",
+      "aliases": [],
+      "encounters": [
+        "Gallery of Echoes"
+      ],
+      "sources": [
+        "src/dungeons/hollow-sanctum-v1.js:10"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "hollowed-surveyor",
+      "asset": null
+    },
+    {
+      "id": "inner-demon",
+      "name": "Inner Demon",
+      "aliases": [],
+      "encounters": [
+        "Demon Hunter class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1267"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "demon-hunter-fel-instinct",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "inner-demon",
+      "asset": null
+    },
+    {
+      "id": "ironbound-challenger",
+      "name": "Ironbound Challenger",
+      "aliases": [],
+      "encounters": [
+        "Warrior class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1256"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "warrior-guardian",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "ironbound-challenger",
+      "asset": null
+    },
+    {
+      "id": "lesser-pact-demon",
+      "name": "Lesser Pact Demon",
+      "aliases": [],
+      "encounters": [
+        "Warlock class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1264"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "warlock-demonic-pact",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "lesser-pact-demon",
+      "asset": null
+    },
+    {
+      "id": "living-boulder",
+      "name": "Living Boulder",
+      "aliases": [],
+      "encounters": [
+        "Wildheart Passage"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:14"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "living-boulder",
+      "asset": null
+    },
+    {
+      "id": "lunar-drone",
+      "name": "Lunar Drone",
+      "aliases": [],
+      "encounters": [
+        "silent-frontier"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:74"
+      ],
+      "classification": "add",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "lunar-drone",
+      "asset": "assets/monsters/v1/lunar-drone.webp",
+      "animationFamily": "machine",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "lust-the-grave-siren",
+      "name": "Lust, the Grave Siren",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:21"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "lust",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "lust-the-grave-siren",
+      "asset": null
+    },
+    {
+      "id": "manor-thrall",
+      "name": "Manor Thrall",
+      "aliases": [],
+      "encounters": [
+        "Manor bedroom (20 numbered instances)"
+      ],
+      "sources": [
+        "manor-raid-v1.js:140"
+      ],
+      "classification": "standard",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "manor-thrall",
+      "asset": null
+    },
+    {
+      "id": "nail-gun-turret",
+      "name": "Nail Gun Turret",
+      "aliases": [],
+      "encounters": [
+        "The Engineer",
+        "The Master of the Manor"
+      ],
+      "sources": [
+        "manor-raid-v1.js:139",
+        "manor-raid-v1.js:141"
+      ],
+      "classification": "add",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "nail-gun-turret",
+      "asset": null
+    },
+    {
+      "id": "null-stalker",
+      "name": "Null Stalker",
+      "aliases": [],
+      "encounters": [
+        "null-complex-v1",
+        "Power Bay Interruption"
+      ],
+      "sources": [
+        "null-complex-v1.js:23",
+        "quests-v2.js:1515"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "null-stalker",
+      "asset": null
+    },
+    {
+      "id": "oathbreaker-shade",
+      "name": "Oathbreaker Shade",
+      "aliases": [],
+      "encounters": [
+        "Paladin class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1257"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "paladin-blessing-resolve",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "oathbreaker-shade",
+      "asset": null
+    },
+    {
+      "id": "overseer-drone",
+      "name": "Overseer Drone",
+      "aliases": [],
+      "encounters": [
+        "null-complex-v1",
+        "Alert Response"
+      ],
+      "sources": [
+        "null-complex-v1.js:24",
+        "quests-v2.js:1518"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "overseer-drone",
+      "asset": null
+    },
+    {
+      "id": "pride-the-fallen-champion",
+      "name": "Pride, the Fallen Champion",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:18"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "pride",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "pride-the-fallen-champion",
+      "asset": null
+    },
+    {
+      "id": "primal-warden",
+      "name": "Primal Warden",
+      "aliases": [],
+      "encounters": [
+        "Druid class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1259"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "druid-primal-flow",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "primal-warden",
+      "asset": null
+    },
+    {
+      "id": "prototype-07-the-reconstituted",
+      "name": "Prototype 07 — The Reconstituted",
+      "aliases": [],
+      "encounters": [
+        "Prototype 07 — The Reconstituted"
+      ],
+      "sources": [
+        "quests-v2.js:1525"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "prototype-07-the-reconstituted",
+      "asset": null
+    },
+    {
+      "id": "razorpack-matriarch",
+      "name": "Razorpack Matriarch",
+      "aliases": [],
+      "encounters": [
+        "Hunter class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1260"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "hunter-pack-instinct",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "razorpack-matriarch",
+      "asset": null
+    },
+    {
+      "id": "reactor-husk",
+      "name": "Reactor Husk",
+      "aliases": [],
+      "encounters": [
+        "null-complex-v1"
+      ],
+      "sources": [
+        "null-complex-v1.js:20"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "reactor-husk",
+      "asset": null
+    },
+    {
+      "id": "resonance-echo",
+      "name": "Resonance Echo",
+      "aliases": [],
+      "encounters": [
+        "Resonance Backlash"
+      ],
+      "sources": [
+        "quests-v2.js:1135"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "resonance-echo",
+      "asset": null
+    },
+    {
+      "id": "resonance-husk",
+      "name": "Resonance Husk",
+      "aliases": [],
+      "encounters": [
+        "The Road Under the Road"
+      ],
+      "sources": [
+        "quests-v2.js:1144"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "resonance-husk",
+      "asset": null
+    },
+    {
+      "id": "resonant-drake",
+      "name": "Resonant Drake",
+      "aliases": [],
+      "encounters": [
+        "Evoker class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1268"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "evoker-draconic-resonance",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "resonant-drake",
+      "asset": null
+    },
+    {
+      "id": "restless-ancestor",
+      "name": "Restless Ancestor",
+      "aliases": [],
+      "encounters": [
+        "Shaman class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1263"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "shaman-ancestral-current",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "restless-ancestor",
+      "asset": null
+    },
+    {
+      "id": "risen-champion",
+      "name": "Risen Champion",
+      "aliases": [],
+      "encounters": [
+        "Death Knight class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1266"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "death-knight-horn",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "risen-champion",
+      "asset": null
+    },
+    {
+      "id": "rootbound-prowler",
+      "name": "Rootbound Prowler",
+      "aliases": [],
+      "encounters": [
+        "Thorn Trail"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:11"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "rootbound-prowler",
+      "asset": null
+    },
+    {
+      "id": "rootling",
+      "name": "Rootling",
+      "aliases": [],
+      "encounters": [
+        "rootling-nest"
+      ],
+      "sources": [
+        "onboarding-v1.js:627"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "rootling",
+      "asset": null
+    },
+    {
+      "id": "siegebreaker",
+      "name": "Siegebreaker",
+      "aliases": [],
+      "encounters": [
+        "Warrior class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1256"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "warrior-battle-focus",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "siegebreaker",
+      "asset": null
+    },
+    {
+      "id": "silas-vane",
+      "name": "Silas Vane",
+      "aliases": [],
+      "encounters": [
+        "Silas Vane"
+      ],
+      "sources": [
+        "no-way-back-v1.js:664"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/bosses/no-way-back-silas-vane-v3.jpg",
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "silas-vane",
+      "asset": null
+    },
+    {
+      "id": "silent-auditor",
+      "name": "Silent Auditor",
+      "aliases": [],
+      "encounters": [
+        "Rogue class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1261"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "rogue-relentless",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "silent-auditor",
+      "asset": null
+    },
+    {
+      "id": "siphon",
+      "name": "Siphon",
+      "aliases": [],
+      "encounters": [
+        "null-complex-v1",
+        "Containment Wing"
+      ],
+      "sources": [
+        "null-complex-v1.js:21",
+        "quests-v2.js:1491"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "siphon",
+      "asset": null
+    },
+    {
+      "id": "sloth-the-ancient-sleeper",
+      "name": "Sloth, the Ancient Sleeper",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:22"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "sloth",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "sloth-the-ancient-sleeper",
+      "asset": null
+    },
+    {
+      "id": "soul-binder",
+      "name": "Soul Binder",
+      "aliases": [],
+      "encounters": [
+        "The Vault Depths"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:14"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "soul-binder",
+      "asset": "assets/monsters/v1/soul-binder.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "soul-devourer",
+      "name": "Soul Devourer",
+      "aliases": [],
+      "encounters": [
+        "Warlock class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1264"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "warlock-soul-hunger",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "soul-devourer",
+      "asset": null
+    },
+    {
+      "id": "spell-eater",
+      "name": "Spell-Eater",
+      "aliases": [],
+      "encounters": [
+        "Mage class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1262"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "mage-flow-state",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "spell-eater",
+      "asset": null
+    },
+    {
+      "id": "splice",
+      "name": "Splice",
+      "aliases": [],
+      "encounters": [
+        "null-complex-v1",
+        "First Contact",
+        "Power Bay Interruption"
+      ],
+      "sources": [
+        "null-complex-v1.js:19",
+        "quests-v2.js:1486",
+        "quests-v2.js:1515"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "splice",
+      "asset": null
+    },
+    {
+      "id": "stoneback-beast",
+      "name": "Stoneback Beast",
+      "aliases": [],
+      "encounters": [
+        "Canyon Mouth",
+        "Thorn Trail"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:10",
+        "src/dungeons/chaos-canyon-v1.js:11"
+      ],
+      "classification": "trash",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "stoneback-beast",
+      "asset": null
+    },
+    {
+      "id": "stormbound-elemental",
+      "name": "Stormbound Elemental",
+      "aliases": [],
+      "encounters": [
+        "Shaman class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1263"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "shaman-bloodlust",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "stormbound-elemental",
+      "asset": null
+    },
+    {
+      "id": "sunbound-servant",
+      "name": "Sunbound Servant",
+      "aliases": [],
+      "encounters": [
+        "first-kingdom"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:59"
+      ],
+      "classification": "add",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "sunbound-servant",
+      "asset": "assets/monsters/v1/sunbound-servant.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "temple-challenger",
+      "name": "Temple Challenger",
+      "aliases": [],
+      "encounters": [
+        "Monk class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1265"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "monk-inner-tempo",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "temple-challenger",
+      "asset": null
+    },
+    {
+      "id": "the-bound-choir",
+      "name": "The Bound Choir",
+      "aliases": [],
+      "encounters": [
+        "The Bound Choir"
+      ],
+      "sources": [
+        "src/dungeons/hollow-sanctum-v1.js:12"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/bosses/hollow-sanctum-bound-choir.webp",
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "the-bound-choir",
+      "asset": null
+    },
+    {
+      "id": "the-butler",
+      "name": "The Butler",
+      "aliases": [],
+      "encounters": [
+        "The Butler"
+      ],
+      "sources": [
+        "manor-raid-v1.js:138"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/manor/manor-butler.webp",
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "the-butler",
+      "asset": null
+    },
+    {
+      "id": "the-canyon-sentinel",
+      "name": "The Canyon Sentinel",
+      "aliases": [],
+      "encounters": [
+        "The Canyon Sentinel"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:12"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "the-canyon-sentinel",
+      "asset": null
+    },
+    {
+      "id": "the-chaos-warden",
+      "name": "The Chaos Warden",
+      "aliases": [],
+      "encounters": [
+        "The Chaos Warden"
+      ],
+      "sources": [
+        "src/dungeons/chaos-canyon-v1.js:13"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "the-chaos-warden",
+      "asset": null
+    },
+    {
+      "id": "the-engineer",
+      "name": "The Engineer",
+      "aliases": [],
+      "encounters": [
+        "The Engineer"
+      ],
+      "sources": [
+        "manor-raid-v1.js:139"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/manor/manor-engineer.webp",
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "the-engineer",
+      "asset": null
+    },
+    {
+      "id": "the-hollow-knight",
+      "name": "The Hollow Knight",
+      "aliases": [],
+      "encounters": [
+        "iron-kingdom"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:41"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "the-hollow-knight",
+      "asset": "assets/monsters/v1/the-hollow-knight.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "the-hollow-knight-echo",
+      "name": "The Hollow Knight — Echo",
+      "aliases": [],
+      "encounters": [
+        "funhouse"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:85"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "the-hollow-knight",
+      "asset": "assets/monsters/v1/the-hollow-knight.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "the-hollow-warden",
+      "name": "The Hollow Warden",
+      "aliases": [],
+      "encounters": [
+        "hollow-warden"
+      ],
+      "sources": [
+        "onboarding-v1.js:653"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "the-hollow-warden",
+      "asset": null
+    },
+    {
+      "id": "the-hollow-wyrm",
+      "name": "The Hollow Wyrm",
+      "aliases": [],
+      "encounters": [
+        "World boss"
+      ],
+      "sources": [
+        "database:world_bosses:0"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "hollow-wyrm",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "the-hollow-wyrm",
+      "asset": null
+    },
+    {
+      "id": "the-maid",
+      "name": "The Maid",
+      "aliases": [],
+      "encounters": [
+        "The Maid"
+      ],
+      "sources": [
+        "manor-raid-v1.js:146"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/manor/manor-maids.webp",
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "the-maid",
+      "asset": null
+    },
+    {
+      "id": "the-master-of-the-manor",
+      "name": "The Master of the Manor",
+      "aliases": [],
+      "encounters": [
+        "The Master of the Manor"
+      ],
+      "sources": [
+        "manor-raid-v1.js:141"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/manor/manor-master.webp",
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "the-master-of-the-manor",
+      "asset": null
+    },
+    {
+      "id": "the-old-man-keeper-of-ages",
+      "name": "The Old Man — Keeper of Ages",
+      "aliases": [],
+      "encounters": [
+        "funhouse"
+      ],
+      "sources": [
+        "src/dungeons/fractured-ages-v1.js:83"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/bosses/fractured-ages-old-man.webp",
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "the-old-man-keeper-of-ages",
+      "asset": "assets/monsters/v1/the-old-man-keeper-of-ages.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "the-vaultheart",
+      "name": "The Vaultheart",
+      "aliases": [],
+      "encounters": [
+        "The Vaultheart"
+      ],
+      "sources": [
+        "src/dungeons/dungeon-2d-v1.js:15"
+      ],
+      "classification": "boss",
+      "existingRendering": "cropped-scene-illustration",
+      "existingAsset": "assets/bosses/ashen-vault-vaultheart.webp",
+      "status": "illustrated-six-pose-atlas",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Cropped illustrated scene",
+      "visualId": "the-vaultheart",
+      "asset": "assets/monsters/v1/the-vaultheart.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
+    },
+    {
+      "id": "vanity-the-glass-empress",
+      "name": "Vanity, the Glass Empress",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:26"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "vanity",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "vanity-the-glass-empress",
+      "asset": null
+    },
+    {
+      "id": "veyr-the-cell-torn",
+      "name": "Veyr, the Cell-Torn",
+      "aliases": [],
+      "encounters": [
+        "World boss"
+      ],
+      "sources": [
+        "database:world_bosses:0"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "cell-torn",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "veyr-the-cell-torn",
+      "asset": null
+    },
+    {
+      "id": "wail",
+      "name": "Wail",
+      "aliases": [],
+      "encounters": [
+        "The Three Hounds"
+      ],
+      "sources": [
+        "no-way-back-v1.js:603"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "wail",
+      "asset": null
+    },
+    {
+      "id": "wayward-disciple",
+      "name": "Wayward Disciple",
+      "aliases": [],
+      "encounters": [
+        "Monk class trial"
+      ],
+      "sources": [
+        "quests-v2.js:1265"
+      ],
+      "classification": "elite",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "monk-mystic-touch",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "wayward-disciple",
+      "asset": null
+    },
+    {
+      "id": "wrath-the-blood-king",
+      "name": "Wrath, the Blood King",
+      "aliases": [],
+      "encounters": [
+        "twelve-below-v1"
+      ],
+      "sources": [
+        "twelve-below-v1.js:16"
+      ],
+      "classification": "boss",
+      "existingRendering": "procedural-icon",
+      "existingAsset": null,
+      "status": "needs-art",
+      "animationRequirements": [
+        "idle",
+        "ready",
+        "move",
+        "prepare",
+        "attack",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "sourceId": "wrath",
+      "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
+      "existingAppearance": "Procedural SVG icon selected by name family",
+      "visualId": "wrath-the-blood-king",
+      "asset": null
+    }
+  ]
+}

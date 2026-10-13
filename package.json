@@ -9,6 +9,8 @@
     "test:browser": "node tools/qa-runner.cjs browser"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.3.14"
+    "@electric-sql/pglite": "0.3.14",
+    "acorn": "8.15.0",
+    "sharp": "0.34.5"
   }
 }

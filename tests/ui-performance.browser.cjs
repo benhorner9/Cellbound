@@ -22,6 +22,12 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
       CellboundGame.renderAll();
     });
 
+    // Recruitment-card ordering must settle: moving existing cards repeatedly
+    // used to feed the roster MutationObserver forever, even behind combat.
+    await page.waitForTimeout(800);
+    const rosterMutations=await page.evaluate(()=>new Promise(resolve=>{let count=0;const root=document.querySelector('#rosterGrid');const observer=new MutationObserver(records=>count+=records.length);observer.observe(root,{childList:true});setTimeout(()=>{observer.disconnect();resolve(count)},700)}));
+    assert(rosterMutations<5,'roster observer must settle while idle: '+rosterMutations);
+
     const sizes=[{width:1366,height:1024},{width:1024,height:1366},{width:1440,height:900},{width:390,height:844}];
     const views=['overview','roster','party','bank','professions','quests','content','world','raids','trading','chat','support'];
     for(const size of sizes){

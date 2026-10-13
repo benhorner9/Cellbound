@@ -1,0 +1,231 @@
+[
+  {
+    "id": "deadeye-mercer",
+    "name": "Deadeye Mercer",
+    "aliases": [
+      "Deadeye Mercer — Echo"
+    ],
+    "family": "ranged",
+    "size": 120,
+    "src": "assets/monsters/v1/deadeye-mercer.webp",
+    "socket": [
+      0.2,
+      0.39
+    ],
+    "frames": 6
+  },
+  {
+    "id": "ash-cultist",
+    "name": "Ash Cultist",
+    "aliases": [],
+    "family": "caster",
+    "size": 100,
+    "src": "assets/monsters/v1/ash-cultist.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "cinder-hound",
+    "name": "Cinder Hound",
+    "aliases": [],
+    "family": "beast",
+    "size": 104,
+    "src": "assets/monsters/v1/cinder-hound.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "furnace-wisp",
+    "name": "Furnace Wisp",
+    "aliases": [],
+    "family": "elemental",
+    "size": 88,
+    "src": "assets/monsters/v1/furnace-wisp.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "ash-guardian",
+    "name": "Ash Guardian",
+    "aliases": [],
+    "family": "humanoid",
+    "size": 108,
+    "src": "assets/monsters/v1/ash-guardian.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "ember-acolyte",
+    "name": "Ember Acolyte",
+    "aliases": [],
+    "family": "caster",
+    "size": 100,
+    "src": "assets/monsters/v1/ember-acolyte.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "soul-binder",
+    "name": "Soul Binder",
+    "aliases": [],
+    "family": "caster",
+    "size": 106,
+    "src": "assets/monsters/v1/soul-binder.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "ash-warden-kael",
+    "name": "Ash Warden Kael",
+    "aliases": [],
+    "family": "humanoid",
+    "size": 142,
+    "src": "assets/monsters/v1/ash-warden-kael.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "embermaw",
+    "name": "Embermaw",
+    "aliases": [],
+    "family": "beast",
+    "size": 152,
+    "src": "assets/monsters/v1/embermaw.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "the-hollow-knight",
+    "name": "The Hollow Knight",
+    "aliases": [
+      "The Hollow Knight — Echo"
+    ],
+    "family": "humanoid",
+    "size": 142,
+    "src": "assets/monsters/v1/the-hollow-knight.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "the-vaultheart",
+    "name": "The Vaultheart",
+    "aliases": [],
+    "family": "elemental",
+    "size": 150,
+    "src": "assets/monsters/v1/the-vaultheart.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "cave-spawn",
+    "name": "Cave Spawn",
+    "aliases": [],
+    "family": "beast",
+    "size": 78,
+    "src": "assets/monsters/v1/cave-spawn.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "amun-rael",
+    "name": "Amun-Rael",
+    "aliases": [
+      "Amun-Rael — Echo"
+    ],
+    "family": "caster",
+    "size": 138,
+    "src": "assets/monsters/v1/amun-rael.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "commander-veyra",
+    "name": "Commander Veyra",
+    "aliases": [
+      "Commander Veyra — Echo"
+    ],
+    "family": "ranged",
+    "size": 132,
+    "src": "assets/monsters/v1/commander-veyra.webp",
+    "socket": [
+      0.23,
+      0.38
+    ],
+    "frames": 6
+  },
+  {
+    "id": "the-old-man-keeper-of-ages",
+    "name": "The Old Man, Keeper of Ages",
+    "aliases": [],
+    "family": "caster",
+    "size": 148,
+    "src": "assets/monsters/v1/the-old-man-keeper-of-ages.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "sunbound-servant",
+    "name": "Sunbound Servant",
+    "aliases": [],
+    "family": "humanoid",
+    "size": 104,
+    "src": "assets/monsters/v1/sunbound-servant.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "lunar-drone",
+    "name": "Lunar Drone",
+    "aliases": [],
+    "family": "machine",
+    "size": 88,
+    "src": "assets/monsters/v1/lunar-drone.webp",
+    "socket": [
+      0.24,
+      0.64
+    ],
+    "frames": 6
+  }
+]

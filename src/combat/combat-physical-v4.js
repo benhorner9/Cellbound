@@ -8,7 +8,7 @@ const ARENA='.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena';
 const UNIT='.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit,.cbl-pet';
 const scenes=new Map();
 const now=()=>window.CellboundCombatAnimation?.now?.()??performance.now();
-const reduce=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+const motionPreference=window.matchMedia?.('(prefers-reduced-motion: reduce)'),reduce=()=>motionPreference?.matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const PROFILES={
  'class-warrior':{name:'Warrior',accent:'#C69B6D',motion:'heavy',projectile:'steel',cast:'brace',lunge:12,recoil:1.18,travel:245},
@@ -201,7 +201,7 @@ function controlled(u){return [...u.statuses.values()].some(s=>['stun','fear','i
 function canAct(u){return u&&!u.dead&&!controlled(u)}
 function center(el){const scene=scenes.get(el?.closest?.(ARENA)),u=scene?.units.get(el);if(u?.spatial?.visual&&scene.bounds)return anchorPoint(scene,el,scene.bounds);const r=actor(el).getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
 function direction(a,b){const x=b.x-a.x,y=b.y-a.y,len=Math.hypot(x,y)||1;return{x:x/len,y:y/len,angle:Math.atan2(y,x)*180/Math.PI,len}}
-function face(u,target){if(!u||!target||u.dead)return;u.target=target;u.facingTarget=target.dataset.cblCombatId||target.dataset.unit||target.dataset.qUnit||target.dataset.tbUnit||target.dataset.pvp2dUnit;const d=direction(center(u.el),center(target));u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.el.style.setProperty('--face-angle',d.angle+'deg')}
+function face(u,target){if(!u||!target||u.dead)return;u.target=target;u.facingTarget=target.dataset.cblCombatId||target.dataset.unit||target.dataset.qUnit||target.dataset.tbUnit||target.dataset.pvp2dUnit;const d=direction(center(u.el),center(target));if(u.drawnAngle!==d.angle){u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.drawnAngle=d.angle}u.el.style.setProperty('--face-angle',d.angle+'deg')}
 function motion(u,frames,duration,scene){
  if(!u||reduce()||u.el.dataset.animationOwned==='1')return;u.animation?.cancel();
  const easing=u.p.motion==='dart'||u.p.motion==='rush'?'cubic-bezier(.18,.82,.22,1)':u.p.motion==='heavy'||u.p.motion==='brutal'?'cubic-bezier(.22,.66,.28,1)':'cubic-bezier(.2,.72,.24,1)';
@@ -235,19 +235,19 @@ function spatialFrame(scene,bounds,time){
  if(scene.arena.dataset.spatialArena!=='1'){scene.arena.dataset.spatialArena='1';scene.arena.closest('.cbcombat-arena-wrap')?.classList.add('cbs-spatial-wrap');scene.arena.closest('.cbcombat-battle-panel')?.classList.add('cbs-spatial-panel')}
  const resized=scene.spatialWidth!==width||scene.spatialHeight!==height;
  if(resized){scene.spatialWidth=width;scene.spatialHeight=height;scene.spatialDirty=true}
- const env=scene.spatialEnvironment||{},g=S.geometry(width,height,{...env,...env.presentation,bounds:{...env.bounds,...env.presentation?.bounds}});scene.spatialGeometry=g;
+ const env=scene.spatialEnvironment||{};if(resized||scene.geometryEnvironment!==env||!scene.spatialGeometry){scene.spatialGeometry=S.geometry(width,height,{...env,...env.presentation,bounds:{...env.bounds,...env.presentation?.bounds}});scene.geometryEnvironment=env}const g=scene.spatialGeometry;
  if(scene.traversing){let moving=false;for(const [el,u] of scene.units){const t=u.transit;if(!el.isConnected||!t)continue;const f=reduce()?1:clamp((time-t.start)/t.duration,0,1),k=f*f*(3-2*f),p={x:t.from.x+(t.to.x-t.from.x)*k,y:t.from.y+(t.to.y-t.from.y)*k};u.spatial.visual={x:p.x*width/100,y:p.y*height/100};u.position=p;el.dataset.x=String(p.x);el.dataset.y=String(p.y);el.style.setProperty('left',p.x+'%','important');el.style.setProperty('top',p.y+'%','important');el.dataset.spatialState=f<1?'moving':'holding';if(f<1)moving=true;else u.transit=null}scene.traversing=moving;return}
- const list=[];
+ const list=[],zones=[...scene.hazards.values(),...(scene.spatialZones||[])].filter(h=>h.position&&h.radius>0).map(h=>Array.from({length:24},(_,i)=>({x:(h.position.x+Math.cos(i*Math.PI/12)*h.radius)*width/100,y:(h.position.y+Math.sin(i*Math.PI/12)*h.radius)*height/100})));
  for(const [el,u] of scene.units){
   if(!el.isConnected){scene.units.delete(el);scene.spatialDirty=true;continue}if(!u.position)continue;
   const id=u.spatialMeta?.id||el.dataset.unit||el.dataset.qUnit||el.dataset.tbUnit||el.dataset.pvp2dUnit||el.dataset.unitKey||el.dataset.hs||el.dataset.cc||el.dataset.bs||el.id||'unit-'+list.length;if(el.dataset.cblCombatId!==id)el.dataset.cblCombatId=id;
   const meta=u.spatialMeta||{},pet=el.classList.contains('cbl-pet'),boss=el.classList.contains('boss')||/boss/.test(meta.classification||'');
   const style=meta.rangeStyle||(el.classList.contains('tank')?'tank':el.classList.contains('healer')?'healer':el.classList.contains('profile-melee')||['Warrior','Rogue','Death Knight','Demon Hunter','Monk'].includes(u.p.name)?'melee':u.p.name==='Enemy'&&!['marksman','occult','support'].includes(u.p.motion)?'melee':'ranged');
-  let s=u.spatial;if(!s){const a=actor(el),css=getComputedStyle(a),w=parseFloat(css.width)||48,h=parseFloat(css.height)||82;s=u.spatial={id,el,rx:Math.max(pet?14:22,w*.52)+(boss?12:5),ry:Math.max(pet?15:22,h*.42)+(boss?12:3),head:h*.8+10,artTop:pet?h/2:boss?h/2:h*.75,artBottom:pet?h/2:boss?h/2:h*.25,foot:46,visual:null};scene.spatialDirty=true;el.dataset.spatialOwned='1';el.style.setProperty('margin','0','important');el.style.setProperty('transition','none','important');el.style.setProperty('transform','translate(-50%,-50%)','important');el.style.setProperty('--cbs-head',s.head+'px');el.querySelector(':scope > .cb2d-unit-hp')?.style.setProperty('top','calc(50% - '+s.head+'px)','important')}
+  let s=u.spatial;if(s&&u.footprintDirty){const css=getComputedStyle(actor(el)),w=parseFloat(css.width)||48,h=parseFloat(css.height)||82;Object.assign(s,{rx:Math.max(pet?14:22,w*.42)+(boss?8:4),ry:Math.max(pet?15:22,h*.25)+(boss?8:3),head:h*.75,artTop:h*.75,artBottom:h*.25});u.footprintDirty=false;scene.spatialDirty=true;el.style.setProperty('--cbs-head',s.head+'px');el.querySelector(':scope > .cb2d-unit-hp')?.style.setProperty('top','calc(50% - '+s.head+'px)','important')}if(!s){const a=actor(el),css=getComputedStyle(a),w=parseFloat(css.width)||48,h=parseFloat(css.height)||82;s=u.spatial={id,el,rx:Math.max(pet?14:22,w*.52)+(boss?12:5),ry:Math.max(pet?15:22,h*.42)+(boss?12:3),head:h*.8+10,artTop:pet?h/2:boss?h/2:h*.75,artBottom:pet?h/2:boss?h/2:h*.25,foot:46,visual:null};if(el.dataset.monsterId){Object.assign(s,{rx:Math.max(22,w*.42)+(boss?8:4),ry:Math.max(22,h*.25)+(boss?8:3),head:h*.75,artTop:h*.75,artBottom:h*.25})}scene.spatialDirty=true;el.dataset.spatialOwned='1';el.style.setProperty('margin','0','important');el.style.setProperty('transition','none','important');el.style.setProperty('transform','translate(-50%,-50%)','important');el.style.setProperty('--cbs-head',s.head+'px');el.querySelector(':scope > .cb2d-unit-hp')?.style.setProperty('top','calc(50% - '+s.head+'px)','important')}
   const locked=controlled(u)||!!u.cast,command=time<(u.spatialCommandUntil||0)?u.spatialCommand:null;
   if(s.dead!==u.dead||s.locked!==locked||s.command!==command){scene.spatialDirty=true;s.dead=u.dead}
   Object.assign(s,{homeSide:s.homeSide||(meta.team==='red'||el.classList.contains('enemy')?1:-1),style,boss,role:pet?'pet':meta.role||((el.classList.contains('enemy')||boss)?'enemy':style==='tank'?'tank':style==='healer'?'healer':'dps'),team:meta.team||el.dataset.team,logical:{x:u.position.x*width/100,y:u.position.y*height/100},target:u.engagementTarget,locked,command});
-  s.zones=[...scene.hazards.values(),...(scene.spatialZones||[])].filter(h=>h.position&&h.radius>0).map(h=>Array.from({length:24},(_,i)=>({x:(h.position.x+Math.cos(i*Math.PI/12)*h.radius)*width/100,y:(h.position.y+Math.sin(i*Math.PI/12)*h.radius)*height/100})));
+  s.zones=zones;
   if(resized){s.visual=null;s.reserved=null;s.waypoint=null}
   list.push(s);
  }
@@ -266,7 +266,7 @@ function spatialFrame(scene,bounds,time){
   if(!s.drawn||S.distance(p,s.drawn)>.1){el.style.setProperty('left',(p.x/width*100).toFixed(3)+'%','important');el.style.setProperty('top',(p.y/height*100).toFixed(3)+'%','important');s.drawn={...p}}
   const vx=(p.x/width*100).toFixed(3),vy=(p.y/height*100).toFixed(3);if(el.dataset.visualX!==vx)el.dataset.visualX=vx;if(el.dataset.visualY!==vy)el.dataset.visualY=vy;
   const target=list.find(t=>t.id===u.facingTarget);if(target?.visual&&Math.abs(target.visual.x-p.x)>18){
-   const baseMirrored=el.dataset.team==='red',left=target.visual.x<p.x;el.style.setProperty('--cbs-face',left!==baseMirrored?'-1':'1');
+   const baseMirrored=el.dataset.team==='red'||el.dataset.monsterFacing==='left',left=target.visual.x<p.x;const face=left!==baseMirrored?'-1':'1';if(s.drawnFace!==face){el.style.setProperty('--cbs-face',face);s.drawnFace=face}
   }
  }
  scene.spatialUnits=list;
@@ -409,7 +409,7 @@ function livingEvent(e,opts={}){
    u.el.dataset.intent=String(e.result||'moving');
    if(e.position&&e.payload?.to){
     const d=direction(e.position,e.payload.to),strength=clamp(d.len/22,.35,1);
-    u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.el.style.setProperty('--cbl-move-angle',d.angle+'deg');u.el.style.setProperty('--cbl-move-strength',String(strength));u.target=null
+    if(u.drawnAngle!==d.angle){u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.drawnAngle=d.angle}u.el.style.setProperty('--cbl-move-angle',d.angle+'deg');u.el.style.setProperty('--cbl-move-strength',String(strength));u.target=null
    }
    setPosition(scene,u,e.payload?.to,duration);clearCast(u);state(u,['knockback','pull'].includes(e.result)?'displaced':'moving',now()+duration/scene.speed);
    if(['knockback','pull'].includes(e.result))effect(scene,'force '+e.result,null,u.el,420)
@@ -468,17 +468,19 @@ function frame(){
   // Read geometry before any style writes: WebKit otherwise flushes the whole
   // SVG scene once for every beam/effect, repeatedly within a single frame.
   const readSocket=el=>{if(el?.isConnected&&!sockets.has(el))sockets.set(el,window.CellboundCombatAnimation?.socket(el)||pos(el))};
-  for(const u of scene.units.values()){if(u.el.dataset.animationOwned==='1')readSocket(u.el);if(u.cast)readSocket(u.target)}
-  for(const f of scene.effects){readSocket(f.source);readSocket(f.target)}
+  // Only live connections need a moving grip. Flights latch their exact socket
+  // once at release; impacts follow target ground coordinates without SVG reads.
+  for(const u of scene.units.values())if(u.cast&&(u.state==='channeling'||!u.el.dataset.animationOwned)){readSocket(u.el);readSocket(u.target)}
+  for(const f of scene.effects)if(!f.flight&&f.n.classList.contains('connection')){readSocket(f.source);readSocket(f.target)}
   scene.sockets=sockets;spatialFrame(scene,bounds,time);
   for(const [el,u] of scene.units){if(el.isConnected)pos(el);if(u.target?.isConnected)pos(u.target)}
   for(const [el,u] of scene.units){
    if(!el.isConnected){scene.units.delete(el);continue}
-   el.style.zIndex=String(clamp(Math.round((pos(el).y-bounds.top)/Math.max(1,bounds.height)*14)+4,4,18));
+   const z=String(clamp(Math.round((pos(el).y-bounds.top)/Math.max(1,bounds.height)*14)+4,4,18));if(u.drawnDepth!==z){el.style.zIndex=z;u.drawnDepth=z}
    if(u.controlUntil&&time>=u.controlUntil){u.controlUntil=0;statuses(u,{type:'DEBUFF_REMOVED',statusEffects:[{id:'visual-control'}]})}
    if(u.until&&time>=u.until&&!u.dead){u.until=0;state(u,controlled(u)?'controlled':'idle')}
    if(u.target?.isConnected&&!u.dead&&u.state!=='moving'){
-    const d=direction(pos(el),pos(u.target));el.style.setProperty('--cbl-facing',d.angle+'deg');
+    const d=direction(pos(el),pos(u.target));if(u.drawnAngle!==d.angle){el.style.setProperty('--cbl-facing',d.angle+'deg');u.drawnAngle=d.angle}
    }
    if(u.cast){
     const progress=clamp((time-u.cast.start)/u.cast.duration,0,1);el.style.setProperty('--cbl-charge',String(progress));u.cast.glyph?.style.setProperty('--cast-progress',String(progress));
@@ -509,6 +511,7 @@ function frame(){
  }
  if(active)wake()
 }
+FX.refreshFootprint=el=>{const s=scenes.get(el?.closest?.(ARENA)),u=s?.units.get(el);if(u){u.footprintDirty=true;s.spatialDirty=true;wake()}};
 FX.visualPoint=el=>{const scene=scenes.get(el?.closest?.(ARENA)),p=scene?.units.get(el)?.spatial?.visual;return p&&scene.bounds?{x:p.x,y:p.y,w:scene.bounds.width,h:scene.bounds.height}:null};
 FX.movePresentation=(el,p,duration=600)=>{
  const scene=scenes.get(el?.closest?.(ARENA)),u=scene?.units.get(el);if(!u?.spatial?.visual||scene.live&&!scene.arena.classList.contains('between-stages'))return false;
@@ -528,8 +531,8 @@ FX.launchAction=(e,arena,source,target,profile,flight)=>{
  const scene=scenes.get(arena);if(!scene||!source?.isConnected||!target?.isConnected||reduce())return;
  const u=scene.units.get(source),f=effect(scene,'class-projectile '+(profile.socket==='bow'?'arrow':family(e,u)),source,target,flight*scene.speed);
  if(!f)return;
- f.flight=flight;f.started=now();f.origin=window.CellboundCombatAnimation?.socket(source,profile.socket,true)||scene.sockets?.get(source)||center(source);
- const bounds=arena.getBoundingClientRect();f.n.style.left=f.origin.x-bounds.left+'px';f.n.style.top=f.origin.y-bounds.top+'px';
+ f.flight=flight;f.started=now();f.origin=window.CellboundCombatAnimation?.socket(source,profile.socket)||scene.sockets?.get(source)||center(source);
+ const bounds=scene.bounds||arena.getBoundingClientRect();f.n.style.left=f.origin.x-bounds.left+'px';f.n.style.top=f.origin.y-bounds.top+'px';
  f.n.style.setProperty('--cbl-accent',/heal/.test(profile.kind)?'#76efac':u?.p.accent||'#ddd');wake();
 };
 FX.presentImpact=(e,fn)=>window.CellboundCombatAnimation?window.CellboundCombatAnimation.present(e,fn):fn();
