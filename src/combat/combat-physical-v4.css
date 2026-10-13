@@ -357,3 +357,20 @@
 .cbl-fx.class-projectile.arrow:after{content:'';position:absolute;right:-1px;top:-2px;border-left:5px solid #e4d8bf;border-top:3px solid transparent;border-bottom:3px solid transparent}
 .cbl-fx.class-projectile.fire{background:#ffb45f}.cbl-fx.class-projectile.frost{background:#a9e5ff}.cbl-fx.class-projectile.shadow{background:#be92df}
 .cbl-scene [data-animation-owned="1"] .cb-paper-arrow{transition:none!important}
+/* One spatial owner moves unit roots; articulated poses stay inside the portrait. */
+.cbl-scene [data-spatial-owned="1"]>.cb-combat-portrait{scale:var(--cbs-face,1) 1}
+.cbl-scene [data-spatial-owned="1"]>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){
+ top:calc(50% + 30px)!important;translate:var(--cbs-label-x,0px) var(--cbs-label-y,0px);min-width:0!important;width:112px;max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.cbl-scene [data-spatial-owned="1"]>.cb2d-unit-hp{top:calc(50% - var(--cbs-head,65px))!important}
+.cbl-scene [data-spatial-owned="1"][data-spatial-state="moving"] .cb-paper-kick-L{animation:cbsWalkL .48s ease-in-out infinite;transform-origin:105px 250px}
+.cbl-scene [data-spatial-owned="1"][data-spatial-state="moving"] .cb-paper-kick-R{animation:cbsWalkR .48s ease-in-out infinite;transform-origin:135px 250px}
+.cbl-scene [data-animation-state="kick"] .cb-paper-kick-R{animation:none!important}
+@keyframes cbsWalkL{0%,100%{rotate:-9deg}50%{rotate:9deg}}
+@keyframes cbsWalkR{0%,100%{rotate:9deg}50%{rotate:-9deg}}
+@media(prefers-reduced-motion:reduce){.cbl-scene [data-spatial-owned="1"] .cb-paper-kick-L,.cbl-scene [data-spatial-owned="1"] .cb-paper-kick-R{animation:none!important}}
+
+.cbl-scene [data-spatial-owned="1"].boss>span:not(.cb-combat-boss-portrait){width:140px;max-width:140px}
+@media(max-width:480px){.cbl-scene [data-spatial-owned="1"]>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){display:block!important;font-size:9px!important;line-height:12px}}
+
+.cbl-unit>.cbs-label-link{position:absolute;left:50%;top:calc(50% + 23px);height:1px;background:#b7a57d88;transform-origin:left center;pointer-events:none}.cbl-unit>.cbs-label-link[hidden]{display:none}

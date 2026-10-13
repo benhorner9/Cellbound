@@ -73,8 +73,8 @@ function renderPvpFrame(root,result,options={}){
     node.dataset.pvpUnitId=u.id;host.appendChild(node)
    }
    node.dataset.team=u.team;node.classList.toggle('dead',!u.alive);
-   node.style.left=Math.max(0,Math.min(100,Number(u.position?.x)||0))+'%';
-   node.style.top=Math.max(0,Math.min(100,Number(u.position?.y)||0))+'%';
+   if(!node.dataset.spatialOwned)node.style.left=Math.max(0,Math.min(100,Number(u.position?.x)||0))+'%';
+   if(!node.dataset.spatialOwned)node.style.top=Math.max(0,Math.min(100,Number(u.position?.y)||0))+'%';
    const bar=node.querySelector('.cb2d-unit-hp i');
    if(bar)bar.style.width=Math.max(0,Math.min(100,(Number(u.health)||0)/Math.max(1,Number(u.maxHealth)||1)*100))+'%'
   });
@@ -82,7 +82,7 @@ function renderPvpFrame(root,result,options={}){
   window.CellboundCombatPortraits?.upgrade?.(host);
   const FX=window.CellboundCombatFX;
   if(FX?.combatEvent){
-   FX.mount?.(stage);
+   FX.mount?.(stage);FX.syncPositions?.(stage,units,data);
    for(const event of Array.isArray(options.events)?options.events:[]){
     FX.combatEvent(event,{arena:stage,speed:1})
    }
@@ -98,7 +98,7 @@ function renderPvpFrame(root,result,options={}){
    const hill=overlays.querySelector('[data-pvp-hill]');
    if(mode==='king-of-the-hill'&&data.hill){
     const pin=hill||document.createElement('div');if(!hill){pin.dataset.pvpHill='';pin.className='cbpvp-hill-ring';overlays.appendChild(pin)}
-    pin.style.left=data.hill.x+'%';pin.style.top=data.hill.y+'%'
+    pin.style.left=data.hill.x+'%';pin.style.top=data.hill.y+'%';if(data.hill.radius){pin.style.width=data.hill.radius*2+'%';pin.style.height=data.hill.radius*2+'%'}
    }else hill?.remove();
    overlays.querySelectorAll('[data-pvp-flag]').forEach(el=>el.remove());
    if(mode==='capture-the-flag'&&data.flags)for(const team of ['blue','red']){

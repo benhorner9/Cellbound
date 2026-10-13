@@ -1,0 +1,29 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto');
+const sandbox={window:{}};vm.runInNewContext(fs.readFileSync('src/combat/combat-spatial-v1.js','utf8'),sandbox);const S=sandbox.window.CellboundCombatSpatial;
+const unit=(id,style,x,y,extra={})=>({id,style,team:'party',role:style==='tank'?'tank':style==='healer'?'healer':'dps',rx:30,ry:37,head:75,foot:46,logical:{x,y},homeSide:-1,...extra});
+const boss=()=>unit('boss','ranged',480,220,{boss:true,role:'enemy',team:'enemy',rx:44,ry:38,homeSide:1});
+const party=()=>[boss(),unit('tank','tank',440,220,{target:'boss'}),unit('melee-a','melee',442,222,{target:'boss'}),unit('melee-b','melee',444,218,{target:'boss'}),unit('ranged','ranged',350,220,{target:'boss'}),unit('healer','healer',320,220,{target:'tank'}),unit('pet','melee',449,219,{role:'pet',rx:20,ry:18,target:'boss'})];
+function apply(list,g,mode){const r=S.plan(list,g,mode);for(const u of list){u.reserved=r.positions.get(u.id);if(!u.visual&&u.reserved)u.visual={...u.reserved};u.speed=160;u.waypoint=null;u.route=null}return r}
+function clear(list,g){for(const u of list.filter(u=>!u.dead)){assert(S.legal(u.reserved,u,g),u.id+' legal');for(const v of list.filter(v=>!v.dead&&v.id>u.id))assert(S.overlap(u,u.reserved,v,v.reserved,0)<.001,u.id+' reserved separately from '+v.id)}}
+const g=S.geometry(744,418),list=party(),original=JSON.stringify(list.map(u=>u.logical));assert.equal(apply(list,g).unresolved,0);clear(list,g);
+const first=JSON.stringify(list.map(u=>u.reserved));apply(list,g);assert.equal(JSON.stringify(list.map(u=>u.reserved)),first,'stationary reservations stable');assert.equal(JSON.stringify(list.map(u=>u.logical)),original,'never change logical positions');
+assert(list.find(u=>u.style==='healer').reserved.x<list.find(u=>u.style==='tank').reserved.x,'healer stays behind tank');
+// Crowded movement and target change: travel from old stance to reserved stance, never teleport.
+list[0].logical.x=350;apply(list,g);for(let i=0;i<600;i++)S.advance(list,g,1/60);
+for(const u of list)assert(S.distance(u.visual,u.reserved)<3,u.id+' finishes moving: '+S.distance(u.visual,u.reserved));clear(list,g);
+list[2].dead=true;apply(list,g);assert(!list[2].reserved,'death releases reservation');list[2].dead=false;apply(list,g);clear(list,g);
+for(const command of ['spread','stack','regroup']){for(const u of list)u.command=command;assert.equal(apply(list,g).unresolved,0);clear(list,g)}
+list[2].locked=true;list[2].visual={x:300,y:220};apply(list,g);assert.equal(list[2].reserved.x,300,'control/casting holds actual position');clear(list,g);list[2].locked=false;apply(list,g);
+const arena=S.geometry(900,600,{bounds:{left:3,right:97,top:10,bottom:96},arena:{shape:'ellipse',cx:50,cy:55,rx:45,ry:40},blockers:[{shape:'ellipse',x:50,y:50,rx:5,ry:12},{shape:'polygon',points:[[60,60],[70,60],[70,70],[60,70]]}]});assert(!S.legal({x:450,y:300},list[1],arena));assert(!S.legal({x:590,y:390},list[1],arena));assert(!S.legal({x:80,y:100},list[1],arena));
+const obstacle=S.geometry(744,418,{blockers:[{shape:'rect',x:50,y:50,w:10,h:20}]});const walker=unit('walker','melee',250,220,{visual:{x:250,y:220},reserved:{x:500,y:220},speed:160});walker.waypoint=S.waypoint(walker.visual,walker.reserved,walker,obstacle);for(let i=0;i<600;i++)S.advance([walker],obstacle,1/60);assert(S.distance(walker.visual,walker.reserved)<3,'routes around authored scenery');
+const crowd=Array.from({length:40},(_,i)=>unit('pvp-'+String(i).padStart(2,'0'),'melee',i<20?400:800,400,{team:i<20?'blue':'red',homeSide:i<20?-1:1,rx:26,ry:30}));const large=S.geometry(1400,850),start=performance.now();const largeResult=apply(crowd,large,'pvp');clear(crowd,large);assert.equal(largeResult.unresolved,0);console.log('40-participant planning: '+Math.round(performance.now()-start)+'ms, '+largeResult.checks+' local checks');
+// Compare old and new authoritative simulation, stripping only new start-event metadata.
+function engine(source){const c={window:{},console};vm.createContext(c);vm.runInContext(fs.readFileSync('src/combat/combat-data-v1.js','utf8'),c);vm.runInContext(source,c);return c.window.CellboundCombatReborn}
+const now=engine(fs.readFileSync('src/combat/combat-reborn-v1.js','utf8'));
+// Captured from unmodified staging 1714113; no git history required in shallow CI.
+const baseline={'mercer':'560586b5d86e32042f516eb0ff6d7d18ca7d98a6692ff97070747c594d5dc0f4','multi-enemy':'076c1ea826ab77a4b0752be206a4abea499f3700a3945b472e044383c36897bd','commands':'673ab7936e5df10aec36e2d783c05ee2a487e9388873fed0bc237a8905cf5c0b'};
+const normal=r=>JSON.stringify(r,(key,value)=>key==='environment'||key==='rangeStyle'?undefined:value);
+function play(e,opts,seed){if(seed!=='commands')return e.simulate(opts);const s=e.createLiveSession(opts);for(let i=0;i<150;i++){if(i===10)s.command('spread');if(i===60)s.command('stack');if(i===100)s.command('regroup');s.advance(100)}return s.snapshot()}
+for(const seed of ['mercer','multi-enemy','commands']){const opts={party:[{id:'tank',class:'Warrior',spec:'Protection',level:20,power:20},{id:'rogue',class:'Rogue',spec:'Assassination',level:20,power:20},{id:'hunt',class:'Hunter',spec:'Beast Mastery',level:20,power:20},{id:'mage',class:'Mage',spec:'Frost',level:20,power:20},{id:'heal',class:'Priest',spec:'Holy',level:20,power:20}],encounter:{kind:'boss',enemies:seed==='multi-enemy'?['A','B','C']:['Deadeye Mercer'],enemyHealth:6000,mechanics:[]},seed,maxDurationMs:15000};assert.equal(crypto.createHash('sha256').update(normal(play(now,opts,seed))).digest('hex'),baseline[seed],seed+' unchanged outcomes, events, resources and threat')}
+console.log('Spatial reservations, roles, movement recovery, death/revival, commands, obstacles, large PvP and before/after engine invariance passed.');

@@ -62,6 +62,9 @@ jobs:
         with:
           name: cellbound-staging-browser-${{ matrix.engine }}
           path: |
+            /tmp/cellbound-spatial/*.png
+            /tmp/cellbound-spatial/*.json
+            /tmp/cellbound-spatial/*mercer.webm
             /tmp/cellbound-class-animation/*.png
             /tmp/cellbound-class-animation/*.json
             /tmp/cellbound-animation/*.png

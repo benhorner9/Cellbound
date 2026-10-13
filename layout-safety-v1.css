@@ -5070,3 +5070,12 @@ body.cb-immersive-ui:has(.recruit-modal-backdrop:not([hidden])) .cb-dock{
     height:38px!important;
   }
 }
+
+/* Spatial occupancy needs vertical room for full-size portraits on narrow arenas.
+   Keep the existing stacked/scrolling mobile HUD; do not let auto tracks collapse
+   beneath the battlefield and put commands over the animated characters. */
+@media(max-width:849px){
+ .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]:not(.results-mode)>.cbcombat-grid:has(.cbs-spatial-panel){grid-template-rows:repeat(4,max-content)!important}
+ .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel>.cbcombat-arena-wrap.cbs-spatial-wrap{min-height:340px!important;aspect-ratio:auto!important}
+ .cbcombat-shell[data-combat-view="canonical-v1"] .cbs-spatial-wrap>[data-spatial-arena="1"]{height:100%!important;min-height:0!important;aspect-ratio:auto!important}
+}

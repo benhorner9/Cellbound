@@ -26,7 +26,7 @@ const STAGES=[
   intro:'Dust rolls through an empty main street. Every clock reads noon. One figure waits beside the water tower with his hand already resting on the grip.',
   blurb:'Deadeye ignores normal threat, chooses random targets and turns the street into a crossfire of marks, ricochets and a lethal High Noon cast.',
   enemies:[{name:'Deadeye Mercer',classification:'boss',targeting:'random',attackRange:30,attackName:'Deadeye Shot',damageType:'physical'}],
-  combat:{kind:'boss',level:14,recommendedItemLevel:38,enemyTypes:['boss'],enemyHealth:1700,mechanicIntervalMs:3300,
+  combat:{kind:'boss',level:14,recommendedItemLevel:38,environment:{presentation:{walkable:[[18,42],[49,29],[86,43],[90,88],[14,88]]}},enemyTypes:['boss'],enemyHealth:1700,mechanicIntervalMs:3300,
    mechanics:[
     {name:'Wanted Mark',type:'circles',duration:1450,status:{id:'wanted-mark',name:'Wanted Mark',duration:5000,effect:{incomingDamageReduction:-.12}}},
     {name:'Ricochet Line',type:'line',duration:1300},

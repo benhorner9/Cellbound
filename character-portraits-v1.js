@@ -1086,7 +1086,8 @@ function paperTierAura(c){
 // markings travel with the kicking leg. Robed characters retain their full skirt.
 function paperAnimatedLegs(c,skin,highlighted,uid){
  var art=paperLegs(c,skin,highlighted)+paperFeet(c,skin,highlighted);
- if(c.class!=='Monk')return art;
+ var legs=itemForSlot(c,'Legs');
+ if(legs&&['Mage','Priest','Druid','Warlock'].includes(gearClass(legs))&&clothLowerStyle(legs)!=='trousers')return art;
  return '<defs><clipPath id="'+uid+'legL"><rect x="0" y="240" width="120" height="170"/></clipPath><clipPath id="'+uid+'legR"><rect x="120" y="240" width="120" height="170"/></clipPath></defs>'+['L','R'].map(function(side){return '<g class="cb-paper-kick-'+side+'"><g clip-path="url(#'+uid+'leg'+side+')">'+art+'</g></g>'}).join('');
 }
 function paperDollSVG(c,opts){
