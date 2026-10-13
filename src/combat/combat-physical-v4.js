@@ -318,6 +318,25 @@ function anchorPoint(scene,el,bounds=scene.arena.getBoundingClientRect()){
  if(!Number.isFinite(x)||!Number.isFinite(y))return null;
  return{x,y}
 }
+
+/* Visual-only ability signatures: never alter simulation or attack timing. */
+function visualSignature(e,kind='damage'){
+ const name=String(e?.ability||e?.payload?.abilityId||'').toLowerCase().replace(/[-_]+/g,' ');
+ const schools=[['poison',/poison|venom|envenom|plague/],['fel',/fel|chaos bolt|demon|infernal/],['frost',/frost|ice|glacial|blizzard|winter/],['storm',/lightning|thunder|storm|electr/],['fire',/fire|flame|pyro|lava|burn|immolate/],['holy',/holy|divine|radiant|judgement|consecrat|benedict/],['shadow',/shadow|void|death|necrot|blood|curse|soul/],['arcane',/arcane|astral|star|celestial|azure|temporal/],['nature',/nature|thorn|root|regrowth|rejuven|wild growth|verdant|emerald|riptide/],['earth',/earth|quake|rock|stone/]];
+ const school=schools.find(([,re])=>re.test(name))?.[0]||(kind==='heal'?'heal':kind==='defense'?'guard':'steel');
+ const shape=kind==='heal'?'blossom':kind==='defense'||/shield|barrier|ward|guard|protection|block/.test(name)?'guard':/chain lightning|chain heal/.test(name)?'chain':/blizzard|whirl|volley|multi shot|starfall|nova|consecrat|earthquake|blade dance|fan of knives|death and decay/.test(name)?'nova':/aimed|shot|arrow|pierc|stab|dagger/.test(name)?'pierce':/slam|execute|crush|mortal strike|cleave|obliterat/.test(name)?'fracture':'pulse';
+ const major=!!(e?.payload?.majorAbility||e?.result==='critical'||Number(e?.payload?.visualIntensity)>=4||/apocalypse|metamorphosis|pyroblast|chaos bolt|glacial spike|frostwyrm|execute/.test(name));
+ return{school,shape,major};
+}
+function abilityImpact(scene,e,u,t,kind='damage'){
+ if(!t?.el||reduce())return false;
+ const v=visualSignature(e,kind);
+ const f=effect(scene,'ability-impact school-'+v.school+' shape-'+v.shape+(v.major?' major':''),null,t.el,v.major?540:380);
+ if(!f)return false;
+ if(u?.el?.isConnected)f.n.style.setProperty('--hit-angle',direction(center(u.el),center(t.el)).angle+'deg');
+ return true;
+}
+
 function effectAnchor(scene,el,bounds){return scene.sockets?.get(el)||anchorPoint(scene,el,bounds)}
 function effect(scene,cls,source,target,life=320,allowUnanchored=false){
  // Anchored FX must receive geometry before they enter the DOM. Previously the
@@ -368,9 +387,9 @@ function strike(scene,u,t,e,heal=false){
   const stroke=/shield|bash/i.test(e.ability||'')?'shield-strike':/thrust|pierce|stab/i.test(e.ability||'')?'thrust':/spin|whirl|sweep/i.test(e.ability||'')?'sweep':/overhead|cleave|crush/i.test(e.ability||'')?'overhead':u.p.motion;
   const f=effect(scene,'slash '+stroke,u.el,t.el,260);if(f)f.n.style.setProperty('--cbl-accent',u.p.accent);
  }
- if(heal){const f=effect(scene,'heal-ring'+(Number(e.payload?.targetHpPct)<40?' emergency':'')+(/HoT/.test(e.ability||'')?' periodic':''),null,t.el,500);return}
+ if(heal){abilityImpact(scene,e,u,t,'heal');const f=effect(scene,'heal-ring'+(Number(e.payload?.targetHpPct)<40?' emergency':'')+(/HoT/.test(e.ability||'')?' periodic':''),null,t.el,500);return}
  if(['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result))return;
- effect(scene,(e.result==='blocked'?'shield':'contact')+(heavy?' heavy':''),null,t.el,240);
+ if(!abilityImpact(scene,e,u,t,e.result==='blocked'?'defense':'damage'))effect(scene,(e.result==='blocked'?'shield':'contact')+(heavy?' heavy':''),null,t.el,240);
  motion(t,[{translate:(d.x*2*intensity)+'px '+(d.y*2*intensity)+'px',scale:heavy?'.94':'.98'},{translate:'0px 0px',scale:'1'}],280,scene)
 }
 function statuses(u,e){
@@ -421,20 +440,20 @@ function livingEvent(e,opts={}){
  case'CAST_START':
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
- case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
+ case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)&&!abilityImpact(scene,e,u,t))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
  case'HEAL_RECEIVED':if(t){
   const visualSource=e.payload?.visualSource?unit(scene,resolve(e.payload.visualSource,opts,arena)):u;
   if(Number(e.payload?.chainBounce)>0&&visualSource){
    const f=effect(scene,'connection heal chain',visualSource.el,t.el,430);if(f)f.n.style.setProperty('--cbl-accent','#76efac');
-   effect(scene,'heal-ring chain',null,t.el,460)
-  }else if(canAct(u))strike(scene,u,t,e,true);else effect(scene,'heal-ring',null,t.el,400);
+   abilityImpact(scene,e,visualSource,t,'heal');effect(scene,'heal-ring chain',null,t.el,460)
+  }else if(canAct(u))strike(scene,u,t,e,true);else{abilityImpact(scene,e,u,t,'heal');effect(scene,'heal-ring',null,t.el,400)}
   if(arena.dataset.bespokeBattlefield==='1'){const floor=effect(scene,'floor-light heal',null,t.el,320);if(floor)floor.n.style.setProperty('--cbl-accent','#76efac')}
  }break;
  case'AGGRO_CHANGED':if(u&&t){face(u,t.el);effect(scene,'aggro',null,t.el,650)}break;
  case'CROWD_CONTROL':if(t){statuses(t,{type:'DEBUFF_APPLIED',statusEffects:[{id:'visual-control',cc:e.payload?.cc||'stun'}]});t.controlUntil=now()+(Number(e.payload?.duration)||900)/scene.speed}break;
  case'BUFF_APPLIED':case'DEBUFF_APPLIED':case'BUFF_REMOVED':case'DEBUFF_REMOVED':statuses(t,e);break;
  case'INTERRUPT':if(e.result==='success'&&t){mechanic(scene,{...e,result:'interrupted'},opts);if(canAct(u))effect(scene,'connection lightning',u.el,t.el,150);clearCast(t);t.animation?.cancel();state(t,'interrupted',now()+500/scene.speed);effect(scene,'interrupt',null,t.el,550)}break;
- case'DEFENSIVE_ACTIVATED':if(t||u)state(t||u,'defending',now()+650/scene.speed);effect(scene,'shield',null,(t||u)?.el,650);break;
+ case'DEFENSIVE_ACTIVATED':if(t||u){state(t||u,'defending',now()+650/scene.speed);abilityImpact(scene,e,u,t||u,'defense')}effect(scene,'shield',null,(t||u)?.el,650);break;
  case'PLAYER_DEFEATED':case'ENEMY_DEFEATED':case'ADD_DEFEATED':
   if(t){t.dead=true;framing(scene);if(t.el.classList.contains('boss'))emphasis(scene,'death');clearCast(t);t.animation?.cancel();state(t,'dead');effect(scene,'death',null,t.el,t.el.classList.contains('boss')?1100:650)}break;
  case'PLAYER_REVIVED':case'ENEMY_REVIVED':
@@ -529,7 +548,7 @@ function combatEvent(e,opts={}){try{
 // Flights are presentation-only and owned by the existing bounded FX lifecycle.
 FX.launchAction=(e,arena,source,target,profile,flight)=>{
  const scene=scenes.get(arena);if(!scene||!source?.isConnected||!target?.isConnected||reduce())return;
- const u=scene.units.get(source),f=effect(scene,'class-projectile '+(profile.socket==='bow'?'arrow':family(e,u)),source,target,flight*scene.speed);
+ const u=scene.units.get(source),sig=visualSignature(e,profile.kind==='heal'?'heal':'damage'),f=effect(scene,'class-projectile '+(profile.socket==='bow'?'arrow':'school-'+sig.school),source,target,flight*scene.speed);
  if(!f)return;
  f.flight=flight;f.started=now();f.origin=window.CellboundCombatAnimation?.socket(source,profile.socket)||scene.sockets?.get(source)||center(source);
  const bounds=scene.bounds||arena.getBoundingClientRect();f.n.style.left=f.origin.x-bounds.left+'px';f.n.style.top=f.origin.y-bounds.top+'px';
@@ -539,7 +558,7 @@ FX.presentImpact=(e,fn)=>window.CellboundCombatAnimation?window.CellboundCombatA
 FX.syncPositions=(arena,units,objectives={})=>{mount(arena);const scene=scenes.get(arena);if(!scene)return;const zones=[];if(objectives.storm)zones.push({position:objectives.storm.centre||{x:50,y:50},radius:objectives.storm.radius});if(objectives.hill?.radius)zones.push({position:objectives.hill,radius:objectives.hill.radius});const signature=JSON.stringify(zones);if(signature!==scene.spatialZoneSignature){scene.spatialZoneSignature=signature;scene.spatialZones=zones;scene.spatialDirty=true}for(const data of units){const u=unit(scene,resolve(data.id,{},arena));if(u){u.spatialMeta={...u.spatialMeta,...data};u.dead=data.alive===false;setPosition(scene,u,data.position,200)}}wake()};
 if(window.CellboundCombatSpatial)window.CellboundCombatSpatial.inspect=arena=>{const s=scenes.get(arena);return s?{checks:s.spatialChecks,unresolved:s.spatialUnresolved,units:(s.spatialUnits||[]).map(u=>({id:u.id,role:u.role,style:u.style,logical:u.logical,visual:u.visual,reserved:u.reserved,rx:u.rx,ry:u.ry,conflict:u.conflict,state:u.el.dataset.spatialState}))}:null};
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
-FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.5.0';FX.living=true;
+FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.5.0';FX.living=true;
 // Legacy public entry points remain callable but no longer duplicate shared reactions.
 for(const name of ['impact','heal','death','spawn','interrupt']){const old=FX[name];FX[name]=function(el,...args){if(el?.closest?.('.cbl-scene'))return;return old?.(el,...args)}}
 })();

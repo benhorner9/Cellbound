@@ -391,3 +391,47 @@
    every armour piece overwhelms tablet frame budgets during joint animation. */
 .cbl-scene .cb-paper-doll :is(.cb-paper-slot,.cb-paper-set-glow,.cb-paper-glow,.cb-paper-race-detail){filter:none!important}
 .cbl-scene .cb-combat-portrait{will-change:transform}
+
+
+/* Distinct per-ability contact: two light CSS layers, no extra particle objects. */
+.cbl-fx.ability-impact{--hit:#e4bf8b;--flash:#fff3d8;width:48px;height:48px;animation:cblHitMain .38s ease-out both;z-index:2}
+.cbl-fx.ability-impact.major{width:70px;height:70px;animation-duration:.54s}
+.cbl-fx.ability-impact:before,.cbl-fx.ability-impact:after{content:"";position:absolute;display:block;pointer-events:none}
+.cbl-fx.ability-impact:before{inset:0;border:2px solid var(--hit);border-radius:50%;background:radial-gradient(circle,var(--flash) 0 6%,var(--hit) 12% 20%,transparent 54%);animation:cblHitRing .4s ease-out both}
+.cbl-fx.ability-impact:after{inset:14%;background:var(--hit);clip-path:polygon(50% 0,64% 37%,100% 19%,72% 51%,100% 72%,64% 67%,76% 100%,50% 72%,19% 100%,35% 64%,0 50%,36% 42%,20% 8%);animation:cblHitMark .4s ease-out both}
+.cbl-fx.school-fire{--hit:#ff944a;--flash:#ffe4a6}
+.cbl-fx.school-frost{--hit:#83dafa;--flash:#eafaff}
+.cbl-fx.school-storm{--hit:#9addf5;--flash:#fff2ae}
+.cbl-fx.school-holy{--hit:#efd179;--flash:#fff7ce}
+.cbl-fx.school-shadow{--hit:#ac83e0;--flash:#eed9ff}
+.cbl-fx.school-fel{--hit:#9cda52;--flash:#e9ffb4}
+.cbl-fx.school-arcane{--hit:#a7a8fa;--flash:#f2e5ff}
+.cbl-fx.school-nature{--hit:#85d4a3;--flash:#e5ffd5}
+.cbl-fx.school-earth{--hit:#c6a274;--flash:#f1e0c1}
+.cbl-fx.school-poison{--hit:#b6cf68;--flash:#f3ffac}
+.cbl-fx.school-heal{--hit:#7edbaa;--flash:#e9ffd1}
+.cbl-fx.school-guard{--hit:#9bcee7;--flash:#effbff}
+.cbl-fx.school-steel{--hit:#dfba91;--flash:#fff0d6}
+.cbl-fx.ability-impact.school-fire:after{clip-path:polygon(46% 0,65% 30%,84% 13%,72% 52%,95% 72%,59% 77%,48% 100%,25% 84%,9% 87%,23% 46%,11% 27%,37% 34%)}
+.cbl-fx.ability-impact.school-frost:after{clip-path:polygon(50% 0,61% 35%,85% 12%,68% 43%,100% 50%,68% 58%,85% 89%,57% 69%,50% 100%,40% 69%,12% 86%,32% 57%,0 50%,31% 44%,14% 14%,40% 35%)}
+.cbl-fx.ability-impact.school-storm:after{clip-path:polygon(42% 0,77% 0,53% 34%,81% 30%,30% 100%,48% 53%,17% 54%);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.school-holy:before{border:4px double var(--hit)}
+.cbl-fx.ability-impact.school-holy:after{clip-path:polygon(42% 0,58% 0,58% 42%,100% 42%,100% 58%,58% 58%,58% 100%,42% 100%,42% 58%,0 58%,0 42%,42% 42%)}
+.cbl-fx.ability-impact.school-shadow:before,.cbl-fx.ability-impact.school-fel:before{border-style:dashed}
+.cbl-fx.ability-impact.shape-fracture:after{clip-path:polygon(39% 0,53% 34%,70% 8%,60% 46%,100% 41%,64% 58%,85% 100%,49% 69%,25% 100%,39% 58%,0 65%,37% 42%,9% 6%)}
+.cbl-fx.ability-impact.shape-pierce:after{clip-path:polygon(0 46%,76% 41%,70% 17%,100% 50%,70% 83%,77% 59%,0 54%);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.shape-chain:after{clip-path:polygon(0 45%,30% 45%,39% 13%,52% 57%,70% 21%,79% 57%,100% 57%,100% 70%,72% 70%,67% 49%,47% 88%,37% 44%,34% 66%,0 66%)}
+.cbl-fx.ability-impact.shape-nova:before{border:4px dotted var(--hit)}
+.cbl-fx.ability-impact.shape-guard:before{border-radius:36% 36% 48% 48%;background:linear-gradient(125deg,transparent,var(--hit),transparent)}
+.cbl-fx.ability-impact.shape-guard:after{inset:12%;clip-path:polygon(50% 0,90% 19%,81% 73%,50% 100%,19% 73%,10% 19%);background:var(--flash)}
+.cbl-fx.ability-impact.shape-blossom:before{border:5px double var(--hit)}
+.cbl-fx.ability-impact.shape-blossom:after{clip-path:polygon(50% 0,60% 31%,88% 14%,68% 43%,100% 50%,68% 57%,88% 87%,60% 69%,50% 100%,40% 69%,12% 87%,32% 57%,0 50%,32% 43%,12% 14%,40% 31%)}
+@keyframes cblHitMain{0%{opacity:0;scale:.4}20%{opacity:1;scale:1}100%{opacity:0;scale:1.2}}
+@keyframes cblHitRing{0%{opacity:0;scale:.5}30%{opacity:.86;scale:.95}100%{opacity:0;scale:1.55}}
+@keyframes cblHitMark{0%{opacity:0;scale:.4;rotate:-18deg}40%{opacity:1;scale:1}100%{opacity:0;scale:1.24;rotate:14deg}}
+.cbl-fx.class-projectile:not(.arrow){background:var(--hit,var(--cbl-accent));border-radius:50%;width:14px;height:9px;box-shadow:none}
+.cbl-fx.class-projectile:not(.arrow):before{content:"";position:absolute;right:100%;top:2px;width:19px;height:5px;background:linear-gradient(90deg,transparent,var(--hit));opacity:.6}
+.cbl-fx.class-projectile.school-fire:not(.arrow){width:18px;height:12px;background:radial-gradient(circle at 72% 50%,#fff4c6,var(--hit) 60%,transparent 92%)}
+.cbl-fx.class-projectile.school-frost:not(.arrow){border-radius:0;clip-path:polygon(0 50%,57% 0,100% 50%,57% 100%)}
+.cbl-fx.class-projectile.school-storm:not(.arrow){width:22px;height:9px;border-radius:0;clip-path:polygon(0 34%,28% 0,47% 53%,70% 14%,100% 50%,62% 100%,39% 61%,16% 94%)}
+@media(prefers-reduced-motion:reduce){.cbl-fx.ability-impact{display:none!important}.cbl-fx.class-projectile:before{display:none!important}}
