@@ -328,6 +328,11 @@ function visualSignature(e,kind='damage'){
  const major=!!(e?.payload?.majorAbility||e?.result==='critical'||Number(e?.payload?.visualIntensity)>=4||/apocalypse|metamorphosis|pyroblast|chaos bolt|glacial spike|frostwyrm|execute/.test(name));
  return{school,shape,major};
 }
+function abilityCharge(scene,e,u){
+ if(!u?.el||reduce()||scene.effects.size>=25)return;
+ const v=visualSignature(e);
+ effect(scene,'ability-charge school-'+v.school+(v.major?' major':''),null,u.el,v.major?520:400);
+}
 function abilityImpact(scene,e,u,t,kind='damage'){
  if(!t?.el||reduce())return false;
  const v=visualSignature(e,kind);
@@ -358,7 +363,7 @@ function effect(scene,cls,source,target,life=320,allowUnanchored=false){
 function clearCast(u){
  if(!u)return;
  u.cast?.orb?.remove();u.cast?.beam?.remove();u.cast?.glyph?.remove();u.cast?.label?.remove();u.cast=null;
- u.el.classList.remove('cbl-casting');u.el.style.removeProperty('--cbl-charge');delete u.el.dataset.castStyle;delete u.el.dataset.castMechanic;delete u.el.dataset.bossCast
+ u.el.classList.remove('cbl-casting');u.el.style.removeProperty('--cbl-charge');delete u.el.dataset.castStyle;delete u.el.dataset.castMechanic;delete u.el.dataset.bossCast;delete u.el.dataset.vfxSchool
 }
 function mountCastVisual(u,e){
  if(!u?.cast||!u.el)return;
@@ -436,9 +441,10 @@ function livingEvent(e,opts={}){
  case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position,80);state(u,controlled(u)?'controlled':'idle');delete u.el.dataset.intent;if(t)face(u,t.el);if(arena.dataset.bespokeBattlefield==='1'&&arena.classList.contains('theme-ashen')&&!reduce())effect(scene,'ground-kick',null,u.el,360)}break;
  case'ABILITY_START':
   if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',now()+560/scene.speed);
-   if(!(e.payload?.castTime>0))motion(u,[{scale:'.965',translate:'0 1px',offset:0},{scale:'1.035',translate:'0 -1px',offset:.46},{scale:'1',translate:'0 0',offset:1}],300,scene)}break;
+   if(!(e.payload?.castTime>0)){const sig=visualSignature(e);if(sig.major||sig.shape==='nova'||sig.shape==='fracture')abilityCharge(scene,e,u);}
+    if(!(e.payload?.castTime>0))motion(u,[{scale:'.965',translate:'0 1px',offset:0},{scale:'1.035',translate:'0 -1px',offset:.46},{scale:'1',translate:'0 0',offset:1}],300,scene)}break;
  case'CAST_START':
-  if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e)}break;
+  if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e);u.el.dataset.vfxSchool=visualSignature(e).school;abilityCharge(scene,e,u)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
  case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)&&!abilityImpact(scene,e,u,t))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
  case'HEAL_RECEIVED':if(t){

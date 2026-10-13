@@ -435,3 +435,22 @@
 .cbl-fx.class-projectile.school-frost:not(.arrow){border-radius:0;clip-path:polygon(0 50%,57% 0,100% 50%,57% 100%)}
 .cbl-fx.class-projectile.school-storm:not(.arrow){width:22px;height:9px;border-radius:0;clip-path:polygon(0 34%,28% 0,47% 53%,70% 14%,100% 50%,62% 100%,39% 61%,16% 94%)}
 @media(prefers-reduced-motion:reduce){.cbl-fx.ability-impact{display:none!important}.cbl-fx.class-projectile:before{display:none!important}}
+
+
+/* Wind-ups: the existing character cast glyph gains the same school as its spell. */
+.cbl-fx.ability-charge{--hit:#dfbb8e;--flash:#fff2d7;width:45px;height:45px;animation:cblChargePop .42s ease-out both;z-index:2}
+.cbl-fx.ability-charge.major{width:57px;height:57px;animation-duration:.55s}
+.cbl-fx.ability-charge:before,.cbl-fx.ability-charge:after{content:"";position:absolute;display:block;pointer-events:none}
+.cbl-fx.ability-charge:before{inset:1px;border:2px dashed var(--hit);border-radius:50%;animation:cblChargeRing .42s ease-out both}
+.cbl-fx.ability-charge:after{inset:23%;border:2px solid var(--flash);border-radius:24%;rotate:45deg;animation:cblChargeRing .42s ease-out both}
+@keyframes cblChargePop{0%{opacity:0;scale:.45}45%{opacity:.7;scale:.95}100%{opacity:0;scale:1.12}}
+@keyframes cblChargeRing{0%{opacity:0;rotate:-25deg;scale:.55}40%{opacity:.85}100%{opacity:0;rotate:35deg;scale:1.2}}
+.cbl-casting[data-vfx-school="fire"] .cbl-cast-glyph{border-color:#ff944a;color:#ff944a}
+.cbl-casting[data-vfx-school="frost"] .cbl-cast-glyph{border-color:#83dafa;color:#83dafa}
+.cbl-casting[data-vfx-school="storm"] .cbl-cast-glyph{border-color:#9addf5;color:#9addf5}
+.cbl-casting[data-vfx-school="holy"] .cbl-cast-glyph{border-color:#efd179;color:#efd179}
+.cbl-casting[data-vfx-school="shadow"] .cbl-cast-glyph{border-color:#ac83e0;color:#ac83e0}
+.cbl-casting[data-vfx-school="fel"] .cbl-cast-glyph{border-color:#9cda52;color:#9cda52}
+.cbl-casting[data-vfx-school="nature"] .cbl-cast-glyph{border-color:#85d4a3;color:#85d4a3}
+.cbl-casting[data-vfx-school="arcane"] .cbl-cast-glyph{border-color:#a7a8fa;color:#a7a8fa}
+@media(prefers-reduced-motion:reduce){.cbl-fx.ability-charge{display:none!important}}
