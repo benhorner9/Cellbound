@@ -4856,3 +4856,217 @@ body.cb-immersive-ui:has(.recruit-modal-backdrop:not([hidden])) .cb-dock{
     width:min(100%, max(180px, calc(177.7778dvh - 790px)))!important;
   }
 }
+
+
+/* MOBILE COMBAT VIEW: battlefield and actions stay in the phone viewport */
+@media (max-width:849px) {
+  /* The outer frame remains one screen high; only its contents scroll. */
+  .cbcombat-backdrop {
+    padding:0!important;
+    overflow:hidden!important;
+  }
+  .cbcombat-backdrop>.cbcombat-shell[data-combat-view="canonical-v1"] {
+    border:0!important;
+    border-radius:0!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode) {
+    --cbcombat-gap:6px;
+    grid-template-rows:auto auto minmax(0,1fr)!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-header {
+    min-height:47px!important;
+    padding:6px 10px!important;
+    gap:7px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-title h2 {
+    font-size:16px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-live-dot {display:none!important}
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-route {
+    min-height:27px!important;
+    height:27px!important;
+    padding:3px 6px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-route span {
+    min-width:78px!important;
+    padding:2px 5px!important;
+  }
+
+  /* Columns become four ordered panels. No horizontal panning or hidden commands. */
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]:not(.results-mode)>.cbcombat-grid {
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:repeat(4,auto)!important;
+    align-content:start!important;
+    gap:6px!important;
+    height:100%!important;
+    padding:6px!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]:not(.results-mode)
+  :is(.cbcombat-left-column,.cbcombat-right-column) {
+    display:contents!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]:not(.results-mode) .cbcombat-battle-panel {
+    grid-column:1!important;
+    grid-row:1!important;
+    display:flex!important;
+    flex-direction:column!important;
+    height:auto!important;
+    min-height:0!important;
+    align-self:start!important;
+    padding:6px!important;
+    gap:5px!important;
+    overflow:visible!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]:not(.results-mode) .cbcombat-arena-wrap {
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    aspect-ratio:16 / 9!important;
+    flex:0 0 auto!important;
+    overflow:hidden!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-topbar {
+    min-height:28px!important;
+    padding:4px 6px!important;
+    gap:4px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-chat {
+    flex:0 0 88px!important;
+    height:88px!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-chat-tabs {
+    min-height:24px!important;
+    padding:2px 4px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-chat-messages {
+    min-height:16px!important;
+    padding:2px 6px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-chat-form {
+    gap:4px!important;
+    padding:3px 5px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-chat-form input {
+    min-height:28px!important;
+    font-size:16px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]:not(.results-mode) .cbcombat-command-panel {
+    grid-column:1!important;
+    grid-row:2!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    padding:7px!important;
+    overflow:visible!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel :is(.cbr-command-groups,.cbstd-command-groups) {
+    flex:0 0 auto!important;
+    height:auto!important;
+    min-height:0!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel .cbr-command-column {
+    height:auto!important;
+    grid-template-rows:repeat(4,minmax(46px,auto))!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel :is(.cbr-command,.cb2d-potion-button) {
+    min-height:46px!important;
+    height:auto!important;
+    padding:6px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel :is(.cbr-command,.cb2d-potion-button) b {
+    font-size:11px!important;
+    line-height:1.2!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-command-panel :is(.cbr-command,.cb2d-potion-button) small {
+    font-size:9px!important;
+    line-height:1.2!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]:not(.results-mode) .cbcombat-party-panel {
+    grid-column:1!important;
+    grid-row:3!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:7px!important;
+    overflow:visible!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party {
+    height:auto!important;
+    min-height:0!important;
+    overflow:visible!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows {
+    height:auto!important;
+    min-height:0!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-rows:auto!important;
+    grid-auto-rows:minmax(66px,auto)!important;
+    overflow:visible!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows>.cb2d-party-row {
+    height:auto!important;
+    min-height:66px!important;
+    grid-template-columns:28px minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;
+    padding:5px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-pet-rows {
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]:not(.results-mode) .cbcombat-meters-panel {
+    grid-column:1!important;
+    grid-row:4!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:7px!important;
+    overflow:visible!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-meter-stack {
+    height:auto!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:repeat(3,auto)!important;
+    overflow:visible!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-meter-stack .cb2d-meter-panel {
+    min-height:70px!important;
+  }
+
+  /* Dungeon actors keep percentages through resize/orientation changes.
+     Desktop's pixel offsets were calculated for a different canvas size. */
+  .cbcombat-shell[data-combat-view="canonical-v1"] #cb2dArena .cb2d-unit[style*="--unit-left"] {
+    left:clamp(32px,var(--unit-left,50%),calc(100% - 32px))!important;
+    top:clamp(34px,var(--unit-top,50%),calc(100% - 38px))!important;
+    margin:0!important;
+    transform:translate(-50%,-50%)!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] #cb2dArena .cb2d-unit>span {
+    max-width:100px!important;
+    min-width:0!important;
+    font-size:9px!important;
+  }
+}
+@media (max-width:420px) {
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-topbar .cb2d-ground-legend {
+    display:none!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-rows {
+    gap:4px!important;
+  }
+  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-header-actions button {
+    min-width:40px!important;
+    height:38px!important;
+  }
+}
