@@ -773,7 +773,7 @@
     "id": "the-old-man-keeper-of-ages",
     "sourceFile": "exec-2821c944-8525-477b-afa8-aa4e4728ee13.png",
     "sha256": "5c110b37553ebdf28d798795d4b1aae5045abe396b4c5e7991deef094aa96bea",
-    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound The Old Man \u2014 Keeper of Ages. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. Existing boss reference identity: stooped ancient humanoid with long white hair, cracked gold smiling theatrical mask, thin spiked clockwork halo, tattered plum and black embroidered robes, brass pendulum in one hand. Full body STANDING, no throne or scenery. Distinct eerie silhouette. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; draws pendulum back and lifts bony hand; extends hand left releasing time magic. Bottom row: both hands weave compact clockwork rings; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
+    "prompt": "Use case: stylized-concept. Final production transparent sprite atlas for Cellbound The Old Man — Keeper of Ages. Illustrated outlined 2D dark fantasy, worn detailed materials and clear silhouettes matching the character equipment reference. Existing boss reference identity: stooped ancient humanoid with long white hair, cracked gold smiling theatrical mask, thin spiked clockwork halo, tattered plum and black embroidered robes, brass pendulum in one hand. Full body STANDING, no throne or scenery. Distinct eerie silhouette. Same entity in SIX poses arranged STRICT 3 columns x 2 rows on 1536x1024 landscape canvas. Each complete pose must fit in its own 512x512 cell with ample transparent margin; no overlap between cells. SAME proportions, costume, scale and pivot across frames, facing LEFT in three-quarter view. Top row: ready; draws pendulum back and lifts bony hand; extends hand left releasing time magic. Bottom row: both hands weave compact clockwork rings; hit recoil with damaged stance; defeated collapsed/dismantled on ground. For hovering creatures use hovering ready and lowered collapsed dead pose. Genuinely change arms, anatomy and equipment motion per action, not whole-image rotation. No scenery, no floor or shadow, no labels/text/gridlines. Preserve true alpha background.",
     "packing": {
       "sourceSize": [
         1536,
@@ -933,5 +933,4545 @@
     },
     "bytes": 77664,
     "promptRecord": "verbatim generation prompt"
+  },
+  {
+    "id": "archdruid-vorran",
+    "sourceFile": "exec-f19c9d40-8a76-4e73-8088-c96afc5ead9a.png",
+    "sha256": "90ed7a8ec19a6e6ce1e937e275e4b0cd6d47141662f83eb5ebb335ee1652a586",
+    "prompt": "Create a production-ready transparent sprite atlas for the EXISTING Cellbound enemy Archdruid Vorran. Ancient antler-crowned grey-bearded archdruid in bark armour, root cloak, green-gold branch staff. Preserve the reference's face, huge antlers, beard and organic materials. The first reference gives identity; the second gives Cellbound's clean painted dark-fantasy sprite style. Reinterpret the reference into an illustrated 2D full-body game actor, precise dark outlines and painterly metal/cloth, not photographic. ONE creature repeated in EXACTLY SIX poses in a strict 3-column 2-row grid. Order: ready; attack wind-up; attack contact/release; special cast/guard; recoiling from a hit; defeated collapsed on ground. Same identity, outfit, anatomy, weapon, scale and LEFT-facing 3/4 orientation in all poses. Every pose wholly inside its cell, with generous transparent gutters of at least 24 pixels. All weapons and magic MUST stay inside the same cell. Entire feet and head visible, same ground baseline within each cell; death pose low. No text, labels, panels, scenery, ground plane, shadow background or border. True alpha transparent background. Full canvas 1536x1024, each cell512x512. Six isolated silhouettes only. Do not crop any limb. This atlas will be cut into game animation frames, not used as a concept poster.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 29,
+          "y0": 61,
+          "x1": 458,
+          "y1": 498
+        },
+        {
+          "x0": 492,
+          "y0": 10,
+          "x1": 957,
+          "y1": 498
+        },
+        {
+          "x0": 933,
+          "y0": 98,
+          "x1": 1518,
+          "y1": 499
+        },
+        {
+          "x0": 19,
+          "y0": 520,
+          "x1": 518,
+          "y1": 968
+        },
+        {
+          "x0": 559,
+          "y0": 557,
+          "x1": 1013,
+          "y1": 969
+        },
+        {
+          "x0": 981,
+          "y0": 765,
+          "x1": 1518,
+          "y1": 991
+        }
+      ],
+      "scale": 0.39590443686006827,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 127800
+  },
+  {
+    "id": "the-bound-choir",
+    "sourceFile": "exec-ece835b0-45c7-4e88-bf32-ce98e3ea9022.png",
+    "sha256": "91521384ad79d48fcc99a6064939b1e4b6e70ab848f136833604c71a398e3175",
+    "prompt": "Create a production-ready transparent sprite atlas for the EXISTING Cellbound enemy The Bound Choir. One floating spectral boss: central jagged dark crown and robe of translucent violet screaming faces, binding chains, spectral hands. Preserve central silhouette, spectral faces and violet energy. No architecture. The first reference gives identity; the second gives Cellbound's clean painted dark-fantasy sprite style. Reinterpret the reference into an illustrated 2D full-body game actor, precise dark outlines and painterly metal/cloth, not photographic. ONE creature repeated in EXACTLY SIX poses in a strict 3-column 2-row grid. Order: ready; attack wind-up; attack contact/release; special cast/guard; recoiling from a hit; defeated collapsed on ground. Same identity, outfit, anatomy, weapon, scale and LEFT-facing 3/4 orientation in all poses. Every pose wholly inside its cell, with generous transparent gutters of at least 24 pixels. All weapons and magic MUST stay inside the same cell. Entire feet and head visible, same ground baseline within each cell; death pose low. No text, labels, panels, scenery, ground plane, shadow background or border. True alpha transparent background. Full canvas 1536x1024, each cell512x512. Six isolated silhouettes only. Do not crop any limb. This atlas will be cut into game animation frames, not used as a concept poster.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 46,
+          "y0": 9,
+          "x1": 504,
+          "y1": 517
+        },
+        {
+          "x0": 554,
+          "y0": 8,
+          "x1": 974,
+          "y1": 514
+        },
+        {
+          "x0": 963,
+          "y0": 60,
+          "x1": 1519,
+          "y1": 519
+        },
+        {
+          "x0": 16,
+          "y0": 519,
+          "x1": 495,
+          "y1": 1012
+        },
+        {
+          "x0": 539,
+          "y0": 575,
+          "x1": 1004,
+          "y1": 1001
+        },
+        {
+          "x0": 1047,
+          "y0": 604,
+          "x1": 1516,
+          "y1": 1001
+        }
+      ],
+      "scale": 0.41651705565529623,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 156138
+  },
+  {
+    "id": "dr-vex-calder",
+    "sourceFile": "exec-237f22ee-ce7a-47b3-a924-2c56870666cc.png",
+    "sha256": "7e3e24bb06ec0ee7caf42cc178f056d5e87bb01bbe4c4880ca5c528daf746f11",
+    "prompt": "Create a production-ready transparent sprite atlas for the EXISTING Cellbound enemy Dr. Vex Calder. Silver-haired scientist mage with rugged face, dark wine-red longcoat, bronze mechanical shoulder harness, teal power coils, cable gauntlets and sturdy boots. Preserve outfit and identity. Electrical hand attacks. The first reference gives identity; the second gives Cellbound's clean painted dark-fantasy sprite style. Reinterpret the reference into an illustrated 2D full-body game actor, precise dark outlines and painterly metal/cloth, not photographic. ONE creature repeated in EXACTLY SIX poses in a strict 3-column 2-row grid. Order: ready; attack wind-up; attack contact/release; special cast/guard; recoiling from a hit; defeated collapsed on ground. Same identity, outfit, anatomy, weapon, scale and LEFT-facing 3/4 orientation in all poses. Every pose wholly inside its cell, with generous transparent gutters of at least 24 pixels. All weapons and magic MUST stay inside the same cell. Entire feet and head visible, same ground baseline within each cell; death pose low. No text, labels, panels, scenery, ground plane, shadow background or border. True alpha transparent background. Full canvas 1536x1024, each cell512x512. Six isolated silhouettes only. Do not crop any limb. This atlas will be cut into game animation frames, not used as a concept poster.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 84,
+          "y0": 67,
+          "x1": 477,
+          "y1": 489
+        },
+        {
+          "x0": 553,
+          "y0": 15,
+          "x1": 977,
+          "y1": 494
+        },
+        {
+          "x0": 1006,
+          "y0": 105,
+          "x1": 1518,
+          "y1": 487
+        },
+        {
+          "x0": 48,
+          "y0": 536,
+          "x1": 505,
+          "y1": 974
+        },
+        {
+          "x0": 593,
+          "y0": 578,
+          "x1": 992,
+          "y1": 973
+        },
+        {
+          "x0": 1010,
+          "y0": 802,
+          "x1": 1509,
+          "y1": 978
+        }
+      ],
+      "scale": 0.4522417153996101,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 132018
+  },
+  {
+    "id": "the-butler",
+    "sourceFile": "exec-4f52f779-d1bb-438f-88e0-4802d0b2d998.png",
+    "sha256": "2f74b5da4df6aac1c22244567fd129d0bb4a5322a45e613d4fc36b42b2896be8",
+    "prompt": "Create a production-ready transparent sprite atlas for the EXISTING Cellbound enemy The Butler. Gaunt undead elderly butler, black formal tailcoat, pale face, silver serving tray and white porcelain plates. Attack winds up and THROWS one plate with arm extended, preparing haunted service with raised tray. No detached plate beyond this cell. The first reference gives identity; the second gives Cellbound's clean painted dark-fantasy sprite style. Reinterpret the reference into an illustrated 2D full-body game actor, precise dark outlines and painterly metal/cloth, not photographic. ONE creature repeated in EXACTLY SIX poses in a strict 3-column 2-row grid. Order: ready; attack wind-up; attack contact/release; special cast/guard; recoiling from a hit; defeated collapsed on ground. Same identity, outfit, anatomy, weapon, scale and LEFT-facing 3/4 orientation in all poses. Every pose wholly inside its cell, with generous transparent gutters of at least 24 pixels. All weapons and magic MUST stay inside the same cell. Entire feet and head visible, same ground baseline within each cell; death pose low. No text, labels, panels, scenery, ground plane, shadow background or border. True alpha transparent background. Full canvas 1536x1024, each cell512x512. Six isolated silhouettes only. Do not crop any limb. This atlas will be cut into game animation frames, not used as a concept poster.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 96,
+          "y0": 77,
+          "x1": 465,
+          "y1": 487
+        },
+        {
+          "x0": 580,
+          "y0": 30,
+          "x1": 954,
+          "y1": 489
+        },
+        {
+          "x0": 1022,
+          "y0": 108,
+          "x1": 1499,
+          "y1": 486
+        },
+        {
+          "x0": 68,
+          "y0": 532,
+          "x1": 476,
+          "y1": 980
+        },
+        {
+          "x0": 590,
+          "y0": 596,
+          "x1": 937,
+          "y1": 978
+        },
+        {
+          "x0": 1025,
+          "y0": 778,
+          "x1": 1497,
+          "y1": 968
+        }
+      ],
+      "scale": 0.48535564853556484,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 94464
+  },
+  {
+    "id": "the-maid",
+    "sourceFile": "exec-51518977-62d1-48a9-b7a7-8e4cd44633f2.png",
+    "sha256": "588fa917e734ee0bb27b8a4ed73cb2852c22ea7cf1f96fb3a4d826e7cba2ec3e",
+    "prompt": "Create a production-ready transparent sprite atlas for the EXISTING Cellbound enemy The Maid. One single ghostly undead maid in torn charcoal Victorian dress, lace cap and grey apron, dishevelled grey hair, clawed hands. Attack is claw swipe; special cast is a dramatic screech with hands raised. Keep fully clothed. No second maid. The first reference gives identity; the second gives Cellbound's clean painted dark-fantasy sprite style. Reinterpret the reference into an illustrated 2D full-body game actor, precise dark outlines and painterly metal/cloth, not photographic. ONE creature repeated in EXACTLY SIX poses in a strict 3-column 2-row grid. Order: ready; attack wind-up; attack contact/release; special cast/guard; recoiling from a hit; defeated collapsed on ground. Same identity, outfit, anatomy, weapon, scale and LEFT-facing 3/4 orientation in all poses. Every pose wholly inside its cell, with generous transparent gutters of at least 24 pixels. All weapons and magic MUST stay inside the same cell. Entire feet and head visible, same ground baseline within each cell; death pose low. No text, labels, panels, scenery, ground plane, shadow background or border. True alpha transparent background. Full canvas 1536x1024, each cell512x512. Six isolated silhouettes only. Do not crop any limb. This atlas will be cut into game animation frames, not used as a concept poster.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 116,
+          "y0": 84,
+          "x1": 473,
+          "y1": 495
+        },
+        {
+          "x0": 600,
+          "y0": 24,
+          "x1": 943,
+          "y1": 498
+        },
+        {
+          "x0": 1043,
+          "y0": 114,
+          "x1": 1503,
+          "y1": 499
+        },
+        {
+          "x0": 81,
+          "y0": 537,
+          "x1": 473,
+          "y1": 987
+        },
+        {
+          "x0": 626,
+          "y0": 605,
+          "x1": 957,
+          "y1": 978
+        },
+        {
+          "x0": 1018,
+          "y0": 784,
+          "x1": 1504,
+          "y1": 977
+        }
+      ],
+      "scale": 0.47638603696098564,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 117490
+  },
+  {
+    "id": "the-engineer",
+    "sourceFile": "exec-c7845231-b19c-4341-a85b-59c034e9958e.png",
+    "sha256": "4f7443e6845905e45a5066ceef69b212e13503576915803859e201e5888edcdc",
+    "prompt": "Create a production-ready transparent sprite atlas for the EXISTING Cellbound enemy The Engineer. Gaunt undead workshop engineer in torn dark workcoat, leather tool harness, metal gauntlet, brass gadgets, heavy wrench. Attack with wrench, special pose commanding his inventions. Preserve white unkempt hair and soot-covered attire. The first reference gives identity; the second gives Cellbound's clean painted dark-fantasy sprite style. Reinterpret the reference into an illustrated 2D full-body game actor, precise dark outlines and painterly metal/cloth, not photographic. ONE creature repeated in EXACTLY SIX poses in a strict 3-column 2-row grid. Order: ready; attack wind-up; attack contact/release; special cast/guard; recoiling from a hit; defeated collapsed on ground. Same identity, outfit, anatomy, weapon, scale and LEFT-facing 3/4 orientation in all poses. Every pose wholly inside its cell, with generous transparent gutters of at least 24 pixels. All weapons and magic MUST stay inside the same cell. Entire feet and head visible, same ground baseline within each cell; death pose low. No text, labels, panels, scenery, ground plane, shadow background or border. True alpha transparent background. Full canvas 1536x1024, each cell512x512. Six isolated silhouettes only. Do not crop any limb. This atlas will be cut into game animation frames, not used as a concept poster.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 26,
+          "y0": 102,
+          "x1": 502,
+          "y1": 497
+        },
+        {
+          "x0": 567,
+          "y0": 14,
+          "x1": 961,
+          "y1": 498
+        },
+        {
+          "x0": 950,
+          "y0": 147,
+          "x1": 1524,
+          "y1": 492
+        },
+        {
+          "x0": 57,
+          "y0": 546,
+          "x1": 544,
+          "y1": 977
+        },
+        {
+          "x0": 619,
+          "y0": 583,
+          "x1": 980,
+          "y1": 977
+        },
+        {
+          "x0": 1016,
+          "y0": 778,
+          "x1": 1522,
+          "y1": 996
+        }
+      ],
+      "scale": 0.40347826086956523,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 87300
+  },
+  {
+    "id": "the-master-of-the-manor",
+    "sourceFile": "exec-6f0cff7c-9b5e-47a3-ad95-a44a28b85ab8.png",
+    "sha256": "4e15e69a9487c8771fd1501e947be03f860d027af70672dea7124497cf5bd8d3",
+    "prompt": "Create a production-ready transparent sprite atlas for the EXISTING Cellbound enemy The Master of the Manor. Ancient undead aristocrat with long white hair, ragged black embroidered noble coat and wine-red cape, pale gaunt face, long spectral fingers. Preserve aristocratic silhouette. Claw strike and commanding necromantic gesture. The first reference gives identity; the second gives Cellbound's clean painted dark-fantasy sprite style. Reinterpret the reference into an illustrated 2D full-body game actor, precise dark outlines and painterly metal/cloth, not photographic. ONE creature repeated in EXACTLY SIX poses in a strict 3-column 2-row grid. Order: ready; attack wind-up; attack contact/release; special cast/guard; recoiling from a hit; defeated collapsed on ground. Same identity, outfit, anatomy, weapon, scale and LEFT-facing 3/4 orientation in all poses. Every pose wholly inside its cell, with generous transparent gutters of at least 24 pixels. All weapons and magic MUST stay inside the same cell. Entire feet and head visible, same ground baseline within each cell; death pose low. No text, labels, panels, scenery, ground plane, shadow background or border. True alpha transparent background. Full canvas 1536x1024, each cell512x512. Six isolated silhouettes only. Do not crop any limb. This atlas will be cut into game animation frames, not used as a concept poster.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 81,
+          "y0": 29,
+          "x1": 500,
+          "y1": 495
+        },
+        {
+          "x0": 546,
+          "y0": 19,
+          "x1": 1003,
+          "y1": 491
+        },
+        {
+          "x0": 1007,
+          "y0": 88,
+          "x1": 1525,
+          "y1": 489
+        },
+        {
+          "x0": 50,
+          "y0": 512,
+          "x1": 539,
+          "y1": 970
+        },
+        {
+          "x0": 584,
+          "y0": 587,
+          "x1": 988,
+          "y1": 980
+        },
+        {
+          "x0": 1019,
+          "y0": 756,
+          "x1": 1518,
+          "y1": 983
+        }
+      ],
+      "scale": 0.44701348747591524,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 116878
+  },
+  {
+    "id": "silas-vane",
+    "sourceFile": "exec-f3b6762a-96e0-4c88-b5c5-e795076b68e5.png",
+    "sha256": "75dd7ee5fe87e235daf470734ced2c0460ccce2a856b1d0fc64de555040c1837",
+    "prompt": "Create a production-ready transparent sprite atlas for the EXISTING Cellbound enemy Silas Vane. Rugged middle-aged dark-haired bearded naval noble in weathered black leather greatcoat with gold epaulettes, heavy boots, massive chained anchor polearm. Preserve face, outfit and anchor weapon. Two-handed heavy anchor swing. The first reference gives identity; the second gives Cellbound's clean painted dark-fantasy sprite style. Reinterpret the reference into an illustrated 2D full-body game actor, precise dark outlines and painterly metal/cloth, not photographic. ONE creature repeated in EXACTLY SIX poses in a strict 3-column 2-row grid. Order: ready; attack wind-up; attack contact/release; special cast/guard; recoiling from a hit; defeated collapsed on ground. Same identity, outfit, anatomy, weapon, scale and LEFT-facing 3/4 orientation in all poses. Every pose wholly inside its cell, with generous transparent gutters of at least 24 pixels. All weapons and magic MUST stay inside the same cell. Entire feet and head visible, same ground baseline within each cell; death pose low. No text, labels, panels, scenery, ground plane, shadow background or border. True alpha transparent background. Full canvas 1536x1024, each cell512x512. Six isolated silhouettes only. Do not crop any limb. This atlas will be cut into game animation frames, not used as a concept poster.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 26,
+          "y0": 74,
+          "x1": 512,
+          "y1": 511
+        },
+        {
+          "x0": 549,
+          "y0": 10,
+          "x1": 1017,
+          "y1": 502
+        },
+        {
+          "x0": 1020,
+          "y0": 126,
+          "x1": 1529,
+          "y1": 501
+        },
+        {
+          "x0": 27,
+          "y0": 539,
+          "x1": 510,
+          "y1": 976
+        },
+        {
+          "x0": 533,
+          "y0": 563,
+          "x1": 1010,
+          "y1": 954
+        },
+        {
+          "x0": 1027,
+          "y0": 775,
+          "x1": 1520,
+          "y1": 970
+        }
+      ],
+      "scale": 0.4549019607843137,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 106098
+  },
+  {
+    "id": "ancient-echo",
+    "sourceFile": "exec-f5a5da7e-b7ad-4116-bbef-8f91c513e737.png",
+    "sha256": "3f46b1adb894f678df8c7c1c9baec2da9000827fd5aab688d6e9ec9a40b2ddad",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Ancient Echo. An ancient translucent draconic spirit with a horned head, spectral scales and violet-gold rune fragments; one compact complete hovering creature. Animation anatomy: elemental. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 58,
+          "y0": 15,
+          "x1": 461,
+          "y1": 493
+        },
+        {
+          "x0": 519,
+          "y0": 18,
+          "x1": 963,
+          "y1": 522
+        },
+        {
+          "x0": 947,
+          "y0": 108,
+          "x1": 1535,
+          "y1": 496
+        },
+        {
+          "x0": 14,
+          "y0": 511,
+          "x1": 479,
+          "y1": 993
+        },
+        {
+          "x0": 551,
+          "y0": 547,
+          "x1": 974,
+          "y1": 993
+        },
+        {
+          "x0": 927,
+          "y0": 675,
+          "x1": 1518,
+          "y1": 991
+        }
+      ],
+      "scale": 0.3918918918918919,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 128990
+  },
+  {
+    "id": "arcane-aberration",
+    "sourceFile": "exec-b897e767-eedc-4aa7-9ab4-d9741f6c29b7.png",
+    "sha256": "a18ad6462bc308cf3a7b9c086bd2872d0ea4afff91f03b8f31ac9bce5092e83d",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Arcane Aberration. A strange hovering arcane creature of interlocked indigo crystal plates around a luminous violet eye, with two asymmetrical crystalline grasping limbs. Animation anatomy: elemental. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 60,
+          "y0": 103,
+          "x1": 459,
+          "y1": 439
+        },
+        {
+          "x0": 578,
+          "y0": 44,
+          "x1": 931,
+          "y1": 458
+        },
+        {
+          "x0": 991,
+          "y0": 134,
+          "x1": 1514,
+          "y1": 430
+        },
+        {
+          "x0": 40,
+          "y0": 558,
+          "x1": 499,
+          "y1": 903
+        },
+        {
+          "x0": 595,
+          "y0": 574,
+          "x1": 968,
+          "y1": 931
+        },
+        {
+          "x0": 1051,
+          "y0": 774,
+          "x1": 1516,
+          "y1": 988
+        }
+      ],
+      "scale": 0.44274809160305345,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 97982
+  },
+  {
+    "id": "ashfang-alpha",
+    "sourceFile": "exec-c56837d2-7b65-4b86-a572-8494d4f9fda2.png",
+    "sha256": "1adb46345f01f947a53a576ca4b972cf88cb4a67be739fb530445948a98e058d",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Ashfang Alpha. A powerful charcoal-grey alpha wolf with an ember-red mane, ash-white muzzle, scarred shoulder and long readable fangs; four legs. Animation anatomy: beast. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 32,
+          "y0": 124,
+          "x1": 483,
+          "y1": 490
+        },
+        {
+          "x0": 557,
+          "y0": 148,
+          "x1": 995,
+          "y1": 493
+        },
+        {
+          "x0": 1027,
+          "y0": 177,
+          "x1": 1517,
+          "y1": 492
+        },
+        {
+          "x0": 43,
+          "y0": 521,
+          "x1": 484,
+          "y1": 982
+        },
+        {
+          "x0": 559,
+          "y0": 602,
+          "x1": 985,
+          "y1": 984
+        },
+        {
+          "x0": 1032,
+          "y0": 809,
+          "x1": 1518,
+          "y1": 990
+        }
+      ],
+      "scale": 0.4725050916496945,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 106078
+  },
+  {
+    "id": "briarheart-beast",
+    "sourceFile": "exec-53e3c54e-065b-43f7-a291-da2704de8b9d.png",
+    "sha256": "adf43c94859549a4e21a31a2b7cba467711070bd0de482b247b2578b48723ba0",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Briarheart Beast. A hulking forest bear with thorn-covered bark growing over its shoulders and a luminous green briar heart; four sturdy paws, mossy fur. Animation anatomy: beast. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 26,
+          "y0": 94,
+          "x1": 487,
+          "y1": 489
+        },
+        {
+          "x0": 527,
+          "y0": 156,
+          "x1": 994,
+          "y1": 480
+        },
+        {
+          "x0": 999,
+          "y0": 155,
+          "x1": 1504,
+          "y1": 481
+        },
+        {
+          "x0": 29,
+          "y0": 515,
+          "x1": 484,
+          "y1": 968
+        },
+        {
+          "x0": 549,
+          "y0": 587,
+          "x1": 955,
+          "y1": 964
+        },
+        {
+          "x0": 1018,
+          "y0": 749,
+          "x1": 1517,
+          "y1": 965
+        }
+      ],
+      "scale": 0.45849802371541504,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 111930
+  },
+  {
+    "id": "bulwark-specimen",
+    "sourceFile": "exec-6386b58f-05b8-443e-9286-23ad7c20458d.png",
+    "sha256": "89908c031df787f1db647d59d5d82dcefe87624b7c4495ca46422c3006692313",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Bulwark Specimen. A hulking containment experiment in a battered iron restraint harness and heavy asymmetric shoulder shell, pale grey skin, powerful clenched arms; no gore. Animation anatomy: humanoid. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 28,
+          "y0": 105,
+          "x1": 472,
+          "y1": 504
+        },
+        {
+          "x0": 605,
+          "y0": 22,
+          "x1": 968,
+          "y1": 503
+        },
+        {
+          "x0": 960,
+          "y0": 159,
+          "x1": 1526,
+          "y1": 498
+        },
+        {
+          "x0": 81,
+          "y0": 560,
+          "x1": 470,
+          "y1": 960
+        },
+        {
+          "x0": 523,
+          "y0": 564,
+          "x1": 944,
+          "y1": 967
+        },
+        {
+          "x0": 1039,
+          "y0": 769,
+          "x1": 1516,
+          "y1": 980
+        }
+      ],
+      "scale": 0.4091710758377425,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 73670
+  },
+  {
+    "id": "canyon-keeper",
+    "sourceFile": "exec-7dec102a-75fd-454d-8aa3-59b19d1951e6.png",
+    "sha256": "d55b5d7a8e28e71187591802e950833d73b0887fd72dc8e613aaafc279e4dc91",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Canyon Keeper. A rugged masked canyon druid with ochre cloth, root-woven mantle, stone charms and a crooked branch staff with muted green magic. Animation anatomy: caster. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 54,
+          "y0": 48,
+          "x1": 472,
+          "y1": 478
+        },
+        {
+          "x0": 575,
+          "y0": 33,
+          "x1": 937,
+          "y1": 480
+        },
+        {
+          "x0": 955,
+          "y0": 119,
+          "x1": 1527,
+          "y1": 480
+        },
+        {
+          "x0": 51,
+          "y0": 514,
+          "x1": 487,
+          "y1": 958
+        },
+        {
+          "x0": 559,
+          "y0": 567,
+          "x1": 985,
+          "y1": 958
+        },
+        {
+          "x0": 1006,
+          "y0": 784,
+          "x1": 1512,
+          "y1": 973
+        }
+      ],
+      "scale": 0.4048865619546248,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 97876
+  },
+  {
+    "id": "canyon-mauler",
+    "sourceFile": "exec-f34cff4b-3341-4d45-ad96-30f2a9050f3d.png",
+    "sha256": "d3c6415cf7fed50b89d24155dfc760452b214306581bb60f5807728018634e81",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Canyon Mauler. A stocky predatory canyon beast with russet hide, rocky shoulder plates, heavy forelimbs and a blunt horned skull; four feet. Animation anatomy: beast. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 15,
+          "y0": 136,
+          "x1": 496,
+          "y1": 478
+        },
+        {
+          "x0": 548,
+          "y0": 135,
+          "x1": 1000,
+          "y1": 487
+        },
+        {
+          "x0": 1012,
+          "y0": 147,
+          "x1": 1522,
+          "y1": 467
+        },
+        {
+          "x0": 35,
+          "y0": 527,
+          "x1": 497,
+          "y1": 962
+        },
+        {
+          "x0": 563,
+          "y0": 571,
+          "x1": 996,
+          "y1": 964
+        },
+        {
+          "x0": 1035,
+          "y0": 783,
+          "x1": 1522,
+          "y1": 960
+        }
+      ],
+      "scale": 0.45401174168297453,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 98622
+  },
+  {
+    "id": "cell-sick-marauder",
+    "sourceFile": "exec-0ecf5e9a-7b4c-4944-b949-95ebe18896b8.png",
+    "sha256": "cf71e2436f6f2c642ac263aba869d4382b897272d3cde855a34446eb94c4cd18",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Cell-Sick Marauder. A desperate bandit corrupted by faint violet cell crystals, torn dark leather armour, ragged scarf, short battered sword; a readable upright humanoid. Animation anatomy: humanoid. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 51,
+          "y0": 105,
+          "x1": 440,
+          "y1": 490
+        },
+        {
+          "x0": 610,
+          "y0": 65,
+          "x1": 923,
+          "y1": 489
+        },
+        {
+          "x0": 981,
+          "y0": 141,
+          "x1": 1509,
+          "y1": 491
+        },
+        {
+          "x0": 72,
+          "y0": 575,
+          "x1": 449,
+          "y1": 953
+        },
+        {
+          "x0": 524,
+          "y0": 577,
+          "x1": 952,
+          "y1": 954
+        },
+        {
+          "x0": 1067,
+          "y0": 777,
+          "x1": 1499,
+          "y1": 960
+        }
+      ],
+      "scale": 0.43856332703213613,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 76072
+  },
+  {
+    "id": "chaos-shapeshifter",
+    "sourceFile": "exec-92dbd805-895b-4e18-8761-536a95422d07.png",
+    "sha256": "4d03358a52009f76ba6319d7f731949244c6db267ef913316c5939ca39420492",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Chaos Shapeshifter. A feral humanoid with asymmetrical bark armour, one oversized claw, mottled russet fur and violet-green corruption; consistent anatomy between poses, no changing species. Animation anatomy: humanoid. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 65,
+          "y0": 94,
+          "x1": 473,
+          "y1": 490
+        },
+        {
+          "x0": 581,
+          "y0": 32,
+          "x1": 940,
+          "y1": 491
+        },
+        {
+          "x0": 979,
+          "y0": 131,
+          "x1": 1520,
+          "y1": 490
+        },
+        {
+          "x0": 45,
+          "y0": 531,
+          "x1": 474,
+          "y1": 973
+        },
+        {
+          "x0": 582,
+          "y0": 572,
+          "x1": 987,
+          "y1": 971
+        },
+        {
+          "x0": 1040,
+          "y0": 770,
+          "x1": 1518,
+          "y1": 979
+        }
+      ],
+      "scale": 0.4280442804428044,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 102408
+  },
+  {
+    "id": "chaos-thorncaster",
+    "sourceFile": "exec-1831dd55-37f3-4453-8b53-9ce27e79c552.png",
+    "sha256": "3f9d80ffe2e19c60eecac6f6df435690489359793d5b4c6a9f322d575daee93b",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Chaos Thorncaster. A lean thorn-masked forest cultist in layered umber robes with thornwood staff, glowing green briars wrapping the forearm. Animation anatomy: caster. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 61,
+          "y0": 57,
+          "x1": 454,
+          "y1": 483
+        },
+        {
+          "x0": 592,
+          "y0": 44,
+          "x1": 920,
+          "y1": 484
+        },
+        {
+          "x0": 911,
+          "y0": 122,
+          "x1": 1522,
+          "y1": 486
+        },
+        {
+          "x0": 50,
+          "y0": 525,
+          "x1": 494,
+          "y1": 959
+        },
+        {
+          "x0": 554,
+          "y0": 598,
+          "x1": 973,
+          "y1": 962
+        },
+        {
+          "x0": 1020,
+          "y0": 791,
+          "x1": 1513,
+          "y1": 962
+        }
+      ],
+      "scale": 0.3790849673202614,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 79558
+  },
+  {
+    "id": "cowardice-the-buried-prince",
+    "sourceFile": "exec-a170abf7-f635-4d0e-8527-4cb2e9c62f85.png",
+    "sha256": "eeb6d63670c96f1eb072287386ea71e0e3a79bb9082935cc1d98fe4c1a39ba9a",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Cowardice, the Buried Prince. A gaunt undead prince in tarnished silver ceremonial armour, broken narrow crown and dusty violet burial cloak, clutching a small tomb sceptre. Hunched defensive stance, special pose summoning tombguards. Animation anatomy: caster. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 35,
+          "y0": 76,
+          "x1": 511,
+          "y1": 480
+        },
+        {
+          "x0": 577,
+          "y0": 14,
+          "x1": 997,
+          "y1": 479
+        },
+        {
+          "x0": 983,
+          "y0": 99,
+          "x1": 1521,
+          "y1": 480
+        },
+        {
+          "x0": 78,
+          "y0": 502,
+          "x1": 514,
+          "y1": 980
+        },
+        {
+          "x0": 547,
+          "y0": 597,
+          "x1": 1000,
+          "y1": 980
+        },
+        {
+          "x0": 1016,
+          "y0": 790,
+          "x1": 1521,
+          "y1": 970
+        }
+      ],
+      "scale": 0.43042671614100186,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 91622
+  },
+  {
+    "id": "cruelty-the-bone-torturer",
+    "sourceFile": "exec-25b90c4d-eefa-4860-b335-5008e7a77d90.png",
+    "sha256": "9d6b221443c67bf28685483bb94de968e140de38cff51b656c61c2416728c059",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Cruelty, the Bone Torturer. A tall skeletal tormentor in bone-lamellar armour and a dark hood, wielding a hooked bone branding staff with restrained crimson magic. No victims, blood or gore. Animation anatomy: caster. For beasts use crouch, bite/claw lunge, roar, recoil and lying dead; floating beings stay floating until collapsed; humanoids use their described hands/weapons.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 44,
+          "y0": 73,
+          "x1": 457,
+          "y1": 492
+        },
+        {
+          "x0": 585,
+          "y0": 10,
+          "x1": 942,
+          "y1": 502
+        },
+        {
+          "x0": 928,
+          "y0": 115,
+          "x1": 1518,
+          "y1": 487
+        },
+        {
+          "x0": 47,
+          "y0": 530,
+          "x1": 506,
+          "y1": 968
+        },
+        {
+          "x0": 586,
+          "y0": 585,
+          "x1": 999,
+          "y1": 966
+        },
+        {
+          "x0": 1034,
+          "y0": 803,
+          "x1": 1521,
+          "y1": 997
+        }
+      ],
+      "scale": 0.3925549915397631,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 94262
+  },
+  {
+    "id": "deceit-the-masked-priest",
+    "sourceFile": "exec-c1d04bf7-0fdb-47b5-a438-8bfc142dbb2f.png",
+    "sha256": "6048308fd871769ba0f00ac30d510370c3301ae03582e51083b7c8b96234bf6b",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Deceit, the Masked Priest. A sinister fully robed priest with an expressionless split ivory-and-black mask, angular mitre, silver censer and violet ritual staff; special pose false-procession summoning. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 50,
+          "y0": 38,
+          "x1": 456,
+          "y1": 493
+        },
+        {
+          "x0": 523,
+          "y0": 9,
+          "x1": 987,
+          "y1": 492
+        },
+        {
+          "x0": 901,
+          "y0": 134,
+          "x1": 1520,
+          "y1": 494
+        },
+        {
+          "x0": 37,
+          "y0": 509,
+          "x1": 455,
+          "y1": 977
+        },
+        {
+          "x0": 552,
+          "y0": 510,
+          "x1": 961,
+          "y1": 973
+        },
+        {
+          "x0": 945,
+          "y0": 794,
+          "x1": 1515,
+          "y1": 980
+        }
+      ],
+      "scale": 0.3741935483870968,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 84028
+  },
+  {
+    "id": "despair-the-last-mourner",
+    "sourceFile": "exec-ef1741dd-ca4b-42e6-af93-a3a929005465.png",
+    "sha256": "3f50dd8644de72887524b9729600d96eb8726d4d681b2d28fed790b3d2df2342",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Despair, the Last Mourner. A solitary spectral mourner in layered faded indigo funeral robes and a long veil, holding an extinguished lantern with cold blue soul-light, shoulders bowed. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 67,
+          "y0": 117,
+          "x1": 504,
+          "y1": 496
+        },
+        {
+          "x0": 547,
+          "y0": 46,
+          "x1": 993,
+          "y1": 498
+        },
+        {
+          "x0": 1028,
+          "y0": 166,
+          "x1": 1527,
+          "y1": 499
+        },
+        {
+          "x0": 38,
+          "y0": 549,
+          "x1": 523,
+          "y1": 971
+        },
+        {
+          "x0": 581,
+          "y0": 607,
+          "x1": 975,
+          "y1": 969
+        },
+        {
+          "x0": 1012,
+          "y0": 752,
+          "x1": 1522,
+          "y1": 963
+        }
+      ],
+      "scale": 0.45401174168297453,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 117934
+  },
+  {
+    "id": "edrin-vale",
+    "sourceFile": "exec-b308a0fc-ed84-46ee-a28a-a2ab5dcc1f40.png",
+    "sha256": "04e1148a6433572b5bab70fb7b63a68c2bd34cd82e4a869617a93b228e9b41ef",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Edrin Vale. An elderly haunted human timekeeper with a narrow silver beard, weathered dark coat, brass hourglass and bell-headed staff, dim amber clockwork magic. Keeper of the Thirteenth Hour. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 51,
+          "y0": 39,
+          "x1": 491,
+          "y1": 480
+        },
+        {
+          "x0": 552,
+          "y0": 19,
+          "x1": 973,
+          "y1": 480
+        },
+        {
+          "x0": 994,
+          "y0": 104,
+          "x1": 1523,
+          "y1": 480
+        },
+        {
+          "x0": 70,
+          "y0": 505,
+          "x1": 493,
+          "y1": 960
+        },
+        {
+          "x0": 538,
+          "y0": 560,
+          "x1": 983,
+          "y1": 968
+        },
+        {
+          "x0": 1007,
+          "y0": 792,
+          "x1": 1514,
+          "y1": 989
+        }
+      ],
+      "scale": 0.4377358490566038,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 103030
+  },
+  {
+    "id": "envy-the-mirror-queen",
+    "sourceFile": "exec-b84b2c68-9f7a-4145-92d4-aafac94a5ed8.png",
+    "sha256": "986c8bb3178a8b482db1cc49e8635c7fe88e4717a45dc5a02f736645ff9a01dd",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Envy, the Mirror Queen. A sinister regal woman in fully covering silver mirror armour, fractured emerald crown and dark green cape, carrying an oval hand mirror that emits green spectral reflections. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 83,
+          "y0": 100,
+          "x1": 496,
+          "y1": 514
+        },
+        {
+          "x0": 560,
+          "y0": 15,
+          "x1": 1005,
+          "y1": 514
+        },
+        {
+          "x0": 982,
+          "y0": 129,
+          "x1": 1520,
+          "y1": 514
+        },
+        {
+          "x0": 42,
+          "y0": 521,
+          "x1": 522,
+          "y1": 1003
+        },
+        {
+          "x0": 585,
+          "y0": 552,
+          "x1": 990,
+          "y1": 991
+        },
+        {
+          "x0": 1033,
+          "y0": 751,
+          "x1": 1520,
+          "y1": 991
+        }
+      ],
+      "scale": 0.43042671614100186,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 117564
+  },
+  {
+    "id": "faithless-echo",
+    "sourceFile": "exec-9b311006-bb4e-4c56-bfd9-4d3a3d872482.png",
+    "sha256": "a5b187b7051b4a8d386f9143d6d215d4fba2dd5655471dc63215ae89c64a3307",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Faithless Echo. A hovering translucent fallen cleric spirit in tattered pale-blue vestments, cracked halo, dark hollow face and ghostly prayer hands. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 131,
+          "y0": 12,
+          "x1": 502,
+          "y1": 504
+        },
+        {
+          "x0": 583,
+          "y0": 12,
+          "x1": 984,
+          "y1": 511
+        },
+        {
+          "x0": 1048,
+          "y0": 112,
+          "x1": 1511,
+          "y1": 514
+        },
+        {
+          "x0": 47,
+          "y0": 516,
+          "x1": 524,
+          "y1": 1015
+        },
+        {
+          "x0": 582,
+          "y0": 553,
+          "x1": 1006,
+          "y1": 991
+        },
+        {
+          "x0": 1022,
+          "y0": 788,
+          "x1": 1525,
+          "y1": 996
+        }
+      ],
+      "scale": 0.4603174603174603,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 131326
+  },
+  {
+    "id": "fallen-justicar",
+    "sourceFile": "exec-4068b7b9-d7ff-4361-8ac0-fcce55470791.png",
+    "sha256": "b5071037a7c658ff00e2a3217b8b1df6de4853e3d37fd82651f8ac1dbf9d402d",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Fallen Justicar. A fallen armoured holy knight with tarnished ivory-and-gold plate, broken sun emblem, one-handed hammer and battered kite shield, grey cloak. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 64,
+          "y0": 106,
+          "x1": 499,
+          "y1": 493
+        },
+        {
+          "x0": 608,
+          "y0": 40,
+          "x1": 973,
+          "y1": 493
+        },
+        {
+          "x0": 973,
+          "y0": 144,
+          "x1": 1514,
+          "y1": 493
+        },
+        {
+          "x0": 67,
+          "y0": 524,
+          "x1": 499,
+          "y1": 959
+        },
+        {
+          "x0": 540,
+          "y0": 566,
+          "x1": 980,
+          "y1": 958
+        },
+        {
+          "x0": 1003,
+          "y0": 785,
+          "x1": 1512,
+          "y1": 968
+        }
+      ],
+      "scale": 0.4280442804428044,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 82264
+  },
+  {
+    "id": "frostbound-revenant",
+    "sourceFile": "exec-ca1e014a-dd37-47e3-a041-fe95e4f9fa4e.png",
+    "sha256": "cf74070e86953574d628a5cce310848c559e6b3b1d22ae35ff0a6b94f63b4073",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Frostbound Revenant. An undead knight in frost-crusted blue-black plate, glowing ice eyes, ragged pale cloak and a large runed two-handed sword. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 14,
+          "y0": 111,
+          "x1": 519,
+          "y1": 490
+        },
+        {
+          "x0": 613,
+          "y0": 50,
+          "x1": 1050,
+          "y1": 490
+        },
+        {
+          "x0": 969,
+          "y0": 161,
+          "x1": 1522,
+          "y1": 494
+        },
+        {
+          "x0": 42,
+          "y0": 570,
+          "x1": 516,
+          "y1": 964
+        },
+        {
+          "x0": 583,
+          "y0": 578,
+          "x1": 1004,
+          "y1": 963
+        },
+        {
+          "x0": 1032,
+          "y0": 759,
+          "x1": 1521,
+          "y1": 976
+        }
+      ],
+      "scale": 0.4187725631768953,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 103982
+  },
+  {
+    "id": "glass-mite",
+    "sourceFile": "exec-bd9c2856-212e-48ed-aa31-5d52069f00b7.png",
+    "sha256": "ec2f583de943c17b1e6accfdf8f88bee8de4224b71e027f4ea42e9f278308ebc",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Glass Mite. A small six-legged glass insect with a translucent smoked-violet crystal carapace, dark jointed legs and sharp mandibles, readable rounded silhouette. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 43,
+          "y0": 141,
+          "x1": 488,
+          "y1": 500
+        },
+        {
+          "x0": 571,
+          "y0": 139,
+          "x1": 968,
+          "y1": 500
+        },
+        {
+          "x0": 986,
+          "y0": 208,
+          "x1": 1497,
+          "y1": 491
+        },
+        {
+          "x0": 48,
+          "y0": 529,
+          "x1": 479,
+          "y1": 971
+        },
+        {
+          "x0": 574,
+          "y0": 588,
+          "x1": 962,
+          "y1": 961
+        },
+        {
+          "x0": 1010,
+          "y0": 771,
+          "x1": 1505,
+          "y1": 967
+        }
+      ],
+      "scale": 0.453125,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 105570
+  },
+  {
+    "id": "glassjaw-sentinel",
+    "sourceFile": "exec-44ddd007-f7d3-4175-aae6-f8055520b1e8.png",
+    "sha256": "2e74ba61b2aafdf5e6a48d5d1de807d9f44c951672e239cdc4fe459e6f9ec864",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Glassjaw Sentinel. A towering dark stone sentinel whose lower face is a jagged translucent violet glass jaw, faceted shoulder armour and heavy stone arms, subtle glowing fissures. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 23,
+          "y0": 117,
+          "x1": 477,
+          "y1": 511
+        },
+        {
+          "x0": 599,
+          "y0": 35,
+          "x1": 1011,
+          "y1": 514
+        },
+        {
+          "x0": 951,
+          "y0": 169,
+          "x1": 1531,
+          "y1": 507
+        },
+        {
+          "x0": 63,
+          "y0": 540,
+          "x1": 458,
+          "y1": 978
+        },
+        {
+          "x0": 610,
+          "y0": 559,
+          "x1": 1017,
+          "y1": 974
+        },
+        {
+          "x0": 1045,
+          "y0": 762,
+          "x1": 1511,
+          "y1": 991
+        }
+      ],
+      "scale": 0.3993115318416523,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 79600
+  },
+  {
+    "id": "glassweb-crawler",
+    "sourceFile": "exec-a9bd1eb8-326d-42d8-af91-ba51bca23ebc.png",
+    "sha256": "0cdfbcb14f2d266a1d48cfe38a2bfc85615e4ae398b9e15275df3489d0275c18",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Glassweb Crawler. A large eight-legged dark glass spider with a faceted violet abdomen, long angular legs, crystalline fangs and a small web spinner; coherent arachnid anatomy. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 36,
+          "y0": 140,
+          "x1": 500,
+          "y1": 460
+        },
+        {
+          "x0": 536,
+          "y0": 68,
+          "x1": 986,
+          "y1": 455
+        },
+        {
+          "x0": 990,
+          "y0": 190,
+          "x1": 1508,
+          "y1": 462
+        },
+        {
+          "x0": 29,
+          "y0": 509,
+          "x1": 491,
+          "y1": 957
+        },
+        {
+          "x0": 563,
+          "y0": 568,
+          "x1": 976,
+          "y1": 957
+        },
+        {
+          "x0": 996,
+          "y0": 731,
+          "x1": 1511,
+          "y1": 945
+        }
+      ],
+      "scale": 0.44701348747591524,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 109286
+  },
+  {
+    "id": "gloamhide-behemoth",
+    "sourceFile": "exec-e5f8b788-ddbd-4015-977e-635ceaaba895.png",
+    "sha256": "3999733bd10906dfd28af0f0479cd3cbab048aa97094b3ba70798ff1dd76beb2",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Gloamhide Behemoth. A massive nocturnal bear-like behemoth with layered obsidian-grey hide, heavy tusks, broad moss-covered shoulders and dim teal eyes, four enormous clawed paws. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 13,
+          "y0": 81,
+          "x1": 482,
+          "y1": 480
+        },
+        {
+          "x0": 526,
+          "y0": 69,
+          "x1": 975,
+          "y1": 472
+        },
+        {
+          "x0": 994,
+          "y0": 120,
+          "x1": 1521,
+          "y1": 492
+        },
+        {
+          "x0": 19,
+          "y0": 528,
+          "x1": 498,
+          "y1": 988
+        },
+        {
+          "x0": 527,
+          "y0": 539,
+          "x1": 940,
+          "y1": 986
+        },
+        {
+          "x0": 962,
+          "y0": 744,
+          "x1": 1519,
+          "y1": 975
+        }
+      ],
+      "scale": 0.4157706093189964,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 97926
+  },
+  {
+    "id": "gluttony-the-devourer",
+    "sourceFile": "exec-7136a676-99ab-4aab-897d-c7282ecccc6e.png",
+    "sha256": "5a2ea3c4154cfef48a2d27e8ef5dbf083c1ad4e4513a709153a65c3183350be6",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Gluttony, the Devourer. A huge grotesque but non-graphic undead ogre with a cavernous toothy mouth, heavy belly armour, chained iron belt and thick grasping arms. Special pose summoning dead servants. No exposed organs. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 16,
+          "y0": 111,
+          "x1": 495,
+          "y1": 499
+        },
+        {
+          "x0": 578,
+          "y0": 15,
+          "x1": 945,
+          "y1": 501
+        },
+        {
+          "x0": 958,
+          "y0": 148,
+          "x1": 1528,
+          "y1": 490
+        },
+        {
+          "x0": 57,
+          "y0": 550,
+          "x1": 488,
+          "y1": 988
+        },
+        {
+          "x0": 584,
+          "y0": 571,
+          "x1": 955,
+          "y1": 982
+        },
+        {
+          "x0": 966,
+          "y0": 776,
+          "x1": 1520,
+          "y1": 1008
+        }
+      ],
+      "scale": 0.4063047285464098,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 90998
+  },
+  {
+    "id": "greed-the-gilded-miser",
+    "sourceFile": "exec-2e397b62-a2dc-427a-964a-8c68ca62abde.png",
+    "sha256": "b68e897b81bbf5556f2b71a74f86cef4bf6e499f3c62b375af99a8fd94cced40",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Greed, the Gilded Miser. A hunched ancient lich miser with a narrow golden mask, black-and-gold embroidered robes, coin chains and a gilded clutching staff, cold gold-green soul magic. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 46,
+          "y0": 69,
+          "x1": 502,
+          "y1": 484
+        },
+        {
+          "x0": 562,
+          "y0": 6,
+          "x1": 979,
+          "y1": 489
+        },
+        {
+          "x0": 932,
+          "y0": 159,
+          "x1": 1519,
+          "y1": 486
+        },
+        {
+          "x0": 43,
+          "y0": 498,
+          "x1": 487,
+          "y1": 953
+        },
+        {
+          "x0": 603,
+          "y0": 575,
+          "x1": 980,
+          "y1": 954
+        },
+        {
+          "x0": 1019,
+          "y0": 768,
+          "x1": 1522,
+          "y1": 961
+        }
+      ],
+      "scale": 0.3945578231292517,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 102300
+  },
+  {
+    "id": "guild-enforcer",
+    "sourceFile": "exec-2699596e-d3d5-4e05-9563-18a5cf43f558.png",
+    "sha256": "5ce87655df1354b02f8ea348614a270cd8622e7ab4807e125212577cb551ba23",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Guild Enforcer. A burly human enforcer in reinforced dark leather, iron half-mask, heavy shoulder guard and short cudgel with a small buckler, restrained guild insignia without text. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 65,
+          "y0": 122,
+          "x1": 465,
+          "y1": 490
+        },
+        {
+          "x0": 621,
+          "y0": 61,
+          "x1": 934,
+          "y1": 490
+        },
+        {
+          "x0": 977,
+          "y0": 156,
+          "x1": 1516,
+          "y1": 490
+        },
+        {
+          "x0": 84,
+          "y0": 595,
+          "x1": 443,
+          "y1": 969
+        },
+        {
+          "x0": 553,
+          "y0": 601,
+          "x1": 932,
+          "y1": 970
+        },
+        {
+          "x0": 1060,
+          "y0": 791,
+          "x1": 1497,
+          "y1": 987
+        }
+      ],
+      "scale": 0.42962962962962964,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 64874
+  },
+  {
+    "id": "hollow-confessor",
+    "sourceFile": "exec-7dae728b-e622-46eb-a688-4b5f52f19acc.png",
+    "sha256": "aaf7a8b4056e8430d1f6a630a00b5d0df6e414c6c29b30da7dbbcf560598e644",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Hollow Confessor. A gaunt undead confessor in charcoal clerical robes, hollow ivory face, chained prayer book and blackwood staff, violet spectral light. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 53,
+          "y0": 29,
+          "x1": 508,
+          "y1": 496
+        },
+        {
+          "x0": 545,
+          "y0": 10,
+          "x1": 949,
+          "y1": 496
+        },
+        {
+          "x0": 913,
+          "y0": 144,
+          "x1": 1530,
+          "y1": 496
+        },
+        {
+          "x0": 50,
+          "y0": 497,
+          "x1": 528,
+          "y1": 977
+        },
+        {
+          "x0": 580,
+          "y0": 547,
+          "x1": 966,
+          "y1": 977
+        },
+        {
+          "x0": 982,
+          "y0": 803,
+          "x1": 1526,
+          "y1": 985
+        }
+      ],
+      "scale": 0.37540453074433655,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 91186
+  },
+  {
+    "id": "hollow-scavenger",
+    "sourceFile": "exec-fe062010-d84d-4ca6-acae-660baae501e7.png",
+    "sha256": "cfafbe0bfa0a666fff25148ef94a9ed2fc435865277fa1b64f0fedf2f8753af9",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Hollow Scavenger. A hunched hollow-eyed scavenger in torn underground traveller clothes and rope belt, long clawed fingers, patched shoulder satchel and short rusty knife. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 77,
+          "y0": 122,
+          "x1": 469,
+          "y1": 496
+        },
+        {
+          "x0": 627,
+          "y0": 64,
+          "x1": 945,
+          "y1": 494
+        },
+        {
+          "x0": 970,
+          "y0": 157,
+          "x1": 1515,
+          "y1": 494
+        },
+        {
+          "x0": 64,
+          "y0": 585,
+          "x1": 521,
+          "y1": 956
+        },
+        {
+          "x0": 583,
+          "y0": 576,
+          "x1": 964,
+          "y1": 959
+        },
+        {
+          "x0": 1021,
+          "y0": 784,
+          "x1": 1500,
+          "y1": 962
+        }
+      ],
+      "scale": 0.4249084249084249,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 78542
+  },
+  {
+    "id": "hollow-sentinel",
+    "sourceFile": "exec-2380ea08-508f-4f4d-a254-7f2dbec48190.png",
+    "sha256": "52d56ae6c61451bb141b50b9cdc4a55e62b1ad606edb52e0c2f899f06dc56643",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Hollow Sentinel. An ancient seal guardian in dark chiselled stone plate with luminous violet seam-runes, enclosed angular helm, long stone spear and broad slab shield. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 10,
+          "y0": 125,
+          "x1": 477,
+          "y1": 479
+        },
+        {
+          "x0": 600,
+          "y0": 41,
+          "x1": 984,
+          "y1": 479
+        },
+        {
+          "x0": 922,
+          "y0": 166,
+          "x1": 1534,
+          "y1": 479
+        },
+        {
+          "x0": 70,
+          "y0": 496,
+          "x1": 457,
+          "y1": 958
+        },
+        {
+          "x0": 491,
+          "y0": 613,
+          "x1": 959,
+          "y1": 957
+        },
+        {
+          "x0": 1061,
+          "y0": 784,
+          "x1": 1517,
+          "y1": 1000
+        }
+      ],
+      "scale": 0.37846655791190864,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 67796
+  },
+  {
+    "id": "hollowed-surveyor",
+    "sourceFile": "exec-4be2e6e0-884b-4c62-8034-acedc1a80d33.png",
+    "sha256": "01bd237c1521f03a24cd08ff5d9f2d77cdbde3c96db82ee997a14b2622b51d4d",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Hollowed Surveyor. A corrupted underground surveyor in worn dark expedition coat, crystal-encrusted hood, lantern and survey staff, pale hollow face and violet-glass growths. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 76,
+          "y0": 64,
+          "x1": 441,
+          "y1": 479
+        },
+        {
+          "x0": 564,
+          "y0": 6,
+          "x1": 944,
+          "y1": 486
+        },
+        {
+          "x0": 940,
+          "y0": 128,
+          "x1": 1517,
+          "y1": 481
+        },
+        {
+          "x0": 44,
+          "y0": 505,
+          "x1": 462,
+          "y1": 956
+        },
+        {
+          "x0": 570,
+          "y0": 530,
+          "x1": 988,
+          "y1": 970
+        },
+        {
+          "x0": 959,
+          "y0": 775,
+          "x1": 1519,
+          "y1": 968
+        }
+      ],
+      "scale": 0.4013840830449827,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 90148
+  },
+  {
+    "id": "inner-demon",
+    "sourceFile": "exec-04ba2f81-fbf3-4846-9000-335b664a2c76.png",
+    "sha256": "23a7f367091226118e5287189793afa292133eb4e7063ff79e2628dba773d93d",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Inner Demon. A lean horned humanoid demon with folded ragged wings, dark crimson skin, obsidian armour plates and two curved black blades, no nudity. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 43,
+          "y0": 95,
+          "x1": 529,
+          "y1": 499
+        },
+        {
+          "x0": 610,
+          "y0": 42,
+          "x1": 922,
+          "y1": 499
+        },
+        {
+          "x0": 981,
+          "y0": 140,
+          "x1": 1508,
+          "y1": 495
+        },
+        {
+          "x0": 57,
+          "y0": 536,
+          "x1": 475,
+          "y1": 978
+        },
+        {
+          "x0": 586,
+          "y0": 618,
+          "x1": 956,
+          "y1": 969
+        },
+        {
+          "x0": 998,
+          "y0": 784,
+          "x1": 1505,
+          "y1": 974
+        }
+      ],
+      "scale": 0.4393939393939394,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 81868
+  },
+  {
+    "id": "ironbound-challenger",
+    "sourceFile": "exec-d21e3798-e1e0-4dc1-9d25-9b4ae2550c65.png",
+    "sha256": "8ee13a92c13608b87316dc3b301d5fe4184a3c06753bcc6f74341d04caa519e2",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Ironbound Challenger. A disciplined arena challenger in heavy weathered iron plate, closed helm with bronze crest, broad one-handed sword and round iron shield. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 42,
+          "y0": 119,
+          "x1": 462,
+          "y1": 511
+        },
+        {
+          "x0": 603,
+          "y0": 52,
+          "x1": 950,
+          "y1": 511
+        },
+        {
+          "x0": 941,
+          "y0": 157,
+          "x1": 1516,
+          "y1": 509
+        },
+        {
+          "x0": 66,
+          "y0": 591,
+          "x1": 496,
+          "y1": 957
+        },
+        {
+          "x0": 586,
+          "y0": 603,
+          "x1": 950,
+          "y1": 964
+        },
+        {
+          "x0": 1050,
+          "y0": 775,
+          "x1": 1500,
+          "y1": 976
+        }
+      ],
+      "scale": 0.4027777777777778,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 67314
+  },
+  {
+    "id": "lesser-pact-demon",
+    "sourceFile": "exec-d09b7340-4a2c-402a-82bc-fe0cd66a7b3b.png",
+    "sha256": "70412a674dca61612625c1f589788ddc0fb4a5ed2495ada85eb543da8228b90b",
+    "prompt": "Production-ready game sprite atlas on a fully TRANSPARENT alpha background, 1536x1024. Exactly SIX distinct full-body poses of ONE consistent monster arranged in 3 equal columns by 2 equal rows, 24px clear gutters, no overlap between cells. Top row left-to-right: ready idle, attack wind-up, attack contact toward LEFT. Bottom row: ability/channel/guard gesture, recoiling from a hit, collapsed dead at ground level. Use the same anatomy, costume and scale throughout, three-quarter LEFT facing. All weapons, limbs and magic stay within their own cell. No labels, text, scenery, background or opaque glow rectangles. Detailed hand-painted dark fantasy RPG illustration matching the reference, strong readable silhouette, warm directional highlights, controlled palette, inked material edges. Not photorealistic. Enemy: Lesser Pact Demon. A small horned pact demon in dark leather wraps, clawed hands, ember-green eyes and a thin hooked tail; compact fully clothed demonic silhouette. Match reference rendering style only, NOT its creature identity. Build the exact described creature with unique silhouette. Anatomically appropriate attack, special action and death poses.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 34,
+          "y0": 121,
+          "x1": 525,
+          "y1": 494
+        },
+        {
+          "x0": 618,
+          "y0": 78,
+          "x1": 971,
+          "y1": 497
+        },
+        {
+          "x0": 999,
+          "y0": 190,
+          "x1": 1523,
+          "y1": 498
+        },
+        {
+          "x0": 82,
+          "y0": 554,
+          "x1": 539,
+          "y1": 941
+        },
+        {
+          "x0": 625,
+          "y0": 585,
+          "x1": 962,
+          "y1": 949
+        },
+        {
+          "x0": 1022,
+          "y0": 779,
+          "x1": 1508,
+          "y1": 952
+        }
+      ],
+      "scale": 0.4419047619047619,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 85520
+  },
+  {
+    "id": "living-boulder",
+    "sourceFile": "exec-5aa17074-0a70-4666-b118-7b2c247052fa.png",
+    "sha256": "313a6fb956f106a7de2837d5e5209f0b01badc93aad50c1ab2af458164f6d6cb",
+    "prompt": "Reconstructed source record: six poses of Living Boulder, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 60,
+          "y0": 131,
+          "x1": 468,
+          "y1": 483
+        },
+        {
+          "x0": 607,
+          "y0": 55,
+          "x1": 936,
+          "y1": 493
+        },
+        {
+          "x0": 974,
+          "y0": 186,
+          "x1": 1501,
+          "y1": 487
+        },
+        {
+          "x0": 92,
+          "y0": 585,
+          "x1": 492,
+          "y1": 959
+        },
+        {
+          "x0": 569,
+          "y0": 555,
+          "x1": 984,
+          "y1": 965
+        },
+        {
+          "x0": 993,
+          "y0": 741,
+          "x1": 1512,
+          "y1": 967
+        }
+      ],
+      "scale": 0.4393939393939394,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 91192
+  },
+  {
+    "id": "lust-the-grave-siren",
+    "sourceFile": "exec-90f27344-666b-492b-a8c2-a9c73b997066.png",
+    "sha256": "c5b13d7466fcb7f7a0d2872d92b78d2e0fd093541b1ef4f28966a3ef932177ed",
+    "prompt": "Reconstructed source record: six poses of Lust, the Grave Siren, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 108,
+          "y0": 91,
+          "x1": 496,
+          "y1": 494
+        },
+        {
+          "x0": 591,
+          "y0": 61,
+          "x1": 976,
+          "y1": 497
+        },
+        {
+          "x0": 1006,
+          "y0": 136,
+          "x1": 1515,
+          "y1": 495
+        },
+        {
+          "x0": 71,
+          "y0": 552,
+          "x1": 514,
+          "y1": 954
+        },
+        {
+          "x0": 597,
+          "y0": 568,
+          "x1": 975,
+          "y1": 955
+        },
+        {
+          "x0": 994,
+          "y0": 779,
+          "x1": 1518,
+          "y1": 965
+        }
+      ],
+      "scale": 0.4419047619047619,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 93934
+  },
+  {
+    "id": "manor-thrall",
+    "sourceFile": "exec-2085a0ee-fb65-4326-bd67-5ee2536af807.png",
+    "sha256": "b966c33c387ba42356e033025b12664bcc1b2ff7b0db8dfec27ad0f2582f860e",
+    "prompt": "Reconstructed source record: six poses of Manor Thrall, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 124,
+          "y0": 106,
+          "x1": 448,
+          "y1": 481
+        },
+        {
+          "x0": 569,
+          "y0": 42,
+          "x1": 927,
+          "y1": 488
+        },
+        {
+          "x0": 993,
+          "y0": 136,
+          "x1": 1507,
+          "y1": 487
+        },
+        {
+          "x0": 92,
+          "y0": 554,
+          "x1": 482,
+          "y1": 966
+        },
+        {
+          "x0": 582,
+          "y0": 588,
+          "x1": 937,
+          "y1": 968
+        },
+        {
+          "x0": 1010,
+          "y0": 805,
+          "x1": 1509,
+          "y1": 965
+        }
+      ],
+      "scale": 0.45048543689320386,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 79234
+  },
+  {
+    "id": "nail-gun-turret",
+    "sourceFile": "exec-a4f9fbfc-5ab6-47af-b87e-e48343fd0d0b.png",
+    "sha256": "f05f8029d2d0f8436e877692a621b53d266737f6a7a94d62c0df12b3da8d2e54",
+    "prompt": "Reconstructed source record: six poses of Nail Gun Turret, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 73,
+          "y0": 169,
+          "x1": 463,
+          "y1": 477
+        },
+        {
+          "x0": 575,
+          "y0": 58,
+          "x1": 942,
+          "y1": 478
+        },
+        {
+          "x0": 1010,
+          "y0": 190,
+          "x1": 1496,
+          "y1": 478
+        },
+        {
+          "x0": 45,
+          "y0": 612,
+          "x1": 505,
+          "y1": 952
+        },
+        {
+          "x0": 561,
+          "y0": 602,
+          "x1": 946,
+          "y1": 945
+        },
+        {
+          "x0": 1031,
+          "y0": 661,
+          "x1": 1509,
+          "y1": 969
+        }
+      ],
+      "scale": 0.47638603696098564,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 94552
+  },
+  {
+    "id": "null-stalker",
+    "sourceFile": "exec-f9a73bec-6e3f-4581-af9e-ece94385512d.png",
+    "sha256": "a8c69713722f6dd9a456cc3ad31b6951ead883be12dd2afd4aed3c64ebf158d1",
+    "prompt": "Reconstructed source record: six poses of Null Stalker, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 67,
+          "y0": 154,
+          "x1": 495,
+          "y1": 491
+        },
+        {
+          "x0": 543,
+          "y0": 86,
+          "x1": 961,
+          "y1": 479
+        },
+        {
+          "x0": 925,
+          "y0": 208,
+          "x1": 1509,
+          "y1": 482
+        },
+        {
+          "x0": 44,
+          "y0": 566,
+          "x1": 511,
+          "y1": 943
+        },
+        {
+          "x0": 624,
+          "y0": 583,
+          "x1": 960,
+          "y1": 937
+        },
+        {
+          "x0": 996,
+          "y0": 766,
+          "x1": 1503,
+          "y1": 944
+        }
+      ],
+      "scale": 0.39658119658119656,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 69070
+  },
+  {
+    "id": "oathbreaker-shade",
+    "sourceFile": "exec-527a6de8-35f0-4889-ab64-fbf9dc1d1c3d.png",
+    "sha256": "4d1e6bada073bcc8af1ac76a11725f4d662271ec46fbaadd55e9af0efb8c67c1",
+    "prompt": "Reconstructed source record: six poses of Oathbreaker Shade, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 38,
+          "y0": 103,
+          "x1": 542,
+          "y1": 488
+        },
+        {
+          "x0": 604,
+          "y0": 49,
+          "x1": 1029,
+          "y1": 492
+        },
+        {
+          "x0": 984,
+          "y0": 131,
+          "x1": 1532,
+          "y1": 485
+        },
+        {
+          "x0": 26,
+          "y0": 536,
+          "x1": 536,
+          "y1": 960
+        },
+        {
+          "x0": 577,
+          "y0": 581,
+          "x1": 1036,
+          "y1": 963
+        },
+        {
+          "x0": 1034,
+          "y0": 659,
+          "x1": 1529,
+          "y1": 989
+        }
+      ],
+      "scale": 0.4225865209471767,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 108132
+  },
+  {
+    "id": "overseer-drone",
+    "sourceFile": "exec-0deab962-4152-42ee-a60d-3d9373326d85.png",
+    "sha256": "67d10e67b6fb13aa7befecefe7844129e1a41da432c7c615f14588cb5a18f5fd",
+    "prompt": "Reconstructed source record: six poses of Overseer Drone, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 44,
+          "y0": 73,
+          "x1": 436,
+          "y1": 480
+        },
+        {
+          "x0": 571,
+          "y0": 15,
+          "x1": 958,
+          "y1": 476
+        },
+        {
+          "x0": 980,
+          "y0": 113,
+          "x1": 1498,
+          "y1": 481
+        },
+        {
+          "x0": 44,
+          "y0": 510,
+          "x1": 475,
+          "y1": 957
+        },
+        {
+          "x0": 558,
+          "y0": 576,
+          "x1": 964,
+          "y1": 956
+        },
+        {
+          "x0": 983,
+          "y0": 735,
+          "x1": 1508,
+          "y1": 989
+        }
+      ],
+      "scale": 0.44106463878326996,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 89822
+  },
+  {
+    "id": "pride-the-fallen-champion",
+    "sourceFile": "exec-cf47ebbf-49af-4204-8942-187f2f13b58f.png",
+    "sha256": "3b10c6d10fe9623c98d05fb3abbc61ef82f81fafd67bb013e31aa8a1369b8dcc",
+    "prompt": "Reconstructed source record: six poses of Pride, the Fallen Champion, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 9,
+          "y0": 70,
+          "x1": 540,
+          "y1": 495
+        },
+        {
+          "x0": 571,
+          "y0": 13,
+          "x1": 982,
+          "y1": 496
+        },
+        {
+          "x0": 919,
+          "y0": 127,
+          "x1": 1525,
+          "y1": 487
+        },
+        {
+          "x0": 55,
+          "y0": 536,
+          "x1": 529,
+          "y1": 969
+        },
+        {
+          "x0": 602,
+          "y0": 576,
+          "x1": 1044,
+          "y1": 967
+        },
+        {
+          "x0": 989,
+          "y0": 788,
+          "x1": 1527,
+          "y1": 1003
+        }
+      ],
+      "scale": 0.38220757825370677,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 81052
+  },
+  {
+    "id": "primal-warden",
+    "sourceFile": "exec-ae792fa7-7aae-43a9-81d6-c6302371a624.png",
+    "sha256": "e066f89a0ce98bc5b40b672e78dedf426810f68403fad6c8edf8306b5b03d1d9",
+    "prompt": "Reconstructed source record: six poses of Primal Warden, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 39,
+          "y0": 71,
+          "x1": 476,
+          "y1": 495
+        },
+        {
+          "x0": 610,
+          "y0": 18,
+          "x1": 962,
+          "y1": 494
+        },
+        {
+          "x0": 979,
+          "y0": 126,
+          "x1": 1522,
+          "y1": 489
+        },
+        {
+          "x0": 51,
+          "y0": 503,
+          "x1": 508,
+          "y1": 981
+        },
+        {
+          "x0": 587,
+          "y0": 583,
+          "x1": 962,
+          "y1": 984
+        },
+        {
+          "x0": 1029,
+          "y0": 803,
+          "x1": 1517,
+          "y1": 990
+        }
+      ],
+      "scale": 0.4264705882352941,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 98552
+  },
+  {
+    "id": "resonance-echo",
+    "sourceFile": "exec-4905379b-ec6d-4e8b-a4c9-0b13a66689be.png",
+    "sha256": "ef4704e72200d60256ef54d3033911ca777d5c72d44d5805f412862f97f36231",
+    "prompt": "Reconstructed source record: six poses of Resonance Echo, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 114,
+          "y0": 88,
+          "x1": 498,
+          "y1": 546
+        },
+        {
+          "x0": 571,
+          "y0": 20,
+          "x1": 976,
+          "y1": 543
+        },
+        {
+          "x0": 951,
+          "y0": 155,
+          "x1": 1518,
+          "y1": 551
+        },
+        {
+          "x0": 61,
+          "y0": 547,
+          "x1": 484,
+          "y1": 994
+        },
+        {
+          "x0": 591,
+          "y0": 585,
+          "x1": 1003,
+          "y1": 995
+        },
+        {
+          "x0": 1056,
+          "y0": 777,
+          "x1": 1502,
+          "y1": 991
+        }
+      ],
+      "scale": 0.4084507042253521,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 109392
+  },
+  {
+    "id": "resonance-husk",
+    "sourceFile": "exec-e7ca5495-7694-455c-857f-bb315c43b5b0.png",
+    "sha256": "a5d4d34b2fd33c303979d7cdbaa6e1f75642b67bd1a285e2f35ad6f1ca4b3b9c",
+    "prompt": "Reconstructed source record: six poses of Resonance Husk, dark fantasy transparent 3-by-2 atlas, ready/wind-up/attack/special/hit/death; generated in expansion batch.",
+    "promptRecord": "reconstructed summary",
+    "packing": {
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 90,
+          "y0": 91,
+          "x1": 484,
+          "y1": 491
+        },
+        {
+          "x0": 597,
+          "y0": 12,
+          "x1": 976,
+          "y1": 491
+        },
+        {
+          "x0": 980,
+          "y0": 140,
+          "x1": 1513,
+          "y1": 494
+        },
+        {
+          "x0": 46,
+          "y0": 540,
+          "x1": 492,
+          "y1": 975
+        },
+        {
+          "x0": 599,
+          "y0": 570,
+          "x1": 995,
+          "y1": 974
+        },
+        {
+          "x0": 1038,
+          "y0": 784,
+          "x1": 1528,
+          "y1": 977
+        }
+      ],
+      "scale": 0.4344569288389513,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 95486
+  },
+  {
+    "id": "fang",
+    "sourceFile": "exec-d5ea6256-d12d-4653-9d8f-c94bdd906a97.png",
+    "sha256": "e29c7d629a2cfc05e8f9762f282b9f3db6df3fd8d7aaabcbf84b02b916c91ca8",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Fang: Lean BLACK greyhound-like hunting hound, narrow muzzle, very long pale fangs, leather collar. Natural dark fur, NO fire or lava. Low pounce and bite.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 16,
+          "y0": 18,
+          "x1": 490,
+          "y1": 492
+        },
+        {
+          "x0": 524,
+          "y0": 34,
+          "x1": 992,
+          "y1": 480
+        },
+        {
+          "x0": 1011,
+          "y0": 110,
+          "x1": 1524,
+          "y1": 459
+        },
+        {
+          "x0": 22,
+          "y0": 527,
+          "x1": 531,
+          "y1": 974
+        },
+        {
+          "x0": 554,
+          "y0": 507,
+          "x1": 969,
+          "y1": 996
+        },
+        {
+          "x0": 1010,
+          "y0": 734,
+          "x1": 1524,
+          "y1": 953
+        }
+      ],
+      "scale": 0.45048543689320386,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 99334
+  },
+  {
+    "id": "fel-pursuer",
+    "sourceFile": "exec-77dd17df-6960-4b5f-9359-3902a31dfa4b.png",
+    "sha256": "083513fe0e251f748d27616d60121a136a87fcf326f4d037b7160a53e682608f",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Fel Pursuer: Predatory four-legged demonic reptile with charcoal CHITIN, curved horns, emerald eyes and spined tail. Green magic, NO lava or fire.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 14,
+          "y0": 61,
+          "x1": 498,
+          "y1": 456
+        },
+        {
+          "x0": 528,
+          "y0": 51,
+          "x1": 1068,
+          "y1": 473
+        },
+        {
+          "x0": 1058,
+          "y0": 56,
+          "x1": 1523,
+          "y1": 446
+        },
+        {
+          "x0": 10,
+          "y0": 508,
+          "x1": 511,
+          "y1": 983
+        },
+        {
+          "x0": 542,
+          "y0": 531,
+          "x1": 1014,
+          "y1": 957
+        },
+        {
+          "x0": 1032,
+          "y0": 620,
+          "x1": 1527,
+          "y1": 959
+        }
+      ],
+      "scale": 0.4288354898336414,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 141214
+  },
+  {
+    "id": "grim",
+    "sourceFile": "exec-b124ef7f-df62-4b58-af65-da499a630ffd.png",
+    "sha256": "0ed58c2669a8b12625aef1bef1c6fd6561ad6eba64445f32300dfb190b382a93",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Grim: Broad heavy dark GREY mastiff, huge square bone-breaking jaw, scarred muzzle, iron collar, coarse fur. Natural anatomy, NO fire or lava.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 7,
+          "y0": 18,
+          "x1": 461,
+          "y1": 474
+        },
+        {
+          "x0": 514,
+          "y0": 87,
+          "x1": 990,
+          "y1": 477
+        },
+        {
+          "x0": 1001,
+          "y0": 32,
+          "x1": 1524,
+          "y1": 451
+        },
+        {
+          "x0": 3,
+          "y0": 490,
+          "x1": 495,
+          "y1": 991
+        },
+        {
+          "x0": 518,
+          "y0": 523,
+          "x1": 1009,
+          "y1": 982
+        },
+        {
+          "x0": 981,
+          "y0": 752,
+          "x1": 1529,
+          "y1": 973
+        }
+      ],
+      "scale": 0.4225865209471767,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 90168
+  },
+  {
+    "id": "prototype-07-the-reconstituted",
+    "sourceFile": "exec-a6056ba3-8f0e-42e2-aca8-a12fbfd605d7.png",
+    "sha256": "692804a4ed4b164b94d748442d897ef46082582958188bde9d79a674f62731ae",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Prototype 07 — The Reconstituted: Huge pale laboratory containment experiment reinforced by black armour, glowing violet tubes, an oversized mechanical fist and bolted legs. No gore.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 32,
+          "y0": 13,
+          "x1": 490,
+          "y1": 478
+        },
+        {
+          "x0": 542,
+          "y0": 0,
+          "x1": 998,
+          "y1": 480
+        },
+        {
+          "x0": 1008,
+          "y0": 80,
+          "x1": 1519,
+          "y1": 477
+        },
+        {
+          "x0": 13,
+          "y0": 498,
+          "x1": 523,
+          "y1": 992
+        },
+        {
+          "x0": 569,
+          "y0": 528,
+          "x1": 997,
+          "y1": 993
+        },
+        {
+          "x0": 1010,
+          "y0": 749,
+          "x1": 1525,
+          "y1": 989
+        }
+      ],
+      "scale": 0.4496124031007752,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 136306
+  },
+  {
+    "id": "razorpack-matriarch",
+    "sourceFile": "exec-87601a1f-7474-450a-a271-ee081866e5ee.png",
+    "sha256": "29c107e72dfa850d996989bcd568c8e7ffc4447ee47e257863466e930c1fa3df",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Razorpack Matriarch: A powerful tawny wolf matriarch, silver ridge of razor-like fur, long claws and narrow alert eyes. Four-legged, natural fur; no flames or lava.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 18,
+          "y0": 18,
+          "x1": 477,
+          "y1": 475
+        },
+        {
+          "x0": 498,
+          "y0": 85,
+          "x1": 1036,
+          "y1": 454
+        },
+        {
+          "x0": 1036,
+          "y0": 17,
+          "x1": 1524,
+          "y1": 449
+        },
+        {
+          "x0": 18,
+          "y0": 495,
+          "x1": 511,
+          "y1": 990
+        },
+        {
+          "x0": 553,
+          "y0": 535,
+          "x1": 1007,
+          "y1": 963
+        },
+        {
+          "x0": 1011,
+          "y0": 738,
+          "x1": 1520,
+          "y1": 974
+        }
+      ],
+      "scale": 0.43042671614100186,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 128558
+  },
+  {
+    "id": "reactor-husk",
+    "sourceFile": "exec-6c9ecb55-5a05-4484-8960-8afb387f45e6.png",
+    "sha256": "7f87e2bedb0eeedb6849fd4bdb559ae3af1f0af41aeeed7938c99706bb5685f5",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Reactor Husk: Experimental host in scorched containment suit with a teal reactor core behind chest glass, insulated gloves, broken cables.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 19,
+          "y0": 9,
+          "x1": 475,
+          "y1": 499
+        },
+        {
+          "x0": 534,
+          "y0": 0,
+          "x1": 986,
+          "y1": 501
+        },
+        {
+          "x0": 996,
+          "y0": 71,
+          "x1": 1522,
+          "y1": 483
+        },
+        {
+          "x0": 12,
+          "y0": 497,
+          "x1": 525,
+          "y1": 1013
+        },
+        {
+          "x0": 561,
+          "y0": 522,
+          "x1": 1017,
+          "y1": 996
+        },
+        {
+          "x0": 976,
+          "y0": 696,
+          "x1": 1522,
+          "y1": 1007
+        }
+      ],
+      "scale": 0.42413162705667273,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 139556
+  },
+  {
+    "id": "resonant-drake",
+    "sourceFile": "exec-47b1b58c-7596-4411-bed3-f1819db8f0d8.png",
+    "sha256": "fc7f77559093ad71682470f0841ebc918fea132a61adb113f3a87e1156e661ae",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Resonant Drake: Compact four-legged violet drake, folded crystalline wings, silver throat plates, long curved tail, purple breath.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 15,
+          "y0": 123,
+          "x1": 540,
+          "y1": 465
+        },
+        {
+          "x0": 552,
+          "y0": 25,
+          "x1": 942,
+          "y1": 467
+        },
+        {
+          "x0": 914,
+          "y0": 24,
+          "x1": 1525,
+          "y1": 469
+        },
+        {
+          "x0": 13,
+          "y0": 494,
+          "x1": 538,
+          "y1": 973
+        },
+        {
+          "x0": 568,
+          "y0": 569,
+          "x1": 995,
+          "y1": 936
+        },
+        {
+          "x0": 1027,
+          "y0": 696,
+          "x1": 1518,
+          "y1": 970
+        }
+      ],
+      "scale": 0.3790849673202614,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 114546
+  },
+  {
+    "id": "restless-ancestor",
+    "sourceFile": "exec-90faa27c-6366-4390-8e4a-f072c93b8e8d.png",
+    "sha256": "862b5c3ed3b103b2f4ec51a05e26e5227befd0db31a15d8c2d8f317f98a45ef6",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Restless Ancestor: Ghostly ancestral shaman with weathered wise face, translucent teal fur mantle, wooden mask ornaments, spirit staff.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 64,
+          "y0": 16,
+          "x1": 457,
+          "y1": 482
+        },
+        {
+          "x0": 553,
+          "y0": 0,
+          "x1": 978,
+          "y1": 484
+        },
+        {
+          "x0": 989,
+          "y0": 76,
+          "x1": 1534,
+          "y1": 462
+        },
+        {
+          "x0": 15,
+          "y0": 486,
+          "x1": 523,
+          "y1": 1010
+        },
+        {
+          "x0": 528,
+          "y0": 559,
+          "x1": 992,
+          "y1": 987
+        },
+        {
+          "x0": 1028,
+          "y0": 702,
+          "x1": 1520,
+          "y1": 1000
+        }
+      ],
+      "scale": 0.4249084249084249,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 146074
+  },
+  {
+    "id": "risen-champion",
+    "sourceFile": "exec-767c5b8a-195f-45ff-84bb-20a6d09b24eb.png",
+    "sha256": "6f06b4048d246f221edc379aaac4b3f8c7621c469c6ecf929f5b840f2beaa16f",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Risen Champion: Skeletal champion in battered dark bronze plate, torn red tabard, iron sword, chipped shield and icy blue eyes.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 14,
+          "y0": 61,
+          "x1": 484,
+          "y1": 474
+        },
+        {
+          "x0": 571,
+          "y0": 6,
+          "x1": 990,
+          "y1": 481
+        },
+        {
+          "x0": 1011,
+          "y0": 98,
+          "x1": 1514,
+          "y1": 475
+        },
+        {
+          "x0": 20,
+          "y0": 519,
+          "x1": 575,
+          "y1": 992
+        },
+        {
+          "x0": 607,
+          "y0": 561,
+          "x1": 981,
+          "y1": 963
+        },
+        {
+          "x0": 1026,
+          "y0": 765,
+          "x1": 1520,
+          "y1": 996
+        }
+      ],
+      "scale": 0.4172661870503597,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 114258
+  },
+  {
+    "id": "rootbound-prowler",
+    "sourceFile": "exec-33cefa54-934d-4f73-bcd4-71e2de66dac3.png",
+    "sha256": "b33cd54bd38637396cd3767e1475535d56887a2a1c0555480063e5e792003a73",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Rootbound Prowler: Low stalking wildcat with reddish bark fur, vine-bound forelegs, green eyes, thorned tail and four agile paws.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 17,
+          "y0": 19,
+          "x1": 490,
+          "y1": 461
+        },
+        {
+          "x0": 559,
+          "y0": 17,
+          "x1": 973,
+          "y1": 465
+        },
+        {
+          "x0": 1034,
+          "y0": 40,
+          "x1": 1523,
+          "y1": 466
+        },
+        {
+          "x0": 15,
+          "y0": 521,
+          "x1": 515,
+          "y1": 992
+        },
+        {
+          "x0": 556,
+          "y0": 535,
+          "x1": 997,
+          "y1": 985
+        },
+        {
+          "x0": 1033,
+          "y0": 701,
+          "x1": 1523,
+          "y1": 960
+        }
+      ],
+      "scale": 0.4630738522954092,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 154018
+  },
+  {
+    "id": "rootling",
+    "sourceFile": "exec-0cf7901a-7232-4d67-b1c3-5fb81e7cf5a4.png",
+    "sha256": "2e5764904229894b10f2170e3367d749d34dcc405c9ef05640bb3f0027feb0c2",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Rootling: Small knotted wood root creature with moss and amber eyes, four twig scrambling limbs. Not a human.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 18,
+          "y0": 53,
+          "x1": 523,
+          "y1": 500
+        },
+        {
+          "x0": 566,
+          "y0": 15,
+          "x1": 955,
+          "y1": 494
+        },
+        {
+          "x0": 1003,
+          "y0": 103,
+          "x1": 1520,
+          "y1": 514
+        },
+        {
+          "x0": 15,
+          "y0": 517,
+          "x1": 621,
+          "y1": 972
+        },
+        {
+          "x0": 597,
+          "y0": 538,
+          "x1": 1031,
+          "y1": 971
+        },
+        {
+          "x0": 984,
+          "y0": 738,
+          "x1": 1526,
+          "y1": 979
+        }
+      ],
+      "scale": 0.38220757825370677,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 109106
+  },
+  {
+    "id": "siegebreaker",
+    "sourceFile": "exec-665abbfa-8879-4641-855c-e809815c96ec.png",
+    "sha256": "9198753d5b1d07c867b11558876307427c8a742c92421f3ffa6306550bb9f212",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Siegebreaker: Massive warrior in scarred black iron plate, angular enclosed helmet, huge two-handed warhammer, ochre cloth.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 18,
+          "y0": 72,
+          "x1": 463,
+          "y1": 498
+        },
+        {
+          "x0": 565,
+          "y0": 6,
+          "x1": 953,
+          "y1": 498
+        },
+        {
+          "x0": 1008,
+          "y0": 138,
+          "x1": 1522,
+          "y1": 517
+        },
+        {
+          "x0": 12,
+          "y0": 514,
+          "x1": 551,
+          "y1": 1004
+        },
+        {
+          "x0": 530,
+          "y0": 562,
+          "x1": 980,
+          "y1": 974
+        },
+        {
+          "x0": 969,
+          "y0": 770,
+          "x1": 1525,
+          "y1": 991
+        }
+      ],
+      "scale": 0.41651705565529623,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 123454
+  },
+  {
+    "id": "silent-auditor",
+    "sourceFile": "exec-9265c019-4056-4c93-948a-3a1b4e1f04fd.png",
+    "sha256": "b567cf003dfac2817f9d456c0b3def927629449fa311dcbdc35bf6f6570b7198",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Silent Auditor: Slender guild assassin, charcoal leather, silver half-mask, hooded cape and two narrow daggers.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 17,
+          "y0": 3,
+          "x1": 476,
+          "y1": 498
+        },
+        {
+          "x0": 547,
+          "y0": 13,
+          "x1": 990,
+          "y1": 492
+        },
+        {
+          "x0": 994,
+          "y0": 88,
+          "x1": 1531,
+          "y1": 477
+        },
+        {
+          "x0": 12,
+          "y0": 516,
+          "x1": 590,
+          "y1": 963
+        },
+        {
+          "x0": 571,
+          "y0": 530,
+          "x1": 1012,
+          "y1": 955
+        },
+        {
+          "x0": 1039,
+          "y0": 778,
+          "x1": 1518,
+          "y1": 958
+        }
+      ],
+      "scale": 0.4006908462867012,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 99086
+  },
+  {
+    "id": "siphon",
+    "sourceFile": "exec-48062c9e-0c00-495a-a6df-2204307534d5.png",
+    "sha256": "dc1573ba18548c2ef7c612b9c86e883cb6e62177b57817a3f01a66dea5d1b933",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Siphon: Lean laboratory specimen with pale angular head, dark restraint harness, violet draining tubes along both arms, reaching hands.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 42,
+          "y0": 12,
+          "x1": 463,
+          "y1": 501
+        },
+        {
+          "x0": 531,
+          "y0": 16,
+          "x1": 948,
+          "y1": 506
+        },
+        {
+          "x0": 936,
+          "y0": 29,
+          "x1": 1517,
+          "y1": 499
+        },
+        {
+          "x0": 15,
+          "y0": 503,
+          "x1": 596,
+          "y1": 1014
+        },
+        {
+          "x0": 627,
+          "y0": 531,
+          "x1": 1036,
+          "y1": 1008
+        },
+        {
+          "x0": 1017,
+          "y0": 802,
+          "x1": 1526,
+          "y1": 1010
+        }
+      ],
+      "scale": 0.39862542955326463,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 119464
+  },
+  {
+    "id": "sloth-the-ancient-sleeper",
+    "sourceFile": "exec-8b7e7949-b46a-44b4-8f37-dd459baddcd7.png",
+    "sha256": "30ce7d68ad610a81876247ada8b5c94ca2778940bcf76bc2c7830904909755a7",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Sloth, the Ancient Sleeper: Enormous rounded mossy ancient stone sleeper, crumbling stone crown, huge slow arms, squat legs, dim amber fissure eyes.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 20,
+          "y0": 35,
+          "x1": 505,
+          "y1": 489
+        },
+        {
+          "x0": 537,
+          "y0": 17,
+          "x1": 1006,
+          "y1": 490
+        },
+        {
+          "x0": 1026,
+          "y0": 106,
+          "x1": 1519,
+          "y1": 496
+        },
+        {
+          "x0": 16,
+          "y0": 524,
+          "x1": 557,
+          "y1": 1000
+        },
+        {
+          "x0": 556,
+          "y0": 590,
+          "x1": 993,
+          "y1": 991
+        },
+        {
+          "x0": 1008,
+          "y0": 722,
+          "x1": 1524,
+          "y1": 991
+        }
+      ],
+      "scale": 0.4280442804428044,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 133626
+  },
+  {
+    "id": "soul-devourer",
+    "sourceFile": "exec-fa2cfe3b-51cb-4af1-accc-833cc38a04ee.png",
+    "sha256": "831bedd3a1f78e2c905de437ba85b917bf6c7f2fdf8d5d0862f3ce4d034a6157",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Soul Devourer: Floating dark demonic soul eater, elongated skull mask, large clawed arms, tattered smoky lower body, green light inside chest.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 13,
+          "y0": 16,
+          "x1": 473,
+          "y1": 517
+        },
+        {
+          "x0": 568,
+          "y0": 18,
+          "x1": 955,
+          "y1": 518
+        },
+        {
+          "x0": 962,
+          "y0": 83,
+          "x1": 1525,
+          "y1": 479
+        },
+        {
+          "x0": 16,
+          "y0": 511,
+          "x1": 570,
+          "y1": 1013
+        },
+        {
+          "x0": 572,
+          "y0": 545,
+          "x1": 1022,
+          "y1": 1006
+        },
+        {
+          "x0": 1002,
+          "y0": 629,
+          "x1": 1524,
+          "y1": 1006
+        }
+      ],
+      "scale": 0.41134751773049644,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 135548
+  },
+  {
+    "id": "spell-eater",
+    "sourceFile": "exec-b31e2bea-5d68-4f68-80fa-04902367c66a.png",
+    "sha256": "6368d758e074891533ca954620e59d7dfdd08300aa5842120a8e6cc3ffe1615f",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Spell-Eater: Six-legged arcane predator, dark violet chitin, wide crystal-lined maw, silver magic-absorbing plates, low horizontal silhouette.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 19,
+          "y0": 141,
+          "x1": 511,
+          "y1": 456
+        },
+        {
+          "x0": 534,
+          "y0": 45,
+          "x1": 996,
+          "y1": 469
+        },
+        {
+          "x0": 1020,
+          "y0": 162,
+          "x1": 1524,
+          "y1": 456
+        },
+        {
+          "x0": 13,
+          "y0": 491,
+          "x1": 526,
+          "y1": 987
+        },
+        {
+          "x0": 539,
+          "y0": 570,
+          "x1": 993,
+          "y1": 971
+        },
+        {
+          "x0": 1003,
+          "y0": 623,
+          "x1": 1530,
+          "y1": 992
+        }
+      ],
+      "scale": 0.4393939393939394,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 133170
+  },
+  {
+    "id": "splice",
+    "sourceFile": "exec-1748cc6a-88af-493f-a531-9771576f2045.png",
+    "sha256": "f2deaa6e042ea5a605ab0a8f9c1060f806ac8668d1058651994c1a354af89f3c",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Splice: Fast thin failed laboratory specimen, pale skin, shredded dark containment clothing, elongated claw forearms, asymmetric violet implant.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 42,
+          "y0": 82,
+          "x1": 473,
+          "y1": 491
+        },
+        {
+          "x0": 577,
+          "y0": 12,
+          "x1": 956,
+          "y1": 489
+        },
+        {
+          "x0": 1031,
+          "y0": 97,
+          "x1": 1525,
+          "y1": 462
+        },
+        {
+          "x0": 30,
+          "y0": 496,
+          "x1": 558,
+          "y1": 959
+        },
+        {
+          "x0": 605,
+          "y0": 524,
+          "x1": 984,
+          "y1": 967
+        },
+        {
+          "x0": 978,
+          "y0": 769,
+          "x1": 1522,
+          "y1": 1004
+        }
+      ],
+      "scale": 0.42568807339449544,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 121736
+  },
+  {
+    "id": "stoneback-beast",
+    "sourceFile": "exec-04a6faf6-f726-4a5d-8006-90ad64083294.png",
+    "sha256": "7bdb2320ddaeae5f57987a024c13662c82cd37f0b7f1f9c5326ec945497044b7",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Stoneback Beast: Stocky canyon boar, grey rocky back plates, rust brown hide, curved tusks, four heavy digging feet.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 17,
+          "y0": 71,
+          "x1": 496,
+          "y1": 468
+        },
+        {
+          "x0": 539,
+          "y0": 31,
+          "x1": 998,
+          "y1": 465
+        },
+        {
+          "x0": 1006,
+          "y0": 113,
+          "x1": 1515,
+          "y1": 471
+        },
+        {
+          "x0": 14,
+          "y0": 513,
+          "x1": 561,
+          "y1": 972
+        },
+        {
+          "x0": 572,
+          "y0": 558,
+          "x1": 1003,
+          "y1": 957
+        },
+        {
+          "x0": 963,
+          "y0": 717,
+          "x1": 1522,
+          "y1": 949
+        }
+      ],
+      "scale": 0.4142857142857143,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 112102
+  },
+  {
+    "id": "stormbound-elemental",
+    "sourceFile": "exec-361f5c94-20d0-4fd2-bdb4-a12de66093ea.png",
+    "sha256": "3bede4a9256cc5bd105d26a120581a448fc017a80eb33bf9bb877659d1ad45a8",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Stormbound Elemental: Living storm spirit, blue stone fragments, two cloud-wreathed fists, bright white-blue lightning core and tapered hovering lower body.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 17,
+          "y0": 17,
+          "x1": 513,
+          "y1": 503
+        },
+        {
+          "x0": 467,
+          "y0": 9,
+          "x1": 1006,
+          "y1": 503
+        },
+        {
+          "x0": 995,
+          "y0": 67,
+          "x1": 1535,
+          "y1": 503
+        },
+        {
+          "x0": 8,
+          "y0": 514,
+          "x1": 560,
+          "y1": 1015
+        },
+        {
+          "x0": 583,
+          "y0": 535,
+          "x1": 1030,
+          "y1": 997
+        },
+        {
+          "x0": 977,
+          "y0": 593,
+          "x1": 1527,
+          "y1": 978
+        }
+      ],
+      "scale": 0.41952983725135623,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 155436
+  },
+  {
+    "id": "temple-challenger",
+    "sourceFile": "exec-374ec1f4-5ac9-4980-8c9e-f57f65243a6a.png",
+    "sha256": "d3e8d0bed743125f5c5d92f7e168bd54f4f4606ce43c17cef90dd441cf85d0af",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Temple Challenger: Disciplined unarmed martial challenger in dark green wrapped temple robes, shaved head, prayer beads, bracers. Fist strikes.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 41,
+          "y0": 27,
+          "x1": 485,
+          "y1": 495
+        },
+        {
+          "x0": 550,
+          "y0": 36,
+          "x1": 975,
+          "y1": 485
+        },
+        {
+          "x0": 1042,
+          "y0": 63,
+          "x1": 1521,
+          "y1": 485
+        },
+        {
+          "x0": 14,
+          "y0": 530,
+          "x1": 505,
+          "y1": 974
+        },
+        {
+          "x0": 569,
+          "y0": 546,
+          "x1": 973,
+          "y1": 970
+        },
+        {
+          "x0": 996,
+          "y0": 804,
+          "x1": 1522,
+          "y1": 962
+        }
+      ],
+      "scale": 0.44022770398481975,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 106850
+  },
+  {
+    "id": "the-canyon-sentinel",
+    "sourceFile": "exec-eb279cb7-ab3f-4801-ba9c-64064f949e61.png",
+    "sha256": "e5eef31ed3ceda15c1e022f7b2183f87944f51eddb725f9618f7eb22b8e294b1",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. The Canyon Sentinel: Huge red sandstone guardian, living roots, angular horned rock head, massive fists, block legs and gold-green fissures.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 28,
+          "y0": 13,
+          "x1": 498,
+          "y1": 495
+        },
+        {
+          "x0": 520,
+          "y0": 13,
+          "x1": 1007,
+          "y1": 492
+        },
+        {
+          "x0": 1031,
+          "y0": 59,
+          "x1": 1534,
+          "y1": 504
+        },
+        {
+          "x0": 14,
+          "y0": 519,
+          "x1": 524,
+          "y1": 1001
+        },
+        {
+          "x0": 553,
+          "y0": 524,
+          "x1": 996,
+          "y1": 989
+        },
+        {
+          "x0": 1011,
+          "y0": 723,
+          "x1": 1519,
+          "y1": 1001
+        }
+      ],
+      "scale": 0.45401174168297453,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 161154
+  },
+  {
+    "id": "the-chaos-warden",
+    "sourceFile": "exec-93837ea4-84a6-4ac3-93fd-9bce5ee20910.png",
+    "sha256": "e4996797837ce047913a334e694d02b54eee07a76167cb77a0ecc6a492d720a0",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. The Chaos Warden: Corrupted warden in jagged root and obsidian armour, antler helmet, huge thornwood halberd, violet-green growths.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 9,
+          "y0": 8,
+          "x1": 566,
+          "y1": 496
+        },
+        {
+          "x0": 553,
+          "y0": 0,
+          "x1": 988,
+          "y1": 500
+        },
+        {
+          "x0": 968,
+          "y0": 82,
+          "x1": 1526,
+          "y1": 496
+        },
+        {
+          "x0": 8,
+          "y0": 478,
+          "x1": 577,
+          "y1": 1008
+        },
+        {
+          "x0": 575,
+          "y0": 555,
+          "x1": 943,
+          "y1": 1005
+        },
+        {
+          "x0": 957,
+          "y0": 753,
+          "x1": 1520,
+          "y1": 1005
+        }
+      ],
+      "scale": 0.4070175438596491,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 135606
+  },
+  {
+    "id": "the-hollow-warden",
+    "sourceFile": "exec-b510dbff-b86c-42dc-89cf-d15952a42f45.png",
+    "sha256": "0fb9ae24d4cdd377d3a86b910773973b058f0af326bcda48932e8de2537b3004",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. The Hollow Warden: Ancient dark armoured boss, hollow crowned helmet, violet eyes, heavy squared shield, broad rune sword.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 5,
+          "y0": 18,
+          "x1": 498,
+          "y1": 500
+        },
+        {
+          "x0": 539,
+          "y0": 9,
+          "x1": 1001,
+          "y1": 516
+        },
+        {
+          "x0": 997,
+          "y0": 121,
+          "x1": 1523,
+          "y1": 506
+        },
+        {
+          "x0": 5,
+          "y0": 520,
+          "x1": 553,
+          "y1": 989
+        },
+        {
+          "x0": 551,
+          "y0": 541,
+          "x1": 1035,
+          "y1": 967
+        },
+        {
+          "x0": 974,
+          "y0": 784,
+          "x1": 1535,
+          "y1": 995
+        }
+      ],
+      "scale": 0.4128113879003559,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 114332
+  },
+  {
+    "id": "the-hollow-wyrm",
+    "sourceFile": "exec-a3e42583-5cf2-4a41-8c5b-cfd96243b18e.png",
+    "sha256": "88e4107033e873dd9d1facb1a2feac59106287beba84420aecf529148bd33b32",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. The Hollow Wyrm: Undead subterranean wyrm, pale bone plates, horned skull, violet throat, entirely coiled serpentine tail, NO legs or wings. Whole coil inside each cell.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 33,
+          "y0": 8,
+          "x1": 482,
+          "y1": 495
+        },
+        {
+          "x0": 527,
+          "y0": 8,
+          "x1": 977,
+          "y1": 501
+        },
+        {
+          "x0": 1004,
+          "y0": 99,
+          "x1": 1522,
+          "y1": 492
+        },
+        {
+          "x0": 16,
+          "y0": 495,
+          "x1": 514,
+          "y1": 1004
+        },
+        {
+          "x0": 536,
+          "y0": 524,
+          "x1": 992,
+          "y1": 991
+        },
+        {
+          "x0": 1025,
+          "y0": 721,
+          "x1": 1527,
+          "y1": 1001
+        }
+      ],
+      "scale": 0.44701348747591524,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 161276
+  },
+  {
+    "id": "vanity-the-glass-empress",
+    "sourceFile": "exec-4eef7601-c904-4675-9495-553bd7db2c7d.png",
+    "sha256": "76a267db1c4820d81cc7a03f48ad20ff6afd4fd60d7196f1ce60e1023830ad61",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Vanity, the Glass Empress: Regal fully armoured empress, faceted smoked glass plate, high crystal crown, deep blue cape, two-handed mirror edged glaive.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 9,
+          "y0": 37,
+          "x1": 564,
+          "y1": 493
+        },
+        {
+          "x0": 552,
+          "y0": 7,
+          "x1": 947,
+          "y1": 493
+        },
+        {
+          "x0": 974,
+          "y0": 107,
+          "x1": 1524,
+          "y1": 488
+        },
+        {
+          "x0": 18,
+          "y0": 516,
+          "x1": 554,
+          "y1": 1000
+        },
+        {
+          "x0": 538,
+          "y0": 553,
+          "x1": 985,
+          "y1": 982
+        },
+        {
+          "x0": 1001,
+          "y0": 760,
+          "x1": 1526,
+          "y1": 975
+        }
+      ],
+      "scale": 0.4172661870503597,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 125974
+  },
+  {
+    "id": "veyr-the-cell-torn",
+    "sourceFile": "exec-f16b6b8d-f9c8-41aa-b595-a010c010abb0.png",
+    "sha256": "50da031d99234f2251b8da84d5d7e0170822cf5b58eb29c14533fe5748799538",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Veyr, the Cell-Torn: Towering humanoid world boss in fractured obsidian armour, purple energy through cracks, angular horned crown, huge energy blade arm.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 11,
+          "y0": 11,
+          "x1": 468,
+          "y1": 489
+        },
+        {
+          "x0": 531,
+          "y0": 12,
+          "x1": 952,
+          "y1": 488
+        },
+        {
+          "x0": 997,
+          "y0": 42,
+          "x1": 1531,
+          "y1": 494
+        },
+        {
+          "x0": 16,
+          "y0": 488,
+          "x1": 578,
+          "y1": 1007
+        },
+        {
+          "x0": 601,
+          "y0": 563,
+          "x1": 972,
+          "y1": 991
+        },
+        {
+          "x0": 992,
+          "y0": 768,
+          "x1": 1529,
+          "y1": 982
+        }
+      ],
+      "scale": 0.41207815275310833,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 129308
+  },
+  {
+    "id": "wail",
+    "sourceFile": "exec-8a86f53a-1b6a-4079-9183-a263e8c00249.png",
+    "sha256": "c8f1a8789715b5499dfd253b93c38f836a3798861416263d69270445e8ac7f6f",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Wail: Gaunt SILVER GREY hunting hound with shaggy neck, long ears, dark leather collar and pale blue ghostly howl. Four legs. NO fire, lava or orange cracks.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 44,
+          "y0": 54,
+          "x1": 507,
+          "y1": 477
+        },
+        {
+          "x0": 561,
+          "y0": 139,
+          "x1": 974,
+          "y1": 468
+        },
+        {
+          "x0": 1013,
+          "y0": 110,
+          "x1": 1513,
+          "y1": 457
+        },
+        {
+          "x0": 41,
+          "y0": 511,
+          "x1": 525,
+          "y1": 990
+        },
+        {
+          "x0": 557,
+          "y0": 551,
+          "x1": 950,
+          "y1": 977
+        },
+        {
+          "x0": 979,
+          "y0": 763,
+          "x1": 1515,
+          "y1": 983
+        }
+      ],
+      "scale": 0.43202979515828677,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 103654
+  },
+  {
+    "id": "wayward-disciple",
+    "sourceFile": "exec-d93115a8-a2da-4806-bf33-db83e82334f8.png",
+    "sha256": "1eb113c7e1d26c25008554feace3dd6903bd4941ce5a2e5ab876a9bc5d47f064",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Wayward Disciple: Rogue unarmed martial disciple in burgundy wrapped robes, dark short hair, wrist bindings, wooden prayer beads.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": true,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 21,
+          "y0": 9,
+          "x1": 464,
+          "y1": 489
+        },
+        {
+          "x0": 543,
+          "y0": 7,
+          "x1": 942,
+          "y1": 487
+        },
+        {
+          "x0": 1009,
+          "y0": 35,
+          "x1": 1520,
+          "y1": 492
+        },
+        {
+          "x0": 8,
+          "y0": 512,
+          "x1": 515,
+          "y1": 992
+        },
+        {
+          "x0": 571,
+          "y0": 511,
+          "x1": 974,
+          "y1": 993
+        },
+        {
+          "x0": 943,
+          "y0": 789,
+          "x1": 1523,
+          "y1": 985
+        }
+      ],
+      "scale": 0.3993115318416523,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 99288
+  },
+  {
+    "id": "wrath-the-blood-king",
+    "sourceFile": "exec-733b4af3-8f21-4623-9ee0-37387b38ba07.png",
+    "sha256": "4255eca0176b2b951f2d84ee0af747c6c298f7f8600f5e1d1589c84c101750f1",
+    "prompt": "Illustrated 2D dark fantasy RPG game sprite atlas, transparent alpha background, 1536x1024. SIX distinct full-body poses of ONE creature, 3 equal columns by 2 equal rows. Top row: ready, wind-up, contact LEFT. Bottom row: special ability, hit recoil, collapsed dead. Consistent creature scale and identity, 24px empty gutters, all limbs/effects inside cell, no labels/scenery. Painted materials, strong silhouette, fine ink outlines, warm rim lighting, muted dark fantasy palette. Anatomically appropriate motions, not all human poses. Wrath, the Blood King: Massive undead war king in crimson and black plate, jagged iron crown, ragged red cape, broad two-handed execution sword. No blood.",
+    "promptRecord": "verbatim generation prompt",
+    "packing": {
+      "flipped": false,
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "boxes": [
+        {
+          "x0": 86,
+          "y0": 3,
+          "x1": 487,
+          "y1": 495
+        },
+        {
+          "x0": 537,
+          "y0": 12,
+          "x1": 987,
+          "y1": 486
+        },
+        {
+          "x0": 1021,
+          "y0": 73,
+          "x1": 1535,
+          "y1": 490
+        },
+        {
+          "x0": 9,
+          "y0": 506,
+          "x1": 544,
+          "y1": 986
+        },
+        {
+          "x0": 547,
+          "y0": 557,
+          "x1": 1033,
+          "y1": 988
+        },
+        {
+          "x0": 982,
+          "y0": 763,
+          "x1": 1529,
+          "y1": 957
+        }
+      ],
+      "scale": 0.4233576642335766,
+      "frameSize": 256,
+      "ground": 242
+    },
+    "bytes": 106566
   }
 ]

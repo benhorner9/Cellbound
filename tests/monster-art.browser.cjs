@@ -25,7 +25,7 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
    await page.evaluate(async batch=>{
     await CellboundMonsterVisuals.preload(batch.map(a=>a.name));
     const party=Array.from({length:5},(_,i)=>{const klass=['Warrior','Rogue','Hunter','Paladin','Mage'][i],equipment={};for(const pos of CellboundGear.EQUIPMENT_POSITION_ORDER)equipment[pos]=CellboundGear.items.find(x=>x.class===klass&&x.tier===1&&x.slot===pos);return{...testParty[0],id:'qa-'+i,name:klass,class:klass,spec:['Protection','Assassination','Beast Mastery','Holy','Fire'][i],role:i===0?'tank':i===3?'healer':'dps',equipment,level:30,power:20}});
-    const encounter={id:'monster-art-qa',title:'Monster animation coverage',kind:'trash',level:8,enemies:batch.map(a=>({name:a.name,classification:'elite',attackRange:['caster','elemental','ranged','machine'].includes(a.family)?25:5,damageType:a.family==='caster'?'magic':'physical'})),enemyHealth:3000,mechanics:[]};
+    const encounter={id:'monster-art-qa',title:'Monster animation coverage',kind:'trash',level:8,enemies:batch.map(a=>({name:a.name,classification:'elite',attackRange:['caster','elemental','ranged','machine','turret'].includes(a.family)?25:5,damageType:a.family==='caster'?'magic':'physical'})),enemyHealth:3000,mechanics:[]};
     const result=CellboundCombatReborn.simulate({party,encounter,seed:'monster-art',maxDurationMs:30000});
     window.coverageFrames={};window.capture=setInterval(()=>document.querySelectorAll('[data-monster-id]').forEach(n=>{const id=n.dataset.monsterId;const frames=coverageFrames[id]||=[];const frame=Number(n.querySelector('[data-sprite-frame]')?.dataset.spriteFrame);if(!frames.includes(frame))frames.push(frame)}),40);
     window.playback=CellboundDungeon2D.playSharedEncounter({party,encounter,result,theme:'ashen',room:'hall-embers',zone:'ashen-vault',environmentHtml:'<img alt="" src="assets/ashen-vault/rooms/hall-embers.webp" style="width:100%;height:100%;object-fit:cover">'});
@@ -35,9 +35,16 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
    await page.screenshot({path:dir+'/batch-'+start+'-combat.png'});
    const observed=await page.evaluate(()=>{clearInterval(capture);return coverageFrames});
    for(const a of batch){assert(observed[a.id]?.some(f=>f===1||f===2),a.id+' must perform a real engine-driven attack: '+JSON.stringify(observed));coverage.push({id:a.id,liveFrames:observed[a.id]})}
+   // Verify every atlas state through the shared presentation interface. Actual
+   // attack playback above remains driven by the unchanged combat simulation.
+   const states=await page.evaluate(()=>[...document.querySelectorAll('#cb2dArena [data-monster-id]')].map(el=>{
+    const frames=[{clip:null},{clip:'swing',progress:.2},{clip:'swing',progress:.5},{clip:'cast',casting:true,progress:.5},{clip:'hit'},{clip:'death',progress:1,dead:true},{clip:'revive',progress:1}].map(state=>{CellboundMonsterVisuals.apply(el,state);return Number(el.querySelector('[data-sprite-frame]').dataset.spriteFrame)});
+    return {id:el.dataset.monsterId,frames};
+   }));
+   for(const state of states)assert.deepEqual(state.frames,[0,1,2,3,4,5,0],state.id+' ready/prepare/contact/cast/hit/death/recovery');
    // The existing controller owns death priority and recovery for every visual family.
    await page.evaluate(()=>{const arena=document.querySelector('#cb2dArena');document.querySelectorAll('#cb2dArena .enemy').forEach(el=>{CellboundCombatFX.combatEvent({type:'ENEMY_DEFEATED',target:el.dataset.unit,timestamp:1000},{arena,speed:1});CellboundCombatFX.combatEvent({type:'ABILITY_START',source:el.dataset.unit,target:'p-qa-0',timestamp:1001},{arena,speed:1})})});
-   await page.waitForTimeout(1100);
+   await page.waitForFunction(()=>[...document.querySelectorAll('#cb2dArena [data-monster-id] [data-sprite-frame]')].every(n=>n.dataset.spriteFrame==='5'),null,{timeout:5000});
    for(const a of batch)assert.equal(await page.locator('[data-monster-id="'+a.id+'"] [data-sprite-frame]').getAttribute('data-sprite-frame'),'5',a.id+' death priority');
    await page.screenshot({path:dir+'/batch-'+start+'-death.png'});
    await page.evaluate(()=>CellboundDungeon2D.closeShared(true));await page.waitForTimeout(150);
@@ -50,6 +57,6 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
   await page.emulateMedia({reducedMotion:'reduce'});
   const reduced=await page.evaluate(async()=>{await CellboundMonsterVisuals.preload(['Lunar Drone']);const scene=document.createElement('div');scene.className='cbl-scene';scene.innerHTML='<div class="cb2d-unit enemy" data-animation-owned="1" data-animation-state="idle"><span>Lunar Drone</span></div>';document.body.appendChild(scene);const el=scene.firstChild;CellboundMonsterVisuals.mount(el);CellboundMonsterVisuals.apply(el,{clip:'thrust',progress:.5,reduced:true});const ready=el.querySelector('[data-sprite-frame]').dataset.spriteFrame,animation=getComputedStyle(el.querySelector('.cb-monster-sprite')).animationName;CellboundMonsterVisuals.apply(el,{clip:'death',progress:1,dead:true,reduced:true});return{ready,animation,dead:el.querySelector('[data-sprite-frame]').dataset.spriteFrame}});
   assert.deepEqual(reduced,{ready:'0',animation:'none',dead:'5'});
-  assert.deepEqual(errors,[]);fs.writeFileSync(dir+'/coverage.json',JSON.stringify(coverage,null,2));console.log('17 monsters: live engine attacks, six authored poses, death priority, bounded loading and failure fallback passed');
+  assert.deepEqual(errors,[]);fs.writeFileSync(dir+'/coverage.json',JSON.stringify(coverage,null,2));console.log(art.length+' monsters: live engine attacks, six authored poses, death priority, bounded loading and failure fallback passed');
  }finally{await context.close();await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

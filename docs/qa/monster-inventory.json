@@ -77,7 +77,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -92,7 +92,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "ancient-echo",
-      "asset": null
+      "asset": "assets/monsters/v1/ancient-echo.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "arcane-aberration",
@@ -107,7 +109,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -122,7 +124,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "arcane-aberration",
-      "asset": null
+      "asset": "assets/monsters/v1/arcane-aberration.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "archdruid-vorran",
@@ -137,7 +141,7 @@
       "classification": "boss",
       "existingRendering": "cropped-scene-illustration",
       "existingAsset": "assets/bosses/chaos-canyon-vorran.webp",
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -151,7 +155,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Cropped illustrated scene",
       "visualId": "archdruid-vorran",
-      "asset": null
+      "asset": "assets/monsters/v1/archdruid-vorran.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "ash-cultist",
@@ -261,7 +267,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -276,7 +282,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "ashfang-alpha",
-      "asset": null
+      "asset": "assets/monsters/v1/ashfang-alpha.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "briarheart-beast",
@@ -291,7 +299,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -306,7 +314,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "briarheart-beast",
-      "asset": null
+      "asset": "assets/monsters/v1/briarheart-beast.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "bulwark-specimen",
@@ -323,7 +333,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -337,7 +347,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "bulwark-specimen",
-      "asset": null
+      "asset": "assets/monsters/v1/bulwark-specimen.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "canyon-keeper",
@@ -352,7 +364,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -366,7 +378,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "canyon-keeper",
-      "asset": null
+      "asset": "assets/monsters/v1/canyon-keeper.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "canyon-mauler",
@@ -381,7 +395,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -395,7 +409,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "canyon-mauler",
-      "asset": null
+      "asset": "assets/monsters/v1/canyon-mauler.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "cave-spawn",
@@ -441,7 +457,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -455,7 +471,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "cell-sick-marauder",
-      "asset": null
+      "asset": "assets/monsters/v1/cell-sick-marauder.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "chaos-shapeshifter",
@@ -470,7 +488,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -484,7 +502,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "chaos-shapeshifter",
-      "asset": null
+      "asset": "assets/monsters/v1/chaos-shapeshifter.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "chaos-thorncaster",
@@ -501,7 +521,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -515,7 +535,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "chaos-thorncaster",
-      "asset": null
+      "asset": "assets/monsters/v1/chaos-thorncaster.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "cinder-hound",
@@ -625,7 +647,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -640,7 +662,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "cowardice-the-buried-prince",
-      "asset": null
+      "asset": "assets/monsters/v1/cowardice-the-buried-prince.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "cruelty-the-bone-torturer",
@@ -655,7 +679,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -670,7 +694,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "cruelty-the-bone-torturer",
-      "asset": null
+      "asset": "assets/monsters/v1/cruelty-the-bone-torturer.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "deadeye-mercer",
@@ -747,7 +773,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -762,7 +788,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "deceit-the-masked-priest",
-      "asset": null
+      "asset": "assets/monsters/v1/deceit-the-masked-priest.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "despair-the-last-mourner",
@@ -777,7 +805,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -792,7 +820,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "despair-the-last-mourner",
-      "asset": null
+      "asset": "assets/monsters/v1/despair-the-last-mourner.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "dr-vex-calder",
@@ -807,7 +837,7 @@
       "classification": "boss",
       "existingRendering": "cropped-scene-illustration",
       "existingAsset": "assets/bosses/blackout-station-calder.webp",
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -821,7 +851,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Cropped illustrated scene",
       "visualId": "dr-vex-calder",
-      "asset": null
+      "asset": "assets/monsters/v1/dr-vex-calder.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "edrin-vale",
@@ -836,7 +868,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -850,7 +882,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "edrin-vale",
-      "asset": null
+      "asset": "assets/monsters/v1/edrin-vale.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "ember-acolyte",
@@ -927,7 +961,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -942,7 +976,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "envy-the-mirror-queen",
-      "asset": null
+      "asset": "assets/monsters/v1/envy-the-mirror-queen.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "faithless-echo",
@@ -957,7 +993,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -972,7 +1008,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "faithless-echo",
-      "asset": null
+      "asset": "assets/monsters/v1/faithless-echo.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "fallen-justicar",
@@ -987,7 +1025,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1002,7 +1040,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "fallen-justicar",
-      "asset": null
+      "asset": "assets/monsters/v1/fallen-justicar.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "fang",
@@ -1017,7 +1057,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1031,7 +1071,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "fang",
-      "asset": null
+      "asset": "assets/monsters/v1/fang.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "fel-pursuer",
@@ -1046,7 +1088,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1061,7 +1103,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "fel-pursuer",
-      "asset": null
+      "asset": "assets/monsters/v1/fel-pursuer.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "frostbound-revenant",
@@ -1076,7 +1120,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1091,7 +1135,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "frostbound-revenant",
-      "asset": null
+      "asset": "assets/monsters/v1/frostbound-revenant.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "furnace-wisp",
@@ -1137,7 +1183,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1151,7 +1197,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "glass-mite",
-      "asset": null
+      "asset": "assets/monsters/v1/glass-mite.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "glassjaw-sentinel",
@@ -1166,7 +1214,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1180,7 +1228,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "glassjaw-sentinel",
-      "asset": null
+      "asset": "assets/monsters/v1/glassjaw-sentinel.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "glassweb-crawler",
@@ -1195,7 +1245,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1209,7 +1259,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "glassweb-crawler",
-      "asset": null
+      "asset": "assets/monsters/v1/glassweb-crawler.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "gloamhide-behemoth",
@@ -1224,7 +1276,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1239,7 +1291,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "gloamhide-behemoth",
-      "asset": null
+      "asset": "assets/monsters/v1/gloamhide-behemoth.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "gluttony-the-devourer",
@@ -1254,7 +1308,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1269,7 +1323,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "gluttony-the-devourer",
-      "asset": null
+      "asset": "assets/monsters/v1/gluttony-the-devourer.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "greed-the-gilded-miser",
@@ -1284,7 +1340,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1299,7 +1355,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "greed-the-gilded-miser",
-      "asset": null
+      "asset": "assets/monsters/v1/greed-the-gilded-miser.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "grim",
@@ -1314,7 +1372,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1328,7 +1386,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "grim",
-      "asset": null
+      "asset": "assets/monsters/v1/grim.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "guild-enforcer",
@@ -1343,7 +1403,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1358,7 +1418,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "guild-enforcer",
-      "asset": null
+      "asset": "assets/monsters/v1/guild-enforcer.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "hollow-confessor",
@@ -1373,7 +1435,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1388,7 +1450,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "hollow-confessor",
-      "asset": null
+      "asset": "assets/monsters/v1/hollow-confessor.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "hollow-scavenger",
@@ -1403,7 +1467,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1417,7 +1481,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "hollow-scavenger",
-      "asset": null
+      "asset": "assets/monsters/v1/hollow-scavenger.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "hollow-sentinel",
@@ -1432,7 +1498,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1446,7 +1512,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "hollow-sentinel",
-      "asset": null
+      "asset": "assets/monsters/v1/hollow-sentinel.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "hollowed-surveyor",
@@ -1461,7 +1529,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1475,7 +1543,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "hollowed-surveyor",
-      "asset": null
+      "asset": "assets/monsters/v1/hollowed-surveyor.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "inner-demon",
@@ -1490,7 +1560,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1505,7 +1575,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "inner-demon",
-      "asset": null
+      "asset": "assets/monsters/v1/inner-demon.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "ironbound-challenger",
@@ -1520,7 +1592,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1535,7 +1607,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "ironbound-challenger",
-      "asset": null
+      "asset": "assets/monsters/v1/ironbound-challenger.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "lesser-pact-demon",
@@ -1550,7 +1624,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1565,7 +1639,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "lesser-pact-demon",
-      "asset": null
+      "asset": "assets/monsters/v1/lesser-pact-demon.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "living-boulder",
@@ -1580,7 +1656,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1594,7 +1670,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "living-boulder",
-      "asset": null
+      "asset": "assets/monsters/v1/living-boulder.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "lunar-drone",
@@ -1640,7 +1718,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1655,7 +1733,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "lust-the-grave-siren",
-      "asset": null
+      "asset": "assets/monsters/v1/lust-the-grave-siren.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "manor-thrall",
@@ -1670,7 +1750,7 @@
       "classification": "standard",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1684,7 +1764,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "manor-thrall",
-      "asset": null
+      "asset": "assets/monsters/v1/manor-thrall.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "nail-gun-turret",
@@ -1701,7 +1783,7 @@
       "classification": "add",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1715,7 +1797,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "nail-gun-turret",
-      "asset": null
+      "asset": "assets/monsters/v1/nail-gun-turret.webp",
+      "animationFamily": "turret",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "null-stalker",
@@ -1732,7 +1816,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1746,7 +1830,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "null-stalker",
-      "asset": null
+      "asset": "assets/monsters/v1/null-stalker.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "oathbreaker-shade",
@@ -1761,7 +1847,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1776,7 +1862,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "oathbreaker-shade",
-      "asset": null
+      "asset": "assets/monsters/v1/oathbreaker-shade.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "overseer-drone",
@@ -1793,7 +1881,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1807,7 +1895,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "overseer-drone",
-      "asset": null
+      "asset": "assets/monsters/v1/overseer-drone.webp",
+      "animationFamily": "machine",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "pride-the-fallen-champion",
@@ -1822,7 +1912,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1837,7 +1927,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "pride-the-fallen-champion",
-      "asset": null
+      "asset": "assets/monsters/v1/pride-the-fallen-champion.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "primal-warden",
@@ -1852,7 +1944,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1867,7 +1959,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "primal-warden",
-      "asset": null
+      "asset": "assets/monsters/v1/primal-warden.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "prototype-07-the-reconstituted",
@@ -1882,7 +1976,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1896,7 +1990,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "prototype-07-the-reconstituted",
-      "asset": null
+      "asset": "assets/monsters/v1/prototype-07-the-reconstituted.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "razorpack-matriarch",
@@ -1911,7 +2007,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1926,7 +2022,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "razorpack-matriarch",
-      "asset": null
+      "asset": "assets/monsters/v1/razorpack-matriarch.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "reactor-husk",
@@ -1941,7 +2039,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1955,7 +2053,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "reactor-husk",
-      "asset": null
+      "asset": "assets/monsters/v1/reactor-husk.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "resonance-echo",
@@ -1970,7 +2070,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -1984,7 +2084,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "resonance-echo",
-      "asset": null
+      "asset": "assets/monsters/v1/resonance-echo.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "resonance-husk",
@@ -1999,7 +2101,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2013,7 +2115,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "resonance-husk",
-      "asset": null
+      "asset": "assets/monsters/v1/resonance-husk.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "resonant-drake",
@@ -2028,7 +2132,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2043,7 +2147,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "resonant-drake",
-      "asset": null
+      "asset": "assets/monsters/v1/resonant-drake.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "restless-ancestor",
@@ -2058,7 +2164,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2073,7 +2179,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "restless-ancestor",
-      "asset": null
+      "asset": "assets/monsters/v1/restless-ancestor.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "risen-champion",
@@ -2088,7 +2196,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2103,7 +2211,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "risen-champion",
-      "asset": null
+      "asset": "assets/monsters/v1/risen-champion.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "rootbound-prowler",
@@ -2118,7 +2228,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2132,7 +2242,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "rootbound-prowler",
-      "asset": null
+      "asset": "assets/monsters/v1/rootbound-prowler.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "rootling",
@@ -2147,7 +2259,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2161,7 +2273,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "rootling",
-      "asset": null
+      "asset": "assets/monsters/v1/rootling.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "siegebreaker",
@@ -2176,7 +2290,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2191,7 +2305,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "siegebreaker",
-      "asset": null
+      "asset": "assets/monsters/v1/siegebreaker.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "silas-vane",
@@ -2206,7 +2322,7 @@
       "classification": "boss",
       "existingRendering": "cropped-scene-illustration",
       "existingAsset": "assets/bosses/no-way-back-silas-vane-v3.jpg",
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2220,7 +2336,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Cropped illustrated scene",
       "visualId": "silas-vane",
-      "asset": null
+      "asset": "assets/monsters/v1/silas-vane.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "silent-auditor",
@@ -2235,7 +2353,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2250,7 +2368,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "silent-auditor",
-      "asset": null
+      "asset": "assets/monsters/v1/silent-auditor.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "siphon",
@@ -2267,7 +2387,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2281,7 +2401,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "siphon",
-      "asset": null
+      "asset": "assets/monsters/v1/siphon.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "sloth-the-ancient-sleeper",
@@ -2296,7 +2418,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2311,7 +2433,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "sloth-the-ancient-sleeper",
-      "asset": null
+      "asset": "assets/monsters/v1/sloth-the-ancient-sleeper.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "soul-binder",
@@ -2357,7 +2481,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2372,7 +2496,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "soul-devourer",
-      "asset": null
+      "asset": "assets/monsters/v1/soul-devourer.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "spell-eater",
@@ -2387,7 +2513,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2402,7 +2528,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "spell-eater",
-      "asset": null
+      "asset": "assets/monsters/v1/spell-eater.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "splice",
@@ -2421,7 +2549,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2435,7 +2563,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "splice",
-      "asset": null
+      "asset": "assets/monsters/v1/splice.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "stoneback-beast",
@@ -2452,7 +2582,7 @@
       "classification": "trash",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2466,7 +2596,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "stoneback-beast",
-      "asset": null
+      "asset": "assets/monsters/v1/stoneback-beast.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "stormbound-elemental",
@@ -2481,7 +2613,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2496,7 +2628,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "stormbound-elemental",
-      "asset": null
+      "asset": "assets/monsters/v1/stormbound-elemental.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "sunbound-servant",
@@ -2542,7 +2676,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2557,7 +2691,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "temple-challenger",
-      "asset": null
+      "asset": "assets/monsters/v1/temple-challenger.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-bound-choir",
@@ -2572,7 +2708,7 @@
       "classification": "boss",
       "existingRendering": "cropped-scene-illustration",
       "existingAsset": "assets/bosses/hollow-sanctum-bound-choir.webp",
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2586,7 +2722,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Cropped illustrated scene",
       "visualId": "the-bound-choir",
-      "asset": null
+      "asset": "assets/monsters/v1/the-bound-choir.webp",
+      "animationFamily": "elemental",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-butler",
@@ -2601,7 +2739,7 @@
       "classification": "boss",
       "existingRendering": "cropped-scene-illustration",
       "existingAsset": "assets/manor/manor-butler.webp",
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2615,7 +2753,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Cropped illustrated scene",
       "visualId": "the-butler",
-      "asset": null
+      "asset": "assets/monsters/v1/the-butler.webp",
+      "animationFamily": "ranged",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-canyon-sentinel",
@@ -2630,7 +2770,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2644,7 +2784,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "the-canyon-sentinel",
-      "asset": null
+      "asset": "assets/monsters/v1/the-canyon-sentinel.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-chaos-warden",
@@ -2659,7 +2801,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2673,7 +2815,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "the-chaos-warden",
-      "asset": null
+      "asset": "assets/monsters/v1/the-chaos-warden.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-engineer",
@@ -2688,7 +2832,7 @@
       "classification": "boss",
       "existingRendering": "cropped-scene-illustration",
       "existingAsset": "assets/manor/manor-engineer.webp",
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2702,7 +2846,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Cropped illustrated scene",
       "visualId": "the-engineer",
-      "asset": null
+      "asset": "assets/monsters/v1/the-engineer.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-hollow-knight",
@@ -2779,7 +2925,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2793,7 +2939,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "the-hollow-warden",
-      "asset": null
+      "asset": "assets/monsters/v1/the-hollow-warden.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-hollow-wyrm",
@@ -2808,7 +2956,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2823,7 +2971,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "the-hollow-wyrm",
-      "asset": null
+      "asset": "assets/monsters/v1/the-hollow-wyrm.webp",
+      "animationFamily": "serpent",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-maid",
@@ -2838,7 +2988,7 @@
       "classification": "boss",
       "existingRendering": "cropped-scene-illustration",
       "existingAsset": "assets/manor/manor-maids.webp",
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2852,7 +3002,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Cropped illustrated scene",
       "visualId": "the-maid",
-      "asset": null
+      "asset": "assets/monsters/v1/the-maid.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-master-of-the-manor",
@@ -2867,7 +3019,7 @@
       "classification": "boss",
       "existingRendering": "cropped-scene-illustration",
       "existingAsset": "assets/manor/manor-master.webp",
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2881,7 +3033,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Cropped illustrated scene",
       "visualId": "the-master-of-the-manor",
-      "asset": null
+      "asset": "assets/monsters/v1/the-master-of-the-manor.webp",
+      "animationFamily": "caster",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "the-old-man-keeper-of-ages",
@@ -2958,7 +3112,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -2973,7 +3127,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "vanity-the-glass-empress",
-      "asset": null
+      "asset": "assets/monsters/v1/vanity-the-glass-empress.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "veyr-the-cell-torn",
@@ -2988,7 +3144,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -3003,7 +3159,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "veyr-the-cell-torn",
-      "asset": null
+      "asset": "assets/monsters/v1/veyr-the-cell-torn.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "wail",
@@ -3018,7 +3176,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -3032,7 +3190,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "wail",
-      "asset": null
+      "asset": "assets/monsters/v1/wail.webp",
+      "animationFamily": "beast",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "wayward-disciple",
@@ -3047,7 +3207,7 @@
       "classification": "elite",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -3062,7 +3222,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "wayward-disciple",
-      "asset": null
+      "asset": "assets/monsters/v1/wayward-disciple.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     },
     {
       "id": "wrath-the-blood-king",
@@ -3077,7 +3239,7 @@
       "classification": "boss",
       "existingRendering": "procedural-icon",
       "existingAsset": null,
-      "status": "needs-art",
+      "status": "illustrated-six-pose-atlas",
       "animationRequirements": [
         "idle",
         "ready",
@@ -3092,7 +3254,9 @@
       "requiredNewArtwork": "Transparent full-body illustrated six-pose atlas; authored movement/inbetween frames for richer motion",
       "existingAppearance": "Procedural SVG icon selected by name family",
       "visualId": "wrath-the-blood-king",
-      "asset": null
+      "asset": "assets/monsters/v1/wrath-the-blood-king.webp",
+      "animationFamily": "humanoid",
+      "animationLimitations": "Six key poses; no authored multi-frame walk or attack inbetweens."
     }
   ]
 }

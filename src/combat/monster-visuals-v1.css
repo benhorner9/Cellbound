@@ -9,6 +9,9 @@
 .cbl-scene [data-animation-state="idle"]>.cb-monster-sprite[data-creature="machine"]{animation:cbMonsterHover 5s ease-in-out var(--cba-phase,0s) infinite!important}
 .cbl-scene [data-spatial-state="moving"]>.cb-monster-sprite[data-creature="beast"]{animation:cbMonsterGait .34s ease-in-out infinite!important}
 .cbl-scene [data-spatial-state="moving"]>.cb-monster-sprite[data-creature="humanoid"]{animation:cbMonsterGait .52s ease-in-out infinite!important}
+.cbl-scene [data-animation-state="idle"]>.cb-monster-sprite[data-creature="turret"]{animation:none!important;will-change:auto}
+.cbl-scene [data-spatial-state="moving"]>.cb-monster-sprite[data-creature="serpent"]{animation:cbMonsterSlither .85s ease-in-out infinite!important}
+@keyframes cbMonsterSlither{0%,100%{scale:1}50%{scale:1.015 .992}}
 @keyframes cbMonsterBreath{0%,100%{scale:1}50%{scale:1.005 1.012}}
 @keyframes cbMonsterHover{0%,100%{translate:0 0}50%{translate:0 -2px}}
 @keyframes cbMonsterGait{0%,100%{translate:0 0}50%{translate:0 -1.3px}}
