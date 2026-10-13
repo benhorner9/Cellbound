@@ -5,8 +5,15 @@ const unit=(id,style,x,y,extra={})=>({id,style,team:'party',role:style==='tank'?
 const boss=()=>unit('boss','ranged',480,220,{boss:true,role:'enemy',team:'enemy',rx:44,ry:38,homeSide:1});
 const party=()=>[boss(),unit('tank','tank',440,220,{target:'boss'}),unit('melee-a','melee',442,222,{target:'boss'}),unit('melee-b','melee',444,218,{target:'boss'}),unit('ranged','ranged',350,220,{target:'boss'}),unit('healer','healer',320,220,{target:'tank'}),unit('pet','melee',449,219,{role:'pet',rx:20,ry:18,target:'boss'})];
 function apply(list,g,mode){const r=S.plan(list,g,mode);for(const u of list){u.reserved=r.positions.get(u.id);if(!u.visual&&u.reserved)u.visual={...u.reserved};u.speed=160;u.waypoint=null;u.route=null}return r}
-function clear(list,g){for(const u of list.filter(u=>!u.dead)){assert(S.legal(u.reserved,u,g),u.id+' legal');for(const v of list.filter(v=>!v.dead&&v.id>u.id))assert(S.overlap(u,u.reserved,v,v.reserved,0)<.001,u.id+' reserved separately from '+v.id)}}
+function clear(list,g){for(const u of list.filter(u=>!u.dead)){assert(S.legal(u.reserved,u,g),u.id+' legal');for(const v of list.filter(v=>!v.dead&&v.id>u.id))assert(S.spacingOverlap(u,u.reserved,v,v.reserved,0)<.001,u.id+' reserved separately from '+v.id)}}
 const g=S.geometry(744,418),list=party(),original=JSON.stringify(list.map(u=>u.logical));assert.equal(apply(list,g).unresolved,0);clear(list,g);
+// Target-contact clearance differs from full artwork clearance: melee feet stay
+// distinct while torso/weapon silhouettes may overlap for believable contact.
+const mercer=list[0],tank=list.find(u=>u.id==='tank'),melees=list.filter(u=>u.style==='melee'&&u.role!=='pet');
+assert(S.distance(mercer.reserved,tank.reserved)<65,'tank engages within visible weapon reach');
+assert(melees.every(u=>S.distance(mercer.reserved,u.reserved)<80),'melee flanks remain close to boss');
+assert(S.overlap(mercer,mercer.reserved,tank,tank.reserved,0)>0,'full portrait envelopes overlap at striking range');
+assert.equal(S.spacingOverlap(mercer,mercer.reserved,tank,tank.reserved,0),0,'ground footprints remain separate');
 const first=JSON.stringify(list.map(u=>u.reserved));apply(list,g);assert.equal(JSON.stringify(list.map(u=>u.reserved)),first,'stationary reservations stable');assert.equal(JSON.stringify(list.map(u=>u.logical)),original,'never change logical positions');
 assert(list.find(u=>u.style==='healer').reserved.x<list.find(u=>u.style==='tank').reserved.x,'healer stays behind tank');
 // Crowded movement and target change: travel from old stance to reserved stance, never teleport.

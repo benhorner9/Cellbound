@@ -27,9 +27,23 @@ function clearSegment(a,b,u,g){const n=Math.max(2,Math.ceil(distance(a,b)/12));f
 function overlap(a,p,b,q,gap=4){const rx=a.rx+b.rx+gap,ry=a.ry+b.ry+gap;return Math.max(0,1-((p.x-q.x)/rx)**2-((p.y-q.y)/ry)**2)}
 function groundOverlap(a,p,b,q){return Math.max(0,1-((p.x-q.x)/((a.rx+b.rx)*.5+2))**2-((p.y-q.y)/((a.ry+b.ry)*.28+2))**2)}
 function team(u){return u.team||((u.role==='enemy'||u.boss)?'enemy':'party')}
+function melee(u){return u.style==='tank'||u.style==='melee'||u.role==='pet'||(u.role==='enemy'&&u.style!=='ranged')}
+// Engaged opponents may overlap in upper-body artwork during a strike, but
+// their feet must remain distinct. Other encounters keep full-sprite spacing.
+function contactPair(a,b){return team(a)!==team(b)&&((melee(a)&&a.contactTarget===b.id)||(melee(b)&&b.contactTarget===a.id))}
+function spacingOverlap(a,p,b,q,gap=4){
+ if(contactPair(a,b))return groundOverlap(a,p,b,q);
+ // Teammates on the same target may overlap a little in perspective without
+ // occupying the same stance; normal separation still applies to the backline.
+ if(team(a)===team(b)&&a.contactTarget&&a.contactTarget===b.contactTarget&&melee(a)&&melee(b)){
+  const rx=(a.rx+b.rx)*.74+gap,ry=(a.ry+b.ry)*.57+gap;
+  return Math.max(0,1-((p.x-q.x)/rx)**2-((p.y-q.y)/ry)**2);
+ }
+ return overlap(a,p,b,q,gap);
+}
 function rank(u){return u.boss?0:u.style==='tank'?1:u.role==='enemy'?2:u.style==='melee'?3:u.style==='healer'?4:u.role==='pet'?6:5}
 function preferred(u,list,placed,g,mode){
- const p=bounded(u.logical,u,g);if(u.locked||mode==='pvp'||u.command||u.boss)return p;
+ const p=bounded(u.logical,u,g);u.contactTarget=null;if(u.locked||mode==='pvp'||u.command||u.boss)return p;
  const foes=list.filter(v=>!v.dead&&team(v)!==team(u)&&v.role!=='pet');
  const target=foes.find(v=>v.id===u.target)||foes.sort((a,b)=>distance(u.logical,a.logical)-distance(u.logical,b.logical)||a.id.localeCompare(b.id))[0];
  if(!target)return p;
@@ -40,10 +54,13 @@ function preferred(u,list,placed,g,mode){
  if(u.style==='tank'||u.style==='melee'||u.role==='pet'||u.role==='enemy'&&u.style!=='ranged'){
   // Only engage a target the simulation has actually approached. No cosmetic chase across a room.
   if(distance(u.logical,target.logical)>Math.max(g.width*.16,125))return p;
+  u.contactTarget=target.id;
   const peers=list.filter(v=>team(v)===team(u)&&v.target===u.target&&v.style===u.style).sort((a,b)=>a.id.localeCompare(b.id)),slot=Math.max(0,peers.indexOf(u));
-  const offsets=u.style==='tank'?[0,-.65,.65]:u.role==='pet'?[1.22,-1.22,.72]:[1.05,-1.05,1.68,-1.68,.56,-.56];
+  const offsets=u.style==='tank'?[0,-.42,.42]:u.role==='pet'?[1.08,-1.08,.7]:[.72,-.72,1.15,-1.15,.32,-.32];
   const angle=base+offsets[slot%offsets.length]+((hash(u.id)%7)-3)*.018;
-  const rx=target.rx+u.rx+9,ry=target.ry+u.ry+9;
+  // Full render footprints include weapons and tall artwork. Stopping at their
+  // outer edges made real melee hits look disconnected despite correct range.
+  const rx=target.rx*.72+u.rx*.62+5,ry=target.ry*.54+u.ry*.50+5;
   return bounded({x:t.x+Math.cos(angle)*rx,y:t.y+Math.sin(angle)*ry},u,g);
  }
  if(u.role!=='enemy'){
@@ -57,9 +74,9 @@ function preferred(u,list,placed,g,mode){
 function plan(units,g,mode='pve'){
  const grid=new Grid(),placed=new Map(),ordered=units.filter(u=>!u.dead).sort((a,b)=>Number(!!b.locked)-Number(!!a.locked)||rank(a)-rank(b)||a.id.localeCompare(b.id));let unresolved=0;
  for(const u of ordered){
-  if(u.locked&&u.visual){u.conflict=grid.near(u,u.visual).reduce((n,a)=>n+overlap(u,u.visual,a.u,a.p,0),0);if(u.conflict>.01)unresolved++;placed.set(u.id,{...u.visual});grid.add(u,u.visual);continue}
+  if(u.locked&&u.visual){u.conflict=grid.near(u,u.visual).reduce((n,a)=>n+spacingOverlap(u,u.visual,a.u,a.p,0),0);if(u.conflict>.01)unresolved++;placed.set(u.id,{...u.visual});grid.add(u,u.visual);continue}
   const ideal=preferred(u,ordered,placed,g,mode),gap=u.command==='spread'?16:u.command==='stack'?0:5;
-  if(u.reserved&&distance(u.reserved,ideal)<12&&!u.zones?.some(z=>inside(u.reserved,z)!==inside(u.logical,z))&&legal(u.reserved,u,g)&&grid.near(u,u.reserved).every(a=>overlap(u,u.reserved,a.u,a.p,gap)===0)){u.conflict=0;placed.set(u.id,{...u.reserved});grid.add(u,u.reserved);continue}
+  if(u.reserved&&distance(u.reserved,ideal)<12&&!u.zones?.some(z=>inside(u.reserved,z)!==inside(u.logical,z))&&legal(u.reserved,u,g)&&grid.near(u,u.reserved).every(a=>spacingOverlap(u,u.reserved,a.u,a.p,gap)===0)){u.conflict=0;placed.set(u.id,{...u.reserved});grid.add(u,u.reserved);continue}
   const candidates=[ideal];
   if(u.reserved&&distance(u.reserved,ideal)<Math.max(22,u.rx*.7))candidates.unshift(u.reserved);
   // Stable reservations, then a bounded search. No per-frame random motion or mutual pushing.
@@ -74,7 +91,7 @@ function plan(units,g,mode='pve'){
    if(u.zones?.some(z=>inside(p,z)!==inside(u.logical,z)))continue;
    const baseScore=distance(p,ideal)**2+(u.reserved?distance(p,u.reserved)**2*.38:0)+distance(p,u.logical)**2*.06;
    if(baseScore>=score)continue;
-   const overlaps=grid.near(u,p).reduce((n,a)=>n+overlap(u,p,a.u,a.p,gap),0);
+   const overlaps=grid.near(u,p).reduce((n,a)=>n+spacingOverlap(u,p,a.u,a.p,gap),0);
    const s=overlaps*1e6+baseScore;
    if(s<score){score=s;best=p;penetration=overlaps}if(s<.01)break;
   }
@@ -128,5 +145,5 @@ function route(u,units,g){
  }
  if(!end)return null;const path=[u.reserved];while(end.parent){path.unshift({x:end.x,y:end.y});end=end.parent}return path;
 }
-window.CellboundCombatSpatial={version:1,Grid,geometry,legal,overlap,plan,advance,waypoint,route,team,distance};
+window.CellboundCombatSpatial={version:1,Grid,geometry,legal,overlap,plan,advance,waypoint,route,team,distance,spacingOverlap};
 })();
