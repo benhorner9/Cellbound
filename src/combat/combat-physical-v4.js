@@ -172,6 +172,7 @@ function petObject(scene,e){
 function mechanic(scene,e,opts={}){
  const token=e.payload?.token;if(token==null)return;scene.spatialDirty=true;
  if(e.type==='MECHANIC_TELEGRAPH'){
+  const old=scene.warnings.get(token);if(old){old.callout?.remove();for(const n of old.markers)n.remove()}
   const type=String(e.payload?.mechanicType||'mechanic').replace(/[^a-z0-9-]/gi,'-').toLowerCase();
   const entry={start:now(),duration:Math.max(1,Number(e.payload.duration)||1000)/scene.speed,nodes:[],markers:[],source:e.source,type,callout:null};scene.warnings.set(token,entry);
   const callout=document.createElement('div');callout.className='cbl-mechanic-callout';callout.dataset.phase='incoming';callout.dataset.mechanicType=type;
@@ -468,23 +469,31 @@ function anchorPoint(scene,el,bounds=scene.arena.getBoundingClientRect()){
 }
 
 /* Visual-only ability signatures: never alter simulation or attack timing. */
-function visualSignature(e,kind='damage'){
+let abilityIndex=null;
+function abilityDefinition(e,klass){
+ if(!abilityIndex&&window.CellboundCombatData){abilityIndex=new Map();for(const [owner,list] of Object.entries(window.CellboundCombatData.ABILITIES))for(const a of list){abilityIndex.set(owner+':'+a.id,a);abilityIndex.set(owner+':'+a.name.toLowerCase(),a)}}
+ const key=String(e?.abilityId||e?.payload?.abilityId||e?.ability||'').replace(/ \((DoT|HoT|Pulse)\)$/i,'').toLowerCase();
+ return abilityIndex?.get(klass+':'+key)||null;
+}
+function visualSignature(e,kind='damage',klass=''){
+ const definition=abilityDefinition(e,klass),actionKind=definition?.kind||e?.payload?.kind||kind;
  const name=String(e?.ability||e?.payload?.abilityId||'').toLowerCase().replace(/[-_]+/g,' ');
  const schools=[['poison',/poison|venom|envenom|plague/],['fel',/fel|chaos bolt|demon|infernal/],['frost',/frost|ice|glacial|blizzard|winter/],['storm',/lightning|thunder|storm|electr/],['fire',/fire|flame|pyro|lava|burn|immolate/],['holy',/holy|divine|radiant|judgement|consecrat|benedict/],['shadow',/shadow|void|death|necrot|blood|curse|soul/],['arcane',/arcane|astral|star|celestial|azure|temporal/],['nature',/nature|thorn|root|regrowth|rejuven|wild growth|verdant|emerald|riptide/],['earth',/earth|quake|rock|stone/]];
- const school=schools.find(([,re])=>re.test(name))?.[0]||(kind==='heal'?'heal':kind==='defense'?'guard':'steel');
+ const school=schools.find(([,re])=>re.test(name))?.[0]||(klass==='Paladin'?'holy':kind==='heal'?'heal':kind==='defense'?'guard':klass==='Mage'?'arcane':klass==='Rogue'?'shadow':'steel');
  const shape=kind==='heal'?'blossom':kind==='defense'||/shield|barrier|ward|guard|protection|block/.test(name)?'guard':/chain lightning|chain heal/.test(name)?'chain':/blizzard|whirl|volley|multi shot|starfall|nova|consecrat|earthquake|blade dance|fan of knives|death and decay/.test(name)?'nova':/aimed|shot|arrow|pierc|stab|dagger/.test(name)?'pierce':/slam|execute|crush|mortal strike|cleave|obliterat/.test(name)?'fracture':'pulse';
  const major=!!(e?.payload?.majorAbility||e?.result==='critical'||Number(e?.payload?.visualIntensity)>=4||/apocalypse|metamorphosis|pyroblast|chaos bolt|glacial spike|frostwyrm|execute/.test(name));
- return{school,shape,major};
+ const area=Number(definition?.cleave)>1||Number(definition?.targets)>1||/nova|consecrat|blizzard|volley|multi.shot|light of dawn|radiant wave|whirlwind|thunder clap/.test(name);
+ return{school,shape,major,area,kind:actionKind,known:!!definition,periodic:/\((DoT|HoT|Pulse)\)/i.test(e?.ability||'')};
 }
 function abilityCharge(scene,e,u){
  if(!u?.el||reduce()||scene.effects.size>=25)return;
- const v=visualSignature(e);
+ const v=visualSignature(e,'damage',u.p.name);
  effect(scene,'ability-charge school-'+v.school+(v.major?' major':''),null,u.el,v.major?520:400);
 }
 function abilityImpact(scene,e,u,t,kind='damage'){
- if(!t?.el||reduce())return false;
- const v=visualSignature(e,kind);
- const f=effect(scene,'ability-impact school-'+v.school+' shape-'+v.shape+(v.major?' major':''),null,t.el,v.major?540:380);
+ if(!t?.el)return false;
+ const v=visualSignature(e,kind,u?.p.name);
+ const f=effect(scene,'ability-impact school-'+v.school+' shape-'+v.shape+(v.major?' major':'')+(v.area?' area':'')+(v.periodic?' periodic':'')+(reduce()?' still':''),null,t.el,reduce()?200:v.major?540:380);
  if(!f)return false;
  if(u?.el?.isConnected)f.n.style.setProperty('--hit-angle',direction(center(u.el),center(t.el)).angle+'deg');
  return true;
@@ -495,7 +504,9 @@ function effect(scene,cls,source,target,life=320,allowUnanchored=false){
  // Anchored FX must receive geometry before they enter the DOM. Previously the
  // browser could paint one frame at 0,0 before the animation loop positioned it.
  if(!allowUnanchored&&!source&&!target)return null;
- if(scene.effects.size>=36)return null;
+ const priority=/class-projectile|interrupt|shield|avoid|shape-guard/.test(cls)?2:/ability-impact|heal-ring/.test(cls)?1:0;
+ const limit=scene.lowDetail?18:36;
+ if(scene.effects.size>=limit){const disposable=[...scene.effects].find(f=>f.priority<priority);if(!disposable)return null;clearTimeout(disposable.timer);disposable.n.remove();scene.effects.delete(disposable)}
  const bounds=scene.bounds||scene.arena.getBoundingClientRect(),tp=target?effectAnchor(scene,target,bounds):null,sp=source?effectAnchor(scene,source,bounds):null;
  if(!allowUnanchored&&!tp&&!sp)return null;
  const n=document.createElement('i');n.className='cbl-fx '+cls;
@@ -506,7 +517,7 @@ function effect(scene,cls,source,target,life=320,allowUnanchored=false){
   if(connection){n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg')}
  }
  if(a&&b)n.dataset.cblPositioned='1';
- const ttl=Math.max(60,life/scene.speed),fx={n,source,target,ends:now()+ttl,timer:0};scene.layer.appendChild(n);scene.effects.add(fx);fx.timer=setTimeout(()=>{if(scene.effects.has(fx)){fx.n.remove();scene.effects.delete(fx)}},ttl+80);return fx
+ const ttl=Math.max(60,life/scene.speed),fx={n,source,target,priority,ends:now()+ttl,timer:0};n.style.setProperty('--fx-life',ttl+'ms');scene.layer.appendChild(n);scene.effects.add(fx);return fx
 }
 function clearCast(u){
  if(!u)return;
@@ -524,7 +535,7 @@ function mountCastVisual(u,e){
 function strike(scene,u,t,e,heal=false){
  if(!u||!t)return;
  const d=direction(center(u.el),center(t.el));face(u,t.el);
- if(['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){
+ if(['miss','missed','dodge','dodged','parry','parried','immune','resist','resisted'].includes(e.result)){
   if(/dodg/.test(e.result))motion(t,[{translate:(-d.y*5)+'px '+(d.x*5)+'px'},{translate:'0px 0px'}],240,scene);
   const f=effect(scene,'avoid',null,t.el,400);if(f)f.n.textContent=String(e.result).toUpperCase();return
  }
@@ -538,7 +549,7 @@ function strike(scene,u,t,e,heal=false){
   const reach=Math.min(u.p.lunge,d.len*.16,12),x=d.x*reach,y=d.y*reach;
   motion(u,[{translate:x+'px '+y+'px',rotate:['flow','fluid'].includes(u.p.motion)?'8deg':u.p.motion==='brutal'?'-6deg':'0deg',scale:heavy?'1.09':'1.04'},{translate:'0px 0px',rotate:'0deg',scale:'1'}],u.p.motion==='dart'?240:380,scene);
   const stroke=/shield|bash/i.test(e.ability||'')?'shield-strike':/thrust|pierce|stab/i.test(e.ability||'')?'thrust':/spin|whirl|sweep/i.test(e.ability||'')?'sweep':/overhead|cleave|crush/i.test(e.ability||'')?'overhead':u.p.motion;
-  if(heavy||visualSignature(e).major){const f=effect(scene,'slash '+stroke,u.el,t.el,260);if(f)f.n.style.setProperty('--cbl-accent',u.p.accent)}
+  if(!reduce()&&!visualSignature(e).periodic){const sig=visualSignature(e,'damage',u.p.name),f=effect(scene,'weapon-trail '+stroke+' school-'+sig.school+(u.p.name==='Rogue'?' quick':'')+(heavy?' heavy':''),u.el,t.el,u.p.name==='Rogue'?190:290);if(f){f.n.style.setProperty('--hit-angle',d.angle+'deg');f.n.dataset.ability=String(e.ability||'Attack')}}
  }
  if(heal){abilityImpact(scene,e,u,t,'heal');const f=effect(scene,'heal-ring'+(Number(e.payload?.targetHpPct)<40?' emergency':'')+(/HoT/.test(e.ability||'')?' periodic':''),null,t.el,500);return}
  if(['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result))return;
@@ -550,7 +561,7 @@ function statuses(u,e){
  for(const s of e.statusEffects||[]) /REMOVED$/.test(e.type)?u.statuses.delete(s.id):u.statuses.set(s.id,s);
  const values=[...u.statuses.values()],cc=values.find(s=>s.cc)?.cc||'';
  u.el.dataset.control=cc;
- u.el.dataset.aura=values.some(s=>s.effect?.damageReduction)?'guard':values.some(s=>s.effect?.damageTaken)?'vulnerable':values.some(s=>/poison|burn|bleed/i.test(s.name))?'harm':'';
+ u.el.dataset.aura=values.some(s=>s.effect?.damageReduction||s.effect?.incomingDamageReduction||s.effect?.absorb)?'guard':values.some(s=>s.effect?.damageTaken)?'vulnerable':values.some(s=>/poison|burn|bleed/i.test(s.name))?'harm':'';
  if(controlled(u)){u.animation?.cancel();clearCast(u);state(u,'controlled')}else if(u.state==='controlled')state(u,'idle')
 }
 function livingEvent(e,opts={}){
@@ -589,7 +600,7 @@ function livingEvent(e,opts={}){
  case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position,80);state(u,controlled(u)?'controlled':'idle');delete u.el.dataset.intent;if(t)face(u,t.el);if(arena.dataset.bespokeBattlefield==='1'&&arena.classList.contains('theme-ashen')&&!reduce())effect(scene,'ground-kick',null,u.el,360)}break;
  case'ABILITY_START':
   if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',now()+560/scene.speed);
-   if(!(e.payload?.castTime>0)){const sig=visualSignature(e);if(sig.major||sig.shape==='nova'||sig.shape==='fracture')abilityCharge(scene,e,u);}
+   if(!(e.payload?.castTime>0)){const sig=visualSignature(e);if(sig.major||sig.shape==='nova'||sig.shape==='fracture')abilityCharge(scene,e,u);else if(!['damage','heal'].includes(e.payload?.kind))abilityCharge(scene,e,u);}
     if(!(e.payload?.castTime>0))motion(u,[{scale:'.965',translate:'0 1px',offset:0},{scale:'1.035',translate:'0 -1px',offset:.46},{scale:'1',translate:'0 0',offset:1}],300,scene)}break;
  case'CAST_START':
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e);u.el.dataset.vfxSchool=visualSignature(e).school;abilityCharge(scene,e,u)}break;
@@ -605,7 +616,14 @@ function livingEvent(e,opts={}){
  }break;
  case'AGGRO_CHANGED':if(u&&t){face(u,t.el);effect(scene,'aggro',null,t.el,650)}break;
  case'CROWD_CONTROL':if(t){statuses(t,{type:'DEBUFF_APPLIED',statusEffects:[{id:'visual-control',cc:e.payload?.cc||'stun'}]});t.controlUntil=now()+(Number(e.payload?.duration)||900)/scene.speed}break;
- case'BUFF_APPLIED':case'DEBUFF_APPLIED':case'BUFF_REMOVED':case'DEBUFF_REMOVED':statuses(t,e);break;
+ case'BUFF_APPLIED':case'DEBUFF_APPLIED':case'BUFF_REMOVED':case'DEBUFF_REMOVED':
+  statuses(t,e);
+  if(t&&/APPLIED$/.test(e.type)&&e.result!=='carried'){
+   const guard=(e.statusEffects||[]).some(s=>s.effect?.damageReduction||s.effect?.incomingDamageReduction||s.effect?.absorb);
+   const sig=visualSignature(e,guard?'defense':'damage',u?.p.name);
+   const f=effect(scene,'status-pulse school-'+sig.school+(guard?' protection':e.type==='DEBUFF_APPLIED'?' harmful':' blessing'),null,t.el,460);
+   if(f)f.n.dataset.ability=String(e.ability||'Status');
+  }break;
  case'INTERRUPT':if(e.result==='success'&&t){mechanic(scene,{...e,result:'interrupted'},opts);if(canAct(u))effect(scene,'connection lightning',u.el,t.el,150);clearCast(t);t.animation?.cancel();state(t,'interrupted',now()+500/scene.speed);effect(scene,'interrupt',null,t.el,550)}break;
  case'DEFENSIVE_ACTIVATED':if(t||u){state(t||u,'defending',now()+650/scene.speed);abilityImpact(scene,e,u,t||u,'defense')}effect(scene,'shield',null,(t||u)?.el,650);break;
  case'PLAYER_DEFEATED':case'ENEMY_DEFEATED':case'ADD_DEFEATED':
@@ -633,6 +651,9 @@ function frame(){
  for(const [arena,scene] of scenes){
   if(!arena.isConnected){disposeScene(scene);continue}
   if(arena.closest('[hidden]')){disposeScene(scene);continue}
+  // Cosmetic quality only; simulation and danger geometry never depend on FPS.
+  const gap=time-(scene.fxFrameAt||time);scene.fxFrameAt=time;
+  if(gap>0&&gap<250){scene.fxFrameAverage=(scene.fxFrameAverage||16)*.94+gap*.06;scene.lowDetail=scene.fxFrameAverage>38||scene.units.size>20;arena.dataset.fxDetail=scene.lowDetail?'low':'full'}
   for(const entry of scene.warnings.values())if(time-entry.start>=entry.duration*.7){for(const n of entry.nodes)n.dataset.phase='imminent';for(const n of entry.markers||[])n.dataset.phase='imminent';if(entry.callout)entry.callout.dataset.phase='imminent'}
   for(const h of scene.hazards.values())if(time>=h.end-900/scene.speed)h.node.dataset.phase='expiring';
   const bounds=scene.bounds||arena.getBoundingClientRect(),positions=new Map();scene.bounds=bounds;
@@ -673,8 +694,9 @@ function frame(){
    if(time>=f.ends||f.target&&!f.target.isConnected){clearTimeout(f.timer);f.n.remove();scene.effects.delete(f);continue}
    if(f.flight){
     const end=pos(f.target),fraction=clamp((time-f.started)/f.flight,0,1),n=f.n;
-    n.style.left=(f.origin.x+(end.x-f.origin.x)*fraction-bounds.left)+'px';n.style.top=(f.origin.y+(end.y-f.origin.y)*fraction-bounds.top)+'px';
-    n.style.setProperty('--cbl-angle',direction(f.origin,end).angle+'deg');continue;
+    const origin={x:bounds.left+f.origin.x*bounds.width,y:bounds.top+f.origin.y*bounds.height};
+    n.style.left=(origin.x+(end.x-origin.x)*fraction-bounds.left)+'px';n.style.top=(origin.y+(end.y-origin.y)*fraction-bounds.top)+'px';
+    n.style.setProperty('--cbl-angle',direction(origin,end).angle+'deg');continue;
    }
    if(f.target){const b=fxpos(f.target),a=f.source?.isConnected?fxpos(f.source):b,d=direction(a,b);
     const connection=f.n.classList.contains('connection');f.n.style.left=(connection?a.x:b.x)-bounds.left+'px';f.n.style.top=(connection?a.y:b.y)-bounds.top+'px';f.n.dataset.cblPositioned='1';
@@ -703,17 +725,19 @@ function combatEvent(e,opts={}){try{
 // Flights are presentation-only and owned by the existing bounded FX lifecycle.
 FX.launchAction=(e,arena,source,target,profile,flight)=>{
  const scene=scenes.get(arena);if(!scene||!source?.isConnected||!target?.isConnected||reduce())return;
- const u=scene.units.get(source),sig=visualSignature(e,profile.kind==='heal'?'heal':'damage'),f=effect(scene,'class-projectile '+(profile.socket==='bow'?'arrow':'school-'+sig.school),source,target,flight*scene.speed);
+ const u=scene.units.get(source),sig=visualSignature(e,profile.kind==='heal'?'heal':'damage',u?.p.name),f=effect(scene,'class-projectile school-'+sig.school+(profile.socket==='bow'?' arrow':'')+(sig.major?' major':''),source,target,flight*scene.speed);
  if(!f)return;
- f.flight=flight;f.started=now();f.origin=window.CellboundCombatAnimation?.socket(source,profile.socket)||scene.sockets?.get(source)||center(source);
- const bounds=scene.bounds||arena.getBoundingClientRect();f.n.style.left=f.origin.x-bounds.left+'px';f.n.style.top=f.origin.y-bounds.top+'px';
+ f.flight=flight;f.started=now();const origin=window.CellboundCombatAnimation?.socket(source,profile.socket)||scene.sockets?.get(source)||center(source);
+ const bounds=scene.bounds||arena.getBoundingClientRect();f.origin={x:(origin.x-bounds.left)/Math.max(1,bounds.width),y:(origin.y-bounds.top)/Math.max(1,bounds.height)};f.n.style.left=origin.x-bounds.left+'px';f.n.style.top=origin.y-bounds.top+'px';
+ f.n.dataset.source=String(e.source||'');f.n.dataset.target=String(e.target||'');f.n.dataset.ability=String(e.ability||'');
  f.n.style.setProperty('--cbl-accent',/heal/.test(profile.kind)?'#76efac':u?.p.accent||'#ddd');wake();
 };
 FX.presentImpact=(e,fn)=>window.CellboundCombatAnimation?window.CellboundCombatAnimation.present(e,fn):fn();
 FX.syncPositions=(arena,units,objectives={})=>{mount(arena);const scene=scenes.get(arena);if(!scene)return;const zones=[];if(objectives.storm)zones.push({position:objectives.storm.centre||{x:50,y:50},radius:objectives.storm.radius});if(objectives.hill?.radius)zones.push({position:objectives.hill,radius:objectives.hill.radius});const signature=JSON.stringify(zones);if(signature!==scene.spatialZoneSignature){scene.spatialZoneSignature=signature;scene.spatialZones=zones;scene.spatialDirty=true}for(const data of units){const u=unit(scene,resolve(data.id,{},arena));if(u){u.spatialMeta={...u.spatialMeta,...data};u.dead=data.alive===false;setPosition(scene,u,data.position,200)}}wake()};
 if(window.CellboundCombatSpatial)window.CellboundCombatSpatial.inspect=arena=>{const s=scenes.get(arena);return s?{checks:s.spatialChecks,unresolved:s.spatialUnresolved,units:(s.spatialUnits||[]).map(u=>({id:u.id,role:u.role,style:u.style,logical:u.logical,visual:u.visual,reserved:u.reserved,rx:u.rx,ry:u.ry,conflict:u.conflict,state:u.el.dataset.spatialState}))}:null};
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
-FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.clarityDescriptor=clarityDescriptor;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.6.0';FX.living=true;
+FX.diagnostics=()=>({scenes:scenes.size,effects:[...scenes.values()].reduce((n,s)=>n+s.effects.size,0),warnings:[...scenes.values()].reduce((n,s)=>n+s.warnings.size,0),lowDetail:[...scenes.values()].some(s=>s.lowDetail)});
+FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.clarityDescriptor=clarityDescriptor;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.7.0';FX.living=true;
 // Legacy public entry points remain callable but no longer duplicate shared reactions.
 for(const name of ['impact','heal','death','spawn','interrupt']){const old=FX[name];FX[name]=function(el,...args){if(el?.closest?.('.cbl-scene'))return;return old?.(el,...args)}}
 })();

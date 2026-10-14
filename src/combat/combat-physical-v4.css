@@ -438,7 +438,7 @@
 
 
 /* Wind-ups: the existing character cast glyph gains the same school as its spell. */
-.cbl-fx.ability-charge{--hit:#dfbb8e;--flash:#fff2d7;width:45px;height:45px;animation:cblChargePop .42s ease-out both;z-index:2}
+.cbl-fx.ability-charge{width:45px;height:45px;animation:cblChargePop .42s ease-out both;z-index:2}
 .cbl-fx.ability-charge.major{width:57px;height:57px;animation-duration:.55s}
 .cbl-fx.ability-charge:before,.cbl-fx.ability-charge:after{content:"";position:absolute;display:block;pointer-events:none}
 .cbl-fx.ability-charge:before{inset:1px;border:2px dashed var(--hit);border-radius:50%;animation:cblChargeRing .42s ease-out both}
@@ -469,6 +469,41 @@
 .cbl-scene[data-clarity-hud="1"] .cbl-unit.enemy:not(.boss):not(.cbl-primary-target):not(.cbl-danger-cast)>.cbs-label-link{display:none!important}
 .cbl-scene[data-combat-clarity="1"] .cbl-fx.ability-impact:not(.major){width:33px;height:33px}
 .cbl-scene[data-combat-clarity="1"] .cbl-fx.ability-charge:not(.major){width:30px;height:30px}
+/* Contact-led VFX: at most two decorative layers per event, no particle emitter.
+   Never use these cosmetic shapes as damage-zone indicators. */
+.cbl-fx.weapon-trail{width:54px;height:42px;rotate:var(--hit-angle,0deg);animation:cblWeaponCut var(--fx-life,290ms) ease-out both}
+.cbl-fx.weapon-trail:before,.cbl-fx.weapon-trail:after{content:"";position:absolute;inset:0;border-radius:50%;border-top:3px solid var(--hit,#e7c294);border-right:2px solid transparent;transform:rotate(-35deg);pointer-events:none}
+.cbl-fx.weapon-trail:after{inset:7px 3px;border-width:1px;opacity:.55}
+.cbl-fx.weapon-trail.heavy,.cbl-fx.weapon-trail.brutal{width:66px;height:52px}
+.cbl-fx.weapon-trail.heavy:before{border-top-width:5px}
+.cbl-fx.weapon-trail.quick{width:45px;height:24px}
+.cbl-fx.weapon-trail.quick:after{transform:rotate(35deg);border-top-color:var(--flash,#fff);opacity:.8}
+.cbl-fx.weapon-trail.thrust{height:14px}
+.cbl-fx.weapon-trail.shield-strike:before{border:3px double var(--hit);border-radius:35% 35% 50% 50%;transform:none}
+.cbl-fx.status-pulse{width:48px;height:64px;border:2px solid var(--hit,#94c9dc);border-radius:45%;background:linear-gradient(0deg,var(--hit,#94c9dc),transparent 40%);animation:cblStatusRise var(--fx-life,460ms) ease-out both;opacity:.55}
+.cbl-fx.status-pulse.harmful{width:38px;height:38px;border-style:dashed;border-radius:50%;background:none}
+.cbl-fx.status-pulse.protection{border-radius:35% 35% 50% 50%;border-style:double;border-width:3px}
+.cbl-fx.ability-impact,.cbl-fx.ability-charge,.cbl-fx.ability-impact:before,.cbl-fx.ability-impact:after,.cbl-fx.ability-charge:before,.cbl-fx.ability-charge:after{animation-duration:var(--fx-life,380ms)}
+.cbl-scene .cbl-fx.ability-impact.area{width:62px;height:50px;opacity:.75}
+.cbl-scene .cbl-fx.ability-impact.periodic{width:23px;height:23px;opacity:.55}
+.cbl-fx.ability-impact.school-fire:before{background:radial-gradient(ellipse,#fff0bf 0 5%,#ef964666 25%,transparent 65%);border-color:#e69c62aa}
+.cbl-fx.ability-impact.school-frost:before{border-style:dotted;background:radial-gradient(ellipse,#b4eaff55,transparent 65%)}
+.cbl-fx.ability-impact.school-poison:after{border-radius:50%;clip-path:polygon(50% 0,90% 55%,78% 90%,25% 100%,7% 58%);opacity:.7}
+.cbl-fx.ability-impact.shape-guard:after{background:transparent;border:2px solid var(--flash);clip-path:none;border-radius:35% 35% 50% 50%}
+.cbl-fx.class-projectile.arrow{width:27px;background:linear-gradient(90deg,transparent,var(--hit,#dfcfaf) 40%,#fff1ca)}
+.cbl-fx.class-projectile.arrow:before{content:"";position:absolute;right:100%;width:22px;height:2px;background:linear-gradient(90deg,transparent,var(--hit,#dfcfaf));opacity:.65}
+.cbl-fx.class-projectile.major:not(.arrow){width:22px;height:14px}
+.cbl-fx.class-projectile.school-arcane:after{content:"";position:absolute;inset:-3px;border:1px solid var(--hit);border-radius:50%;opacity:.6}
+.cbl-scene[data-fx-detail="low"] .cbl-fx:is(.weapon-trail,.ability-charge,.ability-impact):after{display:none}
+.cbl-scene:has(.cbl-mechanic-callout[data-phase="incoming"],.cbl-mechanic-callout[data-phase="imminent"]) .cbl-fx:is(.ability-charge,.weapon-trail,.status-pulse){opacity:.45}
+@keyframes cblWeaponCut{0%{opacity:0;scale:.65;translate:-7px -3px}20%{opacity:.9}100%{opacity:0;scale:1.12;translate:5px 3px}}
+@keyframes cblStatusRise{0%{opacity:0;scale:.8;translate:0 7px}25%{opacity:.6}100%{opacity:0;scale:1.08;translate:0 -7px}}
+@media(prefers-reduced-motion:reduce){
+ .cbl-fx.weapon-trail{display:none!important}
+ .cbl-fx.ability-impact.still{display:block!important;animation:none!important;opacity:.55;width:25px!important;height:25px!important}
+ .cbl-fx.ability-impact.still:before,.cbl-fx.ability-impact.still:after,.cbl-fx.status-pulse{animation:none!important}
+ .cbl-fx.ability-impact.still:after{display:none}
+}
 .cbl-combat-readout{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-width:0;max-width:56%;margin-left:auto;padding:4px 8px;border-left:1px solid rgba(205,177,123,.23);background:rgba(6,12,16,.58);pointer-events:none;color:#d7d9d4;line-height:1.25}
 .cbl-readout-target{font:700 11px/1.3 system-ui,sans-serif;color:#edcd95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:175px}
 .cbl-readout-action{font:500 10px/1.3 system-ui,sans-serif;color:#c4d0d1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:225px}
