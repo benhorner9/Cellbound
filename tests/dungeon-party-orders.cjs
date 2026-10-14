@@ -42,5 +42,5 @@ for(const file of [
  assert(content.includes('CellboundPartyTactics?.current?.(party())'),file+' passes selected orders into combat');
 }
 assert(fs.readFileSync('quests-v2.js','utf8').includes('config.tactics.unitOrders'),'shared dungeon quest engine forwards run orders');
-assert(fs.readFileSync('top-navigation-v1.js','utf8').includes('CellboundEndgame.prepare(dungeonId)'),'featured dungeons skip journal');
+assert(fs.readFileSync('top-navigation-v1.js','utf8').includes('CellboundDungeonQuickEntry.open(dungeonId)'),'featured dungeons skip journal');
 console.log('Dungeon quick-entry and per-character orders affect real combat across all five dungeons.');
