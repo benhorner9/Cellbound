@@ -10,7 +10,7 @@ function harness(role){
  const window={
   CellboundGame:{ready:true},
   CellboundAdmin:{role},
-  CellboundPvPOwnerQA:{render(el){calls.push('render');el.innerHTML='<article class="cbpvp-qa">Owner practice</article>'},stop(){}},
+  CellboundPvPOwnerQA:{render(el){calls.push('render');if(role!=='owner')return false;el.innerHTML='<article class="cbpvp-qa">Owner practice</article>';return true},allowed(){return role==='owner'},stop(){}},
   addEventListener(name,cb){calls.push(name);this[name]=cb}
  };
  const document={
