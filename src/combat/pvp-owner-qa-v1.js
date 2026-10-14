@@ -6,10 +6,12 @@ const game=()=>window.CellboundGame;
 const availableRoster=()=>((game()?.getState?.()?.roster)||[]).filter(c=>game()?.isCharacterRosterUnlocked?.(c.id)!==false&&!game()?.isUnavailable?.(c));
 const activeParty=()=>game()?.getPartyCharacters?.()||[];
 // Owner-only LOCAL practice harness: never calls save(), rewards, match history or rating APIs.
-let pvpPractice=null;
+let pvpPractice=null,practiceOverlay=null;
 function stopPractice(){
- if(!pvpPractice)return;
- clearInterval(pvpPractice.timer);pvpPractice.timer=null;pvpPractice=null;window.CellboundCombatPortraits?.registerCharacters?.([])
+ if(pvpPractice){clearInterval(pvpPractice.timer);pvpPractice.timer=null;pvpPractice=null}
+ if(practiceOverlay){practiceOverlay.dispatchEvent(new Event('cbpvp:close'));practiceOverlay.remove();practiceOverlay=null}
+ document.body.classList.remove('cbpvp-practice-active');
+ window.CellboundCombatPortraits?.registerCharacters?.([])
 }
 function practiceRosters(size){
  const defs=[['Warrior','Protection'],['Priest','Holy'],['Mage','Arcane'],['Rogue','Assassination'],['Hunter','Marksman']];
@@ -59,7 +61,8 @@ function setupPractice(){
  mode.addEventListener('change',()=>{size.disabled=mode.value!=='arena';if(size.disabled)size.value='5';updateMaps();updatePlanner()});
  size.addEventListener('change',updatePlanner);updatePlanner();
  updateMaps();
- window.CellboundPvPMaps?.refresh?.(true).then(updateMaps).catch(error=>console.warn('PvP map list unavailable',error));
+ const refreshing=window.CellboundPvPMaps?.refresh?.(true);
+ if(refreshing&&typeof refreshing.then==='function')refreshing.then(updateMaps).catch(error=>console.warn('PvP map list unavailable',error));
  host.querySelector('[data-pvp-qa-stop]').addEventListener('click',()=>{
   stopPractice();host.querySelector('[data-pvp-qa-viewer]').replaceChildren();
   host.querySelector('[data-pvp-qa-orders]').hidden=true;host.querySelector('[data-pvp-qa-status]').textContent='Practice stopped. No results saved.'
@@ -68,24 +71,45 @@ function setupPractice(){
   if(window.CellboundAdmin?.role!=='owner')return;
   stopPractice();
   const gameMode=mode.value,n=gameMode==='arena'?Number(size.value):5;
-  const engine=window.CellboundCombatStandard,viewer=window.CellboundCombatViewer,root=host.querySelector('[data-pvp-qa-viewer]'),status=host.querySelector('[data-pvp-qa-status]');
+  const engine=window.CellboundCombatStandard,viewer=window.CellboundCombatViewer,status=host.querySelector('[data-pvp-qa-status]');
+  const report=text=>{status.textContent=text;const live=practiceOverlay?.querySelector('[data-pvp-overlay-status]');if(live)live.textContent=text};
   if(!engine?.createPvpSession||!viewer?.renderPvpFrame){status.textContent='Shared PvP engine or viewer is unavailable.';return}
   try{
    const maps=window.CellboundPvPMaps,map=maps?.get?.(mapPicker.value,{ownerPreview:true});
    if(!map||map.mode!==gameMode)throw new Error('Select a valid '+gameMode+' map in the Design Booth.');
    const squad=practiceRosters(n),plan=window.CellboundPvPPreTactics?.load?.(gameMode,n,squad.blue),session=engine.createPvpSession({pvp:{mode:gameMode,size:n,...squad,map,preTactics:{blue:plan}},encounter:{id:'owner-pvp-practice-'+map.id,environment:{blockers:[]}},seed:'owner-practice-'+map.id+'-'+gameMode+'-'+n,maxDurationMs:120000},{zone:'owner-pvp-qa'});
-   root.replaceChildren();
-   // The PvE Combat Portraits adapter owns models in both game modes.
+
+   // Full-screen PvP lives above app navigation like the shared PvE battle
+   // view. The pre-match form remains behind it and can be reopened on exit.
+   const overlay=document.createElement('section');
+   overlay.id='cbpvpPracticeWindow';
+   overlay.className='cbpvp-practice-window';
+   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+   overlay.setAttribute('aria-label','Crucible PvP practice match');
+   overlay.innerHTML='<header class="cbpvp-practice-window-head"><div><small>OWNER PRACTICE · NO REWARDS</small><h2>THE CRUCIBLE · '+(gameMode==='arena'?n+'v'+n+' Arena':gameMode==='capture-the-flag'?'Capture the Flag':'King of the Hill')+'</h2></div><button type="button" data-pvp-qa-exit aria-label="Close PvP practice match">Leave Match ✕</button></header>'+
+     '<p data-pvp-overlay-status role="status">Preparing '+map.title.replace(/[&<>"']/g,'')+'…</p>'+
+     '<div class="cbpvp-practice-window-orders" data-pvp-overlay-controls></div>'+
+     '<div class="cbpvp-practice-window-viewer" data-pvp-overlay-viewer></div>';
+   document.body.appendChild(overlay);practiceOverlay=overlay;document.body.classList.add('cbpvp-practice-active');
+   const root=overlay.querySelector('[data-pvp-overlay-viewer]');
+   const controls=host.querySelector('[data-pvp-qa-orders]').cloneNode(true);
+   controls.hidden=false;
+   controls.querySelectorAll('[data-qa-ctf]').forEach(el=>el.hidden=gameMode!=='capture-the-flag');
+   controls.querySelectorAll('[data-qa-hill]').forEach(el=>el.hidden=gameMode!=='king-of-the-hill');
+   overlay.querySelector('[data-pvp-overlay-controls]').appendChild(controls);
+   overlay.querySelector('[data-pvp-qa-exit]').addEventListener('click',()=>{stopPractice();report('Practice closed. Tactics are saved.');host.querySelector('[data-pvp-qa-start]')?.focus()});
+   overlay.addEventListener('click',e=>{
+    const button=e.target.closest('[data-pvp-qa-command]');if(button)applyCommand(button.dataset.pvpQaCommand)
+   });
+   const onEscape=e=>{if(e.key==='Escape'&&practiceOverlay===overlay){e.stopPropagation();stopPractice();report('Practice closed. Tactics are saved.');window.removeEventListener('keydown',onEscape,true)}};
+   window.addEventListener('keydown',onEscape,true);
+   overlay.addEventListener('cbpvp:close',()=>window.removeEventListener('keydown',onEscape,true),{once:true});
+   // The PvE portrait adapter owns all models in the shared battle viewer.
    window.CellboundCombatPortraits?.registerCharacters?.([...squad.blue,...squad.red]);
    const shell=viewer.mount(root,{profile:'pvp',mode:gameMode,mapArt:maps.artUrl(map),partySize:n,title:gameMode==='arena'?n+'v'+n+' Arena':gameMode==='capture-the-flag'?'Capture the Flag':'King of the Hill',header:'OWNER PRACTICE · NO REWARDS',inline:true});
    viewer.renderPvpFrame(shell,session.snapshot(),{events:session.snapshot().events});
-   // Starting a match reveals a new battlefield below the setup panel. Bring
-   // it into view on tablets/phones instead of leaving the player at the form.
-   try{root.scrollIntoView?.({behavior:'smooth',block:'start'})}catch(_){}
-   const controls=host.querySelector('[data-pvp-qa-orders]');controls.hidden=false;
-   controls.querySelectorAll('[data-qa-ctf]').forEach(el=>el.hidden=gameMode!=='capture-the-flag');
-   controls.querySelectorAll('[data-qa-hill]').forEach(el=>el.hidden=gameMode!=='king-of-the-hill');
-   const practice={session,shell,timer:null,map};pvpPractice=practice;
+   const practice={session,shell,timer:null,map,root};pvpPractice=practice;
+   overlay.querySelector('[data-pvp-qa-exit]')?.focus();
    const advance=()=>{
     if(pvpPractice!==practice)return;
     if(!root.isConnected||window.CellboundAdmin?.role!=='owner'){stopPractice();return}
@@ -94,21 +118,24 @@ function setupPractice(){
      const step=session.advance(200*(engine.playbackRate?.(1)??.7));
      viewer.renderPvpFrame(shell,session.snapshot(),{events:step.events});
      if(step.finished){clearInterval(practice.timer);practice.timer=null;
-      status.textContent='Practice '+(step.result?.pvp?.winner||'draw').toUpperCase()+' · '+Math.round(session.timeMs/1000)+'s · no results saved.';
+      report('Practice '+(step.result?.pvp?.winner||'draw').toUpperCase()+' · '+Math.round(session.timeMs/1000)+'s · no results saved.');
       controls.hidden=true
-     }else status.textContent=map.title+' · Practice running · '+Math.floor(session.timeMs/1000)+'s · command cooldown 1.5s'
-    }catch(error){stopPractice();status.textContent='Practice ended with an error: '+String(error?.message||error)}
+     }else report(map.title+' · Practice running · '+Math.floor(session.timeMs/1000)+'s · command cooldown 1.5s')
+    }catch(error){stopPractice();report('Practice ended with an error: '+String(error?.message||error))}
    };
    practice.timer=setInterval(advance,200);advance();
-  }catch(error){status.textContent='Unable to start practice: '+String(error?.message||error)}
+  }catch(error){stopPractice();report('Unable to start practice: '+String(error?.message||error))}
  });
- host.querySelectorAll('[data-pvp-qa-command]').forEach(button=>button.addEventListener('click',()=>{
-  if(window.CellboundAdmin?.role!=='owner'||!pvpPractice)return;
-  const [category,value]=button.dataset.pvpQaCommand.split(':');
+ function applyCommand(raw){
+  if(window.CellboundAdmin?.role!=='owner'||!pvpPractice||!raw)return;
+  const [category,value]=raw.split(':');
   const result=pvpPractice.session.pvpCommand('blue',category,value);
-  host.querySelector('[data-pvp-qa-status]').textContent=result.ok?'Order accepted: '+value:result.reason==='cooldown'?'Command on cooldown ('+((result.remainingMs||0)/1000).toFixed(1)+'s)':'Order rejected: '+(result.reason||'unknown');
+  const msg=result.ok?'Order accepted: '+value:result.reason==='cooldown'?'Command on cooldown ('+((result.remainingMs||0)/1000).toFixed(1)+'s)':'Order rejected: '+(result.reason||'unknown');
+  host.querySelector('[data-pvp-qa-status]').textContent=msg;
+  const live=practiceOverlay?.querySelector('[data-pvp-overlay-status]');if(live)live.textContent=msg;
   window.CellboundCombatViewer?.renderPvpFrame?.(pvpPractice.shell,pvpPractice.session.snapshot())
- }))
+ }
+ host.querySelectorAll('[data-pvp-qa-command]').forEach(button=>button.addEventListener('click',()=>applyCommand(button.dataset.pvpQaCommand)))
 }
 
 function render(mount){
