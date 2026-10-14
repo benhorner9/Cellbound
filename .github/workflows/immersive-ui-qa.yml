@@ -6,6 +6,9 @@ on:
       - 'adventure-combat-v1.css'
       - 'src/combat/combat-viewer-v1.js'
       - 'character-portraits-v1.js'
+      - 'manor-raid-v1.*'
+      - 'tests/ui-performance.browser.cjs'
+      - 'tests/design-booth.browser.cjs'
       - 'tests/combat-immersive.browser.cjs'
       - '.github/workflows/immersive-ui-qa.yml'
 permissions:
@@ -39,6 +42,7 @@ jobs:
           CELLBOUND_UI_SCREENSHOTS: /tmp/cb-ui
         run: node tests/combat-immersive.browser.cjs
       - name: Check performance and owner editor compatibility
+        if: success() || failure()
         env:
           CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
         run: |

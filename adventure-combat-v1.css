@@ -457,3 +457,6 @@ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="i
 html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-copy{display:none!important}
 html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-target{min-height:40px!important;font-size:11px!important}
 @media(max-height:540px) and (min-width:600px){html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-target{min-height:30px!important}}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-meta{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;flex:0 0 44px!important;height:44px!important;gap:8px!important}
+@media(max-height:540px) and (min-width:600px){html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-meta{flex-basis:30px!important;height:30px!important}}
