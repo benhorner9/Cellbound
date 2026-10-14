@@ -112,6 +112,9 @@ function plan(units,g,mode='pve'){
 }
 // Static obstacle detours are selected once per reservation, not on every animation frame.
 function waypoint(from,to,u,g){
+ // An authored room entrance can start beyond the safe footprint inset.
+ // Let the actor walk into bounds instead of producing a dead waypoint.
+ if(!legal(from,u,g))return to;
  if(clearSegment(from,to,u,g))return to;
  const candidates=[];for(const b of g.blockers){const dx=(b.w/2||b.rx)+u.rx+8,dy=(b.h/2||b.ry)+u.ry+8;for(const sx of [-1,1])for(const sy of [-1,1])candidates.push({x:b.x+sx*dx,y:b.y+sy*dy})}
  if(g.polygon)for(const p of g.polygon)candidates.push({x:p.x+(g.width/2-p.x)*.06,y:p.y+(g.height/2-p.y)*.06});
@@ -121,12 +124,27 @@ function advance(units,g,dt){
  const grid=new Grid();for(const u of units)if(!u.dead&&u.visual)grid.add(u,u.visual);
  let moving=false,routeBudget=2;
  for(const u of units){if(u.dead||u.locked||!u.visual||!u.reserved)continue;
+  // Only room-entry actors may recover continuously from an unsafe initial pose.
+  const recovering=!!u.entryRecovery&&!legal(u.visual,u,g);
+  if(u.entryRecovery&&!recovering)u.entryRecovery=false;
   if(u.route?.length&&distance(u.visual,u.route[0])<3)u.route.shift();
   const target=u.route?.[0]||u.waypoint||u.reserved,dist=distance(u.visual,target);if(dist<1){if(u.waypoint&&distance(u.waypoint,u.reserved)>1&&routeBudget-->0){u.route=route(u,units,g);u.waypoint=u.route?u.reserved:waypoint(u.visual,u.reserved,u,g)}continue}
   const step=Math.min(dist,Math.max(35,u.speed||150)*Math.min(dt,.07)),dx=(target.x-u.visual.x)/dist,dy=(target.y-u.visual.y)/dist;
   let best=u.visual,bestScore=Infinity;const neighbours=grid.near(u,u.visual);
   // Prefer forward travel, try two short sidesteps, otherwise yield. Never displace another actor.
-  for(const angle of [0,.65,-.65,1.12,-1.12]){const x=dx*Math.cos(angle)-dy*Math.sin(angle),y=dx*Math.sin(angle)+dy*Math.cos(angle),p={x:u.visual.x+x*step,y:u.visual.y+y*step};if(!legal(p,u,g))continue;
+  for(const angle of [0,.65,-.65,1.12,-1.12]){const x=dx*Math.cos(angle)-dy*Math.sin(angle),y=dx*Math.sin(angle)+dy*Math.cos(angle),p={x:u.visual.x+x*step,y:u.visual.y+y*step};
+   if(!legal(p,u,g)){
+    if(!recovering||distance(p,u.reserved)>=distance(u.visual,u.reserved)-.1)continue;
+    const pad=Math.min(u.rx,u.ry)*.45;
+    // Leaving an illegal entrance is allowed; entering new scenery is not.
+    if(blocked(p,g,pad)&&!blocked(u.visual,g,pad))continue;
+    if(g.polygon&&inside(u.visual,g.polygon)&&!inside(p,g.polygon))continue;
+    const e=g.ellipse;
+    if(e){
+     const level=v=>((v.x-e.x)/(e.rx-u.rx*.5))**2+((v.y-e.y)/(e.ry-u.ry*.5))**2;
+     if(level(u.visual)<=1&&level(p)>1)continue;
+    }
+   }
    let cost=distance(p,target);for(const a of neighbours)if(a.u!==u){const old=groundOverlap(u,u.visual,a.u,a.p),next=groundOverlap(u,p,a.u,a.p);if(next>old+.015)cost+=next*10000}
    if(cost<bestScore){bestScore=cost;best=p}
   }
