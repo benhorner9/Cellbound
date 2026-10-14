@@ -41,6 +41,12 @@ for(const file of [
  assert(content.includes('CellboundPartyTactics?.markup?.(party())'),file+' exposes role orders');
  assert(content.includes('CellboundPartyTactics?.current?.(party())'),file+' passes selected orders into combat');
 }
-assert(fs.readFileSync('quests-v2.js','utf8').includes('config.tactics.unitOrders'),'shared dungeon quest engine forwards run orders');
+assert(fs.readFileSync('quests-v2.js','utf8').includes("config.tactics&&typeof config.tactics"),'shared dungeon quest engine forwards run orders and stance');
+for(const id of ['blackout-station','fractured-ages']){
+ const file=id==='blackout-station'?'src/dungeons/blackout-station-v1.js':'src/dungeons/fractured-ages-v1.js';
+ const content=fs.readFileSync(file,'utf8');
+ assert(content.includes("stanceMarkup?.('"+id+"')"),id+' has an overall approach');
+ assert(content.includes("stanceTactics?.('"+id+"')"),id+' applies that approach to combat');
+}
 assert(fs.readFileSync('top-navigation-v1.js','utf8').includes('CellboundDungeonQuickEntry.open(dungeonId)'),'featured dungeons skip journal');
 console.log('Dungeon quick-entry and per-character orders affect real combat across all five dungeons.');
