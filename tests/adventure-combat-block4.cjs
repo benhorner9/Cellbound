@@ -14,7 +14,7 @@ assert(build.includes("'heroes-workspace-v1.css','adventure-combat-v1.css'"),'Ad
 for(const selector of ['#content','#quests','#raids','#world','#dungeonBrowserStatus','data-cb-quick-dungeon','CellboundPartyTactics']){
  assert(js.includes(selector),'Must use existing game node '+selector);
 }
-assert(js.includes('difficultyUnlocked')&&js.includes('CellboundEndgame.prepare(id)'),'Quick entry must preserve difficulty gate and use official preparation');
+assert(js.includes('difficultyUnlocked')&&js.includes('E.prepare(id)'),'Quick entry must preserve difficulty gate and use official preparation');
 assert(!js.includes('Game.save(')&&!js.includes('replaceChildren('),'Do not mutate gameplay progression or replace official widgets');
 for(const selector of ['.cb-adventure-brief','.dungeon-browser-card','.quest-tabs','.mr-hero','.cbcombat-shell','.cbcombat-chat','.cbcombat-arena-wrap']){
  assert(css.includes(selector),'Missing designed screen '+selector);
