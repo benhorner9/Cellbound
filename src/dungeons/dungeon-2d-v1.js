@@ -2703,6 +2703,17 @@ async function playLiveRebornSession(result,tok){
   }
  };
  renderEvents(session.drainEvents?.()||[]);
+ // Keep damage and visible movement together. The initial room formation
+ // must start its approach before we advance the combat simulation clock.
+ const approachStartedAt=performance.now();
+ let approachComplete=false;
+ const approachReady=()=>{
+  const arena=$('#cb2dArena'),inspect=window.CellboundCombatSpatial?.inspect;
+  if(!arena||!inspect)return true;
+  const spatial=inspect(arena),partyUnits=spatial?.units?.filter(u=>String(u.id).startsWith('p-')&&u.state!=='dead')||[];
+  return partyUnits.length>0&&partyUnits.every(u=>u.visual&&u.reserved&&
+   Math.hypot(u.visual.x-u.reserved.x,u.visual.y-u.reserved.y)<Math.max(22,arena.clientWidth*.025));
+ };
  run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),commandState:type=>session.commandState?.(type),commandPowerState:()=>session.commandPowerState?.(),now:()=>session.timeMs,result:()=>activeResult};refreshCombatCommandCooldowns();
  return await new Promise(resolve=>{
   const finishPlayback=(value,finalResult=null)=>{
@@ -2720,6 +2731,13 @@ async function playLiveRebornSession(result,tok){
    if(finished)return;
    if(tok!==token||!run){finishPlayback('cancelled');return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   if(!approachComplete){
+    const elapsed=now-approachStartedAt;
+    if(elapsed<300||(elapsed<2200&&!approachReady())){
+     lastWall=now;raf=requestAnimationFrame(frame);return;
+    }
+    approachComplete=true;lastWall=now;
+   }
    const speed=combatPlaybackSpeed(run?.speed||1),delta=Math.max(0,Math.min(250,now-lastWall))*speed;lastWall=now;
    const step=session.advance(delta);
    refreshCombatCommandCooldowns();
