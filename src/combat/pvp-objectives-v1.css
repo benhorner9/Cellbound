@@ -30,7 +30,7 @@
 
 /* iPad-friendly private owner QA controls, without opening the public PvP queue. */
 .cbpvp-qa{margin-top:16px;max-width:100%;overflow:visible}
-.cbpvp-qa header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.cbpvp-qa > header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .cbpvp-qa-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0}
 .cbpvp-qa-toolbar label{display:flex;align-items:center;gap:8px;font-size:.82rem;color:#d7dce5}
 .cbpvp-qa-toolbar select,.cbpvp-qa-toolbar button{min-height:44px;padding:8px 12px;border-radius:8px;border:1px solid rgba(185,207,221,.36);font:inherit;background:#1a2734;color:#f0ecdf;touch-action:manipulation}
