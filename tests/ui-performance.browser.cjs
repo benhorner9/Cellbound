@@ -178,7 +178,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
             const scene=wrap?.getBoundingClientRect(),panel=shell.getBoundingClientRect();
             const box=chat?.getBoundingClientRect(),entry=input?.getBoundingClientRect();
             return {
-              chatExists:!!chat,chatHeight:box?.height??0,
+              scene:{x:scene.x,y:scene.y,width:scene.width,height:scene.height,bottom:scene.bottom},panel:{x:panel.x,y:panel.y,width:panel.width,height:panel.height,bottom:panel.bottom},chatExists:!!chat,chatHeight:box?.height??0,
               entryExists:!!input,
               entryVisible:!!entry&&!!box&&entry.bottom<=box.bottom+2&&entry.top>=box.top-2,
               chatInFrame:!!box&&!!panel&&box.top>=panel.top-2&&box.bottom<=panel.bottom+2,

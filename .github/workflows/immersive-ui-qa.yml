@@ -47,7 +47,11 @@ jobs:
           CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
         run: |
           node tests/ui-performance.browser.cjs
-          node tests/design-booth.browser.cjs
+      - name: Check owner editor
+        if: success() || failure()
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+        run: node tests/design-booth.browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
