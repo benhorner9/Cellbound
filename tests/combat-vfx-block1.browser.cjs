@@ -49,7 +49,7 @@ const dist=path.resolve(__dirname,'../dist'),engine=process.env.CELLBOUND_TEST_E
    await page.clock.runFor(160);
    const first=await page.locator('.class-projectile').boundingBox();assert(first&&first.x>0&&first.x<size.width);
    await page.evaluate(()=>units.e.style.left='65%');await page.clock.runFor(150);
-   const next=await page.locator('.class-projectile').boundingBox();assert(next&&next.x>first.x,'projectile follows its real target');
+   const next=await page.locator('.class-projectile').boundingBox();assert(next&&next.x>first.x,'projectile follows its real target: '+JSON.stringify({size,first,next,detail:await page.evaluate(()=>({source:units.p.getBoundingClientRect().toJSON(),target:units.e.getBoundingClientRect().toJSON(),projectile:stage.querySelector('.class-projectile')?.style.cssText,fx:CellboundCombatFX.diagnostics()}))}));
    await page.clock.runFor(300);assert.equal(await page.locator('.class-projectile').count(),0);
   }
   await page.evaluate(()=>{for(let i=0;i<80;i++)send('DAMAGE_DEALT','Fireball',{amount:30,result:'critical'});send('MECHANIC_TELEGRAPH','Thrown Plate Barrage',{source:'e',target:'p',payload:{token:'boss-test',duration:1000,mechanicType:'circle',targetIds:['p']}})});
