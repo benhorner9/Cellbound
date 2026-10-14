@@ -128,6 +128,40 @@
     window.CellboundDungeonQuickEntry.open(id);
   });
   intro.insertAdjacentElement('afterend',brief);
+  // Every card also gets a direct route. Journal lore remains optional.
+  // Observe only card additions: the dungeon modules re-render unlocked
+  // cards asynchronously after the account's progression is loaded.
+  const browser=dungeons.querySelector('#dungeonBrowser');
+  function syncDungeonCards(){
+    if(!browser)return;
+    browser.querySelectorAll('.dungeon-browser-card[data-dungeon-card]').forEach(card=>{
+      const id=card.dataset.dungeonCard;
+      if(!routes.some(route=>route[0]===id))return;
+      let button=card.querySelector('[data-cb-card-launch]');
+      if(!button){
+        button=document.createElement('button');
+        button.type='button';
+        button.className='cb-dungeon-card-launch';
+        button.dataset.cbCardLaunch=id;
+        button.textContent='PLAN & ENTER →';
+        const actions=card.querySelector('.dungeon-browser-actions')||card.querySelector('.dungeon-browser-copy')||card;
+        actions.appendChild(button);
+      }
+      button.disabled=card.classList.contains('locked');
+      button.title=button.disabled?'Unlock this dungeon through the campaign.':'Set tactics and enter';
+    });
+  }
+  browser?.addEventListener('click',event=>{
+    const button=event.target.closest('[data-cb-card-launch]');
+    if(!button||button.disabled)return;
+    event.preventDefault();event.stopPropagation();
+    window.CellboundDungeonQuickEntry.open(button.dataset.cbCardLaunch);
+  },true);
+  if(browser){
+    new MutationObserver(syncDungeonCards).observe(browser,{subtree:true,childList:true});
+    syncDungeonCards();
+  }
+
   const nav=document.querySelector('.sidebar .primary-nav');
   function sync(){
    brief.querySelectorAll('[data-cb-quick-dungeon]').forEach(button=>{
