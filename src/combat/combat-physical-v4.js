@@ -117,8 +117,11 @@ function fightingGeometry(scene,width,height,count=scene.units.size){
  else if(arena.matches?.('.hs2d-arena'))theme='hollow';
  else if(arena.matches?.('.bs-arena,#bsArena'))theme='blackout';
  else if(arena.matches?.('.wb2d-arena'))theme='world';
+ else if(/fractured|high-noon|iron-kingdom|first-kingdom|silent-frontier|funhouse|fa-(?:high|iron|first|silent)/.test(context))theme='fractured';
+ else if(/manor|butler|maid|engineer|attic/.test(context))theme='manor';
+ else if(/null-complex|theme-null|room-null/.test(context))theme='null';
  else if(arena.matches?.('.quest-cb2d-arena,#q2dArena'))theme='quest';
- else for(const name of ['manor','null','fractured','ashen','hollow','chaos','blackout','twelve','world','quest'])if(context.includes(name)){theme=name;break}
+ else for(const name of ['ashen','hollow','chaos','blackout','twelve','world'])if(context.includes(name)){theme=name;break}
  const env=scene.spatialEnvironment||{},presentation=env.presentation||{},authored=env.bounds||{};
  // Authored walkable polygons already describe actual ground; do not substitute
  // a generic floor that might cut through a room designer's valid path.
@@ -156,7 +159,8 @@ function petObject(scene,e){
   const p=owner?.spatial?.visual&&scene.spatialWidth&&scene.spatialHeight?
    {x:owner.spatial.visual.x/scene.spatialWidth*100,y:owner.spatial.visual.y/scene.spatialHeight*100}:
    owner?.position||e.position;
-  const candidate={x:clamp(Number(p.x)+(Number(p.x)>50?-4:4),0,100)*width/100,y:clamp(Number(p.y)+4,0,100)*height/100};
+  const beside=Math.max(4,Math.min(9,32/width*100))*(Number(p.x)>50?-1:1);
+  const candidate={x:clamp(Number(p.x)+beside,0,100)*width/100,y:clamp(Number(p.y)+4,0,100)*height/100};
   const floor=fightingGeometry(scene,width,height,scene.units.size+1);
   const point=S.safePoint(candidate,{rx:20,ry:20,head:36,foot:14},floor);
   n.style.setProperty('left',(point.x/width*100).toFixed(3)+'%','important');
