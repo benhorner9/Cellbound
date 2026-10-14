@@ -22,8 +22,9 @@ for(const mode of ['arena','capture-the-flag','king-of-the-hill']){
  assert.equal(P.load(mode,n,squad).objective,mode==='arena'?'pressure-healer':mode==='capture-the-flag'?'take-flag':'capture-hill');
  assert(P.markup(mode,n,squad).includes('PRE-MATCH TACTICS'));
  assert(P.markup(mode,n,squad).includes('INDIVIDUAL TARGET PRIORITIES'));
+ assert(P.markup(mode,n,squad).includes('HEALING'),'healer has a separate pre-match support order');
  const team={target:'attack-tank',position:'spread',objective:mode==='arena'?'kite':mode==='capture-the-flag'?'defend-base':'rotate-early',
-  individual:{[squad[0].id]:'attack-healer',[squad[1].id]:'focus-low-health'}};
+  individual:{[squad[0].id]:'attack-healer',[squad[1].id]:'focus-low-health'},healing:{[squad[1].id]:'group'}};
  const session=E.createPvpSession({pvp:{mode,size:n,blue:blue.slice(0,n),red:red.slice(0,n),preTactics:{blue:team}},
   encounter:{id:'preplan-'+mode},seed:'prematch-'+mode,maxDurationMs:10000});
  const start=session.snapshot(),orders=start.pvp.orders;
@@ -31,19 +32,21 @@ for(const mode of ['arena','capture-the-flag','king-of-the-hill']){
  assert.equal(orders.blue.position,'spread','opening formation loaded');
  assert.equal(orders.blue.objective,team.objective,'mode-specific objective loaded');
  assert.equal(orders.blue.individual[squad[0].id],'attack-healer','unit assignment loaded');
+ assert.equal(orders.blue.healing[squad[1].id],'group','healer support order reaches combat');
  assert.equal(orders.red.target,'balanced','opponents keep their own defaults');
  assert(start.events.some(e=>e.type==='PVP_PREMATCH_TACTICS'&&e.payload.team==='blue'),'prematch event emitted');
  assert(start.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='pvp spread'),'opening formation affects movement');
  assert.equal(session.pvpCommand('blue','target','attack-dps').ok,true,'live orders accepted');
  assert.equal(session.snapshot().pvp.orders.blue.target,'attack-dps');
  assert.equal(session.snapshot().pvp.orders.blue.individual,undefined,'live target order overrides personal priority rules');
+ assert.equal(session.snapshot().pvp.orders.blue.healing[squad[1].id],'group','live target switch preserves healer support priorities');
  session.advance(500);
 }
 const invalid=E.createPvpSession({pvp:{mode:'arena',size:2,blue:blue.slice(0,2),red:red.slice(0,2),
- preTactics:{blue:{target:'win-every-time',position:'teleport',objective:'steal-flag',individual:{'blue-tank':'godmode','other-account':'attack-healer'}}}},
+ preTactics:{blue:{target:'win-every-time',position:'teleport',objective:'steal-flag',individual:{'blue-tank':'godmode','other-account':'attack-healer'},healing:{'blue-healer':'god-mode','other-account':'group'}}}},
  encounter:{id:'unsafe-plan'},seed:'unsafe-prematch-seed'});
 const order=invalid.snapshot().pvp.orders.blue;
-assert.equal(order.target,'balanced');assert.equal(order.position,'balanced');assert.equal(order.objective,'push');assert.deepEqual(Object.keys(order.individual),[]);
+assert.equal(order.target,'balanced');assert.equal(order.position,'balanced');assert.equal(order.objective,'push');assert.deepEqual(Object.keys(order.individual),[]);assert.deepEqual(Object.keys(order.healing),[]);
 assert.equal(P.clean({target:'cheat',position:'fly',objective:'win',individual:{'blue-tank':'invalid'}},'arena',blue.slice(0,2)).target,'balanced');
 const owner=fs.readFileSync('src/combat/pvp-owner-qa-v1.js','utf8'),server=fs.readFileSync('server/pvp/match-authority.cjs','utf8');
 assert(owner.includes('CellboundPvPPreTactics?.markup?.'),'Owner QA has the real pre-match form');
