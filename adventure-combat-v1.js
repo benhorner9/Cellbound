@@ -61,6 +61,16 @@
   })
  }
  window.CellboundPartyTactics={VERSION:1,CHOICES,role,key,current,markup,bind};
+ window.CellboundDungeonQuickEntry={open(id){
+  const E=window.CellboundEndgame;
+  if(E?.prepare){
+   const current=E.getSelection?.(id)||{difficulty:'normal',tier:1};
+   // An old saved Heroic/Cellbound+ selection must not turn a quick route
+   // into a dead button when that difficulty has since become unavailable.
+   if(E.difficultyUnlocked?.(id,current.difficulty||'normal',current.tier||1)===false)E.choose?.(id,'normal',1);
+   E.prepare(id);
+  }else window.CellboundDungeonBrowser?.open?.(id);
+ }};
 })();
 
 /* Cellbound UI Block 4: an expedition-preparation panel using live
@@ -77,7 +87,7 @@
   document.body.classList.add('cb-adventure-v4');
   const title=intro.querySelector('h2'),paragraph=intro.querySelector('p');
   if(title)title.textContent='Choose an Expedition';
-  if(paragraph)paragraph.textContent='Check the route, bosses, entry requirements and rewards before setting out with your five.';
+  if(paragraph)paragraph.textContent='Pick a dungeon, set jobs for your five and enter.';
   const brief=document.createElement('section');
   brief.id='cbAdventureBrief';
   brief.className='cb-adventure-brief cb-adventure-quick';
@@ -88,8 +98,7 @@
   brief.addEventListener('click',e=>{
     const button=e.target.closest('[data-cb-quick-dungeon]');if(!button)return;
     const id=button.dataset.cbQuickDungeon;
-    if(window.CellboundEndgame?.prepare)window.CellboundEndgame.prepare(id);
-    else window.CellboundDungeonBrowser?.open?.(id);
+    window.CellboundDungeonQuickEntry.open(id);
   });
   intro.insertAdjacentElement('afterend',brief);
   const nav=document.querySelector('.sidebar .primary-nav');
@@ -98,8 +107,8 @@
     const E=window.CellboundEndgame,id=button.dataset.cbQuickDungeon;
     const selection=E?.getSelection?.(id);
     const unlocked=E?.difficultyUnlocked?.(id,selection?.difficulty||'normal',selection?.tier||1);
-    button.disabled=unlocked===false;
-    button.title=unlocked===false?'Selected difficulty is locked. Open the dungeon journal to change difficulty.':'Open dungeon preparation';
+    button.disabled=false;
+    button.title=unlocked===false?'Open at Normal difficulty to choose a new plan.':'Open dungeon preparation';
    })
   }
   window.addEventListener('cellbound:view-changed',sync);
