@@ -15,6 +15,14 @@ assert(melees.every(u=>S.distance(mercer.reserved,u.reserved)<80),'melee flanks 
 assert(S.overlap(mercer,mercer.reserved,tank,tank.reserved,0)>0,'full portrait envelopes overlap at striking range');
 assert.equal(S.spacingOverlap(mercer,mercer.reserved,tank,tank.reserved,0),0,'ground footprints remain separate');
 const first=JSON.stringify(list.map(u=>u.reserved));apply(list,g);assert.equal(JSON.stringify(list.map(u=>u.reserved)),first,'stationary reservations stable');assert.equal(JSON.stringify(list.map(u=>u.logical)),original,'never change logical positions');
+const beforeIdleAttack=list.filter(u=>['tank','melee'].includes(u.style)).map(u=>({id:u.id,position:{...u.reserved}}));
+list[0].logical.x+=1.5;list[0].logical.y+=.8;apply(list,g);
+for(const before of beforeIdleAttack){
+ const after=list.find(u=>u.id===before.id);
+ assert(S.distance(before.position,after.reserved)<2.5,'minor target drift must not reset '+before.id+' between attacks');
+}
+list[0].logical.x-=1.5;list[0].logical.y-=.8;apply(list,g);
+
 assert(list.find(u=>u.style==='healer').reserved.x<list.find(u=>u.style==='tank').reserved.x,'healer stays behind tank');
 // Crowded movement and target change: travel from old stance to reserved stance, never teleport.
 list[0].logical.x=350;apply(list,g);for(let i=0;i<600;i++)S.advance(list,g,1/60);
