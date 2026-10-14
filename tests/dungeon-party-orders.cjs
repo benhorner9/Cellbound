@@ -30,6 +30,16 @@ assert.equal(hits(orderedRun)[0].target,'e-0','Boss Burn DPS focuses boss despit
 assert.notEqual(orderedRun.summary.totalDamage,defaultRun.summary.totalDamage,'orders change combat outputs');
 const start=orderedRun.events.find(e=>e.type==='COMBAT_START');
 assert.equal(start.payload.tactics.unitOrders.dps1,'boss-burn','orders survive into authoritative combat event');
+const tankModes={};
+for(const mode of ['all-aggro','boss-lock','damage']){
+ const result=E.simulate({...options,seed:'orders-threat-same-seed',tactics:{unitOrders:{tank:mode,heal:'tank-first',dps1:'boss-burn',dps2:'interrupt',dps3:'adds'}}});
+ tankModes[mode]={
+  damage:result.events.filter(e=>e.source==='p-tank'&&e.type==='DAMAGE_DEALT').reduce((sum,e)=>sum+(Number(e.amount)||0),0),
+  generated:result.events.filter(e=>e.source==='p-tank'&&e.type==='THREAT_GENERATED').reduce((sum,e)=>sum+(Number(e.amount)||0),0)
+ };
+}
+assert(tankModes.damage.damage>tankModes['all-aggro'].damage,'Offensive tank stance delivers more damage');
+assert(tankModes.damage.generated<tankModes['boss-lock'].generated,'Offensive tank stance produces less threat than boss lock');
 const invalid=E.simulate({...options,tactics:{unitOrders:{dps1:'cheat',tank:'god-mode'}}});
 assert.equal(invalid.events.find(e=>e.type==='COMBAT_START').payload.tactics.unitOrders.dps1,'','unknown values rejected');
 for(const file of [
