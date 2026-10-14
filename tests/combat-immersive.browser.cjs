@@ -8,7 +8,7 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
   const page=await browser.newPage({viewport:{width:1280,height:720}});
   if(process.env.CELLBOUND_UI_SCREENSHOTS){fs.mkdirSync(process.env.CELLBOUND_UI_SCREENSHOTS,{recursive:true});process.on('unhandledRejection',e=>console.error(e))}
   const errors=await mount(page,matureState(),true,{simulateDungeonRuntime:true});
-  await page.evaluate(()=>{const s=CellboundGame.getState();s.progression.fracturedAgesUnlocked=true;s.roster.forEach(c=>{c.power=12;for(const slot of ['Head','Chest','Weapon','OffHand','Shoulders','Hands','Legs','Feet','Waist'])c.equipment[slot]={...CellboundGear.items.find(x=>x.class===c.class&&x.tier===3&&x.slot===slot),class:c.class,slot,itemLevel:50,baseItemLevel:50}});CellboundGame.renderAll();CellboundFracturedAges.open()});
+  await page.evaluate(()=>{const s=CellboundGame.getState();s.progression.fracturedAgesUnlocked=true;s.roster.forEach(c=>{c.power=12;if(c.class==='Hunter')c.spec='Beast Mastery';for(const slot of ['Head','Chest','Weapon','OffHand','Shoulders','Hands','Legs','Feet','Waist'])c.equipment[slot]={...CellboundGear.items.find(x=>x.class===c.class&&x.tier===3&&x.slot===slot),class:c.class,slot,itemLevel:50,baseItemLevel:50}});CellboundGame.renderAll();CellboundFracturedAges.open()});
   await page.locator('[data-fa-start]').click();
   await page.waitForSelector('#q2dArena [data-animation-owned="1"]',{timeout:45000});
   const shell=page.locator('.cbcombat-shell:visible');
@@ -52,7 +52,7 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
    await raid.locator('[data-combat-compare]').click();assert.equal(await raid.getAttribute('data-combat-layout'),'immersive');
    const cards=await raid.locator('#cb2dRows > .cb2d-party-row:visible').count();
    assert.equal(cards,10,'both raid parties stay visible');
-   const visible=await raid.locator('#cb2dRows > .cb2d-party-row').evaluateAll(rows=>rows.every(row=>{const r=row.getBoundingClientRect(),panel=row.closest('.cbcombat-party-panel').getBoundingClientRect();return r.y>=panel.y&&r.bottom<=panel.bottom+1}));assert(visible,'all raid cards fit inside party panel');
+   const visible=await raid.locator('#cb2dRows > .cb2d-party-row').evaluateAll(rows=>rows.every(row=>{const r=row.getBoundingClientRect(),panel=row.closest('.cbcombat-party-panel').getBoundingClientRect();return r.width>=50&&r.x>=panel.x&&r.right<=panel.right+1&&r.y>=panel.y&&r.bottom<=panel.bottom+1}));assert(visible,'all raid cards fit inside party panel');
    const arena=await raid.locator('[data-combat-arena]').boundingBox();assert(arena.height>180&&arena.y+arena.height<size.height,'raid arena fits');
    if(process.env.CELLBOUND_UI_SCREENSHOTS)await page.screenshot({path:process.env.CELLBOUND_UI_SCREENSHOTS+'/butler-'+size.width+'.png'});
   }

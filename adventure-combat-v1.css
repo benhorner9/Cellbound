@@ -427,3 +427,29 @@ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="i
 }
 
 @media(max-width:849px){html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-target{display:none!important}}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows:not([hidden]){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important;padding:3px 0!important;min-height:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows>small,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-target,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-main>small{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-row{display:flex!important;align-items:center!important;gap:3px!important;height:22px!important;min-height:22px!important;padding:2px!important;overflow:hidden!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-main b{font-size:9px!important;white-space:nowrap!important;text-overflow:ellipsis!important;overflow:hidden!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-icon{width:12px!important;height:12px!important;font-size:10px!important}
+@media(max-width:849px) and (min-height:541px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows:not([hidden]){grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live):has(.cbcombat-pet-row) .cbcombat-party-panel{height:114px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live):has(.cbcombat-pet-row) .cbcombat-battle-panel>.cbcombat-arena-wrap{top:120px!important;height:calc(100% - 304px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live):has(.cbcombat-pet-row) .cbcombat-battle-topbar{top:122px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"]:has(.cbcombat-pet-row) .cbcombat-party-panel{height:172px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"]:has(.cbcombat-pet-row) .cbcombat-battle-panel>.cbcombat-arena-wrap{top:178px!important;height:calc(100% - 362px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"]:has(.cbcombat-pet-row) .cbcombat-battle-topbar{top:180px!important}
+}
+@media(max-height:540px) and (min-width:600px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){grid-auto-rows:34px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows)>.cb2d-party-row{height:34px!important}
+}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){grid-auto-flow:row!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame{top:48px!important;grid-template-columns:minmax(0,1fr) 40px!important;grid-template-rows:auto 6px!important;width:min(430px,calc(100% - 24px))!important;gap:4px 8px!important;padding:5px 8px!important;backdrop-filter:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame>small{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame>b{grid-column:1!important;grid-row:1!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;font-size:12px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame>strong{grid-column:2!important;grid-row:1!important;font-size:11px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame>em{grid-column:1/-1!important;grid-row:2!important;height:6px!important}
