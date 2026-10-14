@@ -24,6 +24,19 @@ for(const before of beforeIdleAttack){
 list[0].logical.x-=1.5;list[0].logical.y-=.8;apply(list,g);
 
 assert(list.find(u=>u.style==='healer').reserved.x<list.find(u=>u.style==='tank').reserved.x,'healer stays behind tank');
+// Room entrances often paint party members outside the combat footprint inset.
+// They must travel to their reserved positions continuously, without freezing.
+const entryGrid=S.geometry(744,418),entering=unit('room-entry-tank','tank',270,210,{visual:{x:14,y:75},reserved:{x:270,y:210},speed:180,entryRecovery:true});
+assert(!S.legal(entering.visual,entering,entryGrid),'room-entry model starts outside combat-safe bounds');
+assert.equal(S.waypoint(entering.visual,entering.reserved,entering,entryGrid),entering.reserved,'off-grid entrance aims at a valid reservation');
+const beforeEntering={...entering.visual};
+S.advance([entering],entryGrid,1/60);
+assert(S.distance(entering.visual,beforeEntering)>1,'off-grid entry moves on its first visible frame');
+assert(S.distance(entering.visual,entering.reserved)>200,'off-grid entry must not teleport to the destination');
+for(let i=0;i<600;i++)S.advance([entering],entryGrid,1/60);
+assert(S.distance(entering.visual,entering.reserved)<3,'off-grid entry reaches the fight');
+assert.equal(entering.entryRecovery,false,'standard arena collision rules resume after recovery');
+
 // Crowded movement and target change: travel from old stance to reserved stance, never teleport.
 list[0].logical.x=350;apply(list,g);for(let i=0;i<600;i++)S.advance(list,g,1/60);
 for(const u of list)assert(S.distance(u.visual,u.reserved)<3,u.id+' finishes moving: '+S.distance(u.visual,u.reserved));clear(list,g);
