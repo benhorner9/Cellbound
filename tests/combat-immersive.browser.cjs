@@ -16,7 +16,7 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
    await page.setViewportSize(size);await page.waitForTimeout(350);
    const metrics=await shell.evaluate(s=>{
     const rect=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom}};
-    return{shell:rect(s),arena:rect(s.querySelector('.cbcombat-arena')),commands:[...s.querySelectorAll('.cbr-command-column button')].map(rect),panel:rect(s.querySelector('.cbcombat-command-panel')),scroll:s.scrollHeight,client:s.clientHeight};
+    return{shell:rect(s),arena:rect(s.querySelector('.cbcombat-arena')),commands:[...s.querySelectorAll('.cbr-command-column button')].map(rect),panel:rect(s.querySelector('.cbcombat-command-panel')),wrap:rect(s.querySelector('.cbcombat-arena-wrap')),grid:rect(s.querySelector('.cbcombat-grid')),children:[...s.children].map(e=>({cls:e.className,hidden:e.hidden,height:getComputedStyle(e).height,display:getComputedStyle(e).display})),scroll:s.scrollHeight,client:s.clientHeight};
    });
    console.log(size,JSON.stringify(metrics));
    if(process.env.CELLBOUND_UI_SCREENSHOTS)await page.screenshot({path:process.env.CELLBOUND_UI_SCREENSHOTS+'/'+size.width+'x'+size.height+'.png'});
@@ -37,6 +37,21 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
   await shell.evaluate(s=>CellboundCombatViewer.setResults(s,true));assert(await shell.locator('.cbcombat-grid').isHidden());
   await shell.evaluate(s=>CellboundCombatViewer.setResults(s,false));assert(await shell.locator('.cbcombat-grid').isVisible());
   page.once('dialog',d=>d.accept());await page.locator('[data-q-close]').click();
+  await page.evaluate(()=>{CellboundGame.getState().roster.forEach(c=>{c.cellShock=0;c.cellShockLockedUntil=null});CellboundGame.renderAll()});
+  await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner');
+  await page.evaluate(()=>CellboundManorRaid.startOwnerSoloQa());
+  await page.locator('#manorRaidOverlay [data-raid-ready]').waitFor();
+  await page.locator('#manorRaidOverlay [data-raid-ready]').evaluate(b=>b.click());
+  await page.waitForSelector('#cb2dBackdrop:not([hidden]) .mr-room-scene.room-butler',{timeout:30000});
+  for(const size of [{width:1366,height:1024},{width:390,height:844}]){
+   await page.setViewportSize(size);await page.waitForTimeout(1000);
+   const raid=page.locator('#cb2dBackdrop .cbcombat-shell');
+   const cards=await raid.locator('#cb2dRows > .cb2d-party-row:visible').count();
+   assert.equal(cards,10,'both raid parties stay visible');
+   const arena=await raid.locator('[data-combat-arena]').boundingBox();assert(arena.height>180&&arena.y+arena.height<size.height,'raid arena fits');
+   if(process.env.CELLBOUND_UI_SCREENSHOTS)await page.screenshot({path:process.env.CELLBOUND_UI_SCREENSHOTS+'/butler-'+size.width+'.png'});
+  }
+  await page.evaluate(()=>CellboundManorRaid.endOwnerSoloQa());
   assert.deepEqual(errors,[]);console.log('Immersive combat: responsive HUD, chat, meters, command, results and exit passed.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
