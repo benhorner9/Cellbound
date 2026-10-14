@@ -162,6 +162,7 @@ const groups=Object.freeze({
   "combat-standard-v1.js",
   "pvp-ruleset-v1.js",
   "pvp-objectives-v1.js",
+  "pvp-pre-tactics-v1.js",
   "pvp-owner-qa-v1.js",
   "pvp-maps-v1.js",
   "pvp-objectives-v1.css",
