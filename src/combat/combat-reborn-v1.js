@@ -2317,7 +2317,7 @@ function healerTarget(ctx,healer){
  const alive=livingPlayers(ctx),order=unitOrder(ctx,healer);
  return alive.sort((a,b)=>{
    const ar=healthRatio(a),br=healthRatio(b);
-   const bias=order==='tank-first'?.18:order==='triage'?0:.02;
+   const bias=order==='tank-first'?.18:order==='triage'?0:.035;
    const aw=ar-(a.role==='tank'?bias:0),bw=br-(b.role==='tank'?bias:0);
    return aw-bw
  })[0]||null
