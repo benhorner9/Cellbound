@@ -340,7 +340,7 @@ function spatialFrame(scene,bounds,time){
    }
    s.reserved=null;s.waypoint=null;s.route=null;
   }
-  if(!s.visual&&s.entryVisual){s.visual=s.entryVisual;s.entryVisual=null}
+  if(!s.visual&&s.entryVisual){s.visual=s.entryVisual;s.entryRecovery=!S.legal(s.visual,s,g);s.entryVisual=null}
   list.push(s);
  }
  if(scene.spatialDirty&&time-(scene.spatialPlannedAt||0)>(list.length>20?220:100)){
