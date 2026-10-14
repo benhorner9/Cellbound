@@ -42,6 +42,17 @@ for(const mode of ['arena','capture-the-flag','king-of-the-hill']){
  assert.equal(session.snapshot().pvp.orders.blue.healing[squad[1].id],'group','live target switch preserves healer support priorities');
  session.advance(500);
 }
+// A character set to Follow Team must obey team focus, not silently switch to Balanced targeting.
+const focusBlue=blue,focusRed=red;
+const inherited=E.createPvpSession({pvp:{mode:'arena',size:5,blue:focusBlue,red:focusRed,
+ preTactics:{blue:{target:'attack-healer',position:'balanced',objective:'pressure-healer',
+ individual:Object.fromEntries(focusBlue.map(c=>[c.id,'balanced']))}}},
+ encounter:{id:'inherit-focus'},seed:'focused-healer',maxDurationMs:10000});
+for(let t=0;t<50;t++)inherited.advance(200);
+const attacking=inherited.snapshot().events.filter(e=>e.type==='DAMAGE_DEALT'&&e.source?.startsWith('p-blue'));
+assert(attacking.length,'PvP players perform real attacks');
+assert.equal(attacking[0].target,'p-red-healer','Follow Team priority attacks enemy healer');
+
 const invalid=E.createPvpSession({pvp:{mode:'arena',size:2,blue:blue.slice(0,2),red:red.slice(0,2),
  preTactics:{blue:{target:'win-every-time',position:'teleport',objective:'steal-flag',individual:{'blue-tank':'godmode','other-account':'attack-healer'},healing:{'blue-healer':'god-mode','other-account':'group'}}}},
  encounter:{id:'unsafe-plan'},seed:'unsafe-prematch-seed'});
