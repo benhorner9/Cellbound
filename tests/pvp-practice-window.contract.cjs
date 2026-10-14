@@ -38,4 +38,13 @@ assert(styles.includes('@media(max-width:650px)'), 'mobile PvP layout required')
 const qa=fs.readFileSync('src/combat/pvp-owner-qa-v1.js','utf8');
 assert(qa.includes('CellboundPvPPreTactics?.markup?.'),'pre-match planner remains present in owner practice');
 assert(qa.includes('window.CellboundAdmin?.role!==\'owner\''),'owner guard remains active');
+const ownerSource=fs.readFileSync('src/combat/pvp-owner-qa-v1.js','utf8');
+const viewerSource=fs.readFileSync('src/combat/combat-viewer-v1.js','utf8');
+assert(ownerSource.includes("overlay.id='cbpvpPracticeWindow'"),'match must open in a dedicated dialog rather than inside the setup form');
+assert(ownerSource.includes("overlay.setAttribute('aria-modal','true')"),'dialog must be accessible');
+assert(ownerSource.includes("data-pvp-qa-exit"),'match must have a close control');
+assert(ownerSource.includes("data-pvp-overlay-controls"),'tactics must be reachable while fighting');
+assert(ownerSource.includes("document.body.classList.remove('cbpvp-practice-active')"),'match exit restores page scrolling');
+assert(styles.includes('#cbpvpPracticeWindow.cbpvp-practice-window'),'PvP modal must fit the viewport');
+assert(viewerSource.includes('(?:svg|webp|png|jpe?g|avif)'), 'dedicated painted SVG PvP maps must be accepted');
 console.log('PvP practice window contract passed: immediate owner entry, public lock, role refresh, mobile/inline sizing, and planner access.');
