@@ -1014,7 +1014,7 @@ async function runQuest2DFight(config){
             _combatUniqueUsed:x.uniqueUsed||{}
           })}),
           encounter,
-          tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced'},
+          tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',...(config.presentationKind==='dungeon'&&config.tactics&&typeof config.tactics==='object'?{unitOrders:config.tactics.unitOrders||{}}:{})},
           seed:config.seed||['quest',tok,config.title,Date.now()].join(':')
         },liveMeta={zone:'quest-encounters'},session=C.createLiveSession(liveOptions,liveMeta),result=session.snapshot();
         questFight.liveSession=session;questFight.result=result;if(questFight.presentationKind==='dungeon')window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-q-command]','qCommand');
