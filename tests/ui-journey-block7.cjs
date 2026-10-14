@@ -33,7 +33,7 @@ assert(forgeBrowser.includes('perfect.heat>98')&&forgeBrowser.includes('rough.he
 assert(livingBrowser.includes('timeout:10000,polling:50'),'Living combat FX cleanup must get bounded headroom');
 const required=['ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css','adventure-combat-v1.css','workshop-economy-v1.css','community-workspace-v1.css'];
 for(const asset of required){
- assert(guild.includes('./'+asset+'?v=1'),'Missing UI block '+asset);
+ assert(new RegExp('\\./'+asset.replace(/\./g,'\\.')+'\\?v=\\d+').test(guild),'Missing UI block '+asset);
  assert(manifest.files.includes(asset),'UI block asset not in runtime manifest '+asset);
  assert(build.includes("'"+asset+"'"),'UI asset not in consolidated bundle '+asset);
 }

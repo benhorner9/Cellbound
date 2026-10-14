@@ -6,8 +6,9 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
  const browser=await(process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
  try{
   const page=await browser.newPage({viewport:{width:1280,height:720}});
+  if(process.env.CELLBOUND_UI_SCREENSHOTS){fs.mkdirSync(process.env.CELLBOUND_UI_SCREENSHOTS,{recursive:true});process.on('unhandledRejection',e=>console.error(e))}
   const errors=await mount(page,matureState(),true,{simulateDungeonRuntime:true});
-  await page.evaluate(()=>{const s=CellboundGame.getState();s.progression.fracturedAgesUnlocked=true;s.roster.forEach(c=>c.power=12);CellboundGame.renderAll();CellboundFracturedAges.open()});
+  await page.evaluate(()=>{const s=CellboundGame.getState();s.progression.fracturedAgesUnlocked=true;s.roster.forEach(c=>{c.power=12;for(const slot of ['Head','Chest','Weapon','OffHand','Shoulders','Hands','Legs','Feet','Waist'])c.equipment[slot]={...CellboundGear.items.find(x=>x.class===c.class&&x.tier===3&&x.slot===slot),class:c.class,slot,itemLevel:50,baseItemLevel:50}});CellboundGame.renderAll();CellboundFracturedAges.open()});
   await page.locator('[data-fa-start]').click();
   await page.waitForSelector('#q2dArena [data-animation-owned="1"]',{timeout:45000});
   const shell=page.locator('.cbcombat-shell:visible');
@@ -18,6 +19,7 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
     return{shell:rect(s),arena:rect(s.querySelector('.cbcombat-arena')),commands:[...s.querySelectorAll('.cbr-command-column button')].map(rect),panel:rect(s.querySelector('.cbcombat-command-panel')),scroll:s.scrollHeight,client:s.clientHeight};
    });
    console.log(size,JSON.stringify(metrics));
+   if(process.env.CELLBOUND_UI_SCREENSHOTS)await page.screenshot({path:process.env.CELLBOUND_UI_SCREENSHOTS+'/'+size.width+'x'+size.height+'.png'});
    assert(metrics.arena.width>size.width*.85,'battlefield uses screen width');
    assert(metrics.arena.height>180,'battlefield keeps usable vertical space');
    assert(metrics.scroll<=metrics.client+1,'combat shell never needs page scrolling');

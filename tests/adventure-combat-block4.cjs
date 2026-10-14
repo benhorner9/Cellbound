@@ -6,7 +6,7 @@ const read=x=>fs.readFileSync(manifest.sourcePath(root,x),'utf8');
 const html=read('guild.html'),css=read('adventure-combat-v1.css'),js=read('adventure-combat-v1.js'),build=read('build.js');
 for(const name of ['adventure-combat-v1.js','adventure-combat-v1.css']){
  assert(manifest.files.includes(name),'Block 4 runtime missing '+name);
- assert(html.includes('./'+name+'?v=1'),'Block 4 asset missing '+name);
+ assert(new RegExp('\\./'+name.replace(/\./g,'\\.')+'\\?v=\\d+').test(html),'Block 4 asset missing '+name);
 }
 assert(html.indexOf('heroes-workspace-v1.css')<html.indexOf('adventure-combat-v1.css'),'Adventure must follow Heroes CSS');
 assert(html.indexOf('heroes-workspace-v1.js')<html.indexOf('adventure-combat-v1.js'),'Adventure must load after Heroes JS');

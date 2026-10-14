@@ -189,6 +189,13 @@ function normalise(shell){
   if(main)main.classList.add('cb2d-party-main')
  });
  if(!shell.dataset.immersiveBound){
+  if(window.CellboundCombatUILayoutEditor?.isOwner?.()){
+   const compare=document.createElement('button');compare.type='button';compare.dataset.combatCompare='';
+   compare.textContent='UI';compare.title='Owner: compare combat layouts';compare.setAttribute('aria-label','Compare combat layouts');
+   compare.setAttribute('aria-pressed','true');
+   compare.addEventListener('click',()=>{const on=shell.dataset.combatLayout!=='immersive';shell.dataset.combatLayout=on?'immersive':'classic';compare.setAttribute('aria-pressed',String(on));shell.dataset.openDrawer='';shell.querySelectorAll('[data-combat-drawer]').forEach(b=>b.setAttribute('aria-expanded','false'))});
+   shell.querySelector('.cbcombat-header-actions')?.prepend(compare);
+  }
   shell.dataset.immersiveBound='1';
   shell.addEventListener('click',event=>{
    const button=event.target.closest('[data-combat-drawer]');if(!button)return;
