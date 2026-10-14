@@ -15,7 +15,6 @@ assert(signature({ability:'Poison (DoT)'},'damage','Rogue').periodic);
 const css=fs.readFileSync('src/combat/combat-physical-v4.css','utf8');
 assert(css.includes('weapon-trail'));assert(css.includes('data-fx-detail="low"'));assert(css.includes('ability-impact.still'));
 // Every mode keeps the existing shared FX hook; no new mode-specific renderer.
-for(const file of ['src/dungeons/dungeon-2d-v1.js','quests-v2.js','worldboss-v1.js','src/combat/combat-viewer-v1.js']){
- if(fs.existsSync(file))assert(fs.readFileSync(file,'utf8').includes('combatEvent'),file);
-}
+for(const file of ['src/dungeons/dungeon-2d-v1.js','quests-v2.js','onboarding-v1.js','twelve-below-v1.js','src/combat/combat-viewer-v1.js'])assert(fs.readFileSync(file,'utf8').includes('combatEvent'),file);
+assert(fs.readFileSync('manor-raid-v1.js','utf8').includes('playSharedEncounter'),'raid retains the shared viewer');
 console.log('VFX Block 1: '+total+' active ability definitions covered; class schools, group healing, periodic feedback and immutable catalogue passed.');

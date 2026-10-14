@@ -653,7 +653,7 @@ function frame(){
   if(arena.closest('[hidden]')){disposeScene(scene);continue}
   // Cosmetic quality only; simulation and danger geometry never depend on FPS.
   const gap=time-(scene.fxFrameAt||time);scene.fxFrameAt=time;
-  if(gap>0&&gap<250){scene.fxFrameAverage=(scene.fxFrameAverage||16)*.94+gap*.06;scene.lowDetail=scene.fxFrameAverage>38||scene.units.size>20;arena.dataset.fxDetail=scene.lowDetail?'low':'full'}
+  if(gap>0&&gap<5000){scene.fxFrameAverage=(scene.fxFrameAverage||16)*.94+Math.min(gap,250)*.06;scene.lowDetail=scene.fxFrameAverage>38||scene.units.size>20;arena.dataset.fxDetail=scene.lowDetail?'low':'full'}
   for(const entry of scene.warnings.values()){
    const progress=clamp((time-entry.start)/entry.duration,0,1),step=Math.round(progress*30);
    if(step!==entry.drawnProgress){entry.callout?.style.setProperty('--warning-left',String(1-progress));entry.drawnProgress=step}
@@ -731,8 +731,11 @@ FX.launchAction=(e,arena,source,target,profile,flight)=>{
  const scene=scenes.get(arena);if(!scene||!source?.isConnected||!target?.isConnected||reduce())return;
  const u=scene.units.get(source),sig=visualSignature(e,profile.kind==='heal'?'heal':'damage',u?.p.name),f=effect(scene,'class-projectile school-'+sig.school+(profile.socket==='bow'?' arrow':'')+(sig.major?' major':''),source,target,flight*scene.speed);
  if(!f)return;
- f.flight=flight;f.started=now();const origin=window.CellboundCombatAnimation?.socket(source,profile.socket)||scene.sockets?.get(source)||center(source);
- const bounds=scene.bounds||arena.getBoundingClientRect();f.origin={x:(origin.x-bounds.left)/Math.max(1,bounds.width),y:(origin.y-bounds.top)/Math.max(1,bounds.height)};f.n.style.left=origin.x-bounds.left+'px';f.n.style.top=origin.y-bounds.top+'px';
+ // A release can precede ResizeObserver after an iPad rotation. Read this
+ // launch's geometry together; never normalise fresh sockets with old bounds.
+ const bounds=arena.getBoundingClientRect(),body=actor(source).getBoundingClientRect();scene.bounds=bounds;
+ f.flight=flight;f.started=now();const origin=window.CellboundCombatAnimation?.socket(source,profile.socket)||{x:body.left+body.width/2,y:body.top+body.height/2};
+ f.origin={x:(origin.x-bounds.left)/Math.max(1,bounds.width),y:(origin.y-bounds.top)/Math.max(1,bounds.height)};f.n.style.left=origin.x-bounds.left+'px';f.n.style.top=origin.y-bounds.top+'px';
  f.n.dataset.source=String(e.source||'');f.n.dataset.target=String(e.target||'');f.n.dataset.ability=String(e.ability||'');
  f.n.style.setProperty('--cbl-accent',/heal/.test(profile.kind)?'#76efac':u?.p.accent||'#ddd');wake();
 };
