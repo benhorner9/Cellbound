@@ -22,7 +22,12 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
   assert.equal(await practice.locator('[data-pvp-plan-field="objective"]').inputValue(),'take-flag','CTF loads independent saved plan');
   await practice.locator('[data-pvp-qa-mode]').selectOption('arena');
   await practice.locator('[data-pvp-qa-start]').click();
-  const shell=practice.locator('[data-pvp-qa-viewer] .cbcombat-pvp-shell');
+  const overlay=page.locator('#cbpvpPracticeWindow.cbpvp-practice-window');
+  await overlay.waitFor({timeout:12000});
+  assert(await overlay.locator('[data-pvp-qa-exit]').isVisible(),'practice window has a visible exit');
+  assert(await overlay.locator('[data-pvp-qa-command="target:attack-healer"]').isVisible(),'live tactics are inside the match window');
+  const shell=overlay.locator('.cbcombat-pvp-shell');
+  assert((await overlay.locator('.cbpvp-environment img').getAttribute('src')).includes('/pvp/maps/arena-shattered-crucible.svg'),'PvP uses its own illustrated arena instead of dungeon artwork');
   await shell.waitFor({timeout:12000});
   await shell.locator('[data-pvp-unit-stage]').waitFor();
   for(const viewport of [{width:1366,height:1024},{width:1024,height:1366},{width:390,height:844}]){
@@ -32,14 +37,18 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
     return{shell:rect(el),stage:rect(el.querySelector('[data-pvp-unit-stage]')),grid:rect(el.querySelector('.cbcombat-grid')),width:document.documentElement.scrollWidth,viewport:window.innerWidth,
       shellHeight:getComputedStyle(el).height,rows:getComputedStyle(el).gridTemplateRows}
    });
+   const overlayRect=await overlay.boundingBox();
+   assert(overlayRect&&Math.abs(overlayRect.x)<3&&overlayRect.width<=viewport.width+3&&overlayRect.height<=viewport.height+3,'dedicated match window fills viewport');
    assert(metrics.shell?.w>200&&metrics.shell.w<=viewport.width+2,'practice shell fits '+viewport.width+'px viewport: '+JSON.stringify(metrics));
    assert(metrics.stage?.w>170&&metrics.stage.h>=200,'practice battlefield remains usable at '+viewport.width+'px: '+JSON.stringify(metrics));
    assert(metrics.grid?.h>150&&metrics.shell.h>metrics.stage.h,'rosters do not collapse the embedded window');
    assert(metrics.width<=metrics.viewport+3,'no horizontal page overflow at '+viewport.width+'px');
   }
-  assert(await practice.locator('[data-pvp-qa-stop]').isVisible(),'Stop practice is reachable');
-  await practice.locator('[data-pvp-qa-stop]').click();
-  assert.equal(await practice.locator('.cbcombat-pvp-shell').count(),0,'closing a practice match restores the setup');
-  console.log('PvP practice browser window passed on landscape iPad, portrait iPad and phone: opener, presets, map changes, battlefield and exit.');
+  assert(await overlay.locator('[data-pvp-qa-exit]').isVisible(),'Exit remains reachable on a phone');
+  await overlay.locator('[data-pvp-qa-exit]').click();
+  assert.equal(await page.locator('#cbpvpPracticeWindow').count(),0,'closing PvP restores the setup');
+  assert(await practice.locator('[data-pvp-qa-start]').isVisible(),'setup is available immediately after returning');
+  assert.equal(await page.evaluate(()=>document.body.classList.contains('cbpvp-practice-active')),false,'body scroll state restored');
+  console.log('PvP fullscreen practice browser passed: owner entry, saved presets, correct arena art, live controls, iPad and phone match window and return to setup.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
