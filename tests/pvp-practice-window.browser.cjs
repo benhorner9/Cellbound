@@ -35,7 +35,10 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
    const metrics=await shell.evaluate(el=>{
     const rect=e=>{if(!e)return null;const r=e.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height,right:r.right}};
     return{shell:rect(el),stage:rect(el.querySelector('[data-pvp-unit-stage]')),grid:rect(el.querySelector('.cbcombat-grid')),width:document.documentElement.scrollWidth,viewport:window.innerWidth,
-      shellHeight:getComputedStyle(el).height,rows:getComputedStyle(el).gridTemplateRows}
+      shellHeight:getComputedStyle(el).height,rows:getComputedStyle(el).gridTemplateRows,
+      cols:getComputedStyle(el.querySelector('.cbcombat-grid')).gridTemplateColumns,
+      items:[...el.querySelector('.cbcombat-grid').children].map(x=>({cl:x.className,rect:rect(x),pos:getComputedStyle(x).position,column:getComputedStyle(x).gridColumn,row:getComputedStyle(x).gridRow,display:getComputedStyle(x).display,width:getComputedStyle(x).width})),
+      wrap:rect(el.querySelector('.cbcombat-arena-wrap'))}
    });
    const overlayRect=await overlay.boundingBox();
    assert(overlayRect&&Math.abs(overlayRect.x)<3&&overlayRect.width<=viewport.width+3&&overlayRect.height<=viewport.height+3,'dedicated match window fills viewport');
