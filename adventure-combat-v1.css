@@ -580,3 +580,9 @@ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="i
 .cb-party-stance-options button.active small{color:#ead3b5}
 .cb-party-stance-options button:focus-visible{outline:2px solid #dcb576;outline-offset:2px}
 @media(max-width:500px){.cb-party-stance-options button{padding:7px 4px;min-height:68px}.cb-party-stance-options button b{font-size:.72rem}.cb-party-stance-options button small{font-size:.62rem}}
+
+/* Two actions per card: direct launch first, journal optional. */
+.dungeon-browser-card .cb-dungeon-card-launch{display:inline-flex;align-items:center;justify-content:center;min-height:39px;margin:5px 0 0 6px;padding:8px 13px;border:1px solid #c9a772;border-radius:6px;background:#4a3826;color:#f4e5c9;font-weight:750;font-size:.75rem;letter-spacing:.04em;cursor:pointer}
+.dungeon-browser-card .cb-dungeon-card-launch:hover,.dungeon-browser-card .cb-dungeon-card-launch:focus-visible{background:#644a2e;outline:2px solid #dec18d;outline-offset:2px}
+.dungeon-browser-card .cb-dungeon-card-launch:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:650px){.dungeon-browser-card .cb-dungeon-card-launch{width:100%;margin:7px 0 0}}
