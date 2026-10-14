@@ -59,4 +59,10 @@ for(const id of ['blackout-station','fractured-ages']){
  assert(content.includes("stanceTactics?.('"+id+"')"),id+' applies that approach to combat');
 }
 assert(fs.readFileSync('top-navigation-v1.js','utf8').includes('CellboundDungeonQuickEntry.open(dungeonId)'),'featured dungeons skip journal');
+const homepage=fs.readFileSync('guild-v4.js','utf8');
+assert(homepage.includes('CellboundDungeonQuickEntry.open(dungeon.id)'),'home mission bypasses journal');
+assert(homepage.includes('CellboundDungeonQuickEntry.open(id)'),'campaign tiles bypass journal');
+const shortcut=fs.readFileSync('adventure-combat-v1.js','utf8');
+assert(shortcut.includes('function syncDungeonCards()'),'dungeon cards add direct Plan and Enter buttons');
+assert(shortcut.includes('button.dataset.cbCardLaunch=id'),'dungeon-card direct route uses correct dungeon ID');
 console.log('Dungeon quick-entry and per-character orders affect real combat across all five dungeons.');
