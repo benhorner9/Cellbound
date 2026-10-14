@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.0';
+const VERSION='1.4.0';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -151,9 +151,9 @@ function shellMarkup(options={}){
   '<form class="cbcombat-chat-form" data-combat-chat-form><label class="cbcombat-chat-channel-name" data-combat-chat-label>GLOBAL</label><input type="text" maxlength="300" autocomplete="off" data-combat-chat-input aria-label="Chat message" placeholder="Message global chat…" required><button type="submit" data-combat-chat-send>SEND ↗</button></form>'+
   '<p class="cbcombat-chat-error" data-combat-chat-error role="status" hidden></p>'+
   '</section>';
- return '<section class="cbcombat-shell cbcombat-standard-hud" data-combat-view="canonical-v1" data-combat-profile="pve" data-combat-theme="'+esc(theme)+'" data-party-size="'+partySize+'">'+
+ return '<section class="cbcombat-shell cbcombat-standard-hud" data-combat-view="canonical-v1" data-combat-profile="pve" data-combat-layout="immersive" data-combat-theme="'+esc(theme)+'" data-party-size="'+partySize+'">'+
   '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2'+idAttr(options.titleId)+'>'+esc(title)+'</h2></div>'+
-   '<div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span>'+
+   '<div class="cbcombat-header-actions"><button type="button" data-combat-drawer="chat" aria-expanded="false">Chat</button><button type="button" data-combat-drawer="meters" aria-expanded="false">Meters</button><span class="cbcombat-live-dot"><i></i>LIVE</span>'+
     (showSpeed?'<button type="button" '+speedAttr+'>'+speedLabel+'</button>':'')+
     (showClose?'<button type="button" '+closeAttr+' aria-label="'+closeLabel+'">×</button>':'')+
    '</div></header>'+
@@ -188,6 +188,24 @@ function normalise(shell){
   const main=[...row.children].find(node=>node.tagName==='SPAN'&&!node.classList.contains('cb2d-party-target')&&!node.classList.contains('cbstd-party-target'));
   if(main)main.classList.add('cb2d-party-main')
  });
+ if(!shell.dataset.immersiveBound){
+  shell.dataset.immersiveBound='1';
+  shell.addEventListener('click',event=>{
+   const button=event.target.closest('[data-combat-drawer]');if(!button)return;
+   const name=button.dataset.combatDrawer;
+   const open=shell.dataset.openDrawer===name?'':name;
+   shell.dataset.openDrawer=open;
+   shell.querySelectorAll('[data-combat-drawer]').forEach(b=>b.setAttribute('aria-expanded',String(b.dataset.combatDrawer===open)));
+   if(open==='chat')shell.querySelector('[data-combat-chat-input]')?.focus({preventScroll:true});
+  });
+  shell.addEventListener('keydown',event=>{
+   if(event.key!=='Escape'||!shell.dataset.openDrawer)return;
+   event.preventDefault();event.stopPropagation();
+   const name=shell.dataset.openDrawer;shell.dataset.openDrawer='';
+   const button=shell.querySelector('[data-combat-drawer="'+name+'"]');
+   button?.setAttribute('aria-expanded','false');button?.focus({preventScroll:true});
+  });
+ }
  return shell
 }
 function setResults(root,enabled=true){

@@ -308,19 +308,19 @@ const CLASS_GEAR_STYLE={
 // T4 and T5 therefore feel like named fantasy sets, not class-colour uniforms.
 const SET_VISUALS={
   'warrior-t4':{primary:'#5d6267',secondary:'#292628',trim:'#b28d59',glow:'#d7a16c',motif:'chevron'},
-  'warrior-t5':{primary:'#30343a',secondary:'#181b20',trim:'#b9975d',glow:'#d46c49',motif:'chevron'},
+  'warrior-t5':{primary:'#704239',secondary:'#271b20',trim:'#dbab61',glow:'#d46c49',motif:'chevron'},
   'paladin-t4':{primary:'#d4c9ad',secondary:'#2d3b50',trim:'#d4ae58',glow:'#ffe09a',motif:'sun'},
-  'paladin-t5':{primary:'#3a495b',secondary:'#171e27',trim:'#d0aa58',glow:'#f2d99d',motif:'sun'},
+  'paladin-t5':{primary:'#b8c6d6',secondary:'#273b62',trim:'#e5b954',glow:'#f2d99d',motif:'sun'},
   'priest-t4':{primary:'#d6dfdc',secondary:'#566370',trim:'#c9ba8c',glow:'#f5ffff',motif:'halo'},
   'priest-t5':{primary:'#77747e',secondary:'#25262c',trim:'#b9b1a0',glow:'#e6e8f5',motif:'halo'},
   'druid-t4':{primary:'#6c533d',secondary:'#304436',trim:'#aab9a4',glow:'#8fc58a',motif:'leaf'},
   'druid-t5':{primary:'#304345',secondary:'#302a39',trim:'#82946b',glow:'#86d5ad',motif:'leaf'},
   'hunter-t4':{primary:'#666c49',secondary:'#342e27',trim:'#ab8d58',glow:'#c3d18a',motif:'arrow'},
-  'hunter-t5':{primary:'#313b35',secondary:'#171d1a',trim:'#858e84',glow:'#91b56f',motif:'arrow'},
+  'hunter-t5':{primary:'#477653',secondary:'#192f26',trim:'#c5ae72',glow:'#91b56f',motif:'arrow'},
   'rogue-t4':{primary:'#3c3d45',secondary:'#24222c',trim:'#8f9199',glow:'#c0b76d',motif:'fang'},
-  'rogue-t5':{primary:'#24282d',secondary:'#15181d',trim:'#70747a',glow:'#d5c76f',motif:'fang'},
+  'rogue-t5':{primary:'#463d68',secondary:'#1d192b',trim:'#a9b5cd',glow:'#d5c76f',motif:'fang'},
   'mage-t4':{primary:'#3d3d67',secondary:'#202539',trim:'#aaa5bd',glow:'#75d2e7',motif:'star'},
-  'mage-t5':{primary:'#283748',secondary:'#292335',trim:'#b79b63',glow:'#69c9e2',motif:'star'},
+  'mage-t5':{primary:'#465d9e',secondary:'#302449',trim:'#d6af67',glow:'#69c9e2',motif:'star'},
   'shaman-t4':{primary:'#4b5d63',secondary:'#27343a',trim:'#b7a477',glow:'#6dcbdc',motif:'storm'},
   'shaman-t5':{primary:'#313b41',secondary:'#252b2e',trim:'#a97250',glow:'#66bdf0',motif:'storm'},
   'warlock-t4':{primary:'#4a3f50',secondary:'#201d25',trim:'#9d825b',glow:'#99cf71',motif:'eye'},
@@ -434,12 +434,15 @@ function gearPalette(c,item,tier,slot){
   };
   var material=MATERIAL_VISUALS[variant%MATERIAL_VISUALS.length];
   var lift=Math.max(0,Math.min(.18,(t-1)*.035));
+  // An item's class treatment travels with the item in inventory and when worn.
+  // Retain material variation while making mixed-class parties readable at combat scale.
+  var coloured=mixHex(material.primary,classAccent,.34);
   return {
     accent:classAccent,
-    base:lift?mixHex(material.primary,'#ffffff',lift):material.primary,
-    dark:material.secondary,
-    light:mixHex(material.primary,'#ffffff',.24+t*.025),
-    trim:mixHex(material.trim,classAccent,.14),
+    base:lift?mixHex(coloured,'#ffffff',lift):coloured,
+    dark:mixHex(material.secondary,classAccent,.12),
+    light:mixHex(coloured,'#ffffff',.24+t*.025),
+    trim:mixHex(material.trim,classAccent,.38),
     glow:mixHex(material.glow,classAccent,t>=4?.24:.10),
     set:null,
     variant:variant,

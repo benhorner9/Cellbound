@@ -1,0 +1,44 @@
+name: Immersive combat UI acceptance
+on:
+  push:
+    branches: [ui/finish-immersive-combat, staging]
+    paths:
+      - 'adventure-combat-v1.css'
+      - 'src/combat/combat-viewer-v1.js'
+      - 'character-portraits-v1.js'
+      - 'tests/combat-immersive.browser.cjs'
+      - '.github/workflows/immersive-ui-qa.yml'
+permissions:
+  contents: read
+jobs:
+  responsive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm install --no-save --package-lock=false playwright@1.51.1
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: cellbound-${{ runner.os }}-playwright-1.51.1-${{ matrix.engine }}
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Check responsive combat and native interactions
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+          CELLBOUND_UI_SCREENSHOTS: /tmp/cb-ui
+        run: node tests/combat-immersive.browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: immersive-combat-${{ matrix.engine }}
+          path: /tmp/cb-ui
+          if-no-files-found: ignore
