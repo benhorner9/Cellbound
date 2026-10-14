@@ -64,7 +64,8 @@ const dist=path.resolve(__dirname,'../dist'),engine=process.env.CELLBOUND_TEST_E
   }
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.evaluate(()=>send('HEAL_RECEIVED','Holy Light',{target:'p',amount:20,result:'heal'}));
-  assert(await page.locator('.ability-impact.still').isVisible(),'reduced motion retains static feedback');await page.clock.runFor(1000);
+  assert(await page.locator('.ability-impact').isVisible(),'reduced motion retains static feedback');
+  assert.equal(await page.locator('.ability-impact').evaluate(n=>getComputedStyle(n).animationName),'none','reduced motion is enforced by CSS even while media-query listeners update');await page.clock.runFor(1000);
   assert.equal((await page.evaluate(()=>CellboundCombatFX.diagnostics())).effects,0,'all effects expire on presentation clock');
   await page.evaluate(()=>stage.remove());await page.clock.runFor(50);
   assert.equal((await page.evaluate(()=>CellboundCombatFX.diagnostics())).scenes,0,'scene teardown frees all effects');
