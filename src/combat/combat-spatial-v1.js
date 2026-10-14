@@ -43,7 +43,10 @@ function spacingOverlap(a,p,b,q,gap=4){
 }
 function rank(u){return u.boss?0:u.style==='tank'?1:u.role==='enemy'?2:u.style==='melee'?3:u.style==='healer'?4:u.role==='pet'?6:5}
 function preferred(u,list,placed,g,mode){
- const p=bounded(u.logical,u,g);u.contactTarget=null;if(u.locked||mode==='pvp'||u.command||u.boss)return p;
+ const p=bounded(u.logical,u,g);u.contactTarget=null;
+ // Attacks never cause a cosmetic stance reset. Only movement or a new
+ // engagement should trigger a new flanking position.
+ if(u.locked||mode==='pvp'||u.command||u.boss){u.stance=null;return p}
  const foes=list.filter(v=>!v.dead&&team(v)!==team(u)&&v.role!=='pet');
  const target=foes.find(v=>v.id===u.target)||foes.sort((a,b)=>distance(u.logical,a.logical)-distance(u.logical,b.logical)||a.id.localeCompare(b.id))[0];
  if(!target)return p;
@@ -53,8 +56,14 @@ function preferred(u,list,placed,g,mode){
  const side=u.homeSide||(home.x<=target.logical.x?-1:1),base=side<0?Math.PI:0;
  if(u.style==='tank'||u.style==='melee'||u.role==='pet'||u.role==='enemy'&&u.style!=='ranged'){
   // Only engage a target the simulation has actually approached. No cosmetic chase across a room.
-  if(distance(u.logical,target.logical)>Math.max(g.width*.16,125))return p;
+  if(distance(u.logical,target.logical)>Math.max(g.width*.16,125)){u.stance=null;return p}
   u.contactTarget=target.id;
+  const drift=Math.max(7,g.width*.012);
+  if(u.stance?.target===target.id&&u.reserved&&
+     distance(u.logical,u.stance.source)<drift&&
+     distance(target.logical,u.stance.targetPos)<drift&&
+     legal(u.reserved,u,g))return {...u.reserved};
+  u.stance={target:target.id,source:{...u.logical},targetPos:{...target.logical}};
   const peers=list.filter(v=>team(v)===team(u)&&v.target===u.target&&v.style===u.style).sort((a,b)=>a.id.localeCompare(b.id)),slot=Math.max(0,peers.indexOf(u));
   const offsets=u.style==='tank'?[0,-.42,.42]:u.role==='pet'?[1.08,-1.08,.7]:[.72,-.72,1.15,-1.15,.32,-.32];
   const angle=base+offsets[slot%offsets.length]+((hash(u.id)%7)-3)*.018;
@@ -63,6 +72,7 @@ function preferred(u,list,placed,g,mode){
   const rx=target.rx*.72+u.rx*.62+5,ry=target.ry*.54+u.ry*.50+5;
   return bounded({x:t.x+Math.cos(angle)*rx,y:t.y+Math.sin(angle)*ry},u,g);
  }
+ u.stance=null;
  if(u.role!=='enemy'){
   // Backline preference supplements the actual ranged formation; heal targets never pull a healer forward.
   const away=Math.max(u.style==='healer'?g.width*.24:g.width*.19,target.rx+u.rx+35);
