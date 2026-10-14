@@ -213,7 +213,7 @@
     nav.click();
     // The official browser still owns all dungeon entry, difficulty and unlock checks.
     const dungeonId=tile.dataset.dungeon;
-    setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeonId),40);
+    setTimeout(()=>{if(window.CellboundEndgame?.prepare)window.CellboundEndgame.prepare(dungeonId);else window.CellboundDungeonBrowser?.open?.(dungeonId)},40);
     if(window.scrollY>160)window.scrollTo({top:0,behavior:'instant'});
   });
   const watch=new MutationObserver(updateGlance);
