@@ -2260,6 +2260,12 @@ function scheduleUnstableGround(ctx){
 function isCrowdControlled(u){
  return Object.values(u?.statuses||{}).some(s=>s?.cc&&Number(s.expiresAt)>0);
 }
+// Run-specific orders are tied to character IDs, never names or class slots.
+// Defaults retain the existing AI when a dungeon has no saved orders.
+function unitOrder(ctx,u){
+ if(!u||ctx.pvp)return '';
+ return ctx.tactics?.unitOrders?.[String(u.characterId??u.original?.id??'')]||'';
+}
 function maybeApplyCrowdControl(ctx){
  const policy=ctx.tactics?.crowdControl||'disabled';
  if(policy==='disabled'||ctx.ccApplied)return;
@@ -2268,7 +2274,7 @@ function maybeApplyCrowdControl(ctx){
  const target=(policy==='priority-elites'?candidates.filter(e=>e.classification==='elite'||e.isAdd):candidates)
    .sort((a,b)=>(b.priority||0)-(a.priority||0)||b.maxHealth-a.maxHealth)[0];
  if(!target)return;
- const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>executionQuality(ctx,b)-executionQuality(ctx,a))[0];
+ const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>(unitOrder(ctx,b)==='adds'?1:0)-(unitOrder(ctx,a)==='adds'?1:0)||executionQuality(ctx,b)-executionQuality(ctx,a))[0];
  if(!controller)return;
  ctx.ccApplied=true;
  const duration=policy==='enabled'?1800:2600;
@@ -2281,18 +2287,38 @@ function pickDamageTarget(ctx,u){
  const commanded=ctx.commandFocusId&&Number(ctx.commandFocusUntil)>ctx.time?getUnit(ctx,ctx.commandFocusId):null;
  if(commanded?.alive)return commanded;
  if(ctx.commandFocusId&&Number(ctx.commandFocusUntil)<=ctx.time){ctx.commandFocusId=null;ctx.commandFocusUntil=0}
- const adds=livingEnemies(ctx).filter(e=>e.isAdd);
+ const live=livingEnemies(ctx),adds=live.filter(e=>e.isAdd||e.classification==='add'),boss=live.find(e=>['boss','world-boss','final'].includes(e.classification)||e.kind==='boss');
+ const order=unitOrder(ctx,u);
+ if(u.role==='tank'){
+  if(order==='boss-lock'&&boss)return boss;
+  if(order==='damage'&&boss)return boss;
+  if(order==='all-aggro'){
+   const loose=live.find(e=>topThreatTarget(ctx,e)?.id!==u.id);
+   if(loose)return loose;
+  }
+ }
+ if(u.role==='dps'){
+  if(order==='boss-burn'&&boss)return boss;
+  if(order==='adds'&&adds.length)return adds.sort((a,b)=>(b.priority||0)-(a.priority||0)||a.health-b.health)[0];
+  if(order==='interrupt'){
+   const casting=live.find(e=>e.id===ctx.activeEnemyCast?.enemyId||e.id===ctx.activeEnemyCast?.source||e.id===ctx.activeEnemyCast?.enemy?.id);
+   if(casting)return casting;
+   const caster=live.find(e=>e.combatBehaviour==='support'||e.combatBehaviour==='artillery');
+   if(caster)return caster;
+  }
+ }
  if(adds.length&&ctx.tactics.addPriority!=='boss'){
   return adds.sort((a,b)=>(b.priority||0)-(a.priority||0)||a.health-b.health)[0];
  }
- return livingEnemies(ctx).sort((a,b)=>(b.priority||0)-(a.priority||0)||a.health-b.health)[0]||null;
+ return live.sort((a,b)=>(b.priority||0)-(a.priority||0)||a.health-b.health)[0]||null;
 }
 function healthRatio(u){return u?.maxHealth>0?u.health/u.maxHealth:0}
-function healerTarget(ctx){
- const alive=livingPlayers(ctx);
+function healerTarget(ctx,healer){
+ const alive=livingPlayers(ctx),order=unitOrder(ctx,healer);
  return alive.sort((a,b)=>{
    const ar=healthRatio(a),br=healthRatio(b);
-   const aw=ar-(a.role==='tank'?.035:0),bw=br-(b.role==='tank'?.035:0);
+   const bias=order==='tank-first'?.18:order==='triage'?0:.02;
+   const aw=ar-(a.role==='tank'?bias:0),bw=br-(b.role==='tank'?bias:0);
    return aw-bw
  })[0]||null
 }
@@ -2323,7 +2349,7 @@ function chooseAbility(ctx,u,target){
    }
  }
  if(u.role==='healer'){
-  const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx),dead=deadPlayers(ctx);
+  const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx,u),order=unitOrder(ctx,u),dead=deadPlayers(ctx);
   const battleRez=pool.find(a=>a.kind==='battle-rez'),revivableDead=dead.filter(p=>canBattleRezTarget(ctx,p));
   if(battleRez&&revivableDead.length){
    const reviveTarget=[...revivableDead].sort((a,b)=>(a.role==='tank'?-3:a.role==='healer'?-2:0)-(b.role==='tank'?-3:b.role==='healer'?-2:0)||b.power-a.power)[0];
@@ -2341,16 +2367,16 @@ function chooseAbility(ctx,u,target){
   const tankRatio=tank?healthRatio(tank):1;
 
   // Group pressure takes priority when mechanics/adds have hurt several players.
-  if(group.length&&(deep.length>=2||injured.length>=3||avg<.88)){
+  if(group.length&&(order==='group'?(deep.length>=1||injured.length>=2||avg<.94):order==='tank-first'?(deep.length>=3||injured.length>=4||avg<.78):(deep.length>=2||injured.length>=3||avg<.88))){
    return{ability:group[0],target:low||u}
   }
 
   // Dungeon healers proactively maintain the tank instead of waiting for a crisis.
   const mistweaver=u.class==='Monk'&&u.spec==='Mistweaver';
-  const needsTank=tank&&tankRatio<(mistweaver?((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.91:.88):((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.97:.92));
-  const needsSingle=low&&healthRatio(low)<(mistweaver?.88:.90);
+  const needsTank=tank&&tankRatio<(order==='tank-first'?.985:order==='triage'?.77:mistweaver?((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.91:.88):((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.97:.92));
+  const needsSingle=low&&healthRatio(low)<(order==='triage'?.72:order==='group'?.83:mistweaver?.88:.90);
   if(single.length&&(needsTank||needsSingle)){
-   let healTarget=needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
+   let healTarget=order==='triage'?low:order==='tank-first'&&needsTank?tank:needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
    let ratio=healthRatio(healTarget),chosen=ratio<.58?single[0]:single[single.length-1];
    if(injured.length>=2&&shouldMistake(ctx,u,'triage',6500)){
     const alternatives=alive.filter(p=>p.id!==healTarget?.id&&healthRatio(p)<.98).sort((a,b)=>healthRatio(b)-healthRatio(a));
@@ -2547,9 +2573,14 @@ function tickCooldowns(ctx){
 }
 function tankNeedsTaunt(ctx,tank){
  if(ctx.pvp)return null;
- return livingEnemies(ctx).find(e=>{
-  const t=topThreatTarget(ctx,e);return t&&t.id!==tank.id;
- });
+ const order=unitOrder(ctx,tank),live=livingEnemies(ctx);
+ const loose=live.filter(e=>{const t=topThreatTarget(ctx,e);return t&&t.id!==tank.id});
+ if(order==='boss-lock'){
+  const boss=loose.find(e=>['boss','world-boss','final'].includes(e.classification)||e.kind==='boss');
+  return boss||loose.find(e=>e.target&&livingPlayers(ctx).some(p=>p.id===e.target&&p.role==='healer'))||null
+ }
+ if(order==='damage')return loose.find(e=>topThreatTarget(ctx,e)?.role==='healer')||loose.find(e=>['boss','world-boss'].includes(e.classification))||null;
+ return loose[0]||null
 }
 function classBuffUseAllowed(ctx,u,buff){
  if(!buff||!u?.alive||(Number(u.cooldowns?.[buff.id])||0)>0)return false;
@@ -3195,7 +3226,11 @@ function tryInterrupt(ctx,e,mechanic,castToken){
  ctx.stats.interrupts.attempts++;
  if(!candidates.length){ctx.stats.interrupts.missedCritical++;return}
  const assignment=ctx.tactics?.interruptAssignment||'best';
- if(assignment==='tank'){
+ candidates.sort((a,b)=>(unitOrder(ctx,b.u)==='interrupt'?1:0)-(unitOrder(ctx,a.u)==='interrupt'?1:0));
+ if(candidates.some(x=>unitOrder(ctx,x.u)==='interrupt')){
+   const assigned=candidates.filter(x=>unitOrder(ctx,x.u)==='interrupt').sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u));
+   candidates.splice(0,candidates.length,...assigned,...candidates.filter(x=>unitOrder(ctx,x.u)!=='interrupt'));
+ }else if(assignment==='tank'){
    candidates.sort((a,b)=>(a.u.role==='tank'?-1:0)-(b.u.role==='tank'?-1:0)||executionQuality(ctx,b.u)-executionQuality(ctx,a.u))
  }else if(assignment==='dps-rotation'){
    const dps=candidates.filter(x=>x.u.role==='dps');
@@ -3669,7 +3704,13 @@ function createCombatContext(options={}){
   movementDiscipline:options.tactics?.movementDiscipline||'balanced',
   cooldownUse:options.tactics?.cooldownUse||'difficult',
   interruptAssignment:options.tactics?.interruptAssignment||'best',
-  crowdControl:options.tactics?.crowdControl||'disabled'
+  crowdControl:options.tactics?.crowdControl||'disabled',
+  unitOrders:Object.fromEntries(players.map(u=>{
+   const raw=options.tactics?.unitOrders||{};
+   const choice=raw[String(u.characterId)]||raw[String(u.id)]||'';
+   const allowed=u.role==='tank'?['all-aggro','boss-lock','damage']:u.role==='healer'?['tank-first','group','triage']:['boss-burn','interrupt','adds'];
+   return[String(u.characterId),allowed.includes(choice)?choice:''];
+  }))
  };
  const environment=copy(encounter.environment||{blockers:[]});
  if(pvpMap&&Array.isArray(pvpMap.blockers)){
