@@ -65,4 +65,35 @@ assert(homepage.includes('CellboundDungeonQuickEntry.open(id)'),'campaign tiles 
 const shortcut=fs.readFileSync('adventure-combat-v1.js','utf8');
 assert(shortcut.includes('function syncDungeonCards()'),'dungeon cards add direct Plan and Enter buttons');
 assert(shortcut.includes('button.dataset.cbCardLaunch=id'),'dungeon-card direct route uses correct dungeon ID');
+
+const advanced={enabled:true,pull:'centre',spacing:18,groupThreshold:90,mana:'survival'};
+const advancedRun=E.simulate({...options,tactics:{unitOrders:orders,advanced}});
+const advancedStart=advancedRun.events.find(e=>e.type==='COMBAT_START');
+assert.equal(advancedStart.payload.tactics.advanced.pull,'centre','advanced pull order reaches authoritative combat');
+assert.equal(advancedStart.payload.tactics.advanced.spacing,18,'ranged spacing reaches engine');
+assert(advancedRun.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='tactical pull'),'tank moves to a tactical pull point, rather than teleporting');
+const baselineSameOrders=E.simulate({...options,tactics:{unitOrders:orders}});
+assert.notEqual(advancedRun.summary.totalDamage,baselineSameOrders.summary.totalDamage,'advanced plan changes real combat output');
+const disabledRun=E.simulate({...options,tactics:{unitOrders:orders,advanced:{...advanced,enabled:false}}});
+assert(!disabledRun.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='tactical pull'),'disabled advanced orders leave existing navigation alone');
+const sanitised=E.simulate({...options,tactics:{advanced:{enabled:true,pull:'teleport',spacing:1000,groupThreshold:-200,mana:'infinite'}}});
+const cleaned=sanitised.events.find(e=>e.type==='COMBAT_START').payload.tactics.advanced;
+assert.equal(cleaned.pull,'entrance','unknown pull options are rejected');
+assert.equal(cleaned.spacing,18,'ranged spacing is capped');
+assert.equal(cleaned.groupThreshold,40,'healing thresholds are bounded');
+assert.equal(cleaned.mana,'balanced','unknown mana policies are rejected');
+for(const [file,id] of [
+ ['src/dungeons/dungeon-2d-v1.js','ashen-vault'],['src/dungeons/hollow-sanctum-v1.js','hollow-sanctum'],
+ ['src/dungeons/chaos-canyon-v1.js','chaos-canyon'],['src/dungeons/blackout-station-v1.js','blackout-station'],
+ ['src/dungeons/fractured-ages-v1.js','fractured-ages']
+]){
+ const source=fs.readFileSync(file,'utf8');
+ assert(source.includes("advancedMarkup?.('"+id+"')"),file+' renders advanced planner');
+ assert(source.includes("advancedBind?.(r,'"+id+"',party())"),file+' binds advanced controls');
+ assert(source.includes("combat?.('"+id+"',party())"),file+' applies advanced plans to authoritative combat');
+}
+const planner=fs.readFileSync('adventure-combat-v1.js','utf8');
+assert(planner.includes("data-advanced-preset=\"safe\""),'safe progression plan exposed');
+assert(planner.includes("data-advanced-save"),'custom plans can be saved');
+console.log('Advanced pull positions, ranged spacing, healer rules and saved per-dungeon plan wiring verified.');
 console.log('Dungeon quick-entry and per-character orders affect real combat across all five dungeons.');
