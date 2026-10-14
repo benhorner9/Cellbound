@@ -406,7 +406,7 @@ function ownerQaNextStage(){
 function mountOwnerQaControls(){
  if(!ownerSoloQa||!session)return;
  let host=$('#mrOwnerQaControls');if(!host){host=document.createElement('aside');host.id='mrOwnerQaControls';host.className='mr-owner-qa-controls';document.body.appendChild(host)}
- host.innerHTML='<small>OWNER SOLO QA · NO CHARGES / NO LOOT</small><b>'+esc(stageName(session.stage))+'</b><div><button data-qa-next>SKIP TO NEXT ROOM</button>'+(['maids','housebound'].includes(session.stage)?'<button data-qa-screech>OPEN SCREECH</button>':'')+'<button data-qa-wipe>TEST WIPE</button><button data-qa-exit>EXIT QA</button></div>';
+ host.innerHTML='<details><summary>OWNER QA · '+esc(stageName(session.stage))+'</summary><small>OWNER SOLO QA · NO CHARGES / NO LOOT</small><b>'+esc(stageName(session.stage))+'</b><div><button data-qa-next>SKIP TO NEXT ROOM</button>'+(['maids','housebound'].includes(session.stage)?'<button data-qa-screech>OPEN SCREECH</button>':'')+'<button data-qa-wipe>TEST WIPE</button><button data-qa-exit>EXIT QA</button></div></details>';
  host.querySelector('[data-qa-next]')?.addEventListener('click',ownerQaNextStage);
  host.querySelector('[data-qa-screech]')?.addEventListener('click',()=>{const side=myRaidSide(),event=fallbackScreechEvent(side)||screechEvents(session.stage,side)[0];if(event)openScreech({event,fallback:true})});
  host.querySelector('[data-qa-wipe]')?.addEventListener('click',()=>failRaid('Owner QA wipe test.'));

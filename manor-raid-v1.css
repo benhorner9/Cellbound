@@ -84,3 +84,11 @@
  .mr-master-status-overlay{top:58px;width:calc(100% - 16px)}.mr-master-status-overlay>div{grid-template-columns:1fr 1fr}
  
 }
+
+/* Owner tools remain accessible without covering combat commands. */
+.mr-owner-qa-controls{bottom:142px;width:auto;max-width:calc(100vw - 24px);padding:6px 10px}
+.mr-owner-qa-controls summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:#d9b1ef;font-size:10px;font-weight:800}
+.mr-owner-qa-controls details>div{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.mr-owner-qa-controls details[open]{max-width:420px}
+@media(max-width:849px){.mr-owner-qa-controls{bottom:184px}.mr-owner-qa-controls details>div{display:grid;grid-template-columns:1fr 1fr}}
+@media(max-height:540px) and (min-width:600px){.mr-owner-qa-controls{bottom:98px}}
