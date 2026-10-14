@@ -53,6 +53,7 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
    const cards=await raid.locator('#cb2dRows > .cb2d-party-row:visible').count();
    assert.equal(cards,10,'both raid parties stay visible');
    const visible=await raid.locator('#cb2dRows > .cb2d-party-row').evaluateAll(rows=>rows.every(row=>{const r=row.getBoundingClientRect(),panel=row.closest('.cbcombat-party-panel').getBoundingClientRect();return r.width>=50&&r.x>=panel.x&&r.right<=panel.right+1&&r.y>=panel.y&&r.bottom<=panel.bottom+1}));assert(visible,'all raid cards fit inside party panel');
+   const actions=await raid.locator('.cbr-command-column button').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return{w:r.width,h:r.height,y:r.y,bottom:r.bottom}}));assert.equal(actions.length,8);for(const b of actions)assert(b.w>=40&&b.h>=40&&b.y>=0&&b.bottom<=size.height,'raid commands fit');
    const arena=await raid.locator('[data-combat-arena]').boundingBox();assert(arena.height>180&&arena.y+arena.height<size.height,'raid arena fits');
    if(process.env.CELLBOUND_UI_SCREENSHOTS)await page.screenshot({path:process.env.CELLBOUND_UI_SCREENSHOTS+'/butler-'+size.width+'.png'});
   }

@@ -42,7 +42,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.equal(combatDock.castOutside,true,'Enemy cast bar is below the artwork');
   assert.equal(combatDock.worldSelected,true,'Global chat is the default combat channel');
   assert.equal(combatDock.form,true,'Combat contains a real chat composer');
-  assert.equal(combatDock.aspect,'16 / 9','Canonical combat art retains its native 16:9 aspect');
+  assert.equal(combatDock.aspect,'auto','Immersive combat arena adapts to the viewport');
   // Canonical Combat UI editor is a real owner-only Design Booth tool.
   await page.locator('[data-dbo-tool="combat-ui"]').click();
   await page.waitForSelector('#cbeOverlay:not([hidden]) .cbe-panel[data-slot="battlefield"]',{timeout:5000});

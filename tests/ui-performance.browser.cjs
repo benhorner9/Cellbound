@@ -149,8 +149,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
     });
     assert.equal(focusRuleLoaded,true,'deployed UI bundle must contain a visible :focus-visible treatment');
 
-    // Desktop combat chat visibility regression: the old 16:9 image could
-    // extend past the centre column, clipping the chat completely on PC.
+    // Fullscreen combat keeps the chat drawer and composer inside the viewport.
     for(const desktop of [{width:1280,height:720},{width:1440,height:900},{width:1920,height:1080}]){
       await page.setViewportSize(desktop);
       for(const profile of ['pve','pvp']){
@@ -171,19 +170,19 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
               metersMarkup:'<div>Damage and healing meters</div>',
               commandsMarkup:'<div>Combat commands</div>'
             });
+            shell.querySelector('[data-combat-drawer=chat]').click();
             const wrap=shell.querySelector('.cbcombat-arena-wrap');
             const chat=shell.querySelector('[data-combat-chat]');
             const input=chat?.querySelector('[data-combat-chat-input]');
             const battle=shell.querySelector('.cbcombat-battle-panel');
-            const scene=wrap?.getBoundingClientRect(),panel=battle?.getBoundingClientRect();
+            const scene=wrap?.getBoundingClientRect(),panel=shell.getBoundingClientRect();
             const box=chat?.getBoundingClientRect(),entry=input?.getBoundingClientRect();
             return {
               chatExists:!!chat,chatHeight:box?.height??0,
               entryExists:!!input,
               entryVisible:!!entry&&!!box&&entry.bottom<=box.bottom+2&&entry.top>=box.top-2,
               chatInFrame:!!box&&!!panel&&box.top>=panel.top-2&&box.bottom<=panel.bottom+2,
-              arenaAboveChat:!!scene&&!!box&&scene.bottom<=box.top+2,
-              imageRatio:scene?.height?scene.width/scene.height:0
+              arenaInFrame:!!scene&&scene.top>=panel.top&&scene.bottom<=panel.bottom&&scene.width>=panel.width*.85&&scene.height>180
             };
           }finally{
             root.remove();
@@ -194,10 +193,8 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
           profile+' combat markup must include the real chat and composer');
         assert(metrics.chatHeight>=120,
           profile+' chat must reserve readable height at '+desktop.width+'×'+desktop.height+': '+JSON.stringify(metrics));
-        assert(metrics.chatInFrame&&metrics.entryVisible&&metrics.arenaAboveChat,
+        assert(metrics.chatInFrame&&metrics.entryVisible&&metrics.arenaInFrame,
           profile+' chat must fit on PC without falling behind battle art at '+desktop.width+'×'+desktop.height+': '+JSON.stringify(metrics));
-        assert(Math.abs(metrics.imageRatio-16/9)<0.04,
-          profile+' scene must retain the uncropped 16:9 ratio at '+desktop.width+'×'+desktop.height+': '+JSON.stringify(metrics));
       }
     }
     await page.setViewportSize({width:1366,height:1024});
