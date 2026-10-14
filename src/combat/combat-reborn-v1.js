@@ -2215,7 +2215,8 @@ function isCrowdControlled(u){
 return Object.values(u?.statuses||{}).some(s=>s?.cc&&Number(s.expiresAt)>0);
 }
 function unitOrder(ctx,u){
-if(!u||ctx.pvp)return '';
+if(!u)return '';
+if(ctx.pvp)return ctx.pvp.orders?.[u.team]?.healing?.[String(u.characterId)]||'';
 return ctx.tactics?.unitOrders?.[String(u.characterId??u.original?.id??'')]||'';
 }
 function maybeApplyCrowdControl(ctx){
@@ -3662,14 +3663,15 @@ if(pvpInput){
   const raw=pvpInput.preTactics?.[team],roster=players.filter(p=>p.team===team);
   if(!raw||typeof raw!=='object'||Array.isArray(raw))continue;
   const pick=(category,value,fallback)=>rule?.validateCommand(mode,{category,value})?.ok?value:fallback;
-  const individual={};
+  const individual={},healing={};
   for(const u of roster){
    const value=raw.individual?.[String(u.characterId)];
-   if(rule?.validateCommand(mode,{category:'target',value})?.ok)individual[String(u.characterId)]=value
+   if(rule?.validateCommand(mode,{category:'target',value})?.ok)individual[String(u.characterId)]=value;
+   const heal=raw.healing?.[String(u.characterId)];if(u.role==='healer'&&['balanced','tank-first','group','triage'].includes(heal))healing[String(u.characterId)]=heal
   }
-  pre[team]={target:pick('target',raw.target,'balanced'),position:pick('position',raw.position,'balanced'),objective:pick('objective',raw.objective,defaultOrder||'push'),individual}
+  pre[team]={target:pick('target',raw.target,'balanced'),position:pick('position',raw.position,'balanced'),objective:pick('objective',raw.objective,defaultOrder||'push'),individual,healing}
  }
- ctx.pvp={mode,size:pvpInput.size,blue:players.slice(0,pvpInput.size),red:players.slice(pvpInput.size),winner:null,objective,orders:{blue:{target:pre.blue?.target||'balanced',position:pre.blue?.position||'balanced',objective:pre.blue?.objective||defaultOrder,...(pre.blue?{individual:pre.blue.individual}:{})},red:{target:pre.red?.target||'balanced',position:pre.red?.position||'balanced',objective:pre.red?.objective||defaultOrder,...(pre.red?{individual:pre.red.individual}:{})}},commandReadyAt:{blue:0,red:0},prematch:pre};
+ ctx.pvp={mode,size:pvpInput.size,blue:players.slice(0,pvpInput.size),red:players.slice(pvpInput.size),winner:null,objective,orders:{blue:{target:pre.blue?.target||'balanced',position:pre.blue?.position||'balanced',objective:pre.blue?.objective||defaultOrder,...(pre.blue?{individual:pre.blue.individual,healing:pre.blue.healing}:{})},red:{target:pre.red?.target||'balanced',position:pre.red?.position||'balanced',objective:pre.red?.objective||defaultOrder,...(pre.red?{individual:pre.red.individual,healing:pre.red.healing}:{})}},commandReadyAt:{blue:0,red:0},prematch:pre};
 }
 players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
 enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
