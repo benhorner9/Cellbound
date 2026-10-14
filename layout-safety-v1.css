@@ -5231,6 +5231,7 @@ body.cbpvp-practice-active{overflow:hidden!important}
  #cbpvpPracticeWindow .cbcombat-right-column{grid-column:3!important;grid-row:1!important}
 }
 #cbpvpPracticeWindow .cbcombat-battle-panel{
+ display:flex!important;flex-direction:column!important;
  position:relative!important;inset:auto!important;min-width:0!important;
  height:auto!important;min-height:0!important;max-height:none!important;
  overflow:visible!important;align-self:start!important;
@@ -5248,6 +5249,7 @@ body.cbpvp-practice-active{overflow:hidden!important}
 }
 #cbpvpPracticeWindow .cbcombat-left-column,
 #cbpvpPracticeWindow .cbcombat-right-column{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto!important;
  height:auto!important;min-width:0!important;min-height:0!important;overflow:visible!important;
 }
 #cbpvpPracticeWindow .cbcombat-party-panel,
