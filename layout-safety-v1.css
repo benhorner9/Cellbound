@@ -5160,3 +5160,121 @@ body.cb-immersive-ui:has(.recruit-modal-backdrop:not([hidden])) .cb-dock{
  #pvpMount .cbpvp-qa .cbcombat-pvp-shell .cbcombat-header{gap:8px!important;padding:8px!important}
  #pvpMount .cbpvp-qa .cbcombat-pvp-shell .cbcombat-header-actions{gap:4px!important}
 }
+
+/* PvP practice: use an actual full-screen encounter surface, never a miniature
+   dungeon HUD embedded below the PvP preparation form. */
+body.cbpvp-practice-active{overflow:hidden!important}
+#cbpvpPracticeWindow.cbpvp-practice-window{
+ position:fixed!important;inset:0!important;
+ z-index:calc(var(--cb-z-gameplay,4500) + 30)!important;
+ display:flex!important;flex-direction:column!important;
+ box-sizing:border-box!important;
+ width:100vw!important;height:100vh!important;height:100dvh!important;
+ min-width:0!important;max-width:100vw!important;
+ padding:env(safe-area-inset-top) max(9px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(9px,env(safe-area-inset-left));
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior:contain;background:#060e12;color:#eee3d0;
+}
+#cbpvpPracticeWindow .cbpvp-practice-window-head{
+ position:sticky!important;top:0;z-index:50;
+ display:flex!important;justify-content:space-between;align-items:center;
+ flex-wrap:wrap;gap:8px;
+ min-height:56px;padding:8px 12px;
+ background:linear-gradient(100deg,#15242b,#0b161b);
+ border:1px solid #bc995944;
+}
+#cbpvpPracticeWindow .cbpvp-practice-window-head>div{min-width:0}
+#cbpvpPracticeWindow .cbpvp-practice-window-head small{display:block;color:#c7a778;font-size:10px;letter-spacing:.1em}
+#cbpvpPracticeWindow .cbpvp-practice-window-head h2{font:400 clamp(17px,2.5vw,24px) Georgia,serif;color:#f2e4c9;margin:3px 0 0}
+#cbpvpPracticeWindow [data-pvp-qa-exit]{
+ flex:0 0 auto;min-height:44px;min-width:120px;max-width:100%;
+ color:#ffe3c6;border:1px solid #bd9669;border-radius:6px;background:#29333b;
+ padding:8px 13px;font-size:13px;font-weight:750;cursor:pointer;
+}
+#cbpvpPracticeWindow [data-pvp-qa-exit]:focus-visible,
+#cbpvpPracticeWindow [data-pvp-qa-command]:focus-visible{outline:2px solid #d7b576;outline-offset:2px}
+#cbpvpPracticeWindow [data-pvp-overlay-status]{margin:6px 0;padding:4px 10px;font-size:12px;line-height:1.4;color:#c6d3d5}
+#cbpvpPracticeWindow .cbpvp-practice-window-orders{display:block;flex:0 0 auto;min-width:0}
+#cbpvpPracticeWindow .cbpvp-qa-toolbar[data-pvp-qa-orders]{
+ display:flex;flex-wrap:wrap;gap:6px;padding:5px 0 10px;max-width:100%;
+}
+#cbpvpPracticeWindow .cbpvp-qa-toolbar[data-pvp-qa-orders][hidden]{display:none!important}
+#cbpvpPracticeWindow .cbpvp-qa-toolbar[data-pvp-qa-orders]>button{
+ flex:0 1 auto;min-height:40px;font:650 11px inherit;
+ padding:7px 10px;border:1px solid #5b6972;border-radius:5px;
+ color:#e9e0d3;background:#24323d;cursor:pointer;
+}
+#cbpvpPracticeWindow .cbpvp-practice-window-viewer{
+ display:block;flex:1 0 auto;box-sizing:border-box;
+ width:100%;min-width:0;max-width:100%;padding-bottom:12px;
+}
+#cbpvpPracticeWindow .cbcombat-pvp-shell[data-combat-view="canonical-v1"]{
+ position:relative!important;inset:auto!important;transform:none!important;
+ box-sizing:border-box!important;display:grid!important;
+ width:100%!important;height:auto!important;min-width:0!important;
+ min-height:0!important;max-height:none!important;
+ grid-template-rows:auto auto auto!important;
+ margin:0!important;overflow:visible!important;
+}
+#cbpvpPracticeWindow .cbcombat-pvp-shell>.cbcombat-grid{
+ position:relative!important;inset:auto!important;display:grid!important;
+ box-sizing:border-box!important;width:100%!important;height:auto!important;
+ min-width:0!important;min-height:0!important;max-height:none!important;
+ grid-template-columns:minmax(125px,.75fr) minmax(0,3.1fr) minmax(125px,.85fr)!important;
+ grid-template-rows:auto!important;overflow:visible!important;
+}
+#cbpvpPracticeWindow .cbcombat-battle-panel{
+ position:relative!important;inset:auto!important;min-width:0!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ overflow:visible!important;align-self:start!important;
+}
+#cbpvpPracticeWindow .cbcombat-arena-wrap{
+ position:relative!important;inset:auto!important;box-sizing:border-box!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ max-height:none!important;aspect-ratio:16/9!important;
+ overflow:hidden!important;flex:0 0 auto!important;
+}
+#cbpvpPracticeWindow .cbpvp-stage.cb2d-arena{
+ position:absolute!important;inset:0!important;
+ width:100%!important;height:100%!important;min-height:0!important;
+ max-height:none!important;overflow:hidden!important;
+}
+#cbpvpPracticeWindow .cbcombat-left-column,
+#cbpvpPracticeWindow .cbcombat-right-column{
+ height:auto!important;min-width:0!important;min-height:0!important;overflow:visible!important;
+}
+#cbpvpPracticeWindow .cbcombat-party-panel,
+#cbpvpPracticeWindow .cbcombat-meters-panel{
+ height:auto!important;min-height:0!important;max-height:none!important;
+ overflow:visible!important;padding:10px!important;
+}
+#cbpvpPracticeWindow .cbcombat-command-panel,
+#cbpvpPracticeWindow .cbcombat-chat{display:none!important}
+#cbpvpPracticeWindow .cbcombat-party-rows{height:auto!important;min-height:0!important}
+#cbpvpPracticeWindow .cbcombat-route{height:auto!important;min-height:0!important}
+@media(max-width:1100px){
+ #cbpvpPracticeWindow .cbcombat-pvp-shell>.cbcombat-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-rows:auto auto!important;
+ }
+ #cbpvpPracticeWindow .cbcombat-battle-panel{grid-column:1/-1!important;grid-row:1!important}
+ #cbpvpPracticeWindow .cbcombat-left-column{grid-column:1!important;grid-row:2!important}
+ #cbpvpPracticeWindow .cbcombat-right-column{grid-column:2!important;grid-row:2!important}
+ #cbpvpPracticeWindow .cbcombat-arena-wrap{max-height:min(64vh,610px)!important}
+}
+@media(max-width:650px){
+ #cbpvpPracticeWindow.cbpvp-practice-window{padding-left:5px;padding-right:5px}
+ #cbpvpPracticeWindow .cbpvp-practice-window-head{gap:6px}
+ #cbpvpPracticeWindow .cbpvp-practice-window-head h2{font-size:17px}
+ #cbpvpPracticeWindow .cbpvp-qa-toolbar[data-pvp-qa-orders]>button{flex:1 1 90px}
+ #cbpvpPracticeWindow .cbcombat-pvp-shell>.cbcombat-grid{
+  grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto!important;
+  gap:6px!important;padding:6px!important;
+ }
+ #cbpvpPracticeWindow .cbcombat-battle-panel{grid-column:1!important;grid-row:1!important}
+ #cbpvpPracticeWindow .cbcombat-left-column{grid-column:1!important;grid-row:2!important}
+ #cbpvpPracticeWindow .cbcombat-right-column{grid-column:1!important;grid-row:3!important}
+ #cbpvpPracticeWindow .cbcombat-arena-wrap{height:clamp(285px,44vh,440px)!important;aspect-ratio:auto!important}
+ #cbpvpPracticeWindow .cbcombat-header{gap:6px!important;padding:7px!important}
+ #cbpvpPracticeWindow .cbcombat-title h2{font-size:16px}
+}
