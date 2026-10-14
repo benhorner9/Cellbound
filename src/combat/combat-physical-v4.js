@@ -307,7 +307,8 @@ function spatialFrame(scene,bounds,time){
  const S=window.CellboundCombatSpatial;if(!S||scene.departing&&!scene.traversing)return;
  const width=bounds.width,height=bounds.height;if(width<1||height<1)return;
  if(scene.arena.dataset.spatialArena!=='1'){scene.arena.dataset.spatialArena='1';scene.arena.closest('.cbcombat-arena-wrap')?.classList.add('cbs-spatial-wrap');scene.arena.closest('.cbcombat-battle-panel')?.classList.add('cbs-spatial-panel')}
- const resized=scene.spatialWidth!==width||scene.spatialHeight!==height;
+ const oldWidth=scene.spatialWidth,oldHeight=scene.spatialHeight;
+ const resized=oldWidth!==width||oldHeight!==height;
  if(resized){scene.spatialWidth=width;scene.spatialHeight=height;scene.spatialDirty=true}
  const env=scene.spatialEnvironment||{};if(resized||scene.geometryEnvironment!==env||!scene.spatialGeometry){scene.spatialGeometry=S.geometry(width,height,{...env,...env.presentation,bounds:{...env.bounds,...env.presentation?.bounds}});scene.geometryEnvironment=env}const g=scene.spatialGeometry;
  if(scene.traversing){let moving=false;for(const [el,u] of scene.units){const t=u.transit;if(!el.isConnected||!t)continue;const f=reduce()?1:clamp((time-t.start)/t.duration,0,1),k=f*f*(3-2*f),p={x:t.from.x+(t.to.x-t.from.x)*k,y:t.from.y+(t.to.y-t.from.y)*k};u.spatial.visual={x:p.x*width/100,y:p.y*height/100};u.position=p;el.dataset.x=String(p.x);el.dataset.y=String(p.y);el.style.setProperty('left',p.x+'%','important');el.style.setProperty('top',p.y+'%','important');el.dataset.spatialState=f<1?'moving':'holding';if(f<1)moving=true;else u.transit=null}scene.traversing=moving;return}
@@ -317,12 +318,29 @@ function spatialFrame(scene,bounds,time){
   const id=u.spatialMeta?.id||el.dataset.unit||el.dataset.qUnit||el.dataset.tbUnit||el.dataset.pvp2dUnit||el.dataset.unitKey||el.dataset.hs||el.dataset.cc||el.dataset.bs||el.id||'unit-'+list.length;if(el.dataset.cblCombatId!==id)el.dataset.cblCombatId=id;
   const meta=u.spatialMeta||{},pet=el.classList.contains('cbl-pet'),boss=el.classList.contains('boss')||/boss/.test(meta.classification||'');
   const style=meta.rangeStyle||(el.classList.contains('tank')?'tank':el.classList.contains('healer')?'healer':el.classList.contains('profile-melee')||['Warrior','Rogue','Death Knight','Demon Hunter','Monk'].includes(u.p.name)?'melee':u.p.name==='Enemy'&&!['marksman','occult','support'].includes(u.p.motion)?'melee':'ranged');
-  let s=u.spatial;if(s&&u.footprintDirty){const css=getComputedStyle(actor(el)),w=parseFloat(css.width)||48,h=parseFloat(css.height)||82;Object.assign(s,{rx:Math.max(pet?14:22,w*.42)+(boss?8:4),ry:Math.max(pet?15:22,h*.25)+(boss?8:3),head:h*.75,artTop:h*.75,artBottom:h*.25});u.footprintDirty=false;scene.spatialDirty=true;el.style.setProperty('--cbs-head',s.head+'px');el.querySelector(':scope > .cb2d-unit-hp')?.style.setProperty('top','calc(50% - '+s.head+'px)','important')}if(!s){const a=actor(el),css=getComputedStyle(a),w=parseFloat(css.width)||48,h=parseFloat(css.height)||82;s=u.spatial={id,el,rx:Math.max(pet?14:22,w*.52)+(boss?12:5),ry:Math.max(pet?15:22,h*.42)+(boss?12:3),head:h*.8+10,artTop:pet?h/2:boss?h/2:h*.75,artBottom:pet?h/2:boss?h/2:h*.25,foot:46,visual:null};if(el.dataset.monsterId){Object.assign(s,{rx:Math.max(22,w*.42)+(boss?8:4),ry:Math.max(22,h*.25)+(boss?8:3),head:h*.75,artTop:h*.75,artBottom:h*.25})}scene.spatialDirty=true;el.dataset.spatialOwned='1';el.style.setProperty('margin','0','important');el.style.setProperty('transition','none','important');el.style.setProperty('transform','translate(-50%,-50%)','important');el.style.setProperty('--cbs-head',s.head+'px');el.querySelector(':scope > .cb2d-unit-hp')?.style.setProperty('top','calc(50% - '+s.head+'px)','important')}
+  let s=u.spatial;
+  // Read the already-painted entry pose before the movement owner changes
+  // root positioning. Combat destinations must be reached by walking.
+  let entryVisual=null;
+  if(!s){
+   const painted=el.getBoundingClientRect(),x=painted.left+painted.width/2-bounds.left,y=painted.top+painted.height/2-bounds.top;
+   if(painted.width>0&&painted.height>0&&Number.isFinite(x)&&Number.isFinite(y)&&
+      x>-width*.25&&x<width*1.25&&y>-height*.25&&y<height*1.25)entryVisual={x,y};
+  }
+  if(s&&u.footprintDirty){const css=getComputedStyle(actor(el)),w=parseFloat(css.width)||48,h=parseFloat(css.height)||82;Object.assign(s,{rx:Math.max(pet?14:22,w*.42)+(boss?8:4),ry:Math.max(pet?15:22,h*.25)+(boss?8:3),head:h*.75,artTop:h*.75,artBottom:h*.25});u.footprintDirty=false;scene.spatialDirty=true;el.style.setProperty('--cbs-head',s.head+'px');el.querySelector(':scope > .cb2d-unit-hp')?.style.setProperty('top','calc(50% - '+s.head+'px)','important')}if(!s){const a=actor(el),css=getComputedStyle(a),w=parseFloat(css.width)||48,h=parseFloat(css.height)||82;s=u.spatial={id,el,rx:Math.max(pet?14:22,w*.52)+(boss?12:5),ry:Math.max(pet?15:22,h*.42)+(boss?12:3),head:h*.8+10,artTop:pet?h/2:boss?h/2:h*.75,artBottom:pet?h/2:boss?h/2:h*.25,foot:46,visual:null,entryVisual};if(el.dataset.monsterId){Object.assign(s,{rx:Math.max(22,w*.42)+(boss?8:4),ry:Math.max(22,h*.25)+(boss?8:3),head:h*.75,artTop:h*.75,artBottom:h*.25})}scene.spatialDirty=true;el.dataset.spatialOwned='1';el.style.setProperty('margin','0','important');el.style.setProperty('transition','none','important');el.style.setProperty('transform','translate(-50%,-50%)','important');el.style.setProperty('--cbs-head',s.head+'px');el.querySelector(':scope > .cb2d-unit-hp')?.style.setProperty('top','calc(50% - '+s.head+'px)','important')}
   const locked=controlled(u)||!!u.cast,command=time<(u.spatialCommandUntil||0)?u.spatialCommand:null;
   if(s.dead!==u.dead||s.locked!==locked||s.command!==command){scene.spatialDirty=true;s.dead=u.dead}
   Object.assign(s,{homeSide:s.homeSide||(meta.team==='red'||el.classList.contains('enemy')?1:-1),style,boss,role:pet?'pet':meta.role||((el.classList.contains('enemy')||boss)?'enemy':style==='tank'?'tank':style==='healer'?'healer':'dps'),team:meta.team||el.dataset.team,logical:{x:u.position.x*width/100,y:u.position.y*height/100},target:u.engagementTarget,locked,command});
   s.zones=zones;
-  if(resized){s.visual=null;s.reserved=null;s.waypoint=null}
+  if(resized){
+   // Re-scale positions on orientation change; never teleport to reservations.
+   if(s.visual&&oldWidth>0&&oldHeight>0){
+    s.visual={x:s.visual.x*width/oldWidth,y:s.visual.y*height/oldHeight};
+    s.drawn=null;
+   }
+   s.reserved=null;s.waypoint=null;s.route=null;
+  }
+  if(!s.visual&&s.entryVisual){s.visual=s.entryVisual;s.entryVisual=null}
   list.push(s);
  }
  if(scene.spatialDirty&&time-(scene.spatialPlannedAt||0)>(list.length>20?220:100)){
