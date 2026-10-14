@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: cellbound-pvp-window-smoke-${{ github.ref }}
+  group: cellbound-pvp-window-smoke-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
