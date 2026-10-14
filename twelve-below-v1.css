@@ -558,7 +558,7 @@ body.tb-open{overflow:hidden}
   transition-timing-function:cubic-bezier(.22,.61,.36,1);
   pointer-events:none;
 }
-.tb-arena .tb-unit.cb2d-unit>i{
+.tb-arena .tb-unit.cb2d-unit>i.tb-unit-placeholder{
   display:block;
   width:22px;
   height:22px;
@@ -580,13 +580,13 @@ body.tb-open{overflow:hidden}
   letter-spacing:.06em;
 }
 .tb-arena .tb-unit.party.tank{color:#d85a4d}
-.tb-arena .tb-unit.party.tank>i{background:#d85a4d}
+.tb-arena .tb-unit.party.tank>i.tb-unit-placeholder{background:#d85a4d}
 .tb-arena .tb-unit.party.healer{color:#5aa7e8}
-.tb-arena .tb-unit.party.healer>i{background:#5aa7e8}
+.tb-arena .tb-unit.party.healer>i.tb-unit-placeholder{background:#5aa7e8}
 .tb-arena .tb-unit.party.dps{color:#63c678}
-.tb-arena .tb-unit.party.dps>i{background:#63c678}
+.tb-arena .tb-unit.party.dps>i.tb-unit-placeholder{background:#63c678}
 .tb-arena .tb-unit.enemy{color:#d9c850}
-.tb-arena .tb-unit.enemy>i{
+.tb-arena .tb-unit.enemy>i.tb-unit-placeholder{
   width:36px;
   height:36px;
   border:2px solid #b89555;
@@ -1052,7 +1052,7 @@ body.tb-open{overflow:hidden}
 .tb-arena .tb-unit.enemy{
   color:var(--tb-boss-accent,#76c9db)
 }
-.tb-arena .tb-unit.enemy>i{
+.tb-arena .tb-unit.enemy>i.tb-unit-placeholder{
   border-color:color-mix(in srgb,var(--tb-boss-accent,#76c9db) 70%,#d7c58e 30%);
   background:
     radial-gradient(circle at 38% 34%,#e8f7f5 0 8%,var(--tb-boss-accent,#76c9db) 9% 42%,#172329 44% 100%);
@@ -1067,7 +1067,7 @@ body.tb-open{overflow:hidden}
 .tb-arena .tb-unit.enemy .cb2d-unit-hp>i{
   background:linear-gradient(90deg,#8e3441,var(--tb-boss-accent,#76c9db))
 }
-.tb-arena.tb-high-pressure .tb-unit.enemy>i{
+.tb-arena.tb-high-pressure .tb-unit.enemy>i.tb-unit-placeholder{
   animation:tbBossPressure 1.2s ease-in-out infinite alternate
 }
 @keyframes tbBossPressure{to{filter:brightness(1.2);transform:scale(1.06)}}
@@ -1114,7 +1114,7 @@ body.tb-open{overflow:hidden}
   .tb-spectral-pass{display:none}
 }
 @media(prefers-reduced-motion:reduce){
-  .tb-floor-seal,.tb-ground:before,.tb-soul-braziers i,.tb-grave-fog,.tb-spectral-pass i,.tb-unit.enemy>i{animation:none!important}
+  .tb-floor-seal,.tb-ground:before,.tb-soul-braziers i,.tb-grave-fog,.tb-spectral-pass i,.tb-unit.enemy>i.tb-unit-placeholder{animation:none!important}
 }
 
 
@@ -1138,4 +1138,109 @@ body.tb-open{overflow:hidden}
   overflow-x:auto;
   border-bottom:1px solid rgba(255,255,255,.045);
   background:#071013
+}
+
+/* Twelve Below iPad landscape: the canonical shell expects a 28px route,
+   but this event has both a live scoreboard AND a twelve-tomb tracker. */
+html body .tb-backdrop:has(.cbcombat-shell[data-combat-theme="twelve"][data-combat-layout="immersive"]){
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;place-items:stretch!important;
+  box-sizing:border-box!important;padding:0!important;overflow:hidden!important;
+  width:100vw!important;height:100dvh!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live){
+  grid-template-rows:48px 74px minmax(0,1fr)!important;
+  min-height:0!important;height:100%!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) > .cbcombat-route{
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  height:74px!important;min-height:74px!important;max-height:74px!important;
+  padding:0!important;overflow:hidden!important;z-index:26!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-route .tb-scorebar{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  flex:0 0 36px!important;height:36px!important;min-height:0!important;overflow:hidden!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-route .tb-scorebar span{
+  min-width:0!important;padding:4px 9px!important;white-space:nowrap!important;overflow:hidden!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-route .tb-scorebar small{
+  font-size:9px!important;line-height:11px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-route .tb-scorebar b{
+  margin:1px 0 0!important;font-size:12px!important;line-height:14px!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-route .tb-tomb-track{
+  box-sizing:border-box!important;display:grid!important;grid-template-columns:repeat(12,minmax(66px,1fr))!important;
+  gap:4px!important;flex:1 1 38px!important;min-height:0!important;height:38px!important;
+  padding:3px 8px!important;overflow-x:auto!important;overflow-y:hidden!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-route .tb-tomb-track .tb-tomb{
+  box-sizing:border-box!important;min-height:0!important;height:30px!important;
+}
+/* The event supplies eight tactical buttons plus a runtime Command Power strip.
+   The old escalation text was a ninth full-height grid child and pushed
+   every command below the bottom of the iPad viewport. */
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel{
+  box-sizing:border-box!important;display:grid!important;
+  grid-template-columns:repeat(8,minmax(0,1fr))!important;grid-template-rows:18px minmax(0,1fr)!important;
+  align-content:stretch!important;gap:4px 6px!important;
+  inset:auto 0 0!important;width:100%!important;height:88px!important;
+  min-height:0!important;max-height:88px!important;
+  padding:5px max(9px,env(safe-area-inset-right)) max(5px,env(safe-area-inset-bottom)) max(9px,env(safe-area-inset-left))!important;
+  overflow:hidden!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel > .cbr-inline-power{
+  box-sizing:border-box!important;grid-column:1/-1!important;grid-row:1!important;
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  min-height:0!important;height:18px!important;min-width:0!important;margin:0!important;
+  padding:0 3px!important;gap:8px!important;overflow:hidden!important;
+  border:0!important;background:transparent!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel > .cbr-inline-power :is(span,strong){font-size:9px!important;white-space:nowrap!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel > :is([data-tb-command],[data-tb-potion]){
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;grid-row:2!important;
+  min-width:0!important;width:100%!important;max-width:none!important;
+  height:100%!important;min-height:44px!important;max-height:56px!important;
+  margin:0!important;padding:3px 4px!important;border-radius:4px!important;
+  overflow:hidden!important;cursor:pointer!important;
+  background:#15263b!important;border:1px solid rgba(155,184,207,.24)!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel > :is([data-tb-command],[data-tb-potion]) b{
+  display:block!important;font-size:11px!important;line-height:14px!important;white-space:nowrap!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel > :is([data-tb-command],[data-tb-potion]) small{
+  display:block!important;max-width:100%!important;margin:2px 0 0!important;
+  font-size:9px!important;line-height:11px!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > .cbcombat-arena-wrap{
+  inset:0 0 98px!important;height:calc(100% - 98px)!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > :is(.cb2d-cast,.cbcombat-cast){
+  bottom:92px!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-chat,
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-meters-panel{
+  bottom:92px!important;
+}
+/* The real illustrated 2D rig replaces the fallback coloured coin. None of
+   the generic direct-child <i> selectors may recolour ground/facing overlays. */
+.tb-arena .tb-unit:has(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait) > i.tb-unit-placeholder,
+.tb-arena .tb-unit[data-animation-owned="1"] > i.tb-unit-placeholder{
+  display:none!important;
+}
+@media(max-width:900px){
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    grid-template-rows:17px repeat(2,minmax(44px,1fr))!important;
+    height:122px!important;max-height:122px!important;
+  }
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel > :is([data-tb-command],[data-tb-potion]){grid-row:auto!important}
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > .cbcombat-arena-wrap{
+    inset:0 0 130px!important;height:calc(100% - 130px)!important;
+  }
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > :is(.cb2d-cast,.cbcombat-cast){bottom:126px!important}
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"][data-combat-theme="twelve"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-chat,.cbcombat-meters-panel){bottom:126px!important}
 }
