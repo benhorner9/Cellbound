@@ -1071,7 +1071,7 @@ if(actual>0)emitComboPointState(ctx,u,'gained',ability,actual);
 return actual
 }
 function spendComboPoints(ctx,u,requested,ability='Finisher'){
-if(u?.class!=='Rogue')return 0;
+ if(u?.class!=='Rogue')return 0;
 const before=Math.max(0,Number(u.comboPoints)||0),need=Math.max(0,Number(requested)||0),spent=Math.min(before,Math.max(need,before));
 u.comboPoints=Math.max(0,before-spent);
 if(spent>0)emitComboPointState(ctx,u,'spent',ability,spent);
@@ -3667,7 +3667,7 @@ if(pvpInput){
    const value=raw.individual?.[String(u.characterId)];
    if(rule?.validateCommand(mode,{category:'target',value})?.ok)individual[String(u.characterId)]=value
   }
-  pre[team]={target:pick('target',raw.target,'balanced'),position:pick('position',raw.position,'balanced'),objective:pick('objective',raw.objective,defaultOrder),individual}
+  pre[team]={target:pick('target',raw.target,'balanced'),position:pick('position',raw.position,'balanced'),objective:pick('objective',raw.objective,defaultOrder||'push'),individual}
  }
  ctx.pvp={mode,size:pvpInput.size,blue:players.slice(0,pvpInput.size),red:players.slice(pvpInput.size),winner:null,objective,orders:{blue:{target:pre.blue?.target||'balanced',position:pre.blue?.position||'balanced',objective:pre.blue?.objective||defaultOrder,...(pre.blue?{individual:pre.blue.individual}:{})},red:{target:pre.red?.target||'balanced',position:pre.red?.position||'balanced',objective:pre.red?.objective||defaultOrder,...(pre.red?{individual:pre.red.individual}:{})}},commandReadyAt:{blue:0,red:0},prematch:pre};
 }
