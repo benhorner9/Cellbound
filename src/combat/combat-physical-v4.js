@@ -175,7 +175,7 @@ function mechanic(scene,e,opts={}){
   const old=scene.warnings.get(token);if(old){old.callout?.remove();for(const n of old.markers)n.remove()}
   const type=String(e.payload?.mechanicType||'mechanic').replace(/[^a-z0-9-]/gi,'-').toLowerCase();
   const entry={start:now(),duration:Math.max(1,Number(e.payload.duration)||1000)/scene.speed,nodes:[],markers:[],source:e.source,type,callout:null};scene.warnings.set(token,entry);
-  const callout=document.createElement('div');callout.className='cbl-mechanic-callout';callout.dataset.phase='incoming';callout.dataset.mechanicType=type;
+  const callout=document.createElement('div');callout.className='cbl-mechanic-callout';callout.dataset.phase='incoming';callout.dataset.mechanicType=type;callout.style.setProperty('--warning-left','1');
   const title=document.createElement('strong');title.textContent=String(e.ability||'Boss mechanic');const kind=document.createElement('span');kind.textContent=type.replace(/-/g,' ').toUpperCase();
   callout.append(title,kind);scene.arena.appendChild(callout);entry.callout=callout;
   const ids=[...new Set([e.target,...(Array.isArray(e.payload?.targetIds)?e.payload.targetIds:[])].filter(Boolean))];
@@ -654,7 +654,11 @@ function frame(){
   // Cosmetic quality only; simulation and danger geometry never depend on FPS.
   const gap=time-(scene.fxFrameAt||time);scene.fxFrameAt=time;
   if(gap>0&&gap<250){scene.fxFrameAverage=(scene.fxFrameAverage||16)*.94+gap*.06;scene.lowDetail=scene.fxFrameAverage>38||scene.units.size>20;arena.dataset.fxDetail=scene.lowDetail?'low':'full'}
-  for(const entry of scene.warnings.values())if(time-entry.start>=entry.duration*.7){for(const n of entry.nodes)n.dataset.phase='imminent';for(const n of entry.markers||[])n.dataset.phase='imminent';if(entry.callout)entry.callout.dataset.phase='imminent'}
+  for(const entry of scene.warnings.values()){
+   const progress=clamp((time-entry.start)/entry.duration,0,1),step=Math.round(progress*30);
+   if(step!==entry.drawnProgress){entry.callout?.style.setProperty('--warning-left',String(1-progress));entry.drawnProgress=step}
+   if(progress>=.7){for(const n of entry.nodes)n.dataset.phase='imminent';for(const n of entry.markers||[])n.dataset.phase='imminent';if(entry.callout)entry.callout.dataset.phase='imminent'}
+  }
   for(const h of scene.hazards.values())if(time>=h.end-900/scene.speed)h.node.dataset.phase='expiring';
   const bounds=scene.bounds||arena.getBoundingClientRect(),positions=new Map();scene.bounds=bounds;
   const pos=el=>{if(!positions.has(el))positions.set(el,anchorPoint(scene,el,bounds)||center(el));return positions.get(el)};

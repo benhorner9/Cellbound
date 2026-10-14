@@ -493,6 +493,8 @@
 .cbl-fx.class-projectile.arrow{width:27px;background:linear-gradient(90deg,transparent,var(--hit,#dfcfaf) 40%,#fff1ca)}
 .cbl-fx.class-projectile.arrow:before{content:"";position:absolute;right:100%;width:22px;height:2px;background:linear-gradient(90deg,transparent,var(--hit,#dfcfaf));opacity:.65}
 .cbl-fx.class-projectile.major:not(.arrow){width:22px;height:14px}
+.cbl-mechanic-callout:after{content:"";position:absolute;left:4px;right:4px;bottom:0;height:2px;background:#f0b477;transform:scaleX(var(--warning-left,1));transform-origin:left;pointer-events:none}
+.cbl-mechanic-callout[data-phase="safe"]:after,.cbl-mechanic-callout[data-phase="impact"]:after{display:none}
 .cbl-fx.class-projectile.school-arcane:after{content:"";position:absolute;inset:-3px;border:1px solid var(--hit);border-radius:50%;opacity:.6}
 .cbl-scene[data-fx-detail="low"] .cbl-fx:is(.weapon-trail,.ability-charge,.ability-impact):after{display:none}
 .cbl-scene:has(.cbl-mechanic-callout[data-phase="incoming"],.cbl-mechanic-callout[data-phase="imminent"]) .cbl-fx:is(.ability-charge,.weapon-trail,.status-pulse){opacity:.45}

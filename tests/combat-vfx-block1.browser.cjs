@@ -27,7 +27,7 @@ const dist=path.resolve(__dirname,'../dist'),engine=process.env.CELLBOUND_TEST_E
     const count=await page.evaluate(a=>{
      send('ABILITY_START',a.name,{abilityId:a.id,payload:{kind:a.kind,range:a.range}});
      if(a.kind==='damage')send('DAMAGE_DEALT',a.name,{abilityId:a.id,amount:30,result:'hit'});
-     else if(a.kind==='heal')send('HEAL_RECEIVED',a.name,{abilityId:a.id,amount:30,result:'heal',target:'p'});
+     else if(a.kind.includes('heal'))send('HEAL_RECEIVED',a.name,{abilityId:a.id,amount:30,result:'heal',target:'p'});
      else if(a.kind==='defensive')send('DEFENSIVE_ACTIVATED',a.name,{target:'p'});
      else if(a.kind==='interrupt')send('INTERRUPT',a.name,{result:'success'});
      else send('BUFF_APPLIED',a.name,{target:'p',statusEffects:[{id:a.id,name:a.name,effect:{}}]});
@@ -58,6 +58,10 @@ const dist=path.resolve(__dirname,'../dist'),engine=process.env.CELLBOUND_TEST_E
   await page.clock.runFor(750);assert.equal(await page.locator('.cbl-mechanic-callout').getAttribute('data-phase'),'imminent');
   await page.evaluate(()=>send('MECHANIC_RESOLVE','Thrown Plate Barrage',{result:'avoided',payload:{token:'boss-test'}}));await page.clock.runFor(600);
   assert.equal(await page.locator('.cbl-mechanic-callout').count(),0);
+  for(const [id,cls] of [['dungeon','cb2d-arena'],['raid','cb2d-arena theme-manor'],['quest','quest-cb2d-arena'],['world','wb2d-arena'],['arena','cb2d-arena cbpvp-stage'],['ctf','pvp2d-arena'],['koth','pvp2d-arena'],['tutorial','cb2d-arena']]){
+   await page.evaluate(({id,cls})=>{stage.className=cls;stage.dataset.testMode=id;send('DAMAGE_DEALT','Fireball',{amount:20,result:'hit'})},{id,cls});
+   assert.equal(await page.locator('.ability-impact.school-fire').count(),1,id+' uses the same effect owner');await page.clock.runFor(700);
+  }
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.evaluate(()=>send('HEAL_RECEIVED','Holy Light',{target:'p',amount:20,result:'heal'}));
   assert(await page.locator('.ability-impact.still').isVisible(),'reduced motion retains static feedback');await page.clock.runFor(1000);

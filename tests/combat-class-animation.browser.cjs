@@ -46,7 +46,7 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
      if(a.cast)await page.clock.runFor(Math.max(0,a.cast-500)/4);
      if(/damage|heal/.test(a.kind))await page.evaluate(a=>send(a.kind==='damage'?'DAMAGE_DEALT':'HEAL_RECEIVED',a,{amount:23,result:a.kind==='damage'?'hit':'heal'}),a);
      else if(a.kind==='interrupt')await page.evaluate(a=>send('INTERRUPT',a,{result:'success'}),a);
-     await page.clock.runFor(50);
+     await page.clock.runFor(120);
      if(a.id===primary.id||a.id===signature.id)await page.screenshot({path:dir+'/action-'+engine+'-'+klass.toLowerCase().replace(/ /g,'-')+'-'+a.id+'.png'});
      await page.clock.runFor(500);
      const state=await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state');assert.equal(state,'idle',klass+' '+a.id+' must recover');
