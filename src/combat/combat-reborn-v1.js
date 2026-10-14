@@ -478,9 +478,6 @@ function abilityPool(c,role){
   const byId=new Map(unlocked.map(a=>[a.id,a]));
   pool=[...new Set(configured)].slice(0,4).map(id=>byId.get(id)).filter(Boolean)
  }else pool=defaults();
- // A stale or empty saved loadout must never make a character inert in combat.
- // Fall back to the current spec defaults whenever the configured skills no longer
- // contain a valid role action (important for classes/specs added to existing saves).
  if(role==='healer'&&!pool.length)pool=defaults();
  if(role==='tank'&&!pool.some(a=>a.kind==='taunt'))pool=defaults();
  if(role==='dps'&&!pool.some(a=>a.kind==='damage'||a.kind==='summon'||a.kind==='pet-command'))pool=defaults();
@@ -2085,8 +2082,6 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(ctx.pvp&&source.team===target.team)return 0;
  if(ctx?.encounter?.focusSelectedDamageOnly&&source.role!=='enemy'&&target.role==='enemy'&&!target.focusSelected)return 0;
  let final=Math.max(0,amount);
- // Press Damage increases tank output, but sacrifices initial threat and
- // delays defensive cooldowns. This is an actual risk/reward run order.
  if(!ctx.pvp&&source.role==='tank'&&target.role==='enemy'&&unitOrder(ctx,source)==='damage')final*=1.10;
  if(target.role==='enemy'&&ctx.encounter.designerEnemy)final*=1-(Number(target.designerDefence)||0)/100;
  if(target.role!=='enemy'){
@@ -2275,8 +2270,6 @@ function scheduleUnstableGround(ctx){
 function isCrowdControlled(u){
  return Object.values(u?.statuses||{}).some(s=>s?.cc&&Number(s.expiresAt)>0);
 }
-// Run-specific orders are tied to character IDs, never names or class slots.
-// Defaults retain the existing AI when a dungeon has no saved orders.
 function unitOrder(ctx,u){
  if(!u||ctx.pvp)return '';
  return ctx.tactics?.unitOrders?.[String(u.characterId??u.original?.id??'')]||'';
@@ -2381,12 +2374,10 @@ function chooseAbility(ctx,u,target){
   const avg=alive.reduce((n,p)=>n+healthRatio(p),0)/Math.max(1,alive.length);
   const tankRatio=tank?healthRatio(tank):1;
 
-  // Group pressure takes priority when mechanics/adds have hurt several players.
   if(group.length&&(order==='group'?(deep.length>=1||injured.length>=2||avg<.94):order==='tank-first'?(deep.length>=3||injured.length>=4||avg<.78):(deep.length>=2||injured.length>=3||avg<.88))){
    return{ability:group[0],target:low||u}
   }
 
-  // Dungeon healers proactively maintain the tank instead of waiting for a crisis.
   const mistweaver=u.class==='Monk'&&u.spec==='Mistweaver';
   const needsTank=tank&&tankRatio<(order==='tank-first'?.985:order==='triage'?.77:mistweaver?((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.91:.88):((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.97:.92));
   const needsSingle=low&&healthRatio(low)<(order==='triage'?.72:order==='group'?.83:mistweaver?.88:.90);
@@ -2407,7 +2398,6 @@ function chooseAbility(ctx,u,target){
    const martial=pool.filter(a=>a.kind==='damage').sort((a,b)=>(b.damage||0)-(a.damage||0));
    if(martial.length&&deep.length===0&&avg>.90&&tankRatio>.88)return{ability:martial[0],target}
   }
-  // Other healers preserve mana and watch incoming damage during safe windows.
   return null
  }
  if(u.class==='Rogue'&&u.spec==='Assassination'){
