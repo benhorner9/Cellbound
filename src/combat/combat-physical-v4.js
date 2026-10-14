@@ -105,6 +105,34 @@ function totem(scene,e){
  const core=document.createElement('i'),rune=document.createElement('b'),label=document.createElement('span');
  label.textContent=String(e.ability||'Totem').replace(/ Totem$/,'');n.append(core,rune,label);scene.arena.appendChild(n);scene.totems.set(id,n)
 }
+// One invisible, artwork-aligned fighting floor for every shared combat view.
+// Room editors can override it with presentation.bounds or data-fighting-area.
+function fightingGeometry(scene,width,height,count=scene.units.size){
+ const S=window.CellboundCombatSpatial;if(!S)return null;
+ const arena=scene.arena,context=(String(arena.className?.baseVal||arena.className||'')+' '+String(arena.closest?.('.cbcombat-shell')?.className||'')+' '+String(arena.dataset.cinematicTheme||arena.dataset.cbvfxTheme||'')).toLowerCase();
+ let theme=arena.dataset.cinematicTheme||arena.dataset.cbvfxTheme||'shared';
+ if(arena.matches?.('#tbArena,.tb-arena'))theme='twelve';
+ else if(arena.matches?.('.cbpvp-stage,.pvp2d-arena,[data-pvp-unit-stage]'))theme='pvp';
+ else if(arena.matches?.('.cc2d-arena'))theme='chaos';
+ else if(arena.matches?.('.hs2d-arena'))theme='hollow';
+ else if(arena.matches?.('.bs-arena,#bsArena'))theme='blackout';
+ else if(arena.matches?.('.wb2d-arena'))theme='world';
+ else if(arena.matches?.('.quest-cb2d-arena,#q2dArena'))theme='quest';
+ else for(const name of ['manor','null','fractured','ashen','hollow','chaos','blackout','twelve','world','quest'])if(context.includes(name)){theme=name;break}
+ const env=scene.spatialEnvironment||{},presentation=env.presentation||{},authored=env.bounds||{};
+ // Authored walkable polygons already describe actual ground; do not substitute
+ // a generic floor that might cut through a room designer's valid path.
+ const floor=env.walkable?.length>=3?{left:4,right:96,top:12,bottom:91}:S.fightingArea(theme,count);
+ const finite=(v,fallback)=>v==null||!Number.isFinite(Number(v))?fallback:Number(v);
+ let bounds={left:Math.max(floor.left,finite(authored.left,4)),right:Math.min(floor.right,finite(authored.right,96)),
+  top:Math.max(floor.top,finite(authored.top,12)),bottom:Math.min(floor.bottom,finite(authored.bottom,95))};
+ if(bounds.right-bounds.left<12||bounds.bottom-bounds.top<16)bounds={left:finite(authored.left,4),right:finite(authored.right,96),top:finite(authored.top,12),bottom:finite(authored.bottom,95)};
+ const manual=String(arena.dataset.fightingArea||'').split(',').map(Number);
+ if(manual.length===4&&manual.every(Number.isFinite)&&manual[1]-manual[0]>=12&&manual[3]-manual[2]>=16&&manual.every(v=>v>=0&&v<=100))
+  bounds={left:manual[0],right:manual[1],top:manual[2],bottom:manual[3]};
+ if(presentation.bounds)bounds={...bounds,...presentation.bounds};
+ return S.geometry(width,height,{...env,...presentation,bounds});
+}
 function petObject(scene,e){
  const id=String(e.payload?.petId||e.target||'');if(!id)return;
  if(e.type==='PET_DISMISSED'){
@@ -119,7 +147,23 @@ function petObject(scene,e){
  const body=document.createElement('i');body.className='cbl-pet-body';body.appendChild(document.createElement('b'));
  const label=document.createElement('span');label.className='cbl-pet-name';label.textContent=String(e.payload?.name||e.ability||'Demon');
  n.append(body,label);scene.arena.appendChild(n);scene.pets.set(id,n);
- const u=unit(scene,n);u.spatialMeta={role:'pet',team:scene.units.get(resolve(e.source,{},scene.arena))?.spatialMeta?.team};u.engagementTarget=e.payload?.targetId;setPosition(scene,u,e.position);state(u,'idle');framing(scene)
+ const owner=scene.units.get(resolve(e.payload?.ownerId||e.source,{},scene.arena));
+ const S=window.CellboundCombatSpatial,width=scene.arena.clientWidth,height=scene.arena.clientHeight;
+ // A freshly inserted .cbl-pet has CSS left:0/top:0. Seed it beside its
+ // Hunter/summoner *inside the floor* before the first animation frame so
+ // it never materialises from the top-left or slides in from off-screen.
+ if(S&&width>0&&height>0){
+  const p=owner?.spatial?.visual&&scene.spatialWidth&&scene.spatialHeight?
+   {x:owner.spatial.visual.x/scene.spatialWidth*100,y:owner.spatial.visual.y/scene.spatialHeight*100}:
+   owner?.position||e.position;
+  const candidate={x:clamp(Number(p.x)+(Number(p.x)>50?-4:4),0,100)*width/100,y:clamp(Number(p.y)+4,0,100)*height/100};
+  const floor=fightingGeometry(scene,width,height,scene.units.size+1);
+  const point=S.safePoint(candidate,{rx:20,ry:20,head:36,foot:14},floor);
+  n.style.setProperty('left',(point.x/width*100).toFixed(3)+'%','important');
+  n.style.setProperty('top',(point.y/height*100).toFixed(3)+'%','important');
+  n.style.setProperty('transform','translate(-50%,-50%)','important');
+ }
+ const u=unit(scene,n);u.spatialMeta={id,role:'pet',team:owner?.spatialMeta?.team||owner?.spatial?.team||'party'};u.engagementTarget=e.payload?.targetId;setPosition(scene,u,e.position);state(u,'idle');framing(scene)
 }
 function mechanic(scene,e,opts={}){
  const token=e.payload?.token;if(token==null)return;scene.spatialDirty=true;
@@ -310,7 +354,7 @@ function spatialFrame(scene,bounds,time){
  const oldWidth=scene.spatialWidth,oldHeight=scene.spatialHeight;
  const resized=oldWidth!==width||oldHeight!==height;
  if(resized){scene.spatialWidth=width;scene.spatialHeight=height;scene.spatialDirty=true}
- const env=scene.spatialEnvironment||{};if(resized||scene.geometryEnvironment!==env||!scene.spatialGeometry){scene.spatialGeometry=S.geometry(width,height,{...env,...env.presentation,bounds:{...env.bounds,...env.presentation?.bounds}});scene.geometryEnvironment=env}const g=scene.spatialGeometry;
+ const env=scene.spatialEnvironment||{},population=scene.units.size,theme=scene.arena.dataset.cinematicTheme||'';if(resized||scene.geometryEnvironment!==env||scene.geometryPopulation!==population||scene.geometryTheme!==theme||!scene.spatialGeometry){scene.spatialGeometry=fightingGeometry(scene,width,height,population);scene.geometryEnvironment=env;scene.geometryPopulation=population;scene.geometryTheme=theme;scene.spatialDirty=true}const g=scene.spatialGeometry;
  if(scene.traversing){let moving=false;for(const [el,u] of scene.units){const t=u.transit;if(!el.isConnected||!t)continue;const f=reduce()?1:clamp((time-t.start)/t.duration,0,1),k=f*f*(3-2*f),p={x:t.from.x+(t.to.x-t.from.x)*k,y:t.from.y+(t.to.y-t.from.y)*k};u.spatial.visual={x:p.x*width/100,y:p.y*height/100};u.position=p;el.dataset.x=String(p.x);el.dataset.y=String(p.y);el.style.setProperty('left',p.x+'%','important');el.style.setProperty('top',p.y+'%','important');el.dataset.spatialState=f<1?'moving':'holding';if(f<1)moving=true;else u.transit=null}scene.traversing=moving;return}
  const list=[],zones=[...scene.hazards.values(),...(scene.spatialZones||[])].filter(h=>h.position&&h.radius>0).map(h=>Array.from({length:24},(_,i)=>({x:(h.position.x+Math.cos(i*Math.PI/12)*h.radius)*width/100,y:(h.position.y+Math.sin(i*Math.PI/12)*h.radius)*height/100})));
  for(const [el,u] of scene.units){
@@ -340,7 +384,15 @@ function spatialFrame(scene,bounds,time){
    }
    s.reserved=null;s.waypoint=null;s.route=null;
   }
-  if(!s.visual&&s.entryVisual){s.visual=s.entryVisual;s.entryRecovery=!S.legal(s.visual,s,g);s.entryVisual=null}
+  if(!s.visual&&s.entryVisual){
+   // A painted formation can start outside the art's walkable floor. Enter
+   // from its nearest legal edge instead of showing an off-screen actor.
+   s.visual=S.legal(s.entryVisual,s,g)?s.entryVisual:S.safePoint(s.entryVisual,s,g);
+   s.entryRecovery=false;s.entryVisual=null;
+  }
+  if(resized&&s.visual&&!S.legal(s.visual,s,g)){
+   s.visual=S.safePoint(s.visual,s,g);s.drawn=null;
+  }
   list.push(s);
  }
  if(scene.spatialDirty&&time-(scene.spatialPlannedAt||0)>(list.length>20?220:100)){
@@ -657,7 +709,7 @@ FX.presentImpact=(e,fn)=>window.CellboundCombatAnimation?window.CellboundCombatA
 FX.syncPositions=(arena,units,objectives={})=>{mount(arena);const scene=scenes.get(arena);if(!scene)return;const zones=[];if(objectives.storm)zones.push({position:objectives.storm.centre||{x:50,y:50},radius:objectives.storm.radius});if(objectives.hill?.radius)zones.push({position:objectives.hill,radius:objectives.hill.radius});const signature=JSON.stringify(zones);if(signature!==scene.spatialZoneSignature){scene.spatialZoneSignature=signature;scene.spatialZones=zones;scene.spatialDirty=true}for(const data of units){const u=unit(scene,resolve(data.id,{},arena));if(u){u.spatialMeta={...u.spatialMeta,...data};u.dead=data.alive===false;setPosition(scene,u,data.position,200)}}wake()};
 if(window.CellboundCombatSpatial)window.CellboundCombatSpatial.inspect=arena=>{const s=scenes.get(arena);return s?{checks:s.spatialChecks,unresolved:s.spatialUnresolved,units:(s.spatialUnits||[]).map(u=>({id:u.id,role:u.role,style:u.style,logical:u.logical,visual:u.visual,reserved:u.reserved,rx:u.rx,ry:u.ry,conflict:u.conflict,state:u.el.dataset.spatialState}))}:null};
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
-FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.clarityDescriptor=clarityDescriptor;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.5.0';FX.living=true;
+FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.clarityDescriptor=clarityDescriptor;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.6.0';FX.living=true;
 // Legacy public entry points remain callable but no longer duplicate shared reactions.
 for(const name of ['impact','heal','death','spawn','interrupt']){const old=FX[name];FX[name]=function(el,...args){if(el?.closest?.('.cbl-scene'))return;return old?.(el,...args)}}
 })();
