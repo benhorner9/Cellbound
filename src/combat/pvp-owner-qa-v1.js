@@ -31,6 +31,7 @@ function practiceMarkup(){
  '<label>Party <select data-pvp-qa-size><option value="2">2v2</option><option value="3">3v3</option><option value="5">5v5</option></select></label>'+
  '<label>Battlefield <select data-pvp-qa-map></select></label>'+
  '<button type="button" data-pvp-qa-start>Start practice</button><button type="button" data-pvp-qa-stop>Stop</button></div>'+
+ '<div data-pvp-qa-pre-plan></div>'+
  '<div class="cbpvp-qa-toolbar" data-pvp-qa-orders hidden><strong>TACTICS</strong>'+
  '<button type="button" data-pvp-qa-command="target:attack-healer">Attack Healer</button>'+
  '<button type="button" data-pvp-qa-command="target:attack-tank">Attack Tank</button>'+
@@ -54,7 +55,9 @@ function setupPractice(){
   for(const map of options){const option=document.createElement('option');option.value=map.id;option.textContent=map.title+(window.CellboundPvPMaps?.isTesting?.(map.id)?' · OWNER TEST':'');mapPicker.appendChild(option)}
   mapPicker.disabled=!options.length
  };
- mode.addEventListener('change',()=>{size.disabled=mode.value!=='arena';if(size.disabled)size.value='5';updateMaps()});
+ const updatePlanner=()=>{const n=mode.value==='arena'?Number(size.value):5,slot=host.querySelector('[data-pvp-qa-pre-plan]'),squad=practiceRosters(n).blue;slot.innerHTML=window.CellboundPvPPreTactics?.markup?.(mode.value,n,squad)||'';window.CellboundPvPPreTactics?.bind?.(slot,mode.value,n,squad)};
+ mode.addEventListener('change',()=>{size.disabled=mode.value!=='arena';if(size.disabled)size.value='5';updateMaps();updatePlanner()});
+ size.addEventListener('change',updatePlanner);updatePlanner();
  updateMaps();
  window.CellboundPvPMaps?.refresh?.(true).then(updateMaps).catch(error=>console.warn('PvP map list unavailable',error));
  host.querySelector('[data-pvp-qa-stop]').addEventListener('click',()=>{
@@ -70,7 +73,7 @@ function setupPractice(){
   try{
    const maps=window.CellboundPvPMaps,map=maps?.get?.(mapPicker.value,{ownerPreview:true});
    if(!map||map.mode!==gameMode)throw new Error('Select a valid '+gameMode+' map in the Design Booth.');
-   const squad=practiceRosters(n),session=engine.createPvpSession({pvp:{mode:gameMode,size:n,...squad,map},encounter:{id:'owner-pvp-practice-'+map.id,environment:{blockers:[]}},seed:'owner-practice-'+map.id+'-'+gameMode+'-'+n,maxDurationMs:120000},{zone:'owner-pvp-qa'});
+   const squad=practiceRosters(n),plan=window.CellboundPvPPreTactics?.load?.(gameMode,n,squad.blue),session=engine.createPvpSession({pvp:{mode:gameMode,size:n,...squad,map,preTactics:{blue:plan}},encounter:{id:'owner-pvp-practice-'+map.id,environment:{blockers:[]}},seed:'owner-practice-'+map.id+'-'+gameMode+'-'+n,maxDurationMs:120000},{zone:'owner-pvp-qa'});
    root.replaceChildren();
    // The PvE Combat Portraits adapter owns models in both game modes.
    window.CellboundCombatPortraits?.registerCharacters?.([...squad.blue,...squad.red]);
