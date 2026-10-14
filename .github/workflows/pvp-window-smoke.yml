@@ -24,10 +24,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  chromium:
-    name: PvP full-screen iPad and phone smoke
+  browser:
+    name: PvP iPad and phone smoke (${{ matrix.engine }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,9 +41,9 @@ jobs:
         run: npm run build
       - name: Install browser runner
         run: npm install --no-save --package-lock=false playwright@1.51.1
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install ${{ matrix.engine }}
+        run: npx playwright install --with-deps ${{ matrix.engine }}
       - name: Exercise real PvP window on iPad and phone
         env:
-          CELLBOUND_TEST_ENGINE: chromium
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
         run: node tests/pvp-practice-window.browser.cjs
