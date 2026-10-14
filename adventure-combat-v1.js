@@ -120,9 +120,11 @@
   const panel=root?.querySelector?.('[data-advanced-dungeon]');if(!panel)return;
   const fields=panel.querySelectorAll('[data-advanced-field]'),enabled=panel.querySelector('[data-advanced-enabled]'),status=panel.querySelector('[data-advanced-status]');
   const sync=cfg=>{enabled.checked=cfg.enabled;fields.forEach(f=>{f.value=String(cfg[f.dataset.advancedField])})};
+  const approach=()=>{const active=root.querySelector('[data-pick^="preset:"].active,[data-hs-pick^="strategyPreset|"].active,[data-cc-pick^="strategyPreset|"].active');const value=active?.dataset.pick?.split(':')[1]||active?.dataset.hsPick?.split('|')[1]||active?.dataset.ccPick?.split('|')[1];return value==='safe'?'defensive':value==='aggressive'?'aggressive':value==='balanced'?'balanced':stance(id)};
+  const applyApproach=value=>{const legacy=value==='defensive'?'safe':value;const button=root.querySelector('[data-pick="preset:'+legacy+'"],[data-hs-pick="strategyPreset|'+legacy+'"],[data-cc-pick="strategyPreset|'+legacy+'"]');button?.click();try{localStorage.setItem(stanceKey(id),value)}catch(_){}root.querySelectorAll('[data-party-stance]').forEach(b=>{const active=b.dataset.partyStance===value;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))})};
   const statusText=t=>{if(status)status.textContent=t};
   const update=()=>{const x=advanced(id);x.enabled=enabled.checked;fields.forEach(f=>x[f.dataset.advancedField]=f.value);saveAdvanced(id,x);statusText(x.enabled?'Advanced tactics active for the next run.':'Advanced tactics off; standard combat rules apply.')};
-  panel.addEventListener('change',e=>{if(e.target.matches('[data-advanced-field],[data-advanced-enabled]'))update()});
+  panel.addEventListener('change',e=>{if(e.target.matches('[data-advanced-field]'))enabled.checked=true;if(e.target.matches('[data-advanced-field],[data-advanced-enabled]'))update()});
   panel.addEventListener('click',e=>{
    const btn=e.target.closest('button');if(!btn)return;
    const preset=btn.dataset.advancedPreset;
@@ -130,7 +132,7 @@
     const plan=PRESETS[preset];
     saveAdvanced(id,{...plan,enabled:true});sync(advanced(id));
     const orders=read();for(const ch of party)orders[key(ch)]=plan.roles[role(ch)]||DEFAULT[role(ch)];save(orders);
-    try{localStorage.setItem(stanceKey(id),plan.stance)}catch(_){}
+    applyApproach(plan.stance);
     // Rebinds the visible orders and approach without reopening the dungeon.
     root.querySelectorAll('[data-order-unit]').forEach(row=>row.querySelectorAll('[data-order-choice]').forEach(button=>{const active=button.dataset.orderChoice===orders[row.dataset.orderUnit];button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))}));
     root.querySelectorAll('[data-party-stance]').forEach(button=>{const active=button.dataset.partyStance===plan.stance;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
@@ -140,13 +142,13 @@
     root.querySelectorAll('[data-plan="strategyPreset"] button').forEach(button=>{button.classList.toggle('active',button.dataset.pick==='strategyPreset:'+legacy)});
     statusText('Applied '+btn.textContent+'. Party orders and advanced settings updated.');
    }else if(btn.hasAttribute('data-advanced-save')){
-    const snapshot={advanced:advanced(id),orders:current(party),stance:stance(id)};
+    const snapshot={advanced:advanced(id),orders:current(party),stance:approach()};
     try{localStorage.setItem(advancedKey(id)+':saved',JSON.stringify(snapshot));statusText('Saved your custom dungeon plan.')}catch(_){statusText('Could not save on this device.')}
    }else if(btn.hasAttribute('data-advanced-load')){
     try{const saved=JSON.parse(localStorage.getItem(advancedKey(id)+':saved')||'null');if(!saved)throw Error('missing');
      saveAdvanced(id,saved.advanced);sync(advanced(id));
      const data=read();for(const ch of party){const v=saved.orders?.[key(ch)];if(CHOICES[role(ch)].some(a=>a[0]===v))data[key(ch)]=v}save(data);
-     if(STANCES.some(a=>a[0]===saved.stance))localStorage.setItem(stanceKey(id),saved.stance);
+     if(STANCES.some(a=>a[0]===saved.stance))applyApproach(saved.stance);
      root.querySelectorAll('[data-order-unit]').forEach(row=>row.querySelectorAll('[data-order-choice]').forEach(b=>{const active=b.dataset.orderChoice===data[row.dataset.orderUnit];b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))}));
      root.querySelectorAll('[data-party-stance]').forEach(b=>{const active=b.dataset.partyStance===saved.stance;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
      statusText('Loaded your saved plan.');
