@@ -736,7 +736,7 @@ function renderOverview(){
     if(!fullParty||!compositionReady||!recoveryReady){switchView('party');return}
     if(!gearReady){switchView('roster');return}
     switchView('content');
-    setTimeout(()=>window.CellboundDungeonQuickEntry?.open?.(dungeon.id)||window.CellboundDungeonBrowser?.open?.(dungeon.id),40);
+    setTimeout(()=>(window.CellboundDungeonQuickEntry?.open?window.CellboundDungeonQuickEntry.open(dungeon.id):window.CellboundDungeonBrowser?.open?.(dungeon.id)),40);
   };
   const missionLabel=!questReady?'CONTINUE QUEST':!fullParty||!compositionReady?'BUILD ACTIVE PARTY':!recoveryReady?'MANAGE RECOVERY':!gearReady?'IMPROVE GEAR':'OPEN DUNGEON';
   const directive=!questReady
@@ -819,7 +819,7 @@ function renderOverview(){
       const id=button.dataset.homeStage;
       if(id==='manor'){switchView('raids');return}
       switchView('content');
-      setTimeout(()=>window.CellboundDungeonQuickEntry?.open?.(id)||window.CellboundDungeonBrowser?.open?.(id),40);
+      setTimeout(()=>(window.CellboundDungeonQuickEntry?.open?window.CellboundDungeonQuickEntry.open(id):window.CellboundDungeonBrowser?.open?.(id)),40);
     }));
   }
 
