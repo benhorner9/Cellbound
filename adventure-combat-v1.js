@@ -87,7 +87,78 @@
    current==='aggressive'?{pullStyle:'aggressive',cooldownUse:'free',interruptPriority:'standard',interruptAssignment:'best',crowdControl:'disabled',defensiveUsage:'standard',addPriority:'boss',movementDiscipline:'damage'}:
    {pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'};
  }
-  window.CellboundPartyTactics={VERSION:1,CHOICES,role,key,current,markup,bind,stance,stanceMarkup,bindStance,stanceTactics};
+
+ // Dungeon-specific advanced plans. Defaults never alter the existing combat until enabled.
+ const advancedKey=id=>storageKey()+':advanced:'+String(id);
+ const ADV_DEFAULT={enabled:false,pull:'entrance',spacing:12,groupThreshold:75,mana:'balanced'};
+ const PRESETS={
+  safe:{pull:'entrance',spacing:16,groupThreshold:85,mana:'conserve',stance:'defensive',roles:{tank:'all-aggro',healer:'group',dps:'adds'}},
+  farm:{pull:'centre',spacing:10,groupThreshold:70,mana:'balanced',stance:'balanced',roles:{tank:'all-aggro',healer:'triage',dps:'adds'}},
+  rush:{pull:'far',spacing:8,groupThreshold:60,mana:'survival',stance:'aggressive',roles:{tank:'boss-lock',healer:'tank-first',dps:'boss-burn'}}
+ };
+ function sanitizeAdvanced(raw){
+  const x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+  const pick=(arr,v,fallback)=>arr.includes(v)?v:fallback;
+  const num=(n,min,max,step,fallback)=>Number.isFinite(Number(n))?Math.max(min,Math.min(max,Math.round(Number(n)/step)*step)):fallback;
+  return{enabled:x.enabled===true,pull:pick(['entrance','centre','far'],x.pull,ADV_DEFAULT.pull),spacing:num(x.spacing,6,18,2,12),groupThreshold:num(x.groupThreshold,40,95,5,75),mana:pick(['conserve','balanced','survival'],x.mana,ADV_DEFAULT.mana)}
+ }
+ function advanced(id){try{return sanitizeAdvanced(JSON.parse(localStorage.getItem(advancedKey(id))||'{}'))}catch(_){return{...ADV_DEFAULT}}}
+ function saveAdvanced(id,v){try{localStorage.setItem(advancedKey(id),JSON.stringify(sanitizeAdvanced(v)))}catch(_){}}
+ function advancedMarkup(id){
+  const cfg=advanced(id),opts=(name,values,selected)=>values.map(([value,label])=>'<option value="'+value+'"'+(selected===value?' selected':'')+'>'+label+'</option>').join('');
+  return '<details class="cb-advanced-plan" data-advanced-dungeon="'+esc(id)+'"><summary><span><b>ADVANCED TACTICS</b><small>Optional · Pull positioning, ranged spacing, healing and saved plans</small></span><em>CONFIGURE</em></summary>'+
+   '<div class="cb-advanced-body"><label class="cb-advanced-enable"><input type="checkbox" data-advanced-enabled '+(cfg.enabled?'checked':'')+'> Use advanced tactics in combat</label>'+
+   '<div class="cb-advanced-presets"><span>QUICK PLANS</span><button type="button" data-advanced-preset="safe">Safe Progression</button><button type="button" data-advanced-preset="farm">Fast Farming</button><button type="button" data-advanced-preset="rush">Boss Rush</button></div>'+
+   '<div class="cb-advanced-fields"><label>Tank pull location<select data-advanced-field="pull">'+opts('pull',[['entrance','Near entry'],['centre','Middle of encounter'],['far','Towards enemy side']],cfg.pull)+'</select></label>'+
+   '<label>Ranged positioning<select data-advanced-field="spacing">'+opts('spacing',[[6,'Close · 6'],[8,'8'],[10,'10'],[12,'Standard · 12'],[14,'14'],[16,'16'],[18,'Spread · 18']],cfg.spacing)+'</select><small>Desired distance from enemy formation; room boundaries and mechanics take priority.</small></label>'+
+   '<label>Group-heal trigger<select data-advanced-field="groupThreshold">'+opts('threshold',Array.from({length:12},(_,i)=>[40+i*5,(40+i*5)+'% HP']),cfg.groupThreshold)+'</select><small>Heal the group when two allies fall below this health.</small></label>'+
+   '<label>Healer mana policy<select data-advanced-field="mana">'+opts('mana',[['conserve','Conserve mana'],['balanced','Balanced'],['survival','Survival first']],cfg.mana)+'</select></label></div>'+
+   '<div class="cb-advanced-save"><button type="button" data-advanced-save>Save current plan</button><button type="button" data-advanced-load>Load saved plan</button><button type="button" data-advanced-reset>Reset advanced</button><output data-advanced-status aria-live="polite">Settings persist for this dungeon on this device.</output></div>'+
+   '<p class="cb-advanced-hint">Tactical positions are movement goals, not teleports. The party may override them to dodge hazards, reach abilities or obey live commands.</p></div></details>';
+ }
+ function advancedBind(root,id,party=[]){
+  const panel=root?.querySelector?.('[data-advanced-dungeon]');if(!panel)return;
+  const fields=panel.querySelectorAll('[data-advanced-field]'),enabled=panel.querySelector('[data-advanced-enabled]'),status=panel.querySelector('[data-advanced-status]');
+  const sync=cfg=>{enabled.checked=cfg.enabled;fields.forEach(f=>{f.value=String(cfg[f.dataset.advancedField])})};
+  const statusText=t=>{if(status)status.textContent=t};
+  const update=()=>{const x=advanced(id);x.enabled=enabled.checked;fields.forEach(f=>x[f.dataset.advancedField]=f.value);saveAdvanced(id,x);statusText(x.enabled?'Advanced tactics active for the next run.':'Advanced tactics off; standard combat rules apply.')};
+  panel.addEventListener('change',e=>{if(e.target.matches('[data-advanced-field],[data-advanced-enabled]'))update()});
+  panel.addEventListener('click',e=>{
+   const btn=e.target.closest('button');if(!btn)return;
+   const preset=btn.dataset.advancedPreset;
+   if(PRESETS[preset]){
+    const plan=PRESETS[preset];
+    saveAdvanced(id,{...plan,enabled:true});sync(advanced(id));
+    const orders=read();for(const ch of party)orders[key(ch)]=plan.roles[role(ch)]||DEFAULT[role(ch)];save(orders);
+    try{localStorage.setItem(stanceKey(id),plan.stance)}catch(_){}
+    // Rebinds the visible orders and approach without reopening the dungeon.
+    root.querySelectorAll('[data-order-unit]').forEach(row=>row.querySelectorAll('[data-order-choice]').forEach(button=>{const active=button.dataset.orderChoice===orders[row.dataset.orderUnit];button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))}));
+    root.querySelectorAll('[data-party-stance]').forEach(button=>{const active=button.dataset.partyStance===plan.stance;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
+    // The original three-stance dungeon buttons use their own legacy values.
+    const legacy=plan.stance==='defensive'?'safe':plan.stance;
+    root.querySelectorAll('[data-plan="preset"] button').forEach(button=>{button.classList.toggle('active',button.dataset.pick==='preset:'+legacy)});
+    root.querySelectorAll('[data-plan="strategyPreset"] button').forEach(button=>{button.classList.toggle('active',button.dataset.pick==='strategyPreset:'+legacy)});
+    statusText('Applied '+btn.textContent+'. Party orders and advanced settings updated.');
+   }else if(btn.hasAttribute('data-advanced-save')){
+    const snapshot={advanced:advanced(id),orders:current(party),stance:stance(id)};
+    try{localStorage.setItem(advancedKey(id)+':saved',JSON.stringify(snapshot));statusText('Saved your custom dungeon plan.')}catch(_){statusText('Could not save on this device.')}
+   }else if(btn.hasAttribute('data-advanced-load')){
+    try{const saved=JSON.parse(localStorage.getItem(advancedKey(id)+':saved')||'null');if(!saved)throw Error('missing');
+     saveAdvanced(id,saved.advanced);sync(advanced(id));
+     const data=read();for(const ch of party){const v=saved.orders?.[key(ch)];if(CHOICES[role(ch)].some(a=>a[0]===v))data[key(ch)]=v}save(data);
+     if(STANCES.some(a=>a[0]===saved.stance))localStorage.setItem(stanceKey(id),saved.stance);
+     root.querySelectorAll('[data-order-unit]').forEach(row=>row.querySelectorAll('[data-order-choice]').forEach(b=>{const active=b.dataset.orderChoice===data[row.dataset.orderUnit];b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))}));
+     root.querySelectorAll('[data-party-stance]').forEach(b=>{const active=b.dataset.partyStance===saved.stance;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
+     statusText('Loaded your saved plan.');
+    }catch(_){statusText('No saved plan found yet.')}
+   }else if(btn.hasAttribute('data-advanced-reset')){
+    saveAdvanced(id,ADV_DEFAULT);sync(advanced(id));statusText('Advanced rules reset and disabled.')
+   }
+  })
+ }
+ function combat(id,party=[]){return{unitOrders:current(party),advanced:advanced(id)}}
+ window.CellboundPartyTactics={VERSION:2,CHOICES,role,key,current,markup,bind,stance,stanceMarkup,bindStance,stanceTactics,advanced,advancedMarkup,advancedBind,combat};
+
  window.CellboundDungeonQuickEntry={open(id){
   const E=window.CellboundEndgame;
   if(E?.prepare){
