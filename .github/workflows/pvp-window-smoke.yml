@@ -1,0 +1,45 @@
+name: Cellbound PvP Window Smoke
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/pvp-window-smoke.yml'
+      - 'pvp-v1.js'
+      - 'pvp-v1.css'
+      - 'guild.html'
+      - 'layout-safety-v1.css'
+      - 'src/combat/pvp-*.js'
+      - 'src/combat/pvp-*.css'
+      - 'src/combat/combat-viewer-v1.js'
+      - 'tests/pvp-practice-window.browser.cjs'
+      - 'tests/pvp-practice-window.contract.cjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cellbound-pvp-window-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium:
+    name: PvP full-screen iPad and phone smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build game
+        run: npm run build
+      - name: Install browser runner
+        run: npm install --no-save --package-lock=false playwright@1.51.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Exercise real PvP window on iPad and phone
+        env:
+          CELLBOUND_TEST_ENGINE: chromium
+        run: node tests/pvp-practice-window.browser.cjs
