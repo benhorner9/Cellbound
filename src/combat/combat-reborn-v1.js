@@ -1207,10 +1207,22 @@ function setAggro(ctx,e,target,reason='threat'){
   emit(ctx,'AGGRO_CHANGED',{source:e.id,target:target.id,result:reason,payload:{previous:prev,threat:copy(e.threat)}});
  }
 }
+function isBossEnemy(e){return e?.kind==='boss'||['boss','world-boss','final'].includes(e?.classification)}
+function openingTankThreat(ctx,e,tank){
+ const base=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;
+ if(tank?.role!=='tank'||ctx.pvp)return base;
+ const order=unitOrder(ctx,tank);
+ return Math.round(base*(order==='all-aggro'?1.25:order==='boss-lock'?(isBossEnemy(e)?1.55:.72):order==='damage'?.70:1));
+}
 function addThreat(ctx,e,u,amount,reason='damage'){
  if(ctx.pvp||!e?.alive||!u?.alive)return;
- e.threat[u.id]=(Number(e.threat[u.id])||0)+Math.max(0,amount);
- emit(ctx,'THREAT_GENERATED',{source:u.id,target:e.id,amount,result:reason,payload:{total:e.threat[u.id]}});
+ let generated=Math.max(0,amount);
+ if(u.role==='tank'){
+  const order=unitOrder(ctx,u);
+  generated*=order==='all-aggro'?1.25:order==='boss-lock'?(isBossEnemy(e)?1.5:.70):order==='damage'?.70:1;
+ }
+ e.threat[u.id]=(Number(e.threat[u.id])||0)+generated;
+ emit(ctx,'THREAT_GENERATED',{source:u.id,target:e.id,amount:generated,result:reason,payload:{total:e.threat[u.id]}});
  setAggro(ctx,e,topThreatTarget(ctx,e),reason);
 }
 function executeTaunt(ctx,u,e,a){
@@ -2073,6 +2085,9 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(ctx.pvp&&source.team===target.team)return 0;
  if(ctx?.encounter?.focusSelectedDamageOnly&&source.role!=='enemy'&&target.role==='enemy'&&!target.focusSelected)return 0;
  let final=Math.max(0,amount);
+ // Press Damage increases tank output, but sacrifices initial threat and
+ // delays defensive cooldowns. This is an actual risk/reward run order.
+ if(!ctx.pvp&&source.role==='tank'&&target.role==='enemy'&&unitOrder(ctx,source)==='damage')final*=1.10;
  if(target.role==='enemy'&&ctx.encounter.designerEnemy)final*=1-(Number(target.designerDefence)||0)/100;
  if(target.role!=='enemy'){
   if(!opts.ignoreMitigation){
@@ -2982,7 +2997,9 @@ function playerAI(ctx,u){
   const purify=u.abilities.find(a=>a.id==='purifying-brew'&&cooldownReady(u,a));
   if(purify&&Number(u.staggerPool||0)/Math.max(1,u.maxHealth)>.07&&useDefensiveSkill(ctx,u,purify))return
  }
- const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
+ const baseDefensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
+ const tankOrder=u.role==='tank'?unitOrder(ctx,u):'';
+ const defensiveThreshold=tankOrder==='damage'?Math.min(baseDefensiveThreshold,.38):tankOrder==='all-aggro'?Math.max(baseDefensiveThreshold,.54):baseDefensiveThreshold;
  const defensive=u.abilities.find(a=>a.kind==='defensive'&&cooldownReady(u,a));
  if(defensive&&healthRatio(u)<defensiveThreshold){
   if(shouldMistake(ctx,u,'defensive',7000))u.nextDecision=Math.max(u.nextDecision,ctx.time+650+Math.round(ctx.rng()*450));
@@ -3758,7 +3775,7 @@ function createCombatContext(options={}){
   }
  }
  const tank=players.find(p=>p.role==='tank')||players[0];
- if(tank)enemies.forEach(e=>{e.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,e,tank,'pull')});
+ if(tank)enemies.forEach(e=>{e.threat[tank.id]=openingTankThreat(ctx,e,tank);setAggro(ctx,e,tank,'pull')});
  maybeApplyCrowdControl(ctx);
  schedulePartyCommands(ctx,options.commandTimeline);scheduleNextMechanic(ctx);scheduleUnstableGround(ctx);
  return ctx
@@ -4006,7 +4023,7 @@ function createLiveSession(options={}){
   const enemy=normaliseEnemies(mini)[0];enemy.id=id;enemy.position=openPosition(ctx,enemy.position,1.6);enemy.threat=Object.fromEntries(ctx.players.map(p=>[p.id,0]));
   ctx.enemies.push(enemy);ctx.units[id]=enemy;ctx.mechanicBag=[];
   const tank=livingPlayers(ctx).find(p=>p.role==='tank')||livingPlayers(ctx)[0];
-  if(tank){enemy.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,enemy,tank,'live spawn')}
+  if(tank){enemy.threat[tank.id]=openingTankThreat(ctx,enemy,tank);setAggro(ctx,enemy,tank,'live spawn')}
   emit(ctx,'ENEMY_SPAWNED',{source:id,target:id,ability:enemy.name,result:'spawned',position:copy(enemy.position),payload:{name:enemy.name,level:enemy.level,classification:enemy.classification,classificationLabel:enemy.classificationLabel,maxHealth:enemy.maxHealth,live:true}});
   if(Array.isArray(opts.mechanics)&&opts.mechanics.length)addMechanics(opts.mechanics,id);
   return{ok:true,id,enemy:copy(enemy),events:ctx.events.slice(Math.max(0,ctx.events.length-2)).map(copy),timeMs:ctx.time}
