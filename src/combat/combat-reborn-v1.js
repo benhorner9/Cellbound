@@ -2235,7 +2235,7 @@ applyStatus(ctx,controller,target,{id:'tactical-control',name:'Tactical Crowd Co
 emit(ctx,'CROWD_CONTROL',{source:controller.id,target:target.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration,policy}});
 }
 function pickDamageTarget(ctx,u){
-if(ctx.pvp){const rule=window.CellboundPvPRuleset,plan=ctx.pvp.orders[u.team]||{},order=plan.individual?.[String(u.characterId)]||plan.target||'balanced';return rule?.selectTarget(order,u,livingEnemies(ctx),(a,b)=>hasLineOfSight(ctx,a,b))||null}
+if(ctx.pvp){const rule=window.CellboundPvPRuleset,plan=ctx.pvp.orders[u.team]||{},order=(plan.individual?.[String(u.characterId)]&&plan.individual[String(u.characterId)]!=='balanced'?plan.individual[String(u.characterId)]:plan.target)||'balanced';return rule?.selectTarget(order,u,livingEnemies(ctx),(a,b)=>hasLineOfSight(ctx,a,b))||null}
 const commanded=ctx.commandFocusId&&Number(ctx.commandFocusUntil)>ctx.time?getUnit(ctx,ctx.commandFocusId):null;
 if(commanded?.alive)return commanded;
 if(ctx.commandFocusId&&Number(ctx.commandFocusUntil)<=ctx.time){ctx.commandFocusId=null;ctx.commandFocusUntil=0}
