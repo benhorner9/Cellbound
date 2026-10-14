@@ -79,6 +79,9 @@ function setupPractice(){
    window.CellboundCombatPortraits?.registerCharacters?.([...squad.blue,...squad.red]);
    const shell=viewer.mount(root,{profile:'pvp',mode:gameMode,mapArt:maps.artUrl(map),partySize:n,title:gameMode==='arena'?n+'v'+n+' Arena':gameMode==='capture-the-flag'?'Capture the Flag':'King of the Hill',header:'OWNER PRACTICE · NO REWARDS',inline:true});
    viewer.renderPvpFrame(shell,session.snapshot(),{events:session.snapshot().events});
+   // Starting a match reveals a new battlefield below the setup panel. Bring
+   // it into view on tablets/phones instead of leaving the player at the form.
+   try{root.scrollIntoView?.({behavior:'smooth',block:'start'})}catch(_){}
    const controls=host.querySelector('[data-pvp-qa-orders]');controls.hidden=false;
    controls.querySelectorAll('[data-qa-ctf]').forEach(el=>el.hidden=gameMode!=='capture-the-flag');
    controls.querySelectorAll('[data-qa-hill]').forEach(el=>el.hidden=gameMode!=='king-of-the-hill');
@@ -112,7 +115,12 @@ function render(mount){
  stopPractice();
  if(!mount||window.CellboundAdmin?.role!=='owner')return;
  mount.insertAdjacentHTML('beforeend',practiceMarkup());
- setupPractice()
+ try{setupPractice()}catch(error){
+  // The pane must remain usable even if a service/map dependency is late.
+  console.warn('PvP owner practice controls failed to initialise',error);
+  const status=mount.querySelector('.cbpvp-qa [data-pvp-qa-status]');
+  if(status)status.textContent='Practice controls could not load. Reopen PvP or reload the game.';
+ }
 }
 window.CellboundPvPOwnerQA=Object.freeze({render,stop:stopPractice});
 })();
