@@ -7,6 +7,25 @@ const party=()=>[boss(),unit('tank','tank',440,220,{target:'boss'}),unit('melee-
 function apply(list,g,mode){const r=S.plan(list,g,mode);for(const u of list){u.reserved=r.positions.get(u.id);if(!u.visual&&u.reserved)u.visual={...u.reserved};u.speed=160;u.waypoint=null;u.route=null}return r}
 function clear(list,g){for(const u of list.filter(u=>!u.dead)){assert(S.legal(u.reserved,u,g),u.id+' legal');for(const v of list.filter(v=>!v.dead&&v.id>u.id))assert(S.spacingOverlap(u,u.reserved,v,v.reserved,0)<.001,u.id+' reserved separately from '+v.id)}}
 const g=S.geometry(744,418),list=party(),original=JSON.stringify(list.map(u=>u.logical));assert.equal(apply(list,g).unresolved,0);clear(list,g);
+
+// Every combat presentation shares a real, screen-safe fighting floor.
+// Check stage themes at desktop, portrait iPad and narrow mobile dimensions.
+for(const theme of ['shared','ashen','hollow','chaos','blackout','fractured','manor','twelve','null','world','quest','pvp']){
+ for(const [width,height] of [[1366,768],[1024,1366],[390,640],[300,340]]){
+  const bounds=S.fightingArea(theme,5),floor=S.geometry(width,height,{bounds});
+  const actor={rx:18,ry:15,head:Math.min(68,height*.22),foot:14};
+  for(const entry of [{x:-100,y:0},{x:width+100,y:height+100},{x:width*.5,y:height*.5}]){
+   const safe=S.safePoint(entry,actor,floor);
+   assert(S.legal(safe,actor,floor),theme+' '+width+'x'+height+' has a legal visible spawn');
+   assert(safe.x>=actor.rx&&safe.x<=width-actor.rx&&safe.y>0&&safe.y<height,theme+' does not draw units off the stage');
+  }
+ }
+}
+const ownerFloor=S.geometry(390,640,{bounds:S.fightingArea('ashen')});
+const hunter={x:8,y:54},petStart=S.safePoint({x:(hunter.x+4)*3.9,y:(hunter.y+4)*6.4},{rx:20,ry:20,head:36,foot:14},ownerFloor);
+assert(S.legal(petStart,{rx:20,ry:20,head:36,foot:14},ownerFloor),'Hunter companion materialises inside fighting floor even by the map edge');
+assert(petStart.x>30,'Hunter companion never emerges from CSS left:0');
+
 // Target-contact clearance differs from full artwork clearance: melee feet stay
 // distinct while torso/weapon silhouettes may overlap for believable contact.
 const mercer=list[0],tank=list.find(u=>u.id==='tank'),melees=list.filter(u=>u.style==='melee'&&u.role!=='pet');
