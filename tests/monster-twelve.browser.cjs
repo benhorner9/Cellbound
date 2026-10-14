@@ -26,9 +26,9 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
     if(!el)return null;const r=el.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
    };
    const route=shell.querySelector('.cbcombat-route'),score=shell.querySelector('.tb-scorebar'),tombs=shell.querySelector('.tb-tomb-track'),
-    panel=shell.querySelector('.cbcombat-command-panel'),buttons=[...panel.querySelectorAll('[data-tb-command],[data-tb-potion]')];
+    panel=shell.querySelector('.cbcombat-command-panel'),deck=panel.querySelector('.tb-command-deck'),buttons=[...deck.querySelectorAll('[data-tb-command],[data-tb-potion]')];
    return{view:{w:innerWidth,h:innerHeight},route:box(route),score:box(score),tombs:box(tombs),panel:box(panel),
-    buttons:buttons.map(box),power:box(panel.querySelector('.cbr-inline-power')),tombCount:tombs.children.length};
+    buttons:buttons.map(box),deck:box(deck),deckColumns:getComputedStyle(deck).gridTemplateColumns.split(' ').filter(Boolean).length,power:box(panel.querySelector('.cbr-inline-power')),tombCount:tombs.children.length};
   });
   const assertLayout=(layout,label)=>{
    assert.equal(layout.tombCount,12,label+' shows all twelve tomb statuses');
@@ -37,6 +37,12 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
    assert(layout.route.bottom<=layout.panel.top-100,label+' battlefield present between HUD elements');
    assert(layout.panel.top>=0&&layout.panel.bottom<=layout.view.h+2,label+' command dock inside viewport');
    assert.equal(layout.buttons.length,8,label+' all seven commands plus potion');
+   assert.equal(layout.deckColumns,4,label+' must have four equal button columns');
+   assert(layout.deck.width>=layout.view.w*.85,label+' deck uses available full width');
+   assert(layout.deck.left>=layout.panel.left-1&&layout.deck.right<=layout.panel.right+1,label+' deck fits command panel');
+   assert(Math.abs(layout.buttons[0].top-layout.buttons[3].top)<3,label+' first four commands share row one');
+   assert(layout.buttons[4].top>=layout.buttons[0].bottom+2,label+' second row starts below first row');
+   assert(Math.abs(layout.buttons[4].top-layout.buttons[7].top)<3,label+' last four commands share row two');
    for(const b of layout.buttons)assert(b.width>=60&&b.height>=43&&b.left>=-1&&b.right<=layout.view.w+2&&b.top>=layout.panel.top-1&&b.bottom<=layout.panel.bottom+2,label+' command visible and tappable: '+JSON.stringify(b));
   };
   await page.waitForTimeout(300);
