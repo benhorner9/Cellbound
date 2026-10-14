@@ -5079,3 +5079,84 @@ body.cb-immersive-ui:has(.recruit-modal-backdrop:not([hidden])) .cb-dock{
  .cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel>.cbcombat-arena-wrap.cbs-spatial-wrap{min-height:340px!important;aspect-ratio:auto!important}
  .cbcombat-shell[data-combat-view="canonical-v1"] .cbs-spatial-wrap>[data-spatial-arena="1"]{height:100%!important;min-height:0!important;aspect-ratio:auto!important}
 }
+
+/*
+ * Inline owner PvP practice must never inherit the fixed-height immersive
+ * dungeon shell. It lives inside the normal PvP view (not a gameplay overlay).
+ * Use auto-sized tracks so the battlefield, rosters and pre-match plan stay
+ * visible on landscape iPad, portrait iPad and phone layouts.
+ */
+#pvpMount{width:100%;min-width:0;max-width:100%;grid-template-columns:minmax(0,1fr)}
+#pvpMount > .cbpvp-qa{box-sizing:border-box;min-width:0;width:100%;max-width:100%;overflow:visible}
+#pvpMount .cbpvp-qa [data-pvp-qa-pre-plan],
+#pvpMount .cbpvp-qa [data-pvp-qa-viewer]{width:100%;max-width:100%;min-width:0}
+#pvpMount .cbpvp-qa .cbcombat-pvp-shell[data-combat-view="canonical-v1"]{
+ position:relative!important;inset:auto!important;
+ display:grid!important;grid-template-rows:auto auto auto!important;
+ width:100%!important;height:auto!important;min-width:0!important;
+ min-height:0!important;max-height:none!important;
+ margin:12px 0 0!important;overflow:visible!important;
+ transform:none!important;
+}
+#pvpMount .cbpvp-qa .cbcombat-pvp-shell[data-combat-view="canonical-v1"] > .cbcombat-grid{
+ position:relative!important;inset:auto!important;
+ display:grid!important;grid-template-rows:auto!important;
+ width:100%!important;height:auto!important;min-width:0!important;
+ min-height:0!important;max-height:none!important;
+ overflow:visible!important;
+}
+#pvpMount .cbpvp-qa .cbcombat-pvp-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel{
+ position:relative!important;inset:auto!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ overflow:visible!important;align-self:start!important;
+}
+#pvpMount .cbpvp-qa .cbcombat-pvp-shell[data-combat-view="canonical-v1"] .cbcombat-arena-wrap{
+ position:relative!important;inset:auto!important;
+ box-sizing:border-box!important;width:100%!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ aspect-ratio:16/9!important;overflow:hidden!important;flex:0 0 auto!important;
+}
+#pvpMount .cbpvp-qa .cbcombat-pvp-shell[data-combat-view="canonical-v1"] .cbpvp-stage.cb2d-arena{
+ position:absolute!important;inset:0!important;
+ width:100%!important;height:100%!important;
+ min-height:0!important;max-height:none!important;
+ overflow:hidden!important;
+}
+#pvpMount .cbpvp-qa .cbcombat-left-column,
+#pvpMount .cbpvp-qa .cbcombat-right-column{
+ min-width:0!important;min-height:0!important;height:auto!important;
+ overflow:visible!important;
+}
+#pvpMount .cbpvp-qa .cbcombat-party-panel,
+#pvpMount .cbpvp-qa .cbcombat-meters-panel,
+#pvpMount .cbpvp-qa .cbcombat-command-panel{
+ height:auto!important;min-height:0!important;max-height:none!important;
+ overflow:visible!important;
+}
+#pvpMount .cbpvp-qa .cbcombat-party-rows{height:auto!important;min-height:0!important}
+#pvpMount .cbpvp-qa .cbcombat-route{min-height:0!important}
+@media(max-width:1100px){
+ #pvpMount .cbpvp-qa .cbcombat-pvp-shell[data-combat-view="canonical-v1"] > .cbcombat-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-rows:auto auto!important;
+ }
+ #pvpMount .cbpvp-qa .cbcombat-battle-panel{grid-column:1/-1!important;grid-row:1!important}
+ #pvpMount .cbpvp-qa .cbcombat-left-column{grid-column:1!important;grid-row:2!important}
+ #pvpMount .cbpvp-qa .cbcombat-right-column{grid-column:2!important;grid-row:2!important}
+}
+@media(max-width:650px){
+ #pvpMount .cbpvp-qa .cbcombat-pvp-shell[data-combat-view="canonical-v1"] > .cbcombat-grid{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto auto!important;
+  padding:6px!important;
+ }
+ #pvpMount .cbpvp-qa .cbcombat-battle-panel{grid-column:1!important;grid-row:1!important}
+ #pvpMount .cbpvp-qa .cbcombat-left-column{grid-column:1!important;grid-row:2!important}
+ #pvpMount .cbpvp-qa .cbcombat-right-column{grid-column:1!important;grid-row:3!important}
+ #pvpMount .cbpvp-qa .cbcombat-pvp-shell[data-combat-view="canonical-v1"] .cbcombat-arena-wrap{
+  height:clamp(310px,50vh,440px)!important;
+  aspect-ratio:auto!important;
+ }
+ #pvpMount .cbpvp-qa .cbcombat-pvp-shell .cbcombat-header{gap:8px!important;padding:8px!important}
+ #pvpMount .cbpvp-qa .cbcombat-pvp-shell .cbcombat-header-actions{gap:4px!important}
+}
