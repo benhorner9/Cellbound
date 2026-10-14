@@ -37,6 +37,8 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
   await shell.evaluate(s=>CellboundCombatViewer.setResults(s,true));assert(await shell.locator('.cbcombat-grid').isHidden());
   await shell.evaluate(s=>CellboundCombatViewer.setResults(s,false));assert(await shell.locator('.cbcombat-grid').isVisible());
   page.once('dialog',d=>d.accept());await page.locator('[data-q-close]').click();
+  await page.locator('[data-fa-return]').click();
+  assert.equal(await page.locator('.fa-failed:visible').count(),0,'departure result is dismissed before opening raid');
   await page.evaluate(()=>{CellboundGame.getState().roster.forEach(c=>{c.cellShock=0;c.cellShockLockedUntil=null});CellboundGame.renderAll()});
   await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner');
   await page.evaluate(()=>CellboundManorRaid.startOwnerSoloQa());
@@ -46,8 +48,11 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
   for(const size of [{width:1366,height:1024},{width:390,height:844}]){
    await page.setViewportSize(size);await page.waitForTimeout(1000);
    const raid=page.locator('#cb2dBackdrop .cbcombat-shell');
+   await raid.locator('[data-combat-compare]').click();assert.equal(await raid.getAttribute('data-combat-layout'),'classic');
+   await raid.locator('[data-combat-compare]').click();assert.equal(await raid.getAttribute('data-combat-layout'),'immersive');
    const cards=await raid.locator('#cb2dRows > .cb2d-party-row:visible').count();
    assert.equal(cards,10,'both raid parties stay visible');
+   const visible=await raid.locator('#cb2dRows > .cb2d-party-row').evaluateAll(rows=>rows.every(row=>{const r=row.getBoundingClientRect(),panel=row.closest('.cbcombat-party-panel').getBoundingClientRect();return r.y>=panel.y&&r.bottom<=panel.bottom+1}));assert(visible,'all raid cards fit inside party panel');
    const arena=await raid.locator('[data-combat-arena]').boundingBox();assert(arena.height>180&&arena.y+arena.height<size.height,'raid arena fits');
    if(process.env.CELLBOUND_UI_SCREENSHOTS)await page.screenshot({path:process.env.CELLBOUND_UI_SCREENSHOTS+'/butler-'+size.width+'.png'});
   }

@@ -185,7 +185,7 @@ function normalise(shell){
  if(meters)meters.classList.add('cbcombat-meter-stack');
  shell.querySelectorAll('[data-combat-party-rows] > .cb2d-party-row').forEach(row=>{
   const dot=row.querySelector(':scope > i.cb2d-dot');if(dot)dot.classList.add('cb2d-party-avatar');
-  const main=[...row.children].find(node=>node.tagName==='SPAN'&&!node.classList.contains('cb2d-party-target')&&!node.classList.contains('cbstd-party-target'));
+  const main=[...row.children].find(node=>node.tagName==='SPAN'&&!node.classList.contains('cb2d-party-avatar')&&!node.classList.contains('cb2d-party-target')&&!node.classList.contains('cbstd-party-target'));
   if(main)main.classList.add('cb2d-party-main')
  });
  if(!shell.dataset.immersiveBound){
