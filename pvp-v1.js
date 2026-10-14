@@ -194,8 +194,12 @@ function lockedMarkup(){
 function render(){
   const mount=$('#pvpMount');if(!mount||!game()?.ready)return;
   if(!pvpEnabled()){
-   mount.innerHTML=lockedMarkup();
-   window.CellboundPvPOwnerQA?.render?.(mount);
+   if(window.CellboundAdmin?.role==='owner'&&window.CellboundPvPOwnerQA?.render){
+    // Owner testing is the primary PvP screen. Do not bury it below the public
+    // locked splash/feature-paused panels or imply that matchmaking is open.
+    mount.replaceChildren();
+    window.CellboundPvPOwnerQA.render(mount);
+   }else mount.innerHTML=lockedMarkup();
    return
   }
   const p=ensureState();if(!p)return;maybeSettleSeason(p);
@@ -296,6 +300,6 @@ function buyGear(tier,slot){
 
 window.CellboundPvP={version:'1.4.0',get enabled(){return pvpEnabled()},render,arenaUnlocked,getRank:()=>pvpEnabled()?bgRank(ensureState()):null,getState:()=>pvpEnabled()?ensureState():null};
 window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render();else window.CellboundPvPOwnerQA?.stop?.()});
-window.addEventListener('cellbound:admin-status',()=>{if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()});
+window.addEventListener('cellbound:admin-status',()=>{if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active')&&!(window.CellboundAdmin?.role==='owner'&&$('#pvpMount .cbpvp-qa')))render()});
 let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);
 })();
