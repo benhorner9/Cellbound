@@ -5223,6 +5223,13 @@ body.cbpvp-practice-active{overflow:hidden!important}
  grid-template-columns:minmax(125px,.75fr) minmax(0,3.1fr) minmax(125px,.85fr)!important;
  grid-template-rows:auto!important;overflow:visible!important;
 }
+/* The global immersive combat CSS places the battle in grid column one.
+   Explicitly reserve the centre column for PvP at desktop/iPad landscape size. */
+@media(min-width:1101px){
+ #cbpvpPracticeWindow .cbcombat-left-column{grid-column:1!important;grid-row:1!important}
+ #cbpvpPracticeWindow .cbcombat-battle-panel{grid-column:2!important;grid-row:1!important}
+ #cbpvpPracticeWindow .cbcombat-right-column{grid-column:3!important;grid-row:1!important}
+}
 #cbpvpPracticeWindow .cbcombat-battle-panel{
  position:relative!important;inset:auto!important;min-width:0!important;
  height:auto!important;min-height:0!important;max-height:none!important;
