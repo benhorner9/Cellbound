@@ -23,7 +23,7 @@ function preset(mode,name,roster=[]){
  const x=defaults(mode);
  if(name==='assault'){x.target='attack-healer';x.position='push-forward';x.objective=mode==='arena'?'pressure-healer':mode==='capture-the-flag'?'take-flag':'capture-hill'}
  if(name==='defence'){x.target='protect-healer';x.position='group-up';x.objective=mode==='arena'?'peel-healer':mode==='capture-the-flag'?'defend-base':'hold-hill'}
- x.individual=Object.fromEntries(roster.map(c=>[String(c.id),name==='assault'?'focus-low-health':name==='defence'?'protect-healer':'balanced']));
+ x.individual=Object.fromEntries(roster.map(c=>[String(c.id),'balanced']));
  x.healing=Object.fromEntries(roster.filter(isHealer).map(c=>[String(c.id),name==='defence'?'group':name==='assault'?'triage':'tank-first']));
  return x
 }
