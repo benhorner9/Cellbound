@@ -113,7 +113,7 @@ function setupPractice(){
 
 function render(mount){
  stopPractice();
- if(!mount||window.CellboundAdmin?.role!=='owner')return;
+ if(!mount||window.CellboundAdmin?.role!=='owner')return false;
  mount.insertAdjacentHTML('beforeend',practiceMarkup());
  try{setupPractice()}catch(error){
   // The pane must remain usable even if a service/map dependency is late.
@@ -121,6 +121,7 @@ function render(mount){
   const status=mount.querySelector('.cbpvp-qa [data-pvp-qa-status]');
   if(status)status.textContent='Practice controls could not load. Reopen PvP or reload the game.';
  }
+ return true
 }
-window.CellboundPvPOwnerQA=Object.freeze({render,stop:stopPractice});
+window.CellboundPvPOwnerQA=Object.freeze({render,stop:stopPractice,allowed:()=>window.CellboundAdmin?.role==='owner'});
 })();
