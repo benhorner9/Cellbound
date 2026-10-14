@@ -63,7 +63,9 @@ function createAuthority({engine,clock=Date.now,acceptanceMs=15000,reconnectMs=3
     assert(!seenUnits.has(u.id),'Character ids must be unique across both squads');
     seenUnits.add(u.id)
    });
-   return{userId:p.userId,team:p.team,roster,ready:false,connected:true,lastSeq:0,lastOrderAt:-Infinity,disconnectedAt:null}
+   const plan=p.sealedPreTactics;
+   assert(plan==null||(typeof plan==='object'&&!Array.isArray(plan)),'Invalid sealed PvP tactical plan');
+   return{userId:p.userId,team:p.team,roster,preTactics:plan?json(plan):null,ready:false,connected:true,lastSeq:0,lastOrderAt:-Infinity,disconnectedAt:null}
   });
   const t=time();
   const m={id,mode,size,players:chosen,seed,map:map?json(map):null,maximumDurationMs,status:'ready',createdAt:t,
@@ -80,7 +82,7 @@ function createAuthority({engine,clock=Date.now,acceptanceMs=15000,reconnectMs=3
    const [blue,red]=m.players;
    // All simulation state comes from the same engine used by dungeons and raids.
    m.session=engine.createPvpSession({
-    pvp:{mode:m.mode,size:m.size,blue:json(blue.roster),red:json(red.roster),...(m.map?{map:json(m.map)}:{})},
+    pvp:{mode:m.mode,size:m.size,blue:json(blue.roster),red:json(red.roster),preTactics:{blue:blue.preTactics,red:red.preTactics},...(m.map?{map:json(m.map)}:{})},
     encounter:{id:'online-'+m.id,environment:{blockers:[]}},
     seed:m.seed,maxDurationMs:m.maximumDurationMs
    },{zone:'online-pvp'});
