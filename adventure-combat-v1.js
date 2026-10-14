@@ -60,7 +60,34 @@
    })
   })
  }
- window.CellboundPartyTactics={VERSION:1,CHOICES,role,key,current,markup,bind};
+ const STANCES=[
+  ['defensive','Defensive','Control threats and keep the party alive'],
+  ['balanced','Balanced','Handle threats without slowing every pull'],
+  ['aggressive','Aggressive','Spend cooldowns and burn targets quickly']
+ ];
+ const stanceKey=id=>storageKey()+':stance:'+String(id);
+ function stance(id){try{const v=localStorage.getItem(stanceKey(id));return STANCES.some(s=>s[0]===v)?v:'balanced'}catch(_){return'balanced'}}
+ function stanceMarkup(id){
+  const selected=stance(id);
+  return '<div class="cb-party-stance" data-stance-dungeon="'+esc(id)+'"><small>PARTY APPROACH</small><div class="cb-party-stance-options">'+STANCES.map(([value,title,hint])=>'<button type="button" data-party-stance="'+value+'" aria-pressed="'+(selected===value)+'" class="'+(selected===value?'active':'')+'"><b>'+title+'</b><small>'+hint+'</small></button>').join('')+'</div></div>';
+ }
+ function bindStance(root,id){
+  const panel=root?.querySelector?.('[data-stance-dungeon]');if(!panel)return;
+  panel.addEventListener('click',e=>{
+   const button=e.target.closest('[data-party-stance]');if(!button||!STANCES.some(s=>s[0]===button.dataset.partyStance))return;
+   try{localStorage.setItem(stanceKey(id),button.dataset.partyStance)}catch(_){}
+   panel.querySelectorAll('[data-party-stance]').forEach(el=>{
+    const chosen=el===button;el.classList.toggle('active',chosen);el.setAttribute('aria-pressed',String(chosen))
+   })
+  })
+ }
+ function stanceTactics(id){
+  const current=stance(id);
+  return current==='defensive'?{pullStyle:'safe',cooldownUse:'difficult',interruptPriority:'high',interruptAssignment:'best',crowdControl:'priority-elites',defensiveUsage:'aggressive',addPriority:'immediate',movementDiscipline:'safety'}:
+   current==='aggressive'?{pullStyle:'aggressive',cooldownUse:'free',interruptPriority:'standard',interruptAssignment:'best',crowdControl:'disabled',defensiveUsage:'standard',addPriority:'boss',movementDiscipline:'damage'}:
+   {pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'};
+ }
+  window.CellboundPartyTactics={VERSION:1,CHOICES,role,key,current,markup,bind,stance,stanceMarkup,bindStance,stanceTactics};
  window.CellboundDungeonQuickEntry={open(id){
   const E=window.CellboundEndgame;
   if(E?.prepare){
