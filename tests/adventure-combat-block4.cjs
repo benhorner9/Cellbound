@@ -11,11 +11,11 @@ for(const name of ['adventure-combat-v1.js','adventure-combat-v1.css']){
 assert(html.indexOf('heroes-workspace-v1.css')<html.indexOf('adventure-combat-v1.css'),'Adventure must follow Heroes CSS');
 assert(html.indexOf('heroes-workspace-v1.js')<html.indexOf('adventure-combat-v1.js'),'Adventure must load after Heroes JS');
 assert(build.includes("'heroes-workspace-v1.css','adventure-combat-v1.css'"),'Adventure CSS must join last bundle');
-for(const selector of ['#content','#quests','#raids','#world','#dungeonBrowserStatus','#partyItemLevelTop','#readinessText']){
+for(const selector of ['#content','#quests','#raids','#world','#dungeonBrowserStatus','data-cb-quick-dungeon','CellboundPartyTactics']){
  assert(js.includes(selector),'Must use existing game node '+selector);
 }
-assert(js.includes('!source.disabled')&&js.includes("classList.contains('locked')"),'Links must check permissions');
-assert(!js.includes('save(')&&!js.includes('replaceChildren('),'Do not mutate progression or existing widgets');
+assert(js.includes('difficultyUnlocked')&&js.includes('CellboundEndgame.prepare(id)'),'Quick entry must preserve difficulty gate and use official preparation');
+assert(!js.includes('Game.save(')&&!js.includes('replaceChildren('),'Do not mutate gameplay progression or replace official widgets');
 for(const selector of ['.cb-adventure-brief','.dungeon-browser-card','.quest-tabs','.mr-hero','.cbcombat-shell','.cbcombat-chat','.cbcombat-arena-wrap']){
  assert(css.includes(selector),'Missing designed screen '+selector);
 }
