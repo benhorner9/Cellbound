@@ -527,3 +527,44 @@ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="i
   html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar{height:43px!important;max-height:43px!important}
   html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame{top:61px!important}
 }
+
+
+/* One-stop dungeon launch and role-based party orders. */
+.cb-adventure-quick{display:flex!important;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 16px!important}
+.cb-adventure-quick .cb-adventure-brief__copy{flex:1 1 220px}
+.cb-adventure-quick .cb-adventure-brief__copy h3{margin:2px 0!important;font-size:1rem!important}
+.cb-adventure-quick .cb-adventure-brief__copy p{font-size:.81rem;max-width:380px}
+.cb-dungeon-quick-list{flex:3 1 480px;display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px}
+.cb-dungeon-quick-list button{min-height:46px;border:1px solid #8c9ab04d;color:#e4e9ed;background:#18222edc;border-radius:7px;padding:8px 10px;text-align:left;font-weight:650;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.cb-dungeon-quick-list button:hover,.cb-dungeon-quick-list button:focus-visible{background:#303340;border-color:#b9a17e;outline-offset:2px}
+.cb-dungeon-quick-list button:disabled{opacity:.45;cursor:not-allowed}
+.cb-party-orders{border:1px solid #b9a17e42;border-radius:10px;padding:13px;background:linear-gradient(140deg,#141c27e8,#12151ee8);margin:14px 0;color:#e5e2db}
+.cb-party-orders-head{display:flex;justify-content:space-between;gap:10px;align-items:start;margin:0 0 12px}
+.cb-party-orders-head h3{font-size:1.05rem!important;margin:3px 0 4px!important;color:#f0e5d3}
+.cb-party-orders-head p{font-size:.8rem;line-height:1.4;color:#bcbcc4;max-width:58ch;margin:0}
+.cb-party-orders-head small{font-size:.66rem;color:#c8a979;letter-spacing:.12em;font-weight:700}
+.cb-party-orders-head button{border:1px solid #ada38b66;border-radius:6px;background:#262b34;color:#ddd3c5;padding:7px 12px;cursor:pointer}
+.cb-party-orders-list{display:grid;gap:9px}
+.cb-party-order{display:grid;grid-template-columns:minmax(105px,145px) minmax(0,1fr);gap:10px;align-items:center;border-top:1px solid #d1c1a01d;padding-top:9px}
+.cb-party-order-name b{display:block;font-size:.86rem;overflow-wrap:anywhere;color:#f4eee6}
+.cb-party-order-name small{font-size:.64rem;letter-spacing:.09em;color:#bda88d}
+.cb-party-order-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.cb-party-order-options button{border:1px solid #75859d4d;border-radius:7px;min-height:58px;text-align:left;background:#202a36;color:#d4dbe0;padding:7px;cursor:pointer}
+.cb-party-order-options button b{display:block;font-size:.74rem;line-height:1.2}
+.cb-party-order-options button small{display:block;font-size:.66rem;line-height:1.3;margin-top:3px;color:#a8b7c5}
+.cb-party-order-options button.active,.cb-party-order-options button[aria-pressed=true]{border-color:#cead74;background:#4b3b2c;color:#fff0d6;box-shadow:inset 0 0 0 1px #d9b58540}
+.cb-party-order-options button.active small{color:#e5d1b6}
+.cb-party-order-options button:hover,.cb-party-order-options button:focus-visible{outline:2px solid #d9b58570;outline-offset:0}
+.cb-party-orders-note{color:#aab2ba;font-size:.72rem;margin:10px 0 0}
+.cb-dungeon-intel-details{margin:14px 0;border-top:1px solid #b9a17e33;padding-top:10px}
+.cb-dungeon-intel-details>summary{cursor:pointer;color:#d4b88b;font-size:.85rem;font-weight:650}
+@media(max-width:700px){
+ .cb-party-orders{padding:10px}
+ .cb-party-order{display:block}
+ .cb-party-order-name{display:flex;gap:8px;align-items:baseline;margin-bottom:6px}
+ .cb-party-order-options button{min-height:55px;padding:6px 4px}
+ .cb-party-order-options button b{font-size:.7rem}
+ .cb-party-order-options button small{font-size:.6rem}
+ .cb-adventure-quick{display:block!important}
+ .cb-dungeon-quick-list{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+}
