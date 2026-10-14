@@ -66,6 +66,23 @@ assert.throws(()=>auth.createMatch({...spec('test-room-004'),players:[{userId:al
 assert.throws(()=>auth.createMatch({...spec('test-room-005'),players:[{userId:alice,team:'blue',sealedRoster:squad('blue',2)},{userId:bob,team:'red',sealedRoster:squad('blue',2)}]}),/unique/);
 assert.throws(()=>auth.createMatch({...spec('test-room-006'),players:[{userId:'bot',team:'blue',sealedRoster:squad('blue',2)},{userId:bob,team:'red',sealedRoster:squad('red',2)}]}),/Distinct authenticated/);
 assert.throws(()=>auth.createMatch(spec('test-room-007','king-of-the-hill',2)),/Invalid squad format/);
+
+const planned=spec('test-room-008','arena',2);
+planned.players[0].sealedPreTactics={target:'attack-healer',position:'spread',objective:'pressure-healer',
+ individual:{'blue-0':'attack-tank'},healing:{'blue-1':'group'}};
+planned.players[1].sealedPreTactics={target:'attack-dps',position:'fall-back',objective:'kite'};
+assert.equal(auth.createMatch(planned).status,'ready');
+auth.accept({matchId:'test-room-008',userId:alice});
+const prematch=auth.accept({matchId:'test-room-008',userId:bob});
+assert.equal(prematch.status,'active');
+assert.equal(prematch.snapshot.pvp.orders.blue.target,'attack-healer');
+assert.equal(prematch.snapshot.pvp.orders.red.position,'fall-back');
+assert.equal(prematch.snapshot.pvp.orders.blue.individual['blue-0'],'attack-tank');
+assert.equal(prematch.snapshot.pvp.orders.blue.healing['blue-1'],'group');
+assert(prematch.snapshot.events.some(e=>e.type==='PVP_PREMATCH_TACTICS'&&e.payload.team==='blue'));
+assert.equal(auth.command({matchId:'test-room-008',userId:alice,sequence:1,category:'target',value:'attack-dps'}).ok,true);
+assert.equal(auth.view({matchId:'test-room-008',userId:alice}).snapshot.pvp.orders.blue.individual,undefined);
+assert.equal(auth.view({matchId:'test-room-008',userId:alice}).snapshot.pvp.orders.blue.healing['blue-1'],'group');
 const implementation=fs.readFileSync(path.join(root,'server/pvp/match-authority.cjs'),'utf8');
 for(const unsafe of ['localStorage','game.save','warMarks+=','arenaSeals+=','service_role','createClient('])
  assert(!implementation.includes(unsafe),'server-only protocol must not mint browser rewards or embed keys: '+unsafe);
