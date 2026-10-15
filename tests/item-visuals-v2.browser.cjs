@@ -44,7 +44,7 @@ const engine=engineName==='webkit'?webkit:chromium;
           const c={id:'item-v2-'+slug(klass)+'-'+tier,race,class:klass,appearance,equipment};
           const svg=P.paperDollSVG(c),chest=equipment.Chest,weapon=equipment.Weapon,classSlug=slug(klass),mode=tier>=4?'set-first':'material-first';
           if(!svg.includes('data-item-visuals="v2"'))failures.push(klass+' T'+tier+' model missing V2 root');
-          if(!svg.includes('data-equipment-fit="v4"')||!svg.includes('data-weapon-pose="held-v2"'))failures.push(klass+' T'+tier+' model missing fit v4 / side-held contract');
+          if(!svg.includes('data-equipment-fit="v4"')||!svg.includes('data-weapon-pose="held-v3"'))failures.push(klass+' T'+tier+' model missing fit v4 / side-held contract');
           if(!svg.includes('cb-paper-side-weapon')||!svg.includes('data-weapon-pose="side-held"'))failures.push(klass+' T'+tier+' weapon is not side-held');
           const fit=P.gearFitProfile(c);
           if(fit.weaponX<fit.weaponSideMin)failures.push(klass+' T'+tier+' weapon moved inward across body');

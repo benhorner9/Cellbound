@@ -11,6 +11,7 @@ for(const race of R.races)for(const gender of [0,1])for(const frame of [0,1,2]){
  for(const klass of G.CLASS_ORDER)for(let tier=1;tier<=5;tier++){
   const equipment={};for(const slot of ['Head','Chest','Shoulders','Legs','Feet','Hands','Waist','Weapon','OffHand'])equipment[slot]=G.items.find(i=>i.class===klass&&i.tier===tier&&i.slot===slot);
   const actor={...subject,class:klass,equipment},fit=R.armourFit(actor,{family:klass,tier}),base=R.equipmentPose(actor);
+  for(const arm of [base.left,base.right]){const radius=Math.max(6.5,fit.profile.p.arm*.5);assert(arm.elbow.x>=radius&&arm.elbow.x+radius<=240,'Resting arm must fit the model canvas')}
   assert.equal(fit.space,'model');assert.equal(fit.revision,5);
   assert(fit.chest.top<150&&fit.chest.bottom===244,'Chest aligns with visible torso');
   assert(fit.foot.top<fit.leg.bottom,'Boots overlap trouser hems');

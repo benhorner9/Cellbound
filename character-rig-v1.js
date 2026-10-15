@@ -284,7 +284,7 @@ function equipmentPose(subject){
       // stowed (no equipment/stat mutation); quivers always mount to the back.
       off={...op,kind:offKind,x:offKind==='shield'?ls+7:ls+10,y:offKind==='quiver'?180:offKind==='shield'?207:256,layer:'equipment-back',mode:'stowed',scale:offKind==='shield'?.86:op.scale};
     }else{
-      left={x:ls+p.shoulder*.20,y:offKind==='shield'?226:offKind==='dagger'?239:249};
+      left={x:ls+p.shoulder*.20,y:offKind==='shield'?226+Math.max(0,p.arm-19)*1.5:offKind==='dagger'?239:249};
       off={...op,kind:offKind,x:left.x,y:left.y,layer:offKind==='shield'?'shield-front':'front-offhand',mode:'held'};
     }
   }
