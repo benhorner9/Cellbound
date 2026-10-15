@@ -74,5 +74,27 @@ for(const [klass,bySpec] of Object.entries(trees)){
 }
 assert.equal(checked,196,'Every new talent needs a passing functional combat check');
 assert.deepEqual(failures,[],'Talent combat effect failures');
+
+// Every talent-gated ability must be absent without its talent and unlocked with rank 1.
+let gatedAbilities=0;
+for(const [klass,bySpec] of Object.entries(trees)){
+ for(const [spec,nodes] of Object.entries(bySpec)){
+  const names=new Set(nodes.map(node=>node.id));
+  const role=B.roleFor(klass,spec),character={class:klass,spec,level:15,talents:{[spec]:{}}};
+  const pool=win.CellboundCombatReborn.skills.classSkillPool(character,role);
+  for(const ability of pool.filter(a=>a.talentReq&&names.has(a.talentReq))){
+   assert.equal(win.CellboundCombatReborn.skills.unlockedSkillPool(character,role).some(a=>a.id===ability.id),false,
+    'Talent-gated skill available before purchase: '+klass+'/'+spec+'/'+ability.id);
+   character.talents[spec][ability.talentReq]=1;
+   assert.equal(win.CellboundCombatReborn.skills.unlockedSkillPool(character,role).some(a=>a.id===ability.id),true,
+    'Talent-gated skill fails to unlock: '+klass+'/'+spec+'/'+ability.id);
+   delete character.talents[spec][ability.talentReq];
+   gatedAbilities++;
+  }
+ }
+}
+assert.equal(gatedAbilities,63,'All currently defined gated class abilities were checked');
+console.log('Talent-gated abilities PASS: '+gatedAbilities+' ability checks.');
+
 console.log('Talent V2 runtime PASS: '+checked+' new talent effects across 13 classes and 28 specialisations.');
 console.log('Effect categories: '+JSON.stringify(byEffect));
