@@ -232,4 +232,24 @@ assert(preservationDeaths<=7,'Preservation Evoker cannot have recurring full-par
 assert(preservationHealing/12>=1000,'Preservation Evoker must sustain effective healing under boss pressure');
 console.log('Preservation Evoker stress PASS: '+preservationWins+'/12 clears, '+preservationDeaths+' deaths, '+Math.round(preservationHealing/12)+' average healing.');
 
+// The shared PvE challenge applies exactly once to every ordinary enemy class.
+// Keep original designer scaling intact so Heroic/Cellbound+ remain proportional.
+const pveProbeEncounter={id:'pve-tuning-contract',kind:'boss',level:15,
+ enemies:[{name:'Tuning Sentinel',classification:'boss',passive:true}],enemyHealth:1000,
+ scaling:{enemyHealth:1.25,enemyDamage:1.20},mechanics:[]};
+const originalProbe=JSON.stringify(pveProbeEncounter);
+const runProbe=()=>C.simulate({party:partyFor(groups[0],true),encounter:pveProbeEncounter,
+ seed:'pve-tuning-contract',maxDurationMs:1000});
+const firstProbe=runProbe(),secondProbe=runProbe(),enemy=firstProbe.finalState.enemies[0];
+const expectedHealth=Math.round(1000*(1+14*.03)*1.22*1.25*1.04);
+assert.equal(enemy.maxHealth,expectedHealth,'PvE enemy health increases exactly 4%');
+assert(Math.abs(enemy.damageScale-(1.28*1.20*1.04))<1e-8,'PvE enemy damage increases exactly 4%');
+assert.equal(secondProbe.finalState.enemies[0].maxHealth,expectedHealth,'repeat simulations do not stack the challenge');
+assert.equal(JSON.stringify(pveProbeEncounter),originalProbe,'input encounters are not mutated');
+const absoluteProbe=C.simulate({party:partyFor(groups[0],true),encounter:{...pveProbeEncounter,
+ enemies:[{name:'Exact HP Enemy',classification:'boss',absoluteHealth:true,maxHealth:1234}]},
+ seed:'pve-absolute-hp',maxDurationMs:1000});
+assert.equal(absoluteProbe.finalState.enemies[0].maxHealth,1234,'explicit absolute-health encounters stay authored');
+console.log('PvE challenge PASS: +4% relative HP/damage, no stacking or encounter mutation, absolute boss health preserved.');
+
 console.log('Role balance PASS: 13 classes, 28 specs, '+encounters+' seeded combat simulations, 6 campaign/raid stages, 10-player Manor, '+arena+' Arena simulations (2v2/3v3/5v5).');
