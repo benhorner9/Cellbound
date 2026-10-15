@@ -49,6 +49,7 @@ function bind(el){
  for(const [key,selector] of Object.entries({body:'.cb-paper-upper-body',actor:'.cb-paper-actor',main:'.cb-paper-slot-weapon',off:'.cb-paper-slot-offhand',rightUpper:'.cb-paper-upper-right',leftUpper:'.cb-paper-upper-left',rightLower:'.cb-paper-forearm-right',leftLower:'.cb-paper-forearm-left',rightGlove:'.cb-paper-glove-right',leftGlove:'.cb-paper-glove-left',rightGrip:'.cb-paper-held-grip-main',leftGrip:'.cb-paper-held-grip-off',rightRing:'.cb-paper-slot-ring2',leftRing:'.cb-paper-slot-ring1',leg:'.cb-paper-kick-R',string:'.cb-paper-bow-string',arrow:'.cb-paper-arrow'})){
   nodes[key]=svg.querySelector(selector);if(nodes[key])original.set(nodes[key],nodes[key].getAttribute('transform')||'');
  }
+ for(const side of ['left','right']){const key=side+'Pad';nodes[key]=svg.querySelector('.cb-paper-pauldron-'+side);if(nodes[key])original.set(nodes[key],nodes[key].getAttribute('transform')||'')}
  return el._cbAnimationRig={svg,klass:svg.dataset.animationClass||'',base:data.pose,p:data.p,nodes,original};
 }
 function apply(u,c){
@@ -67,6 +68,9 @@ function apply(u,c){
   for(const side of ['left','right']){
    const a=r.base[side],b=pose[side],upper=angle(b.shoulder,b.elbow)-angle(a.shoulder,a.elbow),lower=angle(b.elbow,b.hand)-angle(a.elbow,a.hand);
    set(side+'Upper',`rotate(${upper} ${a.shoulder.x} ${a.shoulder.y})`);
+   // Articulated shoulder plates share the upper-arm socket; cap rotation so
+   // their overlapping collar never turns into a rigid extension of the arm.
+   set(side+'Pad',`rotate(${clamp(upper*.45,-24,24)} ${a.shoulder.x} ${a.shoulder.y})`);
    set(side+'Lower',`translate(${b.elbow.x-a.elbow.x} ${b.elbow.y-a.elbow.y}) rotate(${lower} ${a.elbow.x} ${a.elbow.y})`);
    const key=side==='right'?'main':'off',rotation=(pose.twoHanded&&side==='left'?pose.main.angle-r.base.main.angle:(pose[key]?.angle||0)-(r.base[key]?.angle||0));
    for(const part of ['Glove','Grip','Ring']){const node=n[side+part];if(node)set(side+part,`translate(${b.hand.x-a.hand.x} ${b.hand.y-a.hand.y}) rotate(${rotation} ${a.hand.x} ${a.hand.y}) `+r.original.get(node))}

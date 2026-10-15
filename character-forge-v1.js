@@ -15,9 +15,9 @@ const LORE={
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sexName=g=>Number(g)===1?'Female':'Male';
 function appearance(race,gender,prior){
- const raw={...(prior||{}),race,gender:Number(gender)===1?1:0,frame:1,skinTone:0,face:0,brows:0,nose:0,mouth:0,eyeShape:0,eyes:0,hair:0,hairColor:0,facialHair:0,marking:0,feature:0,pattern:0,featureColor:0,texture:0,glow:0};
+ const raw={frame:1,skinTone:0,face:0,eyes:0,hair:0,hairColor:0,facialHair:0,marking:0,feature:0,...(prior||{}),race,gender:Number(gender)===1?1:0};
  const a=P?.normalizeAppearance?P.normalizeAppearance(raw,'forge',race):raw;
- return {...a,race,gender:raw.gender,frame:1,skinTone:0,face:0,brows:0,nose:0,mouth:0,eyeShape:0,eyes:0,hair:0,hairColor:0,facialHair:0,marking:0,feature:0,pattern:0,featureColor:0,texture:0,glow:0};
+ return {...a,race,gender:raw.gender,frame:Math.max(0,Math.min(2,Math.round(Number(raw.frame)||0)))};
 }
 function ensureDraft(d){
  d.race=d.race||'Veyren';
@@ -26,14 +26,14 @@ function ensureDraft(d){
  return d;
 }
 function normaliseStep(step){return STEPS.includes(step)?step:(step==='race'||step==='appearance'||step==='features'?'form':'form')}
-function modelSVG(race,gender,klass){
- const subject={id:'forge-preview-'+race+'-'+gender,race,class:klass||'Warrior',appearance:appearance(race,gender),equipment:{}};
+function modelSVG(race,gender,klass,prior){
+ const subject={id:'forge-preview-'+race+'-'+gender,race,class:klass||'Warrior',appearance:appearance(race,gender,prior),equipment:{}};
  if(P?.paperDollSVG)return P.paperDollSVG(subject,{showGear:false});
  const label=esc(race||'Character');
  return '<svg viewBox="0 0 240 400" role="img" aria-label="'+label+' preview" class="cb-forge-fallback"><rect x="0" y="0" width="240" height="400" rx="18" fill="#091418"/><circle cx="120" cy="86" r="38" fill="#22363a"/><path d="M72 164 Q120 128 168 164 L184 340 Q120 382 56 340Z" fill="#1a2b30"/><text x="120" y="374" text-anchor="middle" fill="#8aa19d" font-size="15">'+label+'</text></svg>';
 }
 function previewHTML(d,cls=''){
- return '<div class="cf-model '+cls+'" data-forge-art="classic-paper-doll-v1" data-gender="'+(Number(d.appearance.gender)===1?'female':'male')+'">'+modelSVG(d.race,d.appearance.gender,d.klass)+'</div>';
+ return '<div class="cf-model '+cls+'" data-forge-art="classic-paper-doll-v1" data-gender="'+(Number(d.appearance.gender)===1?'female':'male')+'">'+modelSVG(d.race,d.appearance.gender,d.klass,d.appearance)+'</div>';
 }
 function nav(step){
  return '<nav class="cf-steps">'+STEPS.map((s,i)=>'<button type="button" data-forge-step="'+s+'" class="'+(s===step?'active':'')+'"><i>'+(i+1)+'</i><span>'+STEP_NAMES[s]+'</span></button>').join('')+'</nav>';
@@ -43,9 +43,16 @@ function formPanel(o,d){
  return '<div class="cf-body-pick"><div class="cf-sex"><span>BODY</span>'+
   [0,1].map(g=>'<button type="button" data-forge-sex="'+g+'" class="'+(Number(d.appearance.gender)===g?'active':'')+'">'+sexName(g)+'</button>').join('')+
  '</div><div class="cf-race-grid">'+races.map(r=>'<button type="button" class="cf-race-card '+(r.id===d.race?'active':'')+'" data-forge-race="'+esc(r.id)+'">'+
-   '<div class="cf-race-model" data-forge-art="classic-paper-doll-v1">'+modelSVG(r.id,d.appearance.gender,d.klass)+'</div>'+
+   '<div class="cf-race-model" data-forge-art="classic-paper-doll-v1">'+modelSVG(r.id,d.appearance.gender,d.klass,d.appearance)+'</div>'+
    '<div><b>'+esc(r.id)+'</b><small>'+esc(r.trait||'')+'</small><p>'+esc(LORE[r.id]||r.lore||'')+'</p></div>'+
-  '</button>').join('')+'</div></div>';
+  '</button>').join('')+'</div>'+appearanceControls(d)+'</div>';
+}
+function appearanceControls(d){
+ const fields=[['frame','Build',['Lean','Balanced','Strong']],['skinTone','Skin tone',6],['hair','Hair',6],['hairColor','Hair colour',8],['facialHair','Facial hair',4],['marking','Markings',['None','Scar','Crossed','Curved','Runic']],['feature','Arcane style',4],['eyes','Eyes',6]];
+ return '<div class="cf-appearance-controls">'+fields.map(([key,label,choices])=>{
+   const labels=Array.isArray(choices)?choices:Array.from({length:choices},(_,i)=>String(i+1));
+   return '<label>'+label+'<select data-forge-appearance="'+key+'">'+labels.map((text,i)=>'<option value="'+i+'" '+(Number(d.appearance[key])===i?'selected':'')+'>'+text+'</option>').join('')+'</select></label>';
+ }).join('')+'</div>';
 }
 function classPanel(o,d){
  return '<div class="cf-class-grid">'+(o.classes||[]).map(c=>{
@@ -54,7 +61,7 @@ function classPanel(o,d){
  }).join('')+'</div>';
 }
 function identityPanel(d){
- return '<div class="cf-name-card"><label for="cfCharacterName">CHARACTER NAME</label><input id="cfCharacterName" maxlength="24" autocomplete="off" value="'+esc(d.name||'')+'" placeholder="Enter a name"><button type="button" data-forge-random>Randomise name</button><p>2–24 characters. Appearance options will expand later; for now the base model is defined by race and sex.</p></div>';
+ return '<div class="cf-name-card"><label for="cfCharacterName">CHARACTER NAME</label><input id="cfCharacterName" maxlength="24" autocomplete="off" value="'+esc(d.name||'')+'" placeholder="Enter a name"><button type="button" data-forge-random>Randomise name</button><p>2–24 characters. Your chosen appearance will be preserved when you equip armour and enter combat.</p></div>';
 }
 function confirmPanel(o,d){
  return '<div class="cf-confirm-card">'+previewHTML(d,'compact')+'<div><small>NEW GUILD MEMBER</small><h3 data-forge-name>'+esc(d.name||'Unnamed')+'</h3><dl>'+
@@ -80,6 +87,7 @@ function render(o){
  root.querySelectorAll('[data-forge-step],[data-forge-prev],[data-forge-next]').forEach(b=>b.onclick=()=>o.onStep?.(b.dataset.forgeStep||b.dataset.forgePrev||b.dataset.forgeNext));
  root.querySelectorAll('[data-forge-race]').forEach(b=>b.onclick=()=>{d.race=b.dataset.forgeRace;change()});
  root.querySelectorAll('[data-forge-sex]').forEach(b=>b.onclick=()=>{d.appearance=appearance(d.race,Number(b.dataset.forgeSex),d.appearance);change()});
+ root.querySelectorAll('[data-forge-appearance]').forEach(input=>input.onchange=()=>{d.appearance={...d.appearance,[input.dataset.forgeAppearance]:Number(input.value)};change()});
  root.querySelectorAll('[data-forge-class]').forEach(b=>b.onclick=()=>{d.klass=b.dataset.forgeClass;d.spec=b.dataset.forgeSpec;change()});
  const input=root.querySelector('#cfCharacterName');
  if(input)input.oninput=()=>{d.name=input.value;root.querySelectorAll('[data-forge-name]').forEach(x=>x.textContent=d.name||'New recruit');o.onName?.(d)};

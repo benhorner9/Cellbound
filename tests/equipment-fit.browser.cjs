@@ -54,8 +54,8 @@ const engine=engineName==='webkit'?webkit:chromium;
       let checked=0;
       for(const item of G.items){
         const pos=posFor(item);
-        for(const race of races)for(const gender of [0,1]){
-          const appearance={race,gender,frame:1,skinTone:1,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
+        for(const race of races)for(const gender of [0,1])for(const frame of [0,1,2]){
+          const appearance={race,gender,frame,skinTone:1,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
           const c={id:'browser-fit-'+checked,race,class:item.class,appearance,equipment:{[pos]:item}};
           host.innerHTML=P.paperDollSVG(c);
           const svg=host.querySelector('svg'),el=svg?.querySelector('.cb-paper-slot-'+pos.toLowerCase()),fit=P.gearFitProfile(c);
@@ -148,7 +148,7 @@ const engine=engineName==='webkit'?webkit:chromium;
         if(!contains(lb,fit.leftLeg,370,3)||!contains(rb,fit.rightLeg,370,3))fail({itemId:klass+'-T'+tier+'-Feet'},race,gender,'full loadout boots miss ankles',{left:lb,right:rb});
         loadoutChecks++;
       }
-      return{checked,total:G.items.length*12,itemCount:G.items.length,loadoutChecks,expectedLoadouts:G.CLASS_ORDER.length*5*6*2*3,failures,fitVersion:P.equipmentFitVersion,rigFitVersion:R.fitVersion};
+      return{checked,total:G.items.length*36,itemCount:G.items.length,loadoutChecks,expectedLoadouts:G.CLASS_ORDER.length*5*6*2*3,failures,fitVersion:P.equipmentFitVersion,rigFitVersion:R.fitVersion};
     });
 
     assert.equal(result.fitVersion,4);

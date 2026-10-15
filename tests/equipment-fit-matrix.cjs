@@ -21,8 +21,8 @@ const families=Object.fromEntries(G.CLASS_ORDER.map(k=>[k,k.toLowerCase().replac
 let itemChecks=0;
 for(const item of G.items){
   const pos=slotPosition(item);
-  for(const race of races)for(const gender of [0,1]){
-    const appearance={race,gender,frame:1,skinTone:1,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
+  for(const race of races)for(const gender of [0,1])for(const frame of [0,1,2]){
+    const appearance={race,gender,frame,skinTone:1,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
     const c={id:'fit-'+item.itemId+'-'+race+'-'+gender,race,class:item.class,appearance,equipment:{[pos]:item}};
     const html=P.paperDollSVG(c),fit=P.gearFitProfile(c);
     assert(!/NaN|Infinity|undefined/.test(html),item.itemId+' broken SVG on '+race+'/'+gender);
@@ -69,7 +69,7 @@ for(const item of G.items){
     itemChecks++;
   }
 }
-assert.equal(itemChecks,G.items.length*12,'Every catalogue item must be audited against all 12 master race/sex models');
+assert.equal(itemChecks,G.items.length*36,'Every catalogue item must be audited against all 36 race/sex/body variants');
 
 let bodyChecks=0;
 for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of races)for(const gender of [0,1])for(const frame of [0,1,2]){
@@ -117,4 +117,4 @@ for(const klass of ['Mage','Priest','Warlock','Druid']){
  assert(styles.includes('trousers'),klass+' must retain at least one trouser tier');
  assert(styles.some(x=>x!=='trousers'),klass+' must include at least one robe/skirt tier');
 }
-console.log('Equipment fit v4: '+itemChecks+' item/body checks across all 12 master models; '+bodyChecks+' complete loadouts across all 36 race/sex/frame bodies; joint lengths, shared sockets, two-handed grips, non-mutating stowage and varied cloth lowers verified.');
+console.log('Equipment fit v4: '+itemChecks+' item/body checks across all 36 race/sex/body variants; '+bodyChecks+' complete loadouts across all 36 race/sex/frame bodies; joint lengths, shared sockets, two-handed grips, non-mutating stowage and varied cloth lowers verified.');

@@ -750,6 +750,7 @@ if(file==='quests-v2.js'){
 /* Bundle the late UI override stack in its existing cascade order.
    Source files remain separate for maintainability, while the browser downloads one stylesheet. */
 const UI_BUNDLE_SOURCES=[
+  'character-fit-viewer-v1.css',
   'readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css',
   'roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','monster-visuals-v1.css','bank-v2.css','character-command-v1.css',
   'character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','character-forge-v1.css',
