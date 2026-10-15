@@ -76,7 +76,7 @@ const engine=engineName==='webkit'?webkit:chromium;
 
     assert.equal(result.itemVisualsVersion,2);
     assert.equal(result.equipmentFitVersion,4);
-    assert.equal(result.weaponPoseVersion,2);
+    assert.equal(result.weaponPoseVersion,3);
     assert.equal(result.itemArtVersion,2);
     assert.equal(result.direction,'class-tier-v2');
     assert.equal(result.classCount,13);

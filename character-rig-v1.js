@@ -343,8 +343,14 @@ function gearFitProfile(subject){
   };
 }
 function anchors(subject){
-  const f=gearFitProfile(subject),m=masterRig(subject),a={...m.anchors};
-  for(const [key,value] of Object.entries(a))a[key]={x:value.x,y:unrigY(value.y)};
+  const f=gearFitProfile(subject),scale=f.p.headScale,headY=33+50*(1-scale);
+  // Public landmarks use the rendered model canvas, including body-frame
+  // deformation. Do not invert the retired raster calibration here.
+  const a={head:{x:120,y:headY+50*scale},crown:{x:120,y:headY+16*scale},
+    hairline:{x:120,y:headY+34*scale},face:{x:120,y:headY+55*scale},
+    neck:{x:120,y:127},chest:{x:120,y:190},
+    leftKnee:{x:f.leftLeg,y:309},rightKnee:{x:f.rightLeg,y:309},
+    leftAnkle:{x:f.leftLeg,y:365},rightAnkle:{x:f.rightLeg,y:365}};
   a.leftShoulder=f.attachments.left.shoulder;a.rightShoulder=f.attachments.right.shoulder;
   a.leftElbow=f.attachments.left.elbow;a.rightElbow=f.attachments.right.elbow;
   a.leftHand=f.attachments.left.hand;a.rightHand=f.attachments.right.hand;

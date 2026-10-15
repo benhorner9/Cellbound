@@ -832,12 +832,16 @@ function armSegment(a,b,wa,wb,fill,stroke,extra=''){
 }
 function paperArms(c,skin,highlighted){
   var fit=paperFit(c),p=fit.p,pose=fit.attachments,aw=Math.max(7.5,p.arm*.65);
+  var garment=itemForSlot(c,'Chest'),pal=garment?gearPalette(c,garment,clampTier(garment.tier),'Chest'):null;
+  var material=CLASS_GEAR_STYLE[gearClass(garment)]?.family,coverage=material==='cloth'?.94:material==='plate'?.68:material==='mail'?.76:.42;
   var clip='arms'+hash(JSON.stringify([c.id,c.race,c.appearance,c.equipment])).toString(36);
   var details=paperRaceArmDetails(c,p,fit.leftShoulder,fit.rightShoulder);
   return '<g class="cb-paper-arms" data-fit-version="4" data-alignment="v4" data-weapon-arm-pose="joint-solved">'+
     ['left','right'].map(function(side){
       var arm=pose[side],shape=armSegment(arm.shoulder,arm.elbow,aw,aw*.8,skin,'#182027'),id=clip+side;
-      return '<g class="cb-paper-upper-'+side+'"><defs><clipPath id="'+id+'">'+shape+'</clipPath></defs>'+shape+'<g clip-path="url(#'+id+')">'+details+'</g></g>';
+      var end={x:arm.shoulder.x+(arm.elbow.x-arm.shoulder.x)*coverage,y:arm.shoulder.y+(arm.elbow.y-arm.shoulder.y)*coverage};
+      var sleeve=pal?armSegment(arm.shoulder,end,aw+1,aw*.87,pal.base,pal.dark,'class="cb-paper-sleeve"')+armSegment({x:end.x+(arm.shoulder.x-end.x)*.12,y:end.y+(arm.shoulder.y-end.y)*.12},end,aw*.88,aw*.88,pal.dark,pal.trim):'';
+      return '<g class="cb-paper-upper-'+side+'"><defs><clipPath id="'+id+'">'+shape+'</clipPath></defs>'+shape+'<g clip-path="url(#'+id+')">'+details+'</g>'+sleeve+'</g>';
     }).join('')+'</g>';
 }
 function paperWeaponForearm(c,highlighted){

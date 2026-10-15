@@ -13,7 +13,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?'webkit':'chromium',ro
    window.draft={race:'Veyren',klass:'Warrior',appearance:{gender:0,frame:1},name:'Keeper'};
    window.drawForge=()=>CellboundCharacterForge.render({mount:document.querySelector('#mount'),draft,step:'form',races:CellboundCharacterRig.races.map(id=>({id})),onChange:drawForge});drawForge();
   });
-  for(const [key,value] of [['frame','2'],['skinTone','5'],['hair','3'],['hairColor','6'],['marking','4'],['feature','3']])await page.selectOption('[data-forge-appearance="'+key+'"]',value);
+  for(const [key,value] of [['frame','2'],['skinTone','5'],['hair','3'],['hairColor','6'],['marking','4'],['feature','3']])await page.selectOption('[data-forge-appearance="'+key+'"]',{value});
   await page.click('[data-forge-sex="1"]');await page.click('[data-forge-race="Stoneborn"]');
   const saved=await page.evaluate(()=>draft.appearance);assert.equal(saved.frame,2);assert.equal(saved.skinTone,5);assert.equal(saved.marking,4);assert.equal(saved.feature,3);assert.equal(saved.gender,1);
   for(const [width,height] of [[1366,1024],[1024,1366],[390,844]]){

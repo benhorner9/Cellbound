@@ -31,7 +31,7 @@ jobs:
           CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
         run: |
           status=0
-          for test in equipment-fit race-identity character-appearance-overhaul item-visuals-v2 weapon-attachments combat-class-animation combat-class-encounters combat-cinematic-global onboarding-beta pvp-practice-window; do
+          for test in equipment-fit race-identity character-appearance-overhaul item-visuals-v2 weapon-attachments combat-class-animation combat-class-encounters combat-cinematic-global onboarding-beta pvp-practice-window ui-performance; do
             node "tests/${test}.browser.cjs" || status=1
           done
           exit "$status"

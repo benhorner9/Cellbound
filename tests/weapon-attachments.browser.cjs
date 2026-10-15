@@ -53,7 +53,7 @@ const root=path.resolve(__dirname,'..'),name=process.env.CELLBOUND_TEST_ENGINE==
      if(pose.off.layer==='shield-front'&&!(forearm.compareDocumentPosition(off)&Node.DOCUMENT_POSITION_FOLLOWING))errors.push('shield behind forearm');
      if(pose.off.mode==='stowed'&&!(off.compareDocumentPosition(forearm)&Node.DOCUMENT_POSITION_FOLLOWING))errors.push('stowed object above arm');
     }
-    const bounds=actor.getBBox();if(bounds.x<0||bounds.x+bounds.width>240||bounds.y<0||bounds.y+bounds.height>410)errors.push('actor clipped by canvas '+JSON.stringify(bounds.toJSON()));
+    const bounds=actor.getBBox();if(bounds.x<0||bounds.x+bounds.width>240||bounds.y<0||bounds.y+bounds.height>410)errors.push('actor clipped by canvas '+JSON.stringify({x:bounds.x,y:bounds.y,width:bounds.width,height:bounds.height}));
     return errors;
    };
   });
