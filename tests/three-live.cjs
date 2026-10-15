@@ -65,6 +65,10 @@ assert(style.includes('.cb3d-stage')&&style.includes('.cb3d-toggle'));
 assert(js.includes('wrap.appendChild(button)'),'toggle must mount in visible battlefield rather than hidden header');
 assert(style.includes('.cbcombat-arena-wrap > .cb3d-toggle'),'battlefield toggle requires visible anchored styles');
 assert(js.includes('states.set(arena,s)'),'enable-before-COMBAT_START must share one event snapshot');
+const viewer=read('src/combat/combat-viewer-v1.js');
+assert(viewer.includes('data-cb3d-toggle hidden'),'canonical battlefield must contain opt-in control in its actual markup');
+assert(viewer.includes('window.CellboundThreeCombat?.attach?.(shell)'),'battlefield mount must notify live 3D adapter without observer');
+assert(js.includes('button=wrap.querySelector(\'[data-cb3d-toggle]\')'),'3D adapter must use actual rendered button');
 const guild=read('guild.html'),manifest=require('../tools/runtime-manifest.cjs');
 for(const name of ['three-live-v1.js','three-live-v1.css'])assert(manifest.files.includes(name),'3D asset not packaged: '+name);
 assert(guild.includes('./three-live-v1.js?v=1'));
@@ -73,7 +77,8 @@ assert(guild.indexOf('three-live-v1.js')>guild.indexOf('admin-combat-ui-editor-v
 // DOM smoke: an authorised admin sees the control even when no header is shown.
 function testBattleToggle(admin){
  const actions={};
- const wrap={children:[],appendChild(node){this.children.push(node);}};
+ const toggle={className:'cb3d-toggle',hidden:true,dataset:{},setAttribute(){},addEventListener(){}};
+ const wrap={children:[toggle],querySelector(selector){return selector==='[data-cb3d-toggle]'?toggle:null;},appendChild(node){this.children.push(node);}};
  const arena={isConnected:true,closest(selector){return selector==='.cbcombat-arena-wrap'?wrap:null}};
  const shell={isConnected:true,dataset:{},querySelector(selector){
   return selector.includes('.cbcombat-arena-wrap >')?arena:null;
@@ -91,7 +96,7 @@ function testBattleToggle(admin){
  };
  vm.runInNewContext(js,{window,document,MutationObserver:class{observe(){}},console});
  actions.DOMContentLoaded();
- return wrap.children.filter(x=>x.className==='cb3d-toggle');
+ return wrap.children.filter(x=>x.className==='cb3d-toggle'&&!x.hidden);
 }
 assert.equal(testBattleToggle(true).length,1,'admin should see an in-battle toggle without a header');
 assert.equal(testBattleToggle(false).length,0,'public player should not see the alpha toggle');
