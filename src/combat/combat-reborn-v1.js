@@ -1948,7 +1948,7 @@ return lateBalanceFactor(u.level,targets[key]||1)
 }
 function specEndgameTankTakenAdjustment(u){
 const key=u.class+'|'+u.spec,targets={
- 'Warrior|Protection':.88,'Paladin|Protection':1.35,'Monk|Brewmaster':1.05,'Death Knight|Blood':1.08,'Demon Hunter|Vengeance':1.08
+ 'Warrior|Protection':.88,'Paladin|Protection':1.31,'Monk|Brewmaster':1.05,'Death Knight|Blood':1.08,'Demon Hunter|Vengeance':1.08
 };
 return lateBalanceFactor(u.level,targets[key]||1)
 }
