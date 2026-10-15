@@ -57,7 +57,7 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
      await page.clock.runFor(500);
      const state=await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state');assert.equal(state,'idle',klass+' '+a.id+' must recover');
      const rendered=await page.evaluate(({klass,a})=>({fx:skillEffects.filter(f=>f.classes.includes('ability-impact')),profile:CellboundCombatAnimationCatalog.resolve(klass,{abilityId:a.id})}),{klass,a});
-     assert(rendered.fx.some(f=>f.classes.includes('skill-'+rendered.profile.motif)&&f.source==='p-qa'&&f.target&&f.width>0&&f.visibility==='visible'),klass+' '+a.id+' missing owned skill impact '+JSON.stringify(rendered.fx));
+     assert(rendered.fx.some(f=>f.classes.includes('skill-'+rendered.profile.motif)&&f.source==='p-qa'&&f.ability===a.id&&f.target===(/heal|defensive|totem|summon/.test(a.kind)?'p-qa':'e-0')&&f.width>0&&f.visibility==='visible'),klass+' '+a.id+' missing owned skill impact '+JSON.stringify(rendered.fx));
      skillCoverage.push({class:klass,spec:a.spec||'All',id:a.id,animated:true,signature:true,tested:true,failed:false});
     }else await page.clock.runFor(700);
    }
@@ -72,9 +72,9 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
   if(!before){
    // A multi-target ability may only launch at targets in actual result events.
    for(const [klass,id] of [['Hunter','multi-shot'],['Rogue','fan-of-knives']]){
-    await page.evaluate(({klass,id})=>{mountClass(klass,0);const extra=units['e-0'].cloneNode(true);extra.dataset.unit='e-1';extra.style.left='650px';arena.append(extra);units['e-1']=extra;const a=CellboundCombatData.ABILITIES[klass].find(a=>a.id===id);send('ABILITY_START',a);for(const target of ['e-0','e-1'])send('DAMAGE_DEALT',a,{target,amount:20,result:'hit'})},{klass,id});
-    await page.clock.runFor(80);
-    const targets=await page.locator('.class-projectile').evaluateAll(nodes=>nodes.map(n=>n.dataset.target).sort());
+    await page.evaluate(({klass,id})=>{mountClass(klass,0);window.flightObserver?.disconnect();window.flightTargets=[];window.flightObserver=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.classList.contains('class-projectile'))flightTargets.push(n.dataset.target)});flightObserver.observe(arena,{childList:true,subtree:true});const extra=units['e-0'].cloneNode(true);extra.dataset.unit='e-1';extra.style.left='650px';arena.append(extra);units['e-1']=extra;const a=CellboundCombatData.ABILITIES[klass].find(a=>a.id===id);send('ABILITY_START',a);for(const target of ['e-0','e-1'])send('DAMAGE_DEALT',a,{target,amount:20,result:'hit'})},{klass,id});
+    await page.clock.runFor(250);
+    const targets=await page.evaluate(()=>flightTargets.sort());
     assert.deepEqual(targets,['e-0','e-1'],id+' follows only the actual affected targets');await page.clock.runFor(700);
    }
    await page.evaluate(()=>{mountClass('Evoker',0);const a=CellboundCombatData.ABILITIES.Evoker.find(a=>a.id==='fire-breath');send('DAMAGE_DEALT',a,{amount:20,result:'hit'})});await page.clock.runFor(100);
