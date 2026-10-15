@@ -359,6 +359,8 @@ const trees={
     ]
   }
 };
+// Shared alternatives work for every class and specialisation.
+Object.entries(trees).forEach(([klass,specs])=>Object.entries(specs).forEach(([spec,nodes])=>{specs[spec]=B?.expandTalentTree?.(klass,spec,nodes)||nodes}));
 
 const leftSlots=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'];
 const rightSlots=['Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
@@ -670,6 +672,7 @@ function ensureCharacter(c){
   [...leftSlots,...rightSlots].forEach(slot=>{if(!(slot in c.equipment))c.equipment[slot]=null});
   c.talents=c.talents||{};
   Object.keys(specs[c.class]||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});
+  B?.migrateTalentBuilds?.(c,Object.keys(specs[c.class]||{}));
   B?.syncLegacyTalentCounter?.(c);
   c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
   c.classBuffProgress=c.classBuffProgress&&typeof c.classBuffProgress==='object'?c.classBuffProgress:{unlocked:[]};
@@ -916,23 +919,13 @@ function talentBudget(c){return B?.talentBudgetForLevel?.(c?.level)??Math.max(1,
 function talentRemaining(c,spec){return B?.talentRemaining?.(c,spec)??Math.max(0,talentBudget(c)-totalSpent(c,spec))}
 function tierNeed(node){return B?.tierRequirement?.(node?.tier)??Math.max(0,Number(node?.tier)||0)*2}
 function treeNodeState(c,spec,node){
-  const ranks=c.talents?.[spec]||{},rank=ranks[node.id]||0,spent=totalSpent(c,spec);
-  const prereq=!node.req||(ranks[node.req]||0)>0;
-  const tierOk=spent>=tierNeed(node);
-  return {rank,available:prereq&&tierOk,complete:rank>=node.max};
+  return B?.nodeState?.(c,spec,node,trees[c.class]?.[spec]||[])||{rank:0,available:false,complete:false,canInvest:false,reason:'Talent rules unavailable.'}
 }
-function talentLockReason(c,spec,node,s){
-  if(s.complete)return'Maximum rank reached.';
-  if(node.req&&!(c.talents?.[spec]?.[node.req]>0))return'Requires '+node.req+'.';
-  const spent=totalSpent(c,spec),need=tierNeed(node);
-  if(spent<need)return'Requires '+need+' points spent in this tree.';
-  if(!(talentRemaining(c,spec)>0))return'No build points available for this specialisation.';
-  return'Ready to invest.';
-}
+function talentLockReason(c,spec,node,s){return s.reason||'Talent rules unavailable.'}
 function talentInspector(c,spec,node){
   if(!node)return `<aside class="cb-talent-inspector cb-talent-inspector-v2 empty"><span>SELECT A TALENT</span><h3>Build your specialisation.</h3><p>Choose a talent to inspect its combat effect, ranks and requirements before spending a point.</p></aside>`;
   const s=treeNodeState(c,spec,node),reason=talentLockReason(c,spec,node,s);
-  const canInvest=s.available&&!s.complete&&(talentRemaining(c,spec)>0),combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
+  const canInvest=s.canInvest,combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
   const rankPips=Array.from({length:node.max},(_,i)=>`<i class="${i<s.rank?'filled':''}"></i>`).join('');
   const status=s.complete?'MAX RANK':canInvest?'READY TO LEARN':s.available?'NO POINTS':'LOCKED';
   return `<aside class="cb-talent-inspector cb-talent-inspector-v2 ${canInvest?'investable':''}">
@@ -952,6 +945,7 @@ function talentInspector(c,spec,node){
 function talentTree(c,spec){
   const nodes=(trees[c.class]?.[spec]||[]).slice().sort((a,b)=>a.tier-b.tier||a.col-b.col);
   const spent=totalSpent(c,spec),role=roleLabel(specs[c.class]?.[spec]||'dps');
+  const member=Boolean(window.CellboundGame?.getEntitlements?.()?.member),reset=B?.respecStatus?.(c,member)||{used:0,limit:1,remaining:1};
   let selected=nodes.find(n=>n.id===selectedTalentId&&selectedTalentSpec===spec);
   if(!selected)selected=nodes.find(n=>treeNodeState(c,spec,n).available&&!treeNodeState(c,spec,n).complete)||nodes[0]||null;
   if(selected){selectedTalentId=selected.id;selectedTalentSpec=spec}
@@ -959,7 +953,7 @@ function talentTree(c,spec){
   const tiers=[0,1,2,3,4].map(tier=>{
     const tierNodes=nodes.filter(n=>n.tier===tier),need=B?.tierRequirement?.(tier)??tier*2,open=spent>=need;
     const cards=tierNodes.map(node=>{
-      const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id,canInvest=s.available&&!s.complete&&(c.talent>0);
+      const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id,canInvest=s.canInvest;
       const rankPips=Array.from({length:node.max},(_,i)=>`<i class="${i<s.rank?'filled':''}"></i>`).join('');
       const combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
       const stateLabel=s.complete?'MAX':canInvest?'READY':s.available?'NO POINTS':'LOCKED';
@@ -980,13 +974,14 @@ function talentTree(c,spec){
   }).join('');
   return `<div class="cb-talent-command-v2">
     <section class="cb-talent-command-hero">
-      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Build through five tiers. Locked talents can still be inspected before you commit.</p><div class="cb-spec-activate-row">${spec===c.spec?'<span class="cb-spec-active-pill">ACTIVE SPECIALISATION</span>':`<button type="button" class="cb-activate-spec" data-activate-spec="${spec}">ACTIVATE ${spec.toUpperCase()}</button>`}</div></div>
+      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Eight points at level 15. Choose one capstone; every point matters.</p><div class="cb-spec-activate-row">${spec===c.spec?'<span class="cb-spec-active-pill">ACTIVE SPECIALISATION</span>':`<button type="button" class="cb-activate-spec" data-activate-spec="${spec}">ACTIVATE ${spec.toUpperCase()}</button>`}</div></div>
       <div class="cb-talent-command-metrics">
         <div><span>AVAILABLE</span><b>${talentRemaining(c,spec)}</b><small>${spec} build points</small></div>
         <div><span>SPENT</span><b>${spent}/${talentBudget(c)}</b><small>In ${spec}</small></div>
         <div><span>ROLE</span><b>${role}</b><small>${spec===c.spec?'Active specialisation':'Inactive specialisation'}</small></div>
       </div>
     </section>
+    <div class="cb-talent-respec-bar"><span>${c.talentRebuildNotice?'Your old allocation was reset free for Talent System V2. ':'Each specialisation has its own build. '}Respecs remaining: <b>${reset.remaining}/${reset.limit}</b> in 24 hours.</span><button type="button" data-respec-talents="${spec}" ${(reset.remaining&&spent>0)?'':'disabled'}>RESET ${spec.toUpperCase()} TALENTS</button></div>
     <div class="cb-talent-board">
       <div class="cb-talent-tier-stack">${tiers}</div>
       ${talentInspector(c,spec,selected)}
@@ -1248,11 +1243,24 @@ function investTalent(spec,nodeId){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!(talentRemaining(c,spec)>0))return;
   const node=(trees[c.class]?.[spec]||[]).find(n=>n.id===nodeId);if(!node)return;
-  const s=treeNodeState(c,spec,node);if(!s.available||s.complete)return;
+  const s=treeNodeState(c,spec,node);if(!s.canInvest)return;
   c.talents[spec][node.id]=(c.talents[spec][node.id]||0)+1;
   B?.syncLegacyTalentCounter?.(c);
   state.activity=state.activity||[];state.activity.push(`${c.name} invested a ${spec} build point in ${node.id}.`);
   writeState(state);renderSheet();window.CellboundFX?.callout?.({eyebrow:'TALENT LEARNED',title:node.id,tone:'arcane'});window.CellboundFX?.flash?.('arcane');
+}
+function resetTalents(spec){
+  if(!characterEditable())return;
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
+  if(!state||!c||!Object.prototype.hasOwnProperty.call(c.talents,spec))return;
+  const member=Boolean(window.CellboundGame?.getEntitlements?.()?.member),status=B?.respecStatus?.(c,member);
+  if(!status?.remaining||!(totalSpent(c,spec)>0))return;
+  if(!confirm('Reset all '+spec+' talents? You have '+status.remaining+' respec(s) remaining in the current 24-hour window.'))return;
+  if(!B?.respec?.(c,spec,member))return;
+  c.skillLoadouts=c.skillLoadouts||{};delete c.skillLoadouts[spec];
+  selectedTalentId=null;selectedTalentSpec=spec;
+  state.activity=state.activity||[];state.activity.push(c.name+' reset their '+spec+' talent build.');
+  writeState(state);renderSheet();window.CellboundFX?.micro?.('Talents reset','gold');
 }
 function changeSpec(spec){
   if(!characterEditable())return;
@@ -1337,6 +1345,7 @@ document.addEventListener('click',event=>{
     const slot=event.target.closest('[data-slot]');if(slot){event.preventDefault();event.stopImmediatePropagation();activeSlot=slot.dataset.slot;renderSheet();return}
     const node=event.target.closest('[data-talent-node]');if(node){selectedTalentId=node.dataset.talentNode;selectedTalentSpec=node.dataset.treeSpec;renderSheet();return}
     const invest=event.target.closest('[data-invest-talent]');if(invest){investTalent(invest.dataset.treeSpec,invest.dataset.investTalent);return}
+    const talentReset=event.target.closest('[data-respec-talents]');if(talentReset){resetTalents(talentReset.dataset.respecTalents);return}
     const spec=event.target.closest('[data-spec-tab]');if(spec){selectedTreeSpec=spec.dataset.specTab;selectedTalentId=null;selectedTalentSpec=selectedTreeSpec;renderSheet();return}
     const activateSpec=event.target.closest('[data-activate-spec]');if(activateSpec){changeSpec(activateSpec.dataset.activateSpec);return}
     const close=event.target.closest('[data-close]');if(close){event.preventDefault();event.stopImmediatePropagation();closeCharacter();return}
