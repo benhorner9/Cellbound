@@ -250,7 +250,7 @@ if(file==='quests-v2.js'){
     if(contents.includes('CellboundItemVisuals.icon'))throw new Error('Classic item icons must not delegate to the newer Forge vector renderer');
   }
   if(file==='class-build-v1.js'){
-    for(const hook of ["CURRENT_SPEC_POINT_CAP=12","TALENT_TIER_REQUIREMENTS=[0,2,4,6,8]","'Priest|Shadow':'dps'","'Hunter|Beast Mastery':'dps'","function talentBudgetForLevel","function talentRemaining"])if(!contents.includes(hook))throw new Error('Class build foundation is incomplete: '+hook);
+    for(const hook of ["CURRENT_SPEC_POINT_CAP=8","TALENT_TIER_REQUIREMENTS=[0,1,3,5,6]","'Priest|Shadow':'dps'","'Hunter|Beast Mastery':'dps'","function talentBudgetForLevel","function talentRemaining"])if(!contents.includes(hook))throw new Error('Class build foundation is incomplete: '+hook);
   }
   if(file==='gear-data.js'){
     if(!contents.includes('appearanceId:itemId')||!contents.includes('inferWeaponType')||!contents.includes('inferOffHandType'))throw new Error('Equipment Visuals V2 item identity metadata is missing');
@@ -989,7 +989,7 @@ const combatPortraitRuntime=readSource('combat-portraits-v1.js');
     if(average<gate)throw new Error(from+' Normal loot cannot reach '+to+' entry gate');
   }
   const B=sandbox.CellboundBuildRules;
-  if(!B||B.talentBudgetForLevel(1)!==1||B.talentBudgetForLevel(15)!==12)throw new Error('Per-spec talent budget foundation failed runtime validation');
+  if(!B||B.talentBudgetForLevel(1)!==1||B.talentBudgetForLevel(15)!==8)throw new Error('Per-spec talent budget foundation failed runtime validation');
   const adaptiveProbe={class:'Priest',spec:'Holy',equipment:{}},adaptiveRules=G.setBonusRulesFor(adaptiveProbe,'Holy',{tier:4,class:'Priest'});
   if(!(adaptiveRules?.pieces2?.effects?.healingScale>1)||!(adaptiveRules?.pieces4?.effects?.talentSkillCooldownScale<1))throw new Error('Adaptive healer set rules failed runtime validation');
   const balanceRules=G.setBonusRulesFor({class:'Druid',spec:'Balance'},'Balance',{tier:4,class:'Druid'});
