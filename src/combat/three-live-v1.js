@@ -369,18 +369,25 @@ function isOwner(){
    window.CellboundCombatUILayoutEditor?.isOwner?.());
 }
 function attach(shell){
- if(!isOwner()||!shell?.isConnected||shell.dataset.cb3dReady)return;
+ if(!isOwner()||!shell?.isConnected)return;
  const arena=shell.querySelector('.cbcombat-arena-wrap > .cb2d-arena,.cbcombat-arena-wrap > [data-combat-arena]');
  const wrap=arena?.closest('.cbcombat-arena-wrap');
  if(!arena||!wrap)return;
+ // The canonical viewer puts a hidden toggle into the *real* arena markup.
+ // For third-party/legacy wrappers without it, create one as a fallback.
+ let button=wrap.querySelector('[data-cb3d-toggle]');
+ if(!button){
+  button=document.createElement('button');button.type='button';button.className='cb3d-toggle';
+  button.dataset.cb3dToggle='';button.textContent='3D Alpha';button.hidden=true;
+  wrap.appendChild(button);
+ }
+ button.hidden=false;
+ if(button.dataset.cb3dBound==='1')return;
+ button.dataset.cb3dBound='1';
  shell.dataset.cb3dReady='1';
- const button=document.createElement('button');button.type='button';button.className='cb3d-toggle';
- button.textContent='3D Alpha';button.title='Admin test: show real combat events in a fixed-camera 3D arena';
+ button.title='Admin test: show real combat events in a fixed-camera 3D arena';
  button.setAttribute('aria-label','Switch combat battlefield to experimental 3D');
  button.setAttribute('aria-pressed','false');
- // Put the switch *inside the battlefield*, not the header: the immersive
- // HUD can conceal the header on tablet and phone layouts.
- wrap.appendChild(button);
  button.addEventListener('click',async()=>{
   if(live.has(arena)){
    live.get(arena).dispose();button.textContent='3D Alpha';button.setAttribute('aria-pressed','false');
@@ -413,6 +420,16 @@ function scan(root=document){
  if(root.matches?.('.cbcombat-shell'))attach(root);
  for(const shell of root.querySelectorAll?.('.cbcombat-shell')||[])attach(shell);
 }
+function refreshAccess(){
+ if(isOwner()){scan();return;}
+ for(const shell of document.querySelectorAll('.cbcombat-shell')){
+  const button=shell.querySelector('[data-cb3d-toggle]');
+  if(button)button.hidden=true;
+  const arena=shell.querySelector('.cbcombat-arena-wrap > .cb2d-arena,.cbcombat-arena-wrap > [data-combat-arena]');
+  const controller=arena&&live.get(arena);
+  controller?.dispose();
+ }
+}
 let scheduled=false;
 const observer=new MutationObserver(records=>{
  let relevant=false;
@@ -426,8 +443,8 @@ function init(){
  scan();
  observer.observe(document.documentElement,{childList:true,subtree:true});
 }
-window.addEventListener('cellbound:admin-status',()=>scan());
-window.addEventListener('cellbound:view-changed',()=>scan());
+window.addEventListener('cellbound:admin-status',refreshAccess);
+window.addEventListener('cellbound:view-changed',refreshAccess);
 window.addEventListener('cellbound:combat-visual',event=>{
  const detail=event?.detail||{},arena=detail.arena,e=detail.event;
  if(!arena||!e)return;
@@ -439,5 +456,5 @@ window.addEventListener('cellbound:combat-visual',event=>{
  if(isOwner()&&!arena.closest('.cbcombat-shell')?.dataset.cb3dReady)scan(arena.closest('.cbcombat-shell')||document);
 },{passive:true});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-window.CellboundThreeCombat=Object.freeze({version:VERSION,createSnapshot,reduce,toWorld,isOwner});
+window.CellboundThreeCombat=Object.freeze({version:VERSION,createSnapshot,reduce,toWorld,isOwner,attach,refreshAccess});
 })();
