@@ -26,24 +26,15 @@ jobs:
           path: ~/.cache/ms-playwright
           key: cellbound-${{ runner.os }}-playwright-1.51.1-${{ matrix.engine }}
       - run: npx playwright install --with-deps ${{ matrix.engine }}
-      - name: All equipment and creation fits
+      - name: Rendered appearance, equipment, creation and combat acceptance
         env:
           CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
         run: |
-          node tests/equipment-fit.browser.cjs
-          node tests/race-identity.browser.cjs
-          node tests/character-appearance-overhaul.browser.cjs
-          node tests/item-visuals-v2.browser.cjs
-          node tests/weapon-attachments.browser.cjs
-      - name: Every skill and actual class encounters
-        env:
-          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
-        run: |
-          node tests/combat-class-animation.browser.cjs
-          node tests/combat-class-encounters.browser.cjs
-          node tests/combat-cinematic-global.browser.cjs
-          node tests/onboarding-beta.browser.cjs
-          node tests/pvp-practice-window.browser.cjs
+          status=0
+          for test in equipment-fit race-identity character-appearance-overhaul item-visuals-v2 weapon-attachments combat-class-animation combat-class-encounters combat-cinematic-global onboarding-beta pvp-practice-window; do
+            node "tests/${test}.browser.cjs" || status=1
+          done
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -46,7 +46,7 @@ function bind(el){
  if(el._cbAnimationRig?.svg===svg)return el._cbAnimationRig;
  let data;try{data=JSON.parse(svg.dataset.rigPose)}catch(_){return null}
  const nodes={},original=new Map();
- for(const [key,selector] of Object.entries({body:'.cb-paper-upper-body',actor:'.cb-paper-actor',main:'.cb-paper-slot-weapon',off:'.cb-paper-slot-offhand',rightUpper:'.cb-paper-upper-right',leftUpper:'.cb-paper-upper-left',rightLower:'.cb-paper-forearm-right',leftLower:'.cb-paper-forearm-left',rightGlove:'.cb-paper-glove-right',leftGlove:'.cb-paper-glove-left',rightGrip:'.cb-paper-held-grip-main',leftGrip:'.cb-paper-held-grip-off',rightRing:'.cb-paper-slot-ring2',leftRing:'.cb-paper-slot-ring1',leg:'.cb-paper-kick-R',string:'.cb-paper-bow-string',arrow:'.cb-paper-arrow'})){
+ for(const [key,selector] of Object.entries({body:'.cb-paper-upper-body',actor:'.cb-paper-actor',main:'.cb-paper-slot-weapon',off:'.cb-paper-slot-offhand',rightUpper:'.cb-paper-upper-right',leftUpper:'.cb-paper-upper-left',rightLower:'.cb-paper-forearm-right',leftLower:'.cb-paper-forearm-left',rightGlove:'.cb-paper-glove-right',leftGlove:'.cb-paper-glove-left',rightGrip:'.cb-paper-held-grip-main',leftGrip:'.cb-paper-held-grip-off',rightRing:'.cb-paper-slot-ring2',leftRing:'.cb-paper-slot-ring1',leg:'.cb-paper-kick-R',cloth:'.cb-paper-cloth',string:'.cb-paper-bow-string',arrow:'.cb-paper-arrow'})){
   nodes[key]=svg.querySelector(selector);if(nodes[key])original.set(nodes[key],nodes[key].getAttribute('transform')||'');
  }
  for(const side of ['left','right']){const key=side+'Pad';nodes[key]=svg.querySelector('.cb-paper-pauldron-'+side);if(nodes[key])original.set(nodes[key],nodes[key].getAttribute('transform')||'')}
@@ -82,6 +82,7 @@ function apply(u,c){
   if(r.prop){r.prop.setAttribute('opacity',String(c.prop||0));r.prop.setAttribute('transform',`translate(${pose.left.hand.x-r.base.left.hand.x} ${pose.left.hand.y-r.base.left.hand.y})`)}
   if(n.off&&r.base.off?.mode==='held')n.off.style.opacity=c.prop?'0':'';
   set('leg',`rotate(${c.leg||0} ${120+r.p.hip*.47} 250)`);
+  set('cloth',`rotate(${clamp((c.leg||0)*.15-(c.lean||0)*.2,-4,4)} 120 244)`);
   if(n.actor)n.actor.style.opacity=String(1-(c.shade||0));
   set('body',`rotate(${c.lean||0} 120 257)`);
   // Mirror remains on the outer actor; all bones and sockets share it.

@@ -419,6 +419,15 @@ function setVisual(c,item){
   }
   return {...base,id:id,classAccent:gearAccent(item)};
 }
+const TAILOR_PALETTES={
+  Warrior:['#626e79','#272e36','#bca37c'],Paladin:['#b8b5a4','#303c55','#d8b36c'],
+  Hunter:['#526249','#28382b','#b9a074'],Rogue:['#434353','#20232e','#8d93a5'],
+  Mage:['#435d86','#242c46','#b7a3cb'],Priest:['#c0bcb0','#475463','#c5b383'],
+  Druid:['#666548','#303e2c','#bcab78'],Shaman:['#52747a','#283d43','#bca375'],
+  Warlock:['#675474','#30263e','#a793aa'],Monk:['#59786c','#2e423c','#c8b586'],
+  'Death Knight':['#53616b','#252b36','#9e747a'],'Demon Hunter':['#4d5751','#242c30','#ac8dab'],
+  Evoker:['#557c7d','#293f46','#c5ab79']
+};
 function gearPalette(c,item,tier,slot){
   var classAccent=gearAccent(item),t=Math.max(1,tier||1),set=setVisual(c,item),variant=visualVariant(item,slot,6);
   if(set)return{
@@ -436,13 +445,14 @@ function gearPalette(c,item,tier,slot){
   var lift=Math.max(0,Math.min(.18,(t-1)*.035));
   // An item's class treatment travels with the item in inventory and when worn.
   // Retain material variation while making mixed-class parties readable at combat scale.
-  var coloured=mixHex(material.primary,classAccent,.34);
+  var tailored=TAILOR_PALETTES[gearClass(item)];
+  var coloured=tailored?mixHex(tailored[0],material.primary,.16):mixHex(material.primary,classAccent,.34);
   return {
     accent:classAccent,
     base:lift?mixHex(coloured,'#ffffff',lift):coloured,
-    dark:mixHex(material.secondary,classAccent,.12),
+    dark:tailored?mixHex(tailored[1],material.secondary,.12):mixHex(material.secondary,classAccent,.12),
     light:mixHex(coloured,'#ffffff',.24+t*.025),
-    trim:mixHex(material.trim,classAccent,.38),
+    trim:tailored?mixHex(tailored[2],material.trim,.15):mixHex(material.trim,classAccent,.38),
     glow:mixHex(material.glow,classAccent,t>=4?.24:.10),
     set:null,
     variant:variant,
@@ -541,7 +551,7 @@ function paperRaceNeck(c,p,skin){
   var race=c.race||c.appearance?.race||'Veyren',nw=p.neck||14;
   // The head now sits into the neck rather than floating above a long column.
   // Keep race-specific thickness, but constrain the visible vertical length.
-  var top=race==='Stoneborn'?111:112,bottom=race==='Stoneborn'?138:race==='Aelari'?136:137,shoulderJoin=bottom+2;
+  var top=race==='Stoneborn'?109:110,bottom=race==='Stoneborn'?138:race==='Aelari'?136:137,shoulderJoin=bottom+2;
   var base='<g class="cb-paper-neck" data-neck-top="'+top+'" data-neck-bottom="'+bottom+'"><path d="M'+(120-nw/2)+' '+top+' L'+(120-nw/2)+' '+bottom+' Q120 '+shoulderJoin+' '+(120+nw/2)+' '+bottom+' L'+(120+nw/2)+' '+top+'Z" fill="'+skin+'" stroke="#182027" stroke-width="2.5"/>';
   var detail='';
   if(race==='Stoneborn')detail='<path d="M'+(120-nw/2+2)+' 120 L120 126 L'+(120+nw/2-2)+' 119 M'+(120-nw/2+3)+' 133 L120 129 L'+(120+nw/2-3)+' 134" fill="none" stroke="#e3d8d0" stroke-width="1.8" opacity=".4"/>';
@@ -770,6 +780,7 @@ function paperHeadMarkup(c,a,skin,eye,hair,highlighted){
     helmet='<path d="M28 43 Q29 18 50 16 Q71 18 72 43 L66 38 Q50 29 34 38Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.2"/>'+
       (v===0?'<path d="M34 32 L50 20 L66 32" fill="none" stroke="'+pal.light+'" stroke-width="2"/>':v===1?'<path d="M31 36 L40 23 L50 31 L60 23 L69 36" fill="none" stroke="'+pal.light+'" stroke-width="2"/>':'<path d="M36 25 Q50 34 64 25" fill="none" stroke="'+pal.light+'" stroke-width="2"/>');
   }
+  if(helm.visualFit==='open')helmet='<path d="M28 39 Q50 31 72 39" fill="none" stroke="'+pal.trim+'" stroke-width="4"/>'+classGlyph(klass,pal,50,36,.6);
   helmet+=itemRune(helm,'Head',pal,50,28,.7)+betaHeadDetail(helm,pal,tier);
   if(tier>=4)helmet+='<circle cx="50" cy="25" r="2.6" fill="'+pal.glow+'" class="cb-paper-glow"/>';
   return base+'<g class="'+paperSlotClass('Head',highlighted,helm)+'" data-item-key="'+esc(itemIdentity(helm,'Head'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(helm))+'" transform="translate(50 35) scale('+headFit.scaleX+' 1) translate(-50 -35)">'+helmet+'</g>';
@@ -783,7 +794,7 @@ function paperLegs(c,skin,highlighted){
   if(!item)return base;
   var tier=clampTier(item.tier),pal=gearPalette(c,item,tier||1,'Legs'),klass=gearClass(item),style=clothLowerStyle(item);
   var heavy=['Warrior','Paladin','Death Knight'].includes(klass),cloth=['Mage','Priest','Druid','Warlock'].includes(klass),robe=cloth&&style!=='trousers';
-  var gear='<g class="'+paperSlotClass('Legs',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Legs'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-left-leg-x="'+lc.toFixed(2)+'" data-right-leg-x="'+rc.toFixed(2)+'" data-lower-silhouette="'+style+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'">';
+  var gear='<g class="'+paperSlotClass('Legs',highlighted,item)+(robe?' cb-paper-cloth':'')+'" data-item-key="'+esc(itemIdentity(item,'Legs'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-left-leg-x="'+lc.toFixed(2)+'" data-right-leg-x="'+rc.toFixed(2)+'" data-lower-silhouette="'+style+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'">';
   if(robe){
     gear+=lowerSilhouetteMarkup(item,pal,p,style);
     if(style==='kilt')gear+='<path d="'+legPath(lc)+' '+legPath(rc)+'" fill="'+pal.dark+'" stroke="#111820" stroke-width="2.1" opacity=".88"/>';
@@ -1149,7 +1160,7 @@ function paperDollSVG(c,opts){
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
   var r=raceDef(a.race),skin=r.skin[a.skinTone],eye=r.eyes[a.eyes],hair=HAIR[a.hairColor];
   var accent=opts.accent||paperAccent(c),highlighted=opts.highlightedSlot||'',profile=bodyProfile(race,a);
-  var uid='pd'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)).toString(36);
+  var uid='pd'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)+'|'+JSON.stringify(c.equipment||{})).toString(36);
   var nw=profile.neck||14;
   var neck=paperRaceNeck(c,profile,skin);
   var hip=profile.hip||32;
