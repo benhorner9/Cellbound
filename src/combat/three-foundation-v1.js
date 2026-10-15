@@ -118,7 +118,8 @@ async function mountPreview(host){
   target.rotation.x=-Math.PI/2;target.position.copy(ring.position);target.position.y=-.086;scene.add(target);
   const resize=()=>{
     const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight),aspect=w/h;
-    const viewHeight=aspect<1.2?13:10;
+    // Fit the full room on iPad and narrow screens without moving the camera.
+    const viewHeight=Math.max(11.8,19.5/Math.max(.4,aspect));
     camera.left=-viewHeight*aspect/2;camera.right=viewHeight*aspect/2;
     camera.top=viewHeight/2;camera.bottom=-viewHeight/2;camera.updateProjectionMatrix();
     renderer.setSize(w,h,false);
