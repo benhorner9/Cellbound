@@ -241,15 +241,36 @@ const originalProbe=JSON.stringify(pveProbeEncounter);
 const runProbe=()=>C.simulate({party:partyFor(groups[0],true),encounter:pveProbeEncounter,
  seed:'pve-tuning-contract',maxDurationMs:1000});
 const firstProbe=runProbe(),secondProbe=runProbe(),enemy=firstProbe.finalState.enemies[0];
-const expectedHealth=Math.round(1000*(1+14*.03)*1.22*1.25*1.04);
-assert.equal(enemy.maxHealth,expectedHealth,'PvE enemy health increases exactly 4%');
-assert(Math.abs(enemy.damageScale-(1.28*1.20*1.04))<1e-8,'PvE enemy damage increases exactly 4%');
+const expectedHealth=Math.round(1000*(1+14*.03)*1.22*1.25*1.03);
+assert.equal(enemy.maxHealth,expectedHealth,'PvE enemy health increases exactly 3%');
+assert(Math.abs(enemy.damageScale-(1.28*1.20*1.03))<1e-8,'PvE enemy damage increases exactly 3%');
 assert.equal(secondProbe.finalState.enemies[0].maxHealth,expectedHealth,'repeat simulations do not stack the challenge');
 assert.equal(JSON.stringify(pveProbeEncounter),originalProbe,'input encounters are not mutated');
 const absoluteProbe=C.simulate({party:partyFor(groups[0],true),encounter:{...pveProbeEncounter,
  enemies:[{name:'Exact HP Enemy',classification:'boss',absoluteHealth:true,maxHealth:1234}]},
  seed:'pve-absolute-hp',maxDurationMs:1000});
 assert.equal(absoluteProbe.finalState.enemies[0].maxHealth,1234,'explicit absolute-health encounters stay authored');
-console.log('PvE challenge PASS: +4% relative HP/damage, no stacking or encounter mutation, absolute boss health preserved.');
+console.log('PvE challenge PASS: +3% relative HP/damage, no stacking or encounter mutation, absolute boss health preserved.');
+
+// Chapter 1 endgame: all 5 tank and 6 healer specialisations must be viable.
+const tanks=groups.filter(g=>g.role==='tank'),healers=groups.filter(g=>g.role==='healer');
+assert.equal(tanks.length,5);assert.equal(healers.length,6);
+let matchupWins=0,matchupTests=0;
+for(const tank of tanks)for(const healer of healers){
+ let wins=0;
+ for(let seed=0;seed<4;seed++){
+  const slots=[[tank.klass,tank.spec],[healer.klass,healer.spec],['Mage','Arcane'],['Hunter','Marksman'],['Rogue','Assassination']];
+  const party=slots.map(([klass,spec],i)=>hero(klass,spec,'u'+i,15,42,true));
+  party.forEach(c=>c.power=29);
+  const result=C.simulate({party,encounter:{id:'tank-healer-audit',kind:'boss',level:18,recommendedItemLevel:42,enemies:[{name:'Boss',classification:'boss'}],enemyHealth:2500,mechanics:[]},
+   seed:'balance-matrix:'+tank.klass+'+'+tank.spec+':'+healer.klass+'+'+healer.spec+':'+seed,maxDurationMs:90000,tactics:{cooldownUse:'free'}});
+  checkResult(result,'Tank/healer '+tank.spec+'/'+healer.spec);
+  wins+=result.outcome==='victory'?1:0;matchupTests++;
+ }
+ matchupWins+=wins;
+ assert(wins>=2,'Tank/healer pairing is systematically failing: '+tank.klass+'/'+tank.spec+' and '+healer.klass+'/'+healer.spec);
+}
+assert(matchupWins>=110,'Endgame tank/healer pairing win rate regressed: '+matchupWins+'/'+matchupTests);
+console.log('Tank/healer role compatibility PASS: '+matchupWins+'/'+matchupTests+' victories across 30 combinations.');
 
 console.log('Role balance PASS: 13 classes, 28 specs, '+encounters+' seeded combat simulations, 6 campaign/raid stages, 10-player Manor, '+arena+' Arena simulations (2v2/3v3/5v5).');

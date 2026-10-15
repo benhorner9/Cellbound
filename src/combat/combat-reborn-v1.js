@@ -2,7 +2,7 @@
 'use strict';
 const VERSION='1.7.0';
 // A modest global PvE-only challenge increase; PvP combat remains unchanged.
-const PVE_CHALLENGE_MULTIPLIER=1.04;
+const PVE_CHALLENGE_MULTIPLIER=1.03;
 const COMMAND_RULES={
 focus:{cooldownMs:8000,sharedMs:3000,cost:1},
 spread:{cooldownMs:10000,sharedMs:3000,cost:1},
