@@ -129,21 +129,6 @@ async function mountPreview(host){
   if(!watcher)window.addEventListener('resize',resize);
   let disposed=false,raf=0;
   const begin=performance.now();
-  function frame(time){
-    if(disposed||document.hidden)return;
-    const t=(time-begin)/1000;
-    players.forEach((entry,i)=>{
-      entry.unit.position.y=Math.sin(t*2+i*.9)*.035;
-    });
-    boss.position.y=Math.sin(t*1.4)*.11;
-    glow.intensity=70+Math.sin(t*2)*8;
-    ring.material.emissiveIntensity=.9+.18*Math.sin(t*2.5);
-    renderer.render(scene,camera);
-    raf=requestAnimationFrame(frame);
-  }
-  function visible(){if(!document.hidden&&!disposed&&!raf)raf=requestAnimationFrame(frame);}
-  function tick(t){raf=0;frame(t);}
-  function loop(t){raf=0;if(!disposed&&!document.hidden){frame(t);}}
   // Track one animation frame at a time, including after visibility changes.
   function renderLoop(t){raf=0;if(disposed||document.hidden)return;const sec=(t-begin)/1000;
     players.forEach((entry,i)=>{entry.unit.position.y=Math.sin(sec*2+i*.9)*.035;});
