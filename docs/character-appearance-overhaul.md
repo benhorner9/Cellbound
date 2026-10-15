@@ -33,4 +33,14 @@ Tests:
 - `tests/character-appearance-overhaul.browser.cjs`: actual creation controls, landscape/portrait/mobile layouts, 108 rendered action states with exact grip/shoulder pivot checks, and 65 class/tier screenshots with stable repaint comparisons.
 - Existing every-skill, actual class encounter, shared combat-theme, weapon, item, race, onboarding and PvP window browser regressions remain part of the dedicated Chromium/WebKit acceptance workflow.
 
-Automated bounds/attachment checks and representative human image inspection do not prove every possible combination is artistically perfect. Physical iPad performance requires hardware testing; WebKit viewport tests are not physical-device certification. Release run references and outcomes will be recorded after acceptance completes.
+## Verification evidence — 15 October 2026
+
+The full acceptance workflow passed in Chromium and WebKit at [run 38764069715](https://github.com/benhorner9/Cellbound/actions/runs/38764069715), commit `bb7f83d0852fc5d2cceae40e1c23beec4c221621`. This includes the production build, 63/63 core suites, all matrix checks above, 516 painted weapon/attachment cases, live equipment swaps across eight shared combat mounts, every active skill (221), actual encounters involving all 13 classes, 11 combat themes, tutorial/onboarding, PvP and responsive UI checks.
+
+Human review of the rendered captures found a cropped mobile Forge preview despite the initial overflow check passing. The final correction constrains the complete SVG canvas to its available flex panel and adds an explicit canvas-containment assertion. It is verified by [run 38764690753](https://github.com/benhorner9/Cellbound/actions/runs/38764690753), commit `ec368f7b9b4ada0f2b4d0a7f2438e7846e21806c` (final run outcome recorded in the delivery report). Browser artifacts contain creation captures, all 13 tier sheets, equipment sheets and combat captures.
+
+Desktop, tablet landscape, tablet portrait and phone viewport checks use automated Chromium/WebKit. Screenshots and geometry checks are complementary: stable repaint comparisons detect nondeterminism, not artistic quality against a previously approved golden image. Automated bounds/attachment checks and representative human image inspection do not prove every possible combination is artistically perfect.
+
+Physical iPad performance remains unverified. Software-rendered CI encounter frame-time diagnostics are slow, particularly WebKit, and the encounter test explicitly makes no performance pass claim. Responsive UI/resource budgets pass, but neither those checks nor emulated tablet viewports certify hardware frame rate. No physical Safari device or authenticated live multiplayer session was tested.
+
+Gameplay data, class balance, equipment statistics, persistence and save formats are unchanged. Deployment is through the existing staging-only workflow; its exact-commit HTTPS verification is reported separately from browser QA.

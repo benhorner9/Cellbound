@@ -36,5 +36,5 @@
 /* Appearance controls share the existing Forge; no second editor or preview. */
 .cf-appearance-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
 .cf-appearance-controls label{display:grid;gap:6px;color:#c9d2cf;font-size:12px;min-width:0}
-.cf-appearance-controls select{width:100%;min-height:44px;padding:8px;border:1px solid #405552;border-radius:6px;background:#132126;color:#f0e9da}
+.cf-appearance-controls select{appearance:none;-webkit-appearance:none;color-scheme:dark;width:100%;min-height:44px;padding:8px 26px 8px 8px;border:1px solid #405552;border-radius:6px;background:linear-gradient(45deg,transparent 50%,#c9d2cf 50%) calc(100% - 14px) 50%/5px 5px no-repeat,linear-gradient(135deg,#c9d2cf 50%,transparent 50%) calc(100% - 9px) 50%/5px 5px no-repeat,#132126;color:#f0e9da}
 @media(max-width:700px){.cf-appearance-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}

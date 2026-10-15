@@ -16,6 +16,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?'webkit':'chromium',ro
   for(const [key,value] of [['frame','2'],['skinTone','5'],['hair','3'],['hairColor','6'],['marking','4'],['feature','3']])await page.selectOption('[data-forge-appearance="'+key+'"]',{value});
   await page.click('[data-forge-sex="1"]');await page.click('[data-forge-race="Stoneborn"]');
   const saved=await page.evaluate(()=>draft.appearance);assert.equal(saved.frame,2);assert.equal(saved.skinTone,5);assert.equal(saved.marking,4);assert.equal(saved.feature,3);assert.equal(saved.gender,1);
+  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('[data-forge-appearance]')).getPropertyValue('-webkit-appearance')),'none','Readable custom select styling in both engines');
   for(const [width,height] of [[1366,1024],[1024,1366],[390,844]]){
    await page.setViewportSize({width,height});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'Forge overflow '+width);
    assert.equal(await page.evaluate(()=>{const model=document.querySelector('.cf-preview>.cf-model'),svg=model.querySelector('svg'),box=model.getBoundingClientRect(),art=svg.getBoundingClientRect();return art.height>100&&art.top>=box.top-1&&art.bottom<=box.bottom+1&&art.left>=box.left-1&&art.right<=box.right+1}),true,'Full model canvas fits preview '+width);
