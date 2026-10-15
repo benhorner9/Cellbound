@@ -470,6 +470,69 @@ function anchorPoint(scene,el,bounds=scene.arena.getBoundingClientRect()){
 
 /* Visual-only ability signatures: never alter simulation or attack timing. */
 let abilityIndex=null;
+// Exact catalogue IDs take precedence over name heuristics (Starfire is lunar,
+// Devouring Plague is shadow, and a healing breath is not a fire attack).
+// These are cosmetic signatures only; area targets still come from combat events.
+const CLASS_SIGNATURES={
+ 'Death Knight':[
+  ['blood','fracture','heart-strike death-strike marrowrend blood-boil'],
+  ['blood','rune','rune-tap dancing-rune-weapon vampiric-blood'],
+  ['frost','fracture','obliterate frost-strike howling-blast frostscythe'],
+  ['frost','nova','remorseless-winter frostwyrms-fury'],
+  ['frost','breath','breath-of-sindragosa'],['frost','guard','icebound-fortitude mind-freeze'],
+  ['shadow','rune','dark-command death-and-decay-blood death-and-decay-unholy dark-transformation army-of-the-dead apocalypse anti-magic-shell'],
+  ['shadow','fracture','festering-strike scourge-strike'],['shadow','pulse','death-coil outbreak']
+ ],
+ 'Demon Hunter':[
+  ['fel','glaive','demons-bite chaos-strike blade-dance throw-glaive shear soul-cleave'],
+  ['fel','breath','eye-beam'],['fel','nova','fel-barrage havoc-metamorphosis spirit-bomb'],
+  ['fel','sigil','torment disrupt blur demon-spikes vengeance-metamorphosis'],
+  ['fire','sigil','infernal-strike sigil-of-flame fiery-brand']
+ ],
+ 'Druid':[
+  ['nature','blossom','rejuvenation regrowth wild-growth tranquility'],
+  ['nature','pulse','restoration-wrath wrath skull-bash'],['nature','guard','barkskin'],
+  ['lunar','star','starfire starsurge moonfire starfall fury-of-elune celestial-alignment'],
+  ['solar','star','sunfire solar-beam']
+ ],
+ 'Evoker':[
+  ['bronze','rune','reversion temporal-anomaly'],
+  ['emerald','blossom','verdant-embrace emerald-blossom emerald-communion'],
+  ['emerald','breath','dream-breath'],['fire','pulse','preservation-living-flame living-flame pyre dragonrage'],
+  ['fire','breath','fire-breath'],['azure','breath','disintegrate'],
+  ['azure','star','azure-strike eternity-surge quell'],['earth','guard','obsidian-scales']
+ ],
+ 'Priest':[
+  ['holy','blossom','heal flash-heal prayer-healing soul-recall divine-hymn'],
+  ['holy','pulse','smite'],['holy','guard','guardian-spirit'],
+  ['shadow','pulse','mind-flay mind-blast devouring-plague shadow-word-pain vampiric-touch void-torrent silence'],
+  ['shadow','nova','shadow-crash void-eruption'],['shadow','guard','dispersion']
+ ],
+ 'Shaman':[
+  ['water','blossom','healing-wave riptide healing-rain'],['water','chain','chain-heal'],
+  ['water','sigil','healing-stream-totem spirit-link-totem'],
+  ['storm','sigil','windfury-totem'],['earth','sigil','stoneskin-totem'],
+  ['storm','pulse','restoration-lightning-bolt lightning-bolt stormkeeper ascendance wind-shear'],
+  ['storm','chain','chain-lightning'],['fire','pulse','lava-burst flame-shock'],
+  ['earth','fracture','earth-shock'],['earth','nova','earthquake'],['arcane','guard','astral-shift']
+ ],
+ 'Warlock':[
+  ['shadow','pulse','shadow-bolt soul-strike shadowfury'],['shadow','guard','dark-pact'],
+  ['fel','pulse','demonbolt chaos-bolt axe-toss'],
+  ['fel','sigil','hand-of-guldan call-dreadstalkers summon-demonic-tyrant summon-infernal'],
+  ['fel','nova','felstorm implosion'],['fire','pulse','incinerate conflagrate immolate channel-demonfire'],
+  ['fire','nova','rain-of-fire']
+ ],
+ 'Monk':[
+  ['brew','fracture','keg-smash'],['brew','guard','purifying-brew celestial-brew fortifying-brew'],
+  ['fire','breath','breath-of-fire'],['mist','blossom','soothing-mist vivify renewing-mist essence-font revival'],
+  ['chi','fist','brewmaster-blackout-kick mist-rising-sun-kick mist-tiger-palm tiger-palm windwalker-blackout-kick windwalker-rising-sun-kick fists-of-fury touch-of-death spear-hand-strike'],
+  ['chi','nova','spinning-crane-kick'],['chi','guard','touch-of-karma'],['chi','pulse','provoke']
+ ]
+};
+const signatureIndex=new Map();
+for(const [klass,groups] of Object.entries(CLASS_SIGNATURES))for(const [school,shape,ids] of groups)for(const id of ids.split(' '))signatureIndex.set(klass+':'+id,{school,shape});
+const CLASS_SCHOOLS={'Warrior':'steel','Paladin':'holy','Hunter':'steel','Rogue':'shadow','Mage':'arcane','Death Knight':'blood','Demon Hunter':'fel','Druid':'nature','Evoker':'emerald','Priest':'holy','Shaman':'storm','Warlock':'shadow','Monk':'chi'};
 function abilityDefinition(e,klass){
  if(!abilityIndex&&window.CellboundCombatData){abilityIndex=new Map();for(const [owner,list] of Object.entries(window.CellboundCombatData.ABILITIES))for(const a of list){abilityIndex.set(owner+':'+a.id,a);abilityIndex.set(owner+':'+a.name.toLowerCase(),a)}}
  const key=String(e?.abilityId||e?.payload?.abilityId||e?.ability||'').replace(/ \((DoT|HoT|Pulse)\)$/i,'').toLowerCase();
@@ -477,13 +540,14 @@ function abilityDefinition(e,klass){
 }
 function visualSignature(e,kind='damage',klass=''){
  const definition=abilityDefinition(e,klass),actionKind=definition?.kind||e?.payload?.kind||kind;
- const name=String(e?.ability||e?.payload?.abilityId||'').toLowerCase().replace(/[-_]+/g,' ');
+ const name=String(definition?.name||e?.ability||e?.abilityId||e?.payload?.abilityId||'').toLowerCase().replace(/[-_]+/g,' ');
+ const authored=signatureIndex.get(klass+':'+definition?.id);
  const schools=[['poison',/poison|venom|envenom|plague/],['fel',/fel|chaos bolt|demon|infernal/],['frost',/frost|ice|glacial|blizzard|winter/],['storm',/lightning|thunder|storm|electr/],['fire',/fire|flame|pyro|lava|burn|immolate/],['holy',/holy|divine|radiant|judgement|consecrat|benedict/],['shadow',/shadow|void|death|necrot|blood|curse|soul/],['arcane',/arcane|astral|star|celestial|azure|temporal/],['nature',/nature|thorn|root|regrowth|rejuven|wild growth|verdant|emerald|riptide/],['earth',/earth|quake|rock|stone/]];
- const school=schools.find(([,re])=>re.test(name))?.[0]||(klass==='Paladin'?'holy':kind==='heal'?'heal':kind==='defense'?'guard':klass==='Mage'?'arcane':klass==='Rogue'?'shadow':'steel');
- const shape=kind==='heal'?'blossom':kind==='defense'||/shield|barrier|ward|guard|protection|block/.test(name)?'guard':/chain lightning|chain heal/.test(name)?'chain':/blizzard|whirl|volley|multi shot|starfall|nova|consecrat|earthquake|blade dance|fan of knives|death and decay/.test(name)?'nova':/aimed|shot|arrow|pierc|stab|dagger/.test(name)?'pierce':/slam|execute|crush|mortal strike|cleave|obliterat/.test(name)?'fracture':'pulse';
+ const school=authored?.school||schools.find(([,re])=>re.test(name))?.[0]||CLASS_SCHOOLS[klass]||(kind==='heal'?'heal':kind==='defense'?'guard':'steel');
+ const shape=kind==='defense'||actionKind==='defensive'?'guard':authored?.shape||(kind==='heal'||/heal/.test(actionKind)?'blossom':/shield|barrier|ward|guard|protection|block/.test(name)?'guard':/chain lightning|chain heal/.test(name)?'chain':/blizzard|whirl|volley|multi shot|starfall|nova|consecrat|earthquake|blade dance|fan of knives|death and decay/.test(name)?'nova':/aimed|shot|arrow|pierc|stab|dagger/.test(name)?'pierce':/slam|execute|crush|mortal strike|cleave|obliterat/.test(name)?'fracture':'pulse');
  const major=!!(e?.payload?.majorAbility||e?.result==='critical'||Number(e?.payload?.visualIntensity)>=4||/apocalypse|metamorphosis|pyroblast|chaos bolt|glacial spike|frostwyrm|execute/.test(name));
- const area=Number(definition?.cleave)>1||Number(definition?.targets)>1||/nova|consecrat|blizzard|volley|multi.shot|light of dawn|radiant wave|whirlwind|thunder clap/.test(name);
- return{school,shape,major,area,kind:actionKind,known:!!definition,periodic:/\((DoT|HoT|Pulse)\)/i.test(e?.ability||'')};
+ const area=actionKind==='group-heal'||Number(definition?.cleave)>1||Number(definition?.targets)>1||/nova|consecrat|blizzard|volley|multi.shot|light of dawn|radiant wave|whirlwind|thunder clap/.test(name);
+ return{school,shape,major,area,kind:actionKind,known:!!definition,authored:!!authored,periodic:/\((DoT|HoT|Pulse)\)/i.test(e?.ability||'')};
 }
 function abilityCharge(scene,e,u){
  if(!u?.el||reduce()||scene.effects.size>=25)return;
@@ -600,10 +664,10 @@ function livingEvent(e,opts={}){
  case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position,80);state(u,controlled(u)?'controlled':'idle');delete u.el.dataset.intent;if(t)face(u,t.el);if(arena.dataset.bespokeBattlefield==='1'&&arena.classList.contains('theme-ashen')&&!reduce())effect(scene,'ground-kick',null,u.el,360)}break;
  case'ABILITY_START':
   if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',now()+560/scene.speed);
-   if(!(e.payload?.castTime>0)){const sig=visualSignature(e);if(sig.major||sig.shape==='nova'||sig.shape==='fracture')abilityCharge(scene,e,u);else if(!['damage','heal'].includes(e.payload?.kind))abilityCharge(scene,e,u);}
+   if(!(e.payload?.castTime>0)){const sig=visualSignature(e,'damage',u.p.name);if(sig.major||sig.shape==='nova'||sig.shape==='fracture')abilityCharge(scene,e,u);else if(!['damage','heal'].includes(e.payload?.kind))abilityCharge(scene,e,u);}
     if(!(e.payload?.castTime>0))motion(u,[{scale:'.965',translate:'0 1px',offset:0},{scale:'1.035',translate:'0 -1px',offset:.46},{scale:'1',translate:'0 0',offset:1}],300,scene)}break;
  case'CAST_START':
-  if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e);u.el.dataset.vfxSchool=visualSignature(e).school;abilityCharge(scene,e,u)}break;
+  if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e);u.el.dataset.vfxSchool=visualSignature(e,'damage',u.p.name).school;abilityCharge(scene,e,u)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
  case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)&&!abilityImpact(scene,e,u,t))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&(e.result==='critical'||visualSignature(e).major||visualSignature(e).shape==='nova')&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
  case'HEAL_RECEIVED':if(t){
@@ -729,7 +793,7 @@ function combatEvent(e,opts={}){try{
 // Flights are presentation-only and owned by the existing bounded FX lifecycle.
 FX.launchAction=(e,arena,source,target,profile,flight)=>{
  const scene=scenes.get(arena);if(!scene||!source?.isConnected||!target?.isConnected||reduce())return;
- const u=scene.units.get(source),sig=visualSignature(e,profile.kind==='heal'?'heal':'damage',u?.p.name),f=effect(scene,'class-projectile school-'+sig.school+(profile.socket==='bow'?' arrow':'')+(sig.major?' major':''),source,target,flight*scene.speed);
+ const u=scene.units.get(source),sig=visualSignature(e,profile.kind==='heal'?'heal':'damage',u?.p.name),f=effect(scene,'class-projectile school-'+sig.school+' shape-'+sig.shape+(profile.socket==='bow'?' arrow':'')+(sig.major?' major':''),source,target,flight*scene.speed);
  if(!f)return;
  // A release can precede ResizeObserver after an iPad rotation. Read this
  // launch's geometry together; never normalise fresh sockets with old bounds.
@@ -744,7 +808,7 @@ FX.syncPositions=(arena,units,objectives={})=>{mount(arena);const scene=scenes.g
 if(window.CellboundCombatSpatial)window.CellboundCombatSpatial.inspect=arena=>{const s=scenes.get(arena);return s?{checks:s.spatialChecks,unresolved:s.spatialUnresolved,units:(s.spatialUnits||[]).map(u=>({id:u.id,role:u.role,style:u.style,logical:u.logical,visual:u.visual,reserved:u.reserved,rx:u.rx,ry:u.ry,conflict:u.conflict,state:u.el.dataset.spatialState}))}:null};
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
 FX.diagnostics=()=>({scenes:scenes.size,effects:[...scenes.values()].reduce((n,s)=>n+s.effects.size,0),warnings:[...scenes.values()].reduce((n,s)=>n+s.warnings.size,0),lowDetail:[...scenes.values()].some(s=>s.lowDetail)});
-FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.clarityDescriptor=clarityDescriptor;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.7.0';FX.living=true;
+FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.visualSignature=visualSignature;FX.clarityDescriptor=clarityDescriptor;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.8.0';FX.living=true;
 // Legacy public entry points remain callable but no longer duplicate shared reactions.
 for(const name of ['impact','heal','death','spawn','interrupt']){const old=FX[name];FX[name]=function(el,...args){if(el?.closest?.('.cbl-scene'))return;return old?.(el,...args)}}
 })();

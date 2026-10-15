@@ -412,6 +412,17 @@
 .cbl-fx.school-heal{--hit:#7edbaa;--flash:#e9ffd1}
 .cbl-fx.school-guard{--hit:#9bcee7;--flash:#effbff}
 .cbl-fx.school-steel{--hit:#dfba91;--flash:#fff0d6}
+/* Class materials share the bounded effect lifecycle and two-layer budget. */
+.cbl-fx.school-blood{--hit:#d85c72;--flash:#ffd0d6}
+.cbl-fx.school-lunar{--hit:#b4b8ff;--flash:#eeefff}
+.cbl-fx.school-solar{--hit:#f2bb61;--flash:#fff0b2}
+.cbl-fx.school-emerald{--hit:#4fd5a4;--flash:#d3ffe9}
+.cbl-fx.school-bronze{--hit:#d6ad6b;--flash:#fff1ca}
+.cbl-fx.school-azure{--hit:#62c7f6;--flash:#d5f4ff}
+.cbl-fx.school-water{--hit:#6bbde6;--flash:#d4f8ff}
+.cbl-fx.school-mist{--hit:#92e7ce;--flash:#e6fff5}
+.cbl-fx.school-chi{--hit:#55deaf;--flash:#e3ffb6}
+.cbl-fx.school-brew{--hit:#dea35d;--flash:#fff0be}
 .cbl-fx.ability-impact.school-fire:after{clip-path:polygon(46% 0,65% 30%,84% 13%,72% 52%,95% 72%,59% 77%,48% 100%,25% 84%,9% 87%,23% 46%,11% 27%,37% 34%)}
 .cbl-fx.ability-impact.school-frost:after{clip-path:polygon(50% 0,61% 35%,85% 12%,68% 43%,100% 50%,68% 58%,85% 89%,57% 69%,50% 100%,40% 69%,12% 86%,32% 57%,0 50%,31% 44%,14% 14%,40% 35%)}
 .cbl-fx.ability-impact.school-storm:after{clip-path:polygon(42% 0,77% 0,53% 34%,81% 30%,30% 100%,48% 53%,17% 54%);rotate:var(--hit-angle,0deg)}
@@ -426,6 +437,29 @@
 .cbl-fx.ability-impact.shape-guard:after{inset:12%;clip-path:polygon(50% 0,90% 19%,81% 73%,50% 100%,19% 73%,10% 19%);background:var(--flash)}
 .cbl-fx.ability-impact.shape-blossom:before{border:5px double var(--hit)}
 .cbl-fx.ability-impact.shape-blossom:after{clip-path:polygon(50% 0,60% 31%,88% 14%,68% 43%,100% 50%,68% 57%,88% 87%,60% 69%,50% 100%,40% 69%,12% 87%,32% 57%,0 50%,32% 43%,12% 14%,40% 31%)}
+.cbl-fx.ability-impact.shape-rune:before{border-radius:15%;border-style:double;rotate:45deg;background:none}
+.cbl-fx.ability-impact.shape-rune:after{clip-path:polygon(45% 0,55% 0,55% 31%,85% 13%,90% 23%,58% 47%,86% 73%,78% 81%,55% 61%,55% 100%,45% 100%,45% 61%,22% 81%,14% 73%,42% 47%,10% 23%,15% 13%,45% 31%)}
+.cbl-fx.ability-impact.shape-sigil:before{border:3px double var(--hit);border-radius:20%;rotate:45deg;background:none}
+.cbl-fx.ability-impact.shape-sigil:after{background:none;border:2px dashed var(--flash);border-radius:50%;clip-path:none}
+.cbl-fx.ability-impact.shape-star:after{clip-path:polygon(50% 0,61% 36%,100% 50%,61% 64%,50% 100%,39% 64%,0 50%,39% 36%)}
+.cbl-fx.ability-impact.shape-glaive:after{clip-path:polygon(0 50%,30% 8%,69% 0,49% 23%,45% 44%,100% 50%,70% 92%,31% 100%,51% 77%,55% 56%)}
+.cbl-fx.ability-impact.shape-breath:before{border:none;border-radius:50%;background:conic-gradient(from 235deg at 10% 50%,transparent 0 55deg,var(--hit) 65deg,transparent 125deg);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.shape-breath:after{inset:20%;border:2px dotted var(--flash);background:none;clip-path:none;border-radius:50%}
+.cbl-fx.ability-impact.shape-fist:before{border:3px solid var(--hit);border-left-color:transparent;border-right-color:transparent;background:none}
+.cbl-fx.ability-impact.shape-fist:after{clip-path:polygon(15% 30%,32% 24%,40% 10%,55% 12%,65% 24%,84% 24%,90% 62%,70% 88%,30% 82%,10% 57%)}
+.cbl-fx.ability-impact.school-mist:before,.cbl-fx.ability-impact.school-water:before{border-radius:40% 60%;background:radial-gradient(ellipse,var(--hit),transparent 65%);opacity:.6}
+.cbl-fx.class-projectile.shape-glaive:not(.arrow){width:23px;height:18px;border-radius:0;clip-path:polygon(0 50%,30% 8%,69% 0,49% 23%,45% 44%,100% 50%,70% 92%,31% 100%,51% 77%,55% 56%)}
+.cbl-fx.class-projectile.school-lunar:not(.arrow),.cbl-fx.class-projectile.school-bronze:not(.arrow){background:transparent;border:2px solid var(--hit)}
+.cbl-casting[data-vfx-school="blood"] .cbl-cast-glyph{border-color:#d85c72;color:#d85c72}
+.cbl-casting[data-vfx-school="lunar"] .cbl-cast-glyph{border-color:#b4b8ff;color:#b4b8ff}
+.cbl-casting[data-vfx-school="solar"] .cbl-cast-glyph{border-color:#f2bb61;color:#f2bb61}
+.cbl-casting[data-vfx-school="emerald"] .cbl-cast-glyph{border-color:#4fd5a4;color:#4fd5a4}
+.cbl-casting[data-vfx-school="bronze"] .cbl-cast-glyph{border-color:#d6ad6b;color:#d6ad6b}
+.cbl-casting[data-vfx-school="azure"] .cbl-cast-glyph{border-color:#62c7f6;color:#62c7f6}
+.cbl-casting[data-vfx-school="water"] .cbl-cast-glyph{border-color:#6bbde6;color:#6bbde6}
+.cbl-casting[data-vfx-school="mist"] .cbl-cast-glyph{border-color:#92e7ce;color:#92e7ce}
+.cbl-casting[data-vfx-school="chi"] .cbl-cast-glyph{border-color:#55deaf;color:#55deaf}
+.cbl-casting[data-vfx-school="brew"] .cbl-cast-glyph{border-color:#dea35d;color:#dea35d}
 @keyframes cblHitMain{0%{opacity:0;scale:.4}20%{opacity:1;scale:1}100%{opacity:0;scale:1.2}}
 @keyframes cblHitRing{0%{opacity:0;scale:.5}30%{opacity:.86;scale:.95}100%{opacity:0;scale:1.55}}
 @keyframes cblHitMark{0%{opacity:0;scale:.4;rotate:-18deg}40%{opacity:1;scale:1}100%{opacity:0;scale:1.24;rotate:14deg}}

@@ -18,10 +18,10 @@ const dist=path.resolve(__dirname,'../dist'),engine=process.env.CELLBOUND_TEST_E
    send('COMBAT_START');
   });
   let covered=0;
-  for(const klass of ['Warrior','Paladin','Hunter','Rogue','Mage']){
+  for(const klass of await page.evaluate(()=>Object.keys(CellboundCombatData.ABILITIES))){
    const abilities=await page.evaluate(k=>CellboundCombatData.ABILITIES[k],klass);
    // Re-mount records the existing actor's class, without touching its position.
-   await page.evaluate(k=>{const old=stage;stage.remove();stage=old.cloneNode(false);document.body.append(stage);for(const [id,el] of Object.entries(units)){el.className='cb2d-unit test-unit '+(id==='p'?'party class-'+k.toLowerCase():'enemy');el.querySelector('b').textContent=id==='p'?k:'Enemy';stage.append(el)}},klass);
+   await page.evaluate(k=>{const old=stage;stage.remove();stage=old.cloneNode(false);document.body.append(stage);for(const [id,el] of Object.entries(units)){el.className='cb2d-unit test-unit '+(id==='p'?'party class-'+k.toLowerCase().replace(/ /g,'-'):'enemy');el.querySelector('b').textContent=id==='p'?k:'Enemy';stage.append(el)}},klass);
    await page.clock.runFor(20);await page.evaluate(()=>send('COMBAT_START'));
    for(const a of abilities){
     const count=await page.evaluate(a=>{
@@ -31,6 +31,9 @@ const dist=path.resolve(__dirname,'../dist'),engine=process.env.CELLBOUND_TEST_E
      else if(a.kind==='defensive')send('DEFENSIVE_ACTIVATED',a.name,{target:'p'});
      else if(a.kind==='interrupt')send('INTERRUPT',a.name,{result:'success'});
      else send('BUFF_APPLIED',a.name,{target:'p',statusEffects:[{id:a.id,name:a.name,effect:{}}]});
+     const sig=CellboundCombatFX.visualSignature({abilityId:a.id},a.kind.includes('heal')?'heal':a.kind==='defensive'?'defense':'damage',units.p.querySelector('b').textContent);
+     const impact=stage.querySelector('.ability-impact');
+     if(['damage','heal','group-heal','defensive'].includes(a.kind)&&(!impact||!impact.classList.contains('school-'+sig.school)||!impact.classList.contains('shape-'+sig.shape)))throw new Error(a.id+' wrong class impact');
      return stage.querySelectorAll('.cbl-fx').length;
     },a);
     assert(count>0,klass+' '+a.id+' has event feedback');covered++;await page.clock.runFor(1000);
@@ -69,6 +72,6 @@ const dist=path.resolve(__dirname,'../dist'),engine=process.env.CELLBOUND_TEST_E
   assert.equal((await page.evaluate(()=>CellboundCombatFX.diagnostics())).effects,0,'all effects expire on presentation clock');
   await page.evaluate(()=>stage.remove());await page.clock.runFor(50);
   assert.equal((await page.evaluate(()=>CellboundCombatFX.diagnostics())).scenes,0,'scene teardown frees all effects');
-  assert.deepEqual(errors,[]);console.log(engine+': '+covered+' beta abilities, avoidance, block, moving projectiles, responsive coordinates, warning priority, reduced motion and teardown passed.');
+  assert.deepEqual(errors,[]);console.log(engine+': '+covered+' abilities across all 13 classes, avoidance, block, moving projectiles, responsive coordinates, warning priority, reduced motion and teardown passed.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -13,7 +13,7 @@ assert(s({ability:'Execute',result:'critical'}).major);
 assert(s({ability:'Anything',payload:{majorAbility:true}}).major);
 assert(code.includes("abilityImpact(scene,e,u,t,e.result==='blocked'?'defense':'damage')"));
 assert(css.includes('@media(prefers-reduced-motion:reduce)'));
-assert(code.includes("u.el.dataset.vfxSchool=visualSignature(e).school;abilityCharge(scene,e,u)"),'cast wind-up linked to named ability');
+assert(code.includes("u.el.dataset.vfxSchool=visualSignature(e,'damage',u.p.name).school;abilityCharge(scene,e,u)"),'cast wind-up linked to named ability');
 assert(code.includes("if(sig.major||sig.shape==='nova'||sig.shape==='fracture')abilityCharge(scene,e,u)"),'major instant ability wind-up');
 assert(code.includes('delete u.el.dataset.vfxSchool'),'cast finish removes school state');
 assert(css.includes('.cbl-fx.ability-charge'),'visual charge CSS exists');

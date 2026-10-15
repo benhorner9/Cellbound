@@ -1,7 +1,7 @@
 name: Combat VFX Block 1 acceptance
 on:
   push:
-    branches: [combat-vfx-block1]
+    branches: [combat-vfx-block1, combat-vfx-all-classes]
 permissions:
   contents: read
 jobs:
