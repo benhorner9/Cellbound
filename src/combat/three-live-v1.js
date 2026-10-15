@@ -160,7 +160,7 @@ async function mountLive(arena,snapshot){
  sun.shadow.camera.left=-11;sun.shadow.camera.right=11;sun.shadow.camera.top=10;sun.shadow.camera.bottom=-10;
  sun.shadow.mapSize.set(1024,1024);scene.add(sun);
  const accent=new THREE.PointLight(colors.accent,36,14,2);accent.position.set(1,3,-2);scene.add(accent);
- const actors=new Map(),hazards=new Map(),flashes=[];
+ const actors=new Map(),hazards=new Map(),flashes=[],shots=[];
  let raf=0,disposed=false,lastFrame=performance.now(),time=0;
  function makeActor(data){
   const id=data.id,info=identity(data,arena);
@@ -249,11 +249,21 @@ async function mountLive(arena,snapshot){
   flashes.push({object:p,end:time+life,start:time,life});
   if(flashes.length>30){const old=flashes.shift();old.object.parent?.remove(old.object);old.object.geometry.dispose();old.object.material.dispose();}
  }
+ function shoot(source,target,e){
+  if(!source||!target||shots.length>=24)return;
+  const skill=String(e?.ability||'').toLowerCase();
+  const color=/heal|renew|mend|restor/.test(skill)?0x7cdbb1:/fire|flame|burn|ember/.test(skill)?0xf9a254:/frost|ice/.test(skill)?0x99d5fb:0x9eaddd;
+  const obj=new THREE.Mesh(new THREE.SphereGeometry(.13,9,7),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.95}));
+  const from=new THREE.Vector3(source.group.position.x,1.55,source.group.position.z);
+  const to=new THREE.Vector3(target.group.position.x,target.boss?2.2:1.25,target.group.position.z);
+  obj.position.copy(from);scene.add(obj);
+  shots.push({object:obj,from,to,start:time,duration:.32});
+ }
  function onEvent(e){
   if(disposed)return;
   if(e.type==='COMBAT_START'){
    for(const a of actors.values()){releaseObject(a.group,true);a.label.remove();}
-   actors.clear();syncSnapshot();
+   actors.clear();for(const shot of shots)releaseObject(shot.object);shots.length=0;syncSnapshot();
   }
   const u=actorFor(snapshot.units.get(safeId(e.source))),t=actorFor(snapshot.units.get(safeId(e.target)));
   if(e.type==='MOVEMENT_START'&&u&&point(e.payload?.to)){
@@ -268,6 +278,12 @@ async function mountLive(arena,snapshot){
    if(t){const dx=t.group.position.x-u.group.position.x,dz=t.group.position.z-u.group.position.z;u.group.rotation.y=Math.atan2(dx,dz);}
    if(/heal|bless|light|holy|renew/i.test(String(e.ability||'')))flash(u,0x78dcb6,.21,.42);
    else if(e.type==='CAST_START')flash(u,0x829bf4,.24,.5);
+   if(e.type==='ABILITY_START'&&t&&!/tank|melee/.test(normalizeRole(u.data)))shoot(u,t,e);
+  }
+  if(e.type==='PET_SUMMONED')actorFor(snapshot.units.get(safeId(e.payload?.petId||e.target)));
+  if(e.type==='PET_DISMISSED'){
+   const petId=safeId(e.payload?.petId||e.target),pet=actors.get(petId);
+   if(pet){releaseObject(pet.group,true);pet.label.remove();actors.delete(petId);}
   }
   if(e.type==='DAMAGE_DEALT'&&t){t.hitUntil=time+.24;flash(t,e.result==='critical'?0xffe7a0:0xf18166,e.result==='critical'?.36:.21);}
   if(e.type==='HEAL_RECEIVED'&&t){t.healUntil=time+.42;flash(t,0x7fe6a6,.29,.45);}
@@ -318,6 +334,11 @@ async function mountLive(arena,snapshot){
     actor.label.style.transform='translate(-50%,-50%) translate('+((dummy.x*.5+.5)*stage.clientWidth).toFixed(1)+'px,'+((-dummy.y*.5+.5)*stage.clientHeight).toFixed(1)+'px)';
     actor.label.hidden=actor.dead||dummy.z>1||dummy.z< -1;
    }
+  }
+  for(let i=shots.length-1;i>=0;i--){
+   const shot=shots[i],t=(time-shot.start)/shot.duration;
+   if(t>=1){releaseObject(shot.object);shots.splice(i,1);}
+   else{shot.object.position.lerpVectors(shot.from,shot.to,t);shot.object.position.y+=Math.sin(t*Math.PI)*.009;}
   }
   for(let i=flashes.length-1;i>=0;i--){
    const f=flashes[i],t=(time-f.start)/f.life;
