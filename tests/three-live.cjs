@@ -70,4 +70,30 @@ for(const name of ['three-live-v1.js','three-live-v1.css'])assert(manifest.files
 assert(guild.includes('./three-live-v1.js?v=1'));
 assert(guild.includes('./three-live-v1.css?v=1'));
 assert(guild.indexOf('three-live-v1.js')>guild.indexOf('admin-combat-ui-editor-v1.js'),'owner gate must exist before bridge script runs');
-console.log('Three.js live-event reducer, optional owner switch, resource packaging: PASS.');
+// DOM smoke: an authorised admin sees the control even when no header is shown.
+function testBattleToggle(admin){
+ const actions={};
+ const wrap={children:[],appendChild(node){this.children.push(node);}};
+ const arena={isConnected:true,closest(selector){return selector==='.cbcombat-arena-wrap'?wrap:null}};
+ const shell={isConnected:true,dataset:{},querySelector(selector){
+  return selector.includes('.cbcombat-arena-wrap >')?arena:null;
+ }};
+ const document={
+  readyState:'loading',documentElement:{},
+  addEventListener(name,cb){actions[name]=cb;},
+  querySelectorAll(selector){return selector==='.cbcombat-shell'?[shell]:[];},
+  createElement(tag){return{tagName:tag,setAttribute(){},addEventListener(){}};}
+ };
+ const window={
+  CellboundAdmin:{isAdmin:admin,role:admin?'admin':null},
+  CellboundCombatUILayoutEditor:{isOwner:()=>false},
+  addEventListener(name,cb){actions['window:'+name]=cb;}
+ };
+ vm.runInNewContext(js,{window,document,MutationObserver:class{observe(){}},console});
+ actions.DOMContentLoaded();
+ return wrap.children.filter(x=>x.className==='cb3d-toggle');
+}
+assert.equal(testBattleToggle(true).length,1,'admin should see an in-battle toggle without a header');
+assert.equal(testBattleToggle(false).length,0,'public player should not see the alpha toggle');
+
+console.log('Three.js live-event reducer, admin battlefield switch, resource packaging: PASS.');
