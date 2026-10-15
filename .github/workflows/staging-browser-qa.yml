@@ -39,6 +39,9 @@ jobs:
       - name: Build testable game
         run: npm run build
 
+      - name: Talent overhaul tests (all classes)
+        run: npm run test:talents
+
       - name: Install Playwright test runner
         run: npm install --no-save --package-lock=false playwright@1.51.1
 
