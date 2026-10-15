@@ -383,6 +383,7 @@ function attach(shell){
   if(!isOwner())return;
   button.disabled=true;button.textContent='Loading 3D…';
   const s=states.get(arena)||createSnapshot();
+  states.set(arena,s);
   if(s.units.size>MAX_UNITS){button.textContent='3D limit';button.title='3D alpha currently supports 32 combatants';button.disabled=false;return;}
   try{
    const controller=await mountLive(arena,s);
