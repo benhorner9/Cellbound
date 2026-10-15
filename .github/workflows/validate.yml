@@ -36,6 +36,9 @@ jobs:
           npm run build
           npm run test:appearance
 
+      - name: Talent overhaul tests (all classes)
+        run: npm run test:talents
+
       - name: Core gameplay, PvP, loot, quest and editor regressions
         run: npm run test:core
 
