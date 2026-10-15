@@ -5,7 +5,7 @@
 ## Goal and change
 - Increase PvE enemy relative health and damage by **3%** in the shared engine. The initial 4% change overshot the requested 3–5 percentage-point clear-rate reduction in the sample.
 - Preserve designer Normal/Heroic/Cellbound+ modifiers and fixed absolute boss HP.
-- PvP remains unchanged; do not touch crafting, minigame, loot, XP or other non-combat success rates.
+- The global PvE difficulty multiplier does not apply to PvP; class-specific Evoker and Paladin ability adjustments can still affect PvP performance and must remain covered by Arena regression checks. Do not change crafting, minigame, loot, XP or other non-combat success rates.
 - Address role outliers separately: stronger/faster Preservation Evoker Reversion and slightly less Protection Paladin endgame incoming damage.
 
 ## Paired-seed calibration
