@@ -49,7 +49,7 @@ assert.equal(s.telegraphs.size,0);
 emit({type:'COMBAT_START',payload:{units:[{id:'p-new',position:{x:44,y:66},alive:true}]}});
 assert.equal(s.units.size,1,'new encounter must replace old party');
 assert(!s.units.has('e-boss'),'old boss cannot leak into a new fight');
-for(const feature of ['OrthographicCamera','DAMAGE_DEALT','HEAL_RECEIVED','MECHANIC_TELEGRAPH','GROUND_HAZARD_SPAWNED','MOVEMENT_START','MOVEMENT_END','CAST_START','ABILITY_START','COMBAT_END','renderer.dispose','CellboundThree.load'])assert(js.includes(feature),'missing 3D feature '+feature);
+for(const feature of ['OrthographicCamera','DAMAGE_DEALT','HEAL_RECEIVED','MECHANIC_TELEGRAPH','GROUND_HAZARD_SPAWNED','MOVEMENT_START','MOVEMENT_END','CAST_START','ABILITY_START','COMBAT_END','renderer.dispose','bridge.load()'])assert(js.includes(feature),'missing 3D feature '+feature);
 assert(style.includes('.cb3d-stage')&&style.includes('.cb3d-toggle'));
 const guild=read('guild.html'),manifest=require('../tools/runtime-manifest.cjs');
 for(const name of ['three-live-v1.js','three-live-v1.css'])assert(manifest.files.includes(name),'3D asset not packaged: '+name);
