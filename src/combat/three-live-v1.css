@@ -1,6 +1,7 @@
 /* Admin-only 3D combat overlay. Does not alter the 2D arena or interactive HUD. */
 .cbcombat-arena-wrap{position:relative}
-.cbcombat-arena-wrap > .cb3d-toggle{position:absolute;right:12px;bottom:12px;z-index:120;pointer-events:auto;box-shadow:0 3px 18px rgba(0,0,0,.65);font-weight:750}
+.cbcombat-arena-wrap > .cb3d-toggle[hidden]{display:none!important}
+.cbcombat-arena-wrap > .cb3d-toggle{display:block!important;position:absolute;right:12px;bottom:12px;z-index:120;pointer-events:auto;box-shadow:0 3px 18px rgba(0,0,0,.65);font-weight:750}
 .cbcombat-arena-wrap > .cb3d-toggle-error{position:absolute;z-index:120;right:12px;bottom:53px;max-width:min(320px,80%);padding:8px 10px;background:rgba(54,22,26,.94);border:1px solid rgba(252,147,113,.65);color:#fff5e9;border-radius:7px;font:600 12px/1.35 system-ui,sans-serif;pointer-events:none}
 @media(max-width:650px){.cbcombat-arena-wrap > .cb3d-toggle{right:8px;bottom:8px;max-width:110px}.cbcombat-arena-wrap > .cb3d-toggle-error{right:8px;bottom:47px}}
 
