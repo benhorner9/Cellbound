@@ -134,7 +134,7 @@ function mount(el,c){
   if(!el||!c)return;
   const hud=el.matches('.cb2d-party-row'),slot=hud?el.querySelector('.cb2d-party-avatar'):null;
   const key=JSON.stringify([c.race,c.appearance,c.equipment,c.pvpEquipment,c.class,el.dataset.team,hud?'headshot':'full-model']);
-  const host=slot||el;
+  const host=slot||(el.matches('.pvp2d-unit')?el.querySelector('.pvp2d-token'):null)||el;
   // A row may reuse its DOM node while the avatar is re-rendered.
   if(el._cbAppearanceKey===key&&host.querySelector(':scope > .cb-combat-portrait'))return;
   const color=CP.CLASS_COLORS?.[c.class]||'#76d7d0';
