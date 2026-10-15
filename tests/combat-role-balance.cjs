@@ -185,10 +185,13 @@ for(const size of [2,3,5]){
  const positions=[['Warrior','Protection'],['Priest','Holy'],['Mage','Arcane'],['Rogue','Assassination'],['Hunter','Marksman']];
  const roster=(side,built)=>positions.slice(0,size).map(([klass,spec],i)=>hero(klass,spec,side+i,15,38,built));
  for(const built of [false,true]){
-  const result=C.simulate({pvp:{mode:'arena',size,blue:roster('blue',built),red:roster('red',built)},
+  const session=C.createLiveSession({pvp:{mode:'arena',size,blue:roster('blue',built),red:roster('red',built)},
    encounter:{id:'balance-arena-'+size,environment:{blockers:[]}},seed:'balance-arena-'+size,maxDurationMs:30000});
+  let frame;for(let i=0;i<340&&!session.finished;i++)frame=session.advance(100);
+  assert(session.finished&&frame?.result,'Arena live combat concludes');
+  const result=frame.result;
   encounters++;arena++;checkResult(result,'Arena '+size);
-  assert(result.outcome==='ongoing'||['blue','red','draw'].includes(result.pvp?.winner),'Arena either continues or produces a legal winner');
+  assert(['blue','red','draw'].includes(result.pvp?.winner),'Arena produces a legal winner');
   const units=Object.fromEntries(result.finalState.players.map(x=>[x.id,x]));
   for(const e of result.events){
    if(e.type==='DAMAGE_DEALT'&&units[e.source]&&units[e.target])
