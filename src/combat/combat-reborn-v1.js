@@ -1,6 +1,8 @@
 (()=>{
 'use strict';
 const VERSION='1.7.0';
+// A modest global PvE-only challenge increase; PvP combat remains unchanged.
+const PVE_CHALLENGE_MULTIPLIER=1.04;
 const COMMAND_RULES={
 focus:{cooldownMs:8000,sharedMs:3000,cost:1},
 spread:{cooldownMs:10000,sharedMs:3000,cost:1},
@@ -41,7 +43,7 @@ return clamp(1+delta*LEVEL_RULES.levelDeltaPerLevel,LEVEL_RULES.minLevelDeltaMul
 }
 function enemyClassRule(kind){return ENEMY_CLASS_RULES[kind]||ENEMY_CLASS_RULES.trash}
 function hasAffix(ctx,id){return Array.isArray(ctx?.encounter?.affixes)&&ctx.encounter.affixes.includes(id)}
-function scalingValue(ctx,key,fallback=1){const v=Number(ctx?.encounter?.scaling?.[key]);return Number.isFinite(v)&&v>0?v:fallback}
+function scalingValue(ctx,key,fallback=1){const v=Number(ctx?.encounter?.scaling?.[key]),base=Number.isFinite(v)&&v>0?v:fallback;return !ctx?.pvp&&(key==='enemyHealth'||key==='enemyDamage')?base*PVE_CHALLENGE_MULTIPLIER:base}
 function enemyPressure(ctx,e,target){
 let mult=levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target?.level||1)*(Number(e.damageScale)||1);
 if(hasAffix(ctx,'blood-moon')&&healthRatio(e)<=.30)mult*=1.25;
@@ -500,7 +502,7 @@ if(/skirmisher|shapeshifter|raider|duelist/.test(clue))return'skirmisher';
 if(/coward|scavenger|imp|runner/.test(clue))return'coward';
 return classification==='elite'?'bruiser':'bruiser'
 }
-function normaliseEnemies(encounter){
+function normaliseEnemies(encounter,isPvp=false){
 const raw=encounter.enemies||['Enemy'],baseLevel=Math.max(1,Number(encounter.level)||Number(encounter.recommendedLevel)||1);
 const baseHealth=Number(encounter.enemyHealth)||((encounter.kind==='final')?680:(encounter.kind==='boss'?480:(encounter.kind==='event'?220:120)));
 return raw.map((entry,i)=>{
@@ -508,7 +510,7 @@ return raw.map((entry,i)=>{
  const level=Math.max(1,Number(data.level)||Number(encounter.enemyLevels?.[i])||baseLevel);
  const inferred=data.classification||encounter.enemyTypes?.[i]||data.kind||((raw.length===1&&(encounter.kind==='boss'||encounter.kind==='final'))?'boss':(encounter.kind==='event'?'elite':'trash'));
  const classification=String(inferred||'trash').toLowerCase(),rule=enemyClassRule(classification);
- const absoluteHealth=Boolean(data.absoluteHealth),rawMax=Number(data.maxHealth)||Number(data.health)||baseHealth,healthMult=Math.max(.25,Number(encounter.scaling?.enemyHealth)||1),damageMult=Math.max(.25,Number(encounter.scaling?.enemyDamage)||1);
+ const absoluteHealth=Boolean(data.absoluteHealth),rawMax=Number(data.maxHealth)||Number(data.health)||baseHealth,healthMult=Math.max(.25,Number(encounter.scaling?.enemyHealth)||1)*(isPvp?1:PVE_CHALLENGE_MULTIPLIER),damageMult=Math.max(.25,Number(encounter.scaling?.enemyDamage)||1)*(isPvp?1:PVE_CHALLENGE_MULTIPLIER);
  const maxHealth=absoluteHealth?Math.max(1,Math.round(rawMax)):Math.round(rawMax*levelHealthScale(level)*rule.health*healthMult);
  const currentHealth=data.currentHealth==null?maxHealth:clamp(Math.round(Number(data.currentHealth)||0),0,maxHealth);
  return{
@@ -3650,7 +3652,7 @@ const roster=pvpInput?[...pvpInput.blue,...pvpInput.red].map((c,i)=>{
  return{...c,_combatPosition:safe(assigned)}
 }):(options.party||[]);
 const seed=options.seed||[encounter.id||'encounter',Date.now(),roster.map(x=>x.id).join('-')].join(':');
-const players=roster.map((ch,i)=>normalisePlayer(ch,i,options.professionZone)),enemies=normaliseEnemies(encounter),units={};
+const players=roster.map((ch,i)=>normalisePlayer(ch,i,options.professionZone)),enemies=normaliseEnemies(encounter,Boolean(pvpInput)),units={};
 [...players,...enemies].forEach(u=>units[u.id]=u);enemies.forEach(e=>players.forEach(p=>e.threat[p.id]=0));
 const tactics={
  interruptPriority:options.tactics?.interruptPriority||options.tactics?.interrupts||'standard',
