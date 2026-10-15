@@ -611,3 +611,22 @@ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="i
 .cb-advanced-hint{font-size:.72rem;line-height:1.4;color:#b3bdc7;margin:0}
 .cb-advanced-plan button:focus-visible,.cb-advanced-plan select:focus-visible,.cb-advanced-plan input:focus-visible,.cb-advanced-plan summary:focus-visible{outline:2px solid #e2bf82;outline-offset:2px}
 @media(max-width:650px){.cb-advanced-fields{grid-template-columns:minmax(0,1fr)}.cb-advanced-presets button{padding:6px 4px;font-size:.7rem}.cb-advanced-save button{flex:1}}
+
+/* iPad party frames: portraits and character names must never collide. */
+@media (min-width:850px) and (min-height:541px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows)>.cb2d-party-row{
+   grid-template-columns:38px minmax(0,1fr)!important;
+   column-gap:7px!important;align-items:center!important;
+ }
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row>.cb2d-party-avatar{
+   grid-column:1!important;grid-row:1!important;
+   width:36px!important;height:36px!important;align-self:center!important;
+ }
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row>.cb2d-party-main{
+   grid-column:2!important;grid-row:1!important;min-width:0!important;overflow:hidden!important;
+ }
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row>.cb2d-party-target,
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row>.cbstd-party-target{
+   grid-column:1/-1!important;grid-row:2!important;min-width:0!important;
+ }
+}

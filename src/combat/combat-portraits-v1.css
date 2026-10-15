@@ -196,3 +196,31 @@
   width:58px!important;
   height:18px!important
 }
+
+/* Real character headshots in compact party HUD frames.
+   Full-body paper dolls remain exclusive to battlefield actors. */
+.cbcombat-shell .cb2d-party-row .cb2d-party-avatar{
+  position:relative;isolation:isolate;flex:none;min-width:0;overflow:hidden;
+}
+.cbcombat-shell .cb2d-party-row .cb2d-party-avatar>.cb-combat-profile-image{
+  position:absolute!important;inset:0!important;left:0!important;top:0!important;
+  width:100%!important;height:100%!important;display:block!important;
+  transform:none!important;overflow:hidden!important;
+  border:0!important;border-radius:50%!important;box-shadow:none!important;
+  background:#081115!important;pointer-events:none!important;z-index:2!important;
+}
+.cbcombat-shell .cb2d-party-row .cb2d-party-avatar>.cb-combat-profile-image>.cb-portrait{
+  display:block!important;position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;border-radius:50%!important;
+  overflow:hidden!important;box-shadow:none!important;margin:0!important;
+}
+.cbcombat-shell .cb2d-party-row .cb-combat-profile-image svg{
+  display:block!important;width:100%!important;height:100%!important;
+  border-radius:50%!important;object-fit:cover;
+}
+.cbcombat-shell .cb2d-party-row.cb-combat-has-portrait .cb2d-party-fallback{
+  display:none!important;
+}
+.cbcombat-shell .cb2d-party-row .cb2d-party-avatar>em{
+  z-index:5!important;pointer-events:none;
+}

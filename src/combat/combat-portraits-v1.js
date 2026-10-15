@@ -12,6 +12,7 @@ const PLAYER_SELECTORS=[
   '[data-tb-unit^="p-"]',
   '[data-q-unit^="p-"]',
   '[data-combat-party^="p-"]',
+  '.cbcombat-shell .cb2d-party-row',
   '.wb2d-unit.own[data-unit-key]',
   '.pvp2d-unit[data-pvp2d-unit]'
 ].join(',');
@@ -55,6 +56,10 @@ function refFor(el){
   if(el.dataset.tbUnit?.startsWith('p-'))return el.dataset.tbUnit.slice(2);
   if(el.dataset.qUnit?.startsWith('p-'))return el.dataset.qUnit.slice(2);
   if(el.dataset.combatParty?.startsWith('p-'))return el.dataset.combatParty.slice(2);
+  if(el.matches('.cb2d-party-row')){
+    const ref=el.dataset.row||el.dataset.cbstdPartyId||el.dataset.hsSideRow||el.dataset.ccSideRow||el.dataset.bsSideRow||el.dataset.qRow||el.dataset.tbSideRow||'';
+    if(ref)return String(ref).replace(/^p-/,'');
+  }
   if(el.matches('.wb2d-unit.own')&&el.dataset.unitKey?.startsWith('you-'))return el.dataset.unitKey.slice(4);
   if(el.matches('.pvp2d-unit')){
     const raw=String(el.dataset.pvp2dUnit||'');
@@ -127,29 +132,33 @@ function mountMonster(el){
 }
 function mount(el,c){
   if(!el||!c)return;
-  const key=JSON.stringify([c.race,c.appearance,c.equipment,c.pvpEquipment,c.class,el.dataset.team]);
-  if(el._cbAppearanceKey===key)return;
-  el._cbAppearanceKey=key;el.querySelector('.cb-combat-portrait')?.remove();
+  const hud=el.matches('.cb2d-party-row'),slot=hud?el.querySelector('.cb2d-party-avatar'):null;
+  const key=JSON.stringify([c.race,c.appearance,c.equipment,c.pvpEquipment,c.class,el.dataset.team,hud?'headshot':'full-model']);
+  const host=slot||el;
+  // A row may reuse its DOM node while the avatar is re-rendered.
+  if(el._cbAppearanceKey===key&&host.querySelector(':scope > .cb-combat-portrait'))return;
   const color=CP.CLASS_COLORS?.[c.class]||'#76d7d0';
   const model=el.matches('.pvp2d-unit')&&c.pvpEquipment?{...c,equipment:c.pvpEquipment}:c;
-  const html=CP.paperDollHTML(model,{size:'combat',mirrored:el.dataset.team==='red',label:(c.name||'Character')+' combat character'});
+  // The battlefield needs the full-body paper doll, but a 32px circular
+  // party frame must use the actual face/bust portrait or it crops the model.
+  const html=hud&&slot
+    ?CP.portraitHTML(model,{size:'fill',label:(c.name||'Character')+' party portrait'})
+    :CP.paperDollHTML(model,{size:'combat',mirrored:el.dataset.team==='red',label:(c.name||'Character')+' combat character'});
   if(!html)return;
-
+  el._cbAppearanceKey=key;
+  host.querySelector(':scope > .cb-combat-portrait')?.remove();
   el.style.setProperty('--cb-combat-class',color);
-  el.classList.add('cb-combat-has-portrait','cb-combat-full-model');
-
+  el.classList.add('cb-combat-has-portrait');
+  if(hud&&slot){
+    el.classList.remove('cb-combat-full-model');
+    slot.insertAdjacentHTML('beforeend','<span class="cb-combat-portrait cb-combat-profile-image">'+html+'</span>');
+    return;
+  }
+  el.classList.add('cb-combat-full-model');
   if(el.matches('.pvp2d-unit')){
     const token=el.querySelector('.pvp2d-token');
     if(token)token.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');
     return;
-  }
-  if(el.matches('.wb2d-unit')){
-    el.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');
-    return;
-  }
-  if(el.matches('.cb2d-party-row')){
-    const slot=el.querySelector('.cb2d-party-avatar');
-    if(slot){slot.querySelector('.cb-combat-portrait')?.remove();slot.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');return}
   }
   el.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');
 }
@@ -178,5 +187,5 @@ function start(){
 }
 if(document.body)start();else document.addEventListener('DOMContentLoaded',start,{once:true});
 
-window.CellboundCombatPortraits={registerCharacters:characters=>{matchCharacters=Array.isArray(characters)?characters.slice(0,40):[]},refresh,upgrade,bosses:BOSS_ART,monsters:MONSTERS,version:'1.3.0'};
+window.CellboundCombatPortraits={registerCharacters:characters=>{matchCharacters=Array.isArray(characters)?characters.slice(0,40):[]},refresh,upgrade,bosses:BOSS_ART,monsters:MONSTERS,version:'1.4.0'};
 })();
