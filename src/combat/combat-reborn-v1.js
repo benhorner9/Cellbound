@@ -527,6 +527,13 @@ if(type==='ABILITY_START')return'ability-cast';if(type==='DAMAGE_DEALT')return r
 }
 function emit(ctx,type,data={}){
 const payload=data.payload?copy(data.payload):{},cue=audioCue(type,data.result);if(cue&&!payload.audioCue)payload.audioCue=cue;
+// Presentation identity only. Resolve duplicate names from the actor's equipped
+// specialisation pool; never change which action was selected or its outcome.
+if(data.ability&&!payload.abilityId){
+ const actor=ctx.players?.find(u=>u.id===data.source),name=String(data.ability).replace(/ \((DoT|HoT|Pulse)\)$/i,'');
+ const action=actor?.abilities?.find(a=>a.name===name&&(!payload.kind||a.kind===payload.kind));
+ if(action)payload.abilityId=action.id;
+}
 const e={
  timestamp:Math.round(ctx.time),type,
  source:data.source||null,target:data.target||null,ability:data.ability||null,

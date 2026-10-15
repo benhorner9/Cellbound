@@ -4,8 +4,8 @@ assert.equal(inventory.length,13);let active=0;
 for(const row of inventory){assert(C.styles[row.class]);for(const a of row.abilities){active++;assert(['swing','bash'].includes(a.clip)||C.clips[a.clip],`${row.class} / ${a.id}: missing clip`);assert(!['cast','swing'].includes(a.clip)||row.class==='Warrior','classes cannot silently share generic casting');const action=C.resolve(row.class,{ability:a.name,payload:{kind:a.kind}},row.class==='Hunter'?'bow':'');assert(action.known,a.name)}}
 assert.equal(active,221);
 assert.notEqual(C.resolve('Mage',{ability:'Fireball'}).clip,C.resolve('Mage',{ability:'Frostbolt'}).clip);
-assert.equal(C.resolve('Rogue',{ability:'Sinister Strike'},'dagger',false,1).clip,'offjab');
-assert.equal(C.resolve('Warrior',{ability:'Guard Strike'},'greatsword',true).clip,'cleave');
+assert.equal(C.resolve('Rogue',{ability:'Sinister Strike'},'dagger',false,1).clip,'skill:Rogue:sinister-strike');
+assert.equal(C.resolve('Warrior',{ability:'Guard Strike'},'greatsword',true).base,'swing');
 for(const [klass,style] of Object.entries(C.styles))for(const key of ['basic','heavy','cast','heal','defense'])assert(style[key]==='swing'||C.clips[style[key]],klass+' '+key);
 for(const a of Object.values(D.ROLE_FALLBACKS).flat())assert(C.resolve('Warrior',{ability:a.name}).clip);
 console.log(`All ${inventory.length} classes / ${active} active catalogue abilities, class buffs and role fallbacks have valid class-aware animation mappings; ${Object.keys(D.TALENT_RULES).length} passive talent rules inventoried.`);

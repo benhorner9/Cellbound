@@ -52,6 +52,12 @@ function bind(el){
  return el._cbAnimationRig={svg,klass:svg.dataset.animationClass||'',base:data.pose,p:data.p,nodes,original};
 }
 function apply(u,c){
+ if(u.blendFrom&&!reduced()){
+  const mix=clamp((now()-u.blendAt)/(90/u.scene.speed),0,1),out={};
+  for(const key of new Set([...Object.keys(u.blendFrom),...Object.keys(c)]))out[key]=(u.blendFrom[key]||0)*(1-mix)+(c[key]||0)*mix;
+  c=out;if(mix===1)u.blendFrom=null;
+ }
+ u.pose=c;
  if(window.CellboundMonsterVisuals?.apply(u.el,{clip:u.clip,progress:clamp((now()-u.start)/Math.max(1,u.until-u.start),0,1),casting:!!u.casting,dead:u.dead,reduced:reduced(),contact:CLIPS[u.clip]?.contact||.44}))return;
  if(!u.rig?.svg.isConnected)u.rig=bind(u.el);
  const r=u.rig,R=window.CellboundCharacterRig;
@@ -82,7 +88,7 @@ function apply(u,c){
 }
 function reset(u){
  window.CellboundMonsterVisuals?.reset(u.el,u.dead);
- u.casting=null;u.suspendedCast=null;
+ u.casting=null;u.suspendedCast=null;u.blendFrom=null;u.pose={};
  if(u.rig){u.rig.prop?.remove();u.rig.prop=null;u.rig.nodes.off?.style.removeProperty('opacity');u.rig.nodes.actor?.style.removeProperty('opacity');u.rig.nodes.arrow?.setAttribute('opacity','0');u.rig.nodes.string?.setAttribute('d','M190 113 L190 325')}
  if(u.rig)for(const [node,value] of u.rig.original)value?node.setAttribute('transform',value):node.removeAttribute('transform');
  const node=u.el.querySelector(ACTOR);if(node){node.style.removeProperty('rotate');node.style.removeProperty('translate')}
@@ -92,6 +98,7 @@ function reset(u){
 function play(u,name,priority=PRIORITY[name]||40,duration){
  if(!u||u.dead&&name!=='death'||u.control.size&&priority<PRIORITY.control||priority<u.priority&&now()<u.until)return false;
  const clip=CLIPS[name];if(!clip)return false;
+ u.blendFrom=u.pose||{};u.blendAt=now();
  if(u.casting&&['hit','block','dodge','heal'].includes(name))u.suspendedCast=u.casting;
  else if(!['hit','block','dodge','heal'].includes(name))u.suspendedCast=null;
  u.casting=null;u.clip=name;u.priority=priority;u.start=now();u.until=u.start+(duration||clip.duration)/u.scene.speed;
@@ -179,7 +186,7 @@ function route(e,opts,deliver){
    if(!t||t.dead||t.control.size)return;
    const result=String(e.result||'');
    if(/miss|immune|resist/.test(result))return;
-   const reaction=e.type==='HEAL_RECEIVED'?'heal':/block/.test(result)?'block':/dodg/.test(result)?'dodge':'hit';
+   const reaction=e.type==='HEAL_RECEIVED'?'heal':/block|parr/.test(result)?'block':/dodg/.test(result)?'dodge':'hit';
    if(reaction==='hit'&&t.el.dataset.monsterId&&(t.casting||t.action&&now()<t.action.expires)&&t.clip!=='hit'){if(!reduced())window.CellboundMonsterVisuals?.react(t.el)}else play(t,reaction);
   });break;
  }

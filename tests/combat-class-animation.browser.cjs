@@ -25,17 +25,21 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
   });
   await page.clock.install();await page.clock.pauseAt(new Date());
   const catalogue=process.env.CELLBOUND_CLASS_EDGE_ONLY?[]:await page.evaluate(()=>Object.entries(CellboundCombatData.ABILITIES).map(([klass,abilities])=>({klass,abilities})));
-  let checked=0;const evidence=[];
+  let checked=0;const evidence=[],skillCoverage=[];
   for(const [i,{klass,abilities}] of catalogue.entries()){
    await page.evaluate(({klass,i})=>mountClass(klass,i),{klass,i});
    const primary=abilities.find(a=>a.kind==='damage')||abilities[0],signature=abilities.find(a=>a.id===({'Warrior':'sweeping-strike','Paladin':'holy-light','Hunter':'multi-shot','Rogue':'killing-spree','Mage':'frostbolt','Priest':'divine-hymn','Druid':'starfall','Shaman':'windfury-totem','Warlock':'call-dreadstalkers','Monk':'windwalker-rising-sun-kick','Death Knight':'army-of-the-dead','Demon Hunter':'blade-dance','Evoker':'fire-breath'}[klass]))||abilities[2];
    const visualAbilities=before?[primary,signature]:abilities;
    for(const a of visualAbilities){
+    const idlePose=await page.evaluate(()=>units['p-qa'].querySelector('.cb-paper-upper-right')?.getAttribute('transform')+'|'+units['p-qa'].querySelector('.cb-paper-forearm-left')?.getAttribute('transform')+'|'+units['p-qa'].querySelector('.cb-paper-kick-R')?.getAttribute('transform'));
+    await page.evaluate(()=>{window.skillEffects=[];window.skillObserver?.disconnect();window.skillObserver=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.classList.contains('cbl-fx'))skillEffects.push({classes:n.className,source:n.dataset.source,target:n.dataset.target,ability:n.dataset.abilityId,paint:getComputedStyle(n,':after').clipPath,animation:getComputedStyle(n,':after').animationName})});skillObserver.observe(arena,{childList:true,subtree:true})});
     await page.evaluate(a=>{send('COMBAT_START',a);send('ABILITY_START',a);if(a.cast)send('CAST_START',a,{payload:{duration:a.cast}})},a);
     await page.clock.runFor(a.cast?Math.min(a.cast*.6,500)/4:70);
     if(!before){
      const result=await page.evaluate(()=>{const el=units['p-qa'],svg=el.querySelector('svg');return{clip:el.dataset.animationClip,state:el.dataset.animationState,arm:svg.querySelector('.cb-paper-upper-right')?.getAttribute('transform'),className:svg.dataset.animationClass,gap:(()=>{const w=svg.querySelector('.cb-paper-slot-weapon'),h=svg.querySelector('.cb-paper-glove-right');if(!w||!h)return 0;const a=new DOMPoint(+w.dataset.gripLocalX,+w.dataset.gripLocalY).matrixTransform(w.getScreenCTM()),b=new DOMPoint(+h.getAttribute('cx'),+h.getAttribute('cy')).matrixTransform(h.getScreenCTM());return Math.hypot(a.x-b.x,a.y-b.y)})()}});
-     assert(result.clip&&result.state!=='idle',klass+' '+a.id+' must perform an action');assert.equal(result.className,klass);assert(result.gap<.15,klass+' '+a.id+' painted grip '+result.gap);checked++;
+     assert(result.clip&&result.state!=='idle',klass+' '+a.id+' must perform an action');
+     const actual=await page.evaluate(({klass,a})=>{const p=CellboundCombatAnimationCatalog.resolve(klass,{abilityId:a.id});return{authored:p.authored,clip:p.clip,motif:p.motif,pose:units['p-qa'].querySelector('.cb-paper-upper-right')?.getAttribute('transform')+'|'+units['p-qa'].querySelector('.cb-paper-forearm-left')?.getAttribute('transform')+'|'+units['p-qa'].querySelector('.cb-paper-kick-R')?.getAttribute('transform')}},{klass,a});
+     assert(actual.authored);assert.equal(result.clip,actual.clip);assert.notEqual(actual.pose,idlePose,klass+' '+a.id+' must move actual rig joints');assert.equal(result.className,klass);assert(result.gap<.15,klass+' '+a.id+' painted grip '+result.gap);checked++;
     }
     if(a.id===primary.id||a.id===signature.id){
      await page.locator('#label').evaluate((el,text)=>el.textContent=text,klass+' · '+a.name+' · '+(before?'BEFORE':'AFTER'));
@@ -44,12 +48,17 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
     }
     if(!before){
      if(a.cast)await page.clock.runFor(Math.max(0,a.cast-500)/4);
+     await page.evaluate(a=>send('ABILITY_FINISH',a,{result:'resolved'}),a);
      if(/damage|heal/.test(a.kind))await page.evaluate(a=>send(a.kind==='damage'?'DAMAGE_DEALT':'HEAL_RECEIVED',a,{amount:23,result:a.kind==='damage'?'hit':'heal'}),a);
      else if(a.kind==='interrupt')await page.evaluate(a=>send('INTERRUPT',a,{result:'success'}),a);
+     else await page.evaluate(a=>send(a.kind==='defensive'?'DEFENSIVE_ACTIVATED':a.kind==='taunt'?'AGGRO_CHANGED':a.kind==='battle-rez'?'PLAYER_REVIVED':a.kind==='pet-command'?'PET_COMMAND':a.kind==='summon'?'PET_SUMMONED':a.kind==='totem'?'TOTEM_PLACED':'BUFF_APPLIED',a,{result:'success',target:/defensive|totem|summon/.test(a.kind)?'p-qa':'e-0'}),a);
      await page.clock.runFor(120);
      if(a.id===primary.id||a.id===signature.id)await page.screenshot({path:dir+'/action-'+engine+'-'+klass.toLowerCase().replace(/ /g,'-')+'-'+a.id+'.png'});
      await page.clock.runFor(500);
      const state=await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state');assert.equal(state,'idle',klass+' '+a.id+' must recover');
+     const rendered=await page.evaluate(({klass,a})=>({fx:skillEffects.filter(f=>f.classes.includes('ability-impact')),profile:CellboundCombatAnimationCatalog.resolve(klass,{abilityId:a.id})}),{klass,a});
+     assert(rendered.fx.some(f=>f.classes.includes('skill-'+rendered.profile.motif)&&f.source==='p-qa'&&f.target),klass+' '+a.id+' missing owned skill impact '+JSON.stringify(rendered.fx));
+     skillCoverage.push({class:klass,spec:a.spec||'All',id:a.id,animated:true,signature:true,tested:true,failed:false});
     }else await page.clock.runFor(700);
    }
    if(!before){
@@ -63,7 +72,7 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
   if(!before){
    await page.evaluate(()=>{mountClass('Mage',0);send('CAST_START',{id:'fireball',name:'Fireball',kind:'damage'},{payload:{duration:2000}})});await page.clock.runFor(50);
    await page.evaluate(()=>send('DAMAGE_DEALT',{name:'Enemy strike',kind:'damage'},{source:'e-0',target:'p-qa',amount:10,result:'hit'}));await page.clock.runFor(140);
-   assert.equal(await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state'),'fire','damage recoil resumes a still-authoritative cast');
+   assert.equal(await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state'),'skill:Mage:fireball','damage recoil resumes a still-authoritative cast');
    await page.evaluate(()=>send('INTERRUPT',{name:'Counterspell',kind:'interrupt'},{source:'e-0',target:'p-qa',result:'success'}));await page.clock.runFor(300);
    await page.evaluate(()=>send('CAST_FINISH',{name:'Fireball',kind:'damage'}));assert.equal(await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state'),'idle','cancelled cast cannot restart on stale finish');
    for(const viewport of [{width:390,height:844},{width:844,height:390},{width:1366,height:1024},{width:1024,height:1366}]){
@@ -77,7 +86,7 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
    await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>send('ABILITY_START',{name:'Living Flame',kind:'damage'}));await page.clock.runFor(500);
    await page.evaluate(()=>arena.remove());await page.clock.runFor(160);assert.deepEqual(await page.evaluate(()=>CellboundCombatAnimation.diagnostics()),{scenes:0,pending:0,actors:0});
   }
-  await page.clock.resume();assert.deepEqual(errors,[]);if(!process.env.CELLBOUND_CLASS_EDGE_ONLY)fs.writeFileSync(dir+'/'+(before?'before':'after')+'-'+engine+'-coverage.json',JSON.stringify({checked,evidence},null,2));
+  await page.clock.resume();assert.deepEqual(errors,[]);if(!process.env.CELLBOUND_CLASS_EDGE_ONLY)fs.writeFileSync(dir+'/'+(before?'before':'after')+'-'+engine+'-coverage.json',JSON.stringify({checked,evidence,skillCoverage},null,2));
   console.log(`${engine}: ${checked} active abilities across all 13 classes rendered, preparation/release/recovery and per-class death/revival; ${evidence.length} primary/signature captures.`);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
