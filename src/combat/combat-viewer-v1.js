@@ -160,7 +160,7 @@ function shellMarkup(options={}){
   '<div class="cbcombat-route"'+idAttr(options.routeId)+'>'+route+'</div>'+
   '<div class="cbcombat-grid">'+
    '<div class="cbcombat-left-column"><section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+esc(partyLabel)+'</small><div class="cbcombat-party-rows" data-combat-party-rows'+idAttr(options.partyRowsId)+'>'+partyMarkup+'</div><div class="cbcombat-pet-rows" data-combat-pets'+idAttr(options.petsId)+' '+(petsMarkup?'':'hidden')+'>'+petsMarkup+'</div></div></section></div>'+
-   '<main class="cbcombat-panel cbcombat-battle-panel">'+battleTopbar+'<div class="cbcombat-arena-wrap '+esc(battleClass)+'" data-combat-theme="'+esc(theme)+'">'+arenaMarkup+'</div>'+castMarkup+combatChat+'</main>'+
+   '<main class="cbcombat-panel cbcombat-battle-panel">'+battleTopbar+'<div class="cbcombat-arena-wrap '+esc(battleClass)+'" data-combat-theme="'+esc(theme)+'">'+arenaMarkup+'<button type="button" class="cb3d-toggle" data-cb3d-toggle hidden aria-label="Switch to experimental 3D combat">3D Alpha</button></div>'+castMarkup+combatChat+'</main>'+
    '<aside class="cbcombat-right-column"><section class="cbcombat-panel cbcombat-meters-panel">'+metersMarkup+'</section>'+
     '<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel"'+commandGrouped+'>'+commandsMarkup+'</section>'+rightExtra+'</aside>'+
   '</div>'+
@@ -267,6 +267,8 @@ function mount(root,options={}){
  const shell=normalise(root.querySelector(':scope > .cbcombat-shell')||root.querySelector('.cbcombat-shell'));
  window.CellboundCombatHUDStandard?.upgrade?.(shell);
  window.CellboundSocial?.mountCombatChat?.(shell);
+ // Attach to the exact rendered battlefield, not a later MutationObserver guess.
+ window.CellboundThreeCombat?.attach?.(shell);
  return shell
 }
 
