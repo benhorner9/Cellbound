@@ -123,7 +123,7 @@ legacy.talents.Arcane['Arcane Precision Edge']=1;
 assert.equal(B.respec(legacy,'Arcane',true,1000002),true);
 legacy.talents.Arcane['Arcane Precision Edge']=1;
 assert.equal(B.respec(legacy,'Arcane',true,1000003),false,'Member maximum three respecs');
-assert.equal(B.respec(legacy,'Arcane',false,1000000+86400001),true,'Expired respec window frees allowance');
+assert.equal(B.respec(legacy,'Arcane',false,1000002+86400001),true,'Expired respec window frees allowance');
 const combatTest=engine.tests.run();
 assert.equal(combatTest.passed,combatTest.total,'Combat engine regressions');
 console.log('Talent V2 PASS: '+Object.keys(trees).length+' classes, '+specCount+' specialisations, '+
