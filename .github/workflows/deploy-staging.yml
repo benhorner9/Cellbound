@@ -69,6 +69,10 @@ jobs:
         if: steps.freshness.outputs.current == 'true'
         run: npm run test:talents
 
+      - name: Tank, healer and DPS balance across classes and game modes
+        if: steps.freshness.outputs.current == 'true'
+        run: npm run test:role-balance
+
       - name: Core gameplay, PvP, loot, quest and editor regressions
         if: steps.freshness.outputs.current == 'true'
         run: npm run test:core
