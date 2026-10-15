@@ -566,20 +566,20 @@ function abilityImpact(scene,e,u,t,kind='damage'){
  // Connections exist only for real successful result targets. They are cosmetic
  // contact sequences, never a forecast of an area or an extra damage tick.
  if(!reduce()&&!v.periodic&&u?.el&&u!==t&&['beam','ray','breath'].includes(v.skill?.transport)){
-  ownEffect(effect(scene,'connection skill-link school-'+v.school+' transport-'+v.skill.transport+skillClasses(v),u.el,t.el,320),e,u,t);
+  ownEffect(effect(scene,'connection skill-link school-'+v.school+' transport-'+v.skill.transport+skillClasses(v),u.el,t.el,320,false,v.skill.socket),e,u,t);
  }
  return true;
 }
 
 function effectAnchor(scene,el,bounds){return scene.sockets?.get(el)||anchorPoint(scene,el,bounds)}
-function effect(scene,cls,source,target,life=320,allowUnanchored=false){
+function effect(scene,cls,source,target,life=320,allowUnanchored=false,sourceSocket=null){
  // Anchored FX must receive geometry before they enter the DOM. Previously the
  // browser could paint one frame at 0,0 before the animation loop positioned it.
  if(!allowUnanchored&&!source&&!target)return null;
  const priority=/class-projectile|interrupt|shield|avoid|shape-guard/.test(cls)?2:/ability-impact|heal-ring/.test(cls)?1:0;
  const limit=scene.lowDetail?18:36;
  if(scene.effects.size>=limit){const disposable=[...scene.effects].find(f=>f.priority<priority);if(!disposable)return null;clearTimeout(disposable.timer);disposable.n.remove();scene.effects.delete(disposable)}
- const bounds=scene.bounds||scene.arena.getBoundingClientRect(),tp=target?effectAnchor(scene,target,bounds):null,sp=source?effectAnchor(scene,source,bounds):null;
+ const bounds=scene.bounds||scene.arena.getBoundingClientRect(),tp=target?effectAnchor(scene,target,bounds):null,sp=source?(sourceSocket&&window.CellboundCombatAnimation?.socket(source,sourceSocket)||effectAnchor(scene,source,bounds)):null;
  if(!allowUnanchored&&!tp&&!sp)return null;
  const n=document.createElement('i');n.className='cbl-fx '+cls;
  const connection=n.classList.contains('connection'),a=sp||tp,b=tp||sp;
@@ -589,7 +589,7 @@ function effect(scene,cls,source,target,life=320,allowUnanchored=false){
   if(connection){n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg')}
  }
  if(a&&b)n.dataset.cblPositioned='1';
- const ttl=Math.max(60,life/scene.speed),fx={n,source,target,priority,ends:now()+ttl,timer:0};n.style.setProperty('--fx-life',ttl+'ms');scene.layer.appendChild(n);scene.effects.add(fx);return fx
+ const ttl=Math.max(60,life/scene.speed),fx={n,source,target,sourceSocket,priority,ends:now()+ttl,timer:0};n.style.setProperty('--fx-life',ttl+'ms');scene.layer.appendChild(n);scene.effects.add(fx);return fx
 }
 function clearCast(u){
  if(!u)return;
@@ -762,8 +762,9 @@ function frame(){
    if(u.cast){
     const progress=clamp((time-u.cast.start)/u.cast.duration,0,1);el.style.setProperty('--cbl-charge',String(progress));u.cast.glyph?.style.setProperty('--cast-progress',String(progress));
     if(u.state==='channeling'&&u.target?.isConnected){
-     if(!u.cast.beam){const n=document.createElement('i');n.className='cbl-fx connection channel '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',u.p.accent);scene.layer.appendChild(n);u.cast.beam=n}
-     const a=fxpos(el),b=fxpos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');n.dataset.cblPositioned='1';
+     const sig=u.cast.signature||(u.cast.signature=visualSignature(u.cast.event,'damage',u.p.name));
+     if(!u.cast.beam){const n=document.createElement('i');n.className='cbl-fx connection channel '+(sig.skill?'skill-link school-'+sig.school+' transport-'+sig.skill.transport+skillClasses(sig):family(u.cast.event,u));n.style.setProperty('--cbl-accent',u.p.accent);scene.layer.appendChild(n);u.cast.beam=n}
+     const a=sig.skill&&window.CellboundCombatAnimation?.socket(el,sig.skill.socket)||fxpos(el),b=fxpos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');n.dataset.cblPositioned='1';
     }else if(!el.dataset.animationOwned&&(u.cast.destination||u.target?.isConnected&&u.target!==el)&&progress>Math.max(0,1-u.p.travel/scene.speed/u.cast.duration)){
      if(!u.cast.orb){const n=document.createElement('i');n.className='cbl-fx cast-orb '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',kind(u.action||u.cast.event,u)==='heal'?'#86f3b7':u.p.accent);scene.layer.appendChild(n);u.cast.orb=n}
      const a=fxpos(el),b=u.cast.destination?{x:bounds.left+u.cast.destination.x/100*bounds.width,y:bounds.top+u.cast.destination.y/100*bounds.height}:fxpos(u.target),travelFraction=Math.min(1,u.p.travel/scene.speed/u.cast.duration),t=reduce()?1:clamp((progress-1+travelFraction)/travelFraction,0,1),n=u.cast.orb;
@@ -780,7 +781,7 @@ function frame(){
     n.style.left=(origin.x+(end.x-origin.x)*fraction-bounds.left)+'px';n.style.top=(origin.y+(end.y-origin.y)*fraction-bounds.top)+'px';
     n.style.setProperty('--cbl-angle',direction(origin,end).angle+'deg');continue;
    }
-   if(f.target){const b=fxpos(f.target),a=f.source?.isConnected?fxpos(f.source):b,d=direction(a,b);
+   if(f.target){const b=fxpos(f.target),a=f.source?.isConnected?(f.sourceSocket&&window.CellboundCombatAnimation?.socket(f.source,f.sourceSocket)||fxpos(f.source)):b,d=direction(a,b);
     const connection=f.n.classList.contains('connection');f.n.style.left=(connection?a.x:b.x)-bounds.left+'px';f.n.style.top=(connection?a.y:b.y)-bounds.top+'px';f.n.dataset.cblPositioned='1';
     if(connection){f.n.style.width=d.len+'px';f.n.style.setProperty('--cbl-angle',d.angle+'deg')}
    }

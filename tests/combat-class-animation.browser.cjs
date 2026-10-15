@@ -77,6 +77,9 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
     const targets=await page.locator('.class-projectile').evaluateAll(nodes=>nodes.map(n=>n.dataset.target).sort());
     assert.deepEqual(targets,['e-0','e-1'],id+' follows only the actual affected targets');await page.clock.runFor(700);
    }
+   await page.evaluate(()=>{mountClass('Evoker',0);const a=CellboundCombatData.ABILITIES.Evoker.find(a=>a.id==='fire-breath');send('DAMAGE_DEALT',a,{amount:20,result:'hit'})});await page.clock.runFor(100);
+   const origin=await page.evaluate(()=>{const n=arena.querySelector('.transport-breath'),r=arena.getBoundingClientRect(),head=CellboundCombatAnimation.socket(units['p-qa'],'head');return n?{x:r.left+parseFloat(n.style.left),y:r.top+parseFloat(n.style.top),head}:null});
+   assert(origin&&Math.hypot(origin.x-origin.head.x,origin.y-origin.head.y)<10,'breath originates at the articulated head socket');await page.clock.runFor(600);
    await page.evaluate(()=>{mountClass('Shaman',0);send('HEAL_RECEIVED',CellboundCombatData.ABILITIES.Shaman.find(a=>a.id==='healing-stream-totem'),{target:'p-qa',amount:10,result:'heal'})});await page.clock.runFor(60);
    assert.equal(await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state'),'heal','totem tick reacts without another placement cast');await page.clock.runFor(600);
    await page.evaluate(()=>{mountClass('Mage',0);send('CAST_START',{id:'fireball',name:'Fireball',kind:'damage'},{payload:{duration:2000}})});await page.clock.runFor(50);
