@@ -363,18 +363,24 @@ async function mountLive(arena,snapshot){
  return{dispose,onEvent,syncSnapshot,stage};
 }
 function isOwner(){
- return Boolean(window.CellboundCombatUILayoutEditor?.isOwner?.());
+ // The admin service is authoritative. Owner and other approved admin roles
+ // may open this presentation-only alpha; public players cannot.
+ return Boolean(window.CellboundAdmin?.isAdmin===true ||
+   window.CellboundCombatUILayoutEditor?.isOwner?.());
 }
 function attach(shell){
  if(!isOwner()||!shell?.isConnected||shell.dataset.cb3dReady)return;
  const arena=shell.querySelector('.cbcombat-arena-wrap > .cb2d-arena,.cbcombat-arena-wrap > [data-combat-arena]');
- const toolbar=shell.querySelector('.cbcombat-header-actions');
- if(!arena||!toolbar)return;
+ const wrap=arena?.closest('.cbcombat-arena-wrap');
+ if(!arena||!wrap)return;
  shell.dataset.cb3dReady='1';
  const button=document.createElement('button');button.type='button';button.className='cb3d-toggle';
- button.textContent='3D Alpha';button.title='Owner test: display real combat events in the 3D renderer';
+ button.textContent='3D Alpha';button.title='Admin test: show real combat events in a fixed-camera 3D arena';
+ button.setAttribute('aria-label','Switch combat battlefield to experimental 3D');
  button.setAttribute('aria-pressed','false');
- toolbar.prepend(button);
+ // Put the switch *inside the battlefield*, not the header: the immersive
+ // HUD can conceal the header on tablet and phone layouts.
+ wrap.appendChild(button);
  button.addEventListener('click',async()=>{
   if(live.has(arena)){
    live.get(arena).dispose();button.textContent='3D Alpha';button.setAttribute('aria-pressed','false');
@@ -389,12 +395,16 @@ function attach(shell){
    const controller=await mountLive(arena,s);
    if(!arena.isConnected||!shell.isConnected||!isOwner()){controller.dispose();return;}
    live.set(arena,controller);
+   wrap.querySelector('.cb3d-toggle-error')?.remove();
    button.textContent='Return to 2D';button.setAttribute('aria-pressed','true');
   }catch(error){
    console.warn('Cellbound 3D mode unavailable',error);
    button.textContent='3D unavailable';
    button.title=String(error?.message||error);
    button.setAttribute('aria-pressed','false');
+   let errorText=wrap.querySelector('.cb3d-toggle-error');
+   if(!errorText){errorText=document.createElement('small');errorText.className='cb3d-toggle-error';errorText.setAttribute('role','status');wrap.appendChild(errorText);}
+   errorText.textContent='3D unavailable: '+String(error?.message||error).slice(0,180);
   }finally{button.disabled=false;}
  });
 }
