@@ -551,7 +551,7 @@ function visualSignature(e,kind='damage',klass=''){
  return{school,shape,major,area,kind:actionKind,known:!!definition,authored:!!authored,periodic:/\((DoT|HoT|Pulse)\)/i.test(e?.ability||''),skill:choreography?.authored?choreography:null};
 }
 function skillClasses(v){return v.skill?' skill-'+v.skill.motif+' rhythm-'+v.skill.rhythm:''}
-function ownEffect(f,e,u,t){if(f){f.n.dataset.abilityId=e.abilityId||e.payload?.abilityId||e.ability||'';f.n.dataset.source=e.source||u?.el?.dataset.unit||'';f.n.dataset.target=e.target||t?.el?.dataset.unit||''}return f}
+function ownEffect(f,e,u,t){if(f){f.n.dataset.abilityId=e.abilityId||e.payload?.abilityId||e.ability||'';f.n.dataset.source=e.source||u?.el?.dataset.unit||'';f.n.dataset.target=t?.el?.dataset.unit||e.target||''}return f}
 function abilityCharge(scene,e,u){
  if(!u?.el||reduce()||scene.effects.size>=25)return;
  const v=visualSignature(e,'damage',u.p.name);
@@ -614,7 +614,7 @@ function strike(scene,u,t,e,heal=false){
  const k=heal?'heal':kind(u.action||e,u),heavy=e.result==='critical'||Number(e.amount)>Number(e.payload?.targetMax||Infinity)*.15;
  const intensity=clamp(Number(e.payload?.visualIntensity)||(/signature|ultimate/i.test(e.ability||'')?5:e.payload?.majorAbility?4:heavy?3:Number(e.amount)<10?1:2),1,5);u.el.dataset.intensity=String(intensity);
  // Instant engine attacks have no flight interval: connect at contact, never invent a delayed hit.
- if(k!=='melee'&&!window.CellboundCombatAnimation?.isProjectile(e)){
+ if(k!=='melee'&&!window.CellboundCombatAnimation?.isProjectile(e)&&!['beam','ray','breath'].includes(visualSignature(e,heal?'heal':'damage',u.p.name).skill?.transport)){
   const f=effect(scene,'connection '+(heal?'heal':family(e,u)),u.el,t.el,heal?400:210);
   if(f)f.n.style.setProperty('--cbl-accent',heal?'#76efac':u.p.accent);
  }else if(k==='melee'&&d.len<110){
@@ -676,7 +676,11 @@ function livingEvent(e,opts={}){
     if(!(e.payload?.castTime>0))motion(u,[{scale:'.965',translate:'0 1px',offset:0},{scale:'1.035',translate:'0 -1px',offset:.46},{scale:'1',translate:'0 0',offset:1}],300,scene)}break;
  case'CAST_START':
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e);u.el.dataset.vfxSchool=visualSignature(e,'damage',u.p.name).school;abilityCharge(scene,e,u)}break;
- case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
+ case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':
+  clearCast(u);if(u&&!u.dead&&!controlled(u)){
+   state(u,'idle');
+   if(e.type==='ABILITY_FINISH'&&!/^failed/.test(e.result||'')){const sig=visualSignature(e,'damage',u.p.name);if(sig.skill?.kind==='taunt'&&t)abilityImpact(scene,e,u,t);else if(sig.skill?.kind==='summon')abilityImpact(scene,e,u,u)}
+  }break;
  case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)&&!abilityImpact(scene,e,u,t))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&(e.result==='critical'||visualSignature(e).major||visualSignature(e).shape==='nova')&&!['miss','missed','dodge','dodged','immune','resist','resisted'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
  case'HEAL_RECEIVED':if(t){
   const visualSource=e.payload?.visualSource?unit(scene,resolve(e.payload.visualSource,opts,arena)):u;

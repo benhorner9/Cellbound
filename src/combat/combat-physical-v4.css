@@ -607,3 +607,4 @@
 @keyframes cblSkillOrbit{0%{opacity:0;rotate:-50deg;scale:.6}30%{opacity:.8}100%{opacity:0;rotate:100deg;scale:1.2}}
 @keyframes cblSkillSweep{0%{opacity:0;rotate:-45deg;scale:.7}25%{opacity:.9}100%{opacity:0;rotate:60deg;scale:1.2}}
 @media(prefers-reduced-motion:reduce){.cbl-scene .cbl-fx.ability-impact[class*="skill-"]:before,.cbl-scene .cbl-fx.ability-impact[class*="skill-"]:after{animation:none!important}.cbl-fx.skill-link{display:none!important}}
+.cbl-scene .cbl-fx.ability-impact.rhythm-finish:not(.periodic){width:56px;height:56px}

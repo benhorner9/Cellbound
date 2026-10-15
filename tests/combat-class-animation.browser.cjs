@@ -32,7 +32,7 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
    const visualAbilities=before?[primary,signature]:abilities;
    for(const a of visualAbilities){
     const idlePose=await page.evaluate(()=>units['p-qa'].querySelector('.cb-paper-upper-right')?.getAttribute('transform')+'|'+units['p-qa'].querySelector('.cb-paper-forearm-left')?.getAttribute('transform')+'|'+units['p-qa'].querySelector('.cb-paper-kick-R')?.getAttribute('transform'));
-    await page.evaluate(()=>{window.skillEffects=[];window.skillObserver?.disconnect();window.skillObserver=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.classList.contains('cbl-fx'))skillEffects.push({classes:n.className,source:n.dataset.source,target:n.dataset.target,ability:n.dataset.abilityId,paint:getComputedStyle(n,':after').clipPath,animation:getComputedStyle(n,':after').animationName})});skillObserver.observe(arena,{childList:true,subtree:true})});
+    await page.evaluate(()=>{window.skillEffects=[];window.skillObserver?.disconnect();window.skillObserver=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.classList.contains('cbl-fx'))skillEffects.push({classes:n.className,source:n.dataset.source,target:n.dataset.target,ability:n.dataset.abilityId,paint:getComputedStyle(n,':after').clipPath,animation:getComputedStyle(n,':after').animationName,width:n.getBoundingClientRect().width,visibility:getComputedStyle(n).visibility})});skillObserver.observe(arena,{childList:true,subtree:true})});
     await page.evaluate(a=>{send('COMBAT_START',a);send('ABILITY_START',a);if(a.cast)send('CAST_START',a,{payload:{duration:a.cast}})},a);
     await page.clock.runFor(a.cast?Math.min(a.cast*.6,500)/4:70);
     if(!before){
@@ -51,13 +51,13 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
      await page.evaluate(a=>send('ABILITY_FINISH',a,{result:'resolved'}),a);
      if(/damage|heal/.test(a.kind))await page.evaluate(a=>send(a.kind==='damage'?'DAMAGE_DEALT':'HEAL_RECEIVED',a,{amount:23,result:a.kind==='damage'?'hit':'heal'}),a);
      else if(a.kind==='interrupt')await page.evaluate(a=>send('INTERRUPT',a,{result:'success'}),a);
-     else await page.evaluate(a=>send(a.kind==='defensive'?'DEFENSIVE_ACTIVATED':a.kind==='taunt'?'AGGRO_CHANGED':a.kind==='battle-rez'?'PLAYER_REVIVED':a.kind==='pet-command'?'PET_COMMAND':a.kind==='summon'?'PET_SUMMONED':a.kind==='totem'?'TOTEM_PLACED':'BUFF_APPLIED',a,{result:'success',target:/defensive|totem|summon/.test(a.kind)?'p-qa':'e-0'}),a);
+     else if(!['taunt','summon'].includes(a.kind))await page.evaluate(a=>send(a.kind==='defensive'?'DEFENSIVE_ACTIVATED':a.kind==='taunt'?'AGGRO_CHANGED':a.kind==='battle-rez'?'PLAYER_REVIVED':a.kind==='pet-command'?'PET_COMMAND':a.kind==='summon'?'PET_SUMMONED':a.kind==='totem'?'TOTEM_PLACED':'BUFF_APPLIED',a,{result:'success',target:/defensive|totem|summon/.test(a.kind)?'p-qa':'e-0'}),a);
      await page.clock.runFor(120);
      if(a.id===primary.id||a.id===signature.id)await page.screenshot({path:dir+'/action-'+engine+'-'+klass.toLowerCase().replace(/ /g,'-')+'-'+a.id+'.png'});
      await page.clock.runFor(500);
      const state=await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state');assert.equal(state,'idle',klass+' '+a.id+' must recover');
      const rendered=await page.evaluate(({klass,a})=>({fx:skillEffects.filter(f=>f.classes.includes('ability-impact')),profile:CellboundCombatAnimationCatalog.resolve(klass,{abilityId:a.id})}),{klass,a});
-     assert(rendered.fx.some(f=>f.classes.includes('skill-'+rendered.profile.motif)&&f.source==='p-qa'&&f.target),klass+' '+a.id+' missing owned skill impact '+JSON.stringify(rendered.fx));
+     assert(rendered.fx.some(f=>f.classes.includes('skill-'+rendered.profile.motif)&&f.source==='p-qa'&&f.target&&f.width>0&&f.visibility==='visible'),klass+' '+a.id+' missing owned skill impact '+JSON.stringify(rendered.fx));
      skillCoverage.push({class:klass,spec:a.spec||'All',id:a.id,animated:true,signature:true,tested:true,failed:false});
     }else await page.clock.runFor(700);
    }
@@ -70,6 +70,15 @@ const dir='/tmp/cellbound-class-animation',engine=process.env.CELLBOUND_TEST_ENG
    }
   }
   if(!before){
+   // A multi-target ability may only launch at targets in actual result events.
+   for(const [klass,id] of [['Hunter','multi-shot'],['Rogue','fan-of-knives']]){
+    await page.evaluate(({klass,id})=>{mountClass(klass,0);const extra=units['e-0'].cloneNode(true);extra.dataset.unit='e-1';extra.style.left='650px';arena.append(extra);units['e-1']=extra;const a=CellboundCombatData.ABILITIES[klass].find(a=>a.id===id);send('ABILITY_START',a);for(const target of ['e-0','e-1'])send('DAMAGE_DEALT',a,{target,amount:20,result:'hit'})},{klass,id});
+    await page.clock.runFor(80);
+    const targets=await page.locator('.class-projectile').evaluateAll(nodes=>nodes.map(n=>n.dataset.target).sort());
+    assert.deepEqual(targets,['e-0','e-1'],id+' follows only the actual affected targets');await page.clock.runFor(700);
+   }
+   await page.evaluate(()=>{mountClass('Shaman',0);send('HEAL_RECEIVED',CellboundCombatData.ABILITIES.Shaman.find(a=>a.id==='healing-stream-totem'),{target:'p-qa',amount:10,result:'heal'})});await page.clock.runFor(60);
+   assert.equal(await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state'),'heal','totem tick reacts without another placement cast');await page.clock.runFor(600);
    await page.evaluate(()=>{mountClass('Mage',0);send('CAST_START',{id:'fireball',name:'Fireball',kind:'damage'},{payload:{duration:2000}})});await page.clock.runFor(50);
    await page.evaluate(()=>send('DAMAGE_DEALT',{name:'Enemy strike',kind:'damage'},{source:'e-0',target:'p-qa',amount:10,result:'hit'}));await page.clock.runFor(140);
    assert.equal(await page.locator('[data-unit="p-qa"]').getAttribute('data-animation-state'),'skill:Mage:fireball','damage recoil resumes a still-authoritative cast');

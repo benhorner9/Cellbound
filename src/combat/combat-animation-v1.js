@@ -161,7 +161,8 @@ function route(e,opts,deliver){
   if(u){const profile=choose(u,e),duration=Math.max(1,Number(e.payload?.duration)||1000)/scene.speed;
    if(play(u,profile.clip,PRIORITY.cast,duration*scene.speed)){u.casting={event:e,profile,start:time,end:time+duration};u.action={ability:e.ability,contact:time+duration,expires:time+duration+1200,profile};u.el.dataset.animationAbility=profile.abilityId||e.ability}}break;
  case'CAST_FINISH':case'ABILITY_FINISH':
-  if(u?.casting||u?.suspendedCast){if(/^failed/.test(e.result||'')){u.action=null;reset(u)}else attack(u,e,true)}break;
+  if(u?.casting||u?.suspendedCast){if(/^failed/.test(e.result||'')){u.action=null;reset(u)}else attack(u,e,true)}
+  if(u?.action&&!/^failed/.test(e.result||'')&&['taunt','summon'].includes(u.action.profile.kind))due=reduced()?time:Math.min(time+350/scene.speed,Math.max(time,u.action.contact));break;
  case'CAST_CANCELLED':case'INTERRUPT':{
   const v=e.type==='CAST_CANCELLED'?u:e.result==='success'?t:null;
   if(e.type==='INTERRUPT'&&e.result==='success'&&u)attack(u,e);
@@ -169,7 +170,7 @@ function route(e,opts,deliver){
  }
  case'DAMAGE_DEALT':case'HEAL_RECEIVED':{
   const passive=!!u?.rig?.klass&&!choose(u,e).known&&u?.action?.ability!==e.ability;
-  const periodic=passive||/\(DoT\)|\(HoT\)|\(Pulse\)|Stagger|bleed|burn tick/i.test(e.ability||'');
+  const periodic=passive||choose(u,e).kind==='totem'||/\(DoT\)|\(HoT\)|\(Pulse\)|Stagger|bleed|burn tick/i.test(e.ability||'');
   if(!periodic&&(u?.casting||u?.suspendedCast))attack(u,e,true);
   else if(!periodic&&u&&(!u.action||u.action.ability!==e.ability||time>u.action.expires))attack(u,e);
   due=reduced()||periodic?time:Math.max(time,u?.action?.ability===e.ability?u.action.contact:time);

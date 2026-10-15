@@ -11,7 +11,11 @@
     "execution": "snap",
     "effect": "cut",
     "transport": "local",
-    "description": "A high-threat strike that generates Runic Power."
+    "description": "A high-threat strike that generates Runic Power.",
+    "previousEffect": {
+      "school": "blood",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -25,7 +29,11 @@
     "execution": "weight",
     "effect": "coil",
     "transport": "local",
-    "description": "Spend Runic Power to strike and heal from damage taken recently."
+    "description": "Spend Runic Power to strike and heal from damage taken recently.",
+    "previousEffect": {
+      "school": "blood",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -39,7 +47,11 @@
     "execution": "pulse",
     "effect": "command",
     "transport": "local",
-    "description": "Command an enemy to attack the Death Knight."
+    "description": "Command an enemy to attack the Death Knight.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "rune"
+    }
   },
   {
     "class": "Death Knight",
@@ -53,7 +65,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "local",
-    "description": "Interrupt an enemy cast with frozen runic force."
+    "description": "Interrupt an enemy cast with frozen runic force.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "guard"
+    }
   },
   {
     "class": "Death Knight",
@@ -67,7 +83,11 @@
     "execution": "weight",
     "effect": "shards",
     "transport": "local",
-    "description": "Generate Runic Power and reinforce Bone Shield."
+    "description": "Generate Runic Power and reinforce Bone Shield.",
+    "previousEffect": {
+      "school": "blood",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -81,7 +101,11 @@
     "execution": "pulse",
     "effect": "drops",
     "transport": "local",
-    "description": "Boil the blood of nearby enemies for heavy pack threat."
+    "description": "Boil the blood of nearby enemies for heavy pack threat.",
+    "previousEffect": {
+      "school": "blood",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -95,7 +119,11 @@
     "execution": "sustain",
     "effect": "sigil",
     "transport": "local",
-    "description": "Corrupt the ground beneath enemies with shadow damage."
+    "description": "Corrupt the ground beneath enemies with shadow damage.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "rune"
+    }
   },
   {
     "class": "Death Knight",
@@ -109,7 +137,11 @@
     "execution": "snap",
     "effect": "sigil",
     "transport": "local",
-    "description": "Briefly reduce incoming damage."
+    "description": "Briefly reduce incoming damage.",
+    "previousEffect": {
+      "school": "blood",
+      "shape": "guard"
+    }
   },
   {
     "class": "Death Knight",
@@ -123,7 +155,11 @@
     "execution": "sustain",
     "effect": "knives",
     "transport": "local",
-    "description": "Summon a spectral weapon that reinforces defence and threat."
+    "description": "Summon a spectral weapon that reinforces defence and threat.",
+    "previousEffect": {
+      "school": "blood",
+      "shape": "guard"
+    }
   },
   {
     "class": "Death Knight",
@@ -137,7 +173,11 @@
     "execution": "pulse",
     "effect": "coil",
     "transport": "local",
-    "description": "Empower your blood, restoring health and greatly improving survival."
+    "description": "Empower your blood, restoring health and greatly improving survival.",
+    "previousEffect": {
+      "school": "blood",
+      "shape": "guard"
+    }
   },
   {
     "class": "Death Knight",
@@ -151,7 +191,11 @@
     "execution": "finish",
     "effect": "fissure",
     "transport": "local",
-    "description": "A brutal melee strike that generates Runic Power."
+    "description": "A brutal melee strike that generates Runic Power.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -165,7 +209,11 @@
     "execution": "weight",
     "effect": "cut",
     "transport": "local",
-    "description": "Spend Runic Power on a weapon strike infused with frost."
+    "description": "Spend Runic Power on a weapon strike infused with frost.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -179,7 +227,11 @@
     "execution": "weight",
     "effect": "rays",
     "transport": "ray",
-    "description": "Blast the target and nearby enemies with freezing wind."
+    "description": "Blast the target and nearby enemies with freezing wind.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -193,7 +245,11 @@
     "execution": "sustain",
     "effect": "rain",
     "transport": "local",
-    "description": "Surround yourself with a freezing storm that cleaves nearby enemies."
+    "description": "Surround yourself with a freezing storm that cleaves nearby enemies.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "nova"
+    }
   },
   {
     "class": "Death Knight",
@@ -207,7 +263,11 @@
     "execution": "double",
     "effect": "cleave",
     "transport": "local",
-    "description": "Sweep a frozen blade through several enemies."
+    "description": "Sweep a frozen blade through several enemies.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -221,7 +281,11 @@
     "execution": "finish",
     "effect": "shards",
     "transport": "local",
-    "description": "Call a frostwyrm across the battlefield for heavy cleave damage."
+    "description": "Call a frostwyrm across the battlefield for heavy cleave damage.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "nova"
+    }
   },
   {
     "class": "Death Knight",
@@ -235,7 +299,11 @@
     "execution": "sustain",
     "effect": "rays",
     "transport": "breath",
-    "description": "Unleash a devastating cone of frost into the enemy pack."
+    "description": "Unleash a devastating cone of frost into the enemy pack.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "breath"
+    }
   },
   {
     "class": "Death Knight",
@@ -249,7 +317,11 @@
     "execution": "sustain",
     "effect": "shards",
     "transport": "local",
-    "description": "Harden yourself against incoming damage."
+    "description": "Harden yourself against incoming damage.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "guard"
+    }
   },
   {
     "class": "Death Knight",
@@ -263,7 +335,11 @@
     "execution": "weight",
     "effect": "brands",
     "transport": "local",
-    "description": "Strike the target, generate Runic Power and apply Festering Wounds."
+    "description": "Strike the target, generate Runic Power and apply Festering Wounds.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -277,7 +353,11 @@
     "execution": "double",
     "effect": "drops",
     "transport": "local",
-    "description": "Burst Festering Wounds for additional shadow damage."
+    "description": "Burst Festering Wounds for additional shadow damage.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Death Knight",
@@ -291,7 +371,11 @@
     "execution": "snap",
     "effect": "spiral",
     "transport": "bolt",
-    "description": "Spend Runic Power to hurl death magic at the target."
+    "description": "Spend Runic Power to hurl death magic at the target.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Death Knight",
@@ -305,7 +389,11 @@
     "execution": "pulse",
     "effect": "brands",
     "transport": "bolt",
-    "description": "Infect the target with a damaging plague."
+    "description": "Infect the target with a damaging plague.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Death Knight",
@@ -319,7 +407,11 @@
     "execution": "sustain",
     "effect": "thorns",
     "transport": "local",
-    "description": "Corrupt the ground beneath enemies with shadow damage."
+    "description": "Corrupt the ground beneath enemies with shadow damage.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "rune"
+    }
   },
   {
     "class": "Death Knight",
@@ -333,7 +425,11 @@
     "execution": "weight",
     "effect": "brands",
     "transport": "bolt",
-    "description": "Empower your permanent Ghoul into a savage frenzy."
+    "description": "Empower your permanent Ghoul into a savage frenzy.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "rune"
+    }
   },
   {
     "class": "Death Knight",
@@ -347,7 +443,11 @@
     "execution": "triple",
     "effect": "summon",
     "transport": "local",
-    "description": "Summon a pack of temporary ghouls to tear into your enemies."
+    "description": "Summon a pack of temporary ghouls to tear into your enemies.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "rune"
+    }
   },
   {
     "class": "Death Knight",
@@ -361,7 +461,11 @@
     "execution": "finish",
     "effect": "summon",
     "transport": "local",
-    "description": "Burst Festering Wounds and summon additional undead attackers."
+    "description": "Burst Festering Wounds and summon additional undead attackers.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "rune"
+    }
   },
   {
     "class": "Death Knight",
@@ -375,7 +479,11 @@
     "execution": "sustain",
     "effect": "orbit",
     "transport": "local",
-    "description": "Wrap yourself in anti-magic energy to reduce incoming damage."
+    "description": "Wrap yourself in anti-magic energy to reduce incoming damage.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "guard"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -389,7 +497,11 @@
     "execution": "snap",
     "effect": "cut",
     "transport": "local",
-    "description": "Generate Fury with a fast warglaive strike."
+    "description": "Generate Fury with a fast warglaive strike.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "glaive"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -403,7 +515,11 @@
     "execution": "weight",
     "effect": "cross",
     "transport": "bolt",
-    "description": "Spend Fury on a heavy chaos-infused melee strike."
+    "description": "Spend Fury on a heavy chaos-infused melee strike.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "glaive"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -417,7 +533,11 @@
     "execution": "triple",
     "effect": "cleave",
     "transport": "local",
-    "description": "Dance through the target and nearby enemies with both warglaives."
+    "description": "Dance through the target and nearby enemies with both warglaives.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "glaive"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -431,7 +551,11 @@
     "execution": "double",
     "effect": "knives",
     "transport": "glaive",
-    "description": "Throw a warglaive at a distant target while repositioning."
+    "description": "Throw a warglaive at a distant target while repositioning.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "glaive"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -445,7 +569,11 @@
     "execution": "sustain",
     "effect": "ray",
     "transport": "beam",
-    "description": "Channel fel energy through enemies in front of you."
+    "description": "Channel fel energy through enemies in front of you.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "breath"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -459,7 +587,11 @@
     "execution": "triple",
     "effect": "rays",
     "transport": "bolt",
-    "description": "Unleash a violent fel barrage across the enemy pack."
+    "description": "Unleash a violent fel barrage across the enemy pack.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "nova"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -473,7 +605,11 @@
     "execution": "finish",
     "effect": "wings",
     "transport": "local",
-    "description": "Transform and crash into the target, opening a major demonic burst window."
+    "description": "Transform and crash into the target, opening a major demonic burst window.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "nova"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -487,7 +623,11 @@
     "execution": "sustain",
     "effect": "tracks",
     "transport": "local",
-    "description": "Blur your form, reducing incoming damage for 8 seconds."
+    "description": "Blur your form, reducing incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "guard"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -501,7 +641,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "bolt",
-    "description": "Interrupt an enemy cast with fel force."
+    "description": "Interrupt an enemy cast with fel force.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -515,7 +659,11 @@
     "execution": "weight",
     "effect": "cut",
     "transport": "local",
-    "description": "Rip into the target, generating Fury and a Soul Fragment."
+    "description": "Rip into the target, generating Fury and a Soul Fragment.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "glaive"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -529,7 +677,11 @@
     "execution": "double",
     "effect": "coil",
     "transport": "bolt",
-    "description": "Spend Fury and consume Soul Fragments to damage the target and heal yourself."
+    "description": "Spend Fury and consume Soul Fragments to damage the target and heal yourself.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "glaive"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -543,7 +695,11 @@
     "execution": "weight",
     "effect": "fissure",
     "transport": "local",
-    "description": "Leap into the pack in a burst of fel fire and heavy threat."
+    "description": "Leap into the pack in a burst of fel fire and heavy threat.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -557,7 +713,11 @@
     "execution": "pulse",
     "effect": "command",
     "transport": "local",
-    "description": "Torment the enemy and force its attention onto the Demon Hunter."
+    "description": "Torment the enemy and force its attention onto the Demon Hunter.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -571,7 +731,11 @@
     "execution": "pulse",
     "effect": "sigil",
     "transport": "local",
-    "description": "Burn enemies in a fel sigil for area damage and pack threat."
+    "description": "Burn enemies in a fel sigil for area damage and pack threat.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -585,7 +749,11 @@
     "execution": "sustain",
     "effect": "thorns",
     "transport": "local",
-    "description": "Harden your body with demonic spikes to reduce incoming damage."
+    "description": "Harden your body with demonic spikes to reduce incoming damage.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "guard"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -599,7 +767,11 @@
     "execution": "weight",
     "effect": "brands",
     "transport": "local",
-    "description": "Brand the enemy with fel fire while fortifying yourself against its assault."
+    "description": "Brand the enemy with fel fire while fortifying yourself against its assault.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "guard"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -613,7 +785,11 @@
     "execution": "finish",
     "effect": "burst",
     "transport": "bolt",
-    "description": "Consume Soul Fragments in an explosive fel blast that also restores health."
+    "description": "Consume Soul Fragments in an explosive fel blast that also restores health.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "nova"
+    }
   },
   {
     "class": "Demon Hunter",
@@ -627,7 +803,11 @@
     "execution": "sustain",
     "effect": "wings",
     "transport": "local",
-    "description": "Transform into a towering demon, restoring health and greatly reducing damage taken."
+    "description": "Transform into a towering demon, restoring health and greatly reducing damage taken.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "guard"
+    }
   },
   {
     "class": "Druid",
@@ -641,7 +821,11 @@
     "execution": "pulse",
     "effect": "petals",
     "transport": "bolt",
-    "description": "An efficient heal with a short healing-over-time effect."
+    "description": "An efficient heal with a short healing-over-time effect.",
+    "previousEffect": {
+      "school": "nature",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Druid",
@@ -655,7 +839,11 @@
     "execution": "weight",
     "effect": "thorns",
     "transport": "bolt",
-    "description": "A stronger direct heal for injured allies."
+    "description": "A stronger direct heal for injured allies.",
+    "previousEffect": {
+      "school": "nature",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Druid",
@@ -669,7 +857,11 @@
     "execution": "double",
     "effect": "bloom",
     "transport": "local",
-    "description": "Restore health to the whole party."
+    "description": "Restore health to the whole party.",
+    "previousEffect": {
+      "school": "nature",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Druid",
@@ -683,7 +875,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "local",
-    "description": "Interrupt an enemy cast."
+    "description": "Interrupt an enemy cast.",
+    "previousEffect": {
+      "school": "nature",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Druid",
@@ -697,7 +893,11 @@
     "execution": "snap",
     "effect": "spiral",
     "transport": "bolt",
-    "description": "A ranged nature attack for safe damage windows."
+    "description": "A ranged nature attack for safe damage windows.",
+    "previousEffect": {
+      "school": "nature",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Druid",
@@ -711,7 +911,11 @@
     "execution": "sustain",
     "effect": "thorns",
     "transport": "local",
-    "description": "Reduce incoming damage for 8 seconds."
+    "description": "Reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "nature",
+      "shape": "guard"
+    }
   },
   {
     "class": "Druid",
@@ -725,7 +929,11 @@
     "execution": "sustain",
     "effect": "ripple",
     "transport": "beam",
-    "description": "A powerful emergency party heal with a long cooldown."
+    "description": "A powerful emergency party heal with a long cooldown.",
+    "previousEffect": {
+      "school": "nature",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Druid",
@@ -739,7 +947,11 @@
     "execution": "weight",
     "effect": "spiral",
     "transport": "bolt",
-    "description": "Cast nature magic to generate Astral Power and move toward Lunar Eclipse."
+    "description": "Cast nature magic to generate Astral Power and move toward Lunar Eclipse.",
+    "previousEffect": {
+      "school": "nature",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Druid",
@@ -753,7 +965,11 @@
     "execution": "weight",
     "effect": "ray",
     "transport": "ray",
-    "description": "Cast arcane stellar magic to generate Astral Power and move toward Solar Eclipse."
+    "description": "Cast arcane stellar magic to generate Astral Power and move toward Solar Eclipse.",
+    "previousEffect": {
+      "school": "lunar",
+      "shape": "star"
+    }
   },
   {
     "class": "Druid",
@@ -767,7 +983,11 @@
     "execution": "finish",
     "effect": "stars",
     "transport": "bolt",
-    "description": "Spend Astral Power on a heavy single-target astral strike."
+    "description": "Spend Astral Power on a heavy single-target astral strike.",
+    "previousEffect": {
+      "school": "lunar",
+      "shape": "star"
+    }
   },
   {
     "class": "Druid",
@@ -781,7 +1001,11 @@
     "execution": "snap",
     "effect": "orbit",
     "transport": "local",
-    "description": "Burn the target with lunar magic that continues dealing damage."
+    "description": "Burn the target with lunar magic that continues dealing damage.",
+    "previousEffect": {
+      "school": "lunar",
+      "shape": "star"
+    }
   },
   {
     "class": "Druid",
@@ -795,7 +1019,11 @@
     "execution": "pulse",
     "effect": "rays",
     "transport": "local",
-    "description": "Scorch the target with solar nature magic and spread pressure into nearby enemies."
+    "description": "Scorch the target with solar nature magic and spread pressure into nearby enemies.",
+    "previousEffect": {
+      "school": "solar",
+      "shape": "star"
+    }
   },
   {
     "class": "Druid",
@@ -809,7 +1037,11 @@
     "execution": "sustain",
     "effect": "rain",
     "transport": "local",
-    "description": "Spend Astral Power to call falling stars across the enemy pack."
+    "description": "Spend Astral Power to call falling stars across the enemy pack.",
+    "previousEffect": {
+      "school": "lunar",
+      "shape": "star"
+    }
   },
   {
     "class": "Druid",
@@ -823,7 +1055,11 @@
     "execution": "sustain",
     "effect": "ray",
     "transport": "beam",
-    "description": "Channel an astral beam through the enemy pack while generating Astral Power."
+    "description": "Channel an astral beam through the enemy pack while generating Astral Power.",
+    "previousEffect": {
+      "school": "lunar",
+      "shape": "star"
+    }
   },
   {
     "class": "Druid",
@@ -837,7 +1073,11 @@
     "execution": "finish",
     "effect": "orbit",
     "transport": "local",
-    "description": "Align the heavens and empower Solar and Lunar magic simultaneously."
+    "description": "Align the heavens and empower Solar and Lunar magic simultaneously.",
+    "previousEffect": {
+      "school": "lunar",
+      "shape": "star"
+    }
   },
   {
     "class": "Druid",
@@ -851,7 +1091,11 @@
     "execution": "snap",
     "effect": "rays",
     "transport": "ray",
-    "description": "Silence an enemy cast with focused solar energy."
+    "description": "Silence an enemy cast with focused solar energy.",
+    "previousEffect": {
+      "school": "solar",
+      "shape": "star"
+    }
   },
   {
     "class": "Evoker",
@@ -865,7 +1109,11 @@
     "execution": "pulse",
     "effect": "spiral",
     "transport": "bolt",
-    "description": "Rewind an ally to a healthier moment and continue healing them briefly."
+    "description": "Rewind an ally to a healthier moment and continue healing them briefly.",
+    "previousEffect": {
+      "school": "bronze",
+      "shape": "rune"
+    }
   },
   {
     "class": "Evoker",
@@ -879,7 +1127,11 @@
     "execution": "weight",
     "effect": "wings",
     "transport": "bolt",
-    "description": "Rush restorative dragon magic into an injured ally."
+    "description": "Rush restorative dragon magic into an injured ally.",
+    "previousEffect": {
+      "school": "emerald",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Evoker",
@@ -893,7 +1145,11 @@
     "execution": "pulse",
     "effect": "bloom",
     "transport": "local",
-    "description": "Bloom emerald magic through the party."
+    "description": "Bloom emerald magic through the party.",
+    "previousEffect": {
+      "school": "emerald",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Evoker",
@@ -907,7 +1163,11 @@
     "execution": "sustain",
     "effect": "petals",
     "transport": "breath",
-    "description": "Breathe restorative energy across the party."
+    "description": "Breathe restorative energy across the party.",
+    "previousEffect": {
+      "school": "emerald",
+      "shape": "breath"
+    }
   },
   {
     "class": "Evoker",
@@ -921,7 +1181,11 @@
     "execution": "double",
     "effect": "orbit",
     "transport": "local",
-    "description": "Send a temporal pulse through allies for broad recovery."
+    "description": "Send a temporal pulse through allies for broad recovery.",
+    "previousEffect": {
+      "school": "bronze",
+      "shape": "rune"
+    }
   },
   {
     "class": "Evoker",
@@ -935,7 +1199,11 @@
     "execution": "sustain",
     "effect": "ripple",
     "transport": "beam",
-    "description": "Commune with emerald magic for a powerful emergency party heal."
+    "description": "Commune with emerald magic for a powerful emergency party heal.",
+    "previousEffect": {
+      "school": "emerald",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Evoker",
@@ -949,7 +1217,11 @@
     "execution": "snap",
     "effect": "coil",
     "transport": "bolt",
-    "description": "A safe ranged damage spell for quiet healing windows."
+    "description": "A safe ranged damage spell for quiet healing windows.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Evoker",
@@ -963,7 +1235,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "bolt",
-    "description": "Interrupt an enemy cast with draconic force."
+    "description": "Interrupt an enemy cast with draconic force.",
+    "previousEffect": {
+      "school": "azure",
+      "shape": "star"
+    }
   },
   {
     "class": "Evoker",
@@ -977,7 +1253,11 @@
     "execution": "weight",
     "effect": "shards",
     "transport": "local",
-    "description": "Harden your scales to reduce incoming damage."
+    "description": "Harden your scales to reduce incoming damage.",
+    "previousEffect": {
+      "school": "earth",
+      "shape": "guard"
+    }
   },
   {
     "class": "Evoker",
@@ -991,7 +1271,11 @@
     "execution": "weight",
     "effect": "coil",
     "transport": "bolt",
-    "description": "Launch a focused bolt of red dragonfire."
+    "description": "Launch a focused bolt of red dragonfire.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Evoker",
@@ -1005,7 +1289,11 @@
     "execution": "snap",
     "effect": "cut",
     "transport": "bolt",
-    "description": "Strike instantly with blue dragon magic."
+    "description": "Strike instantly with blue dragon magic.",
+    "previousEffect": {
+      "school": "azure",
+      "shape": "star"
+    }
   },
   {
     "class": "Evoker",
@@ -1019,7 +1307,11 @@
     "execution": "sustain",
     "effect": "ray",
     "transport": "beam",
-    "description": "Spend Essence to tear into the target with blue magic."
+    "description": "Spend Essence to tear into the target with blue magic.",
+    "previousEffect": {
+      "school": "azure",
+      "shape": "breath"
+    }
   },
   {
     "class": "Evoker",
@@ -1033,7 +1325,11 @@
     "execution": "weight",
     "effect": "rays",
     "transport": "breath",
-    "description": "Breathe red dragonfire through the enemy pack."
+    "description": "Breathe red dragonfire through the enemy pack.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "breath"
+    }
   },
   {
     "class": "Evoker",
@@ -1047,7 +1343,11 @@
     "execution": "finish",
     "effect": "burst",
     "transport": "bolt",
-    "description": "Spend Essence to explode dragonfire across nearby enemies."
+    "description": "Spend Essence to explode dragonfire across nearby enemies.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Evoker",
@@ -1061,7 +1361,11 @@
     "execution": "finish",
     "effect": "stars",
     "transport": "bolt",
-    "description": "Release a devastating blast of blue dragon magic."
+    "description": "Release a devastating blast of blue dragon magic.",
+    "previousEffect": {
+      "school": "azure",
+      "shape": "star"
+    }
   },
   {
     "class": "Evoker",
@@ -1075,7 +1379,11 @@
     "execution": "triple",
     "effect": "wings",
     "transport": "local",
-    "description": "Unleash the full fury of the dragonflights and enter a major burst window."
+    "description": "Unleash the full fury of the dragonflights and enter a major burst window.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Hunter",
@@ -1089,7 +1397,11 @@
     "execution": "weight",
     "effect": "pierce",
     "transport": "arrow",
-    "description": "A slow, heavy ranged shot."
+    "description": "A slow, heavy ranged shot.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pierce"
+    }
   },
   {
     "class": "Hunter",
@@ -1103,7 +1415,11 @@
     "execution": "snap",
     "effect": "spiral",
     "transport": "arrow",
-    "description": "Reliable ranged damage."
+    "description": "Reliable ranged damage.",
+    "previousEffect": {
+      "school": "arcane",
+      "shape": "pierce"
+    }
   },
   {
     "class": "Hunter",
@@ -1117,7 +1433,11 @@
     "execution": "pulse",
     "effect": "cut",
     "transport": "arrow",
-    "description": "Generate Focus while maintaining ranged pressure."
+    "description": "Generate Focus while maintaining ranged pressure.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pierce"
+    }
   },
   {
     "class": "Hunter",
@@ -1131,7 +1451,11 @@
     "execution": "double",
     "effect": "rays",
     "transport": "arrow",
-    "description": "Strike the target and nearby enemies."
+    "description": "Strike the target and nearby enemies.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "nova"
+    }
   },
   {
     "class": "Hunter",
@@ -1145,7 +1469,11 @@
     "execution": "finish",
     "effect": "pierce",
     "transport": "arrow",
-    "description": "A finishing attack that is strongest against weakened enemies."
+    "description": "A finishing attack that is strongest against weakened enemies.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pierce"
+    }
   },
   {
     "class": "Hunter",
@@ -1159,7 +1487,11 @@
     "execution": "snap",
     "effect": "coil",
     "transport": "arrow",
-    "description": "Fire a fast shot while directing your beast, spending Focus for mobile pressure."
+    "description": "Fire a fast shot while directing your beast, spending Focus for mobile pressure.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pierce"
+    }
   },
   {
     "class": "Hunter",
@@ -1173,7 +1505,11 @@
     "execution": "pulse",
     "effect": "thorns",
     "transport": "arrow",
-    "description": "Wound the target, generate Focus and drive your permanent beast into a frenzy."
+    "description": "Wound the target, generate Focus and drive your permanent beast into a frenzy.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pierce"
+    }
   },
   {
     "class": "Hunter",
@@ -1187,7 +1523,11 @@
     "execution": "snap",
     "effect": "command",
     "transport": "local",
-    "description": "Command your permanent beast to tear into the target."
+    "description": "Command your permanent beast to tear into the target.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Hunter",
@@ -1201,7 +1541,11 @@
     "execution": "triple",
     "effect": "rays",
     "transport": "arrow",
-    "description": "Strike several enemies and trigger Beast Cleave when talented."
+    "description": "Strike several enemies and trigger Beast Cleave when talented.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "nova"
+    }
   },
   {
     "class": "Hunter",
@@ -1215,7 +1559,11 @@
     "execution": "weight",
     "effect": "summon",
     "transport": "local",
-    "description": "Call a temporary beast that attacks your target and generates Focus."
+    "description": "Call a temporary beast that attacks your target and generates Focus.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Hunter",
@@ -1229,7 +1577,11 @@
     "execution": "triple",
     "effect": "tracks",
     "transport": "local",
-    "description": "Call a stampede of beasts through the enemy pack."
+    "description": "Call a stampede of beasts through the enemy pack.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Hunter",
@@ -1243,7 +1595,11 @@
     "execution": "pulse",
     "effect": "brands",
     "transport": "local",
-    "description": "Empower yourself and your permanent beast for a major burst window."
+    "description": "Empower yourself and your permanent beast for a major burst window.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Hunter",
@@ -1257,7 +1613,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "arrow",
-    "description": "Interrupt an enemy cast from range."
+    "description": "Interrupt an enemy cast from range.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pierce"
+    }
   },
   {
     "class": "Hunter",
@@ -1271,7 +1631,11 @@
     "execution": "sustain",
     "effect": "orbit",
     "transport": "local",
-    "description": "Reduce incoming damage for 8 seconds."
+    "description": "Reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "guard"
+    }
   },
   {
     "class": "Mage",
@@ -1285,7 +1649,11 @@
     "execution": "finish",
     "effect": "burst",
     "transport": "bolt",
-    "description": "A slow, devastating ranged spell."
+    "description": "A slow, devastating ranged spell.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1299,7 +1667,11 @@
     "execution": "weight",
     "effect": "burst",
     "transport": "bolt",
-    "description": "Reliable ranged spell damage."
+    "description": "Reliable ranged spell damage.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1313,7 +1685,11 @@
     "execution": "snap",
     "effect": "rays",
     "transport": "local",
-    "description": "An instant burst of damage."
+    "description": "An instant burst of damage.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1327,7 +1703,11 @@
     "execution": "triple",
     "effect": "stars",
     "transport": "bolt",
-    "description": "An instant ranged attack with a short cooldown."
+    "description": "An instant ranged attack with a short cooldown.",
+    "previousEffect": {
+      "school": "arcane",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1341,7 +1721,11 @@
     "execution": "sustain",
     "effect": "orbit",
     "transport": "local",
-    "description": "Reduce incoming damage for 8 seconds."
+    "description": "Reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "arcane",
+      "shape": "guard"
+    }
   },
   {
     "class": "Mage",
@@ -1355,7 +1739,11 @@
     "execution": "pulse",
     "effect": "sigil",
     "transport": "local",
-    "description": "Burst the target and nearby enemies with arcane energy."
+    "description": "Burst the target and nearby enemies with arcane energy.",
+    "previousEffect": {
+      "school": "arcane",
+      "shape": "nova"
+    }
   },
   {
     "class": "Mage",
@@ -1369,7 +1757,11 @@
     "execution": "weight",
     "effect": "pierce",
     "transport": "bolt",
-    "description": "Launch a bolt of frost and build toward Frost procs."
+    "description": "Launch a bolt of frost and build toward Frost procs.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1383,7 +1775,11 @@
     "execution": "snap",
     "effect": "pierce",
     "transport": "bolt",
-    "description": "An instant frost shard that becomes deadly against frozen targets."
+    "description": "An instant frost shard that becomes deadly against frozen targets.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1397,7 +1793,11 @@
     "execution": "triple",
     "effect": "shards",
     "transport": "bolt",
-    "description": "A rapid sequence of frost bolts that can prepare a Shatter window."
+    "description": "A rapid sequence of frost bolts that can prepare a Shatter window.",
+    "previousEffect": {
+      "school": "arcane",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1411,7 +1811,11 @@
     "execution": "sustain",
     "effect": "rain",
     "transport": "local",
-    "description": "Blanket the enemy pack in freezing magic."
+    "description": "Blanket the enemy pack in freezing magic.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "nova"
+    }
   },
   {
     "class": "Mage",
@@ -1425,7 +1829,11 @@
     "execution": "pulse",
     "effect": "orbit",
     "transport": "bolt",
-    "description": "Launch an orb that repeatedly lashes nearby enemies with frost."
+    "description": "Launch an orb that repeatedly lashes nearby enemies with frost.",
+    "previousEffect": {
+      "school": "arcane",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1439,7 +1847,11 @@
     "execution": "finish",
     "effect": "shards",
     "transport": "bolt",
-    "description": "Hurl a massive spike of compressed ice for devastating burst."
+    "description": "Hurl a massive spike of compressed ice for devastating burst.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1453,7 +1865,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "local",
-    "description": "Interrupt an enemy cast from range."
+    "description": "Interrupt an enemy cast from range.",
+    "previousEffect": {
+      "school": "arcane",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Mage",
@@ -1467,7 +1883,11 @@
     "execution": "weight",
     "effect": "shield",
     "transport": "local",
-    "description": "Wrap yourself in ice, reducing incoming damage for 8 seconds."
+    "description": "Wrap yourself in ice, reducing incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "frost",
+      "shape": "guard"
+    }
   },
   {
     "class": "Warrior",
@@ -1481,7 +1901,11 @@
     "execution": "snap",
     "effect": "shield",
     "transport": "local",
-    "description": "High-threat melee strike."
+    "description": "High-threat melee strike.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "guard"
+    }
   },
   {
     "class": "Warrior",
@@ -1495,7 +1919,11 @@
     "execution": "double",
     "effect": "cross",
     "transport": "local",
-    "description": "Reliable tank damage with increased threat."
+    "description": "Reliable tank damage with increased threat.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warrior",
@@ -1509,7 +1937,11 @@
     "execution": "pulse",
     "effect": "command",
     "transport": "local",
-    "description": "Force an enemy to attack the Warrior."
+    "description": "Force an enemy to attack the Warrior.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warrior",
@@ -1523,7 +1955,11 @@
     "execution": "weight",
     "effect": "cut",
     "transport": "local",
-    "description": "Heavy single-target weapon damage."
+    "description": "Heavy single-target weapon damage.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Warrior",
@@ -1537,7 +1973,11 @@
     "execution": "weight",
     "effect": "crush",
     "transport": "local",
-    "description": "Reliable melee damage."
+    "description": "Reliable melee damage.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Warrior",
@@ -1551,7 +1991,11 @@
     "execution": "finish",
     "effect": "fissure",
     "transport": "local",
-    "description": "A finishing strike that becomes deadly against weakened enemies."
+    "description": "A finishing strike that becomes deadly against weakened enemies.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Warrior",
@@ -1565,7 +2009,11 @@
     "execution": "snap",
     "effect": "burst",
     "transport": "local",
-    "description": "Interrupt an enemy cast."
+    "description": "Interrupt an enemy cast.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warrior",
@@ -1579,7 +2027,11 @@
     "execution": "sustain",
     "effect": "shield",
     "transport": "local",
-    "description": "Greatly reduce incoming damage for 8 seconds."
+    "description": "Greatly reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "guard"
+    }
   },
   {
     "class": "Warrior",
@@ -1593,7 +2045,11 @@
     "execution": "double",
     "effect": "cleave",
     "transport": "local",
-    "description": "Strike the target and nearby enemies."
+    "description": "Strike the target and nearby enemies.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warrior",
@@ -1607,7 +2063,11 @@
     "execution": "weight",
     "effect": "ring",
     "transport": "local",
-    "description": "Damage several enemies while generating extra threat."
+    "description": "Damage several enemies while generating extra threat.",
+    "previousEffect": {
+      "school": "storm",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warrior",
@@ -1621,7 +2081,11 @@
     "execution": "pulse",
     "effect": "orbit",
     "transport": "local",
-    "description": "Brace for danger and reduce incoming damage for 8 seconds."
+    "description": "Brace for danger and reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "guard"
+    }
   },
   {
     "class": "Warrior",
@@ -1635,7 +2099,11 @@
     "execution": "snap",
     "effect": "cut",
     "transport": "local",
-    "description": "A powerful strike with a short cooldown."
+    "description": "A powerful strike with a short cooldown.",
+    "previousEffect": {
+      "school": "steel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Paladin",
@@ -1649,7 +2117,11 @@
     "execution": "double",
     "effect": "shield",
     "transport": "shield",
-    "description": "Ranged tank attack with strong threat and cleave."
+    "description": "Ranged tank attack with strong threat and cleave.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "guard"
+    }
   },
   {
     "class": "Paladin",
@@ -1663,7 +2135,11 @@
     "execution": "weight",
     "effect": "ray",
     "transport": "ray",
-    "description": "A reliable ranged holy attack."
+    "description": "A reliable ranged holy attack.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Paladin",
@@ -1677,7 +2153,11 @@
     "execution": "snap",
     "effect": "command",
     "transport": "local",
-    "description": "Force an enemy to attack the Paladin."
+    "description": "Force an enemy to attack the Paladin.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Paladin",
@@ -1691,7 +2171,11 @@
     "execution": "pulse",
     "effect": "bloom",
     "transport": "bolt",
-    "description": "Call on holy power to restore health during sustained pressure."
+    "description": "Call on holy power to restore health during sustained pressure.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "guard"
+    }
   },
   {
     "class": "Paladin",
@@ -1705,7 +2189,11 @@
     "execution": "sustain",
     "effect": "ray",
     "transport": "ray",
-    "description": "A strong efficient direct heal."
+    "description": "A strong efficient direct heal.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Paladin",
@@ -1719,7 +2207,11 @@
     "execution": "snap",
     "effect": "burst",
     "transport": "bolt",
-    "description": "An instant heal with a short cooldown."
+    "description": "An instant heal with a short cooldown.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Paladin",
@@ -1733,7 +2225,11 @@
     "execution": "pulse",
     "effect": "rays",
     "transport": "local",
-    "description": "Restore health to the whole party."
+    "description": "Restore health to the whole party.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Paladin",
@@ -1747,7 +2243,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "local",
-    "description": "Interrupt an enemy cast."
+    "description": "Interrupt an enemy cast.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Paladin",
@@ -1761,7 +2261,11 @@
     "execution": "sustain",
     "effect": "orbit",
     "transport": "local",
-    "description": "Reduce incoming damage for 8 seconds."
+    "description": "Reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "guard"
+    }
   },
   {
     "class": "Paladin",
@@ -1775,7 +2279,11 @@
     "execution": "snap",
     "effect": "stars",
     "transport": "bolt",
-    "description": "A fast emergency heal at a higher mana cost."
+    "description": "A fast emergency heal at a higher mana cost.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Paladin",
@@ -1789,7 +2297,11 @@
     "execution": "pulse",
     "effect": "shield",
     "transport": "local",
-    "description": "Reduce incoming damage for 8 seconds."
+    "description": "Reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "guard"
+    }
   },
   {
     "class": "Paladin",
@@ -1803,7 +2315,11 @@
     "execution": "weight",
     "effect": "sigil",
     "transport": "local",
-    "description": "Damage the target and nearby enemies."
+    "description": "Damage the target and nearby enemies.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "nova"
+    }
   },
   {
     "class": "Paladin",
@@ -1817,7 +2333,11 @@
     "execution": "double",
     "effect": "ripple",
     "transport": "local",
-    "description": "A powerful emergency party heal."
+    "description": "A powerful emergency party heal.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Priest",
@@ -1831,7 +2351,11 @@
     "execution": "weight",
     "effect": "bloom",
     "transport": "bolt",
-    "description": "Efficient direct healing."
+    "description": "Efficient direct healing.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Priest",
@@ -1845,7 +2369,11 @@
     "execution": "snap",
     "effect": "stars",
     "transport": "bolt",
-    "description": "Fast emergency healing."
+    "description": "Fast emergency healing.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Priest",
@@ -1859,7 +2387,11 @@
     "execution": "pulse",
     "effect": "rays",
     "transport": "local",
-    "description": "Restore health to the whole party."
+    "description": "Restore health to the whole party.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Priest",
@@ -1873,7 +2405,11 @@
     "execution": "snap",
     "effect": "ray",
     "transport": "ray",
-    "description": "A ranged holy attack for safe damage windows."
+    "description": "A ranged holy attack for safe damage windows.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Priest",
@@ -1887,7 +2423,11 @@
     "execution": "finish",
     "effect": "wings",
     "transport": "local",
-    "description": "Return a fallen ally to combat. Very long cooldown."
+    "description": "Return a fallen ally to combat. Very long cooldown.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Priest",
@@ -1901,7 +2441,11 @@
     "execution": "sustain",
     "effect": "wings",
     "transport": "local",
-    "description": "Reduce incoming damage for 8 seconds."
+    "description": "Reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "guard"
+    }
   },
   {
     "class": "Priest",
@@ -1915,7 +2459,11 @@
     "execution": "sustain",
     "effect": "ripple",
     "transport": "beam",
-    "description": "A major emergency heal for the entire party."
+    "description": "A major emergency heal for the entire party.",
+    "previousEffect": {
+      "school": "holy",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Priest",
@@ -1929,7 +2477,11 @@
     "execution": "sustain",
     "effect": "coil",
     "transport": "beam",
-    "description": "Channel shadow energy into the target and generate Insanity."
+    "description": "Channel shadow energy into the target and generate Insanity.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Priest",
@@ -1943,7 +2495,11 @@
     "execution": "weight",
     "effect": "burst",
     "transport": "local",
-    "description": "Assault the target’s mind for heavy shadow damage and Insanity."
+    "description": "Assault the target’s mind for heavy shadow damage and Insanity.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Priest",
@@ -1957,7 +2513,11 @@
     "execution": "pulse",
     "effect": "drops",
     "transport": "local",
-    "description": "Spend Insanity to infect the target with a powerful devouring shadow plague."
+    "description": "Spend Insanity to infect the target with a powerful devouring shadow plague.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Priest",
@@ -1971,7 +2531,11 @@
     "execution": "snap",
     "effect": "brands",
     "transport": "local",
-    "description": "Afflict the target with lingering shadow pain while generating Insanity."
+    "description": "Afflict the target with lingering shadow pain while generating Insanity.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Priest",
@@ -1985,7 +2549,11 @@
     "execution": "weight",
     "effect": "coil",
     "transport": "bolt",
-    "description": "Apply a draining shadow curse that damages the target over time."
+    "description": "Apply a draining shadow curse that damages the target over time.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Priest",
@@ -1999,7 +2567,11 @@
     "execution": "weight",
     "effect": "fissure",
     "transport": "bolt",
-    "description": "Crash shadow energy into the target and nearby enemies."
+    "description": "Crash shadow energy into the target and nearby enemies.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "nova"
+    }
   },
   {
     "class": "Priest",
@@ -2013,7 +2585,11 @@
     "execution": "sustain",
     "effect": "ray",
     "transport": "beam",
-    "description": "Channel concentrated Void energy for heavy damage and rapid Insanity generation."
+    "description": "Channel concentrated Void energy for heavy damage and rapid Insanity generation.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Priest",
@@ -2027,7 +2603,11 @@
     "execution": "finish",
     "effect": "spiral",
     "transport": "local",
-    "description": "Spend Insanity to erupt with Void energy and enter Voidform."
+    "description": "Spend Insanity to erupt with Void energy and enter Voidform.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "nova"
+    }
   },
   {
     "class": "Priest",
@@ -2041,7 +2621,11 @@
     "execution": "sustain",
     "effect": "orbit",
     "transport": "local",
-    "description": "Disperse into shadow, greatly reducing incoming damage for 6 seconds."
+    "description": "Disperse into shadow, greatly reducing incoming damage for 6 seconds.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "guard"
+    }
   },
   {
     "class": "Priest",
@@ -2055,7 +2639,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "bolt",
-    "description": "Interrupt an enemy cast from range."
+    "description": "Interrupt an enemy cast from range.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2069,7 +2657,11 @@
     "execution": "double",
     "effect": "cross",
     "transport": "local",
-    "description": "Strike with both weapons and generate two Combo Points."
+    "description": "Strike with both weapons and generate two Combo Points.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2083,7 +2675,11 @@
     "execution": "finish",
     "effect": "cut",
     "transport": "local",
-    "description": "Spend Combo Points on a hard-hitting finishing attack."
+    "description": "Spend Combo Points on a hard-hitting finishing attack.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2097,7 +2693,11 @@
     "execution": "sustain",
     "effect": "coil",
     "transport": "local",
-    "description": "Open a bleeding wound and generate one Combo Point."
+    "description": "Open a bleeding wound and generate one Combo Point.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2111,7 +2711,11 @@
     "execution": "weight",
     "effect": "drops",
     "transport": "local",
-    "description": "Spend Combo Points on a heavy poisoned finisher."
+    "description": "Spend Combo Points on a heavy poisoned finisher.",
+    "previousEffect": {
+      "school": "poison",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2125,7 +2729,11 @@
     "execution": "double",
     "effect": "knives",
     "transport": "knives",
-    "description": "Strike the target and nearby enemies, generating one Combo Point."
+    "description": "Strike the target and nearby enemies, generating one Combo Point.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "nova"
+    }
   },
   {
     "class": "Rogue",
@@ -2139,7 +2747,11 @@
     "execution": "snap",
     "effect": "cut",
     "transport": "local",
-    "description": "A fast sabre strike that generates one Combo Point."
+    "description": "A fast sabre strike that generates one Combo Point.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2153,7 +2765,11 @@
     "execution": "snap",
     "effect": "pierce",
     "transport": "bolt",
-    "description": "Fire a pistol at short range; Opportunity empowers the shot."
+    "description": "Fire a pistol at short range; Opportunity empowers the shot.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pierce"
+    }
   },
   {
     "class": "Rogue",
@@ -2167,7 +2783,11 @@
     "execution": "weight",
     "effect": "fissure",
     "transport": "local",
-    "description": "Spend Combo Points on a powerful melee finisher."
+    "description": "Spend Combo Points on a powerful melee finisher.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2181,7 +2801,11 @@
     "execution": "pulse",
     "effect": "sigil",
     "transport": "local",
-    "description": "Spend Combo Points to roll a temporary combat advantage."
+    "description": "Spend Combo Points to roll a temporary combat advantage.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2195,7 +2819,11 @@
     "execution": "triple",
     "effect": "cleave",
     "transport": "local",
-    "description": "Enter a cleaving stance that echoes melee damage into nearby enemies."
+    "description": "Enter a cleaving stance that echoes melee damage into nearby enemies.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2209,7 +2837,11 @@
     "execution": "finish",
     "effect": "cross",
     "transport": "bolt",
-    "description": "Spend Combo Points on a pistol finisher that creates a critical-strike window."
+    "description": "Spend Combo Points on a pistol finisher that creates a critical-strike window.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2223,7 +2855,11 @@
     "execution": "pulse",
     "effect": "tracks",
     "transport": "local",
-    "description": "Enter a burst state with greatly increased Energy recovery and attack speed."
+    "description": "Enter a burst state with greatly increased Energy recovery and attack speed.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2237,7 +2873,11 @@
     "execution": "triple",
     "effect": "knives",
     "transport": "local",
-    "description": "Rapidly strike the target and nearby enemies in a short burst."
+    "description": "Rapidly strike the target and nearby enemies in a short burst.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2251,7 +2891,11 @@
     "execution": "snap",
     "effect": "burst",
     "transport": "local",
-    "description": "Interrupt an enemy cast."
+    "description": "Interrupt an enemy cast.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Rogue",
@@ -2265,7 +2909,11 @@
     "execution": "snap",
     "effect": "ripple",
     "transport": "local",
-    "description": "Reduce incoming damage for 8 seconds."
+    "description": "Reduce incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "guard"
+    }
   },
   {
     "class": "Shaman",
@@ -2279,7 +2927,11 @@
     "execution": "weight",
     "effect": "ripple",
     "transport": "bolt",
-    "description": "A dependable restorative cast for an injured ally."
+    "description": "A dependable restorative cast for an injured ally.",
+    "previousEffect": {
+      "school": "water",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Shaman",
@@ -2293,7 +2945,11 @@
     "execution": "snap",
     "effect": "drops",
     "transport": "bolt",
-    "description": "An instant tidal heal that continues restoring health briefly."
+    "description": "An instant tidal heal that continues restoring health briefly.",
+    "previousEffect": {
+      "school": "water",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Shaman",
@@ -2307,7 +2963,11 @@
     "execution": "double",
     "effect": "chains",
     "transport": "bolt",
-    "description": "Heal one ally, then bounce restorative energy through other injured party members."
+    "description": "Heal one ally, then bounce restorative energy through other injured party members.",
+    "previousEffect": {
+      "school": "water",
+      "shape": "chain"
+    }
   },
   {
     "class": "Shaman",
@@ -2321,7 +2981,11 @@
     "execution": "pulse",
     "effect": "spiral",
     "transport": "local",
-    "description": "Place a Windfury Totem that increases party damage and haste while it remains active."
+    "description": "Place a Windfury Totem that increases party damage and haste while it remains active.",
+    "previousEffect": {
+      "school": "storm",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Shaman",
@@ -2335,7 +2999,11 @@
     "execution": "weight",
     "effect": "shards",
     "transport": "local",
-    "description": "Place a Stoneskin Totem that reduces damage taken by the party while it remains active."
+    "description": "Place a Stoneskin Totem that reduces damage taken by the party while it remains active.",
+    "previousEffect": {
+      "school": "earth",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Shaman",
@@ -2349,7 +3017,11 @@
     "execution": "sustain",
     "effect": "ripple",
     "transport": "local",
-    "description": "Place a Healing Stream Totem that pulses healing through the party while it remains active."
+    "description": "Place a Healing Stream Totem that pulses healing through the party while it remains active.",
+    "previousEffect": {
+      "school": "water",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Shaman",
@@ -2363,7 +3035,11 @@
     "execution": "sustain",
     "effect": "chains",
     "transport": "local",
-    "description": "Place an emergency Spirit Link Totem that protects and stabilises injured allies."
+    "description": "Place an emergency Spirit Link Totem that protects and stabilises injured allies.",
+    "previousEffect": {
+      "school": "water",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Shaman",
@@ -2377,7 +3053,11 @@
     "execution": "snap",
     "effect": "rays",
     "transport": "bolt",
-    "description": "A ranged lightning attack for safe damage windows."
+    "description": "A ranged lightning attack for safe damage windows.",
+    "previousEffect": {
+      "school": "storm",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Shaman",
@@ -2391,7 +3071,11 @@
     "execution": "sustain",
     "effect": "rain",
     "transport": "local",
-    "description": "Call restorative rain over the party for broad recovery."
+    "description": "Call restorative rain over the party for broad recovery.",
+    "previousEffect": {
+      "school": "water",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Shaman",
@@ -2405,7 +3089,11 @@
     "execution": "weight",
     "effect": "rays",
     "transport": "bolt",
-    "description": "Hurl lightning at the target and generate Maelstrom."
+    "description": "Hurl lightning at the target and generate Maelstrom.",
+    "previousEffect": {
+      "school": "storm",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Shaman",
@@ -2419,7 +3107,11 @@
     "execution": "weight",
     "effect": "burst",
     "transport": "bolt",
-    "description": "Launch molten lava for heavy fire damage and generate Maelstrom."
+    "description": "Launch molten lava for heavy fire damage and generate Maelstrom.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Shaman",
@@ -2433,7 +3125,11 @@
     "execution": "snap",
     "effect": "fissure",
     "transport": "local",
-    "description": "Spend Maelstrom to strike the target with a violent earth shock."
+    "description": "Spend Maelstrom to strike the target with a violent earth shock.",
+    "previousEffect": {
+      "school": "earth",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Shaman",
@@ -2447,7 +3143,11 @@
     "execution": "triple",
     "effect": "chains",
     "transport": "bolt",
-    "description": "Arc lightning through the target and nearby enemies while generating Maelstrom."
+    "description": "Arc lightning through the target and nearby enemies while generating Maelstrom.",
+    "previousEffect": {
+      "school": "storm",
+      "shape": "chain"
+    }
   },
   {
     "class": "Shaman",
@@ -2461,7 +3161,11 @@
     "execution": "snap",
     "effect": "brands",
     "transport": "local",
-    "description": "Burn the target with fire that continues dealing damage and generates Maelstrom."
+    "description": "Burn the target with fire that continues dealing damage and generates Maelstrom.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Shaman",
@@ -2475,7 +3179,11 @@
     "execution": "sustain",
     "effect": "fissure",
     "transport": "local",
-    "description": "Spend Maelstrom to rupture the ground beneath the enemy pack."
+    "description": "Spend Maelstrom to rupture the ground beneath the enemy pack.",
+    "previousEffect": {
+      "school": "earth",
+      "shape": "nova"
+    }
   },
   {
     "class": "Shaman",
@@ -2489,7 +3197,11 @@
     "execution": "pulse",
     "effect": "orbit",
     "transport": "local",
-    "description": "Call down a storm and enter a short lightning burst window."
+    "description": "Call down a storm and enter a short lightning burst window.",
+    "previousEffect": {
+      "school": "storm",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Shaman",
@@ -2503,7 +3215,11 @@
     "execution": "finish",
     "effect": "wings",
     "transport": "local",
-    "description": "Become a living storm and unleash a major Elemental burst window."
+    "description": "Become a living storm and unleash a major Elemental burst window.",
+    "previousEffect": {
+      "school": "storm",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Shaman",
@@ -2517,7 +3233,11 @@
     "execution": "snap",
     "effect": "cross",
     "transport": "bolt",
-    "description": "Interrupt an enemy cast with a sharp burst of wind."
+    "description": "Interrupt an enemy cast with a sharp burst of wind.",
+    "previousEffect": {
+      "school": "storm",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Shaman",
@@ -2531,7 +3251,11 @@
     "execution": "sustain",
     "effect": "stars",
     "transport": "local",
-    "description": "Shift partially into the spirit world, reducing incoming damage for 8 seconds."
+    "description": "Shift partially into the spirit world, reducing incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "arcane",
+      "shape": "guard"
+    }
   },
   {
     "class": "Warlock",
@@ -2545,7 +3269,11 @@
     "execution": "weight",
     "effect": "spiral",
     "transport": "bolt",
-    "description": "A reliable ranged shadow spell."
+    "description": "A reliable ranged shadow spell.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2559,7 +3287,11 @@
     "execution": "weight",
     "effect": "brands",
     "transport": "bolt",
-    "description": "Hurl concentrated demonic energy at the target."
+    "description": "Hurl concentrated demonic energy at the target.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2573,7 +3305,11 @@
     "execution": "finish",
     "effect": "summon",
     "transport": "local",
-    "description": "Call down fel energy on the target and nearby enemies."
+    "description": "Call down fel energy on the target and nearby enemies.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Warlock",
@@ -2587,7 +3323,11 @@
     "execution": "snap",
     "effect": "cut",
     "transport": "glaive",
-    "description": "Command your Felguard to hurl its weapon and interrupt an enemy cast."
+    "description": "Command your Felguard to hurl its weapon and interrupt an enemy cast.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2601,7 +3341,11 @@
     "execution": "double",
     "effect": "tracks",
     "transport": "local",
-    "description": "Summon two Dreadstalkers to maul your enemies for a short time."
+    "description": "Summon two Dreadstalkers to maul your enemies for a short time.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Warlock",
@@ -2615,7 +3359,11 @@
     "execution": "snap",
     "effect": "command",
     "transport": "bolt",
-    "description": "Command your Felguard to deliver a crushing soul-infused strike."
+    "description": "Command your Felguard to deliver a crushing soul-infused strike.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2629,7 +3377,11 @@
     "execution": "triple",
     "effect": "cleave",
     "transport": "bolt",
-    "description": "Command your Felguard to spin through several nearby enemies."
+    "description": "Command your Felguard to spin through several nearby enemies.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "nova"
+    }
   },
   {
     "class": "Warlock",
@@ -2643,7 +3395,11 @@
     "execution": "finish",
     "effect": "burst",
     "transport": "bolt",
-    "description": "Detonate your temporary demons into the target for explosive area damage."
+    "description": "Detonate your temporary demons into the target for explosive area damage.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "nova"
+    }
   },
   {
     "class": "Warlock",
@@ -2657,7 +3413,11 @@
     "execution": "sustain",
     "effect": "summon",
     "transport": "local",
-    "description": "Summon a Demonic Tyrant that bombards enemies and empowers your active demons."
+    "description": "Summon a Demonic Tyrant that bombards enemies and empowers your active demons.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Warlock",
@@ -2671,7 +3431,11 @@
     "execution": "weight",
     "effect": "coil",
     "transport": "bolt",
-    "description": "Scorch the target and generate Soul Shards."
+    "description": "Scorch the target and generate Soul Shards.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2685,7 +3449,11 @@
     "execution": "snap",
     "effect": "burst",
     "transport": "local",
-    "description": "Instantly blast the target with fire and generate a Soul Shard."
+    "description": "Instantly blast the target with fire and generate a Soul Shard.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2699,7 +3467,11 @@
     "execution": "finish",
     "effect": "spiral",
     "transport": "bolt",
-    "description": "Spend Soul Shards on a devastating bolt of chaotic fire."
+    "description": "Spend Soul Shards on a devastating bolt of chaotic fire.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2713,7 +3485,11 @@
     "execution": "pulse",
     "effect": "brands",
     "transport": "local",
-    "description": "Burn the target over time and generate Soul Shard fragments from the flames."
+    "description": "Burn the target over time and generate Soul Shard fragments from the flames.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2727,7 +3503,11 @@
     "execution": "sustain",
     "effect": "rain",
     "transport": "local",
-    "description": "Spend Soul Shards to rain fire across the enemy pack."
+    "description": "Spend Soul Shards to rain fire across the enemy pack.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "nova"
+    }
   },
   {
     "class": "Warlock",
@@ -2741,7 +3521,11 @@
     "execution": "sustain",
     "effect": "rays",
     "transport": "beam",
-    "description": "Channel waves of demonfire into burning targets."
+    "description": "Channel waves of demonfire into burning targets.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2755,7 +3539,11 @@
     "execution": "finish",
     "effect": "fissure",
     "transport": "local",
-    "description": "Crash an Infernal into the enemy pack to burn them for a short time."
+    "description": "Crash an Infernal into the enemy pack to burn them for a short time.",
+    "previousEffect": {
+      "school": "fel",
+      "shape": "sigil"
+    }
   },
   {
     "class": "Warlock",
@@ -2769,7 +3557,11 @@
     "execution": "weight",
     "effect": "cross",
     "transport": "local",
-    "description": "Disrupt an enemy cast with a burst of shadow force."
+    "description": "Disrupt an enemy cast with a burst of shadow force.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Warlock",
@@ -2783,7 +3575,11 @@
     "execution": "sustain",
     "effect": "sigil",
     "transport": "local",
-    "description": "Wrap yourself in demonic power, reducing incoming damage for 8 seconds."
+    "description": "Wrap yourself in demonic power, reducing incoming damage for 8 seconds.",
+    "previousEffect": {
+      "school": "shadow",
+      "shape": "guard"
+    }
   },
   {
     "class": "Monk",
@@ -2797,7 +3593,11 @@
     "execution": "weight",
     "effect": "drops",
     "transport": "local",
-    "description": "Smash the target and nearby enemies with heavy threat."
+    "description": "Smash the target and nearby enemies with heavy threat.",
+    "previousEffect": {
+      "school": "brew",
+      "shape": "fracture"
+    }
   },
   {
     "class": "Monk",
@@ -2811,7 +3611,11 @@
     "execution": "weight",
     "effect": "cut",
     "transport": "local",
-    "description": "Reliable Brewmaster melee pressure."
+    "description": "Reliable Brewmaster melee pressure.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   },
   {
     "class": "Monk",
@@ -2825,7 +3629,11 @@
     "execution": "snap",
     "effect": "command",
     "transport": "local",
-    "description": "Challenge an enemy and force its attention onto the Brewmaster."
+    "description": "Challenge an enemy and force its attention onto the Brewmaster.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "pulse"
+    }
   },
   {
     "class": "Monk",
@@ -2839,7 +3647,11 @@
     "execution": "snap",
     "effect": "drops",
     "transport": "local",
-    "description": "Clear a large portion of accumulated Stagger damage."
+    "description": "Clear a large portion of accumulated Stagger damage.",
+    "previousEffect": {
+      "school": "brew",
+      "shape": "guard"
+    }
   },
   {
     "class": "Monk",
@@ -2853,7 +3665,11 @@
     "execution": "weight",
     "effect": "orbit",
     "transport": "local",
-    "description": "Reduce incoming damage while your brews stabilise you."
+    "description": "Reduce incoming damage while your brews stabilise you.",
+    "previousEffect": {
+      "school": "brew",
+      "shape": "guard"
+    }
   },
   {
     "class": "Monk",
@@ -2867,7 +3683,11 @@
     "execution": "sustain",
     "effect": "rays",
     "transport": "breath",
-    "description": "Breathe fire across the target and nearby enemies."
+    "description": "Breathe fire across the target and nearby enemies.",
+    "previousEffect": {
+      "school": "fire",
+      "shape": "breath"
+    }
   },
   {
     "class": "Monk",
@@ -2881,7 +3701,11 @@
     "execution": "sustain",
     "effect": "shield",
     "transport": "local",
-    "description": "Major defensive brew that also restores health."
+    "description": "Major defensive brew that also restores health.",
+    "previousEffect": {
+      "school": "brew",
+      "shape": "guard"
+    }
   },
   {
     "class": "Monk",
@@ -2895,7 +3719,11 @@
     "execution": "sustain",
     "effect": "ripple",
     "transport": "beam",
-    "description": "Efficient focused healing through soothing mist."
+    "description": "Efficient focused healing through soothing mist.",
+    "previousEffect": {
+      "school": "mist",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Monk",
@@ -2909,7 +3737,11 @@
     "execution": "snap",
     "effect": "bloom",
     "transport": "bolt",
-    "description": "A strong direct heal for an injured ally."
+    "description": "A strong direct heal for an injured ally.",
+    "previousEffect": {
+      "school": "mist",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Monk",
@@ -2923,7 +3755,11 @@
     "execution": "pulse",
     "effect": "petals",
     "transport": "bolt",
-    "description": "Instant healing that continues restoring the target over time."
+    "description": "Instant healing that continues restoring the target over time.",
+    "previousEffect": {
+      "school": "mist",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Monk",
@@ -2937,7 +3773,11 @@
     "execution": "double",
     "effect": "rain",
     "transport": "local",
-    "description": "Release a wave of healing across the party."
+    "description": "Release a wave of healing across the party.",
+    "previousEffect": {
+      "school": "mist",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Monk",
@@ -2951,7 +3791,11 @@
     "execution": "pulse",
     "effect": "stars",
     "transport": "local",
-    "description": "A martial strike that can fuel fistweaving healing."
+    "description": "A martial strike that can fuel fistweaving healing.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   },
   {
     "class": "Monk",
@@ -2965,7 +3809,11 @@
     "execution": "snap",
     "effect": "ripple",
     "transport": "local",
-    "description": "A quick martial strike for safe healing windows."
+    "description": "A quick martial strike for safe healing windows.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   },
   {
     "class": "Monk",
@@ -2979,7 +3827,11 @@
     "execution": "finish",
     "effect": "wings",
     "transport": "local",
-    "description": "Instantly restore the whole party in an emergency."
+    "description": "Instantly restore the whole party in an emergency.",
+    "previousEffect": {
+      "school": "mist",
+      "shape": "blossom"
+    }
   },
   {
     "class": "Monk",
@@ -2993,7 +3845,11 @@
     "execution": "snap",
     "effect": "ring",
     "transport": "local",
-    "description": "A quick strike that maintains martial pressure."
+    "description": "A quick strike that maintains martial pressure.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   },
   {
     "class": "Monk",
@@ -3007,7 +3863,11 @@
     "execution": "double",
     "effect": "cut",
     "transport": "local",
-    "description": "A fast finishing kick in the Windwalker rotation."
+    "description": "A fast finishing kick in the Windwalker rotation.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   },
   {
     "class": "Monk",
@@ -3021,7 +3881,11 @@
     "execution": "weight",
     "effect": "rays",
     "transport": "local",
-    "description": "A heavy martial strike with a short cooldown."
+    "description": "A heavy martial strike with a short cooldown.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   },
   {
     "class": "Monk",
@@ -3035,7 +3899,11 @@
     "execution": "triple",
     "effect": "cleave",
     "transport": "local",
-    "description": "Spin through the target and nearby enemies."
+    "description": "Spin through the target and nearby enemies.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "nova"
+    }
   },
   {
     "class": "Monk",
@@ -3049,7 +3917,11 @@
     "execution": "triple",
     "effect": "burst",
     "transport": "local",
-    "description": "Unleash a powerful flurry that cleaves nearby enemies."
+    "description": "Unleash a powerful flurry that cleaves nearby enemies.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   },
   {
     "class": "Monk",
@@ -3063,7 +3935,11 @@
     "execution": "finish",
     "effect": "fissure",
     "transport": "local",
-    "description": "A devastating finishing technique against weakened enemies."
+    "description": "A devastating finishing technique against weakened enemies.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   },
   {
     "class": "Monk",
@@ -3077,7 +3953,11 @@
     "execution": "sustain",
     "effect": "coil",
     "transport": "local",
-    "description": "Reduce incoming damage for a short period."
+    "description": "Reduce incoming damage for a short period.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "guard"
+    }
   },
   {
     "class": "Monk",
@@ -3091,6 +3971,10 @@
     "execution": "snap",
     "effect": "pierce",
     "transport": "local",
-    "description": "Interrupt an enemy cast with a precise hand strike."
+    "description": "Interrupt an enemy cast with a precise hand strike.",
+    "previousEffect": {
+      "school": "chi",
+      "shape": "fist"
+    }
   }
 ]
