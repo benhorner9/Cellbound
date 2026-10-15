@@ -157,6 +157,7 @@ if(!u)return;
 emit(ctx,'UNIQUE_EFFECT_TRIGGER',{source:u.id,target:payload.target||u.id,ability:name,result:id,payload:{effectId:id,...payload}})
 }
 function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
+function talentBonuses(u){const ranks=u?.talentTree||u?.talents?.[u?.spec]||{};return window.CellboundBuildRules?.talentBonuses?.({class:u?.class,spec:u?.spec,talents:{[u?.spec]:ranks}})||{}}
 function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
 function talentReady(ctx,u,key){return Number(u?.talentTimers?.[key]||0)<=ctx.time}
 function talentSetCooldown(ctx,u,key,ms){u.talentTimers=u.talentTimers||{};u.talentTimers[key]=ctx.time+Math.max(0,Number(ms)||0)}
@@ -293,11 +294,13 @@ if(u.class==='Evoker'&&u.spec==='Devastation'){
 }
 const aura=livingPlayers(ctx).find(p=>p.class==='Hunter'&&talentRank(p,'Trueshot Aura')>0);
 if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
+const bonus=talentBonuses(u);m*=1+(bonus.damage||0)+(Number(a?.cleave)>1?(bonus.cleave||0):0)+(['boss','world-boss','final'].includes(target?.classification)?(bonus.bossDamage||0):0)+(hp<.35?(bonus.executeDamage||0):0);
 return m
 }
 function talentCritBonus(u){
-if(u.class!=='Mage')return 0;
-return u.spec==='Frost'?talentRank(u,'Ice Shards')*.025:talentRank(u,'Nether Precision')*.03
+const bonus=talentBonuses(u).crit||0;
+if(u.class!=='Mage')return bonus;
+return bonus+(u.spec==='Frost'?talentRank(u,'Ice Shards')*.025:talentRank(u,'Nether Precision')*.03)
 }
 function talentCritMultiplier(u){return u.class==='Mage'&&u.spec==='Arcane'?1+talentRank(u,'Spell Impact')*.12:1}
 function talentHealingScale(ctx,u,a,target){
@@ -335,6 +338,7 @@ if(u.class==='Evoker'&&u.spec==='Preservation'){
  if(a.id==='emerald-blossom')m*=1+talentRank(u,'Echoing Bloom')*.045;
  if(a.id==='emerald-communion')m*=1.18;
 }
+const bonus=talentBonuses(u);m*=1+(bonus.heal||0)+(a.kind==='group-heal'?(bonus.groupHeal||0):0)+(hp<.4?(bonus.lowHeal||0):0);
 return m
 }
 function talentCooldownScale(u,a){
@@ -348,15 +352,17 @@ if(u.class==='Death Knight'&&u.spec==='Blood'&&a.kind==='defensive')m*=Math.max(
 if(u.class==='Demon Hunter'&&u.spec==='Vengeance'&&a.kind==='defensive')m*=Math.max(.76,1-talentRank(u,'Feed the Demon')*.07);
 if(u.class==='Evoker'&&u.spec==='Preservation'&&(a.kind==='heal'||a.kind==='group-heal'))m*=Math.max(.78,1-talentRank(u,'Time Lord')*.055);
 if(a?.talentReq)m*=Math.max(.65,Number(u?.setBonuses?.talentSkillCooldownScale)||1);
+m*=Math.max(.7,1-(talentBonuses(u).cooldown||0));
 return m
 }
 function talentResourceRegenScale(u){
-if(u.class==='Hunter'&&u.spec==='Beast Mastery')return 1+talentRank(u,'Killer Cobra')*.04;
-if(u.class==='Rogue'&&u.spec==='Assassination')return 1+talentRank(u,'Quick Recovery')*.08;
-if(u.class==='Rogue'&&u.spec==='Outlaw')return 1+talentRank(u,'Combat Potency')*.07;
-if(u.class==='Monk'&&u.spec==='Mistweaver')return 1+talentRank(u,'Mana Tea')*.08;
-if(u.class==='Evoker'&&u.spec==='Preservation')return 1+talentRank(u,'Essence Attunement')*.08;
-return 1
+ let mult=1;
+ if(u.class==='Hunter'&&u.spec==='Beast Mastery')mult+=talentRank(u,'Killer Cobra')*.04;
+ if(u.class==='Rogue'&&u.spec==='Assassination')mult+=talentRank(u,'Quick Recovery')*.08;
+ if(u.class==='Rogue'&&u.spec==='Outlaw')mult+=talentRank(u,'Combat Potency')*.07;
+ if(u.class==='Monk'&&u.spec==='Mistweaver')mult+=talentRank(u,'Mana Tea')*.08;
+ if(u.class==='Evoker'&&u.spec==='Preservation')mult+=talentRank(u,'Essence Attunement')*.08;
+ return mult*(1+(talentBonuses(u).regen||0))
 }
 function talentCost(ctx,u,a,cost){
 let value=cost;
@@ -377,6 +383,7 @@ if(u.class==='Mage'&&value>0){
  const r=talentRank(u,'Clearcasting');
  if(r&&ctx.rng()<r*.08){talentTrigger(ctx,u,'Clearcasting',u,{saved:Math.round(value)});value=0}
 }
+value*=Math.max(.65,1-(talentBonuses(u).cost||0));
 return Math.max(0,value)
 }
 function talentCastTime(ctx,u,a,cast){
@@ -468,7 +475,7 @@ const baseHp=tank?185:healer?115:125;
 const power=Math.max(1,Number(c?.power)||1);
 const defence=window.CellboundIdentities?.defenceProfile?.(c)||{physicalTaken:1,magicTaken:1,blockChance:0,blockMultiplier:.72,healthMultiplier:1};
 const level=Math.max(1,Number(c?.level)||1),baseHealth=Math.round(baseHp+(power*1.8)),healthScale=levelHealthScale(level),outputScale=levelOutputScale(level);
-const professionBonuses=professionCombatBonuses(c,zone),professionProcs=window.CellboundProfessions?.activeProcs?.(c)||{},maxHealth=Math.round(baseHealth*healthScale*Math.max(1,Number(defence.healthMultiplier)||1)+Math.max(0,Number(professionBonuses.stamina)||0)*4),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
+const professionBonuses=professionCombatBonuses(c,zone),professionProcs=window.CellboundProfessions?.activeProcs?.(c)||{},maxHealth=Math.round(baseHealth*healthScale*Math.max(1,Number(defence.healthMultiplier)||1)*(1+(talentBonuses(c).health||0))+Math.max(0,Number(professionBonuses.stamina)||0)*4),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
 const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
 const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
 const setState=gearSetState(c),resourceRegen=(healer&&res.name==='Mana'?2.1:res.regen)*setState.resourceRegen;
@@ -1189,13 +1196,14 @@ if(u.role==='tank'){
  const order=unitOrder(ctx,u);
  generated*=order==='all-aggro'?1.25:order==='boss-lock'?(isBossEnemy(e)?1.5:.70):order==='damage'?.70:1;
 }
+generated*=1+(talentBonuses(u).threat||0);
 e.threat[u.id]=(Number(e.threat[u.id])||0)+generated;
 emit(ctx,'THREAT_GENERATED',{source:u.id,target:e.id,amount:generated,result:reason,payload:{total:e.threat[u.id]}});
 setAggro(ctx,e,topThreatTarget(ctx,e),reason);
 }
 function executeTaunt(ctx,u,e,a){
 const top=Math.max(0,...Object.values(e.threat).map(Number)),rank=talentRank(u,'Taunt Mastery');
-e.threat[u.id]=Math.max(Number(e.threat[u.id])||0,top+120*(1+rank*.30));
+e.threat[u.id]=Math.max(Number(e.threat[u.id])||0,top+120*(1+rank*.30)*(1+(talentBonuses(u).threat||0)));
 e.forcedTarget=u.id;e.forcedUntil=ctx.time+3000+rank*750;
 u.cooldowns[a.id]=Math.round((Number(a.cd)||8000)*talentCooldownScale(u,a));
 emit(ctx,'ABILITY_START',{source:u.id,target:e.id,ability:a.name,result:'taunt',position:copy(u.position)});
@@ -1984,6 +1992,12 @@ if(damageType==='magic')value*=1-clamp((Number(profession.magicWardPct)||0)/100,
 if(healthRatio(target)<=.4)value*=1-clamp((Number(target?.professionProcs?.lowHealthWardPct)||0)/100,0,.15);
 if(damageType==='physical')value*=1-clamp((Number(profession.armour)||0)*.002,0,.18);
 value*=1-clamp(Number(target?.setBonuses?.incomingDamageReduction)||0,0,.35);
+if(target?.characterId){
+ value*=1-clamp(talentBonuses(target).mitigation||0,0,.30);
+ const allies=ctx?.pvp?(ctx.pvp[target.team]||[]):livingPlayers(ctx);
+ const guardians=allies.filter(p=>p?.alive&&p?.characterId).reduce((sum,p)=>sum+(talentBonuses(p).partyGuard||0),0);
+ value*=1-clamp(guardians,0,.15);
+}
 if(opts.aggroHit&&target.role!=='tank')value*=target.role==='healer'?1.28:1.22;
 let blockChance=(Number(profile.blockChance)||0)+Math.max(0,Number(target?.professionBonuses?.block)||0);
 if(target.class==='Warrior'&&target.spec==='Protection')blockChance+=talentRank(target,'Shield Mastery')*4;
