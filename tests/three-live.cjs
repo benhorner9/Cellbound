@@ -14,6 +14,12 @@ class MutationObserver{observe(){} disconnect(){}}
 vm.runInNewContext(js,{window,document,MutationObserver,console},{filename:'three-live-v1.js'});
 const bridge=window.CellboundThreeCombat;
 assert(bridge&&bridge.isOwner());
+window.CellboundCombatUILayoutEditor={isOwner:()=>false};
+window.CellboundAdmin={isAdmin:true,role:'admin'};
+assert(bridge.isOwner(),'registered admin must see the 3D alpha toggle');
+window.CellboundAdmin={isAdmin:false,role:null};
+assert.equal(bridge.isOwner(),false,'public player must not see the admin toggle');
+window.CellboundAdmin={isAdmin:true,role:'owner'};
 const s=bridge.createSnapshot();
 const emit=e=>bridge.reduce(s,e);
 emit({type:'COMBAT_START',payload:{units:[
@@ -56,6 +62,8 @@ assert.equal(s.units.size,1,'new encounter must replace old party');
 assert(!s.units.has('e-boss'),'old boss cannot leak into a new fight');
 for(const feature of ['OrthographicCamera','DAMAGE_DEALT','HEAL_RECEIVED','MECHANIC_TELEGRAPH','GROUND_HAZARD_SPAWNED','MOVEMENT_START','MOVEMENT_END','CAST_START','ABILITY_START','COMBAT_END','renderer.dispose','bridge.load()'])assert(js.includes(feature),'missing 3D feature '+feature);
 assert(style.includes('.cb3d-stage')&&style.includes('.cb3d-toggle'));
+assert(js.includes('wrap.appendChild(button)'),'toggle must mount in visible battlefield rather than hidden header');
+assert(style.includes('.cbcombat-arena-wrap > .cb3d-toggle'),'battlefield toggle requires visible anchored styles');
 assert(js.includes('states.set(arena,s)'),'enable-before-COMBAT_START must share one event snapshot');
 const guild=read('guild.html'),manifest=require('../tools/runtime-manifest.cjs');
 for(const name of ['three-live-v1.js','three-live-v1.css'])assert(manifest.files.includes(name),'3D asset not packaged: '+name);
