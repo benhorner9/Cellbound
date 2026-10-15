@@ -27,6 +27,7 @@ function slot(){
 function element(type){
  const classes=new Set(),photo=slot(),own=slot();
  const el={
+  nodeType:1,
   dataset:type==='hud'?{combatParty:'p-hero-1',row:'hero-1'}:type==='pvp'?{pvp2dUnit:'blue-hero-1'}:{unit:'p-hero-1'},
   style:{setProperty(){}},
   classList:{add:(...items)=>items.forEach(x=>classes.add(x)),remove:(...items)=>items.forEach(x=>classes.delete(x)),contains:x=>classes.has(x)},
