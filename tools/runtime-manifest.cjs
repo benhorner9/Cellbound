@@ -13,6 +13,7 @@ const groups=Object.freeze({
   "styles.css",
   "auth.js",
   "guild.html",
+  "three-preview.html",
   "highscores.html"
 ]),
   core:Object.freeze([
@@ -178,7 +179,8 @@ const groups=Object.freeze({
   "combat-physical-v4.js",
   "combat-physical-v4.css",
   "combat-cinematic-v1.css",
-  "combat-cinematic-v1.js"
+  "combat-cinematic-v1.js",
+  "three-foundation-v1.js"
 ]),
   dungeons:Object.freeze([
   "dungeon-2d-v1.css",
@@ -216,6 +218,7 @@ const sourceOverrides=Object.freeze({
   "combat-physical-v4.js":"src/combat/combat-physical-v4.js",
   "combat-cinematic-v1.css":"src/combat/combat-cinematic-v1.css",
   "combat-cinematic-v1.js":"src/combat/combat-cinematic-v1.js",
+  "three-foundation-v1.js":"src/combat/three-foundation-v1.js",
   "blacksmith-forge-v1.js":"src/professions/blacksmith-forge-v1.js",
   "combat-polish-v2.css":"src/combat/combat-polish-v2.css",
   "combat-polish-v2.js":"src/combat/combat-polish-v2.js",
