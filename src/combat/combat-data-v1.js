@@ -122,7 +122,7 @@ const ABILITIES={
   {id:'solar-beam',name:'Solar Beam',kind:'interrupt',role:'dps',spec:'Balance',unlockLevel:1,desc:'Silence an enemy cast with focused solar energy.',range:30,cost:0,gcd:0,cd:30000}
  ],
  Evoker:[
-  {id:'reversion',name:'Reversion',kind:'heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Rewind an ally to a healthier moment and continue healing them briefly.',range:25,heal:35,cost:1,gcd:1500,cast:0,cd:7000,hot:8},
+  {id:'reversion',name:'Reversion',kind:'heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Rewind an ally to a healthier moment and continue healing them briefly.',range:25,heal:38,cost:1,gcd:1500,cast:0,cd:5500,hot:8},
   {id:'verdant-embrace',name:'Verdant Embrace',kind:'heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Rush restorative dragon magic into an injured ally.',range:25,heal:48,cost:1,gcd:1500,cast:700,cd:6000},
   {id:'emerald-blossom',name:'Emerald Blossom',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Bloom emerald magic through the party.',range:25,heal:18,cost:2,gcd:1500,cast:1000,cd:8000},
   {id:'dream-breath',name:'Dream Breath',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Breathe restorative energy across the party.',range:25,heal:29,cost:3,gcd:1500,cast:1600,cd:22000},
