@@ -52,9 +52,11 @@ function reduce(s,e){
  if(type==='ADD_SPAWNED'&&t){
   Object.assign(t,{...e.payload,position:point(e.position)||t.position,alive:true,role:'enemy'});
  }
- if(type==='PET_SUMMONED'&&t){
-  Object.assign(t,{...e.payload,position:point(e.position)||t.position,alive:true,role:'pet'});
+ if(type==='PET_SUMMONED'){
+  const petId=safeId(e.payload?.petId||e.target);
+  if(petId){const pet=upsert(s,petId);Object.assign(pet,{...e.payload,position:point(e.position)||pet.position,alive:true,role:'pet'});}
  }
+ if(type==='PET_DISMISSED')s.units.delete(safeId(e.payload?.petId||e.target));
  if(type==='PLAYER_DEFEATED'||type==='ENEMY_DEFEATED'||type==='ADD_DEFEATED'){if(t)t.alive=false;}
  if(type==='PLAYER_REVIVED'||type==='ENEMY_REVIVED'){if(t)t.alive=true;}
  if(type==='DAMAGE_DEALT'||type==='HEAL_RECEIVED'){
@@ -227,9 +229,17 @@ async function mountLive(arena,snapshot){
   outline.rotation.x=-Math.PI/2;outline.position.set(p.x,-.037,p.z);group.add(outline);
   scene.add(group);return group;
  }
+ function releaseObject(object,skipShared=false){
+  object.traverse(o=>{
+   o.geometry?.dispose?.();
+   const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];
+   for(const m of ms)if(!skipShared||(m!==bright&&m!==edge))m.dispose?.();
+  });
+  object.parent?.remove(object);
+ }
  function refreshHazards(){
   const wanted=new Map([...snapshot.telegraphs,...snapshot.hazards]);
-  for(const [id,obj] of hazards){if(!wanted.has(id)){scene.remove(obj);hazards.delete(id);}}
+  for(const [id,obj] of hazards){if(!wanted.has(id)){releaseObject(obj);hazards.delete(id);}}
   for(const [id,h] of wanted)if(!hazards.has(id))hazards.set(id,visualRing(id,h,snapshot.hazards.has(id)));
  }
  function flash(at,color=0xffcb7a,scale=.18,life=.3){
@@ -242,7 +252,7 @@ async function mountLive(arena,snapshot){
  function onEvent(e){
   if(disposed)return;
   if(e.type==='COMBAT_START'){
-   for(const a of actors.values()){scene.remove(a.group);a.label.remove();}
+   for(const a of actors.values()){releaseObject(a.group,true);a.label.remove();}
    actors.clear();syncSnapshot();
   }
   const u=actorFor(snapshot.units.get(safeId(e.source))),t=actorFor(snapshot.units.get(safeId(e.target)));
@@ -267,6 +277,7 @@ async function mountLive(arena,snapshot){
   if(['PLAYER_DEFEATED','ENEMY_DEFEATED','ADD_DEFEATED'].includes(e.type)&&t){t.dead=true;flash(t,0xf5ab6b,.46,.55);}
   if(['PLAYER_REVIVED','ENEMY_REVIVED'].includes(e.type)&&t){t.dead=false;flash(t,0x7fe6a6,.36,.6);}
   if(e.type==='COMBAT_END'){notice.textContent='Battle finished • 3D view mirrors the completed encounter';}
+  if(actors.size>=MAX_UNITS)notice.textContent='3D alpha supports up to '+MAX_UNITS+' visible units; return to 2D for larger battles.';
   if(/^(MECHANIC_|GROUND_HAZARD_)/.test(e.type)||e.type==='COMBAT_START'||e.type==='COMBAT_END')refreshHazards();
  }
  function resize(){
@@ -351,6 +362,7 @@ function attach(shell){
   if(!isOwner())return;
   button.disabled=true;button.textContent='Loading 3D…';
   const s=states.get(arena)||createSnapshot();
+  if(s.units.size>MAX_UNITS){button.textContent='3D limit';button.title='3D alpha currently supports 32 combatants';button.disabled=false;return;}
   try{
    const controller=await mountLive(arena,s);
    if(!arena.isConnected||!shell.isConnected||!isOwner()){controller.dispose();return;}
@@ -382,7 +394,8 @@ function init(){
  scan();
  observer.observe(document.documentElement,{childList:true,subtree:true});
 }
-document.addEventListener('cellbound:admin-status',()=>scan());
+window.addEventListener('cellbound:admin-status',()=>scan());
+window.addEventListener('cellbound:view-changed',()=>scan());
 window.addEventListener('cellbound:combat-visual',event=>{
  const detail=event?.detail||{},arena=detail.arena,e=detail.event;
  if(!arena||!e)return;
