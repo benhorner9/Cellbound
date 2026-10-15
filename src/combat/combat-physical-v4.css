@@ -551,3 +551,60 @@
  .cbl-readout-action{font-size:9px;max-width:110px}
  .cbl-scene[data-clarity-hud="1"] .cbl-unit.enemy:not(.boss):not(.cbl-primary-target):not(.cbl-danger-cast)>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){opacity:0!important}
 }
+
+/* Skill choreography motifs: two paint layers, no extra particle DOM. These
+   contact marks are not mechanic warnings and never imply additional targets. */
+.cbl-fx.ability-impact[class*="skill-"]:before{border:1px solid var(--hit);border-radius:50%;background:radial-gradient(ellipse,var(--hit) 0,transparent 65%)}
+.cbl-fx.ability-impact[class*="skill-"]:after{border:0;border-radius:0;background:var(--flash);clip-path:none;inset:15%}
+.cbl-fx.ability-impact.skill-cut:after{clip-path:polygon(0 85%,40% 42%,100% 0,60% 58%);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.skill-cross:after{clip-path:polygon(0 0,50% 40%,100% 0,60% 50%,100% 100%,50% 60%,0 100%,40% 50%)}
+.cbl-fx.ability-impact.skill-pierce:after{clip-path:polygon(0 45%,70% 42%,70% 15%,100% 50%,70% 85%,70% 58%,0 55%);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.skill-cleave:after{background:none;border-top:4px solid var(--flash);border-radius:50%;rotate:var(--hit-angle,0deg);inset:0 -15%;animation-name:cblSkillSweep}
+.cbl-fx.ability-impact.skill-crush:after{clip-path:polygon(20% 0,80% 0,65% 65%,100% 100%,50% 80%,0 100%,35% 65%)}
+.cbl-fx.ability-impact.skill-fissure:after{clip-path:polygon(45% 0,60% 30%,40% 44%,70% 58%,55% 100%,45% 70%,20% 58%,48% 36%)}
+.cbl-fx.ability-impact:is(.skill-ring,.skill-ripple,.skill-sigil,.skill-summon):before{background:none;border:3px double var(--hit);translate:0 22px;scale:1.3 .55}
+.cbl-fx.ability-impact.skill-ring:after,.cbl-fx.ability-impact.skill-ripple:after{background:none;border:2px solid var(--flash);border-radius:50%;translate:0 22px;scale:1 .45}
+.cbl-fx.ability-impact.skill-ripple:after{animation-delay:calc(var(--fx-life) * .14)}
+.cbl-fx.ability-impact.skill-rain:before{background:repeating-linear-gradient(115deg,transparent 0 13px,var(--hit) 14px 17px,transparent 18px 26px);border:0;border-radius:0;inset:-35% -25%;animation-name:cblSkillFall}
+.cbl-fx.ability-impact.skill-rain:after{background:repeating-linear-gradient(115deg,transparent 0 15px,var(--flash) 16px 18px,transparent 19px 30px);inset:-20%;animation-name:cblSkillFall;animation-delay:calc(var(--fx-life) * .12)}
+.cbl-fx.ability-impact.skill-spiral:after{background:none;border:3px solid var(--flash);border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-orbit:after{background:none;border:2px dashed var(--flash);border-radius:50%;inset:-12%;animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-ray:after{inset:-40% 43%;background:linear-gradient(0deg,transparent,var(--flash),transparent)}
+.cbl-fx.ability-impact.skill-rays:after{background:repeating-conic-gradient(from 10deg,var(--flash) 0 8deg,transparent 9deg 60deg);border-radius:50%;inset:-10%}
+.cbl-fx.ability-impact.skill-shield:before{background:none;border:3px double var(--hit);border-radius:35% 35% 50% 50%;inset:-20% -5%}
+.cbl-fx.ability-impact.skill-shield:after{background:none;border:1px solid var(--flash);border-radius:35% 35% 50% 50%}
+.cbl-fx.ability-impact.skill-sigil:after{background:none;border:2px solid var(--flash);rotate:45deg;translate:0 18px;scale:1 .6}
+.cbl-fx.ability-impact.skill-bloom:after{clip-path:polygon(50% 0,65% 35%,100% 50%,65% 65%,50% 100%,35% 65%,0 50%,35% 35%);border-radius:40%}
+.cbl-fx.ability-impact.skill-petals:after{background:radial-gradient(ellipse at 20% 20%,var(--flash) 0 12%,transparent 14%),radial-gradient(ellipse at 80% 45%,var(--hit) 0 15%,transparent 17%),radial-gradient(ellipse at 35% 80%,var(--flash) 0 12%,transparent 14%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-chains:after{background:repeating-linear-gradient(45deg,transparent 0 7px,var(--flash) 8px 10px,transparent 11px 18px);border-radius:50%;animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-burst:after{clip-path:polygon(50% 0,61% 31%,95% 15%,73% 48%,100% 70%,65% 68%,50% 100%,35% 69%,0 80%,27% 48%,5% 15%,39% 31%)}
+.cbl-fx.ability-impact.skill-brands:after{background:none;border-left:3px solid var(--flash);border-right:3px solid var(--flash);border-top:2px solid var(--hit);rotate:-15deg}
+.cbl-fx.ability-impact.skill-stars:after{background:radial-gradient(circle at 20% 20%,var(--flash) 0 7%,transparent 9%),radial-gradient(circle at 80% 35%,var(--flash) 0 10%,transparent 12%),radial-gradient(circle at 45% 80%,var(--hit) 0 12%,transparent 14%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-knives:after{background:repeating-conic-gradient(var(--flash) 0 10deg,transparent 11deg 90deg);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-command:after{clip-path:polygon(45% 0,55% 0,55% 65%,45% 65%,45% 80%,55% 80%,55% 100%,45% 100%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-summon:after{background:linear-gradient(0deg,var(--hit),transparent);clip-path:polygon(0 100%,5% 35%,20% 15%,30% 35%,35% 100%,50% 100%,55% 20%,70% 0,85% 20%,90% 100%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-tracks:after{background:repeating-linear-gradient(115deg,transparent 0 7px,var(--hit) 8px 12px,transparent 13px 20px);animation-name:cblSkillSweep}
+.cbl-fx.ability-impact.skill-coil:after{background:none;border:3px dotted var(--flash);border-radius:30% 70% 30% 70%;animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-drops:after{background:radial-gradient(ellipse at 20% 30%,var(--flash) 0 10%,transparent 12%),radial-gradient(ellipse at 80% 50%,var(--hit) 0 12%,transparent 14%),radial-gradient(ellipse at 45% 80%,var(--flash) 0 8%,transparent 10%);animation-name:cblSkillFall}
+.cbl-fx.ability-impact.skill-thorns:after,.cbl-fx.ability-impact.skill-shards:after{clip-path:polygon(0 100%,10% 20%,30% 65%,45% 0,55% 65%,85% 10%,100% 100%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-wings:after{inset:-15% -35%;clip-path:polygon(0 0,40% 30%,50% 75%,60% 30%,100% 0,85% 70%,60% 85%,50% 100%,40% 85%,15% 70%);background:linear-gradient(90deg,transparent,var(--hit),transparent)}
+.cbl-fx.ability-impact.rhythm-double:after{animation-iteration-count:2;animation-duration:calc(var(--fx-life) / 2)}
+.cbl-fx.ability-impact.rhythm-triple:after{animation-iteration-count:3;animation-duration:calc(var(--fx-life) / 3)}
+.cbl-fx.ability-impact.rhythm-finish:before{border-width:3px}
+.cbl-fx.ability-charge.rhythm-finish:before{border-width:4px}
+.cbl-fx.ability-charge.rhythm-snap{width:25px;height:25px}
+.cbl-fx.ability-charge:is(.skill-rain,.skill-stars):after{border-radius:0;border-style:dotted}
+.cbl-fx.ability-charge:is(.skill-sigil,.skill-summon):before{border-radius:15%}
+.cbl-fx.connection.skill-link{background:linear-gradient(90deg,transparent,var(--hit),var(--flash));animation-duration:var(--fx-life);opacity:.65}
+.cbl-fx.connection.transport-beam{height:7px;border-top:1px solid var(--flash);border-bottom:1px solid var(--hit)}
+.cbl-fx.connection.transport-breath{height:28px;clip-path:polygon(0 44%,100% 0,100% 100%,0 56%);opacity:.45}
+.cbl-fx.class-projectile.skill-shield{width:22px!important;height:25px!important;border:2px solid var(--flash);border-radius:35% 35% 50% 50%!important;background:var(--hit)!important}
+.cbl-fx.class-projectile.skill-knives{width:23px!important;height:14px!important;clip-path:polygon(0 50%,75% 0,62% 40%,100% 50%,62% 60%,75% 100%);border-radius:0!important}
+.cbl-fx.class-projectile.skill-spiral:after,.cbl-fx.class-projectile.skill-orbit:after{content:'';position:absolute;inset:-4px;border:1px dashed var(--flash);border-radius:50%;animation:cblSkillOrbit var(--fx-life) linear both}
+.cbl-fx.class-projectile.skill-shards{clip-path:polygon(0 50%,65% 0,100% 50%,65% 100%)}
+@keyframes cblSkillFall{0%{opacity:0;translate:4px -22px}25%{opacity:.8}100%{opacity:0;translate:-5px 14px}}
+@keyframes cblSkillRise{0%{opacity:0;translate:0 13px;scale:.6}30%{opacity:.8}100%{opacity:0;translate:0 -16px;scale:1.15}}
+@keyframes cblSkillOrbit{0%{opacity:0;rotate:-50deg;scale:.6}30%{opacity:.8}100%{opacity:0;rotate:100deg;scale:1.2}}
+@keyframes cblSkillSweep{0%{opacity:0;rotate:-45deg;scale:.7}25%{opacity:.9}100%{opacity:0;rotate:60deg;scale:1.2}}
+@media(prefers-reduced-motion:reduce){.cbl-scene .cbl-fx.ability-impact[class*="skill-"]:before,.cbl-scene .cbl-fx.ability-impact[class*="skill-"]:after{animation:none!important}.cbl-fx.skill-link{display:none!important}}
+.cbl-scene .cbl-fx.ability-impact.rhythm-finish:not(.periodic){width:56px;height:56px}
