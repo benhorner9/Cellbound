@@ -201,4 +201,35 @@ for(const size of [2,3,5]){
   }
  }
 }
+
+// Preservation Evoker must remain viable when paired with a Protection Paladin.
+// This pairing exposed a cooldown-bound healing throughput deficit after Talent V2.
+// Use a difficult, fixed-seed Fractured Ages boss without inventing extra mechanics.
+let preservationWins=0,preservationDeaths=0,preservationHealing=0;
+for(let seed=0;seed<12;seed++){
+ const party=[
+  hero('Paladin','Protection','t',15,42,true),
+  hero('Evoker','Preservation','h',15,42,true),
+  hero('Mage','Arcane','d1',15,42,true),
+  hero('Hunter','Marksman','d2',15,42,true),
+  hero('Rogue','Assassination','d3',15,42,true)
+ ];
+ party.forEach(c=>c.power=29);
+ const result=C.simulate({
+  party,
+  encounter:{id:'fractured-n',kind:'boss',level:18,recommendedItemLevel:42,
+   enemies:[{name:'Iron Kingdom Boss',classification:'boss'}],enemyHealth:2500,mechanics:[]},
+  seed:'universal-healer:Evoker:Preservation:'+seed,
+  maxDurationMs:90000,tactics:{cooldownUse:'free'}
+ });
+ encounters++;checkResult(result,'Preservation Evoker stress '+seed);
+ preservationWins+=result.outcome==='victory'?1:0;
+ preservationDeaths+=result.summary.deaths;
+ preservationHealing+=result.summary.players.find(x=>x.id==='p-h')?.healing||0;
+}
+assert(preservationWins>=11,'Preservation Evoker must win at least 11/12 difficult Paladin-tank boss cases');
+assert(preservationDeaths<=7,'Preservation Evoker cannot have recurring full-party wipes');
+assert(preservationHealing/12>=1000,'Preservation Evoker must sustain effective healing under boss pressure');
+console.log('Preservation Evoker stress PASS: '+preservationWins+'/12 clears, '+preservationDeaths+' deaths, '+Math.round(preservationHealing/12)+' average healing.');
+
 console.log('Role balance PASS: 13 classes, 28 specs, '+encounters+' seeded combat simulations, 6 campaign/raid stages, 10-player Manor, '+arena+' Arena simulations (2v2/3v3/5v5).');
