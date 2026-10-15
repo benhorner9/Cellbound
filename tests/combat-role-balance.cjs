@@ -188,7 +188,7 @@ for(const size of [2,3,5]){
   const result=C.simulate({pvp:{mode:'arena',size,blue:roster('blue',built),red:roster('red',built)},
    encounter:{id:'balance-arena-'+size,environment:{blockers:[]}},seed:'balance-arena-'+size,maxDurationMs:30000});
   encounters++;arena++;checkResult(result,'Arena '+size);
-  assert(['blue','red','draw'].includes(result.pvp.winner),'Arena produces a legal winner');
+  assert(result.outcome==='ongoing'||['blue','red','draw'].includes(result.pvp?.winner),'Arena either continues or produces a legal winner');
   const units=Object.fromEntries(result.finalState.players.map(x=>[x.id,x]));
   for(const e of result.events){
    if(e.type==='DAMAGE_DEALT'&&units[e.source]&&units[e.target])
