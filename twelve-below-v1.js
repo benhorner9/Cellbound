@@ -460,7 +460,7 @@ function renderLive(){
   header:'THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT',title:'The Twelve Below',
   routeMarkup,partyLabel:'ACTIVE FIVE · PRIVATE INSTANCE',partyMarkup,partyRowsId:'tbPartyRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
-  theme:'twelve',battleClass:'tb-shell',partySize:party().length,speedAttribute:'data-tb-speed',closeAttribute:'data-tb-close',speedLabel:combatLabel(playSpeed)
+  theme:'twelve',battleClass:'tb-shell',partySize:party().length,commandGrouped:true,speedAttribute:'data-tb-speed',closeAttribute:'data-tb-close',speedLabel:combatLabel(playSpeed)
  });
  root.querySelector('[data-tb-close]').onclick=close;
  root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=combatLabel(playSpeed)};
