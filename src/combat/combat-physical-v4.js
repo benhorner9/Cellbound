@@ -808,6 +808,30 @@ function frame(){
 }
 FX.refreshFootprint=el=>{const s=scenes.get(el?.closest?.(ARENA)),u=s?.units.get(el);if(u){u.footprintDirty=true;s.spatialDirty=true;wake()}};
 FX.visualPoint=el=>{const scene=scenes.get(el?.closest?.(ARENA)),p=scene?.units.get(el)?.spatial?.visual;return p&&scene.bounds?{x:p.x,y:p.y,w:scene.bounds.width,h:scene.bounds.height}:null};
+// The room caller owns arrival choreography; permanent pets are attached to
+// their owner's entry anchor before the screen fades in, never at screen edge.
+const companionPoint=p=>({x:clamp(Number(p.x)+(Number(p.x)>65?-3:3),2,98),y:clamp(Number(p.y)+4,2,98)});
+FX.stageCompanions=(arena,ownerEntries={})=>{
+ const scene=scenes.get(arena);if(!scene)return;
+ const width=arena.clientWidth,height=arena.clientHeight;
+ for(const n of scene.pets.values()){
+  if(n.dataset.petPermanent!=='1')continue;
+  const anchor=ownerEntries[n.dataset.owner];if(!anchor)continue;
+  const p=companionPoint(anchor),u=unit(scene,n);
+  n.style.setProperty('transition-property','none','important');
+  n.style.setProperty('transition-duration','0ms','important');
+  n.style.setProperty('left',p.x+'%','important');n.style.setProperty('top',p.y+'%','important');
+  n.dataset.x=String(p.x);n.dataset.y=String(p.y);
+  u.transit=null;u.position={...p};
+  if(u.spatial){u.spatial.visual={x:p.x*width/100,y:p.y*height/100};u.spatial.entryVisual=null;u.spatial.drawn={...u.spatial.visual};u.spatial.reserved=null}
+ }
+ scene.departing=true;scene.traversing=false;scene.spatialDirty=true;
+};
+FX.moveCompanions=(ownerId,p,duration=600)=>{
+ const anchor=companionPoint(p);
+ for(const scene of scenes.values())for(const n of scene.pets.values())
+  if(n.dataset.petPermanent==='1'&&n.dataset.owner===ownerId&&n.isConnected)FX.movePresentation(n,anchor,duration);
+};
 FX.movePresentation=(el,p,duration=600)=>{
  const scene=scenes.get(el?.closest?.(ARENA)),u=scene?.units.get(el);if(!u?.spatial?.visual||scene.live&&!scene.arena.classList.contains('between-stages'))return false;
  const w=scene.spatialWidth,h=scene.spatialHeight;if(!w||!h)return false;
