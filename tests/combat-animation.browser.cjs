@@ -2,6 +2,9 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium,webkit}=require('playwright');
 const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIST||path.join(root,'dist'),before=!!process.env.CELLBOUND_ANIMATION_DIST;
+// Large animated-scene PNG captures can crash memory-constrained headless
+// WebKit; its gameplay/pose assertions still run. Opt in to captures via env.
+const capture=(target,options)=>process.env.CELLBOUND_TEST_ENGINE==='webkit'&&!process.env.CELLBOUND_CAPTURE_WEBKIT?Promise.resolve():target.screenshot(options);
 (async()=>{
  const browser=await(process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true});
  const errors=[],dir='/tmp/cellbound-animation';fs.mkdirSync(dir,{recursive:true});
@@ -30,7 +33,7 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
   });
   assert(simulation.blocks>0,'fixture must contain a genuine block');
   await page.waitForTimeout(1500);
-  await page.screenshot({path:dir+'/'+(before?'before':'after')+'-ipad.png'});
+  await capture(page,{path:dir+'/'+(before?'before':'after')+'-ipad.png'});
   if(!before){
    // Named abilities now use authored, class-specific choreography rather than the old generic cleave clip.
    await page.waitForFunction(()=>{
@@ -38,11 +41,11 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
     return unit?.dataset.animationState?.startsWith('skill:Warrior:')&&unit.dataset.animationClip===unit.dataset.animationState;
    },null,{timeout:12000});
    await page.waitForTimeout(180);
-   await page.screenshot({path:dir+'/after-swing.png'});
+   await capture(page,{path:dir+'/after-swing.png'});
   }
   await page.evaluate(()=>window.playback);
   await page.waitForTimeout(1100);
-  await page.screenshot({path:dir+'/'+(before?'before':'after')+'-victory.png'});
+  await capture(page,{path:dir+'/'+(before?'before':'after')+'-victory.png'});
   console.log('Real Ashen Guardian encounter',simulation);
   if(before)return;
   // Use the same production viewer/actors for deterministic event edge cases.
@@ -79,7 +82,7 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
   await page.waitForFunction(()=>document.querySelector('[data-unit="p-warrior"]')?.dataset.animationState==='dodge',null,{timeout:1500});
   await page.waitForTimeout(500);
   await page.evaluate(()=>send('DAMAGE_DEALT','e-0','p-warrior',{result:'blocked',amount:8}));await page.waitForFunction(()=>document.querySelector('[data-unit="p-warrior"]')?.dataset.animationState==='block',null,{timeout:1500});
-  await page.screenshot({path:dir+'/after-block.png'});
+  await capture(page,{path:dir+'/after-block.png'});
   await page.waitForTimeout(500);
   await page.evaluate(()=>{
    const other=document.querySelector('[data-unit="e-0"]').cloneNode(true);other.dataset.unit='e-1';arena.appendChild(other);
@@ -99,7 +102,7 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
   await page.emulateMedia({reducedMotion:'reduce'});
   const immediate=await page.evaluate(()=>{const e=send('DAMAGE_DEALT','p-warrior','e-0',{amount:7,result:'hit'});let done=false;CellboundCombatFX.presentImpact(e,()=>done=true);return done});assert(immediate);
   await page.emulateMedia({reducedMotion:'no-preference'});
-  for(const viewport of [{width:1024,height:1366},{width:1440,height:900}]){await page.setViewportSize(viewport);await page.screenshot({path:dir+'/after-'+viewport.width+'.png'});assert(await page.locator('[data-speed]').isVisible(),'speed control remains visible')}
+  for(const viewport of [{width:1024,height:1366},{width:1440,height:900}]){await page.setViewportSize(viewport);await capture(page,{path:dir+'/after-'+viewport.width+'.png'});assert(await page.locator('[data-speed]').isVisible(),'speed control remains visible')}
   // Same engine options with presentation subscribed must yield byte-identical results.
   const invariant=await page.evaluate(()=>{
    const a=CellboundCombatReborn.simulate(testOptions),b=CellboundCombatReborn.simulate({...testOptions,onEvent:e=>CellboundCombatFX.combatEvent(e,{arena,speed:1})});return JSON.stringify(a)===JSON.stringify(b);
@@ -122,11 +125,11 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
   await page.clock.pauseAt(new Date(reviewTime.getTime()+1000));
   await page.addScriptTag({path:path.join(dist,'combat-animation-v1.js')});
   await page.evaluate(()=>send('COMBAT_START',null,null));
-  await page.locator('#poseReview').screenshot({path:dir+'/pose-0-ready.png',animations:'allow'});
+  await capture(page.locator('#poseReview'),{path:dir+'/pose-0-ready.png',animations:'allow'});
   await page.evaluate(()=>{CellboundCombatFX.combatEvent(realAttack,{arena,speed:1});CellboundCombatFX.combatEvent(realHit,{arena,speed:1})});
-  for(const [ms,name] of [[190,'1-windup'],[115,'2-contact'],[130,'3-follow-through'],[270,'4-recovery']]){await page.clock.runFor(ms);await page.locator('#poseReview').screenshot({path:dir+'/pose-'+name+'.png',animations:'allow'})}
+  for(const [ms,name] of [[190,'1-windup'],[115,'2-contact'],[130,'3-follow-through'],[270,'4-recovery']]){await page.clock.runFor(ms);await capture(page.locator('#poseReview'),{path:dir+'/pose-'+name+'.png',animations:'allow'})}
   await page.evaluate(()=>{send('DAMAGE_DEALT','e-0','p-warrior',{result:'blocked',amount:8})});await page.clock.runFor(330);
-  await page.locator('#poseReview').screenshot({path:dir+'/pose-5-block.png',animations:'allow'});
+  await capture(page.locator('#poseReview'),{path:dir+'/pose-5-block.png',animations:'allow'});
   await page.clock.resume();
   await page.evaluate(()=>{send('ABILITY_START');send('DAMAGE_DEALT');send('COMBAT_END');arena.remove()});
   await page.waitForTimeout(160);assert.deepEqual(await page.evaluate(()=>CellboundCombatAnimation.diagnostics()),{scenes:0,pending:0,actors:0});
