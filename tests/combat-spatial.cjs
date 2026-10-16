@@ -44,6 +44,12 @@ list[0].logical.x-=1.5;list[0].logical.y-=.8;apply(list,g);
 
 assert(list.find(u=>u.style==='healer').reserved.x<list.find(u=>u.style==='tank').reserved.x,'healer stays behind tank');
 // Room entrances often paint party members outside the combat footprint inset.
+// The renderer must hand the actual painted location to the recovery solver,
+// not teleport to safePoint before that solver receives its first frame.
+const physical=fs.readFileSync('src/combat/combat-physical-v4.js','utf8');
+assert(physical.includes('s.visual={...s.entryVisual};'),'combat renderer must preserve the painted entrance');
+assert(physical.includes('s.entryRecovery=!S.legal(s.visual,s,g);'),'off-grid entrance needs continuous recovery');
+assert(physical.includes('geometryChanged&&s.visual&&!s.entryRecovery'),'initial geometry setup must not undo entry recovery');
 // They must travel to their reserved positions continuously, without freezing.
 const entryGrid=S.geometry(744,418),entering=unit('room-entry-tank','tank',270,210,{visual:{x:14,y:75},reserved:{x:270,y:210},speed:180,entryRecovery:true});
 assert(!S.legal(entering.visual,entering,entryGrid),'room-entry model starts outside combat-safe bounds');
