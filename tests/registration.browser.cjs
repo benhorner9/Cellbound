@@ -47,8 +47,9 @@ const sdk=String.raw`
         return{error:state.updateError?fail('Password update failed'):null};
       }
     };
-    return{auth,from(table){assert(table==='profiles');
+    return{auth,from(table){if(table!=='profiles')throw new Error('Unexpected table '+table);
       return{async upsert(value){state.calls.push(['profile',value]);
+        sessionStorage.setItem('cb-test-profile-calls',String(state.calls.filter(x=>x[0]==='profile').length));
         return{error:state.profileError?fail('Profile insert blocked'):null};}};
     }};
   }};
@@ -122,7 +123,7 @@ async function main(){
       await page.evaluate(()=>window.__authMock.signupMode='session');
       await page.locator('#create-account').click();
       await page.waitForURL('https://cellbound.test/guild.html');
-      assert.equal((await called(page,'profile')).length,1);
+      assert.equal(await page.evaluate(()=>sessionStorage.getItem('cb-test-profile-calls')),'1');
       const stored=await page.evaluate(()=>({
         local:localStorage.getItem('sb-test-auth-token'),
         session:sessionStorage.getItem('sb-test-auth-token')
@@ -145,7 +146,7 @@ async function main(){
       await page.locator('#remember-device').check();
       await page.locator('#enter-button').click();
       await page.waitForURL('https://cellbound.test/guild.html');
-      assert.equal((await called(page,'profile')).length,1);
+      assert.equal(await page.evaluate(()=>sessionStorage.getItem('cb-test-profile-calls')),'1');
       const stored=await page.evaluate(()=>({
         local:localStorage.getItem('sb-test-auth-token'),
         session:sessionStorage.getItem('sb-test-auth-token')
@@ -165,7 +166,7 @@ async function main(){
       await page.evaluate(()=>window.__authMock.profileError=false);
       await page.locator('#enter-button').click();
       await page.waitForURL('https://cellbound.test/guild.html');
-      assert.equal((await called(page,'profile')).length,2);
+      assert.equal(await page.evaluate(()=>sessionStorage.getItem('cb-test-profile-calls')),'2');
       await page.close();
     }
     // Verification callback must enter the game without a redundant password request.
@@ -173,7 +174,7 @@ async function main(){
       const page=await open();
       await page.evaluate(()=>window.__authMock.emit('SIGNED_IN',{user:{id:'registration-test-user',email:'beta@example.test'}}));
       await page.waitForURL('https://cellbound.test/guild.html');
-      assert.equal((await called(page,'profile')).length,1);
+      assert.equal(await page.evaluate(()=>sessionStorage.getItem('cb-test-profile-calls')),'1');
       await page.close();
     }
     // Password reset email and actual recovery update are distinct operations.
