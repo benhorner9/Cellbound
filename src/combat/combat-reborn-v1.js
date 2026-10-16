@@ -1009,35 +1009,6 @@ const ranged=ctx.players.filter(p=>p.role!=='tank'&&p.role!=='healer'&&combatRan
 const angle=base+symmetricFormationOffset(slot),desired=ctx.tactics?.advanced?.enabled?Math.max(11,Math.min((Number(range)||25)*.75,9+ctx.tactics.advanced.spacing)):Math.max(11,Math.min((Number(range)||25)*.60,18.5));
 return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
 }
-// Select a reachable, unoccupied flank instead of ordering every Warrior to
-// queue on one fixed melee slot. This operates on the authoritative physical
-// arena and never grants an attack outside actual range or line of sight.
-function openMeleeEngagement(ctx,u,target,range,preferred){
- const reach=Math.max(2,Number(range)||5),origin=physicalPosition(ctx,u),
-  radius=Math.min(Math.max(bodyClearance(u,target)+.4,3.5),reach-.25),
-  base=Math.atan2(origin.y-target.position.y,origin.x-target.position.x);
- const candidates=[preferred];
- for(const factor of [1,1.08,.88]){
-  const r=radius*factor;
-  for(const offset of [0,.40,-.40,.8,-.8,1.2,-1.2,1.6,-1.6,2,-2,2.5,-2.5,Math.PI]){
-   candidates.push({x:target.position.x+Math.cos(base+offset)*r,y:target.position.y+Math.sin(base+offset)*r})
-  }
- }
- let best=null,score=Infinity;
- for(const proposed of candidates){
-  const p=openPosition(ctx,proposed,Math.max(1.1,bodyRadius(u)*.65));
-  if(dist(p,target.position)>reach-.04)continue;
-  if(!pointInsideArena(ctx,p,Math.max(.65,bodyRadius(u)*.45)))continue;
-  if(environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInBlocker(p,b,Math.max(.65,bodyRadius(u)*.5))))continue;
-  if(segmentBlocker(ctx,p,target.position,'los',0))continue;
-  if(bodyOverlap(ctx,u,p,[target.id]))continue;
-  const blockedByActor=segmentBodyHit(ctx,u,origin,p,[target.id]);
-  const blockedByWall=segmentBlocker(ctx,origin,p,'movement',Math.max(.5,bodyRadius(u)*.4));
-  const cost=dist(origin,p)+(blockedByActor?14:0)+(blockedByWall?20:0)+dist(p,preferred)*.10;
-  if(cost<score){best=p;score=cost}
- }
- return best||visibleCastPoint(ctx,u,target,reach,preferred)
-}
 function supportFormationAnchor(ctx,u,target){
 const enemy=pickDamageTarget(ctx,u);
 return enemy?.alive?enemy:target
@@ -1059,17 +1030,8 @@ if(supportive){
   moveTo(ctx,u,desired,480,!los?'line of sight':'support range');return false
 }
 if(r<=7){
-  const formation=meleeFormationPoint(ctx,u,target),
-   basePoint=visibleCastPoint(ctx,u,target,r,formation),
-   // Preserve existing class cadence and stable formations; only a Warrior
-   // with an occupied slot needs the extra flank search.
-   crowded=ctx.physicalSpace!==false&&u.class==='Warrior'&&u.role==='tank'&&!!bodyOverlap(ctx,u,basePoint,[target.id]),
-   desired=crowded?openMeleeEngagement(ctx,u,target,r,basePoint):basePoint,
-   slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
+  const formation=meleeFormationPoint(ctx,u,target),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
   if(combatRange&&los&&ctx.physicalSpace&&u.role!=='tank')return true;
-  // Tanks normally respect their assigned front-facing formation. If that
-  // space is taken, an already-adjacent Warrior may attack while rerouting.
-  if(u.role==='tank'&&crowded&&combatRange&&los)return true;
   const tolerance=u.role==='tank'?(ctx.physicalSpace?3.35:2.1):3.75;
   if(combatRange&&los&&slotDistance<=tolerance)return true;
   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=(ctx.physicalSpace?6.75:4.75))return true;
