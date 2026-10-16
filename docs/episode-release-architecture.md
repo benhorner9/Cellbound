@@ -6,6 +6,12 @@ Built on draft PR #224, `e3e951a8f2492c18ca93a761cd9a6f9864d1d4ef`. The Episode 
 
 ## Implemented paths
 
+### Corrected environment policy
+
+The Episode Manager's **public activation controls belong to the official game**. On the separate development backend, registered content is open to signed-in development players regardless of its release state; no owner allowlist or activation is needed. Story prerequisites, valid parties, matching client builds and implemented encounters remain required. The dev interface offers **OPEN DEV PLAYTEST**, not public activation buttons. Attempts to invoke public release transitions directly on dev are rejected by SQL.
+
+On the official backend, deployments never change episode release state. An unreleased episode remains closed until the owner explicitly activates it after readiness validation. Only server environment configuration chooses this policy; a request field, hostname or browser flag cannot turn official access into dev access. Development sessions can earn development-only rewards through verified settlement; official private-preview sessions still cannot grant durable rewards. Separate databases prevent development receipts, saves or release changes from affecting official accounts.
+
 * Existing Admin navigation → Episodes → server registry. No separate admin app.
 * `public.cellbound_episodes(action,payload)` is an invoker wrapper around a deliberately privileged, private-schema API. Every call requires `auth.uid()`. Owner checks read `cellbound_admins`, never user metadata or browser flags.
 * Seven initial registrations; E1 permanently live. `register` accepts future manifests without custom episode controls. Owner-only tester allowlist changes are audited and restricted to isolated development.
@@ -25,7 +31,7 @@ The connected projects currently contain only Cellbound production and an unrela
 
 ## Pause policy
 
-Paused episodes reject new sessions. Previously issued non-preview sessions can settle a result verified during their four-hour lifetime, even after pause or a later build rollout. Retries return the original receipt. A stale account revision requires trusted-worker reconciliation; it is never overwritten. No pause transition modifies saves, inventory, talent allocation or completion flags.
+On the official game, paused episodes reject new sessions. Previously issued non-preview sessions can settle a result verified during their four-hour lifetime, even after pause or a later build rollout. Retries return the original receipt. A stale account revision requires trusted-worker reconciliation; it is never overwritten. No pause transition modifies saves, inventory, talent allocation or completion flags. Official pauses do not close development playtesting.
 
 ## Outstanding security/integration work
 

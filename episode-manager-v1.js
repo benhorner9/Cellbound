@@ -26,13 +26,14 @@ async function preview(episode){
  try{
   // Re-query server; a local preview flag is never an authority.
   const fresh=await rpc('list');const current=fresh.episodes?.find(e=>e.id===episode.id);
-  if(!current||!fresh.owner||current.state!=='private_testing')throw Error('Owner private testing access is required.');
-  box.append(node('h3',`${current.title} — PRIVATE TEST`),node('p','Prerequisites remain required. Test sessions cannot settle durable rewards.'));
+  const development=fresh.environment==='isolated-development';
+  if(!current||(!development&&(!fresh.owner||current.state!=='private_testing')))throw Error('Owner private testing access is required.');
+  box.append(node('h3',`${current.title} — ${development?'DEV PLAYTEST':'PRIVATE TEST'}`),node('p',development?'Development access is open. Story prerequisites still apply. Progress and rewards stay in the separate development database.':'Prerequisites remain required. Production preview sessions cannot settle durable rewards.'));
   for(const id of Object.values(current.manifest).flat()){
    const def=window.CellboundEpisodeTwo?.CONTENT?.[id];
    const row=node('div',`${id} · ${def?.name||def?.title||'Registered content'}`,'episode-content-row');
    const adapter=window.CellboundEpisodeAdapters?.[id];
-   const button=node('button',adapter?'START PRIVATE SESSION':'ENCOUNTER NOT IMPLEMENTED');
+   const button=node('button',adapter?(development?'START DEV SESSION':'START PRIVATE SESSION'):'ENCOUNTER NOT IMPLEMENTED');
    button.disabled=!adapter;button.onclick=async()=>{try{const session=await rpc('start',{episode:current.id,content:id,build:build()});await adapter.start(session);}catch(e){message(e.message);}};
    row.append(button);box.append(row);
   }
@@ -40,13 +41,18 @@ async function preview(episode){
 }
 function render(){
  const root=document.getElementById('episodeManagerCards');if(!root)return;root.replaceChildren();
- const env=document.getElementById('episodeManagerEnvironment');env.textContent=report?`${report.environment.toUpperCase()} · ${report.build} · schema ${report.schemaVersion}`:'ENVIRONMENT NOT VERIFIED — RELEASE DISABLED';
+ const development=report?.environment==='isolated-development';
+ const env=document.getElementById('episodeManagerEnvironment');env.textContent=report?`${development?'DEV — OPEN FOR TESTING; NO PUBLIC RELEASE CONTROLS':'OFFICIAL GAME — OWNER ACTIVATION REQUIRED'} · ${report.build} · schema ${report.schemaVersion}`:'ENVIRONMENT NOT VERIFIED — RELEASE DISABLED';
  for(const episode of report?.episodes||[]){
   const card=node('article',undefined,'episode-manager-card');
   card.append(node('small',episode.id.replace('_',' ').toUpperCase()),node('h3',episode.title),node('strong',!episode.built&&episode.id!=='episode_2'?'Not Built':labels[episode.state]));
   const m=episode.manifest;
-  card.append(node('p',`${m.quests.length} quests · ${m.dungeons.length} dungeons · ${m.raids.length} raids`),node('p',episode.ready?'Release evidence: VERIFIED for this build and schema':'Release evidence: INCOMPLETE — activation blocked'));
+  card.append(node('p',`${m.quests.length} quests · ${m.dungeons.length} dungeons · ${m.raids.length} raids`),node('p',development?'Development access: OPEN. Unimplemented encounters remain unavailable.':episode.ready?'Release evidence: VERIFIED for this build and schema':'Release evidence: INCOMPLETE — activation blocked'));
   if(episode.id==='episode_1'){card.append(node('p','Permanent release. Cannot be paused.'));root.append(card);continue;}
+  if(development){
+   card.append(node('p','No activation needed on dev. Deploying this content to the official game does not release it.'));
+   const button=node('button','OPEN DEV PLAYTEST');button.disabled=busy;button.onclick=()=>preview(episode);card.append(button);root.append(card);continue;
+  }
   if(report.owner){
    const states={in_development:['private_testing'],private_testing:['in_development','ready'],ready:['private_testing','live'],live:['paused'],paused:['private_testing','live']}[episode.state]||[];
    for(const state of states){const button=node('button',state==='live'?`ACTIVATE ${episode.id.replace('_',' ').toUpperCase()}`:state==='paused'?'PAUSE EPISODE':labels[state].toUpperCase());button.disabled=busy||(['ready','live'].includes(state)&&!episode.ready);button.onclick=()=>change(episode,state);card.append(button);}

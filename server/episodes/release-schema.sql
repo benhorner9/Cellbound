@@ -100,10 +100,10 @@ begin
  select * into env from episode_private.environment;
  if not found then raise exception 'Environment is not provisioned'; end if;
  if p_action='list' then
-  return jsonb_build_object('environment',env.name,'build',env.build,'schemaVersion',env.schema_version,'owner',episode_private.owner(),
+  return jsonb_build_object('environment',env.name,'accessMode',case when env.name='isolated-development' then 'development-open' else 'owner-release' end,'build',env.build,'schemaVersion',env.schema_version,'owner',episode_private.owner(),
    'episodes',(select jsonb_agg(to_jsonb(x)) from (
     select reg.*,episode_private.ready(reg.id) as ready from episode_private.registry reg
-    where episode_private.owner() or exists(select 1 from public.cellbound_admins where user_id=u)
+    where env.name='isolated-development' or episode_private.owner() or exists(select 1 from public.cellbound_admins where user_id=u)
      or reg.state='live' or (reg.state='private_testing' and exists(select 1 from episode_private.testers t where t.episode=reg.id and t.user_id=u))
     order by substring(reg.id from 9)::integer)x));
  end if;
@@ -115,7 +115,7 @@ begin
    insert into episode_private.saves(user_id,save_version,state) values(u,env.min_save_version,next_state) on conflict do nothing;
    select * into s from episode_private.saves where user_id=u;
   end if;
-  return to_jsonb(s)||jsonb_build_object('progression_cap',case when exists(
+  return to_jsonb(s)||jsonb_build_object('progression_cap',case when env.name='isolated-development' or exists(
    select 1 from episode_private.registry reg where reg.id='episode_2' and (reg.state='live' or
    (reg.state='private_testing' and (episode_private.owner() or exists(select 1 from episode_private.testers t where t.episode=reg.id and t.user_id=u))))) then 30 else 15 end);
  end if;
@@ -178,6 +178,7 @@ begin
  end if;
  if p_action='transition' then
   if not episode_private.owner() then raise exception 'Owner required'; end if;
+  if env.name<>'production' then raise exception 'Public release controls belong to the official game; development access is already open'; end if;
   if r.id='episode_1' then raise exception 'Episode 1 is permanent'; end if;
   if p_payload->>'environment' is distinct from env.name or p_payload->>'confirm' is distinct from r.id then raise exception 'Confirm exact episode and environment'; end if;
   if (p_payload->>'revision')::bigint is distinct from r.revision then raise exception 'Conflicting release update'; end if;
@@ -192,8 +193,8 @@ begin
   return to_jsonb(r);
  end if;
  if p_action='start' then
-  if p_payload->>'build' is distinct from env.build or r.minimum_build not in ('legacy',env.build) then raise exception 'Incompatible episode build'; end if;
-  allowed:=r.state='live' or (r.state='private_testing' and (episode_private.owner() or exists(select 1 from episode_private.testers where episode=r.id and user_id=u)));
+  if p_payload->>'build' is distinct from env.build or (env.name='production' and r.minimum_build not in ('legacy',env.build)) then raise exception 'Incompatible episode build'; end if;
+  allowed:=env.name='isolated-development' or r.state='live' or (r.state='private_testing' and (episode_private.owner() or exists(select 1 from episode_private.testers where episode=r.id and user_id=u)));
   if not allowed then raise exception 'Episode temporarily unavailable'; end if;
   select * into s from episode_private.saves where user_id=u for update;
   if not found then raise exception 'Load account first'; end if;
@@ -207,9 +208,9 @@ begin
   if (select count(distinct id) from (
    select s.state#>>'{party,tank}' id union all select s.state#>>'{party,healer}' union all
    select jsonb_array_elements_text(coalesce(s.state#>'{party,dps}','[]'))) party
-   where exists(select 1 from jsonb_array_elements(coalesce(s.state->'roster','[]')) c where c->>'id'=party.id))<>5 then raise exception 'Complete owned five-character party required'; end if;
+   where exists(select 1 from jsonb_array_elements(coalesce(s.state->'roster','[]')) roster_entry where roster_entry->>'id'=party.id))<>5 then raise exception 'Complete owned five-character party required'; end if;
   insert into episode_private.sessions(user_id,episode,content,build,party,preview)
-   values(u,r.id,p_payload->>'content',env.build,coalesce(s.state->'party','[]'),r.state<>'live') returning * into run;
+   values(u,r.id,p_payload->>'content',env.build,coalesce(s.state->'party','[]'),env.name='production' and r.state<>'live') returning * into run;
   return to_jsonb(run);
  end if;
  raise exception 'Unknown operation';

@@ -4,6 +4,20 @@
 
 Base: draft PR #224, `e3e951a8f2492c18ca93a761cd9a6f9864d1d4ef`.
 
+## Follow-up: official release controls / open development
+
+Ben clarified that public release controls belong to the official game, not dev. This correction is implemented in the candidate SQL and existing Admin interface:
+
+* Isolated dev exposes registered content to signed-in development accounts without activation or tester allowlisting. Story, party, client-build and implementation checks still apply.
+* Dev shows OPEN DEV PLAYTEST and no public activation/pause controls. Direct SQL RPC attempts to release an episode from dev are rejected.
+* Official code deployments leave the persisted release state unchanged. Owner activation still requires current evidence, explicit environment confirmation and a revision match.
+* Official pauses leave dev open. Development reward receipts cannot be redeemed in the separate official database.
+* `node tests/episode-environments.database.cjs`: **22 assertions passed across two independent PGlite databases**, including normal dev access, official denial after deployment, forged dev flags rejected, owner activation, pause and unchanged saved progression.
+* `node tests/episode-release.database.cjs`: **30 assertions passed**, now exercising release transitions in a disposable official-environment fixture.
+* Follow-up `npm run test:core`: **72/72 passed in 92 seconds**. Follow-up `npm run build`: **passed**.
+
+These are real local SQL tests, not hosted deployment evidence. Browser and provisioning limitations below remain. The broader Block 2 acceptance gaps are not resolved by this policy correction.
+
 ## Delivered in this checkpoint
 
 Reusable private-schema SQL registry, five release states, E1 permanence, exact-environment confirmations, revision locking, owner authorisation, audited transitions, tester allowlist, future registration API, evidence-bound readiness, legacy direct-save revocation, version/CAS save API, protected high-level records, and transactional verified-result receipts.
