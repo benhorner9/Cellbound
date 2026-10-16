@@ -81,6 +81,22 @@ for(const command of ['spread','stack','regroup']){for(const u of list)u.command
 list[2].locked=true;list[2].visual={x:300,y:220};apply(list,g);assert.equal(list[2].reserved.x,300,'control/casting holds actual position');clear(list,g);list[2].locked=false;apply(list,g);
 const arena=S.geometry(900,600,{bounds:{left:3,right:97,top:10,bottom:96},arena:{shape:'ellipse',cx:50,cy:55,rx:45,ry:40},blockers:[{shape:'ellipse',x:50,y:50,rx:5,ry:12},{shape:'polygon',points:[[60,60],[70,60],[70,70],[60,70]]}]});assert(!S.legal({x:450,y:300},list[1],arena));assert(!S.legal({x:590,y:390},list[1],arena));assert(!S.legal({x:80,y:100},list[1],arena));
 const obstacle=S.geometry(744,418,{blockers:[{shape:'rect',x:50,y:50,w:10,h:20}]});const walker=unit('walker','melee',250,220,{visual:{x:250,y:220},reserved:{x:500,y:220},speed:160});walker.waypoint=S.waypoint(walker.visual,walker.reserved,walker,obstacle);for(let i=0;i<600;i++)S.advance([walker],obstacle,1/60);assert(S.distance(walker.visual,walker.reserved)<3,'routes around authored scenery');
+// A crowded melee slot must not leave a Warrior idle at the same waypoint.
+// This exercises real collision recovery without any rendering dependencies.
+const occupiedGround=S.geometry(800,500,{bounds:{left:4,right:96,top:12,bottom:94}});
+const stuck=unit('blocked-warrior','tank',145,260,{team:'party',rx:16,ry:19,head:22,foot:14,
+ visual:{x:145,y:260},reserved:{x:428,y:260},waypoint:{x:145,y:260},speed:175,contactTarget:'mob'});
+const enemy=unit('mob','melee',463,260,{team:'enemy',role:'enemy',rx:16,ry:19,head:22,foot:14,
+ visual:{x:463,y:260},reserved:{x:463,y:260},locked:true});
+const guard=unit('occupied-melee-slot','melee',428,260,{team:'party',rx:16,ry:19,head:22,foot:14,
+ visual:{x:428,y:260},reserved:{x:428,y:260},locked:true});
+const flankGuard=unit('occupied-flank','melee',417,292,{team:'party',rx:16,ry:19,head:22,foot:14,
+ visual:{x:417,y:292},reserved:{x:417,y:292},locked:true});
+for(let i=0;i<90;i++)S.advanceElapsed([stuck,enemy,guard,flankGuard],occupiedGround,.07);
+assert(stuck.avoidanceCount>0,'blocked Warrior requests an alternate melee flank');
+assert(S.distance(stuck.visual,{x:145,y:260})>65,'blocked Warrior actually advances instead of staying still');
+assert(S.distance(stuck.visual,enemy.visual)<S.distance({x:145,y:260},enemy.visual)-65,'Warrior closes with the enemy');
+assert(S.legal(stuck.visual,stuck,occupiedGround),'alternate melee flank respects the room floor');
 const crowd=Array.from({length:40},(_,i)=>unit('pvp-'+String(i).padStart(2,'0'),'melee',i<20?400:800,400,{team:i<20?'blue':'red',homeSide:i<20?-1:1,rx:26,ry:30}));const large=S.geometry(1400,850),start=performance.now();const largeResult=apply(crowd,large,'pvp');clear(crowd,large);assert.equal(largeResult.unresolved,0);console.log('40-participant planning: '+Math.round(performance.now()-start)+'ms, '+largeResult.checks+' local checks');
 // Spatial correctness is tested above. For the authoritative engine, check
 // deterministic events and outcomes under identical seeds. Never compare with a
