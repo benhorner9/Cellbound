@@ -215,8 +215,20 @@ function route(e,opts,deliver){
 }
 // Adapter feedback joins this event's contact frame; gameplay updates stay immediate.
 function present(e,fn){const entry=times.get(e);if(entry&&scenes.get(entry.scene.arena)===entry.scene)defer(entry.scene,entry.due,()=>{if(entry.scene.arena.isConnected)fn()});else fn()}
-let raf=0;
-function wake(){if(!raf&&!document.hidden)raf=requestFrame(tick,1)}
+let raf=0,pendingTimer=0,pendingDue=Infinity;
+function schedulePending(){
+ if(document.hidden)return;
+ let due=Infinity;
+ for(const scene of scenes.values())for(const job of scene.pending)if(job.due<due)due=job.due;
+ if(!Number.isFinite(due)){if(pendingTimer)clearTimeout(pendingTimer);pendingTimer=0;pendingDue=Infinity;return}
+ if(pendingTimer&&pendingDue<=due)return;
+ if(pendingTimer)clearTimeout(pendingTimer);
+ pendingDue=due;
+ // Combat feedback and contact must execute on time even if an iPad/WebKit
+ // paint callback is delayed by complicated animated SVG geometry.
+ pendingTimer=setTimeout(()=>{pendingTimer=0;pendingDue=Infinity;tick()},Math.max(0,due-now()));
+}
+function wake(){if(!raf&&!document.hidden)raf=requestFrame(tick,1);schedulePending()}
 function tick(){
  raf=0;const time=now();let active=false;
  for(const scene of scenes.values()){
@@ -261,6 +273,6 @@ function socket(el,type,cached=false){
  else{point.x=Number(node.dataset.gripLocalX)||0;point.y=Number(node.dataset.gripLocalY)||0}
  const p=point.matrixTransform(matrix);return{x:p.x,y:p.y};
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(frameRequest)cancelAnimationFrame(frameRequest);frameRequest=0;hiddenAt=performance.now();if(raf)cancelFrame(tick);raf=0}else{if(hiddenAt!==null)hiddenElapsed+=performance.now()-hiddenAt;hiddenAt=null;wake()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(pendingTimer)clearTimeout(pendingTimer);pendingTimer=0;pendingDue=Infinity;if(frameRequest)cancelAnimationFrame(frameRequest);frameRequest=0;hiddenAt=performance.now();if(raf)cancelFrame(tick);raf=0}else{if(hiddenAt!==null)hiddenElapsed+=performance.now()-hiddenAt;hiddenAt=null;wake()}});
 window.CellboundCombatAnimation={version:3,now,isProjectile:e=>!!times.get(e)?.projectile,route,present,socket,sample,clips:CLIPS,dispose:arena=>{const s=scenes.get(arena);if(s)dispose(s)},diagnostics:arena=>{const entries=arena?[scenes.get(arena)].filter(Boolean):[...scenes.values()];return{scenes:entries.length,pending:entries.reduce((n,s)=>n+s.pending.length,0),actors:entries.reduce((n,s)=>n+s.units.size,0)}}};
 })();
