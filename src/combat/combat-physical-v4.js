@@ -410,7 +410,7 @@ function spatialFrame(scene,bounds,time){
   spatialLabels(scene,list,g);
  }
  const dt=(time-(scene.spatialFrameAt||time))/1000;scene.spatialFrameAt=time;
- if(reduce()){for(const s of list)if(s.reserved)s.visual={...s.reserved}}else S.advance(list,g,dt);
+ if(reduce()){for(const s of list)if(s.reserved)s.visual={...s.reserved}}else S.advanceElapsed(list,g,dt);
  for(const s of list){if(!s.visual)continue;const p=s.visual,u=scene.units.get(s.el),el=s.el;
   const moving=!s.dead&&!s.locked&&!reduce()&&s.reserved&&S.distance(p,s.reserved)>2;
   const spatialState=s.dead?'dead':s.locked?'controlled':moving?'moving':'holding';if(el.dataset.spatialState!==spatialState)el.dataset.spatialState=spatialState;
