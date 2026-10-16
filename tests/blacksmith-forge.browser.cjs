@@ -179,7 +179,7 @@ const root=path.resolve(__dirname,'..');
  await page.click('[data-craft="test-whetstone"]');
  await page.waitForSelector('.forge-workshop[data-forge-stage="0"]');
  for(let step=0;step<3;step++){await page.click('[data-forge-strike]');await page.waitForSelector('.forge-workshop[data-forge-stage="'+(step+1)+'"]')}
- await page.evaluate(()=>{const now=Date.now.bind(Date);Date.now=()=>now()+30000;window.dispatchEvent(new Event('focus'))});
+ await page.evaluate(()=>{window.dispatchEvent(new Event('focus'));const now=Date.now.bind(Date);Date.now=()=>now()+30000;window.dispatchEvent(new Event('focus'))});
  await page.waitForFunction(qty=>window.mockState.consumables[0]?.quantity===qty+1,existing,{timeout:6000});
  assert.equal(await page.evaluate(()=>window.mockState.materials['zeltiran-iron']),0,'free masterwork must not reclaim any material');
  assert.equal(await page.evaluate(()=>window.mockState.workshopCraftSummary.reclaimed),0,'summary correctly shows zero reagent refunds');
