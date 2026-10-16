@@ -158,13 +158,19 @@ function waypoint(from,to,u,g){
 }
 function advance(units,g,dt){
  const grid=new Grid();for(const u of units)if(!u.dead&&u.visual)grid.add(u,u.visual);
- let moving=false,routeBudget=2;
+ let moving=false;
  for(const u of units){if(u.dead||u.locked||!u.visual||!u.reserved)continue;
   // Only room-entry actors may recover continuously from an unsafe initial pose.
   const recovering=!!u.entryRecovery&&!legal(u.visual,u,g);
   if(u.entryRecovery&&!recovering)u.entryRecovery=false;
   if(u.route?.length&&distance(u.visual,u.route[0])<3)u.route.shift();
-  const target=u.route?.[0]||u.waypoint||u.reserved,dist=distance(u.visual,target);if(dist<1){if(u.waypoint&&distance(u.waypoint,u.reserved)>1&&routeBudget-->0){u.route=route(u,units,g);u.waypoint=u.route?u.reserved:waypoint(u.visual,u.reserved,u,g)}continue}
+  const target=u.route?.[0]||u.waypoint||u.reserved,dist=distance(u.visual,target);if(dist<1){
+   if(distance(u.visual,u.reserved)>3&&(!u.route||!u.route.length)){
+    u.rerouteCooldown=Math.max(0,(u.rerouteCooldown||0)-dt);
+    if(u.rerouteCooldown===0){recoverPath(u,units,g);u.rerouteCooldown=.42}
+   }
+   continue
+  }
   const step=Math.min(dist,Math.max(35,u.speed||150)*Math.min(dt,.07)),dx=(target.x-u.visual.x)/dist,dy=(target.y-u.visual.y)/dist;
   let best=u.visual,bestScore=Infinity;const neighbours=grid.near(u,u.visual);
   // Prefer forward travel, try two short sidesteps, otherwise yield. Never displace another actor.
@@ -186,9 +192,56 @@ function advance(units,g,dt){
   }
   if(bestScore<distance(u.visual,target)+8){u.visual=best;moving=true}
   const progress=dist-distance(u.visual,target);u.stalled=progress<step*.18?(u.stalled||0)+dt:0;
-  if(u.stalled>.35&&routeBudget-->0){u.route=route(u,units,g);if(u.route)u.waypoint=u.reserved;u.stalled=-.65}
+  if(u.stalled>.35){
+   u.rerouteCooldown=Math.max(0,(u.rerouteCooldown||0)-dt);
+   if(u.rerouteCooldown===0){recoverPath(u,units,g);u.rerouteCooldown=.42;u.stalled=-.28}
+  }else u.rerouteCooldown=Math.max(0,(u.rerouteCooldown||0)-dt);
  }
  return moving;
+}
+// Once a reserved position is crowded or the authored route cannot reach it,
+// choose another legal flank that a melee character can actually walk to.
+// Never teleport, push an ally, or move the simulation's authoritative actor.
+function openFlank(u,units,g){
+ const occupied=units.filter(a=>a!==u&&!a.dead&&a.visual),goal=u.reserved,from=u.visual;
+ const foe=units.find(a=>a.id===u.contactTarget&&a.visual);
+ const candidates=[];
+ // Scan around the preferred landing spot first, then around the target's
+ // attack ring. This is deterministic and preserves the selected flank.
+ for(let ring=1;ring<=7;ring++)for(let i=0;i<20;i++){
+  const a=i*Math.PI/10+(hash(u.id)%23)*.005;
+  candidates.push({x:goal.x+Math.cos(a)*ring*14,y:goal.y+Math.sin(a)*ring*12});
+ }
+ if(foe){
+  const base=Math.atan2(from.y-foe.visual.y,from.x-foe.visual.x),
+   radius=Math.max(foe.rx+u.rx*.52+4,32);
+  for(const offset of [0,.4,-.4,.8,-.8,1.2,-1.2,1.6,-1.6,2.1,-2.1,Math.PI])
+   candidates.push({x:foe.visual.x+Math.cos(base+offset)*radius,y:foe.visual.y+Math.sin(base+offset)*Math.max(foe.ry*.45+u.ry*.45+5,22)});
+ }
+ let best=null,score=Infinity;
+ for(const point of candidates){
+  const p=bounded(point,u,g);
+  if(!legal(p,u,g)||distance(p,from)<5||!clearSegment(from,p,u,g))continue;
+  if(occupied.some(a=>spacingOverlap(u,p,a,a.visual,2)>.035))continue;
+  const cost=distance(p,goal)+distance(p,from)*.22+(foe?distance(p,foe.visual)*.05:0);
+  if(cost<score){best=p;score=cost}
+ }
+ return best
+}
+function recoverPath(u,units,g){
+ const congested=units.some(a=>a!==u&&!a.dead&&a.visual&&spacingOverlap(u,u.reserved,a,a.visual,0)>.10);
+ if(!congested){
+  const detour=route(u,units,g);
+  if(detour?.length){u.route=detour;u.waypoint=u.reserved;u.stalled=-.28;return true}
+ }
+ const alternative=openFlank(u,units,g);
+ if(alternative){
+  u.reserved=alternative;u.route=null;u.waypoint=alternative;u.stalled=-.28;
+  u.avoidanceCount=(u.avoidanceCount||0)+1;return true
+ }
+ const detour=route(u,units,g);
+ if(detour?.length){u.route=detour;u.waypoint=u.reserved;u.stalled=-.28;return true}
+ return false
 }
 // A slow browser frame must not discard almost all elapsed walking time.
 // Advance in short collision-safe slices so WebKit/iPad can catch up without
@@ -223,5 +276,5 @@ function route(u,units,g){
  }
  if(!end)return null;const path=[u.reserved];while(end.parent){path.unshift({x:end.x,y:end.y});end=end.parent}return path;
 }
-window.CellboundCombatSpatial={version:3,Grid,geometry,legal,safePoint,fightingArea,overlap,plan,advance,advanceElapsed,waypoint,route,team,distance,spacingOverlap};
+window.CellboundCombatSpatial={version:4,Grid,geometry,legal,safePoint,fightingArea,overlap,plan,advance,advanceElapsed,waypoint,route,team,distance,spacingOverlap};
 })();
