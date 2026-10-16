@@ -1813,9 +1813,19 @@ function setRoomFade(black,duration=520){
 function roomFadeInDuringEntry(){
  if(!run?.roomTransitionBlack)return;
  const fade=ensureRoomFade();if(!fade)return;
+ const entryRun=run,entryToken=token;
  fade.classList.add('is-black');fade.classList.remove('is-clear');
- requestAnimationFrame(()=>requestAnimationFrame(()=>setRoomFade(false,520)));
- setTimeout(()=>{if(!fade.isConnected)return;fade.classList.remove('is-black');fade.classList.add('is-clear');fade.style.opacity='0'},820);
+ // Never depend on two paint callbacks here. iPad Safari can delay both
+ // for seconds while decoding a new room and then reveal the old/new art
+ // out of order, which looks like flickering backwards through the doorway.
+ setTimeout(()=>{
+  if(!fade.isConnected||run!==entryRun||token!==entryToken)return;
+  setRoomFade(false,520);
+  setTimeout(()=>{
+   if(!fade.isConnected||run!==entryRun||token!==entryToken)return;
+   fade.classList.remove('is-black');fade.classList.add('is-clear');
+  },560)
+ },40);
  run.roomTransitionBlack=false
 }
 function clearArenaEphemera(){
