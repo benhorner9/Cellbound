@@ -143,9 +143,20 @@ function petObject(scene,e){
   return
  }
  if(e.type!=='PET_SUMMONED'||!e.position)return;
- const existing=scene.pets.get(id);if(existing){scene.units.delete(existing);existing.remove()}
+ const existing=scene.pets.get(id);
+ if(existing?.dataset.petPermanent==='1'&&e.result==='permanent'){
+  // Persistent companions are the SAME actor from the previous room.
+  // Keep their illustrated body and arrival position; only update their
+  // next encounter's authoritative destination.
+  existing.dataset.petReturning='1';
+  const companion=unit(scene,existing),owner=scene.units.get(resolve(e.payload?.ownerId||e.source,{},scene.arena));
+  companion.spatialMeta={id,role:'pet',team:owner?.spatialMeta?.team||'party'};
+  companion.engagementTarget=e.payload?.targetId;companion.dead=false;
+  setPosition(scene,companion,e.position);state(companion,'idle');return;
+ }
+ if(existing){scene.units.delete(existing);existing.remove()}
  const type=String(e.payload?.petType||'demon').replace(/[^a-z0-9-]/gi,'-').toLowerCase(),ownerClass=String(e.payload?.ownerClass||'Warlock'),ownerKey=ownerClass.toLowerCase().replace(/[^a-z0-9]+/g,'-'),n=document.createElement('div');
- n.className='cbl-pet class-'+ownerKey+' '+type;n.dataset.unit=id;n.dataset.petType=type;n.dataset.owner=String(e.payload?.ownerId||e.source||'');
+ n.className='cbl-pet class-'+ownerKey+' '+type;n.dataset.unit=id;n.dataset.petType=type;n.dataset.owner=String(e.payload?.ownerId||e.source||'');n.dataset.petPermanent=e.result==='permanent'?'1':'0';
  n.setAttribute('aria-label',String(e.payload?.name||e.ability||(ownerClass==='Death Knight'?'Undead minion':'Warlock demon')));
  const body=document.createElement('i');body.className='cbl-pet-body';body.appendChild(document.createElement('b'));
  const label=document.createElement('span');label.className='cbl-pet-name';label.textContent=String(e.payload?.name||e.ability||'Demon');
@@ -655,7 +666,10 @@ function livingEvent(e,opts={}){
  switch(e.type){
  case'COMBAT_START':
   for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}scene.effects.clear();
-  for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();
+  for(const n of scene.totems.values())n.remove();scene.totems.clear();
+  for(const [id,n] of scene.pets)if(n.dataset.petPermanent!=='1'||!arena.querySelector('[data-unit="'+n.dataset.owner+'"].party')){
+   scene.units.delete(n);n.remove();scene.pets.delete(id);
+  }
   scene.live=true;scene.traversing=false;scene.departing=false;initClarity(scene);scene.spatialFrameAt=now();scene.spatialEnvironment=e.payload?.environment||{};scene.spatialDirty=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){a.spatialMeta=v;enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
  case'PARTY_COMMAND':{const command=e.payload?.type;if(['spread','stack','regroup','fall-back'].includes(command)){for(const v of scene.units.values())if(v.spatialMeta?.role!=='enemy'){v.spatialCommand=command;v.spatialCommandUntil=now()+(Number(e.payload?.durationMs)||3000)/scene.speed}scene.spatialDirty=true}break;}
@@ -710,7 +724,7 @@ function livingEvent(e,opts={}){
  case'PLAYER_REVIVED':case'ENEMY_REVIVED':
   if(t){t.dead=false;t.statuses.clear();t.el.dataset.control='';t.el.classList.remove('dead','dying');state(t,'reviving',now()+800/scene.speed);effect(scene,'revive',u?.el,t.el,850);abilityImpact(scene,e,u,t,'heal')}break;
  case'ADD_SPAWNED':requestAnimationFrame(()=>{const el=resolve(e.target,opts,arena);if(el){const spawned=unit(scene,el);spawned.spatialMeta={id:e.target,role:'enemy',...(e.payload||{})};enemyProfile(spawned,e.payload||{});setPosition(scene,spawned,e.position);framing(scene);effect(scene,'spawn',null,el,650)}});break;
- case'PET_SUMMONED':if(t){effect(scene,'spawn pet-spawn',null,t.el,650);abilityImpact(scene,e,u,t);state(t,'idle')}break;
+ case'PET_SUMMONED':if(t){if(t.el.dataset.petReturning==='1')delete t.el.dataset.petReturning;else{effect(scene,'spawn pet-spawn',null,t.el,650);abilityImpact(scene,e,u,t)}state(t,'idle')}break;
  case'TOTEM_PLACED':if(u)abilityImpact(scene,e,u,u);break;
  case'PET_COMMAND':if(t||u){effect(scene,'command',null,(t||u).el,420);abilityImpact(scene,e,u,t||u)}break;
  case'INTERACTION_REQUIRED':if(/screech/i.test(e.ability||''))effect(scene,'screech',null,u?.el||t?.el,800);break;
@@ -718,7 +732,7 @@ function livingEvent(e,opts={}){
  case'PHASE_CHANGE':emphasis(scene,'phase');if(scene.room)scene.room.dataset.wear=String(Math.min(3,Number(scene.room.dataset.wear||0)+1));if(u){effect(scene,'phase',null,u.el,1000);u.el.dataset.intensity='5'}break;
  case'GROUND_HAZARD_SPAWNED':
   if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650,true);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%';f.n.dataset.cblPositioned='1'}}break;
- case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();for(const w of scene.warnings.values()){w.callout?.remove();for(const n of w.markers||[])n.remove()}scene.warnings.clear();arena.querySelectorAll('.cbl-mechanic-callout,.cbl-mechanic-marker').forEach(n=>n.remove());scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
+ case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const [id,n] of scene.pets)if(n.dataset.petPermanent!=='1'){scene.units.delete(n);n.remove();scene.pets.delete(id)}for(const w of scene.warnings.values()){w.callout?.remove();for(const n of w.markers||[])n.remove()}scene.warnings.clear();arena.querySelectorAll('.cbl-mechanic-callout,.cbl-mechanic-marker').forEach(n=>n.remove());scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
  }
  updateClarity(scene,e,u,t);
  wake();
