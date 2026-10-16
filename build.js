@@ -63,6 +63,7 @@ for(const file of files){
     contents=contents.replace(/const SUPABASE_URL='[^']*';/, 'const SUPABASE_URL='+JSON.stringify(url)+';')
       .replace(/const SUPABASE_PUBLISHABLE_KEY='[^']*';/, 'const SUPABASE_PUBLISHABLE_KEY='+JSON.stringify(key)+';');
   }
+  if(file==='guild.html')contents=contents.replace('__CELLBOUND_SECURE_SAVES__',process.env.CELLBOUND_STAGING_SUPABASE_URL?'true':'false');
 
   if(file.endsWith('.js')){
     try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}

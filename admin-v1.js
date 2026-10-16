@@ -13,7 +13,7 @@ let activePanel=sessionStorage.getItem('cellbound-admin-panel-v1')||'overview';
 window.CellboundAdmin={autoClear:false,role:null,isAdmin:false,panel:activePanel};
 
 function setPanel(panel,{scroll=false}={}){
-  const allowed=new Set(['overview','reports','analytics','players','tools']);
+  const allowed=new Set(['overview','reports','analytics','players','tools','episodes']);
   activePanel=allowed.has(panel)?panel:'overview';
   sessionStorage.setItem('cellbound-admin-panel-v1',activePanel);
   window.CellboundAdmin.panel=activePanel;

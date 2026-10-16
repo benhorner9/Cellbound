@@ -77,3 +77,4 @@
   .admin-card{padding:14px}
   .admin-card h3{font-size:.9rem}
 }
+.episode-manager{padding:20px;min-width:0}.episode-environment{padding:14px;border:2px solid #d9a651;color:#f2cf88;overflow-wrap:anywhere}.episode-manager #episodeManagerCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px;margin-top:20px}.episode-manager-card{padding:18px;background:#172130;border:1px solid #546074;border-radius:12px;min-width:0}.episode-manager button{min-height:48px;padding:12px;margin:5px;white-space:normal}.episode-manager button:disabled{opacity:.5;cursor:not-allowed}.episode-content-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-bottom:1px solid #546074}.episode-manager h3{overflow-wrap:anywhere}
