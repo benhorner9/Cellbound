@@ -360,7 +360,7 @@ function spatialFrame(scene,bounds,time){
  const resized=oldWidth!==width||oldHeight!==height;
  if(resized){scene.spatialWidth=width;scene.spatialHeight=height;scene.spatialDirty=true}
  const env=scene.spatialEnvironment||{},population=scene.units.size,theme=scene.arena.dataset.cinematicTheme||'';const geometryChanged=resized||scene.geometryEnvironment!==env||scene.geometryPopulation!==population||scene.geometryTheme!==theme||!scene.spatialGeometry;if(geometryChanged){scene.spatialGeometry=fightingGeometry(scene,width,height,population);scene.geometryEnvironment=env;scene.geometryPopulation=population;scene.geometryTheme=theme;scene.spatialDirty=true}const g=scene.spatialGeometry;
- if(scene.traversing){let moving=false;for(const [el,u] of scene.units){const t=u.transit;if(!el.isConnected||!t)continue;const f=reduce()?1:clamp((time-t.start)/t.duration,0,1),k=f*f*(3-2*f),p={x:t.from.x+(t.to.x-t.from.x)*k,y:t.from.y+(t.to.y-t.from.y)*k};u.spatial.visual={x:p.x*width/100,y:p.y*height/100};u.position=p;el.dataset.x=String(p.x);el.dataset.y=String(p.y);if(!t.native||f>=1){el.style.setProperty('left',p.x+'%','important');el.style.setProperty('top',p.y+'%','important')}el.dataset.spatialState=f<1?'moving':'holding';if(f<1)moving=true;else{t.native?.cancel();u.transit=null}}scene.traversing=moving;return}
+ if(scene.traversing){let moving=false;for(const [el,u] of scene.units){const t=u.transit;if(!el.isConnected||!t)continue;const f=reduce()?1:clamp((time-t.start)/t.duration,0,1),k=f*f*(3-2*f),p={x:t.from.x+(t.to.x-t.from.x)*k,y:t.from.y+(t.to.y-t.from.y)*k};u.spatial.visual={x:p.x*width/100,y:p.y*height/100};u.position=p;el.dataset.x=String(p.x);el.dataset.y=String(p.y);if(!t.css||f>=1){el.style.setProperty('left',p.x+'%','important');el.style.setProperty('top',p.y+'%','important')}el.dataset.spatialState=f<1?'moving':'holding';if(f<1)moving=true;else{if(t.css){el.style.setProperty('transition-property','none','important');el.style.setProperty('transition-duration','0ms','important')}u.transit=null}}scene.traversing=moving;return}
  const list=[],zones=[...scene.hazards.values(),...(scene.spatialZones||[])].filter(h=>h.position&&h.radius>0).map(h=>Array.from({length:24},(_,i)=>({x:(h.position.x+Math.cos(i*Math.PI/12)*h.radius)*width/100,y:(h.position.y+Math.sin(i*Math.PI/12)*h.radius)*height/100})));
  for(const [el,u] of scene.units){
   if(!el.isConnected){scene.units.delete(el);scene.spatialDirty=true;continue}if(!u.position)continue;
@@ -798,17 +798,33 @@ FX.movePresentation=(el,p,duration=600)=>{
  const scene=scenes.get(el?.closest?.(ARENA)),u=scene?.units.get(el);if(!u?.spatial?.visual||scene.live&&!scene.arena.classList.contains('between-stages'))return false;
  const w=scene.spatialWidth,h=scene.spatialHeight;if(!w||!h)return false;
  scene.departing=true;scene.traversing=true;
- u.transit?.native?.cancel();
- const from={x:u.spatial.visual.x/w*100,y:u.spatial.visual.y/h*100},to={x:clamp(Number(p.x),0,100),y:clamp(Number(p.y),0,100)};
- const transit=u.transit={from,to,start:now(),duration:Math.max(1,duration),native:null};
- // Keep visually smooth exit travel on iPad even when intensive character
- // artwork stalls JS requestAnimationFrame. The browser interpolates the
- // visible positions; the spatial model still tracks the same route.
- if(!reduce()&&typeof el.animate==='function'){
-  el.style.setProperty('left',from.x+'%');el.style.setProperty('top',from.y+'%');
-  try{transit.native=el.animate([{left:from.x+'%',top:from.y+'%'},{left:to.x+'%',top:to.y+'%'}],{duration:transit.duration,easing:'ease-in-out',fill:'forwards'})}
-  catch(_){transit.native=null}
+ const previous=u.transit,clock=now();
+ // A delayed WebKit paint can leave u.spatial.visual a full waypoint behind.
+ // Read the actual interpolated CSS position when extending/replacing a route.
+ const style=getComputedStyle(el),sx=parseFloat(style.left),sy=parseFloat(style.top);
+ const fallback=previous?(()=>{
+  const t=reduce()?1:clamp((clock-previous.start)/previous.duration,0,1),e=t*t*(3-2*t);
+  return{x:previous.from.x+(previous.to.x-previous.from.x)*e,y:previous.from.y+(previous.to.y-previous.from.y)*e}
+ })():{x:u.spatial.visual.x/w*100,y:u.spatial.visual.y/h*100};
+ const from={x:Number.isFinite(sx)?sx/w*100:fallback.x,y:Number.isFinite(sy)?sy/h*100:fallback.y};
+ const to={x:clamp(Number(p.x),0,100),y:clamp(Number(p.y),0,100)};
+ const transit=u.transit={from,to,start:clock,duration:Math.max(1,duration),css:!reduce()};
+ // One owner for visible travel: CSS transitions on left/top interpolate even
+ // when requestAnimationFrame is stalled. Native Web Animations could not
+ // override the room stylesheet's !important position rules and flickered.
+ el.style.setProperty('transition-property','none','important');
+ el.style.setProperty('transition-duration','0ms','important');
+ el.style.setProperty('left',from.x+'%','important');
+ el.style.setProperty('top',from.y+'%','important');
+ if(!reduce()){
+  // Commit the start without waiting for a paint callback.
+  void el.offsetWidth;
+  el.style.setProperty('transition-property','left, top','important');
+  el.style.setProperty('transition-duration',transit.duration+'ms','important');
+  el.style.setProperty('transition-timing-function','ease-in-out','important');
  }
+ el.style.setProperty('left',to.x+'%','important');
+ el.style.setProperty('top',to.y+'%','important');
  wake();return true;
 };
 window.addEventListener('scroll',()=>{for(const scene of scenes.values())scene.bounds=null},{passive:true,capture:true});
