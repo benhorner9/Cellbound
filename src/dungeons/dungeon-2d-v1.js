@@ -1590,7 +1590,27 @@ function addUnit(id,label,cls,x,y,size,meta=''){
  $('#cb2dUnits').appendChild(e);applyUnitPosition(e,x,y,true)
 }
 function move(id,x,y,ms){
- const e=$('[data-unit="'+id+'"]');if(!e)return; if(!run?.combatActive&&window.CellboundCombatFX?.movePresentation?.(e,{x,y},ms/((run&&run.speed)||1)))return;
+ const e=$('[data-unit="'+id+'"]');if(!e)return;
+ const arena=$('#cb2dArena'),duration=Math.max(0,ms/((run&&run.speed)||1));
+ if(!run?.combatActive&&arena?.classList.contains('room-entering')&&e.classList.contains('party')){
+  // Entry uses the same left/top coordinates as live combat. The old
+  // --unit-x transform path fought with theme-ashen's !important left/top
+  // and made the party hop to the formation before combat began.
+  const style=getComputedStyle(e),left=parseFloat(style.left),top=parseFloat(style.top);
+  const fromX=Number.isFinite(left)?left/Math.max(1,arena.clientWidth)*100:Number(e.dataset.x)||x;
+  const fromY=Number.isFinite(top)?top/Math.max(1,arena.clientHeight)*100:Number(e.dataset.y)||y;
+  e.style.setProperty('transition-property','none','important');
+  e.style.setProperty('transition-duration','0ms','important');
+  e.style.setProperty('left',fromX+'%','important');e.style.setProperty('top',fromY+'%','important');
+  void e.offsetWidth;
+  e.style.setProperty('transition-property','left, top','important');
+  e.style.setProperty('transition-duration',duration+'ms','important');
+  e.style.setProperty('transition-timing-function','ease-in-out','important');
+  e.style.setProperty('left',clamp(Number(x),0,100)+'%','important');
+  e.style.setProperty('top',clamp(Number(y),0,100)+'%','important');
+  e.dataset.x=String(x);e.dataset.y=String(y);return;
+ }
+ if(!run?.combatActive&&window.CellboundCombatFX?.movePresentation?.(e,{x,y},duration))return;
  const ox=Number(e.dataset.x)||x,oy=Number(e.dataset.y)||y,dx=x-ox,dy=y-oy;
  if(Math.hypot(dx,dy)>.8)e.style.setProperty('--face-angle',(Math.atan2(dy,dx)*180/Math.PI)+'deg');
  e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';
@@ -2953,7 +2973,7 @@ async function seamlessFrom(startIndex,tok){
    const s=STAGES[i];if(s.kind==='final')await window.CellboundBossDossier?.show?.('vaultheart');else if(i>startIndex)await window.CellboundExpeditionPresentation?.room?.('ashen-vault',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
    if(s.kind==='boss'||s.kind==='final')window.CellboundFX?.boss?.(s.title);
    $('#cb2dTitle').textContent=s.title;$('#cb2dRoute').innerHTML=route();$('#cb2dType').textContent=s.kind==='final'?'FINAL BOSS':s.kind==='boss'?'BOSS':s.kind==='event'?'EVENT':'HOSTILE PACK';
-   spawn(s);status('Preparing encounter…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(650);
+   spawn(s);status('Preparing encounter…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(790);
    await ensureCombatRebornEngine();
    if(tok!==token||!run)return;
    status('Encounter ready');
