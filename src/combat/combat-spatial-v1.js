@@ -190,6 +190,20 @@ function advance(units,g,dt){
  }
  return moving;
 }
+// A slow browser frame must not discard almost all elapsed walking time.
+// Advance in short collision-safe slices so WebKit/iPad can catch up without
+// bypassing the path planner or snapping directly to the reservation.
+// Cap one visual frame at 700ms to avoid a giant jump after tab suspension.
+function advanceElapsed(units,g,elapsed){
+ const dt=Math.max(0,Math.min(.7,Number(elapsed)||0));
+ let moved=false;
+ for(let remaining=dt;remaining>.000001;){
+  const step=Math.min(.07,remaining);
+  moved=advance(units,g,step)||moved;
+  remaining-=step;
+ }
+ return moved;
+}
 // A bounded, coarse route search is only used when local steering cannot progress.
 // Route around occupied ground, rather than moving the actor that is in the way.
 function route(u,units,g){
@@ -209,5 +223,5 @@ function route(u,units,g){
  }
  if(!end)return null;const path=[u.reserved];while(end.parent){path.unshift({x:end.x,y:end.y});end=end.parent}return path;
 }
-window.CellboundCombatSpatial={version:2,Grid,geometry,legal,safePoint,fightingArea,overlap,plan,advance,waypoint,route,team,distance,spacingOverlap};
+window.CellboundCombatSpatial={version:3,Grid,geometry,legal,safePoint,fightingArea,overlap,plan,advance,advanceElapsed,waypoint,route,team,distance,spacingOverlap};
 })();
