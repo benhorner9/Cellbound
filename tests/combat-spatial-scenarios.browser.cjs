@@ -4,6 +4,28 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
 const out='/tmp/cellbound-spatial';fs.mkdirSync(out,{recursive:true});
 (async()=>{const browser=await(process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true});try{
  const page=await browser.newPage({viewport:{width:1366,height:1024}}),errors=await mount(page,matureState(),true,{simulateDungeonRuntime:true});
+ // Regression: an occupied melee slot must not strand a Warrior at an
+ // obsolete waypoint. Its cosmetic path finds another clear attack flank.
+ const detour=await page.evaluate(()=>{
+  const S=CellboundCombatSpatial,g=S.geometry(800,500,{bounds:{left:4,right:96,top:12,bottom:94}});
+  const actor=(id,role,visual,locked=false)=>({id,role,style:role==='enemy'?'melee':role==='tank'?'tank':'melee',
+   team:role==='enemy'?'enemy':'party',rx:16,ry:19,head:22,foot:14,visual:{...visual},reserved:{...visual},
+   locked,dead:false,speed:175,logical:{...visual}});
+  const warrior=actor('blocked-warrior','tank',{x:145,y:260});
+  warrior.reserved={x:428,y:260};warrior.waypoint={...warrior.visual};warrior.contactTarget='mob';
+  const mob=actor('mob','enemy',{x:463,y:260},true);
+  const ally=actor('occupied-melee-slot','melee',{x:428,y:260},true);
+  const ally2=actor('occupied-flank','melee',{x:417,y:292},true);
+  const units=[warrior,mob,ally,ally2],before=S.distance(warrior.visual,mob.visual);
+  for(let i=0;i<90;i++)S.advanceElapsed(units,g,.07);
+  return {before,after:S.distance(warrior.visual,mob.visual),travel:S.distance(warrior.visual,{x:145,y:260}),
+   avoidanceCount:warrior.avoidanceCount||0,legal:S.legal(warrior.visual,warrior,g),
+   visual:warrior.visual,reserved:warrior.reserved}
+ });
+ assert(detour.avoidanceCount>0,'Warrior tries a new free flank when its reserved position is occupied: '+JSON.stringify(detour));
+ assert(detour.travel>65&&detour.after<detour.before-65&&detour.legal,
+  'Warrior moves around occupied ground rather than standing still: '+JSON.stringify(detour));
+ console.log('Blocked Warrior reroute passed:',JSON.stringify(detour));
  for(const mode of ['arena','capture-the-flag','king-of-the-hill']){
   await page.evaluate(mode=>{
    window.spatialRoot=document.createElement('div');document.body.appendChild(spatialRoot);
