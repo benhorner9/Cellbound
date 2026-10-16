@@ -390,12 +390,14 @@ function spatialFrame(scene,bounds,time){
    s.reserved=null;s.waypoint=null;s.route=null;
   }
   if(!s.visual&&s.entryVisual){
-   // A painted formation can start outside the art's walkable floor. Enter
-   // from its nearest legal edge instead of showing an off-screen actor.
-   s.visual=S.legal(s.entryVisual,s,g)?s.entryVisual:S.safePoint(s.entryVisual,s,g);
-   s.entryRecovery=false;s.entryVisual=null;
+   // Keep the illustrated entrance position. The spatial solver already
+   // supports walking unsafe entry poses into the playable floor; snapping
+   // to safePoint here caused a visible teleport as combat began.
+   s.visual={...s.entryVisual};
+   s.entryRecovery=!S.legal(s.visual,s,g);
+   s.entryVisual=null;
   }
-  if(geometryChanged&&s.visual&&!S.legal(s.visual,s,g)){
+  if(geometryChanged&&s.visual&&!s.entryRecovery&&!S.legal(s.visual,s,g)){
    s.visual=S.safePoint(s.visual,s,g);s.drawn=null;
   }
   list.push(s);
