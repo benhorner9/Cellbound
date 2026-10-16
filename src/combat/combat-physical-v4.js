@@ -166,17 +166,26 @@ function petObject(scene,e){
  }
  if(existing){scene.units.delete(existing);existing.remove()}
  const type=String(e.payload?.petType||'demon').replace(/[^a-z0-9-]/gi,'-').toLowerCase(),ownerClass=String(e.payload?.ownerClass||'Warlock'),ownerKey=ownerClass.toLowerCase().replace(/[^a-z0-9]+/g,'-'),n=document.createElement('div');
+ const owner=scene.units.get(resolve(e.payload?.ownerId||e.source,{},scene.arena));
+ // The first Ashen Vault room starts with the Hunter calling their beast
+ // *beside them*. This is presentation-only: combat still uses the normal
+ // engine-driven PET_SUMMONED event and keeps the same pet attacks.
+ const firstRoomHunterCall=type==='hunter-beast'&&ownerClass==='Hunter'&&e.result==='permanent'&&scene.arena.id==='cb2dArena'&&window.CellboundDungeon2D?.currentRun?.()?.stage===0&&!!owner?.el?.isConnected;
+ const bounds=scene.arena.getBoundingClientRect(),ownerBounds=owner?.el?.getBoundingClientRect();
+ const ownerPosition=firstRoomHunterCall&&bounds.width>0&&bounds.height>0?
+  {x:(ownerBounds.left+ownerBounds.width/2-bounds.left)/bounds.width*100,y:(ownerBounds.top+ownerBounds.height/2-bounds.top)/bounds.height*100}:null;
+ const callPosition=ownerPosition?{x:clamp(ownerPosition.x+(ownerPosition.x>65?-3:3),7,93),y:clamp(ownerPosition.y+4,15,86)}:null;
+ if(callPosition){n.style.setProperty('visibility','hidden','important');n.dataset.firstRoomCall='1'}
  n.className='cbl-pet class-'+ownerKey+' '+type;n.dataset.unit=id;n.dataset.petType=type;n.dataset.owner=String(e.payload?.ownerId||e.source||'');n.dataset.petPermanent=e.result==='permanent'?'1':'0';
  n.setAttribute('aria-label',String(e.payload?.name||e.ability||(ownerClass==='Death Knight'?'Undead minion':'Warlock demon')));
  const body=document.createElement('i');body.className='cbl-pet-body';body.appendChild(document.createElement('b'));
  const label=document.createElement('span');label.className='cbl-pet-name';label.textContent=String(e.payload?.name||e.ability||'Demon');
  n.append(body,label);scene.arena.appendChild(n);scene.pets.set(id,n);
- const owner=scene.units.get(resolve(e.payload?.ownerId||e.source,{},scene.arena));
  const S=window.CellboundCombatSpatial,width=scene.arena.clientWidth,height=scene.arena.clientHeight;
  // A freshly inserted .cbl-pet has CSS left:0/top:0. Seed it beside its
  // Hunter/summoner *inside the floor* before the first animation frame so
  // it never materialises from the top-left or slides in from off-screen.
- if(S&&width>0&&height>0){
+ if(S&&width>0&&height>0&&!callPosition){
   const p=owner?.spatial?.visual&&scene.spatialWidth&&scene.spatialHeight?
    {x:owner.spatial.visual.x/scene.spatialWidth*100,y:owner.spatial.visual.y/scene.spatialHeight*100}:
    owner?.position||e.position;
@@ -188,7 +197,26 @@ function petObject(scene,e){
   n.style.setProperty('top',(point.y/height*100).toFixed(3)+'%','important');
   n.style.setProperty('transform','translate(-50%,-50%)','important');
  }
- const u=unit(scene,n);u.spatialMeta={id,role:'pet',team:owner?.spatialMeta?.team||owner?.spatial?.team||'party'};u.engagementTarget=e.payload?.targetId;setPosition(scene,u,e.position);state(u,'idle');framing(scene)
+ if(callPosition){
+  // Initialise the visible actor at the Hunter's *painted* position before
+  // revealing it; never animate its root from CSS left:0/top:0.
+  n.style.setProperty('transition','none','important');
+  n.style.setProperty('left',callPosition.x+'%','important');
+  n.style.setProperty('top',callPosition.y+'%','important');
+  n.style.setProperty('transform','translate(-50%,-50%)','important');
+  n.dataset.x=String(callPosition.x);n.dataset.y=String(callPosition.y);
+ }
+ const u=unit(scene,n);u.spatialMeta={id,role:'pet',team:owner?.spatialMeta?.team||owner?.spatial?.team||'party'};u.engagementTarget=e.payload?.targetId;setPosition(scene,u,e.position);state(u,'idle');
+ if(callPosition){
+  const call=document.createElement('span');call.className='cbl-hunter-call';call.textContent='CALL PET';
+  call.style.left=clamp(ownerPosition.x,4,96)+'%';call.style.top=clamp(ownerPosition.y-5,5,90)+'%';
+  call.setAttribute('aria-hidden','true');scene.arena.appendChild(call);
+  setTimeout(()=>call.remove(),950);
+  n.classList.add('cbl-hunter-call-arrival');
+  n.style.removeProperty('visibility');
+  if(!reduce())effect(scene,'command',null,owner.el,420);
+ }
+ framing(scene)
 }
 function mechanic(scene,e,opts={}){
  const token=e.payload?.token;if(token==null)return;scene.spatialDirty=true;
