@@ -32,8 +32,11 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
   await page.waitForTimeout(1500);
   await page.screenshot({path:dir+'/'+(before?'before':'after')+'-ipad.png'});
   if(!before){
-   await page.waitForFunction(()=>document.querySelector('[data-unit="p-warrior"][data-animation-clip="cleave"]'),null,{timeout:12000});
-   await page.waitForFunction(()=>document.querySelector('[data-unit="p-warrior"]')?.dataset.animationState==='cleave',null,{timeout:12000});
+   // Named abilities now use authored, class-specific choreography rather than the old generic cleave clip.
+   await page.waitForFunction(()=>{
+    const unit=document.querySelector('[data-unit="p-warrior"]');
+    return unit?.dataset.animationState?.startsWith('skill:Warrior:')&&unit.dataset.animationClip===unit.dataset.animationState;
+   },null,{timeout:12000});
    await page.waitForTimeout(180);
    await page.screenshot({path:dir+'/after-swing.png'});
   }
