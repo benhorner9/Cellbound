@@ -1833,19 +1833,20 @@ function setRoomFade(black,duration=520){
 function roomFadeInDuringEntry(){
  if(!run?.roomTransitionBlack)return;
  const fade=ensureRoomFade();if(!fade)return;
- const entryRun=run,entryToken=token;
- fade.classList.add('is-black');fade.classList.remove('is-clear');
- // Never depend on two paint callbacks here. iPad Safari can delay both
- // for seconds while decoding a new room and then reveal the old/new art
- // out of order, which looks like flickering backwards through the doorway.
- setTimeout(()=>{
-  if(!fade.isConnected||run!==entryRun||token!==entryToken)return;
+ const entryRun=run,entryToken=token,arena=$('#cb2dArena'),img=arena?.querySelector('.cb2d-stage-image');
+ // The previous room has already faded to black. Keep the cover opaque while
+ // the new battlefield image and models are installed; do not reveal them
+ // after an arbitrary 40ms when WebKit may still be decoding the artwork.
+ setRoomFade(true,0);
+ void fade.offsetWidth;
+ const imageReady=img&&!img.complete&&typeof img.decode==='function'?img.decode().catch(()=>{}):Promise.resolve();
+ Promise.all([
+  new Promise(resolve=>setTimeout(resolve,140)),
+  Promise.race([imageReady,new Promise(resolve=>setTimeout(resolve,330))])
+ ]).then(()=>{
+  if(!fade.isConnected||run!==entryRun||token!==entryToken||arena!==$('#cb2dArena'))return;
   setRoomFade(false,520);
-  setTimeout(()=>{
-   if(!fade.isConnected||run!==entryRun||token!==entryToken)return;
-   fade.classList.remove('is-black');fade.classList.add('is-clear');
-  },560)
- },40);
+ });
  run.roomTransitionBlack=false
 }
 function clearArenaEphemera(){
@@ -1919,7 +1920,13 @@ function stageEnemyPosition(s,i){
  return{x:Number(p.x),y:Number(p.y)}
 }
 function spawn(s){
- window.CellboundMonsterVisuals?.preload?.([...s.enemies,'Cave Spawn']);const next=STAGES[STAGES.findIndex(x=>x.id===s.id)+1];if(next)window.CellboundMonsterVisuals?.preload?.(next.enemies);if(next)window.CellboundExpeditionPresentation?.preload?.(ashenRoomConfig(next.id)?.art);
+ window.CellboundMonsterVisuals?.preload?.([...s.enemies,'Cave Spawn']);const next=STAGES[STAGES.findIndex(x=>x.id===s.id)+1];if(next)window.CellboundMonsterVisuals?.preload?.(ashenRoomConfig(next.id)?.art);
+ // New dungeon runs also enter through a black doorway rather than having
+ // characters and scenery appear instantly in the very first room.
+ if(run?.stage===0&&!run.initialRoomFaded){run.initialRoomFaded=true;run.roomTransitionBlack=true;setRoomFade(true,0)}
+ // When crossing rooms, preserve the existing opaque fade while replacing the
+ // stage art and rebuilding the party; never expose a half-built room.
+ if(run?.roomTransitionBlack){setRoomFade(true,0);const fade=ensureRoomFade();if(fade)void fade.offsetWidth}
  clearArenaEphemera();renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const arena=$('#cb2dArena'),route=ashenRoute(s);arena?.classList.add('room-entering');
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
