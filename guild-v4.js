@@ -239,7 +239,7 @@ async function awardPartyXp(amount,{source='Progression'}={}){
     let level=beforeLevel,xp=beforeLevel>=PLAYER_LEVEL_CAP?0:beforeXp+reward,levels=0;
     while(level<PLAYER_LEVEL_CAP&&xp>=xpNeeded(level)){xp-=xpNeeded(level);level++;levels++}
     if(level>=PLAYER_LEVEL_CAP){level=PLAYER_LEVEL_CAP;xp=0}
-    c.level=level;c.xp=xp;if(levels)c.talent=(Number(c.talent)||0)+levels;
+    c.level=level;c.xp=xp;B?.syncLegacyTalentCounter?.(c);
     return{id:c.id,name:c.name,amount:beforeLevel>=PLAYER_LEVEL_CAP?0:reward,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:xpNeeded(level),levels,capped:level>=PLAYER_LEVEL_CAP}
   });
   state.activity=Array.isArray(state.activity)?state.activity:[];
@@ -350,7 +350,9 @@ function migrateState(raw){
     s.onboarding={...s.onboarding,complete:false,stage:'zeltira-arrival',zone:s.onboarding.zone||'zeltira',partyCreatedAt:s.onboarding.partyCreatedAt||new Date().toISOString()};
     delete s.onboarding.draft;
   }
-  repairInvalidOffHands(s);s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;delete s.fresh_start_at;return s;
+  repairInvalidOffHands(s);s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;delete s.fresh_start_at;
+  if(currentUser?.id&&window.CellboundEpisodeTwo)s.episode2=window.CellboundEpisodeTwo.migrate(s,currentUser.id).episode2;
+  return s;
 }
 function localCandidate(userId){
   const owner=localStorage.getItem(LOCAL_OWNER);

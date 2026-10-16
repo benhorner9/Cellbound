@@ -72,6 +72,10 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
   });
   await page.locator('[data-start]').click();
   await page.waitForFunction(()=>CellboundDungeon2D.currentRun()?.stage>=2,null,{timeout:180000});
+  // stage increments before the next DOM scene is mounted. Keep sampling until
+  // that room has actually faded in; stopping on the counter drops every frame
+  // of room 2 and falsely reports a missing fade. All opacity assertions remain.
+  await page.waitForFunction(()=>roomSamples.some(x=>x.stage===2&&x.fade!==null&&x.fade<.12),null,{timeout:15000});
   if(process.env.CELLBOUND_REALTIME_FULL_RUN){
    const deadline=Date.now()+240000;
    while(Date.now()<deadline&&!await page.evaluate(()=>Number(CellboundGame.getState().dungeonCompletions)>0)){

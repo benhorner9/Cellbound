@@ -87,6 +87,7 @@ const groups=Object.freeze({
   "gear-data.js",
   "profession-data.js",
   "balance-v1.js",
+  "episode-two-v1.js",
   "item-atlas-v2.js",
   "item-visuals-v2.js",
   "item-art-v1.js",
@@ -210,6 +211,7 @@ const files=Object.freeze([
 ]);
 
 const sourceOverrides=Object.freeze({
+  "episode-two-v1.js":"src/episodes/episode-two-v1.js",
   "combat-hud-standard-v1.js":"src/combat/combat-hud-standard-v1.js",
   "combat-identities-v1.js":"src/combat/combat-identities-v1.js",
   "combat-data-v1.js":"src/combat/combat-data-v1.js",

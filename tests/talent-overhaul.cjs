@@ -24,8 +24,9 @@ vm.runInContext(source('src/combat/combat-data-v1.js'),context,{filename:'combat
 vm.runInContext(source('src/combat/combat-reborn-v1.js'),context,{filename:'combat-reborn-v1.js'});
 const engine=win.CellboundCombatReborn,combatSource=source('src/combat/combat-reborn-v1.js');
 assert.ok(engine?.simulate&&engine?.tests?.run,'Combat engine loads');
-assert.deepEqual([B.CURRENT_LEVEL_CAP,B.CURRENT_SPEC_POINT_CAP],[15,8]);
+assert.deepEqual([B.CURRENT_LEVEL_CAP,B.CURRENT_SPEC_POINT_CAP],[30,12]);
 assert.deepEqual(Array.from({length:15},(_,i)=>B.talentBudgetForLevel(i+1)),[1,1,2,2,3,3,4,4,5,5,6,6,7,7,8]);
+assert.deepEqual(Array.from({length:15},(_,i)=>B.talentBudgetForLevel(i+16)),[8,8,9,9,9,9,10,10,10,10,11,11,11,11,12]);
 assert.deepEqual(Array.from({length:5},(_,i)=>B.tierRequirement(i)),[0,1,3,5,6]);
 assert.equal(Object.keys(trees).length,13);
 
@@ -67,6 +68,7 @@ for(const [klass,specs] of Object.entries(trees)){
   specCount++;
   assert.equal(B.roleFor(klass,spec)==='dps'||B.roleFor(klass,spec)==='tank'||B.roleFor(klass,spec)==='healer',true);
   assert.equal(nodes.length,16,'16 meaningful nodes: '+klass+'/'+spec);
+  assert.ok(nodes.reduce((n,node)=>n+node.max,0)>B.talentBudgetForLevel(30),'Level 30 cannot buy every rank: '+klass+'/'+spec);
   assert.equal(new Set(nodes.map(n=>n.id)).size,nodes.length,'Unique IDs: '+klass+'/'+spec);
   const capstones=nodes.filter(n=>n.tier===4&&n.exclusive==='capstone');
   assert.equal(capstones.length,2,'Alternative capstones: '+klass+'/'+spec);

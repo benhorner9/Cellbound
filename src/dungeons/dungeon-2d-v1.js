@@ -940,7 +940,7 @@ function awardPartyXp(amount){
    }
    if(level>=cap){level=cap;xp=0}
    c.level=level;c.xp=xp;
-   if(levels>0)c.talent=(Number(c.talent)||0)+levels;
+   window.CellboundBuildRules?.syncLegacyTalentCounter?.(c);
    gains.push({
      id:c.id,name:c.name,portrait:c.portrait||String(c.name||'?').slice(0,2).toUpperCase(),
      amount:beforeLevel>=cap?0:reward,beforeLevel,beforeXp,beforeNeed,

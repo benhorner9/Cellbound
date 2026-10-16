@@ -1,0 +1,97 @@
+{
+  "base_commit": "3130a252cdc490ef19de9afe58dc6d430f2250b3",
+  "acceptance": "NOT_SIGNED_OFF",
+  "deployed": false,
+  "suites": {
+    "build": {
+      "result": "PASS",
+      "exit_code": 0
+    },
+    "core": {
+      "result": "PASS",
+      "passed": 70,
+      "total": 70
+    },
+    "talents": {
+      "result": "PASS",
+      "classes": 13,
+      "specialisations": 28,
+      "engine_tests": 113
+    },
+    "talent_runtime": {
+      "result": "PASS",
+      "effect_checks": 784,
+      "ability_checks": 252,
+      "levels": [
+        15,
+        20,
+        25,
+        30
+      ]
+    },
+    "appearance": {
+      "result": "PASS",
+      "scope": "Existing Episode 1 assets only"
+    },
+    "role_balance": {
+      "result": "PASS",
+      "simulations": 386,
+      "scope": "Existing encounter fixtures"
+    },
+    "episode_two_progression": {
+      "result": "PASS",
+      "routes": 72,
+      "xp": 90750,
+      "scope": "Pure reducer, not playable content or live persistence"
+    },
+    "episode_two_scaling": {
+      "result": "PASS",
+      "simulations": 60,
+      "scope": "Synthetic canonical-engine probes"
+    },
+    "episode_two_pvp": {
+      "result": "PASS",
+      "equipment_levels": [
+        20,
+        25,
+        30
+      ]
+    },
+    "episode_two_foundation_chromium": {
+      "result": "PASS",
+      "viewports": [
+        [
+          1024,
+          1366
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          1440,
+          900
+        ]
+      ],
+      "backend": "MOCKED"
+    },
+    "room_transitions_chromium": {
+      "result": "PASS",
+      "scope": "Existing Ashen Vault; first-room pet, fades, movement, close/re-entry"
+    },
+    "browser_full_chromium": {
+      "result": "RUNNING"
+    },
+    "foundation_webkit": {
+      "result": "BLOCKED",
+      "reason": "Missing host libraries; system dependency install failed with setgroups/seteuid restrictions"
+    }
+  },
+  "live_account_tests": "NOT_RUN",
+  "cooperative_raid_tests": "NOT_RUN",
+  "new_artwork": {
+    "scenes": 0,
+    "panels": 0
+  },
+  "full_campaign_playthrough": "NOT_RUN"
+}
