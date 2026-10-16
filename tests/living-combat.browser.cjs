@@ -23,10 +23,12 @@ const isWebkit=process.env.CELLBOUND_TEST_ENGINE==='webkit';
  await page.evaluate(()=>{send('ABILITY_START','p-t','e-0',{kind:'damage',range:5});send('DAMAGE_DEALT','p-t','e-0',{targetMax:1000},{amount:35,result:'hit'})});
  const portraitAnimated=await page.evaluate(()=>document.querySelector('[data-unit="p-t"] .cb-combat-portrait').getAnimations().length>0);
  assert(portraitAnimated,'animate the visible portrait');
- assert.equal(await page.locator('.cbl-fx.contact').count(),1,'one impact owner');
- await page.waitForFunction(()=>document.querySelectorAll('.cbl-fx.contact').length===0,{},{timeout:isWebkit?12000:5000,polling:50});
+ // The canonical ability-impact is the single hit owner; the former generic .contact
+ // element is deliberately suppressed when a school-specific impact exists.
+ assert.equal(await page.locator('.cbl-fx.ability-impact').count(),1,'one skill-specific impact owner');
+ await page.waitForFunction(()=>document.querySelectorAll('.cbl-fx.ability-impact').length===0,{},{timeout:isWebkit?12000:5000,polling:50});
  await page.evaluate(()=>send('DAMAGE_DEALT','p-t','e-0',{}, {amount:0,result:'miss'}));
- assert.equal(await page.locator('.cbl-fx.contact').count(),0,'miss cannot hit');
+ assert.equal(await page.locator('.cbl-fx.ability-impact').count(),0,'miss cannot spawn a hit impact');
  await page.evaluate(()=>send('DEBUFF_APPLIED','e-0','p-t',{}, {statusEffects:[{id:'stun',cc:'stun'}]}));
  await page.evaluate(()=>send('ABILITY_START','p-t','e-0',{kind:'damage',range:5}));
  assert.equal(await page.locator('[data-unit="p-t"]').getAttribute('data-combat-state'),'controlled');
