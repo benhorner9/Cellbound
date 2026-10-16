@@ -158,7 +158,7 @@ function petObject(scene,e){
   // Persistent companions are the SAME actor from the previous room.
   // Keep their illustrated body and arrival position; only update their
   // next encounter's authoritative destination.
-  existing.dataset.petReturning='1';delete existing.dataset.petBetweenRooms;
+  existing.dataset.petReturning='1';delete existing.dataset.petBetweenRooms;existing.dataset.petReady='1';
   const companion=unit(scene,existing),owner=scene.units.get(resolve(e.payload?.ownerId||e.source,{},scene.arena));
   companion.spatialMeta={id,role:'pet',team:owner?.spatialMeta?.team||'party'};
   companion.engagementTarget=e.payload?.targetId;companion.dead=false;
@@ -166,25 +166,33 @@ function petObject(scene,e){
  }
  if(existing){scene.units.delete(existing);existing.remove()}
  const type=String(e.payload?.petType||'demon').replace(/[^a-z0-9-]/gi,'-').toLowerCase(),ownerClass=String(e.payload?.ownerClass||'Warlock'),ownerKey=ownerClass.toLowerCase().replace(/[^a-z0-9]+/g,'-'),n=document.createElement('div');
- const owner=scene.units.get(resolve(e.payload?.ownerId||e.source,{},scene.arena));
+ const ownerId=String(e.payload?.ownerId||e.source||'');
+ const ownerEl=resolve(ownerId,{},scene.arena);
+ const owner=scene.units.get(ownerEl);
  // The first Ashen Vault room starts with the Hunter calling their beast
  // *beside them*. This is presentation-only: combat still uses the normal
  // engine-driven PET_SUMMONED event and keeps the same pet attacks.
- const firstRoomHunterCall=type==='hunter-beast'&&ownerClass==='Hunter'&&e.result==='permanent'&&scene.arena.id==='cb2dArena'&&window.CellboundDungeon2D?.currentRun?.()?.stage===0&&!!owner?.el?.isConnected;
- const bounds=scene.arena.getBoundingClientRect(),ownerBounds=owner?.el?.getBoundingClientRect();
- const ownerPosition=firstRoomHunterCall&&bounds.width>0&&bounds.height>0?
+ const firstRoomHunterCall=type==='hunter-beast'&&ownerClass==='Hunter'&&e.result==='permanent'&&scene.arena.id==='cb2dArena'&&window.CellboundDungeon2D?.currentRun?.()?.stage===0;
+ const bounds=scene.arena.getBoundingClientRect(),ownerBounds=ownerEl?.isConnected?ownerEl.getBoundingClientRect():null;
+ const ownerPosition=firstRoomHunterCall&&ownerBounds&&bounds.width>0&&bounds.height>0?
   {x:(ownerBounds.left+ownerBounds.width/2-bounds.left)/bounds.width*100,y:(ownerBounds.top+ownerBounds.height/2-bounds.top)/bounds.height*100}:null;
  const callPosition=ownerPosition?{x:clamp(ownerPosition.x+(ownerPosition.x>65?-3:3),7,93),y:clamp(ownerPosition.y+4,15,86)}:null;
- if(callPosition){n.style.setProperty('visibility','hidden','important');n.dataset.firstRoomCall='1'}
+ if(callPosition)n.dataset.firstRoomCall='1';
+ // The old pet stylesheet placed every new pet at 0,0 and an older
+ // transform-based renderer could paint that position before our event
+ // handler assigned coordinates. Never expose an unpositioned actor.
+ n.dataset.petReady='0';
+ n.style.setProperty('visibility','hidden','important');
+ n.style.setProperty('transition','none','important');
  n.className='cbl-pet class-'+ownerKey+' '+type;n.dataset.unit=id;n.dataset.petType=type;n.dataset.owner=String(e.payload?.ownerId||e.source||'');n.dataset.petPermanent=e.result==='permanent'?'1':'0';
  n.setAttribute('aria-label',String(e.payload?.name||e.ability||(ownerClass==='Death Knight'?'Undead minion':'Warlock demon')));
  const body=document.createElement('i');body.className='cbl-pet-body';body.appendChild(document.createElement('b'));
  const label=document.createElement('span');label.className='cbl-pet-name';label.textContent=String(e.payload?.name||e.ability||'Demon');
  n.append(body,label);scene.arena.appendChild(n);scene.pets.set(id,n);
  const S=window.CellboundCombatSpatial,width=scene.arena.clientWidth,height=scene.arena.clientHeight;
- // A freshly inserted .cbl-pet has CSS left:0/top:0. Seed it beside its
- // Hunter/summoner *inside the floor* before the first animation frame so
- // it never materialises from the top-left or slides in from off-screen.
+ // Seed every pet in the currently painted room, never at the legacy
+ // top-left fallback. Positioning is done while hidden and with transitions
+ // disabled so even slow iPad paint callbacks cannot expose an edge travel.
  if(S&&width>0&&height>0&&!callPosition){
   const p=owner?.spatial?.visual&&scene.spatialWidth&&scene.spatialHeight?
    {x:owner.spatial.visual.x/scene.spatialWidth*100,y:owner.spatial.visual.y/scene.spatialHeight*100}:
@@ -206,15 +214,24 @@ function petObject(scene,e){
   n.style.setProperty('transform','translate(-50%,-50%)','important');
   n.dataset.x=String(callPosition.x);n.dataset.y=String(callPosition.y);
  }
+ // The fallback is also safe if spatial geometry is temporarily unavailable.
+ if(!n.style.getPropertyValue('left')){
+  const p=ownerBounds&&bounds.width>0&&bounds.height>0?
+   {x:(ownerBounds.left+ownerBounds.width/2-bounds.left)/bounds.width*100,y:(ownerBounds.top+ownerBounds.height/2-bounds.top)/bounds.height*100}:e.position;
+  n.style.setProperty('left',clamp(Number(p.x)||50,7,93)+'%','important');
+  n.style.setProperty('top',clamp(Number(p.y)||50,15,86)+'%','important');
+ }
+ n.style.setProperty('transform','translate(-50%,-50%)','important');
  const u=unit(scene,n);u.spatialMeta={id,role:'pet',team:owner?.spatialMeta?.team||owner?.spatial?.team||'party'};u.engagementTarget=e.payload?.targetId;setPosition(scene,u,e.position);state(u,'idle');
+ // Mark ready only AFTER painting coordinates and combat metadata exist.
+ n.dataset.petReady='1';n.style.removeProperty('visibility');
  if(callPosition){
   const call=document.createElement('span');call.className='cbl-hunter-call';call.textContent='CALL PET';
   call.style.left=clamp(ownerPosition.x,4,96)+'%';call.style.top=clamp(ownerPosition.y-5,5,90)+'%';
   call.setAttribute('aria-hidden','true');scene.arena.appendChild(call);
   setTimeout(()=>call.remove(),950);
   n.classList.add('cbl-hunter-call-arrival');
-  n.style.removeProperty('visibility');
-  if(!reduce())effect(scene,'command',null,owner.el,420);
+  if(!reduce()&&ownerEl?.isConnected)effect(scene,'command',null,ownerEl,420);
  }
  framing(scene)
 }
