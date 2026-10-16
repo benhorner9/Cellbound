@@ -11,7 +11,7 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
   await page.evaluate(()=>{
    window.roomSamples=[];
    window.entryContinuity=[];
-   window.hunterFirstCall=null;
+   window.hunterFirstCall=null;window.hunterCallFrames=[];
    const originalCombatEvent=CellboundCombatFX.combatEvent;
    CellboundCombatFX.combatEvent=function(event,options){
     const arena=options?.arena;
@@ -39,6 +39,20 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
       isCalledAtOwner:pet?.dataset.firstRoomCall==='1',
       ownerDistance:Math.hypot(px-ox,py-oy),
       leftPct:(px-a.left)/a.width*100,topPct:(py-a.top)/a.height*100};
+     // The original assertion only sampled this one moment. Catch a legacy
+     // transform repaint or spatial handoff that moves the pet from (0,0)
+     // during the first second, including on slow iPad WebKit.
+     const started=performance.now(),petId=event.target;
+     const capture=()=>{
+      const node=arena.querySelector('[data-unit="'+petId+'"].cbl-pet');
+      if(!node)return;
+      const rect=node.getBoundingClientRect(),b=arena.getBoundingClientRect(),style=getComputedStyle(node);
+      hunterCallFrames.push({t:performance.now()-started,x:rect.left+rect.width/2-b.left,y:rect.top+rect.height/2-b.top,
+       w:b.width,h:b.height,ready:node.dataset.petReady,visibility:style.visibility,
+       left:style.left,top:style.top,transform:style.transform});
+     };
+     capture();
+     const timer=setInterval(()=>{capture();if(performance.now()-started>1200)clearInterval(timer)},55);
     }
     return result;
    };
@@ -64,15 +78,28 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
    }
    assert(await page.evaluate(()=>Number(CellboundGame.getState().dungeonCompletions)>0),'full run completes through the real boss briefing');
   }
-  const {data,entries,firstCall}=await page.evaluate(()=>{
-   clearInterval(roomTimer);return{data:roomSamples,entries:entryContinuity,firstCall:hunterFirstCall};
+  const {data,entries,firstCall,callFrames}=await page.evaluate(()=>{
+   clearInterval(roomTimer);return{data:roomSamples,entries:entryContinuity,firstCall:hunterFirstCall,callFrames:hunterCallFrames};
   });
   fs.writeFileSync('/tmp/cellbound-realtime/rooms.json',JSON.stringify(data));
   fs.writeFileSync('/tmp/cellbound-realtime/entry-continuity.json',JSON.stringify(entries,null,2));
+  fs.writeFileSync('/tmp/cellbound-realtime/hunter-call-frames.json',JSON.stringify(callFrames,null,2));
   assert(firstCall?.hasPet&&firstCall.isCalledAtOwner&&firstCall.hasCallLabel,
    'first-room Hunter calls their pet as a visible spawn instead of having it enter from off-screen: '+JSON.stringify(firstCall));
   assert(firstCall.ownerDistance<92&&firstCall.leftPct>=6&&firstCall.leftPct<=94&&firstCall.topPct>=12&&firstCall.topPct<=89,
    'first-room pet first appears beside the Hunter inside the arena: '+JSON.stringify(firstCall));
+  assert(callFrames.length>=3,'pet sampled across subsequent animation frames');
+  const readyFrames=callFrames.filter(x=>x.ready==='1'&&x.visibility==='visible');
+  assert(readyFrames.length>=2,'pet becomes visible only after a real position is assigned');
+  for(const f of readyFrames){
+   assert(f.x>=f.w*.035&&f.x<=f.w*.965&&f.y>=f.h*.085&&f.y<=f.h*.92,
+    'pet does not reappear from off-screen corner after initial summon: '+JSON.stringify(f));
+  }
+  for(let i=1;i<readyFrames.length;i++){
+   const a=readyFrames[i-1],b=readyFrames[i],distance=Math.hypot(b.x-a.x,b.y-a.y),elapsed=Math.max(1,b.t-a.t);
+   assert(distance<Math.max(75,elapsed*.32),
+    'pet must not jump after summon or during renderer handover: '+JSON.stringify({distance,elapsed,a,b}));
+  }
   assert(entries.length>=2,'entry continuity captured across room transitions');
   for(const entry of entries){
    // Two WebKit animation frames may span hundreds of milliseconds. Allow
