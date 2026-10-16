@@ -139,7 +139,17 @@ function fightingGeometry(scene,width,height,count=scene.units.size){
 function petObject(scene,e){
  const id=String(e.payload?.petId||e.target||'');if(!id)return;
  if(e.type==='PET_DISMISSED'){
-  const old=scene.pets.get(id);if(old){const u=scene.units.get(old);u?.animation?.cancel();clearCast(u);scene.units.delete(old);old.remove();scene.pets.delete(id);scene.spatialDirty=true}
+  const old=scene.pets.get(id);
+  // The combat engine retires all session pets at the end of an encounter.
+  // That is not a player dismissing their permanent companion: keep the
+  // illustrated actor in this room so it can walk out beside its owner.
+  if(old?.dataset.petPermanent==='1'&&e.result==='combat-end'){
+   const companion=scene.units.get(old);
+   if(companion){clearCast(companion);companion.animation?.cancel();state(companion,'idle')}
+   old.dataset.petBetweenRooms='1';
+   scene.spatialDirty=true;return;
+  }
+  if(old){const u=scene.units.get(old);u?.animation?.cancel();clearCast(u);scene.units.delete(old);old.remove();scene.pets.delete(id);scene.spatialDirty=true}
   return
  }
  if(e.type!=='PET_SUMMONED'||!e.position)return;
@@ -148,7 +158,7 @@ function petObject(scene,e){
   // Persistent companions are the SAME actor from the previous room.
   // Keep their illustrated body and arrival position; only update their
   // next encounter's authoritative destination.
-  existing.dataset.petReturning='1';
+  existing.dataset.petReturning='1';delete existing.dataset.petBetweenRooms;
   const companion=unit(scene,existing),owner=scene.units.get(resolve(e.payload?.ownerId||e.source,{},scene.arena));
   companion.spatialMeta={id,role:'pet',team:owner?.spatialMeta?.team||'party'};
   companion.engagementTarget=e.payload?.targetId;companion.dead=false;
