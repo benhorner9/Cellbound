@@ -27,13 +27,23 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
     const party=Array.from({length:5},(_,i)=>{const klass=['Warrior','Rogue','Hunter','Paladin','Mage'][i],equipment={};for(const pos of CellboundGear.EQUIPMENT_POSITION_ORDER)equipment[pos]=CellboundGear.items.find(x=>x.class===klass&&x.tier===1&&x.slot===pos);return{...testParty[0],id:'qa-'+i,name:klass,class:klass,spec:['Protection','Assassination','Beast Mastery','Holy','Fire'][i],role:i===0?'tank':i===3?'healer':'dps',equipment,level:30,power:20}});
     const encounter={id:'monster-art-qa',title:'Monster animation coverage',kind:'trash',level:8,enemies:batch.map(a=>({name:a.name,classification:'elite',attackRange:['caster','elemental','ranged','machine','turret'].includes(a.family)?25:5,damageType:a.family==='caster'?'magic':'physical'})),enemyHealth:3000,mechanics:[]};
     const result=CellboundCombatReborn.simulate({party,encounter,seed:'monster-art',maxDurationMs:30000});
-    window.coverageFrames={};window.capture=setInterval(()=>document.querySelectorAll('[data-monster-id]').forEach(n=>{const id=n.dataset.monsterId;const frames=coverageFrames[id]||=[];const frame=Number(n.querySelector('[data-sprite-frame]')?.dataset.spriteFrame);if(!frames.includes(frame))frames.push(frame)}),40);
+    // Capture every actual sprite state transition at the source. On WebKit a
+     // 40ms polling timer misses short attacks when the frame rate drops.
+     window.coverageFrames={};
+     window.capture=new MutationObserver(records=>records.forEach(record=>{
+      const n=record.target.closest('[data-monster-id]');if(!n)return;
+      const id=n.dataset.monsterId,frames=coverageFrames[id]||[];
+      const frame=Number(record.target.dataset.spriteFrame);
+      if(Number.isFinite(frame)&&!frames.includes(frame))frames.push(frame);
+     }));
+     window.capture.observe(document.body,{subtree:true,attributes:true,attributeFilter:['data-sprite-frame']});
+     document.querySelectorAll('[data-monster-id]').forEach(n=>{coverageFrames[n.dataset.monsterId]=[Number(n.querySelector('[data-sprite-frame]')?.dataset.spriteFrame)||0]});
     window.playback=CellboundDungeon2D.playSharedEncounter({party,encounter,result,theme:'ashen',room:'hall-embers',zone:'ashen-vault',environmentHtml:'<img alt="" src="assets/ashen-vault/rooms/hall-embers.webp" style="width:100%;height:100%;object-fit:cover">'});
    },batch);
    await page.waitForFunction(n=>document.querySelectorAll('#cb2dArena [data-monster-id]').length===n,batch.length);
    await page.waitForTimeout(6500);
    await page.screenshot({path:dir+'/batch-'+start+'-combat.png'});
-   const observed=await page.evaluate(()=>{clearInterval(capture);return coverageFrames});
+   const observed=await page.evaluate(()=>{capture.disconnect();return coverageFrames});
    for(const a of batch){assert(observed[a.id]?.some(f=>f===1||f===2),a.id+' must perform a real engine-driven attack: '+JSON.stringify(observed));coverage.push({id:a.id,liveFrames:observed[a.id]})}
    // Verify every atlas state through the shared presentation interface. Actual
    // attack playback above remains driven by the unchanged combat simulation.
