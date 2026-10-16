@@ -11,6 +11,7 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
   await page.evaluate(()=>{
    window.roomSamples=[];
    window.entryContinuity=[];
+   window.hunterFirstCall=null;
    const originalCombatEvent=CellboundCombatFX.combatEvent;
    CellboundCombatFX.combatEvent=function(event,options){
     const arena=options?.arena;
@@ -27,7 +28,19 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
         Math.hypot(after.get(p.id).x-p.x,after.get(p.id).y-p.y):null}))});
      }));
     }
-    return originalCombatEvent.apply(this,arguments);
+    const result=originalCombatEvent.apply(this,arguments);
+    if(event?.type==='PET_SUMMONED'&&event.payload?.petType==='hunter-beast'&&arena?.id==='cb2dArena'&&CellboundDungeon2D.currentRun()?.stage===0){
+     const pet=arena.querySelector('[data-unit="'+event.target+'"].cbl-pet');
+     const owner=arena.querySelector('[data-unit="'+event.payload.ownerId+'"].party');
+     const a=arena.getBoundingClientRect(),p=pet?.getBoundingClientRect(),o=owner?.getBoundingClientRect();
+     const px=p?p.left+p.width/2:NaN,py=p?p.top+p.height/2:NaN;
+     const ox=o?o.left+o.width/2:NaN,oy=o?o.top+o.height/2:NaN;
+     hunterFirstCall={hasPet:!!pet,hasCallLabel:!!arena.querySelector('.cbl-hunter-call'),
+      isCalledAtOwner:pet?.dataset.firstRoomCall==='1',
+      ownerDistance:Math.hypot(px-ox,py-oy),
+      leftPct:(px-a.left)/a.width*100,topPct:(py-a.top)/a.height*100};
+    }
+    return result;
    };
    window.roomTimer=setInterval(()=>{
     const run=CellboundDungeon2D.currentRun(),arena=document.querySelector('#cb2dArena');if(!run||!arena)return;
@@ -51,11 +64,15 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
    }
    assert(await page.evaluate(()=>Number(CellboundGame.getState().dungeonCompletions)>0),'full run completes through the real boss briefing');
   }
-  const {data,entries}=await page.evaluate(()=>{
-   clearInterval(roomTimer);return{data:roomSamples,entries:entryContinuity};
+  const {data,entries,firstCall}=await page.evaluate(()=>{
+   clearInterval(roomTimer);return{data:roomSamples,entries:entryContinuity,firstCall:hunterFirstCall};
   });
   fs.writeFileSync('/tmp/cellbound-realtime/rooms.json',JSON.stringify(data));
   fs.writeFileSync('/tmp/cellbound-realtime/entry-continuity.json',JSON.stringify(entries,null,2));
+  assert(firstCall?.hasPet&&firstCall.isCalledAtOwner&&firstCall.hasCallLabel,
+   'first-room Hunter calls their pet as a visible spawn instead of having it enter from off-screen: '+JSON.stringify(firstCall));
+  assert(firstCall.ownerDistance<92&&firstCall.leftPct>=6&&firstCall.leftPct<=94&&firstCall.topPct>=12&&firstCall.topPct<=89,
+   'first-room pet first appears beside the Hunter inside the arena: '+JSON.stringify(firstCall));
   assert(entries.length>=2,'entry continuity captured across room transitions');
   for(const entry of entries){
    // Two WebKit animation frames may span hundreds of milliseconds. Allow
