@@ -1920,7 +1920,7 @@ function stageEnemyPosition(s,i){
  return{x:Number(p.x),y:Number(p.y)}
 }
 function spawn(s){
- window.CellboundMonsterVisuals?.preload?.([...s.enemies,'Cave Spawn']);const next=STAGES[STAGES.findIndex(x=>x.id===s.id)+1];if(next)window.CellboundMonsterVisuals?.preload?.(ashenRoomConfig(next.id)?.art);
+ window.CellboundMonsterVisuals?.preload?.([...s.enemies,'Cave Spawn']);const next=STAGES[STAGES.findIndex(x=>x.id===s.id)+1];if(next)window.CellboundMonsterVisuals?.preload?.(next.enemies);
  // New dungeon runs also enter through a black doorway rather than having
  // characters and scenery appear instantly in the very first room.
  if(run?.stage===0&&!run.initialRoomFaded){run.initialRoomFaded=true;run.roomTransitionBlack=true;setRoomFade(true,0)}
