@@ -967,24 +967,27 @@ async function qPlayReborn(result,tok){
  const renderEvents=events=>{for(const event of events||[]){try{qRenderRebornEvent(event)}catch(error){console.warn('Quest live combat visual recovered',event?.type,event?.ability,error)}}};
  renderEvents(session.drainEvents?.()||[]);
  return await new Promise(resolve=>{
-  let finished=false,raf=0,lastWall=performance.now();
+  let finished=false,timer=0,lastWall=performance.now();
   const resume=()=>{lastWall=performance.now()};document.addEventListener('visibilitychange',resume);
   const finish=(value,finalResult=null)=>{
-   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',resume);
+   if(finished)return;finished=true;if(timer)clearInterval(timer);document.removeEventListener('visibilitychange',resume);
    const final=finalResult||session.snapshot?.()||result;if(final){try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}playbackFight.result=final}
    playbackFight.liveSession=null;resolve(value)
   };
-  const frame=now=>{
+  const tick=()=>{
+   const now=performance.now();
    if(finished)return;if(tok!==encounterToken||!questFight){finish(false);return}
-   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   if(document.hidden){lastWall=now;return}
    const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(questFight.speed);lastWall=now;
    const step=session.advance(delta);questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,Number(step.timeMs)||0);
    if(questFight.presentationKind==='dungeon')window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-q-command]','qCommand');
    if(step.events?.length)renderEvents(step.events);
    if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
-   raf=requestAnimationFrame(frame)
   };
-  raf=requestAnimationFrame(frame)
+  // Authoritative simulation must not stall when a complex WebKit/iPad SVG
+  // presentation drops requestAnimationFrame callbacks. Timers continue
+  // to tick between painted frames; all effects still use the same events.
+  timer=setInterval(tick,50);tick()
  })
 }
 function qEncounterFromConfig(config){
