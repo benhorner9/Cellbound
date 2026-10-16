@@ -19,10 +19,10 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
       const r=el.getBoundingClientRect(),stage=arena.getBoundingClientRect();
       return{id:el.dataset.unit,x:r.left+r.width/2-stage.left,y:r.top+r.height/2-stage.top};
      });
-     const before=positions();
+     const before=positions(),start=performance.now();
      requestAnimationFrame(()=>requestAnimationFrame(()=>{
       const after=new Map(positions().map(p=>[p.id,p]));
-      entryContinuity.push({stage:CellboundDungeon2D.currentRun()?.stage,width:arena.clientWidth,
+      entryContinuity.push({stage:CellboundDungeon2D.currentRun()?.stage,width:arena.clientWidth,elapsedMs:performance.now()-start,
        jumps:before.map(p=>({id:p.id,distance:after.has(p.id)?
         Math.hypot(after.get(p.id).x-p.x,after.get(p.id).y-p.y):null}))});
      }));
@@ -32,8 +32,13 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
    window.roomTimer=setInterval(()=>{
     const run=CellboundDungeon2D.currentRun(),arena=document.querySelector('#cb2dArena');if(!run||!arena)return;
     roomSamples.push({time:performance.now(),stage:run.stage,combat:run.combatActive,travel:arena.classList.contains('travelling'),
-     units:[...arena.querySelectorAll('[data-unit^="p-"]')].map(e=>{const r=e.getBoundingClientRect(),ar=arena.getBoundingClientRect();return{id:e.dataset.unit,left:e.style.left,top:e.style.top,x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,spatial:e.dataset.spatialState}})});
+     units:[...arena.querySelectorAll('[data-unit^="p-"]')].map(e=>{const r=e.getBoundingClientRect(),ar=arena.getBoundingClientRect();return{id:e.dataset.unit,left:e.style.left,top:e.style.top,x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,spatial:e.dataset.spatialState}}),
+     pets:[...arena.querySelectorAll('.cbl-pet[data-pet-permanent="1"]')].map(e=>{const r=e.getBoundingClientRect(),owner=arena.querySelector('[data-unit="'+e.dataset.owner+'"].party'),o=owner?.getBoundingClientRect();return{id:e.dataset.unit,owner:e.dataset.owner,x:r.left+r.width/2,y:r.top+r.height/2,ownerDistance:o?Math.hypot(r.left+r.width/2-o.left-o.width/2,r.top+r.height/2-o.top-o.height/2):null}})});
    },80);
+   // A permanent Hunter pet must enter and exit as a member of the party.
+   const hunter=CellboundGame.getState().roster.find(c=>c.class==='Hunter');
+   if(hunter)hunter.spec='Beast Mastery';
+   CellboundGame.renderAll();
    CellboundDungeon2D.open();
   });
   await page.locator('[data-start]').click();
@@ -53,7 +58,9 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
   fs.writeFileSync('/tmp/cellbound-realtime/entry-continuity.json',JSON.stringify(entries,null,2));
   assert(entries.length>=2,'entry continuity captured across room transitions');
   for(const entry of entries){
-   const limit=Math.max(45,entry.width*.045);
+   // Two WebKit animation frames may span hundreds of milliseconds. Allow
+   // legitimate walking at <= 220px/s, but never a frame-independent warp.
+   const limit=Math.max(45,entry.width*.045,Math.min(220,25+(entry.elapsedMs||0)*.22));
    for(const u of entry.jumps){
     assert(Number.isFinite(u.distance),u.id+' remained mounted during combat handoff');
     assert(u.distance<limit,u.id+' teleported '+Math.round(u.distance)+'px when combat began in stage '+entry.stage);
@@ -69,6 +76,11 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
    // interpolation can move visibly between throttled animation callbacks.
    assert(samples.length>=2&&distance>20,'party visibly travels through exit '+stage+' ('+samples.length+' samples, '+Math.round(distance)+'px)');
   }
+  const observedPets=data.filter(s=>s.pets?.some(p=>p.owner==='p-hunt'&&p.id.includes('hunter-beast')));
+  assert(observedPets.some(s=>s.travel&&s.stage===0),'Hunter beast walks out of the first room with the party');
+  assert(observedPets.some(s=>s.stage===1),'Hunter beast survives the next room entry instead of respawning from an edge');
+  assert(observedPets.some(s=>s.stage===1&&s.pets.some(p=>p.owner==='p-hunt'&&p.ownerDistance!==null&&p.ownerDistance<115)),
+   'Hunter beast appears near its owner in the next room');
   if(process.env.CELLBOUND_REALTIME_FULL_RUN)await page.locator('[data-loot-return]').click();
   else{page.once('dialog',d=>d.accept());await page.locator('#cb2dBackdrop [data-close]').first().click()}
   await page.waitForTimeout(300);await page.evaluate(()=>CellboundDungeon2D.open());
