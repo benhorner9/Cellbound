@@ -1903,8 +1903,14 @@ function spawn(s){
    const start=routeOffset(entry,entry,inside,i,spread),target=stagePartyPosition(s,c,i);
    addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),start.x,start.y,'');mountRebornResourceBar(c);
    const unit=$('[data-unit="p-'+c.id+'"]');if(unit){unit.dataset.uiSlot=String(i);unit.style.setProperty('--label-shift-x',(i===0?-12:i===1?12:i===2?-20:i===3?20:0)+'px');unit.style.setProperty('--status-shift-x',(i===0?-10:i===1?10:i===2?-18:i===3?18:0)+'px')}
-   setTimeout(()=>{if(!unit?.isConnected||unit!==$('[data-unit="p-'+c.id+'"]'))return;move('p-'+c.id,target.x,target.y,560);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},35+i*18)
+   setTimeout(()=>{if(!unit?.isConnected||unit!==$('[data-unit="p-'+c.id+'"]'))return;move('p-'+c.id,target.x,target.y,560);window.CellboundCombatFX?.moveCompanions?.('p-'+c.id,target,560);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},35+i*18)
  });
+ // Re-anchor carried Hunter/summoner pets alongside their owner's new-room
+ // entrance while the inter-room fade is black, before entrance movement.
+ window.CellboundCombatFX?.stageCompanions?.(arena,Object.fromEntries(party().map((c,i)=>{
+  const entryAnchor=routeOffset(entry,entry,inside,i,spread);
+  return['p-'+c.id,entryAnchor]
+ })));
  // Hostiles belong to the room: they are already waiting when the party enters.
  s.enemies.forEach((n,i)=>{
    const meta=stageEnemyMeta(s,i),boss=meta.type==='boss'||meta.type==='world-boss',p=stageEnemyPosition(s,i);
@@ -2222,7 +2228,7 @@ async function travelDeeper(currentStage,nextStage,tok){
    const point=activePath[step],from=step===0?centroid:activePath[step-1],to=activePath[Math.min(activePath.length-1,step+1)]||point;
    const finalStep=step===activePath.length-1,duration=finalStep?520:380;
    if(finalStep)setRoomFade(true,duration+120);
-   chars.forEach((c,i)=>{const p=routeOffset(point,from,to,i,spread);move('p-'+c.id,p.x,p.y,duration)});
+   chars.forEach((c,i)=>{const p=routeOffset(point,from,to,i,spread);move('p-'+c.id,p.x,p.y,duration);window.CellboundCombatFX?.moveCompanions?.('p-'+c.id,p,duration)});
    await delay(duration+35);if(tok!==token||!run)return
  }
  run.roomTransitionBlack=true;
