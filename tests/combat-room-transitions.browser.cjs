@@ -32,7 +32,7 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
    window.roomTimer=setInterval(()=>{
     const run=CellboundDungeon2D.currentRun(),arena=document.querySelector('#cb2dArena');if(!run||!arena)return;
     roomSamples.push({time:performance.now(),stage:run.stage,combat:run.combatActive,travel:arena.classList.contains('travelling'),
-     units:[...arena.querySelectorAll('[data-unit^="p-"]')].map(e=>({id:e.dataset.unit,left:e.style.left,top:e.style.top,spatial:e.dataset.spatialState}))});
+     units:[...arena.querySelectorAll('[data-unit^="p-"]')].map(e=>{const r=e.getBoundingClientRect(),ar=arena.getBoundingClientRect();return{id:e.dataset.unit,left:e.style.left,top:e.style.top,x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,spatial:e.dataset.spatialState}})});
    },80);
    CellboundDungeon2D.open();
   });
@@ -63,8 +63,11 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
   console.log({samples:data.length,transit:transit.length,stages:[...new Set(data.map(x=>x.stage))],errors});
   assert(transit.length>5);
   for(const stage of [0,1]){
-   const samples=transit.filter(x=>x.stage===stage).flatMap(x=>x.units.filter(u=>u.id==='p-tank').map(u=>u.left+u.top));
-   assert(new Set(samples).size>4,'party travels through exit '+stage);
+   const samples=transit.filter(x=>x.stage===stage).flatMap(x=>x.units.filter(u=>u.id==='p-tank'));
+   const distance=Math.max(0,...samples.map(a=>Math.max(...samples.map(b=>Math.hypot(a.x-b.x,a.y-b.y)))));
+   // Physical travel, not a count of JS style writes: native WebKit
+   // interpolation can move visibly between throttled animation callbacks.
+   assert(samples.length>=2&&distance>20,'party visibly travels through exit '+stage+' ('+samples.length+' samples, '+Math.round(distance)+'px)');
   }
   if(process.env.CELLBOUND_REALTIME_FULL_RUN)await page.locator('[data-loot-return]').click();
   else{page.once('dialog',d=>d.accept());await page.locator('#cb2dBackdrop [data-close]').first().click()}
