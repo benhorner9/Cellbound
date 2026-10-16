@@ -62,6 +62,17 @@ for(let i=0;i<600;i++)S.advance([entering],entryGrid,1/60);
 assert(S.distance(entering.visual,entering.reserved)<3,'off-grid entry reaches the fight');
 assert.equal(entering.entryRecovery,false,'standard arena collision rules resume after recovery');
 
+const lagging=unit('lagging','melee',270,210,{visual:{x:130,y:210},reserved:{x:370,y:210},speed:180});
+const frameStart={...lagging.visual};
+assert.equal(typeof S.advanceElapsed,'function','frame-rate independent spatial integration exposed');
+S.advanceElapsed([lagging],entryGrid,.7);
+assert(S.distance(lagging.visual,frameStart)>90,'a slow WebKit frame advances more than a single 70ms slice');
+assert(S.distance(lagging.visual,lagging.reserved)>50,'catch-up movement cannot teleport to the reservation');
+const beforeLongPause={...lagging.visual};
+S.advanceElapsed([lagging],entryGrid,5);
+assert(S.distance(lagging.visual,beforeLongPause)<=127,'after a stalled tab, movement remains bounded to 700ms');
+
+
 // Crowded movement and target change: travel from old stance to reserved stance, never teleport.
 list[0].logical.x=350;apply(list,g);for(let i=0;i<600;i++)S.advance(list,g,1/60);
 for(const u of list)assert(S.distance(u.visual,u.reserved)<3,u.id+' finishes moving: '+S.distance(u.visual,u.reserved));clear(list,g);
