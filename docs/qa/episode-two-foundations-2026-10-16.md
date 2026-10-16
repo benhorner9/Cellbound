@@ -1,7 +1,7 @@
 # Episode 2 foundation implementation — not expansion sign-off
 
 Base: staging `3130a252cdc490ef19de9afe58dc6d430f2250b3`.
-Review target: `staging`. No production or staging deployment has been made by this change.
+Review: [draft PR #224](https://github.com/benhorner9/Cellbound/pull/224), targeting `staging`. No production or staging deployment has been made by this change.
 
 ## Actual implementation
 
@@ -14,11 +14,12 @@ Review target: `staging`. No production or staging deployment has been made by t
 - Both raid-mode identifiers use the same progression definitions. This is **not** implementation of either playable raid mode.
 - The existing PvP armoury purchase function and requirements copy now enforce equipment tiers at Levels 20, 25 and 30. Existing equipment is retained. PvP remains disabled by the pre-existing staging launch gate.
 - New tests exercise progression ordering, retries, migration, runtime talents/abilities, canonical combat scaling, PvP purchases, and browser normalization.
+- Repaired the monster-art observer so newly recorded frame arrays are saved in its coverage map; its real-attack assertions remain unchanged. Updated the existing corrupted-save browser assertion to the new Level 30 cap.
 - Repaired a timing race in the existing room-transition browser test: it stopped sampling immediately when the stage counter incremented, before room 2 mounted. It now awaits that room's rendered fade-in before evaluating the unchanged fade assertions.
 
 ## Important source findings
 
-1. The repository's approved staging configuration shares `jvydqeikdpelmtloulnd` with production. The connected account exposes only that Cellbound project; the other project is unrelated coaching infrastructure.
+1. The repository's approved staging configuration shares `jvydqeikdpelmtloulnd` with production. The connected account exposes only that Cellbound project; the other project is unrelated coaching infrastructure. There are no existing development branches on the Cellbound project.
 2. `main` still has `PLAYER_LEVEL_CAP=15`. Its `normalizeCharacter` path clamps higher saved levels. Deploying this patch against the shared account store before resolving old-client compatibility could let an older client save a downgraded roster. Do not merge/deploy this draft until that risk is resolved through backend isolation or a tested compatibility migration.
 3. Manor's database constraints and RPCs are specific to the `manor` raid ID. Naming Episode 2 raid stages does not make its cooperative infrastructure support them.
 4. Current staging allows all thirteen classes and explicitly disables public PvP. This patch does not silently reverse either pre-existing decision. Five requested beta classes receive additional Level 20/25/30 probes; all thirteen remain in legacy talent/role regression coverage.
@@ -82,7 +83,10 @@ The final raid's domain rule refuses to clear the Subject Zero stage without an 
 | `node tests/episode-two-combat-scaling.cjs` | Pass: 60 synthetic canonical-engine probes, five beta classes, ten specs, two legal builds at Levels 20/25/30. |
 | `node tests/episode-two-pvp-brackets.cjs` | Pass: actual purchase handler accepts 20/25/30, rejects underlevel/repeated spending, displays requirements. |
 | `node tests/episode-two-foundation.browser.cjs` | Chromium pass at 1024×1366, 390×844 and 1440×900. Real game XP/normalization/render paths; mocked backend. |
-| Full `npm run test:browser` | See accompanying test-results JSON for final status. Initial runtime-browser attempt failed to launch all 33 tests; pinned Playwright 1.51.1 installed successfully and the suite was rerun. |
+| Full `npm run test:browser` | Pinned Chromium run: **31/33 passed in 537s**. The two failed test fixtures were corrected and both entire test files passed on targeted rerun: **33/33 individually verified**. The full suite was not repeated after those two corrections. Initial unpinned runtime attempt could not launch browsers. |
+| `node tests/full-playthrough.browser.cjs` rerun | Pass after replacing the obsolete Level 15 clamp expectation with 30. Existing-game playthrough with mocked backend, not Episode 2 campaign completion. |
+| `node tests/monster-art.browser.cjs` rerun | Pass after fixing the observer: 99 monsters with actual engine-driven attack frames, poses, death priority and fallback. |
+| `node tests/combat-room-transitions.browser.cjs` | Pass after waiting for the rendered room, including pet summon/position, fades, movement and close/re-entry. |
 | WebKit foundation test | Blocked: required host libraries missing. `install-deps webkit` failed with environment `setgroups`/`seteuid` restrictions. No WebKit pass claimed. |
 | Actual iPad Safari, two humans, remote persistence | Not executed. |
 

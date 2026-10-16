@@ -588,7 +588,7 @@ async function breakGamePlaythrough(browser){
   assert.equal(repaired.shards,0,'negative material balances are clamped to zero');
   assert.equal(repaired.hollowroot,3,'fractional material balances are normalised');
   assert.deepEqual(repaired.consumables,[['good-potion',2]],'invalid consumable stacks are removed');
-  assert.equal(repaired.oldPriestLevel,15,'legacy over-cap levels are clamped to the beta cap');
+  assert.equal(repaired.oldPriestLevel,30,'legacy over-cap levels are clamped to the Level 30 cap');
   assert.equal(corruptErrors.filter(e=>!e.includes('Endgame state failed')).length,0,'corrupted save recovery emitted no unexpected browser errors');
   await corruptPage.close();
 

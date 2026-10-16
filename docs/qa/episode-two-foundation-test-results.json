@@ -80,11 +80,29 @@
       "scope": "Existing Ashen Vault; first-room pet, fades, movement, close/re-entry"
     },
     "browser_full_chromium": {
-      "result": "RUNNING"
+      "result": "PASS_AFTER_TARGETED_RERUNS",
+      "initial_passed": 31,
+      "total": 33,
+      "initial_seconds": 537,
+      "initial_failures": [
+        "full-playthrough.browser.cjs",
+        "monster-art.browser.cjs"
+      ],
+      "corrections": {
+        "full-playthrough.browser.cjs": "Updated obsolete Level 15 assertion to the new Level 30 cap; full test rerun passed.",
+        "monster-art.browser.cjs": "Persisted new coverage frame arrays in observer; actual attack assertions unchanged; all 99 monsters passed on rerun."
+      },
+      "final_individual_passed": 33,
+      "full_suite_repeated_after_fixes": false
     },
     "foundation_webkit": {
       "result": "BLOCKED",
       "reason": "Missing host libraries; system dependency install failed with setgroups/seteuid restrictions"
+    },
+    "monster_art_chromium": {
+      "result": "PASS",
+      "monsters": 99,
+      "scope": "Real engine-driven attacks, poses, death priority, loading and fallback"
     }
   },
   "live_account_tests": "NOT_RUN",
@@ -93,5 +111,6 @@
     "scenes": 0,
     "panels": 0
   },
-  "full_campaign_playthrough": "NOT_RUN"
+  "full_campaign_playthrough": "NOT_RUN",
+  "review_pr": "https://github.com/benhorner9/Cellbound/pull/224"
 }
