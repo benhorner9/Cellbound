@@ -1060,15 +1060,19 @@ if(supportive){
 }
 if(r<=7){
   const formation=meleeFormationPoint(ctx,u,target),
-   desired=ctx.physicalSpace===false?visibleCastPoint(ctx,u,target,r,formation):openMeleeEngagement(ctx,u,target,r,formation),
+   basePoint=visibleCastPoint(ctx,u,target,r,formation),
+   // Preserve existing class cadence and stable formations; only a Warrior
+   // with an occupied slot needs the extra flank search.
+   crowded=ctx.physicalSpace!==false&&u.class==='Warrior'&&!!bodyOverlap(ctx,u,basePoint,[target.id]),
+   desired=crowded?openMeleeEngagement(ctx,u,target,r,basePoint):basePoint,
    slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
-  // The preset stance is a presentation preference, NOT an extra condition
-  // for landing attacks. A tank already adjacent with clear sight must never
-  // stop using abilities because a teammate occupied its ideal marker.
-  if(combatRange&&los&&ctx.physicalSpace!==false)return true;
-  const tolerance=u.role==='tank'?2.1:3.75;
+  if(combatRange&&los&&ctx.physicalSpace&&u.role!=='tank')return true;
+  // Tanks normally respect their assigned front-facing formation. If that
+  // space is taken, an already-adjacent Warrior may attack while rerouting.
+  if(u.role==='tank'&&crowded&&combatRange&&los)return true;
+  const tolerance=u.role==='tank'?(ctx.physicalSpace?3.35:2.1):3.75;
   if(combatRange&&los&&slotDistance<=tolerance)return true;
-  if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=4.75)return true;
+  if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=(ctx.physicalSpace?6.75:4.75))return true;
   moveTo(ctx,u,desired,500,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
   return false
 }
