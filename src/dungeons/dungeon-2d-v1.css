@@ -1564,15 +1564,21 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 }
 
 
-/* Ashen Vault room crossfade v1 */
+/* Ashen Vault doorway transitions.
+   The late fullscreen visibility rules lift party actors, telegraphs, HUD
+   captions and room labels to z-index 68-90. The fade must cover ALL of them,
+   not sit behind the characters at z-index 60. */
 .cb2d-arena .cb2d-room-fade{
-  position:absolute;
-  inset:0;
-  z-index:60;
-  pointer-events:none;
-  background:#020303;
+  position:absolute!important;
+  inset:0!important;
+  z-index:1000!important;
+  display:block!important;
+  visibility:visible!important;
+  pointer-events:none!important;
+  background:#020303!important;
   opacity:0;
-  transition:opacity var(--cb2d-room-fade-ms,520ms) ease;
+  transition:opacity var(--cb2d-room-fade-ms,520ms) ease-in-out;
+  will-change:opacity;
 }
 .cb2d-arena .cb2d-room-fade.is-black{opacity:1}
 .cb2d-arena .cb2d-room-fade.is-clear{opacity:0}
