@@ -58,7 +58,9 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
    };
    window.roomTimer=setInterval(()=>{
     const run=CellboundDungeon2D.currentRun(),arena=document.querySelector('#cb2dArena');if(!run||!arena)return;
-    roomSamples.push({time:performance.now(),stage:run.stage,combat:run.combatActive,travel:arena.classList.contains('travelling'),
+    const fade=arena.querySelector('.cb2d-room-fade'),fadeStyle=fade&&getComputedStyle(fade);
+    roomSamples.push({time:performance.now(),stage:run.stage,combat:run.combatActive,travel:arena.classList.contains('travelling'),entering:arena.classList.contains('room-entering'),
+     fade:fadeStyle?Number(fadeStyle.opacity):null,fadeZ:fadeStyle?Number(fadeStyle.zIndex):null,
      units:[...arena.querySelectorAll('[data-unit^="p-"]')].map(e=>{const r=e.getBoundingClientRect(),ar=arena.getBoundingClientRect();return{id:e.dataset.unit,left:e.style.left,top:e.style.top,x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,spatial:e.dataset.spatialState}}),
      pets:[...arena.querySelectorAll('.cbl-pet[data-pet-permanent="1"]')].map(e=>{const r=e.getBoundingClientRect(),owner=arena.querySelector('[data-unit="'+e.dataset.owner+'"].party'),o=owner?.getBoundingClientRect();return{id:e.dataset.unit,owner:e.dataset.owner,x:r.left+r.width/2,y:r.top+r.height/2,ownerDistance:o?Math.hypot(r.left+r.width/2-o.left-o.width/2,r.top+r.height/2-o.top-o.height/2):null}})});
    },80);
@@ -113,6 +115,25 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
   const transit=data.filter(x=>x.travel);
   console.log({samples:data.length,transit:transit.length,stages:[...new Set(data.map(x=>x.stage))],errors});
   assert(transit.length>5);
+  // Full-screen visibility rules had accidentally moved party sprites above
+  // the old fade. Verify effective computed opacity and paint ordering, not
+  // just that an "is-black" class was toggled.
+  assert(data.some(x=>x.stage===0&&x.entering&&x.fade!==null&&x.fade>.82),
+   'first room begins black before the scene fades in');
+  assert(data.some(x=>x.stage===0&&x.fade!==null&&x.fade<.12),
+   'first room fades back to full visibility');
+  for(const stage of [0,1]){
+   const exiting=transit.filter(x=>x.stage===stage);
+   assert(exiting.some(x=>x.fade!==null&&x.fade>.82),
+    'room '+stage+' visibly fades to black as the party leaves');
+   const next=data.filter(x=>x.stage===stage+1);
+   assert(next.some(x=>x.entering&&x.fade!==null&&x.fade>.82),
+    'room '+(stage+1)+' stays black while its scene is mounted');
+   assert(next.some(x=>x.fade!==null&&x.fade<.12),
+    'room '+(stage+1)+' fades back in after entering');
+   assert(exiting.concat(next).filter(x=>x.fade!==null).every(x=>x.fadeZ>=900),
+    'room fade must paint above the party, telegraphs and route labels');
+  }
   for(const stage of [0,1]){
    const samples=transit.filter(x=>x.stage===stage).flatMap(x=>x.units.filter(u=>u.id==='p-tank'));
    const distance=Math.max(0,...samples.map(a=>Math.max(...samples.map(b=>Math.hypot(a.x-b.x,a.y-b.y)))));
