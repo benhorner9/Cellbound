@@ -1063,7 +1063,7 @@ if(r<=7){
    basePoint=visibleCastPoint(ctx,u,target,r,formation),
    // Preserve existing class cadence and stable formations; only a Warrior
    // with an occupied slot needs the extra flank search.
-   crowded=ctx.physicalSpace!==false&&u.class==='Warrior'&&!!bodyOverlap(ctx,u,basePoint,[target.id]),
+   crowded=ctx.physicalSpace!==false&&u.class==='Warrior'&&u.role==='tank'&&!!bodyOverlap(ctx,u,basePoint,[target.id]),
    desired=crowded?openMeleeEngagement(ctx,u,target,r,basePoint):basePoint,
    slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
   if(combatRange&&los&&ctx.physicalSpace&&u.role!=='tank')return true;
