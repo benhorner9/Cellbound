@@ -7,7 +7,11 @@ const registry=new Map(),mounted=new WeakMap(),pending=new WeakMap(),cache=new M
 for(const a of ART)for(const key of [a.id,a.name,...a.aliases])registry.set(normalize(key),a);
 function resolve(value){const name=typeof value==='object'?value?.visualId||value?.name||value?.id:value;return registry.get(normalize(name))||(/^manor-thrall-\d+$/.test(normalize(name))?registry.get('manor-thrall'):null)||null}
 // Bounded decoded-image LRU. Only requested encounters are loaded, never the catalogue.
-function preload(values){return Promise.all([...new Set((values||[]).map(resolve).filter(Boolean))].map(a=>{
+function preload(values){
+ // Support a single monster name as well as a roster. A mistaken string
+ // argument must never abort a dungeon encounter during visual preloading.
+ const names=Array.isArray(values)?values:values==null?[]:[values];
+ return Promise.all([...new Set(names.map(resolve).filter(Boolean))].map(a=>{
  if(cache.has(a.id)){const entry=cache.get(a.id);cache.delete(a.id);cache.set(a.id,entry);return entry.promise}
  const image=new Image();image.decoding='async';const entry={image,promise:null,ready:false};
  entry.promise=new Promise(resolve=>{let settled=false;const end=ok=>{entry.ready=ok;if(settled){if(ok)window.CellboundCombatPortraits?.refresh?.();return}settled=true;clearTimeout(timer);resolve(ok)};const timer=setTimeout(()=>end(false),1800);image.onload=()=>image.decode?.().then(()=>end(true),()=>end(true))||end(true);image.onerror=()=>end(false);image.src=a.src});
