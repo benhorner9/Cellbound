@@ -1,8 +1,7 @@
 'use strict';
 function validate(url,key,approval={}){
  const shared=url==='https://jvydqeikdpelmtloulnd.supabase.co';
- const approved=approval.backendMode==='owner-approved-shared-2026-10-10'&&approval.projectRef==='jvydqeikdpelmtloulnd'&&approval.websiteTarget==='staging';
- if(!/^https:\/\/[a-z0-9]{20}\.supabase\.co$/.test(url||'')||shared&&!approved)throw Error('Job 9 deployment blocked: configure a separate staging Supabase project or the explicit owner approval. The existing project is shared with production.');
+ if(!/^https:\/\/[a-z0-9]{20}\.supabase\.co$/.test(url||'')||shared)throw Error('Deployment blocked: Level 30 requires a separate staging Supabase project. The former shared-storage waiver is no longer valid.');
  let anon=false;try{anon=JSON.parse(Buffer.from(key.split('.')[1],'base64url')).role==='anon'}catch{}
  if(!/^sb_publishable_[A-Za-z0-9_-]+$/.test(key||'')&&!anon)throw Error('Staging requires a publishable or anon key. Server credentials are forbidden.');
  return true;

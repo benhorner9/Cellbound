@@ -2,14 +2,15 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const {validate}=require('../tools/verify-booth-staging.cjs');
 assert.throws(()=>validate(),/separate staging/);
-assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_publishable_test'),/shared with production/);
+assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_publishable_test'),/separate staging/);
 assert.throws(()=>validate('https://abcdefghijklmnopqrst.supabase.co','sb_secret_never_ship'),/Server credentials/);
 const token=role=>'header.'+Buffer.from(JSON.stringify({role})).toString('base64url')+'.signature';
 assert.throws(()=>validate('https://abcdefghijklmnopqrst.supabase.co',token('service_role')),/Server credentials/);
 assert(validate('https://abcdefghijklmnopqrst.supabase.co','sb_publishable_staging'));
 assert(validate('https://abcdefghijklmnopqrst.supabase.co',token('anon')));
 const approval=require('../config/booth-release.json');
-assert(validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_publishable_test',approval));
+assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_publishable_test',approval),/separate staging/);
+assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_publishable_test',{backendMode:'owner-approved-shared-2026-10-10',projectRef:'jvydqeikdpelmtloulnd',websiteTarget:'staging'}),/separate staging/);
 assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_publishable_test',{...approval,websiteTarget:'main'}));
 assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_secret_test',approval));
 const workflow=fs.readFileSync('.github/workflows/deploy-staging.yml','utf8');

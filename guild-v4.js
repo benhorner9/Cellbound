@@ -137,6 +137,14 @@ const bosses=[
 let state=null;
 let account=null;
 let currentUser=null;
+let secureRevision=null,secureEpisodeState,secureProgressionCap=15;
+async function secureAccountLoad(){
+  const result=await supabaseClient.rpc('cellbound_episodes',{p_action:'load',p_payload:{}});
+  if(result.error)throw Error(result.error.message||'Secure account service unavailable');
+  secureRevision=result.data.revision;secureEpisodeState=result.data.state?.episode2;
+  secureProgressionCap=result.data.progression_cap===30?30:15;
+  return result.data.state;
+}
 let bankBulkMode=false;
 const bankBulkSelected=new Set();
 const bankUpgradeCooldowns=new Map();
@@ -392,9 +400,18 @@ async function persistState({reusePending=false}={}){
   // preserve the original timestamp so stale local data cannot outrank newer
   // progress saved from another device.
   const pending=(reusePending&&pendingSaveMeta(currentUser.id))||markPendingLocal();
-  const snapshot=JSON.parse(JSON.stringify(state)),savedAt=pending?.at||new Date().toISOString();setSync('Saving…','busy');
+  const snapshotOwner=currentUser.id,snapshot=JSON.parse(JSON.stringify(state)),savedAt=pending?.at||new Date().toISOString();setSync('Saving…','busy');
   saveSerial=saveSerial.catch(error=>{console.warn('Previous Cellbound save rejected; retrying latest state',error);return false;}).then(async()=>{
     try{
+      if(currentUser?.id!==snapshotOwner)throw Error('Account changed; stale save cancelled');
+      if(window.CELLBOUND_SECURE_SAVES===true){
+        if(secureRevision===null)throw Error('Verified account load required before saving');
+        if(secureEpisodeState===undefined)delete snapshot.episode2;else snapshot.episode2=secureEpisodeState;
+        const result=await supabaseClient.rpc('cellbound_episodes',{p_action:'save',p_payload:{build:String(window.CELLBOUND_BUILD),saveVersion:SAVE_VERSION,revision:secureRevision,state:snapshot}});
+        if(result.error){window.dispatchEvent(new CustomEvent('cellbound:save-rejected',{detail:{message:result.error.message}}));throw Error(result.error.message||'Secure save rejected');}
+        secureRevision=result.data.revision;
+        clearPendingLocal(pending?.token);setSync('Saved','ok');return true;
+      }
       // Account security intentionally grants players UPDATE only on game_state/updated_at.
       // Do not use PostgREST upsert here: ON CONFLICT also tries to UPDATE user_id and is rejected.
       let {data,error}=await supabaseClient.from('guild_accounts')
@@ -424,7 +441,7 @@ function flushPendingSave(){
   clearTimeout(syncTimer);syncTimer=null;persistState({reusePending:true});
 }
 async function loadAccount(user){
-  currentUser=user;setSync('Loading…','busy');
+  currentUser=user;secureRevision=null;secureEpisodeState=undefined;setSync('Loading…','busy');
   const [accountResult,identityResult,adminResult]=await Promise.all([
     supabaseClient.from('guild_accounts').select('user_id,game_state,guild_name,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle(),
     supabaseClient.rpc('cellbound_social_identity'),
@@ -448,7 +465,12 @@ async function loadAccount(user){
   // Cloud is authoritative unless this browser has a demonstrably newer unsynced snapshot.
   // The roster recovery path remains for legacy saves created while cloud persistence was broken.
   if(pending&&!localPendingNewer&&Number.isFinite(remoteAt)&&pendingAt<=remoteAt)localStorage.removeItem(PENDING_SAVE);
-  const sourceRaw=(localPendingNewer||localPlayableRecovery)?localRaw:(remoteRaw||localRaw||initialState());
+  let sourceRaw=(localPendingNewer||localPlayableRecovery)?localRaw:(remoteRaw||localRaw||initialState());
+  if(window.CELLBOUND_SECURE_SAVES===true){
+    secureRevision=null;
+    try{sourceRaw=await secureAccountLoad();if(!Object.keys(sourceRaw).length)sourceRaw=initialState();}
+    catch(error){setSync('Secure load unavailable — saving blocked','error');throw error;}
+  }
   state=migrateState(sourceRaw);
   if(account.guild_name)state.socialDisplayName=account.guild_name;
   removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
@@ -460,6 +482,10 @@ async function refreshStateFromServer({render=true}={}){
   if(!currentUser||!supabaseClient)return false;
   clearTimeout(syncTimer);
   try{
+    if(window.CELLBOUND_SECURE_SAVES===true){
+      await saveSerial.catch(()=>false);
+      state=migrateState(await secureAccountLoad());writeLocal();if(render)renderAll();setSync('Saved','ok');return true;
+    }
     if(pendingSaveMeta(currentUser.id))await persistState({reusePending:true});else await saveSerial.catch(()=>false);
     const {data,error}=await supabaseClient.from('guild_accounts').select('game_state,guild_name,updated_at').eq('user_id',currentUser.id).maybeSingle();
     if(error||!data?.game_state){if(error)console.warn('Cellbound state refresh failed',error);return false;}

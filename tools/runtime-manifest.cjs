@@ -111,6 +111,7 @@ const groups=Object.freeze({
   "boss-dossier-v1.js",
   "twelve-below-v1.js",
   "admin-v1.js",
+  "episode-manager-v1.js",
   "admin-room-editor-v1.js",
   "admin-comic-scene-editor-v1.js",
   "analytics-v1.js",
