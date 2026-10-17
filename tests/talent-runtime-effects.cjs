@@ -26,12 +26,12 @@ vm.runInContext(cs.slice(start,end)+';window.__allTalentTrees=trees;',ctxVM);
 const trees=win.__allTalentTrees;
 let checked=0;
 const byEffect={},failures=[];
-for(const [klass,bySpec] of Object.entries(trees)){
+for(const testLevel of [15,20,25,30])for(const [klass,bySpec] of Object.entries(trees)){
  for(const spec of Object.keys(bySpec)){
   for(const def of B.bonusTalentDefinitions(klass,spec)){
    const v={
     class:klass,spec,role:B.roleFor(klass,spec),id:'p1',characterId:'1',
-    name:'Hero',level:15,alive:true,position:{x:25,y:50},
+    name:'Hero',level:testLevel,alive:true,position:{x:25,y:50},
     statuses:{},resource:{value:100},talentTree:{},talents:{[spec]:{}},
     defence:{blockChance:0},power:20,maxHealth:100,health:100
    };
@@ -72,15 +72,15 @@ for(const [klass,bySpec] of Object.entries(trees)){
   }
  }
 }
-assert.equal(checked,196,'Every new talent needs a passing functional combat check');
+assert.equal(checked,196*4,'Every new talent needs a passing functional combat check');
 assert.deepEqual(failures,[],'Talent combat effect failures');
 
 // Every talent-gated ability must be absent without its talent and unlocked with rank 1.
 let gatedAbilities=0;
-for(const [klass,bySpec] of Object.entries(trees)){
+for(const testLevel of [15,20,25,30])for(const [klass,bySpec] of Object.entries(trees)){
  for(const [spec,nodes] of Object.entries(bySpec)){
   const names=new Set(nodes.map(node=>node.id));
-  const role=B.roleFor(klass,spec),character={class:klass,spec,level:15,talents:{[spec]:{}}};
+  const role=B.roleFor(klass,spec),character={class:klass,spec,level:testLevel,talents:{[spec]:{}}};
   const pool=win.CellboundCombatReborn.skills.classSkillPool(character,role);
   for(const ability of pool.filter(a=>a.talentReq&&names.has(a.talentReq))){
    assert.equal(win.CellboundCombatReborn.skills.unlockedSkillPool(character,role).some(a=>a.id===ability.id),false,
@@ -93,8 +93,8 @@ for(const [klass,bySpec] of Object.entries(trees)){
   }
  }
 }
-assert.equal(gatedAbilities,63,'All currently defined gated class abilities were checked');
+assert.equal(gatedAbilities,63*4,'All currently defined gated class abilities were checked');
 console.log('Talent-gated abilities PASS: '+gatedAbilities+' ability checks.');
 
-console.log('Talent V2 runtime PASS: '+checked+' new talent effects across 13 classes and 28 specialisations.');
+console.log('Talent V2 runtime PASS: '+checked+' talent effects across 13 classes and 28 specialisations at Levels 15, 20, 25 and 30.');
 console.log('Effect categories: '+JSON.stringify(byEffect));

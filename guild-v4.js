@@ -137,6 +137,14 @@ const bosses=[
 let state=null;
 let account=null;
 let currentUser=null;
+let secureRevision=null,secureEpisodeState,secureProgressionCap=15;
+async function secureAccountLoad(){
+  const result=await supabaseClient.rpc('cellbound_episodes',{p_action:'load',p_payload:{}});
+  if(result.error)throw Error(result.error.message||'Secure account service unavailable');
+  secureRevision=result.data.revision;secureEpisodeState=result.data.state?.episode2;
+  secureProgressionCap=result.data.progression_cap===30?30:15;
+  return result.data.state;
+}
 let bankBulkMode=false;
 const bankBulkSelected=new Set();
 const bankUpgradeCooldowns=new Map();
@@ -239,7 +247,7 @@ async function awardPartyXp(amount,{source='Progression'}={}){
     let level=beforeLevel,xp=beforeLevel>=PLAYER_LEVEL_CAP?0:beforeXp+reward,levels=0;
     while(level<PLAYER_LEVEL_CAP&&xp>=xpNeeded(level)){xp-=xpNeeded(level);level++;levels++}
     if(level>=PLAYER_LEVEL_CAP){level=PLAYER_LEVEL_CAP;xp=0}
-    c.level=level;c.xp=xp;if(levels)c.talent=(Number(c.talent)||0)+levels;
+    c.level=level;c.xp=xp;B?.syncLegacyTalentCounter?.(c);
     return{id:c.id,name:c.name,amount:beforeLevel>=PLAYER_LEVEL_CAP?0:reward,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:xpNeeded(level),levels,capped:level>=PLAYER_LEVEL_CAP}
   });
   state.activity=Array.isArray(state.activity)?state.activity:[];
@@ -350,7 +358,9 @@ function migrateState(raw){
     s.onboarding={...s.onboarding,complete:false,stage:'zeltira-arrival',zone:s.onboarding.zone||'zeltira',partyCreatedAt:s.onboarding.partyCreatedAt||new Date().toISOString()};
     delete s.onboarding.draft;
   }
-  repairInvalidOffHands(s);s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;delete s.fresh_start_at;return s;
+  repairInvalidOffHands(s);s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;delete s.fresh_start_at;
+  if(currentUser?.id&&window.CellboundEpisodeTwo)s.episode2=window.CellboundEpisodeTwo.migrate(s,currentUser.id).episode2;
+  return s;
 }
 function localCandidate(userId){
   const owner=localStorage.getItem(LOCAL_OWNER);
@@ -390,9 +400,18 @@ async function persistState({reusePending=false}={}){
   // preserve the original timestamp so stale local data cannot outrank newer
   // progress saved from another device.
   const pending=(reusePending&&pendingSaveMeta(currentUser.id))||markPendingLocal();
-  const snapshot=JSON.parse(JSON.stringify(state)),savedAt=pending?.at||new Date().toISOString();setSync('Saving…','busy');
+  const snapshotOwner=currentUser.id,snapshot=JSON.parse(JSON.stringify(state)),savedAt=pending?.at||new Date().toISOString();setSync('Saving…','busy');
   saveSerial=saveSerial.catch(error=>{console.warn('Previous Cellbound save rejected; retrying latest state',error);return false;}).then(async()=>{
     try{
+      if(currentUser?.id!==snapshotOwner)throw Error('Account changed; stale save cancelled');
+      if(window.CELLBOUND_SECURE_SAVES===true){
+        if(secureRevision===null)throw Error('Verified account load required before saving');
+        if(secureEpisodeState===undefined)delete snapshot.episode2;else snapshot.episode2=secureEpisodeState;
+        const result=await supabaseClient.rpc('cellbound_episodes',{p_action:'save',p_payload:{build:String(window.CELLBOUND_EPISODE_BUILD||window.CELLBOUND_BUILD),saveVersion:SAVE_VERSION,revision:secureRevision,state:snapshot}});
+        if(result.error){window.dispatchEvent(new CustomEvent('cellbound:save-rejected',{detail:{message:result.error.message}}));throw Error(result.error.message||'Secure save rejected');}
+        secureRevision=result.data.revision;
+        clearPendingLocal(pending?.token);setSync('Saved','ok');return true;
+      }
       // Account security intentionally grants players UPDATE only on game_state/updated_at.
       // Do not use PostgREST upsert here: ON CONFLICT also tries to UPDATE user_id and is rejected.
       let {data,error}=await supabaseClient.from('guild_accounts')
@@ -422,7 +441,7 @@ function flushPendingSave(){
   clearTimeout(syncTimer);syncTimer=null;persistState({reusePending:true});
 }
 async function loadAccount(user){
-  currentUser=user;setSync('Loading…','busy');
+  currentUser=user;secureRevision=null;secureEpisodeState=undefined;setSync('Loading…','busy');
   const [accountResult,identityResult,adminResult]=await Promise.all([
     supabaseClient.from('guild_accounts').select('user_id,game_state,guild_name,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle(),
     supabaseClient.rpc('cellbound_social_identity'),
@@ -446,7 +465,12 @@ async function loadAccount(user){
   // Cloud is authoritative unless this browser has a demonstrably newer unsynced snapshot.
   // The roster recovery path remains for legacy saves created while cloud persistence was broken.
   if(pending&&!localPendingNewer&&Number.isFinite(remoteAt)&&pendingAt<=remoteAt)localStorage.removeItem(PENDING_SAVE);
-  const sourceRaw=(localPendingNewer||localPlayableRecovery)?localRaw:(remoteRaw||localRaw||initialState());
+  let sourceRaw=(localPendingNewer||localPlayableRecovery)?localRaw:(remoteRaw||localRaw||initialState());
+  if(window.CELLBOUND_SECURE_SAVES===true){
+    secureRevision=null;
+    try{sourceRaw=await secureAccountLoad();if(!Object.keys(sourceRaw).length)sourceRaw=initialState();}
+    catch(error){setSync('Secure load unavailable — saving blocked','error');throw error;}
+  }
   state=migrateState(sourceRaw);
   if(account.guild_name)state.socialDisplayName=account.guild_name;
   removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
@@ -458,6 +482,10 @@ async function refreshStateFromServer({render=true}={}){
   if(!currentUser||!supabaseClient)return false;
   clearTimeout(syncTimer);
   try{
+    if(window.CELLBOUND_SECURE_SAVES===true){
+      await saveSerial.catch(()=>false);
+      state=migrateState(await secureAccountLoad());writeLocal();if(render)renderAll();setSync('Saved','ok');return true;
+    }
     if(pendingSaveMeta(currentUser.id))await persistState({reusePending:true});else await saveSerial.catch(()=>false);
     const {data,error}=await supabaseClient.from('guild_accounts').select('game_state,guild_name,updated_at').eq('user_id',currentUser.id).maybeSingle();
     if(error||!data?.game_state){if(error)console.warn('Cellbound state refresh failed',error);return false;}
@@ -493,6 +521,11 @@ async function refreshMembershipStatus({render=true,silent=false}={}){
   if(before!==after||partyChanged){writeLocal();await persistState()}
   if(render&&(before!==after||partyChanged))renderAll();
   return after;
+}
+function acceptEpisodeSnapshot(snapshot){
+  if(window.CELLBOUND_SECURE_SAVES!==true||snapshot?.user_id!==currentUser?.id||!Number.isSafeInteger(snapshot.revision)||snapshot.revision<Number(secureRevision||0))throw Error('Invalid chapter snapshot');
+  clearTimeout(syncTimer);secureRevision=snapshot.revision;secureEpisodeState=snapshot.state.episode2;
+  state=migrateState(snapshot.state);writeLocal();renderAll();setSync('Saved','ok');
 }
 function replaceState(next){state=migrateState(next);removeInvalidPartyMembers(state);writeLocal();persistState();renderAll();}
 
@@ -1268,7 +1301,7 @@ function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
-  ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
+  ready:false,acceptEpisodeSnapshot,waitForPendingSaves:async()=>{if(syncTimer){clearTimeout(syncTimer);syncTimer=null;await persistState({reusePending:true});}return saveSerial.catch(()=>false)},getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
   characterItemLevel,partyItemLevel,averagePartyLevel,xpNeeded,awardPartyXp,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
   betaPlayableClasses:BETA_PLAYABLE_CLASSES,getPlayableClasses:availableClassNames,isBetaClassPlayable,isCharacterBetaPlayable,isStaffAdmin:hasStaffClassAccess,adminRole,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,

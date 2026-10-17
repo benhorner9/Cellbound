@@ -1454,6 +1454,7 @@ async function nullComic(title,speaker,text,art,done){
  if(done)await done()
 }
 async function startNullQuest(){
+ if(window.CELLBOUND_SECURE_SAVES&&window.CellboundNullStory)return window.CellboundNullStory.open();
  const n=nullQ();if(n.complete)return;
  if(!nullQuestAvailable()){questToast('QUEST LOCKED',NULL_QUEST.title,'Complete The Manor raid before investigating NULL//07.');Game.switchView?.('raids');return}
  if(!n.started){n.started=true;n.startedAt=new Date().toISOString();nullHistory('Dr. Elara Voss isolated an impossible transmission marked NULL//07.');await commit()}
@@ -1480,6 +1481,7 @@ async function startNullQuest(){
  await nullAdvance('signal','entry','Voss traced NULL//07 to a sealed research facility omitted from every living map.')
 }
 async function playNullQuest(){
+ if(window.CELLBOUND_SECURE_SAVES&&window.CellboundNullStory)return window.CellboundNullStory.open();
  const n=nullQ(),stage=nullStage(),p=party();
  if(!nullQuestAvailable()){questToast('QUEST LOCKED',NULL_QUEST.title,'Complete The Manor raid before investigating NULL//07.');Game.switchView?.('raids');return}
  if(p.length!==5){alert('Build a complete active five-character party before entering the Null Complex.');Game.switchView?.('party');return}

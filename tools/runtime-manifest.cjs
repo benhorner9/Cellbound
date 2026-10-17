@@ -87,6 +87,7 @@ const groups=Object.freeze({
   "gear-data.js",
   "profession-data.js",
   "balance-v1.js",
+  "episode-two-v1.js",
   "item-atlas-v2.js",
   "item-visuals-v2.js",
   "item-art-v1.js",
@@ -110,6 +111,12 @@ const groups=Object.freeze({
   "boss-dossier-v1.js",
   "twelve-below-v1.js",
   "admin-v1.js",
+  "episode-manager-v1.js",
+  "null-story-data-v1.js",
+  "null-story-v1.js",
+  "morrowfields-data-v1.js",
+  "morrowfields-v1.js",
+  "morrowfields-v1.css",
   "admin-room-editor-v1.js",
   "admin-comic-scene-editor-v1.js",
   "analytics-v1.js",
@@ -210,6 +217,12 @@ const files=Object.freeze([
 ]);
 
 const sourceOverrides=Object.freeze({
+  "null-story-data-v1.js":"src/episodes/null-story-data-v1.js",
+  "null-story-v1.js":"src/episodes/null-story-v1.js",
+  "morrowfields-data-v1.js":"src/episodes/morrowfields-data-v1.js",
+  "morrowfields-v1.js":"src/episodes/morrowfields-v1.js",
+  "morrowfields-v1.css":"src/episodes/morrowfields-v1.css",
+  "episode-two-v1.js":"src/episodes/episode-two-v1.js",
   "combat-hud-standard-v1.js":"src/combat/combat-hud-standard-v1.js",
   "combat-identities-v1.js":"src/combat/combat-identities-v1.js",
   "combat-data-v1.js":"src/combat/combat-data-v1.js",

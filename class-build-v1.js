@@ -1,9 +1,9 @@
 (()=>{
 'use strict';
 
-const VERSION='2.0.0';
-const CURRENT_LEVEL_CAP=15;
-const CURRENT_SPEC_POINT_CAP=8;
+const VERSION='2.1.0';
+const CURRENT_LEVEL_CAP=30;
+const CURRENT_SPEC_POINT_CAP=12;
 const TALENT_TIER_REQUIREMENTS=[0,1,3,5,6];
 
 const SPEC_ROLES={
@@ -27,7 +27,9 @@ function clampLevel(level){
 }
 function talentBudgetForLevel(level){
   const l=clampLevel(level);
-  return Math.min(CURRENT_SPEC_POINT_CAP,1+Math.floor((l-1)/2))
+  // Preserve every Episode 1 build. New points arrive at 18, 22, 26 and 30.
+  // The 16-node trees still have unpurchased ranks and exclusive capstones.
+  return l<=15?1+Math.floor((l-1)/2):Math.min(CURRENT_SPEC_POINT_CAP,8+Math.floor((l-14)/4))
 }
 function talentSpent(character,spec=character?.spec){
   const tree=character?.talents?.[spec]||{};

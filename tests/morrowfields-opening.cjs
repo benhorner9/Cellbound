@@ -1,0 +1,68 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {createStore,seed,PLAYER,OTHER}=require('../tools/morrowfields-test-store.cjs');
+const {createOpeningAuthority}=require('../server/episodes/opening-authority.cjs');
+(async()=>{
+ const fixture=await createStore();const {db,store,proof}=fixture;let now=1000000,count=0;
+ const a=createOpeningAuthority({store,clock:()=>now});
+ const call=async(action,payload={},user=PLAYER)=>{const r=await store.load(user);return a.act(user,{build:'local-dev',revision:r.account.revision,action,...payload})};
+ const fails=async(fn,pattern)=>{await assert.rejects(fn,pattern);count++};
+ try{
+  await fails(()=>call('start'),/verified Null/);await proof(PLAYER);
+  await db.exec("update episode_private.environment set name='production'");
+  await fails(()=>call('start'),/not been released/);
+  await db.exec("update episode_private.environment set name='isolated-development'");
+  await fails(()=>call('start',{build:'stale'}),/Update/);
+  let r=await call('start');assert.equal(r.account.state.episode2.quests.e2_q01.objectives.length,0);count++;
+  await fails(()=>call('recover'),/current objective/);await fails(()=>call('intro-panel',{panel:2}),/current panel/);
+  for(let panel=0;panel<3;panel++)r=await call('intro-panel',{panel});
+  await call('briefing');await fails(()=>call('visit',{location:'wagon'}),/Mara/);
+  await call('visit',{location:'fenstead'});await call('meet-mara');await call('visit',{location:'wagon'});
+  for(const clue of ['tracks','container','soil','device'])r=await call('clue',{clue});
+  assert.deepEqual(r.account.state.episode2.quests.e2_q01.objectives,['transmission','briefing','fenstead','wagon']);count++;
+  await fails(()=>call('visit',{location:'heart'}),/not playable/);
+  r=await call('battle-start');const attempt=r.attempt;
+  await fails(()=>call('battle-finish',{attempt:'other',outcome:'victory'}),/Unknown/);
+  await fails(()=>call('battle-finish',{attempt:attempt.id,commands:[{at:0,type:'kill-all'}]}),/Unknown command/);
+  await fails(()=>call('battle-finish',{attempt:attempt.id}),/not finished/);
+  now+=180000;r=await call('battle-finish',{attempt:attempt.id,commands:[]});
+  assert.equal(r.attempt.status,'victory');count++;
+  assert.equal(r.account.state.gold,5000);count++;
+  const replay=a.replay((await store.load(PLAYER)).attempt,[]);
+  assert(replay.events.some(e=>e.type==='PET_SUMMONED'||e.type==='SUMMON_SPAWNED'||String(e.type).includes('SUMMON')));count++;
+  assert(replay.summary.players.some(p=>p.healing>0));count++;
+  await call('recover');await fails(()=>call('outro-panel',{panel:2}),/current panel/);
+  for(let panel=0;panel<3;panel++)r=await call('outro-panel',{panel});
+  assert.equal(r.account.state.gold,5180);assert(r.account.state.roster.every(c=>c.level===16&&c.xp===0));count++;
+  assert.deepEqual(r.account.state.episode2.unlocked,['e2_q01','e2_q02','e2_q03']);count++;
+  const earned=JSON.stringify(r.account.state);r=await call('outro-panel',{panel:2});assert.equal(JSON.stringify(r.account.state),earned);count++;
+  assert.equal((await store.load(OTHER)).account.state.gold,5000);count++;
+  await fails(()=>call('load',{},OTHER),/verified Null/);
+  const reload=createOpeningAuthority({store,clock:()=>now});r=await reload.act(PLAYER,{action:'load',build:'local-dev'});assert.equal(JSON.stringify(r.account.state),earned);count++;
+  await fails(()=>a.act(PLAYER,{action:'visit',location:'map',build:'local-dev',revision:0}),/Stale/);
+  const same=(await store.load(PLAYER)).account.revision;
+  const concurrent=await Promise.allSettled([a.act(PLAYER,{action:'visit',location:'map',build:'local-dev',revision:same}),a.act(PLAYER,{action:'visit',location:'fenstead',build:'local-dev',revision:same})]);assert.equal(concurrent.filter(x=>x.status==='fulfilled').length,1);count++;
+  await db.exec('set role authenticated');
+  await fails(()=>db.query('select public.cellbound_opening_commit($1,0,$2,$3,$4)',[OTHER,'local-dev','{}','{}']),/permission denied/);
+  await fails(()=>db.exec('select * from episode_private.story_proofs'),/permission denied/);
+  await db.exec('reset role');
+  // A trusted proof alone cannot replace the actual story state. Nor can a
+  // browser-supplied victory turn a genuine wipe into objective completion.
+  await proof(OTHER);
+  const weak=seed();weak.questSystem.nullComplex.complete=false;
+  await db.query('update episode_private.saves set state=$1 where user_id=$2',[JSON.stringify(weak),OTHER]);
+  await fails(()=>call('start',{},OTHER),/verified Null/);
+  weak.questSystem.nullComplex.complete=true;weak.roster.forEach(c=>c._combatHealthPct=1);
+  await db.query('update episode_private.saves set state=$1 where user_id=$2',[JSON.stringify(weak),OTHER]);
+  await call('start',{},OTHER);for(let panel=0;panel<3;panel++)await call('intro-panel',{panel},OTHER);
+  await call('briefing',{},OTHER);await call('visit',{location:'fenstead'},OTHER);await call('meet-mara',{},OTHER);await call('visit',{location:'wagon'},OTHER);
+  for(const clue of ['tracks','container','soil','device'])await call('clue',{clue},OTHER);
+  const doomed=await call('battle-start',{},OTHER);now+=180000;
+  const lost=await call('battle-finish',{attempt:doomed.attempt.id,commands:[],outcome:'victory',gold:999999},OTHER);
+  assert.equal(lost.attempt.status,'defeat');assert.equal(lost.account.state.gold,5000);assert.equal(lost.account.state.episode2.quests.e2_q01.objectives.length,4);count++;
+  await fails(()=>call('recover',{},OTHER),/current objective/);
+  const retry=await call('battle-start',{},OTHER);assert.notEqual(retry.attempt.id,doomed.attempt.id);count++;
+  const production=(await db.query("select state from episode_private.registry where id='episode_2'")).rows[0].state;assert.equal(production,'in_development');count++;
+  console.log('Morrowfields opening PASS: '+count+' checks; all six objectives, canonical combat replay, 4300 XP × 5 + 180 gold, idempotency, reload, CAS concurrency, account ownership, denied client writes, production closed. Finale proof is an explicit trusted fixture; no hosted finale or staging sign-off.');
+ }finally{await db.close()}
+})().catch(e=>{console.error(e);process.exitCode=1});

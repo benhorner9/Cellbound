@@ -1375,5 +1375,44 @@
       0.52
     ],
     "frames": 6
+  },
+  {
+    "id": "blighted-grazer",
+    "name": "Blighted Grazer",
+    "aliases": [],
+    "family": "beast",
+    "size": 120,
+    "src": "assets/monsters/v1/blighted-grazer.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "harvest-crawler",
+    "name": "Harvest Crawler",
+    "aliases": [],
+    "family": "beast",
+    "size": 95,
+    "src": "assets/monsters/v1/harvest-crawler.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
+  },
+  {
+    "id": "rotroot-husk",
+    "name": "Rotroot Husk",
+    "aliases": [],
+    "family": "caster",
+    "size": 115,
+    "src": "assets/monsters/v1/rotroot-husk.webp",
+    "socket": [
+      0.24,
+      0.52
+    ],
+    "frames": 6
   }
 ]

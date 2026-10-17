@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
 
-const VERSION=2;
-const PLAYER_LEVEL_CAP=15;
+const VERSION=3;
+const PLAYER_LEVEL_CAP=30;
 const PVE_WIPE_CELL_SHOCK=25;
 const RECOVERY_MINUTES=Object.freeze({standard:60,member:30});
 const SHIPWRIGHT_KIT_COST=1000;

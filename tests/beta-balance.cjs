@@ -16,7 +16,7 @@ function load(file){
 
 const balance=load('balance-v1.js').CellboundBalance;
 assert(balance,'balance contract loads');
-assert.equal(balance.PLAYER_LEVEL_CAP,15);
+assert.equal(balance.PLAYER_LEVEL_CAP,30);
 assert.equal(balance.xpToReachLevel(15),33950,'Level 1 to 15 XP budget is stable');
 assert.deepEqual(
   [1,2,3,4].map(balance.fourfoldKeyChance),

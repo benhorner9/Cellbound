@@ -1,4 +1,9 @@
 const fs=require('fs');
+if(process.env.GITHUB_REF==='refs/heads/staging'||process.env.CELLBOUND_TARGET==='development'){
+ const dev=require('./config/development.json');
+ process.env.CELLBOUND_STAGING_SUPABASE_URL=dev.backend;process.env.CELLBOUND_STAGING_SUPABASE_KEY=dev.publishableKey;process.env.CELLBOUND_EPISODE_SERVICE_URL=dev.chapterService;
+}
+
 const path=require('path');
 const vm=require('vm');
 const zlib=require('zlib');
@@ -22,6 +27,7 @@ const retiredBlackoutArt='assets/blackout-station/rooms/reactor-core.webp';
 if(fs.existsSync(path.join(__dirname,retiredBlackoutArt)))throw new Error('Retired Blackout reactor artwork returned: '+retiredBlackoutArt);
 const assets=[...['warrior','paladin','hunter','rogue','mage','weapons','secondary','heads','accessories','resources'].map(name=>'assets/items/illustrated-v2/'+name+'.webp'),'assets/combat/status-icons-v1.webp','assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp','assets/bosses/no-way-back-three-hounds-v3.jpg','assets/bosses/no-way-back-silas-vane-v3.jpg','assets/pvp/maps/arena-shattered-crucible.svg','assets/pvp/maps/capture-the-flag-ruined-causeway.svg','assets/pvp/maps/king-of-the-hill-fivefold-ruins.svg','assets/ashen-vault/rooms/broken-gate.webp','assets/ashen-vault/rooms/hall-embers.webp','assets/ashen-vault/rooms/kael.webp','assets/ashen-vault/rooms/furnace.webp','assets/ashen-vault/rooms/embermaw.webp','assets/ashen-vault/rooms/vault-depths.webp','assets/ashen-vault/rooms/vaultheart.webp','assets/chaos-canyon/rooms/canyon-mouth.webp','assets/chaos-canyon/rooms/thorn-trail.webp','assets/chaos-canyon/rooms/sentinel.webp','assets/chaos-canyon/rooms/crossing.webp','assets/chaos-canyon/rooms/warden.webp','assets/chaos-canyon/rooms/wildheart.webp','assets/chaos-canyon/rooms/vorran.webp','assets/hollow-sanctum/rooms/gallery-void-v2.webp','assets/hollow-sanctum/rooms/sentinel-void-v2.webp','assets/hollow-sanctum/rooms/choir-void-v2.webp','assets/blackout-station/rooms/grid-distribution-board.svg','assets/blackout-station/rooms/vex-calder-room.avif','assets/fractured-ages/rooms/high-noon.webp','assets/fractured-ages/rooms/iron-kingdom.webp','assets/fractured-ages/rooms/first-kingdom.webp','assets/fractured-ages/rooms/silent-frontier.webp','assets/fractured-ages/rooms/funhouse.webp','assets/dungeons/ashen-vault.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp','assets/quests/ashes-east-road-cinder-cart.webp','assets/tutorial/battlefields/rootling-nest.webp','assets/tutorial/battlefields/collapsed-gallery.webp','assets/tutorial/battlefields/hollow-warden.webp','assets/world/twelve-below-key-art.webp','assets/manor/manor-butler.webp','assets/manor/manor-maids.webp','assets/manor/manor-engineer.webp','assets/manor/manor-master.webp','assets/manor/manor-raid-hero.webp','assets/manor/rooms/entrance-hall.svg','assets/manor/rooms/dining-room.svg','assets/manor/rooms/kitchen.svg','assets/manor/rooms/workshop.svg','assets/manor/rooms/bedroom.svg','assets/manor/rooms/attic.svg','assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp','assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','assets/comics/tutorial/the_quartermaster_s_choice.webp','assets/comics/tutorial/warden_s_descent_into_the_ruins.webp','assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp','assets/comics/thirteenth-bell/sealed_letter.webp','assets/comics/thirteenth-bell/greywake_arrival.webp','assets/comics/thirteenth-bell/greywake_arrival-restored.svg','assets/comics/thirteenth-bell/locked_house.webp','assets/comics/thirteenth-bell/final_run.webp','assets/comics/thirteenth-bell/bellkeeper.webp','assets/comics/thirteenth-bell/bell_breaks.webp','assets/comics/thirteenth-bell/greywake_freed.webp','assets/comics/thirteenth-bell/departure.webp','assets/comics/null-complex/voss-signal.webp','assets/comics/null-complex/facility-entry.webp','assets/comics/null-complex/first-aberrant.webp','assets/comics/null-complex/orin-recording.webp','assets/comics/null-complex/subject-zero.webp','assets/comics/null-complex/teleporter.webp','assets/comics/null-complex/overseer-awakens.webp','assets/comics/null-complex/prototype-07.webp','assets/comics/null-complex/escape.webp','assets/comics/null-complex/subject-zero-awake.webp','assets/comics/tutorial-2026/twilight-evacuation.webp','assets/comics/tutorial-2026/twilight-siege.webp','assets/comics/tutorial-2026/sunset-briefing.webp','assets/comics/tutorial-2026/investigating-tracks.webp','assets/comics/tutorial-2026/arcane-trail.webp','assets/comics/tutorial-2026/arcane-armory.webp','assets/comics/tutorial-2026/descent.webp','assets/comics/tutorial-2026/violet-catacombs.webp','assets/comics/tutorial-2026/lost-crystal-vault.webp','assets/comics/tutorial-2026/arcane-relic.webp','assets/comics/tutorial-2026/wardstone-twilight.webp','assets/comics/main-quests-2026/forge-seal.svg','assets/comics/main-quests-2026/forge-keepers.svg','assets/comics/main-quests-2026/forge-decision.svg','assets/comics/main-quests-2026/glass-buried.svg','assets/comics/main-quests-2026/glass-whisper.svg','assets/comics/main-quests-2026/glass-warning.svg','assets/comics/main-quests-2026/dead-glass.svg','assets/comics/main-quests-2026/glass-recognition.svg','assets/comics/main-quests-2026/arcane-shard-war-room.webp','assets/comics/main-quests-2026/arcane-passage-revealed.webp','assets/comics/main-quests-2026/adventurers-beyond-violet-portal.webp','assets/comics/main-quests-2026/heroes-against-arcane-storm.webp','assets/comics/main-quests-2026/into-molten-citadel.webp','assets/comics/main-quests-2026/surveyors-violet-depths.webp','assets/comics/main-quests-2026/echoes-violet-shard.webp','assets/comics/main-quests-2026/cartographers-council.webp','assets/comics/main-quests-2026/shattered-crystal-ritual.webp','assets/comics/main-quests-2026/ghostly-violet-wardens.webp','assets/comics/main-quests-2026/adventurers-before-breathing-gate.webp','assets/comics/main-quests-2026/breathing-gate-awakens.webp','assets/comics/main-quests-2026/heroes-before-cosmic-gateway.webp','assets/comics/main-quests-2026/awakening-arcane-seal.webp','assets/comics/main-quests-2026/arcane-gate-awakening.webp','assets/comics/main-quests-2026/adventurers-before-arcane-abyss.webp','assets/comics/main-quests-2026/pressure-before-three.svg','assets/comics/main-quests-2026/pressure-shard-moves.svg','assets/comics/main-quests-2026/surveyor-cut-marks.svg','assets/comics/main-quests-2026/surveyor-ledger-handoff.svg','assets/comics/main-quests-2026/breathing-door-three-rings.svg','assets/comics/main-quests-2026/breathing-door-heart-pulse.svg','assets/comics/main-quests-2026/dead-glass-responds.svg','assets/comics/main-quests-2026/bearer-fragment-temperature.svg','assets/comics/main-quests-2026/fragment-memory-echo.svg','assets/comics/main-quests-2026/seal-pressure-equalises.svg','assets/comics/no-way-back-2026/sailor-trusted-crew.svg','assets/comics/no-way-back-2026/sailor-black-buoy.svg','assets/comics/no-way-back-2026/boat-hull-inspection.svg','assets/comics/no-way-back-2026/boat-lost-chart.svg','assets/comics/no-way-back-2026/silas-trap-closes.svg','assets/comics/story-composites-2026/bram-hollow-report.svg','assets/comics/story-composites-2026/bram-underground-warning.svg','assets/comics/story-composites-2026/bram-council-report.svg','assets/comics/story-composites-2026/bram-final-warning.svg','assets/comics/story-composites-2026/fourfold-stranger.svg','assets/comics/story-composites-2026/fourfold-locked-coffer.svg','assets/comics/story-composites-2026/fourfold-four-keyholes.svg','assets/comics/story-composites-2026/fourfold-fractured-timeline.svg','assets/comics/story-composites-2026/fourfold-worlds-through-time.svg','assets/comics/story-composites-2026/fourfold-future-reveal.svg','assets/comics/no-way-back-2026/sailor-harbour-warning.svg','assets/comics/no-way-back-2026/sailor-hidden-island.svg','assets/comics/no-way-back-2026/boat-weathered-hull.svg','assets/comics/no-way-back-2026/boat-missing-chart.svg','assets/comics/no-way-back-2026/return-stormwreck.svg','assets/comics/no-way-back-2026/return-damaged-sail.svg','assets/comics/no-way-back-2026/manor-island-landing.svg','assets/comics/no-way-back-2026/silas-manor-master.svg'];
 assets.push(...require('./config/monster-art.json').map(a=>a.src));
+assets.push(...require('./config/morrowfields-art.json').map(a=>a.src));
 for(const required of ['assets/hollow-sanctum/rooms/gallery-void-v2.webp','assets/hollow-sanctum/rooms/sentinel-void-v2.webp','assets/hollow-sanctum/rooms/choir-void-v2.webp']){
   if(!assets.includes(required))throw new Error('Hollow Sanctum rendered room asset is not shipped: '+required);
 }
@@ -57,12 +63,20 @@ const touchFix=`\n<style id="cellbound-ios-touch-fix">html,body{touch-action:man
 for(const file of files){
   const src=sourcePath(file),dest=path.join(out,file);
   let contents=fs.readFileSync(src,'utf8');
-  if(['auth.js','guild-v4.js'].includes(file)&&process.env.CELLBOUND_STAGING_SUPABASE_URL){
+  if(['auth.js','guild-v4.js','highscores-v1.js'].includes(file)&&process.env.CELLBOUND_STAGING_SUPABASE_URL){
     const url=process.env.CELLBOUND_STAGING_SUPABASE_URL,key=process.env.CELLBOUND_STAGING_SUPABASE_KEY||'';
     require('./tools/verify-booth-staging.cjs').validate(url,key,require('./config/booth-release.json'));
     contents=contents.replace(/const SUPABASE_URL='[^']*';/, 'const SUPABASE_URL='+JSON.stringify(url)+';')
-      .replace(/const SUPABASE_PUBLISHABLE_KEY='[^']*';/, 'const SUPABASE_PUBLISHABLE_KEY='+JSON.stringify(key)+';');
+      .replace(/const SUPABASE_PUBLISHABLE_KEY='[^']*';/, 'const SUPABASE_PUBLISHABLE_KEY='+JSON.stringify(key)+';')
+      .replace(/const URL='https:\/\/jvydqeikdpelmtloulnd.supabase.co';/,'const URL='+JSON.stringify(url)+';')
+      .replace(/const KEY='[^']*';/,'const KEY='+JSON.stringify(key)+';');
   }
+  if(file==='guild.html'&&process.env.CELLBOUND_EPISODE_SERVICE_URL){
+    const endpoint=new URL(process.env.CELLBOUND_EPISODE_SERVICE_URL);
+    if(endpoint.protocol!=='https:'||!process.env.CELLBOUND_STAGING_SUPABASE_URL)throw Error('Chapter service requires isolated development configuration and HTTPS');
+    contents=contents.replace('</head>','<script>window.CELLBOUND_EPISODE_BUILD='+JSON.stringify(require('./config/development.json').authorityBuild)+';window.CELLBOUND_EPISODE_SERVICE_URL='+JSON.stringify(endpoint.href).replace(/</g,'\\u003c')+';</script></head>');
+  }
+  if(file==='guild.html')contents=contents.replace('__CELLBOUND_SECURE_SAVES__',process.env.CELLBOUND_STAGING_SUPABASE_URL?'true':'false');
 
   if(file.endsWith('.js')){
     try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}
@@ -70,6 +84,10 @@ for(const file of files){
     if(singletonCollectionCall.test(contents))throw new Error('querySelector helper $ cannot be used as a collection in '+file+'; use document.querySelectorAll instead');
   }
   if(/sb_secret_|SUPABASE_SERVICE_ROLE(?:_KEY)?|service[_-]?role[_-]?key/i.test(contents))throw new Error('Server-only Supabase credential marker found in shipped asset '+file);
+  if(file==='auth.js'&&process.env.CELLBOUND_STAGING_SUPABASE_URL)contents+='\n'+fs.readFileSync('src/episodes/development-login.js','utf8');
+  if(file==='auth.js'&&process.env.CELLBOUND_STAGING_SUPABASE_URL)contents+=`
+intro.textContent='Development game · separate accounts and saves. Create a dev account here to begin.';
+`;
   if(file==='auth.js'){
     for(const hook of ['const NEW_PASSWORD_MIN=12',"creds(true,NEW_PASSWORD_MIN)","password.value.length<NEW_PASSWORD_MIN"])if(!contents.includes(hook))throw new Error('New/reset password hardening is missing '+hook);
   }
@@ -250,7 +268,7 @@ if(file==='quests-v2.js'){
     if(contents.includes('CellboundItemVisuals.icon'))throw new Error('Classic item icons must not delegate to the newer Forge vector renderer');
   }
   if(file==='class-build-v1.js'){
-    for(const hook of ["CURRENT_SPEC_POINT_CAP=8","TALENT_TIER_REQUIREMENTS=[0,1,3,5,6]","'Priest|Shadow':'dps'","'Hunter|Beast Mastery':'dps'","function talentBudgetForLevel","function talentRemaining"])if(!contents.includes(hook))throw new Error('Class build foundation is incomplete: '+hook);
+    for(const hook of ["CURRENT_SPEC_POINT_CAP=12","TALENT_TIER_REQUIREMENTS=[0,1,3,5,6]","'Priest|Shadow':'dps'","'Hunter|Beast Mastery':'dps'","function talentBudgetForLevel","function talentRemaining"])if(!contents.includes(hook))throw new Error('Class build foundation is incomplete: '+hook);
   }
   if(file==='gear-data.js'){
     if(!contents.includes('appearanceId:itemId')||!contents.includes('inferWeaponType')||!contents.includes('inferOffHandType'))throw new Error('Equipment Visuals V2 item identity metadata is missing');
@@ -754,7 +772,7 @@ const UI_BUNDLE_SOURCES=[
   'readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css',
   'roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','monster-visuals-v1.css','bank-v2.css','character-command-v1.css',
   'character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','character-forge-v1.css',
-  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','combat-cinematic-v1.css','layout-safety-v1.css','highscores-v1.css','top-navigation-v1.css','ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css','adventure-combat-v1.css','workshop-economy-v1.css','community-workspace-v1.css','ui-polish-block8.css'
+  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','combat-cinematic-v1.css','layout-safety-v1.css','highscores-v1.css','top-navigation-v1.css','ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css','adventure-combat-v1.css','workshop-economy-v1.css','community-workspace-v1.css','morrowfields-v1.css','ui-polish-block8.css'
 ];
 {
   const bundle=UI_BUNDLE_SOURCES.map(file=>'/* ===== '+file+' ===== */\n'+fs.readFileSync(sourcePath(file),'utf8')).join('\n\n');
@@ -989,7 +1007,7 @@ const combatPortraitRuntime=readSource('combat-portraits-v1.js');
     if(average<gate)throw new Error(from+' Normal loot cannot reach '+to+' entry gate');
   }
   const B=sandbox.CellboundBuildRules;
-  if(!B||B.talentBudgetForLevel(1)!==1||B.talentBudgetForLevel(15)!==8)throw new Error('Per-spec talent budget foundation failed runtime validation');
+  if(!B||B.talentBudgetForLevel(1)!==1||B.talentBudgetForLevel(15)!==8||B.talentBudgetForLevel(30)!==12)throw new Error('Per-spec talent budget foundation failed runtime validation');
   const adaptiveProbe={class:'Priest',spec:'Holy',equipment:{}},adaptiveRules=G.setBonusRulesFor(adaptiveProbe,'Holy',{tier:4,class:'Priest'});
   if(!(adaptiveRules?.pieces2?.effects?.healingScale>1)||!(adaptiveRules?.pieces4?.effects?.talentSkillCooldownScale<1))throw new Error('Adaptive healer set rules failed runtime validation');
   const balanceRules=G.setBonusRulesFor({class:'Druid',spec:'Balance'},'Balance',{tier:4,class:'Druid'});

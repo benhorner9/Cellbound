@@ -974,7 +974,7 @@ function talentTree(c,spec){
   }).join('');
   return `<div class="cb-talent-command-v2">
     <section class="cb-talent-command-hero">
-      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Eight points at level 15. Choose one capstone; every point matters.</p><div class="cb-spec-activate-row">${spec===c.spec?'<span class="cb-spec-active-pill">ACTIVE SPECIALISATION</span>':`<button type="button" class="cb-activate-spec" data-activate-spec="${spec}">ACTIVATE ${spec.toUpperCase()}</button>`}</div></div>
+      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Eight points at Level 15; twelve at Level 30. Choose one capstone; every point matters.</p><div class="cb-spec-activate-row">${spec===c.spec?'<span class="cb-spec-active-pill">ACTIVE SPECIALISATION</span>':`<button type="button" class="cb-activate-spec" data-activate-spec="${spec}">ACTIVATE ${spec.toUpperCase()}</button>`}</div></div>
       <div class="cb-talent-command-metrics">
         <div><span>AVAILABLE</span><b>${talentRemaining(c,spec)}</b><small>${spec} build points</small></div>
         <div><span>SPENT</span><b>${spent}/${talentBudget(c)}</b><small>In ${spec}</small></div>

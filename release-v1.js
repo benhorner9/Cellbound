@@ -5,6 +5,12 @@ let Game=null,db=null,timer=null,busy=false,lastRequired=null,pendingInfo=null;
 const currentBuild=()=>String(window.CELLBOUND_BUILD||'development');
 const currentBuildNumber=()=>Number(window.CELLBOUND_BUILD_NUMBER||0)||0;
 const releaseGateEnabled=()=>/^(?:www\.)?playcellbound\.com$/i.test(String(location.hostname||''));
+// The database rejects obsolete writes; this only explains that authoritative
+// rejection. It is not a substitute for server save-version enforcement.
+window.addEventListener('cellbound:save-rejected',event=>{
+ const message=String(event.detail?.message||'');
+ if(/Unsupported client/.test(message))showGate({message:'This build cannot save safely. Load the current build before continuing.',build_id:'current server build'});
+});
 
 function overlay(){
   let el=$('#cellboundUpdateGate');

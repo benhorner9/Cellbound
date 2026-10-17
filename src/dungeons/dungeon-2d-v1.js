@@ -940,7 +940,7 @@ function awardPartyXp(amount){
    }
    if(level>=cap){level=cap;xp=0}
    c.level=level;c.xp=xp;
-   if(levels>0)c.talent=(Number(c.talent)||0)+levels;
+   window.CellboundBuildRules?.syncLegacyTalentCounter?.(c);
    gains.push({
      id:c.id,name:c.name,portrait:c.portrait||String(c.name||'?').slice(0,2).toUpperCase(),
      amount:beforeLevel>=cap?0:reward,beforeLevel,beforeXp,beforeNeed,
@@ -3219,10 +3219,16 @@ async function playSharedEncounter(options={}){
  run.rebornSimulation={options:{party:extParty,encounter:copyObject(encounter),tactics:copyObject(startTactics),seed:result.seed},meta:options.zone?{zone:options.zone}:{}};
  const C=window.CellboundCombatStandard;if(C?.createLiveSession){
    run.rebornLiveSession=C.createLiveSession(run.rebornSimulation.options,run.rebornSimulation.meta);
+   if(typeof options.onCommand==='function'){
+    const live=run.rebornLiveSession,originalCommand=live.command.bind(live);
+    live.command=(type,payload={})=>{options.onCommand(type,payload,live.timeMs);return originalCommand(type,payload)};
+   }
    const liveStart=run.rebornLiveSession.snapshot();
    try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,liveStart)}catch(_){}
  }
- sharedViewerShell(options);spawnSharedEncounter(run.externalStage,result,options);
+ sharedViewerShell(options);
+ if(options.disableConsumables){const potion=$('[data-shared-potion]');if(potion){potion.disabled=true;potion.hidden=true}}
+ spawnSharedEncounter(run.externalStage,result,options);
  const outcome=await playRebornTimeline(result,tok);
  if(tok!==token||!run)return'cancelled';
  run.resolved=true;status(outcome==='victory'?'Encounter cleared':'Party defeated');

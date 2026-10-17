@@ -1,6 +1,6 @@
 {
-  "backendMode": "owner-approved-shared-2026-10-10",
-  "projectRef": "jvydqeikdpelmtloulnd",
-  "websiteTarget": "staging",
-  "approval": "Ben explicitly authorised shared database changes on 2026-10-10. No production website deployment."
+ "backendMode":"isolated-development",
+ "projectRef":"zrvehixcthljiktcctne",
+ "websiteTarget":"staging",
+ "approval":"Owner authorised separate development environment on 2026-10-17. Development uses its own Auth, saves and chapter verifier; official activation is unchanged."
 }

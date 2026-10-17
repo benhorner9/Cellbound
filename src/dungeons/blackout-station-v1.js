@@ -612,7 +612,7 @@ function awardXp(){
   let level=beforeLevel,xp=beforeLevel>=cap?0:beforeXp+reward,levels=0;
   while(level<cap&&xp>=hpNeed(level)){xp-=hpNeed(level);level++;levels++}
   if(level>=cap){level=cap;xp=0}
-  c.level=level;c.xp=xp;if(levels)c.talent=(Number(c.talent)||0)+levels;
+  c.level=level;c.xp=xp;window.CellboundBuildRules?.syncLegacyTalentCounter?.(c);
   return{name:c.name,amount:beforeLevel>=cap?0:reward,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:hpNeed(level),level,xp,levels,capped:level>=cap}
  })
 }
