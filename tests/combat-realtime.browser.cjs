@@ -60,7 +60,7 @@ const viewport=process.env.CELLBOUND_REALTIME_MOBILE?{width:390,height:844}:proc
     frames.push(t-last);last=t;
     maxEffects=Math.max(maxEffects,document.querySelectorAll('.cbl-fx').length);
     document.querySelectorAll('#q2dArena [data-animation-state]').forEach(n=>states.add(n.dataset.animationState));
-    document.querySelectorAll('#q2dArena .cb-paper-upper-right').forEach(arm=>poses.add(arm.getAttribute('transform')));
+    const arm=document.querySelector('#q2dArena .cb-paper-upper-right');if(arm)poses.add(arm.getAttribute('transform'));
     if(t-start<duration)requestAnimationFrame(frame);else{observer?.disconnect();resolve({frames,long,elapsed:t-start,probe:realtimeProbe,poses:poses.size,states:[...states],maxEffects})}
    }requestAnimationFrame(frame);
   }),duration);

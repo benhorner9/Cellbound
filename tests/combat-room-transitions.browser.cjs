@@ -10,6 +10,16 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
   const errors=await mount(page,coreLoopState(),false,{simulateDungeonRuntime:true});
   await page.evaluate(()=>{
    window.roomSamples=[];
+   // The 80ms polling interval can miss a brief but valid fully-black
+   // scene mount. Capture the actual fade and entry class transitions too.
+   window.roomEntryFrames=[];
+   const observeEntry=new MutationObserver(()=>{
+    const arena=document.querySelector('#cb2dArena'),run=window.CellboundDungeon2D?.currentRun?.();
+    const fade=arena?.querySelector('.cb2d-room-fade');if(!arena||!run||!fade)return;
+    const style=getComputedStyle(fade);
+    roomEntryFrames.push({stage:run.stage,entering:arena.classList.contains('room-entering'),black:fade.classList.contains('is-black'),fade:Number(style.opacity)});
+   });
+   observeEntry.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
    window.entryContinuity=[];
    window.hunterFirstCall=null;window.hunterCallFrames=[];
    const originalCombatEvent=CellboundCombatFX.combatEvent;
@@ -80,8 +90,8 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
    }
    assert(await page.evaluate(()=>Number(CellboundGame.getState().dungeonCompletions)>0),'full run completes through the real boss briefing');
   }
-  const {data,entries,firstCall,callFrames}=await page.evaluate(()=>{
-   clearInterval(roomTimer);return{data:roomSamples,entries:entryContinuity,firstCall:hunterFirstCall,callFrames:hunterCallFrames};
+  const {data,entries,firstCall,callFrames,entryFrames}=await page.evaluate(()=>{
+   clearInterval(roomTimer);return{data:roomSamples,entries:entryContinuity,firstCall:hunterFirstCall,callFrames:hunterCallFrames,entryFrames:roomEntryFrames};
   });
   fs.writeFileSync('/tmp/cellbound-realtime/rooms.json',JSON.stringify(data));
   fs.writeFileSync('/tmp/cellbound-realtime/entry-continuity.json',JSON.stringify(entries,null,2));
@@ -127,7 +137,7 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
    assert(exiting.some(x=>x.fade!==null&&x.fade>.82),
     'room '+stage+' visibly fades to black as the party leaves');
    const next=data.filter(x=>x.stage===stage+1);
-   assert(next.some(x=>x.entering&&x.fade!==null&&x.fade>.82),
+   assert(next.some(x=>x.entering&&x.fade!==null&&x.fade>.82)||entryFrames.some(x=>x.stage===stage+1&&x.entering&&x.black&&x.fade>.82),
     'room '+(stage+1)+' stays black while its scene is mounted');
    assert(next.some(x=>x.fade!==null&&x.fade<.12),
     'room '+(stage+1)+' fades back in after entering');

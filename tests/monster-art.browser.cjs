@@ -35,8 +35,8 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
       const original=CellboundMonsterVisuals.apply;
       CellboundMonsterVisuals.apply=function(el,state){
        const result=original.apply(this,arguments),id=el?.dataset?.monsterId;
-       if(id&&window.coverageFrames&&el.isConnected){
-        const frames=coverageFrames[id]||[],frame=Number(el.querySelector('[data-sprite-frame]')?.dataset.spriteFrame);
+       if(id&&window.coverageFrames&&result){
+        const frames=coverageFrames[id]||[],node=el.querySelector('[data-sprite-frame]'),frame=node?Number(node.dataset.spriteFrame):NaN;
         if(Number.isFinite(frame)&&!frames.includes(frame))frames.push(frame);
        }
        return result;
