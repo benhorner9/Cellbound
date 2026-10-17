@@ -10,6 +10,7 @@ Provisioning order for a fresh **development-only** database:
 2. server/development/episode-base.sql (Episode Manager and chapter RPCs).
 3. supabase/migrations/20261017145518_development_episode_authority.sql (environment, save mirror, trusted finale, first-copy import).
 4. server/development/booth-restore.sql (private design publishing schema and column permissions).
+5. server/episodes/admin-role-hardening.sql (deny max/reset actions when the caller has no admin role).
 
 The development-only migrations are not a production migration stream. Do not run the whole legacy migration directory against the official database.
 

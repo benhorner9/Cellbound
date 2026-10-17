@@ -2,7 +2,7 @@
 
 Development target: https://cb.athleticsmanagergame.com/
 Development backend: `zrvehixcthljiktcctne`, London.
-Official backend: `jvydqeikdpelmtloulnd`; no schema changes or episode activation performed there.
+Official backend: `jvydqeikdpelmtloulnd`; no Episode 2 schema changes or episode activation performed there. The narrow legacy admin-role fix described below was applied to both projects.
 
 ## Implemented
 
@@ -33,3 +33,16 @@ Physical iPad Safari is not tested. This is a development release, not approval 
 - Test account balance: 5,000 starting gold + 150 Null first-clear + 180 chapter reward = **5,330**, roster **Level 16**.
 - Screenshots: [regional map](regional-map.jpg), [chapter completion](hosted-complete.jpg).
 - Supabase security advisors: no error-level findings; intentional service-only tables deny direct access. Warnings remain for the inherited authenticated security-definer game RPCs and unavailable leaked-password protection; these are not represented as a complete legacy security audit.
+
+
+## Deployment and final security checks
+
+- Deployed frontend commit: `8b0532f00e6324dc261e58f7b22b5e398b60ba99`.
+- [Staging deployment workflow](https://github.com/benhorner9/Cellbound/actions/runs/39066380157): successful; served `build-meta.json` matches that exact commit.
+- Deployed authentication and guild bundle point to the separate dev project, with secure saves and hosted chapter service enabled.
+- A dev JWT is rejected by official Auth (403). Anonymous chapter calls are rejected (401). The copy bridge rejects a dev JWT as an official identity (401). Direct browser chapter settlement is denied (403).
+- Found inherited NULL-role authorization bugs in `cellbound_admin_max_player` and `cellbound_admin_fresh_start_player`. Applied `server/episodes/admin-role-hardening.sql` to **both** projects. Real dev API calls and an official rollback-only transaction confirmed non-admin rejection. No player saves or episode availability were changed.
+- Production build verified with a staging dispatch ref: it still uses official Auth/storage and does not enable the chapter service.
+
+The follow-up receipt commit contains only this evidence, provisioning instructions and the already-applied SQL fix; it does not change deployed frontend assets.
+- Final deployed-site Chromium smoke: **PASS** at 1366×1024, 390×844 and 1440×900. Real dev session reloads the completed chapter and 5,330-gold balance; no uncaught page errors or horizontal overflow.
