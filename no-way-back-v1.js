@@ -125,6 +125,20 @@ const NWB_COMIC_STORY_ART={
   './assets/comics/no-way-back-2026/return-damaged-sail.svg',
   './assets/comics/no-way-back-2026/boat-weathered-hull.svg'
  ],
+ 'Behind The Iron Gate':[
+  './assets/comics/no-way-back-2026/gate-hounds-fall.svg',
+  './assets/comics/no-way-back-2026/gate-silas-bars.svg'
+ ],
+ 'Master Of The Manor':[
+  './assets/comics/no-way-back-2026/courtyard-torches.svg',
+  './assets/comics/no-way-back-2026/silas-anchor-stance.svg',
+  './assets/comics/no-way-back-2026/manor-crest-reveal.svg'
+ ],
+ 'You Still Do Not Understand':[
+  './assets/comics/no-way-back-2026/silas-falls.svg',
+  './assets/comics/no-way-back-2026/silas-final-warning.svg',
+  './assets/comics/no-way-back-2026/manor-awakens.svg'
+ ],
  'Homecoming':[
   './assets/comics/no-way-back-2026/manor-island-landing.svg',
   './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
@@ -699,9 +713,9 @@ async function completeQuest(){
     await C.show({
      eyebrow:'QUEST COMPLETE',title:'No Way Back',subtitle:'The Manor has been awakened.',page:'COMPLETE',theme:'manor',
      panels:[
-      {kind:'npc',artwork:NWB_STORY_ART.silas,eyebrow:'SILAS VANE',title:'“I only needed to come home.”',text:'The black iron key slips from his coat as the courtyard falls silent.'},
-      {kind:'location',artwork:NWB_STORY_ART.manor,eyebrow:'PERMANENT ATTUNEMENT',title:'THE MANOR',text:'The windows ignite. The front doors open. Your guild is now permanently attuned to the island raid.'},
-      {kind:'reveal',artwork:NWB_STORY_ART.master,eyebrow:'QUEST ITEM',title:'THE MANOR KEY',text:'The key is bound to your guild. Whatever waits inside is awake.'}
+      {kind:'npc',artwork:'./assets/comics/no-way-back-2026/silas-black-iron-key.svg',eyebrow:'SILAS VANE',title:'“I only needed to come home.”',text:'The black iron key slips from his coat as the courtyard falls silent.'},
+      {kind:'location',artwork:'./assets/comics/no-way-back-2026/manor-doors-open.svg',eyebrow:'PERMANENT ATTUNEMENT',title:'THE MANOR',text:'The windows ignite. The front doors open. Your guild is now permanently attuned to the island raid.'},
+      {kind:'reveal',artwork:'./assets/comics/no-way-back-2026/manor-key-attunement.svg',eyebrow:'QUEST ITEM',title:'THE MANOR KEY',text:'The key is bound to your guild. Whatever waits inside is awake.'}
      ],
      progressive:true,panelOnly:true,allowSkip:false,nextLabel:'NEXT →',continueLabel:'RETURN TO QUEST JOURNAL →'
     });
