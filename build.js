@@ -1,5 +1,8 @@
 const fs=require('fs');
-if(process.env.GITHUB_REF==='refs/heads/staging'||process.env.CELLBOUND_TARGET==='development'){
+// The production workflow checks out main even when dispatched from another ref.
+const productionBuild=process.env.CELLBOUND_TARGET==='production'||process.env.GITHUB_WORKFLOW==='Deploy Cellbound Production';
+if(productionBuild){for(const key of ['CELLBOUND_STAGING_SUPABASE_URL','CELLBOUND_STAGING_SUPABASE_KEY','CELLBOUND_EPISODE_SERVICE_URL'])delete process.env[key];}
+if(!productionBuild&&(process.env.GITHUB_REF==='refs/heads/staging'||process.env.CELLBOUND_TARGET==='development')){
  const dev=require('./config/development.json');
  process.env.CELLBOUND_STAGING_SUPABASE_URL=dev.backend;process.env.CELLBOUND_STAGING_SUPABASE_KEY=dev.publishableKey;process.env.CELLBOUND_EPISODE_SERVICE_URL=dev.chapterService;
 }
