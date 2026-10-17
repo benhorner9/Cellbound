@@ -69,9 +69,9 @@ async function mount(page,seedState=null,owner=false,options={}){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed,simulateDungeonRuntime})=>{
+  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed,simulateDungeonRuntime,userId,episodeBridge})=>{
     window.__CELLBOUND_TEST_SEED=seed;
-    const user={id:'playthrough-user',email:'playthrough@example.test'};
+    const user={id:userId||'playthrough-user',email:'playthrough@example.test'};
     if(localSeed){
       localStorage.setItem('cellbound-management-owner',user.id);
       localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(localSeed));
@@ -100,13 +100,14 @@ async function mount(page,seedState=null,owner=false,options={}){
     }
     const client={
       auth:{
-        getSession:async()=>({data:{session:{user}},error:null}),
+        getSession:async()=>({data:{session:{user,access_token:episodeBridge?'local-test-token':undefined}},error:null}),
         getUser:async()=>({data:{user},error:null}),
         signOut:async()=>({error:null}),
         onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})
       },
       from:query,
       rpc:async(name,args={})=>{
+        if(episodeBridge&&name==='cellbound_episodes')return window.episodeDatabaseRpc(args.p_action,args.p_payload);
         if(name==='cellbound_booth'){if(args.p_action==='access')return{data:{role:owner?'owner':'none',scopes:owner?['adventure','template','room-layout','room-art','comic-art','comic-text','pvp-map','boss-drops']:[],can_publish:owner},error:null};if(args.p_action==='list'||args.p_action==='members')return{data:[],error:null};return{data:null,error:{message:'Workflow test fixture does not implement this mutation'}}}
         if(name==='cellbound_social_identity')return{data:{staff_member:owner,chat_badge:owner?'owner':'player',player_mod_discount_eligible:false},error:null};
         if(name==='cellbound_admin_status')return{data:owner?{is_admin:true,role:'owner',auto_clear_cell_shock:false}:{is_admin:false,role:null,auto_clear_cell_shock:false},error:null};
@@ -140,16 +141,16 @@ async function mount(page,seedState=null,owner=false,options={}){
       storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})}
     };
     window.supabase={createClient:()=>client};
-  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null,simulateDungeonRuntime:Boolean(options.simulateDungeonRuntime)});
+  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null,simulateDungeonRuntime:Boolean(options.simulateDungeonRuntime),userId:options.userId||null,episodeBridge:Boolean(options.episodeBridge)});
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
     if(relative==='guild.html'){
       const shell=path.resolve(root,options.useBuiltGuild?'dist/guild.html':'guild.html');
-      const html=fs.readFileSync(shell,'utf8')
+      const html=fs.readFileSync(shell,'utf8').replaceAll('__CELLBOUND_SECURE_SAVES__','false')
         .replace(/<meta\s+http-equiv=["']refresh["'][^>]*>/i,'')
         .replace(/<script>\s*window\.location\.replace\(["']\.\/index\.html["']\);?\s*<\/script>/i,'');
-      await route.fulfill({status:200,contentType:'text/html',body:html});return;
+      await route.fulfill({status:200,contentType:'text/html',body:options.transformGuild?options.transformGuild(html):html});return;
     }
     const file=path.resolve(root,'dist',relative);
     if(!file.startsWith(path.resolve(root,'dist')+path.sep)||!fs.existsSync(file)){

@@ -522,6 +522,11 @@ async function refreshMembershipStatus({render=true,silent=false}={}){
   if(render&&(before!==after||partyChanged))renderAll();
   return after;
 }
+function acceptEpisodeSnapshot(snapshot){
+  if(window.CELLBOUND_SECURE_SAVES!==true||snapshot?.user_id!==currentUser?.id||!Number.isSafeInteger(snapshot.revision)||snapshot.revision<Number(secureRevision||0))throw Error('Invalid chapter snapshot');
+  clearTimeout(syncTimer);secureRevision=snapshot.revision;secureEpisodeState=snapshot.state.episode2;
+  state=migrateState(snapshot.state);writeLocal();renderAll();setSync('Saved','ok');
+}
 function replaceState(next){state=migrateState(next);removeInvalidPartyMembers(state);writeLocal();persistState();renderAll();}
 
 // Compatibility: the existing character sheet writes to localStorage. Capture those writes,
@@ -1296,7 +1301,7 @@ function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
-  ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
+  ready:false,acceptEpisodeSnapshot,waitForPendingSaves:()=>saveSerial.catch(()=>false),getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
   characterItemLevel,partyItemLevel,averagePartyLevel,xpNeeded,awardPartyXp,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
   betaPlayableClasses:BETA_PLAYABLE_CLASSES,getPlayableClasses:availableClassNames,isBetaClassPlayable,isCharacterBetaPlayable,isStaffAdmin:hasStaffClassAccess,adminRole,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,

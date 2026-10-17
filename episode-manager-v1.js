@@ -34,7 +34,7 @@ async function preview(episode){
    const row=node('div',`${id} · ${def?.name||def?.title||'Registered content'}`,'episode-content-row');
    const adapter=window.CellboundEpisodeAdapters?.[id];
    const button=node('button',adapter?(development?'START DEV SESSION':'START PRIVATE SESSION'):'ENCOUNTER NOT IMPLEMENTED');
-   button.disabled=!adapter;button.onclick=async()=>{try{const session=await rpc('start',{episode:current.id,content:id,build:build()});await adapter.start(session);}catch(e){message(e.message);}};
+   button.disabled=!adapter;button.onclick=async()=>{try{if(adapter.authoritativeStart){await adapter.start();return;}const session=await rpc('start',{episode:current.id,content:id,build:build()});await adapter.start(session);}catch(e){message(e.message);}};
    row.append(button);box.append(row);
   }
  }catch(e){message(e.message);}
