@@ -1,0 +1,203 @@
+{
+  "engine": "chromium",
+  "auth": "mocked shell; explicit trusted finale fixture; real local PostgreSQL and canonical worker",
+  "results": [
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "objectives": [
+        "transmission",
+        "briefing",
+        "fenstead",
+        "wagon",
+        "creatures",
+        "component"
+      ],
+      "enemyFrames": {
+        "blighted-grazer": [
+          "0",
+          "1",
+          "2",
+          "4",
+          "5"
+        ],
+        "harvest-crawler": [
+          "0",
+          "1",
+          "2",
+          "4",
+          "3",
+          "5"
+        ],
+        "rotroot-husk": [
+          "0",
+          "1",
+          "2",
+          "4"
+        ]
+      },
+      "gold": 5180,
+      "roster": [
+        {
+          "id": "tank",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "heal",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "mage",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "hunt",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "rogue",
+          "level": 16,
+          "xp": 0
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "objectives": [
+        "transmission",
+        "briefing",
+        "fenstead",
+        "wagon",
+        "creatures",
+        "component"
+      ],
+      "enemyFrames": {
+        "blighted-grazer": [
+          "0",
+          "4",
+          "1",
+          "2",
+          "5"
+        ],
+        "harvest-crawler": [
+          "0",
+          "1",
+          "2",
+          "4",
+          "3",
+          "5"
+        ],
+        "rotroot-husk": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      "gold": 5180,
+      "roster": [
+        {
+          "id": "tank",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "heal",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "mage",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "hunt",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "rogue",
+          "level": 16,
+          "xp": 0
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "objectives": [
+        "transmission",
+        "briefing",
+        "fenstead",
+        "wagon",
+        "creatures",
+        "component"
+      ],
+      "enemyFrames": {
+        "blighted-grazer": [
+          "0",
+          "1",
+          "2",
+          "4",
+          "5"
+        ],
+        "harvest-crawler": [
+          "0",
+          "1",
+          "2",
+          "4",
+          "3",
+          "5"
+        ],
+        "rotroot-husk": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      "gold": 5180,
+      "roster": [
+        {
+          "id": "tank",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "heal",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "mage",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "hunt",
+          "level": 16,
+          "xp": 0
+        },
+        {
+          "id": "rogue",
+          "level": 16,
+          "xp": 0
+        }
+      ]
+    }
+  ]
+}

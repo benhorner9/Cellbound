@@ -112,6 +112,9 @@ const groups=Object.freeze({
   "twelve-below-v1.js",
   "admin-v1.js",
   "episode-manager-v1.js",
+  "morrowfields-data-v1.js",
+  "morrowfields-v1.js",
+  "morrowfields-v1.css",
   "admin-room-editor-v1.js",
   "admin-comic-scene-editor-v1.js",
   "analytics-v1.js",
@@ -212,6 +215,9 @@ const files=Object.freeze([
 ]);
 
 const sourceOverrides=Object.freeze({
+  "morrowfields-data-v1.js":"src/episodes/morrowfields-data-v1.js",
+  "morrowfields-v1.js":"src/episodes/morrowfields-v1.js",
+  "morrowfields-v1.css":"src/episodes/morrowfields-v1.css",
   "episode-two-v1.js":"src/episodes/episode-two-v1.js",
   "combat-hud-standard-v1.js":"src/combat/combat-hud-standard-v1.js",
   "combat-identities-v1.js":"src/combat/combat-identities-v1.js",

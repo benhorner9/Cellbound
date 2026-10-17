@@ -15,7 +15,8 @@ for(const asset of ['ui-polish-block8.css','ui-polish-block8.js']){
 }
 assert(html.lastIndexOf('<link rel="stylesheet"')===html.indexOf('<link rel="stylesheet" href="./ui-polish-block8.css'),'Polish CSS last');
 assert(html.indexOf('ui-polish-block8.js?v=1')>html.indexOf('community-workspace-v1.js?v=1'),'Craft modal must load after existing UI and economy');
-assert(build.includes("'community-workspace-v1.css','ui-polish-block8.css'"),'Block 8 CSS must be in consolidated bundle');
+const bundle=build.slice(build.indexOf('const UI_BUNDLE_SOURCES='),build.indexOf('const bundle=UI_BUNDLE_SOURCES'));
+assert(bundle.indexOf("'ui-polish-block8.css'")>bundle.indexOf("'community-workspace-v1.css'"),'Block 8 CSS follows community styles in consolidated bundle');
 assert(build.includes('const polish8Link='),'Bundle guard must recognise Block 8 CSS');
 assert(economy.includes('window.CellboundCraftOverlay.isReady()'),'Timer must wait for user-initiated modal start');
 assert(economy.includes("document.querySelector('#professions.view.active')"),'Leaving workshop must still pause timer');

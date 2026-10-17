@@ -36,7 +36,7 @@ const {mount,matureState}=require('./full-playthrough.browser.cjs');
    await page.waitForSelector('.episode-content-row');
    assert.equal(await page.locator('.episode-content-row').count(),13);
    assert.equal(await page.getByRole('button',{name:/ACTIVATE EPISODE|READY TO RELEASE|PAUSE EPISODE/}).count(),0);
-   assert.equal(await page.locator('.episode-content-row button:not([disabled])').count(),0,'Missing encounters cannot be launched as fake previews');
+   assert.equal(await page.locator('.episode-content-row button:not([disabled])').count(),1,'Only the implemented opening may request its authoritative service; unfinished content stays closed');
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
    fs.mkdirSync('docs/qa/episode-manager',{recursive:true});
    await page.screenshot({path:`docs/qa/episode-manager/owner-${viewport.width}.png`,fullPage:true});
