@@ -16,5 +16,5 @@ assert.throws(()=>validate('https://jvydqeikdpelmtloulnd.supabase.co','sb_secret
 const workflow=fs.readFileSync('.github/workflows/deploy-staging.yml','utf8');
 assert(workflow.indexOf('node tools/verify-booth-staging.cjs')<workflow.indexOf('name: Deploy staging build'));
 const builder=fs.readFileSync('build.js','utf8');
-assert(builder.includes("['auth.js','guild-v4.js'].includes(file)"),'Both clients must use the isolated staging backend');
+assert(builder.includes("['auth.js','guild-v4.js','highscores-v1.js'].includes(file)"),'Both clients must use the isolated staging backend');
 console.log('Booth staging guard passed: unapproved shared backends, main website target and server credentials are rejected.');

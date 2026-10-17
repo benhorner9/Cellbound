@@ -8,13 +8,13 @@ const copy=v=>JSON.parse(JSON.stringify(v));
 const check=(v,m)=>{if(!v)throw Error(m)};
 function runtime(){
  const window={},context=vm.createContext({window,console});
- for(const name of ['balance-v1.js','class-build-v1.js','src/combat/combat-identities-v1.js','src/combat/combat-data-v1.js','src/combat/combat-reborn-v1.js','src/episodes/episode-two-v1.js','src/episodes/morrowfields-data-v1.js'])
+ for(const name of ['balance-v1.js','class-build-v1.js','src/combat/combat-identities-v1.js','src/combat/combat-data-v1.js','src/combat/combat-reborn-v1.js','src/episodes/episode-two-v1.js','src/episodes/morrowfields-data-v1.js','src/episodes/null-story-data-v1.js'])
   vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),context,{filename:name});
  return window;
 }
-function createOpeningAuthority({store,clock=Date.now,uuid=randomUUID}={}){
+function createOpeningAuthority({store,clock=Date.now,uuid=randomUUID,runtimeFactory=runtime}={}){
  check(store?.load&&store?.commit,'Trusted account store required');
- const w=runtime(),E=w.CellboundEpisodeTwo,D=w.CellboundMorrowfieldsData,C=w.CellboundCombatReborn;
+ const w=runtimeFactory(),E=w.CellboundEpisodeTwo,D=w.CellboundMorrowfieldsData,C=w.CellboundCombatReborn;
  const stages=E.CONTENT.e2_q01.objectives.map(o=>o.id);
  function replay(attempt,commands){
   check(Array.isArray(commands)&&commands.length<=80,'Invalid command history');

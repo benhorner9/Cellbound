@@ -11,9 +11,10 @@ if(require.main===module){
  const fs=require('node:fs'),approval=require('../config/booth-release.json');
  if(process.env.GITHUB_REF&&process.env.GITHUB_REF!=='refs/heads/staging')throw Error('Website deployment is staging-only.');
  const source=fs.readFileSync('auth.js','utf8');
- const url=process.env.CELLBOUND_STAGING_SUPABASE_URL||source.match(/const SUPABASE_URL='([^']+)'/)[1];
- const key=process.env.CELLBOUND_STAGING_SUPABASE_KEY||source.match(/const SUPABASE_PUBLISHABLE_KEY='([^']+)'/)[1];
- if(Boolean(process.env.CELLBOUND_STAGING_SUPABASE_URL)!==Boolean(process.env.CELLBOUND_STAGING_SUPABASE_KEY))throw Error('Configure both staging URL and key, or neither.');
+ const dev=(process.env.GITHUB_REF==='refs/heads/staging'||process.env.CELLBOUND_TARGET==='development')?require('../config/development.json'):null;
+ const url=dev?.backend||process.env.CELLBOUND_STAGING_SUPABASE_URL||source.match(/const SUPABASE_URL='([^']+)'/)[1];
+ const key=dev?.publishableKey||process.env.CELLBOUND_STAGING_SUPABASE_KEY||source.match(/const SUPABASE_PUBLISHABLE_KEY='([^']+)'/)[1];
+ if(!dev&&Boolean(process.env.CELLBOUND_STAGING_SUPABASE_URL)!==Boolean(process.env.CELLBOUND_STAGING_SUPABASE_KEY))throw Error('Configure both staging URL and key, or neither.');
  validate(url,key,approval);
  console.log('Staging-only website deployment verified. Backend: '+url+' ('+approval.backendMode+').');
 }

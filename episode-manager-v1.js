@@ -3,7 +3,7 @@
 let report=null,busy=false;
 const labels={in_development:'In Development',private_testing:'Private Testing',ready:'Ready to Release',live:'Live',paused:'Paused'};
 const Game=()=>window.CellboundGame;
-const build=()=>String(window.CELLBOUND_BUILD||'development');
+const build=()=>String(window.CELLBOUND_EPISODE_BUILD||window.CELLBOUND_BUILD||'development');
 async function rpc(action,payload={}){
  const db=Game()?.getSupabase?.();if(!db)throw Error('Sign in to verify episode availability.');
  const {data,error}=await db.rpc('cellbound_episodes',{p_action:action,p_payload:payload});

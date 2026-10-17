@@ -1,0 +1,11 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path');
+const sources=['balance-v1.js','class-build-v1.js','src/combat/combat-identities-v1.js','src/combat/combat-data-v1.js','src/combat/combat-reborn-v1.js','src/episodes/episode-two-v1.js','src/episodes/morrowfields-data-v1.js','src/episodes/null-story-data-v1.js'];
+const out='supabase/functions/episode-opening';fs.mkdirSync(out,{recursive:true});
+fs.writeFileSync(out+'/runtime.js','const window={};\n'+sources.map(p=>fs.readFileSync(p,'utf8')).join('\n')+'\nexport default window;\n');
+let code=fs.readFileSync('server/episodes/opening-authority.cjs','utf8');
+code=code.slice(code.indexOf('function createOpeningAuthority')).replace('runtimeFactory=runtime','runtimeFactory=()=>runtime');
+code=code.replace('module.exports={createOpeningAuthority,runtime};','export {createOpeningAuthority};');
+fs.writeFileSync(out+'/authority.js',`import {randomUUID,createHash} from 'node:crypto';\nimport runtime from './runtime.js';\nconst copy=v=>JSON.parse(JSON.stringify(v));\nconst check=(v,m)=>{if(!v)throw Error(m)};\n`+code);
+let nullCode=fs.readFileSync('server/episodes/null-authority.cjs','utf8').replace("const {randomUUID,createHash}=require('node:crypto');","import {randomUUID,createHash} from 'node:crypto';").replace('module.exports={createNullAuthority};','export {createNullAuthority};');fs.writeFileSync(out+'/null-authority.js',nullCode);
+console.log('Generated edge runtime from the shared combat and quest sources.');

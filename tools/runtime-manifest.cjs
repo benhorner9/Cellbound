@@ -112,6 +112,8 @@ const groups=Object.freeze({
   "twelve-below-v1.js",
   "admin-v1.js",
   "episode-manager-v1.js",
+  "null-story-data-v1.js",
+  "null-story-v1.js",
   "morrowfields-data-v1.js",
   "morrowfields-v1.js",
   "morrowfields-v1.css",
@@ -215,6 +217,8 @@ const files=Object.freeze([
 ]);
 
 const sourceOverrides=Object.freeze({
+  "null-story-data-v1.js":"src/episodes/null-story-data-v1.js",
+  "null-story-v1.js":"src/episodes/null-story-v1.js",
   "morrowfields-data-v1.js":"src/episodes/morrowfields-data-v1.js",
   "morrowfields-v1.js":"src/episodes/morrowfields-v1.js",
   "morrowfields-v1.css":"src/episodes/morrowfields-v1.css",

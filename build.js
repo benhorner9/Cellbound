@@ -1,4 +1,9 @@
 const fs=require('fs');
+if(process.env.GITHUB_REF==='refs/heads/staging'||process.env.CELLBOUND_TARGET==='development'){
+ const dev=require('./config/development.json');
+ process.env.CELLBOUND_STAGING_SUPABASE_URL=dev.backend;process.env.CELLBOUND_STAGING_SUPABASE_KEY=dev.publishableKey;process.env.CELLBOUND_EPISODE_SERVICE_URL=dev.chapterService;
+}
+
 const path=require('path');
 const vm=require('vm');
 const zlib=require('zlib');
@@ -58,16 +63,18 @@ const touchFix=`\n<style id="cellbound-ios-touch-fix">html,body{touch-action:man
 for(const file of files){
   const src=sourcePath(file),dest=path.join(out,file);
   let contents=fs.readFileSync(src,'utf8');
-  if(['auth.js','guild-v4.js'].includes(file)&&process.env.CELLBOUND_STAGING_SUPABASE_URL){
+  if(['auth.js','guild-v4.js','highscores-v1.js'].includes(file)&&process.env.CELLBOUND_STAGING_SUPABASE_URL){
     const url=process.env.CELLBOUND_STAGING_SUPABASE_URL,key=process.env.CELLBOUND_STAGING_SUPABASE_KEY||'';
     require('./tools/verify-booth-staging.cjs').validate(url,key,require('./config/booth-release.json'));
     contents=contents.replace(/const SUPABASE_URL='[^']*';/, 'const SUPABASE_URL='+JSON.stringify(url)+';')
-      .replace(/const SUPABASE_PUBLISHABLE_KEY='[^']*';/, 'const SUPABASE_PUBLISHABLE_KEY='+JSON.stringify(key)+';');
+      .replace(/const SUPABASE_PUBLISHABLE_KEY='[^']*';/, 'const SUPABASE_PUBLISHABLE_KEY='+JSON.stringify(key)+';')
+      .replace(/const URL='https:\/\/jvydqeikdpelmtloulnd.supabase.co';/,'const URL='+JSON.stringify(url)+';')
+      .replace(/const KEY='[^']*';/,'const KEY='+JSON.stringify(key)+';');
   }
   if(file==='guild.html'&&process.env.CELLBOUND_EPISODE_SERVICE_URL){
     const endpoint=new URL(process.env.CELLBOUND_EPISODE_SERVICE_URL);
     if(endpoint.protocol!=='https:'||!process.env.CELLBOUND_STAGING_SUPABASE_URL)throw Error('Chapter service requires isolated development configuration and HTTPS');
-    contents=contents.replace('</head>','<script>window.CELLBOUND_EPISODE_SERVICE_URL='+JSON.stringify(endpoint.href).replace(/</g,'\\u003c')+';</script></head>');
+    contents=contents.replace('</head>','<script>window.CELLBOUND_EPISODE_BUILD='+JSON.stringify(require('./config/development.json').authorityBuild)+';window.CELLBOUND_EPISODE_SERVICE_URL='+JSON.stringify(endpoint.href).replace(/</g,'\\u003c')+';</script></head>');
   }
   if(file==='guild.html')contents=contents.replace('__CELLBOUND_SECURE_SAVES__',process.env.CELLBOUND_STAGING_SUPABASE_URL?'true':'false');
 
@@ -77,6 +84,10 @@ for(const file of files){
     if(singletonCollectionCall.test(contents))throw new Error('querySelector helper $ cannot be used as a collection in '+file+'; use document.querySelectorAll instead');
   }
   if(/sb_secret_|SUPABASE_SERVICE_ROLE(?:_KEY)?|service[_-]?role[_-]?key/i.test(contents))throw new Error('Server-only Supabase credential marker found in shipped asset '+file);
+  if(file==='auth.js'&&process.env.CELLBOUND_STAGING_SUPABASE_URL)contents+='\n'+fs.readFileSync('src/episodes/development-login.js','utf8');
+  if(file==='auth.js'&&process.env.CELLBOUND_STAGING_SUPABASE_URL)contents+=`
+intro.textContent='Development game · separate accounts and saves. Create a dev account here to begin.';
+`;
   if(file==='auth.js'){
     for(const hook of ['const NEW_PASSWORD_MIN=12',"creds(true,NEW_PASSWORD_MIN)","password.value.length<NEW_PASSWORD_MIN"])if(!contents.includes(hook))throw new Error('New/reset password hardening is missing '+hook);
   }

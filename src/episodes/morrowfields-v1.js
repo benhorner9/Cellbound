@@ -17,7 +17,7 @@ async function call(action,payload={}){
  if(accountId&&accountId!==user.id){record=null;throw Error('Account changed. Reopen the chapter.');}accountId=user.id;
  await G().waitForPendingSaves?.();
  const session=await G().getSupabase().auth.getSession();
- const result=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.data.session.access_token},body:JSON.stringify({action,build:String(window.CELLBOUND_BUILD||'development'),revision:record?.account.revision,...payload})});
+ const result=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.data.session.access_token},body:JSON.stringify({action,build:String(window.CELLBOUND_EPISODE_BUILD||window.CELLBOUND_BUILD||'development'),revision:record?.account.revision,...payload})});
  const data=await result.json();if(!result.ok||data.error)throw Error(data.error||'Could not save chapter progress. Please retry.');
  if(G().getUser()?.id!==user.id)throw Error('Account changed. Reopen the chapter.');
  if(!data.account?.state?.episode2||data.account.user_id!==user.id)throw Error('Chapter account verification failed.');

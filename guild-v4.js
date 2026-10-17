@@ -407,7 +407,7 @@ async function persistState({reusePending=false}={}){
       if(window.CELLBOUND_SECURE_SAVES===true){
         if(secureRevision===null)throw Error('Verified account load required before saving');
         if(secureEpisodeState===undefined)delete snapshot.episode2;else snapshot.episode2=secureEpisodeState;
-        const result=await supabaseClient.rpc('cellbound_episodes',{p_action:'save',p_payload:{build:String(window.CELLBOUND_BUILD),saveVersion:SAVE_VERSION,revision:secureRevision,state:snapshot}});
+        const result=await supabaseClient.rpc('cellbound_episodes',{p_action:'save',p_payload:{build:String(window.CELLBOUND_EPISODE_BUILD||window.CELLBOUND_BUILD),saveVersion:SAVE_VERSION,revision:secureRevision,state:snapshot}});
         if(result.error){window.dispatchEvent(new CustomEvent('cellbound:save-rejected',{detail:{message:result.error.message}}));throw Error(result.error.message||'Secure save rejected');}
         secureRevision=result.data.revision;
         clearPendingLocal(pending?.token);setSync('Saved','ok');return true;
@@ -1301,7 +1301,7 @@ function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
-  ready:false,acceptEpisodeSnapshot,waitForPendingSaves:()=>saveSerial.catch(()=>false),getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
+  ready:false,acceptEpisodeSnapshot,waitForPendingSaves:async()=>{if(syncTimer){clearTimeout(syncTimer);syncTimer=null;await persistState({reusePending:true});}return saveSerial.catch(()=>false)},getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
   characterItemLevel,partyItemLevel,averagePartyLevel,xpNeeded,awardPartyXp,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
   betaPlayableClasses:BETA_PLAYABLE_CLASSES,getPlayableClasses:availableClassNames,isBetaClassPlayable,isCharacterBetaPlayable,isStaffAdmin:hasStaffClassAccess,adminRole,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
