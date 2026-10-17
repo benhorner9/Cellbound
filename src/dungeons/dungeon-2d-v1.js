@@ -1846,8 +1846,8 @@ function roomFadeInDuringEntry(){
  ]).then(()=>{
   if(!fade.isConnected||run!==entryRun||token!==entryToken||arena!==$('#cb2dArena'))return;
   setRoomFade(false,520);
+  entryRun.roomTransitionBlack=false;
  });
- run.roomTransitionBlack=false
 }
 function clearArenaEphemera(){
  const arena=$('#cb2dArena');if(!arena)return;
