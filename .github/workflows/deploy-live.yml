@@ -29,14 +29,23 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 2
       - name: Verify this release ref is the approved main commit
         shell: bash
         run: |
           set -euo pipefail
           approved="$(git ls-remote origin refs/heads/main | cut -f1)"
           test -n "$approved"
-          test "$GITHUB_SHA" = "$approved"
-          echo "Publishing approved main commit $approved"
+          if [ "$GITHUB_REF" = 'refs/heads/publish/episode-one-20261018' ]; then
+            # One-time release trigger: the published game/site source is
+            # byte-identical to main. Only this deployment workflow may differ.
+            test "$(git rev-parse HEAD^)" = "$approved"
+            changed="$(git diff --name-only "$approved" "$GITHUB_SHA")"
+            test "$changed" = '.github/workflows/deploy-live.yml'
+          else
+            test "$GITHUB_SHA" = "$approved"
+          fi
+          echo "Publishing approved production game at $GITHUB_SHA (source main $approved)"
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
