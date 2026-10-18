@@ -12,7 +12,7 @@ const fs=require('node:fs');
  const step=(name)=>{const now=Date.now();if(name!==lastStage){results.push({stage:lastStage,elapsedSeconds:Math.round((now-last)/1000)});lastStage=name;last=now;console.log('STOPWATCH_STAGE',name,Math.round((now-started)/1000)+'s');}};
  const click=async(sel)=>{const node=page.locator(sel).first();if(await node.count()&&await node.isVisible()&&await node.isEnabled()){await node.click({timeout:7500});actions++;return true}return false};
  try{
-  const browserErrors=await mount(page,null,false,{useBuiltGuild:true});
+  const browserErrors=await mount(page,null,false,{useBuiltGuild:true,simulateDungeonRuntime:true});
   step('guild-introduction');
   await page.locator('#startGuildCharter').click();actions++;
   const created=await page.evaluate(()=>({state:CellboundGame.getState().onboarding?.stage,roster:CellboundGame.getState().roster?.length||0}));
@@ -121,6 +121,38 @@ const fs=require('node:fs');
     await page.waitForTimeout(progressed?180:220);
    }
    console.log('ASHES_TIMING',JSON.stringify({elapsedSeconds:Math.round((Date.now()-questStart)/1000),reason}));
+  }
+  // Attempt the first full seven-stage dungeon on the same honest, fresh
+  // player save. This captures whether real entry and reward gates permit
+  // a normal player's next step after their first quest.
+  if(await page.evaluate(()=>CellboundGame.getState().questSystem?.ashfall?.complete)){
+   step('ashen-vault-entry');
+   const entry=await page.evaluate(()=>({ilvl:CellboundGame.partyItemLevel(),level:CellboundGame.getState().roster.map(c=>c.level),
+    unlocked:CellboundGame.getState().progression.ashenVaultUnlocked}));
+   console.log('ASHEN_ENTRY',JSON.stringify(entry));
+   await page.evaluate(()=>window.CellboundDungeon2D.open({difficulty:'normal'}));
+   await page.waitForSelector('#cb2dBackdrop:not([hidden])',{timeout:10000});
+   const gated=await page.locator('#cb2dBackdrop .cb2d-blocked').count();
+   if(gated){
+    console.log('ASHEN_BLOCKED',(await page.locator('#cb2dBackdrop .cb2d-blocked').innerText()).replace(/\s+/g,' '));
+   }else if(await page.locator('#cb2dBackdrop [data-start]').isEnabled()){
+    const startedDungeon=Date.now();step('ashen-vault-first-run');
+    await click('#cb2dBackdrop [data-start]');
+    try{
+     await page.waitForFunction(()=>{
+      const s=CellboundGame.getState();return (Number(s.dungeonCompletions)||0)>0||
+        !!document.querySelector('#cb2dBackdrop:not([hidden]) [data-failure-return]');
+     },{},{timeout:240000,polling:500});
+    }catch(e){console.log('ASHEN_RUN_TIMEOUT',String(e).slice(0,220))}
+    const result=await page.evaluate(()=>{const s=CellboundGame.getState();return{
+     clears:Number(s.dungeonCompletions)||0,partyLevel:s.roster.map(c=>c.level),
+     end:document.querySelector('#cb2dEnd')?.textContent?.slice(0,200)||'',
+     stage:window.CellboundDungeon2D.currentRun()?.stage??null
+    }});
+    console.log('ASHEN_RESULT',JSON.stringify({elapsedSeconds:Math.round((Date.now()-startedDungeon)/1000),...result}));
+    if(result.clears>0)step('ashen-vault-cleared');
+    else reason=reason||'Fresh Ashen Vault did not award its first clear';
+   }else console.log('ASHEN_NOT_READY','No enabled begin expedition button');
   }
   const final=await page.evaluate(()=>{const s=CellboundGame.getState();return{onboarding:s.onboarding?.stage,onboardingComplete:s.onboarding?.complete,levels:s.roster.map(c=>c.level),xp:s.roster.map(c=>c.xp),ashenVaultUnlocked:s.progression?.ashenVaultUnlocked,quest:s.questSystem?.ashfall?.stage,roster:s.roster.length}});
   const report={startedAt:new Date(started).toISOString(),elapsedSeconds:Math.round((Date.now()-started)/1000),combatSeconds:Math.round(combatMs/1000),actions,chapters:results,final,reason,errors:[...browserErrors,...errors]};
