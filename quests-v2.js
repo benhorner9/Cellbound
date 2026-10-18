@@ -1598,7 +1598,7 @@ function renderVerifiedNullDetail(root,side){
 function questCards(){
  const q=ensure(),a=q.ashfall;
  return [
-  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Requires The Manor',difficulty:NULL_QUEST.difficulty,status:episodeJournalEnabled()&&state()?.questSystem?.nullComplex?.authoritative?'COMPLETE':nullQ().complete?'COMPLETE':!nullQuestAvailable()?'LOCKED':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:Boolean((episodeJournalEnabled()&&state()?.questSystem?.nullComplex?.authoritative)||nullQ().complete),locked:!nullQuestAvailable()&&!nullQ().complete,icon:'◈'},
+  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Requires The Manor',difficulty:NULL_QUEST.difficulty,status:episodeJournalEnabled()?(state()?.questSystem?.nullComplex?.authoritative?'COMPLETE':!nullQuestAvailable()?'LOCKED':'IN PROGRESS'):nullQ().complete?'COMPLETE':!nullQuestAvailable()?'LOCKED':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:episodeJournalEnabled()?Boolean(state()?.questSystem?.nullComplex?.authoritative):Boolean(nullQ().complete),locked:!nullQuestAvailable()&&!nullQ().complete,icon:'◈'},
   ...episodeQuestCards(),
   {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
   {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
