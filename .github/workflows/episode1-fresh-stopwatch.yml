@@ -31,4 +31,5 @@ jobs:
           if-no-files-found: warn
       - name: Record test result
         if: always()
-        run: echo "Stopwatch result: ${{ steps.stopwatch.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          echo "Stopwatch result: ${{ steps.stopwatch.outcome }}" >> "$GITHUB_STEP_SUMMARY"
