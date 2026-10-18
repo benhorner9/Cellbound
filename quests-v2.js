@@ -1556,7 +1556,7 @@ function renderNullQuestDetail(root,side){
 const episodeJournalEnabled=()=>Boolean(window.CELLBOUND_SECURE_SAVES===true&&window.CELLBOUND_EPISODE_SERVICE_URL&&window.CellboundEpisodeTwo);
 function episodeQuestCards(){
  const E=window.CellboundEpisodeTwo,s=state();
- if(!episodeJournalEnabled()||!s||!E.finaleCompleted(s))return [];
+ if(!episodeJournalEnabled()||!s||!E.finaleCompleted(s)||s.questSystem?.nullComplex?.authoritative!==true)return [];
  return Object.values(E.CONTENT).filter(d=>d.kind==='quest').filter(d=>d.id==='e2_q01'||d.requires.every(id=>id===E.FINALE||E.CONTENT[id]&&E.status(s,id).complete)).map(d=>{
   const info=E.status(s,d.id),q=s.episode2?.quests?.[d.id],playable=Boolean(window.CellboundEpisodeAdapters?.[d.id]);
   return{id:d.id,title:d.name,meta:'Episode II · Invasion on the Farm · Level '+d.levels.join('–'),difficulty:'Intermediate',
