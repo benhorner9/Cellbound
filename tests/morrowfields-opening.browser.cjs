@@ -51,7 +51,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await shot('farm');
   assert.equal(await page.locator('#morrowfields .mf-dialogue').count(),1,'One farm conversation, no redundant map screen');
   await click('#morrowfields [data-mf="meet-mara"]');
-  await click('#morrowfields [data-mf="follow-wagon"]');
+  await click('#morrowfields .mf-next [data-mf="follow-wagon"]');
   await page.waitForSelector('#morrowfields [data-clue="tracks"]');
   assert.equal((await store.load(PLAYER)).account.state.episode2.quests.e2_q01.objectives.length,3,
    'Purposeful guided travel preserves exact server progress');
