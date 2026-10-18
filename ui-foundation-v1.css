@@ -1,0 +1,280 @@
+/* Cellbound UI foundation — Block 1 of the seven-block rebuild.
+   A restrained, shared chrome layer. Gameplay, rarity, combat and editor
+   interaction states remain owned by their respective systems. */
+html body.cb-top-nav-enabled {
+  --cb-ui-ink:#090e10;
+  --cb-ui-surface:#10191b;
+  --cb-ui-panel:#142022;
+  --cb-ui-raised:#1b2929;
+  --cb-ui-line:rgba(179,149,101,.31);
+  --cb-ui-line-soft:rgba(179,149,101,.18);
+  --cb-ui-accent:#c4a574;
+  --cb-ui-accent-hover:#e1c38b;
+  --cb-ui-text:#eae5d9;
+  --cb-ui-muted:#b2bcb5;
+  --cb-ui-dim:#83928d;
+  --cb-theme-bg:var(--cb-ui-ink);
+  --cb-theme-panel:var(--cb-ui-panel);
+  --cb-theme-raised:var(--cb-ui-raised);
+  --cb-theme-border:#65583e;
+  --cb-theme-gold:var(--cb-ui-accent);
+  --cb-theme-muted:var(--cb-ui-muted);
+  --cb-theme-text:var(--cb-ui-text);
+  --cb-v3-navy:var(--cb-ui-ink);
+  --cb-v3-panel:var(--cb-ui-panel);
+  --cb-v3-panel-hi:var(--cb-ui-raised);
+  --cb-v3-edge:#665a45;
+  --cb-v3-cream:var(--cb-ui-text);
+  --cb-v3-text:var(--cb-ui-text);
+  --cb-v3-muted:var(--cb-ui-muted);
+  --cb-v3-gold:var(--cb-ui-accent);
+  color-scheme:dark;
+}
+html body.cb-top-nav-enabled,
+html body.cb-top-nav-enabled .app-shell {
+  background:radial-gradient(ellipse at 50% -20%,#20302e 0%,#121b1d 38%,#080d0f 100%)!important;
+  color:var(--cb-ui-text);
+}
+html body.cb-top-nav-enabled .app-shell>.main {
+  color:var(--cb-ui-text)!important;
+  background:none!important;
+}
+html body.cb-top-nav-enabled .cb-global-header {
+  background:linear-gradient(180deg,rgba(21,30,30,.99),rgba(10,17,19,.99))!important;
+  color:var(--cb-ui-text);
+  border-bottom:1px solid var(--cb-ui-line)!important;
+  box-shadow:0 7px 22px #0009!important;
+  padding-left:max(12px,env(safe-area-inset-left));
+  padding-right:max(12px,env(safe-area-inset-right));
+}
+html body.cb-top-nav-enabled .cb-global-brand {
+  color:var(--cb-ui-text)!important;
+  letter-spacing:.09em;
+}
+html body.cb-top-nav-enabled .cb-global-brand-mark {
+  color:var(--cb-ui-accent)!important;
+  border-color:var(--cb-ui-line)!important;
+  background:radial-gradient(circle at 42% 26%,#34413c,#121c1e 68%)!important;
+  text-shadow:none;
+  box-shadow:inset 0 1px 0 #ffffff12;
+}
+html body.cb-top-nav-enabled .cb-global-links {
+  scroll-padding-inline:12px;
+}
+html body.cb-top-nav-enabled .cb-global-links button {
+  color:#c7d0c9!important;
+  font-family:Georgia,serif;
+  font-size:clamp(12px,.88vw,14px);
+  padding-inline:clamp(9px,.95vw,17px);
+  min-width:0;
+}
+html body.cb-top-nav-enabled .cb-global-links .cb-global-link-icon {
+  color:#a79a81!important;
+}
+html body.cb-top-nav-enabled .cb-global-links button:is(:hover,.is-active) {
+  background:linear-gradient(180deg,#b9955310,#b9955323)!important;
+  color:#f4e6d0!important;
+  border-bottom-color:var(--cb-ui-accent)!important;
+}
+html body.cb-top-nav-enabled .cb-global-links button.is-active .cb-global-link-icon {
+  color:var(--cb-ui-accent-hover)!important;
+}
+html body.cb-top-nav-enabled .cb-global-gold {
+  color:#e3c68b!important;
+  border-left-color:var(--cb-ui-line-soft);
+}
+html body.cb-top-nav-enabled .cb-global-more,
+html body.cb-top-nav-enabled .cb-global-account>summary {
+  min-height:44px;
+  background:#172224!important;
+  border:1px solid var(--cb-ui-line)!important;
+  color:var(--cb-ui-text)!important;
+  border-radius:4px;
+}
+html body.cb-top-nav-enabled .cb-global-more:is(:hover,.is-active),
+html body.cb-top-nav-enabled .cb-global-more[aria-expanded="true"],
+html body.cb-top-nav-enabled .cb-global-account[open]>summary {
+  background:#302b22!important;
+  border-color:var(--cb-ui-accent)!important;
+  color:#f1e4d0!important;
+}
+html body.cb-top-nav-enabled .cb-global-account-panel {
+  background:linear-gradient(150deg,#1b2929,#0e1719)!important;
+  border-color:var(--cb-ui-line)!important;
+  color:var(--cb-ui-text);
+}
+html body.cb-top-nav-enabled .cb-global-resource-slot .resource-strip>div {
+  background:#101d1e!important;
+  border-color:var(--cb-ui-line-soft)!important;
+}
+html body.cb-top-nav-enabled .cb-global-resource-slot .resource-strip :is(b,span) {
+  color:var(--cb-ui-text);
+}
+html body.cb-top-nav-enabled .cb-global-resource-slot .resource-strip span {
+  color:var(--cb-ui-muted);
+}
+html body.cb-top-nav-enabled .cb-subnav {
+  background:rgba(14,23,25,.975)!important;
+  color:var(--cb-ui-muted)!important;
+  border-color:var(--cb-ui-line-soft)!important;
+  box-shadow:0 4px 14px #0007!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__label {
+  color:var(--cb-ui-accent)!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button {
+  min-height:42px;
+  color:var(--cb-ui-muted)!important;
+  background:#182426!important;
+  border-color:var(--cb-ui-line-soft)!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button:is([aria-current="page"],:hover) {
+  background:#332d22!important;
+  border-color:var(--cb-ui-accent)!important;
+  color:#f0e1c9!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel :is(.cb-more__panel,.cb-more__head) {
+  background:#101d1f!important;
+  border-color:var(--cb-ui-line)!important;
+  color:var(--cb-ui-text)!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button {
+  min-height:44px;
+  background:#172729!important;
+  border-color:var(--cb-ui-line-soft)!important;
+  color:var(--cb-ui-text)!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button:hover {
+  background:#302f28!important;
+  border-color:var(--cb-ui-accent)!important;
+}
+html body.cb-top-nav-enabled .main>.view .panel {
+  background:linear-gradient(180deg,#172325,#0e181b)!important;
+  border-color:var(--cb-ui-line-soft)!important;
+  color:var(--cb-ui-text)!important;
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head) {
+  background:linear-gradient(90deg,#1a2929,#152122)!important;
+  border-bottom-color:var(--cb-ui-line-soft)!important;
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head) h3 {
+  color:var(--cb-ui-text)!important;
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head) small {
+  color:var(--cb-ui-accent)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro {
+  background-color:#111f20!important;
+  border-color:var(--cb-ui-line)!important;
+}
+html body.cb-top-nav-enabled #overview :is(.panel,.cb-hub-actions) {
+  color:var(--cb-ui-text)!important;
+  background:linear-gradient(180deg,#1a2929,#101a1d)!important;
+  border-color:var(--cb-ui-line-soft)!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head {
+  background:linear-gradient(90deg,#24302c,#162121)!important;
+  border-color:var(--cb-ui-line-soft)!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head .panel-head-note,
+html body.cb-top-nav-enabled #overview .cb-hub-heading p {
+  color:var(--cb-ui-muted)!important;
+}
+html body.cb-top-nav-enabled #overview :is(.cb-hub-action-grid button,.cb-v3-update) {
+  background-color:#19272a!important;
+  border-color:var(--cb-ui-line)!important;
+  color:var(--cb-ui-text)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button {
+  background-image:linear-gradient(155deg,#25322f,#142023)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:is(:hover,:focus-visible) {
+  background-image:linear-gradient(155deg,#354039,#192729)!important;
+  border-color:var(--cb-ui-accent)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button span {
+  color:#c0a77b!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-watch {
+  background:#111e20!important;
+  border-color:var(--cb-ui-line)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-watch-row {
+  background:linear-gradient(130deg,#202f30,#111c1f)!important;
+  border-color:var(--cb-ui-line-soft)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-watch-row:hover {
+  background:#273331!important;
+  border-color:var(--cb-ui-accent)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-objective {
+  border-bottom-color:var(--cb-ui-line-soft);
+}
+html body.cb-top-nav-enabled #overview .cb-v3-objective:hover {
+  background:#26332e;
+}
+/* Inputs and keyboard interactions share one legible shell; gameplay inputs
+   such as command bars, minigames and colour controls keep their own styling. */
+html body.cb-top-nav-enabled .main>.view :is(input:not([type=range]):not([type=color]):not([type=file]),select,textarea) {
+  color-scheme:dark;
+}
+html body.cb-top-nav-enabled :is(.cb-global-header,#cbMorePanel,.cb-subnav,.main>.view)
+  :is(button,summary,a,input,select,textarea):focus-visible {
+  outline:2px solid var(--cb-ui-accent-hover)!important;
+  outline-offset:3px!important;
+}
+html body.cb-top-nav-enabled .cb-global-header button,
+html body.cb-top-nav-enabled .cb-subnav button,
+html body.cb-top-nav-enabled #cbMorePanel button {
+  touch-action:manipulation;
+}
+html body.cb-top-nav-enabled :is(.cb-global-header,.cb-subnav,#cbMorePanel) button:disabled {
+  opacity:.48;
+  cursor:not-allowed;
+}
+@media (max-width:1100px) {
+  html body.cb-top-nav-enabled .cb-global-header {gap:5px}
+  html body.cb-top-nav-enabled .cb-global-brand {font-size:14px}
+  html body.cb-top-nav-enabled .cb-global-links button {
+    flex-direction:column;
+    gap:3px;
+    padding-inline:10px;
+    font-size:11px;
+  }
+  html body.cb-top-nav-enabled .cb-global-links .cb-global-link-icon {font-size:18px}
+  html body.cb-top-nav-enabled .cb-global-gold {font-size:11px}
+}
+@media (max-width:720px) {
+  html body.cb-top-nav-enabled .cb-global-header {
+    min-height:56px;
+    height:56px;
+    padding-inline:7px;
+  }
+  html body.cb-top-nav-enabled .app-shell {padding-top:56px!important}
+  html body.cb-top-nav-enabled .cb-subnav {top:56px}
+  html body.cb-top-nav-enabled .cb-global-brand {font-size:11px}
+  html body.cb-top-nav-enabled .cb-global-brand-mark {width:26px;height:26px}
+  html body.cb-top-nav-enabled .cb-global-links button {
+    min-height:54px;
+    font-size:10px;
+    padding-inline:8px;
+  }
+  html body.cb-top-nav-enabled .cb-global-more,
+  html body.cb-top-nav-enabled .cb-global-account>summary {
+    min-height:40px;
+    padding:6px;
+  }
+  html body.cb-top-nav-enabled .cb-global-gold {display:none}
+  html body.cb-top-nav-enabled #cbMorePanel .cb-more__panel {
+    top:60px;
+    max-height:calc(100dvh - 68px);
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  html body.cb-top-nav-enabled .cb-global-links button,
+  html body.cb-top-nav-enabled .cb-subnav button {
+    transition:none!important;
+  }
+}
+/* Full-screen encounter, modal and Design Booth positioning rules are not
+   modified here. These are safe colours and controls, not new gameplay UI. */

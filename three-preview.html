@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101822">
+<title>Cellbound — Three.js Engine Lab</title>
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{font:15px/1.45 system-ui,-apple-system,sans-serif;background:#0d131a;color:#e9e5dc}
+.lab{max-width:1180px;min-height:100%;margin:auto;padding:clamp(12px,3vw,28px);display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.eyebrow{color:#d6a76e;text-transform:uppercase;letter-spacing:.13em;font-weight:700;font-size:.74rem}
+h1{font-size:clamp(1.3rem,4vw,2rem);margin:2px 0}
+p{color:#b5c0cb;margin:6px 0}
+a{color:#f1d3a8}
+.buttons{display:flex;gap:8px;flex-wrap:wrap}
+button,.back{border:1px solid #6f6151;border-radius:10px;padding:10px 13px;background:#272e35;color:#fff;font:inherit;text-decoration:none;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,.back:focus-visible{outline:3px solid #e9bb76;outline-offset:3px}
+.viewport{position:relative;flex:1;min-height:320px;height:min(64vh,660px);background:#101822;border:1px solid #414953;border-radius:14px;overflow:hidden}
+.stage{position:absolute;inset:0}
+.placeholder{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;padding:20px;text-align:center;color:#bdc7ce;pointer-events:none}
+.hud{position:absolute;inset:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;pointer-events:none}
+.hud span{padding:6px 9px;border-radius:7px;background:#10171edb;font-size:.72rem;letter-spacing:.04em}
+.hud strong{color:#f2b675}
+footer{font-size:.85rem;color:#abb6bf}
+@media(max-width:600px){.hud{inset:8px}.viewport{height:58vh;min-height:300px}.hud span{font-size:.62rem}}
+</style>
+</head>
+<body>
+<main class="lab">
+<header>
+<div><div class="eyebrow">Cellbound • experimental 3D engine</div><h1>Ashen Vault — Fixed Camera Lab</h1><p>Five placeholder heroes facing a forge guardian. Rendering test only: no live combat or account changes.</p></div>
+<div class="buttons">
+<a class="back" href="./guild.html">← Back to Cellbound</a>
+<button id="start" type="button">Start 3D Test</button>
+<button id="stop" type="button" disabled>Stop</button>
+</div>
+</header>
+<section class="viewport" aria-label="Three-dimensional fixed camera rendering test">
+<div id="stage" class="stage"></div>
+<div class="placeholder" id="message" role="status" aria-live="polite">Select Start 3D Test to load the renderer.</div>
+<div class="hud"><span>ASHEN VAULT · <strong>3D PROTOTYPE</strong></span><span>FIXED CAMERA · PLACEHOLDER MODELS</span></div>
+</section>
+<footer>3D rendering is isolated from Cellbound's 2D gameplay. WebGL 2 and an internet connection to load the pinned Three.js module are required. The scene is static gameplay-wise; it does not simulate a fight.</footer>
+</main>
+<script src="./three-foundation-v1.js?v=1"></script>
+<script>
+(()=>{
+'use strict';
+const start=document.getElementById('start'),stop=document.getElementById('stop');
+const msg=document.getElementById('message'),host=document.getElementById('stage');
+let active=null,requestId=0;
+start.addEventListener('click',async()=>{
+  const id=++requestId;start.disabled=true;msg.hidden=false;msg.textContent='Loading Three.js engine…';
+  try{
+    const preview=await window.CellboundThree.mountPreview(host);
+    if(id!==requestId){preview.dispose();return;}
+    active=preview;stop.disabled=false;msg.hidden=true;
+  }catch(error){
+    if(id!==requestId)return;
+    msg.hidden=false;msg.textContent='Unable to start 3D test: '+(error?.message||'Unknown error');
+    start.disabled=false;
+  }
+});
+stop.addEventListener('click',()=>{
+  ++requestId;active?.dispose();active=null;
+  start.disabled=false;stop.disabled=true;host.replaceChildren();
+  msg.hidden=false;msg.textContent='Renderer stopped. Your game has not been changed.';
+});
+window.addEventListener('pagehide',()=>{++requestId;active?.dispose();active=null;});
+})();
+</script>
+</body>
+</html>

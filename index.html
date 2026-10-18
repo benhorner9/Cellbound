@@ -3,243 +3,110 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#090d0f" />
-  <title>Cellbound — A Guild-Management Fantasy RPG</title>
-  <meta name="description" content="Cellbound is a browser-based fantasy guild-management RPG in development. Build a roster, choose your five and lead them through dungeons, raids and the world beyond Zeltira." />
-  <link rel="stylesheet" href="./website-v1.css?v=2" />
+  <meta name="theme-color" content="#102338" />
+  <title>Cellbound</title>
+  <meta name="description" content="Build a guild, master dungeons and lead your adventurers through Cellbound." />
+  <link rel="stylesheet" href="./styles.css?v=6" />
 </head>
 <body>
-  <div class="site-shell">
-    <header class="site-nav">
-      <a class="brand" href="#top" aria-label="Cellbound home">
-        <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
-        <span class="brand-copy"><strong>CELLBOUND</strong><small>in development</small></span>
-      </a>
+  <main class="login-shell">
+    <div class="login-world" aria-hidden="true">
+      <img src="./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp" alt="" />
+      <div class="login-world__wash"></div>
+      <div class="login-world__mist login-world__mist--one"></div>
+      <div class="login-world__mist login-world__mist--two"></div>
+    </div>
 
-      <nav class="desktop-nav" aria-label="Primary navigation">
-        <a href="#game">The game</a>
-        <a href="#dungeons">Places</a>
-        <a href="#development">Development</a>
-      </nav>
-
-      <p class="nav-note">Not playable publicly yet.</p>
-
-      <details class="mobile-menu">
-        <summary aria-label="Open navigation">Menu</summary>
-        <nav aria-label="Mobile navigation">
-          <a href="#game">The game</a>
-          <a href="#dungeons">Places</a>
-          <a href="#development">Development</a>
-        </nav>
-      </details>
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="cell-mark" aria-hidden="true">
+          <span class="cell-mark__ring cell-mark__ring--outer"></span>
+          <span class="cell-mark__ring cell-mark__ring--inner"></span>
+          <span class="cell-mark__crystal"></span>
+          <span class="cell-mark__flare"></span>
+        </div>
+        <div>
+          <b>CELLBOUND</b>
+          <small>Guild Command</small>
+        </div>
+      </div>
+      <div class="world-status"><span></span><b>Zeltira</b><em>Founding Season</em></div>
     </header>
 
-    <main id="top">
-      <section class="hero">
-        <div class="hero-art" aria-hidden="true">
-          <img src="./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp" alt="" />
+    <section class="world-intro" aria-label="Cellbound introduction">
+      <div class="world-intro__eyebrow"><i></i> THE GATES OF ZELTIRA</div>
+      <h1>Build your guild.<br><strong>Lead them into Zeltira.</strong></h1>
+      <p>Recruit your party of five, then take on quests, dungeons and raids. Your choices decide how they fight.</p>
+      <p class="public-highscores-entrance"><a href="./highscores.html">♛ VIEW PUBLIC HIGH SCORES <span aria-hidden="true">→</span></a></p>
+
+      <div class="command-strip" aria-label="Cellbound game features">
+        <span><i>01</i><b>Recruit</b><small>Build your roster</small></span>
+        <span><i>02</i><b>Prepare</b><small>Gear & professions</small></span>
+        <span><i>03</i><b>Command</b><small>Survive the expedition</small></span>
+      </div>
+    </section>
+
+    <section class="gate-panel" aria-label="Cellbound account login">
+      <div class="gate-panel__ornament gate-panel__ornament--top" aria-hidden="true"></div>
+      <div class="gate-panel__ornament gate-panel__ornament--bottom" aria-hidden="true"></div>
+
+      <div class="gate-panel__seal" aria-hidden="true">
+        <div class="cell-mark">
+          <span class="cell-mark__ring cell-mark__ring--outer"></span>
+          <span class="cell-mark__ring cell-mark__ring--inner"></span>
+          <span class="cell-mark__crystal"></span>
+          <span class="cell-mark__flare"></span>
+        </div>
+      </div>
+
+      <p class="gate-panel__kicker">GUILD LEDGER</p>
+      <h2>Return to your guild</h2>
+      <p id="login-intro" class="gate-panel__intro">Sign in to open your guild.</p>
+
+      <form id="login-form">
+        <label for="email">Guildmaster email</label>
+        <div class="field">
+          <span class="field-rune" aria-hidden="true">✦</span>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
         </div>
 
-        <div class="hero-content">
-          <p class="overline">A browser RPG about building a guild</p>
-          <h1>Choose your five.<br><em>Then live with the choice.</em></h1>
-          <p class="hero-lead">Cellbound is about the bit before the fight as much as the fight itself — who you bring, what they are wearing, what they can make and whether the party you built can actually handle what is waiting inside.</p>
-          <a class="text-link" href="#game">See what the game is becoming <span>↓</span></a>
-          <p class="hero-status">Pre-alpha · public access stays closed while the game is still moving around underneath us.</p>
+        <div class="label-row">
+          <label for="password">Password</label>
+          <button id="forgot-password" class="text-button" type="button">Forgot password?</button>
+        </div>
+        <div class="field">
+          <span class="field-rune" aria-hidden="true">◇</span>
+          <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+          <button id="toggle-password" class="eye-button" type="button">Show</button>
         </div>
 
-        <aside class="hero-note">
-          <span>Current focus</span>
-          <p>Getting the combat, UI and artwork to feel like they all belong to the same game.</p>
-        </aside>
-      </section>
+        <label class="remember">
+          <input id="remember-device" type="checkbox" />
+          <span>Remember this device</span>
+        </label>
 
-      <section id="game" class="story-section">
-        <div class="story-title">
-          <p class="hand-note">The short version</p>
-          <h2>You do not play one hero.<br>You run the whole guild.</h2>
-        </div>
+        <button id="enter-button" class="enter-button" type="submit">
+          <span>ENTER ZELTIRA</span>
+          <b aria-hidden="true">→</b>
+        </button>
+      </form>
 
-        <div class="story-copy">
-          <p>You recruit the roster, pick an active party of five and decide how that group is built. Tanks, healers and damage dealers all have a job, but the interesting part is making five characters work together rather than chasing one perfect build.</p>
-          <p>Between runs you are back in the guild: sorting gear, crafting, changing the party, taking quests and deciding what is worth attempting next.</p>
-        </div>
-      </section>
+      <p id="login-message" class="gate-panel__message" aria-live="polite" hidden></p>
 
-      <section class="combat-section">
-        <figure class="combat-shot">
-          <img src="./assets/ashen-vault/battlefields/hall-embers.avif" alt="Illustrated battlefield inside the Ashen Vault" />
-          <figcaption>Ashen Vault — one of the first dungeons being rebuilt around the shared combat view.</figcaption>
-        </figure>
+      <div class="divider"><span>NO GUILD YET?</span></div>
+      <button id="create-account" class="create-button" type="button">FOUND A NEW GUILD</button>
 
-        <div class="combat-copy">
-          <p class="hand-note">During a fight</p>
-          <h2>The party keeps moving.<br>You step in when it matters.</h2>
-          <p>Combat runs in real time. Your characters handle their normal attacks and abilities while you deal with priority targets, interrupts, defensive calls and the moments where the plan starts falling apart.</p>
+      <p class="legal">Your guild and progress are saved to your account. Passwords must be at least 12 characters.</p>
+    </section>
 
-          <div class="plain-list">
-            <p><b>Target the problem.</b> Boss mechanic, healer, add, whatever needs attention now.</p>
-            <p><b>Spend commands carefully.</b> They are there to change a fight, not to become another button-mashing rotation.</p>
-            <p><b>Watch the whole party.</b> Health, resources, threat, summons and positioning all matter at the same time.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="guild-section">
-        <div class="guild-intro">
-          <p class="hand-note">Back at the guild</p>
-          <h2>Most of the decisions happen before you press Enter.</h2>
-        </div>
-
-        <div class="guild-lines">
-          <article>
-            <span>01</span>
-            <div>
-              <h3>Roster</h3>
-              <p>Build more than one useful team. Different classes, different roles, different answers when a dungeon starts asking awkward questions.</p>
-            </div>
-          </article>
-
-          <article>
-            <span>02</span>
-            <div>
-              <h3>Gear</h3>
-              <p>Items roll differently, better tiers change how a character develops, and the best piece on paper is not always the piece your party actually needs.</p>
-            </div>
-          </article>
-
-          <article>
-            <span>03</span>
-            <div>
-              <h3>Professions</h3>
-              <p>Every character gets one. Craft gear, consumables and attachments that make preparation part of the run instead of a menu you ignore.</p>
-            </div>
-          </article>
-
-          <article>
-            <span>04</span>
-            <div>
-              <h3>The wider game</h3>
-              <p>Quests, trading, activities, world bosses, raids and social systems all feed back into the same roster rather than living as separate mini-games.</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section id="dungeons" class="places-section">
-        <div class="places-intro">
-          <p class="hand-note">Places we have actually built</p>
-          <h2>Not five versions of the same corridor.</h2>
-          <p>Each dungeon is being treated like a place with its own mood and mechanics, not a background swap around the same encounter.</p>
-        </div>
-
-        <article class="place place-featured">
-          <img src="./assets/dungeons/ashen-vault.webp" alt="Ashen Vault dungeon artwork" />
-          <div>
-            <span>01</span>
-            <h3>Ashen Vault</h3>
-            <p>Hot, cramped and getting worse the deeper you go. The Vaultheart is waiting at the bottom.</p>
-          </div>
-        </article>
-
-        <div class="place-pair">
-          <article class="place">
-            <img src="./assets/hollow-sanctum/rooms/gallery.webp" alt="Hollow Sanctum dungeon artwork" />
-            <div>
-              <span>02</span>
-              <h3>Hollow Sanctum</h3>
-              <p>Three rooms, a broken sacred place and a choir that should probably have stayed quiet.</p>
-            </div>
-          </article>
-
-          <article class="place offset">
-            <img src="./assets/chaos-canyon/rooms/canyon-mouth.webp" alt="Chaos Canyon dungeon artwork" />
-            <div>
-              <span>03</span>
-              <h3>Chaos Canyon</h3>
-              <p>Green, overgrown and increasingly unstable. One bad crossing can make the next boss harder.</p>
-            </div>
-          </article>
-        </div>
-
-        <div class="place-pair lower">
-          <article class="place offset-small">
-            <img src="./assets/blackout-station/rooms/vex-calder-room.avif" alt="Blackout Station dungeon artwork" />
-            <div>
-              <span>04</span>
-              <h3>Blackout Station</h3>
-              <p>An abandoned power station full of bad wiring, worse ideas and Dr Vex Calder.</p>
-            </div>
-          </article>
-
-          <article class="place">
-            <img src="./assets/fractured-ages/rooms/high-noon.webp" alt="Fractured Ages High Noon dungeon artwork" />
-            <div>
-              <span>05</span>
-              <h3>Fractured Ages</h3>
-              <p>Western town, medieval castle, ancient kingdom, space and a funhouse. It is meant to feel a little unhinged.</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section id="raid" class="raid-section">
-        <img src="./assets/manor/manor-raid-hero.webp" alt="The Manor raid artwork" />
-        <div class="raid-wash"></div>
-
-        <div class="raid-content">
-          <p class="hand-note light">The first raid</p>
-          <h2>The Manor</h2>
-          <p>Two players bring five characters each. The raid splits both parties through different parts of the house, then forces them back together with the consequences of what happened while they were apart.</p>
-          <p class="raid-aside">Ten characters sounds like chaos. That is partly the point.</p>
-        </div>
-      </section>
-
-      <section class="world-section">
-        <div class="world-copy">
-          <p class="hand-note">Outside the dungeon list</p>
-          <h2>Zeltira needs to feel like somewhere you return to.</h2>
-          <p>The long-term direction is a proper living hub rather than a stack of menus: places to craft, trade, pick up quests, meet other players and head back out again.</p>
-          <p>Some of that exists already. Some of it is still sketches, rough systems and half-finished ideas. The site will change as the game does.</p>
-        </div>
-
-        <figure class="world-image">
-          <img src="./assets/world/twelve-below-key-art.webp" alt="Cellbound world artwork" />
-          <figcaption>Twelve Below — world/activity key art currently used in-game.</figcaption>
-        </figure>
-      </section>
-
-      <section id="development" class="development-section">
-        <div class="dev-rule"></div>
-        <div class="development-copy">
-          <p class="hand-note">A note on development</p>
-          <h2>No fake trailer. No pretend launch date.</h2>
-          <p>Cellbound is still pre-alpha. Combat is being rebuilt, old artwork is being replaced, the UI is being tightened up and content is still changing. The public game is staying closed until those pieces feel like one coherent thing.</p>
-          <p>This website is here to show the direction without pretending the game is further along than it is.</p>
-          <strong>When there is something worth playing publicly, the button will appear here.</strong>
-        </div>
-      </section>
-
-      <section class="final-cta">
-        <div class="final-art" aria-hidden="true">
-          <img src="./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp" alt="" />
-        </div>
-        <div class="final-content">
-          <p class="hand-note light">For now</p>
-          <h2>The gates stay shut.</h2>
-          <p>We keep building.</p>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <a class="brand footer-brand" href="#top" aria-label="Back to top">
-        <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
-        <span class="brand-copy"><strong>CELLBOUND</strong></span>
-      </a>
-      <p>Browser-based fantasy guild-management RPG · Pre-alpha</p>
-      <span>© 2026</span>
+    <footer>
+      <span>© 2026 CELLBOUND</span>
+      <span class="footer-rune">◇</span>
+      <span>EPISODE ONE · EARLY ACCESS</span>
     </footer>
-  </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
+  <script src="./auth.js?v=3"></script>
 </body>
 </html>

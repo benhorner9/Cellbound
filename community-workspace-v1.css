@@ -1,0 +1,511 @@
+/* Cellbound UI Block 6 — PvP, Guild Social, High Scores, Beta Support,
+ * and Admin. Only presentation, never combat results, messages, rankings or
+ * the Design Booth's state/geometry and publishing workflows. */
+html body.cb-top-nav-enabled.cb-community-v6{
+ --cb-social-ink:#ebe4d6;
+ --cb-social-muted:#b6c2b7;
+ --cb-social-gold:#d0b080;
+ --cb-social-line:rgba(190,159,107,.31);
+ --cb-social-panel:#152325;
+ --cb-social-raised:#233230;
+}
+html body.cb-top-nav-enabled.cb-community-v6 :is(#pvp,#chat,#highscores,#support,#admin){
+ max-width:1680px;margin-inline:auto;min-width:0;
+}
+html body.cb-top-nav-enabled.cb-community-v6 :is(#pvp,#chat,#highscores,#support,#admin)>.section-intro{
+ min-height:clamp(160px,14.5vw,207px)!important;
+ margin:2px 0 12px!important;padding:clamp(20px,2.7vw,35px)!important;
+ border:1px solid var(--cb-social-line)!important;
+ border-radius:5px!important;
+ box-shadow:0 13px 34px #0008!important;
+ background-color:#131f21!important;
+ background-image:linear-gradient(90deg,#080e10f5,#0b1415da 43%,#0d191994),
+ url('./assets/comics/tutorial-2026/sunset-briefing.webp')!important;
+ background-position:center,center 43%!important;
+ background-size:cover!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp>.section-intro{
+ background-image:linear-gradient(90deg,#100f13f5,#15171ad7 48%,#160d0c99),
+ url('./assets/fractured-ages/rooms/iron-kingdom.webp')!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores>.section-intro{
+ background-image:linear-gradient(90deg,#0b1011f5,#121d1dd8 48%,#0c131493),
+ url('./assets/comics/tutorial-2026/twilight-evacuation.webp')!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support>.section-intro{
+ background-image:linear-gradient(90deg,#0a1113f5,#141f20d8 48%,#12191ba8),
+ url('./assets/comics/tutorial-2026/investigating-tracks.webp')!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin>.section-intro{
+ background-image:linear-gradient(90deg,#0b1112f4,#19201fda 51%,#141d1caa),
+ url('./assets/comics/tutorial-2026/arcane-armory.webp')!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 :is(#pvp,#chat,#highscores,#support,#admin)>.section-intro h2{
+ margin:6px 0 9px!important;
+ color:#f1e6d6!important;
+ font:normal clamp(2rem,3.15vw,3.3rem)/1.09 Georgia,serif!important;
+ letter-spacing:-.02em;
+}
+html body.cb-top-nav-enabled.cb-community-v6 :is(#pvp,#chat,#highscores,#support,#admin)>.section-intro small{
+ color:#d2b184!important;font-size:10px!important;letter-spacing:.16em!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 :is(#pvp,#chat,#highscores,#support,#admin)>.section-intro p{
+ max-width:675px;color:#c1cabd!important;
+ font:400 clamp(12px,1.1vw,15px)/1.53 system-ui,sans-serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 .cb-community-routes{
+ display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+ padding:8px;margin:0 0 12px;
+ border:1px solid var(--cb-social-line);
+ background:linear-gradient(120deg,#1e2d2b,#111d1f);
+ border-radius:5px;
+}
+html body.cb-top-nav-enabled.cb-community-v6 .cb-community-routes[hidden],
+html body.cb-top-nav-enabled.cb-community-v6 .cb-community-route[hidden]{display:none!important}
+html body.cb-top-nav-enabled.cb-community-v6 .cb-community-route,
+html body.cb-top-nav-enabled.cb-community-v6 .cb-community-find-group{
+ display:inline-flex;gap:8px;align-items:center;justify-content:center;
+ min-height:44px;padding:9px 15px;cursor:pointer;
+ color:#e9dfcf!important;
+ border:1px solid rgba(202,171,123,.56)!important;
+ border-radius:4px;background:#26322c!important;
+ font:700 12px system-ui,sans-serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 .cb-community-route span{
+ color:#dcc291;font-size:18px;
+}
+html body.cb-top-nav-enabled.cb-community-v6 :is(.cb-community-route,.cb-community-find-group):hover{
+ color:#f5dfb8!important;border-color:#dec089!important;
+ background:#403729!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 :is(.cb-community-route,.cb-community-find-group):focus-visible{
+ outline:2px solid #e8cc92!important;outline-offset:3px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .cb-community-find-group{
+ flex-shrink:0;background:#413528!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat>.section-intro #refreshSocial{
+ min-height:44px!important;
+}
+/* PvP: state is locked by the existing gameplay module, and stays locked.
+   Present a serious, readable status without suggesting live matchmaking. */
+html body.cb-top-nav-enabled.cb-community-v6 #pvp #pvpMount{
+ display:grid;gap:13px;margin-top:3px;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-hero{
+ min-height:245px;grid-template-columns:minmax(0,1.35fr) minmax(200px,.65fr);
+ align-items:center;gap:20px;
+ padding:clamp(18px,2.7vw,31px)!important;
+ background-color:#151c1d!important;
+ background-image:linear-gradient(90deg,#090e11f0,#171918df 55%,#1e1514a1),
+ url('./assets/fractured-ages/rooms/iron-kingdom.webp')!important;
+ background-size:cover!important;background-position:center,center 50%!important;
+ border:1px solid #9c755f77!important;
+ border-radius:5px;box-shadow:0 13px 28px #0009!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-hero h2{
+ color:#f0e3d4!important;
+ font:normal clamp(24px,2.5vw,36px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-hero small{
+ color:#d6b19b!important;font-size:10px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-hero p{
+ max-width:760px;color:#c4c9c0!important;
+ font:400 13px/1.58 system-ui,sans-serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-rank-card{
+ background:#101a1bdc!important;border:1px solid #ad8c67a1!important;
+ border-radius:5px;padding:17px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-rank-card>b{
+ color:#eac6a7!important;font:normal clamp(23px,2.2vw,34px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-rank-card :is(small,span){
+ color:#bcad9c!important;font-size:11px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-panel{
+ min-width:0;border:1px solid #94795e73!important;
+ border-radius:5px;
+ background:linear-gradient(#202a29,#131e21)!important;
+ box-shadow:0 10px 25px #0007!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-panel>header{
+ background:#222e2b!important;border-bottom-color:#92795e55!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-panel>header h3{
+ color:#eee3d3!important;font:normal clamp(18px,1.65vw,24px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-panel>header small{
+ color:#d1b185!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-panel>p{
+ color:#b7c4b9!important;font-size:13px!important;line-height:1.6!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-tabs{
+ border-color:var(--cb-social-line)!important;background:#192829!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-tabs button{
+ min-height:44px;background:#1b2929!important;color:#c8cec3!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-tabs button.active{
+ color:#f5e2bf!important;background:#443628!important;
+ box-shadow:inset 0 -3px #c9a677!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp :is(.pvp-mode-grid button,.pvp-size-grid button,.arena-roster button){
+ min-height:65px;background:#1a2a2b!important;
+ border-color:var(--cb-social-line)!important;color:#e8e6da!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #pvp :is(.pvp-mode-grid button.active,.pvp-size-grid button.active,.arena-roster button.selected){
+ background:#373b2b!important;border-color:#d2b27d!important;
+}
+/* Social: chat as primary space, finder and guild identity alongside it. */
+html body.cb-top-nav-enabled.cb-community-v6 #chat .social-layout{
+ display:grid!important;
+ grid-template-columns:minmax(0,1.65fr) minmax(270px,.82fr);
+ gap:13px;align-items:start;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .social-layout>*{min-width:0}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-panel{
+ display:flex;flex-direction:column;min-height:min(66dvh,675px);
+ overflow:hidden;
+ background:linear-gradient(#1a2928,#101c1f)!important;
+ border:1px solid var(--cb-social-line)!important;border-radius:5px;
+ box-shadow:0 12px 29px #0007!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-tabs{
+ display:flex;gap:5px;flex-wrap:wrap;
+ padding:9px;background:#1d2c2a!important;
+ border-bottom:1px solid var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-tabs button{
+ flex:1 1 100px;min-height:44px!important;
+ border:1px solid #92795669!important;border-radius:4px;
+ color:#c3cdbf!important;background:#1b2928!important;
+ font:700 11px system-ui,sans-serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-tabs button.active{
+ color:#f5e0bb!important;border-color:#cdac79!important;
+ background:#433628!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-messages{
+ flex:1 1 auto;min-height:250px;max-height:clamp(350px,50dvh,600px);
+ padding:14px!important;overflow-y:auto!important;
+ background:#0d191c!important;
+ scrollbar-color:#776b4a #122022;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-message{
+ margin-bottom:9px;padding:12px 13px!important;
+ border:1px solid #947d5436!important;border-radius:4px;
+ background:linear-gradient(110deg,#1b2b29,#172326)!important;
+ color:#e8e4d8!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-message .chat-meta{
+ color:#bbc8bb!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-message p{
+ color:#e2e3d9!important;font-size:13px!important;line-height:1.52!important;
+ overflow-wrap:anywhere;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-form{
+ display:flex;gap:8px;align-items:center;
+ padding:11px!important;border-top:1px solid var(--cb-social-line)!important;
+ background:#182627!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat #chatInput{
+ min-height:45px!important;min-width:0;flex:1 1 auto;
+ border:1px solid #9c875e74!important;border-radius:4px;
+ background:#0e1c1e!important;color:#e9e7dc!important;
+ font-size:14px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-form button{
+ flex:0 0 auto;min-height:45px!important;
+ border:1px solid #c0a16f!important;border-radius:4px;
+ background:#55422a!important;color:#f4e4c5!important;
+ font:700 12px system-ui,sans-serif;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-safety-note{
+ margin:0;padding:4px 11px 13px!important;color:#9eaea1!important;
+ font-size:10px!important;letter-spacing:.025em!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .social-side{
+ display:grid;gap:13px;min-width:0
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .social-side>.panel{
+ background:linear-gradient(#1b2b29,#111e20)!important;
+ border:1px solid var(--cb-social-line)!important;border-radius:5px;
+ box-shadow:0 8px 25px #0005!important;min-width:0
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .social-side .panel-head{
+ background:#202d2a!important;border-bottom-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .social-side .panel-head h3{
+ font:normal clamp(17px,1.45vw,22px) Georgia,serif!important;
+ color:#efe7d7!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat :is(.guild-name-form,.party-finder-form){
+ padding:12px!important;gap:10px;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat :is(.guild-name-form,.party-finder-form) label{
+ color:#b8c3b5!important;font-size:11px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat :is(.guild-name-form,.party-finder-form) :is(input,select){
+ min-height:44px;border:1px solid var(--cb-social-line)!important;
+ border-radius:4px;background:#101e20!important;color:#eee6d8!important;
+ font-size:13px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat :is(.guild-name-form,.party-finder-form) button{
+ min-height:44px;border-color:#a78a5f!important;
+ background:#3d362a!important;color:#edd9b6!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .party-finder-listings{
+ max-height:370px;overflow-y:auto;scrollbar-color:#8f7857 #132323;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat .pf-card{
+ background:#1b2929!important;border-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #chat :is(.social-empty,.guild-name-locked span){
+ color:#b3c0b4!important;
+}
+/* High scores: readable records and medal hierarchy, rankings untouched. */
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-board{
+ --hs-edge:rgba(199,166,111,.33);
+ min-width:0;border:1px solid var(--hs-edge)!important;
+ border-radius:5px;overflow:hidden;background:#101e20!important;
+ box-shadow:0 15px 35px #0007!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-masthead{
+ background:linear-gradient(105deg,#26312b,#101d1e)!important;
+ border-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-masthead h2{
+ color:#f3e4ce!important;font:normal clamp(27px,2.6vw,40px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-masthead p{
+ color:#c1cbbd!important;font-size:13px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-bar{
+ background:#1b2929!important;border-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-bar :is(select,button){
+ min-height:44px!important;border-color:#a58c639c!important;
+ background:#26342e!important;color:#f0e3cf!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-podium-card{
+ border-color:#987d557e!important;background:linear-gradient(#26332d,#141f22)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-podium-card h3{
+ color:#f1e7d8!important;font-family:Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-podium-card p{
+ color:#b9c5b9!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-table-wrap{
+ overflow-x:auto!important;background:#132124!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-table th{
+ color:#d6b987!important;background:#23312d!important;
+ border-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-table td{
+ color:#dedfd6!important;border-color:#aa8b5730!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #highscores .hs-table tr.hs-own{
+ background:#373e2c!important;
+}
+/* Beta Support: prominent editable report form, readable ticket history. */
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-support-grid{
+ gap:13px;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-panel{
+ background:linear-gradient(#1a2928,#101c1f)!important;
+ border:1px solid var(--cb-social-line)!important;
+ border-radius:5px!important;box-shadow:0 8px 26px #0006!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-panel-head{
+ background:#23302c!important;border-bottom-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-panel-head h3{
+ color:#f1e6d6!important;font:normal clamp(18px,1.7vw,24px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-panel-head p{
+ color:#b5c3b7!important;font-size:12px!important;line-height:1.55!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-form :is(input,textarea,select){
+ min-height:44px;border:1px solid #a1885e82!important;
+ border-radius:4px;background:#101d20!important;color:#f0e6d8!important;
+ font-size:14px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-form textarea{
+ min-height:145px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-form label>span{
+ color:#c8b386!important;font-size:11px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support .beta-form button[type="submit"]{
+ min-height:45px;background:#4e3c28!important;
+ border-color:#d0af7e!important;color:#f3e1c4!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support :is(.beta-ticket,.beta-note){
+ background:#1b292a!important;border-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #support :is(.beta-report-hint,.beta-ticket p){
+ color:#b7c3b8!important;font-size:12px!important;
+}
+/* Developer console and Design Booth: shared hardware, no changing
+   privilege checks, tabs, editors, canvas or publishing workflow. */
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-nav{
+ display:flex;gap:6px;overflow-x:auto;
+ background:#101b1d!important;border:1px solid var(--cb-social-line)!important;
+ border-radius:5px;padding:8px!important;
+ scrollbar-color:#96815e #132123;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-nav button{
+ flex:1 0 135px;min-height:59px!important;
+ border:1px solid #a88d5e49!important;border-radius:4px;
+ background:#182729!important;color:#bec8bc!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-nav button.active{
+ background:#41382a!important;border-color:#c5a678!important;
+ box-shadow:inset 0 -3px #c7a775!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-nav button.active span{
+ color:#f1e0c1!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-nav button small{
+ color:#aebbb0!important;font-size:10px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-meta>span{
+ background:#1b2829!important;border:1px solid var(--cb-social-line)!important;
+ border-radius:4px;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-meta small{
+ color:#b3bfae!important;font-size:10px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-meta b{
+ color:#eddfc8!important;font-size:11px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-card{
+ min-width:0;
+ border:1px solid var(--cb-social-line)!important;border-radius:5px!important;
+ background:linear-gradient(#1c2928,#111d20)!important;
+ box-shadow:0 10px 26px #0006!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-card h3{
+ color:#f2e5d4!important;font:normal clamp(18px,1.6vw,24px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-card>p{
+ color:#b9c7ba!important;font-size:12px!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-shell{
+ border:1px solid #a58c6371!important;border-radius:6px;
+ background:#101d1e!important;
+ box-shadow:0 18px 44px #0008!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-master-head{
+ background:linear-gradient(110deg,#342d22,#182728 58%,#1c2524)!important;
+ border-bottom-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-master-head h2{
+ color:#f0e4d3!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-master-head p{
+ color:#b7c4b8!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-tabs{
+ background:#182627!important;border-color:var(--cb-social-line)!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-tabs button{
+ min-height:70px!important;
+ border-right-color:#9c815c3c!important;
+ color:#c7d0c3!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-tabs button.active{
+ background:#423628!important;color:#f5e4c9!important;
+ border-bottom-color:#d1ae76!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-tabs button small{
+ color:#adbaaf!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin :is(.dbo-builder-top,.dbo-projects,.dbo-project-editor){
+ background-color:#142122!important;border-color:#957e5d4d!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin :is(.dbo-project-list button,.dbo-stage-list button){
+ background:#1c2b2a!important;border-color:var(--cb-social-line)!important;
+ color:#e3e4d8!important;min-height:43px;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin :is(.dbo-project-list button.active,.dbo-stage-list button.active){
+ background:#39382b!important;border-color:#cbaa75!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-field>span{
+ color:#c4cfbf!important;
+}
+html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-field :is(input,select,textarea){
+ background:#102022!important;border-color:#a58c6b66!important;
+ color:#f0e9dd!important;
+}
+/* Do not style the movable combat editor canvas, its positioning or the
+   critical save/publish/rollback state and confirmation buttons. */
+html body.cb-top-nav-enabled.cb-community-v6 :is(#pvp,#chat,#highscores,#support,#admin)
+ :is(button,summary,a,input,textarea,select):focus-visible{
+ outline:2px solid #ead098!important;outline-offset:3px!important;
+}
+@media(max-width:1100px){
+ html body.cb-top-nav-enabled.cb-community-v6 #chat .social-layout{
+  grid-template-columns:minmax(0,1.35fr) minmax(250px,.85fr);
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-hero{
+  grid-template-columns:minmax(0,1fr) minmax(180px,.5fr);
+ }
+}
+@media(max-width:850px){
+ html body.cb-top-nav-enabled.cb-community-v6 #chat .social-layout{
+  grid-template-columns:1fr;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-panel{
+  min-height:440px;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #chat .social-side{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #pvp .pvp-hero{
+  grid-template-columns:1fr;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #admin .admin-workspace-nav button{
+  flex-basis:135px;
+ }
+}
+@media(max-width:620px){
+ html body.cb-top-nav-enabled.cb-community-v6 :is(#pvp,#chat,#highscores,#support,#admin)>.section-intro{
+  padding:18px!important;min-height:170px!important;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 .cb-community-routes{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 .cb-community-route{
+  padding-inline:9px;font-size:11px!important;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #chat .social-side{
+  grid-template-columns:1fr;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-form{
+  flex-wrap:wrap;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #chat .chat-messages{
+  max-height:50dvh;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #support .beta-form-row{
+  grid-template-columns:1fr!important;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-tabs{
+  display:flex;overflow-x:auto;
+ }
+ html body.cb-top-nav-enabled.cb-community-v6 #admin .dbo-tabs button{
+  flex:0 0 125px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html body.cb-top-nav-enabled.cb-community-v6 :is(#pvp,#chat,#highscores,#support,#admin) *{
+  scroll-behavior:auto!important;
+ }
+}

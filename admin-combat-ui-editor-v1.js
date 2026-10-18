@@ -3,39 +3,12 @@
 const KEY='cellbound-owner-combat-ui-layout-v1';
 const MODES={pve:'PvE · Combat Reborn',arena:'PvP · Arena',ctf:'PvP · Capture the Flag',hill:'PvP · King of the Hill'};
 const PROFILES={desktop:[1200,720],tablet:[1024,768],mobile:[390,844]};
-const PVE=[
- ['header','Window header','.cb2d-head'],['route','Dungeon progress','.cb2d-route'],
- ['battlefield','Combat battlefield','.cb2d-arena'],['controls','Command centre','.cb2d-controls'],
- ['feed','Combat feed','.cb2d-feed'],['cast','Enemy cast','.cb2d-cast'],
- ['meters','Damage / healing / threat','.cb2d-combat-meters'],
- ['actions','Party actions','.cb2d-actions'],['party','Party condition','.cb2d-party'],
- ['tactics','Tactics summary','.cb2d-plan']
-];
-const PVP=[
- ['header','Match header','.pvp2d-head'],['blue','Blue team roster','.pvp2d-layout>aside:first-child'],
- ['battlefield','Combat battlefield','.pvp2d-arena'],
- ['red','Red team roster','.pvp2d-layout>aside:last-child'],
- ['feed','Combat feed','.pvp2d-lower>section:first-child'],
- ['meters','Damage / healing meters','.pvp2d-lower>section:last-child']
-];
-const DEFAULT_PVE={
- header:[1,1,98,8],route:[1,10,98,6],battlefield:[1,17,68,57],
- controls:[1,75,68,9],feed:[1,85,68,14],cast:[70,17,29,11],
- meters:[70,29,29,28],actions:[70,58,29,13],party:[70,72,29,17],tactics:[70,90,29,9]
-};
-const DEFAULT_PVP={
- header:[1,1,98,9],blue:[1,11,16,63],battlefield:[18,11,64,63],red:[83,11,16,63],
- feed:[1,76,48,23],meters:[50,76,49,23]
-};
-const DEFAULT_MOBILE_PVE={
- header:[1,1,98,6],route:[1,8,98,4],battlefield:[1,13,98,44],
- controls:[1,58,98,8],feed:[1,86,98,13],cast:[1,67,47,8],
- meters:[1,76,47,9],actions:[50,67,49,8],party:[50,76,49,9],tactics:[1,0,0,0]
-};
-const DEFAULT_MOBILE_PVP={
- header:[1,1,98,7],battlefield:[1,9,98,49],blue:[1,59,48,14],
- red:[51,59,48,14],feed:[1,74,98,12],meters:[1,87,98,12]
-};
+const PVE=[['header','Window header','.cbcombat-header'],['route','Progress / objective','.cbcombat-route'],['battlefield','Combat battlefield','.cbcombat-arena-wrap'],['party','Party frames','.cbcombat-party-panel'],['meters','Damage / healing / threat','.cbcombat-meters-panel'],['controls','Command centre','.cbcombat-command-panel']];
+const PVP=[['header','Match header','.cbcombat-header'],['route','Match objectives','.cbcombat-route'],['battlefield','Combat battlefield','.cbcombat-arena-wrap'],['party','Blue roster','.cbcombat-party-panel'],['meters','Red roster','.cbcombat-meters-panel'],['controls','PvP commands','.cbcombat-command-panel']];
+const DEFAULT_PVE={header:[1,1,98,8],route:[1,10,98,5],party:[1,16,17,81],battlefield:[19,16,54,81],meters:[74,16,25,34],controls:[74,51,25,46]};
+const DEFAULT_PVP={header:[1,1,98,8],route:[1,10,98,8],party:[1,19,17,78],battlefield:[19,19,54,78],meters:[74,19,25,38],controls:[74,58,25,39]};
+const DEFAULT_MOBILE_PVE={header:[1,1,98,7],route:[1,9,98,5],party:[1,15,48,18],meters:[50,15,49,18],battlefield:[1,34,98,43],controls:[1,78,98,21]};
+const DEFAULT_MOBILE_PVP={header:[1,1,98,7],route:[1,9,98,7],party:[1,17,48,17],meters:[50,17,49,17],battlefield:[1,35,98,43],controls:[1,79,98,20]};
 const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>[...p.querySelectorAll(s)];
 const copy=x=>JSON.parse(JSON.stringify(x));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,Number(n)||0));
@@ -45,8 +18,6 @@ const key=()=>KEY+'-'+currentUser();
 const defaultSlot=(mode,profile,id)=>{
  const source=profile==='mobile'?(mode==='pve'?DEFAULT_MOBILE_PVE:DEFAULT_MOBILE_PVP):(mode==='pve'?DEFAULT_PVE:DEFAULT_PVP);
  let a=source[id]||[1,1,20,12];
- if(profile==='tablet'&&id==='battlefield'&&mode==='pve')a=[1,17,65,57];
- if(profile==='tablet'&&id==='meters'&&mode==='pve')a=[67,29,32,28];
  return{x:a[0],y:a[1],w:a[2],h:a[3],hidden:a[2]===0};
 };
 const slots=mode=>mode==='pve'?PVE:PVP;
@@ -97,18 +68,19 @@ function modal(){
  '<button id="cbeSave" type="button">Save draft</button><button id="cbePublish" data-accent type="button">Apply to this device</button><button id="cbeClose" class="cbe-close" type="button">Close ✕</button></div>'+
  '<div class="cbe-workspace"><section class="cbe-center"><div class="cbe-info"><span><strong>Touch a panel</strong> to select and drag. Pull its gold corner to resize.</span><span id="cbeInfo"></span></div><div class="cbe-stage"><div class="cbe-canvas" id="cbeCanvas"></div></div></section>'+
  '<aside class="cbe-aside"><h3 id="cbeSelectedName">Battlefield</h3><p>Positions and sizes are percentages of the entire combat window.</p><div class="cbe-fields" id="cbeFields"></div>'+
- '<div class="cbe-inline"><button id="cbeVisible" type="button">Hide panel</button><button id="cbeResetPanel" type="button">Reset panel</button></div><hr>'+
+ '<div class="cbe-inline"><button id="cbeVisible" type="button">Hide panel</button><button id="cbeResetPanel" type="button">Reset panel</button></div>'+ 
+ '<div class="cbe-inline"><button id="cbeFitScene" type="button">Fit battlefield to artwork (16:9)</button></div><hr>'+
  '<h3>Whole window</h3><div class="cbe-fields"><label>Width (px)<input id="cbeWidth" type="number" min="320" max="1800" step="20"></label><label>Height (px)<input id="cbeHeight" type="number" min="420" max="1500" step="20"></label></div>'+
  '<div class="cbe-inline"><button id="cbeGrid" type="button">Grid: On</button><button id="cbeReset" type="button">Reset layout</button></div><hr>'+
  '<h3>Save and share</h3><p>Drafts and applied layouts stay on this device. Export JSON to back them up or move them to another device. Applying is not a global release.</p>'+
  '<div class="cbe-inline"><button id="cbeExport" type="button">Export JSON</button><button id="cbeImport" type="button">Import JSON</button></div>'+
  '<div class="cbe-inline"><button id="cbeRevert" type="button">Remove device layout</button></div><p id="cbeStatus" class="cbe-status" role="status"></p></aside></div>'+
- '<div class="cbe-foot">OWNER PREVIEW · The sample characters are placeholders. Applied layouts reposition the actual PvE / PvP panels without changing combat decisions or simulation.</div></section>';
+ '<div class="cbe-foot">OWNER PREVIEW · The preview mirrors the canonical Combat Reborn panel structure. Applied layouts affect this device only and never change combat logic.</div></section>';
  document.body.appendChild(node);bindModal(node);return node
 }
 function renderCanvas(){
  const canvas=$('#cbeCanvas');if(!canvas)return;
- const layout=getDraft(),size=PROFILES[profile];
+ const layout=getDraft(),size=[layout.width,layout.height];
  canvas.style.width='min(100%,'+size[0]+'px)';
  canvas.style.aspectRatio=size[0]+' / '+size[1];
  canvas.dataset.grid=grid?'1':'0';
@@ -174,6 +146,16 @@ function bindPanel(el){
 }
 function changeMode(next){mode=next;selected='battlefield';undo=[];redo=[];renderCanvas()}
 function changeProfile(next){profile=next;selected='battlefield';undo=[];redo=[];renderCanvas()}
+function fitBattlefieldToArt(){
+ // Fit the illustrated scene *inside* its currently assigned UI region.
+ // No neighbouring panel is moved or overwritten, and Undo restores the slot.
+ remember();selected='battlefield';
+ const layout=getDraft(),slot=layout.slots.battlefield;
+ const targetHeight=slot.w*layout.width*9/(16*layout.height);
+ if(targetHeight<=slot.h)slot.h=Math.max(4,Math.round(targetHeight*10)/10);
+ else slot.w=Math.max(4,Math.round(slot.h*layout.height*16/(9*layout.width)*10)/10);
+ renderCanvas();status('Battlefield fitted to 16:9 artwork — save or apply to test')
+}
 function bindModal(node){
  $('#cbeMode',node).addEventListener('change',e=>changeMode(e.target.value));
  $('#cbeProfile',node).addEventListener('change',e=>changeProfile(e.target.value));
@@ -188,6 +170,7 @@ function bindModal(node){
  };
  $('#cbeVisible',node).onclick=()=>{remember();getDraft().slots[selected].hidden=!getDraft().slots[selected].hidden;renderCanvas()};
  $('#cbeResetPanel',node).onclick=()=>{remember();getDraft().slots[selected]=defaultSlot(mode,profile,selected);renderCanvas()};
+ $('#cbeFitScene',node).onclick=fitBattlefieldToArt;
  $('#cbeGrid',node).onclick=()=>{grid=!grid;renderCanvas()};
  $('#cbeReset',node).onclick=()=>{if(!confirm('Reset every panel in this draft?'))return;remember();state.drafts[mode][profile]=defaultLayout(mode,profile);renderCanvas()};
  ['width','height'].forEach(dim=>$('#cbe'+dim[0].toUpperCase()+dim.slice(1),node).addEventListener('change',e=>{remember();getDraft()[dim]=clamp(e.target.value,dim==='width'?320:420,dim==='width'?1800:1500);renderCanvas()}));
@@ -211,6 +194,8 @@ function bindModal(node){
 }
 function open(){
  if(!owner())return false;
+ const host=$('#combatUILayoutMount');
+ if(host){host.hidden=false;host.innerHTML='<div class="cbe-reopen"><h3>Combat UI Layout Editor</h3><p>Drag and resize the complete combat window. Drafts and applied layouts are private to this device.</p><button type="button" id="cbeReopenEditor">OPEN VISUAL EDITOR</button></div>';$('#cbeReopenEditor',host)?.addEventListener('click',()=>open())}
  state=load();opened=true;
  const node=modal();node.hidden=false;
  $('#cbeMode').innerHTML=opt(MODES,mode);$('#cbeProfile').innerHTML=opt(Object.fromEntries(Object.keys(PROFILES).map(k=>[k,k[0].toUpperCase()+k.slice(1)])),profile);
@@ -219,65 +204,57 @@ function open(){
 }
 function close(){opened=false;const node=$('#cbeOverlay');if(node)node.hidden=true;document.body.classList.remove('cbe-editor-open')}
 function syncAccess(){
- const entry=$('#combatUILayoutEntry');if(entry)entry.hidden=!owner();
  if(!owner())close()
 }
 function activeProfile(){const touch=window.matchMedia?.('(pointer:coarse)')?.matches||false;return window.innerWidth<=600?'mobile':(window.innerWidth<=1100||(touch&&window.innerWidth<=1500))?'tablet':'desktop'}
 function liveMode(shell){
- if(shell.classList.contains('cb2d-shell'))return'pve';
- const label=$('.pvp2d-head',shell)?.textContent.toLowerCase()||'';
- return label.includes('capture the flag')?'ctf':label.includes('king of the hill')?'hill':'arena'
+ if(shell.dataset.combatProfile!=='pvp')return'pve';
+ const m=String(shell.querySelector('[data-pvp-mode]')?.dataset.pvpMode||'arena');
+ return m==='capture-the-flag'?'ctf':m==='king-of-the-hill'?'hill':'arena'
 }
-const INLINE=['position','left','top','right','bottom','width','height','min-height','max-height','overflow','display','z-index','margin','padding','box-sizing'];
-function unstyle(el){if(!el)return;const original=el._cbeOriginalStyle;if(original===undefined)return;if(original===null)el.removeAttribute('style');else el.setAttribute('style',original);delete el._cbeOriginalStyle}
+const originals=new WeakMap();
+function rememberStyle(el){if(el&&!originals.has(el))originals.set(el,el.getAttribute('style'))}
+function restoreStyle(el){if(!el||!originals.has(el))return;const v=originals.get(el);if(v===null)el.removeAttribute('style');else el.setAttribute('style',v);originals.delete(el)}
 function styleElement(el,s){
- if(!el)return;
- if(el._cbeOriginalStyle===undefined)el._cbeOriginalStyle=el.getAttribute('style');
- const props={position:'absolute',left:s.x+'%',top:s.y+'%',right:'auto',bottom:'auto',width:s.w+'%',height:s.h+'%',minHeight:'0',maxHeight:'none',overflow:'auto',display:s.hidden?'none':'',zIndex:'2',margin:'0',boxSizing:'border-box'};
- for(const [name,value]of Object.entries(props)){const prop=name.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());if(value==='')el.style.removeProperty(prop);else el.style.setProperty(prop,value,'important')}
+ if(!el)return;rememberStyle(el);
+ for(const [k,v]of Object.entries({position:'absolute',left:s.x+'%',top:s.y+'%',right:'auto',bottom:'auto',width:s.w+'%',height:s.h+'%',minHeight:'0',maxHeight:'none',overflow:'auto',display:s.hidden?'none':null,zIndex:'2',margin:'0',boxSizing:'border-box'})){
+  const name=k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());if(v===null)el.style.removeProperty(name);else el.style.setProperty(name,v,'important')
+ }
 }
 function clearShell(shell){
  if(!shell.classList.contains('cbe-live'))return;
- const m=liveMode(shell);
- slots(m).forEach(([, ,selector])=>unstyle($(selector,shell)));
- unstyle(shell);shell.classList.remove('cbe-live');delete shell.dataset.cbeProfile;delete shell.dataset.cbeMode
+ for(const [,,selector]of PVE)restoreStyle(shell.querySelector(selector));
+ restoreStyle(shell);shell.style.removeProperty('--cbe-width');shell.style.removeProperty('--cbe-height');
+ shell.classList.remove('cbe-live');delete shell.dataset.cbeProfile;delete shell.dataset.cbeMode
 }
 function refreshLive(){
- $$('.cb2d-shell,.pvp2d-shell').forEach(shell=>{if(shell.classList.contains('cbe-live'))clearShell(shell);applyShell(shell)})
+ document.querySelectorAll('.cbcombat-shell[data-combat-view="canonical-v1"]').forEach(shell=>{clearShell(shell);applyShell(shell)})
 }
 function applyShell(shell){
- if(!owner())return;
- // Briefings and end screens share the shell class; edit only an active combat viewer.
- if(shell.classList.contains('cb2d-shell')&&!$('.cb2d-layout .cb2d-arena',shell))return;
- if(shell.classList.contains('pvp2d-shell')&&!$('.pvp2d-layout .pvp2d-arena',shell))return;
- const m=liveMode(shell),p=activeProfile(),raw=state.applied[m]?.[p];
- if(!raw)return;
+ if(!owner()||!shell||shell.classList.contains('results-mode')||!shell.querySelector('.cbcombat-arena-wrap'))return;
+ const m=liveMode(shell),p=activeProfile(),raw=state.applied[m]?.[p];if(!raw)return;
  if(shell.classList.contains('cbe-live')&&shell.dataset.cbeProfile===p&&shell.dataset.cbeMode===m)return;
- if(shell.classList.contains('cbe-live'))clearShell(shell);
- const cfg=safeLayout(raw,m,p);shell._cbeOriginalStyle=shell.getAttribute('style');
+ clearShell(shell);const cfg=safeLayout(raw,m,p);rememberStyle(shell);
  shell.style.setProperty('--cbe-width',cfg.width+'px');shell.style.setProperty('--cbe-height',cfg.height+'px');
  shell.classList.add('cbe-live');shell.dataset.cbeMode=m;shell.dataset.cbeProfile=p;
- for(const [id,,selector]of slots(m))styleElement($(selector,shell),cfg.slots[id]);
- window.dispatchEvent(new Event('resize'))
+ for(const [id,,selector]of slots(m))styleElement(shell.querySelector(selector),cfg.slots[id]);
 }
 function scan(){
  scheduled=false;
  if(!owner()||!Object.keys(state.applied).length)return;
- $$('.cb2d-shell,.pvp2d-shell').forEach(applyShell)
+ document.querySelectorAll('.cbcombat-shell[data-combat-view="canonical-v1"]').forEach(applyShell)
 }
 function scheduleScan(){if(scheduled)return;scheduled=true;requestAnimationFrame(scan)}
 function init(){
  if(started)return;
- const entry=$('#combatUILayoutEntry');
- if(!entry){setTimeout(init,150);return}
+ if(!document.body){setTimeout(init,150);return}
  started=true;state=load();profile=activeProfile();
- $('#openCombatUILayoutEditor')?.addEventListener('click',open);
  window.addEventListener('cellbound:admin-status',()=>{state=load();syncAccess();scheduleScan()});
  window.addEventListener('cellbound:view-changed',syncAccess);
  window.addEventListener('resize',()=>{scheduleScan()},{passive:true});
  observer=new MutationObserver(records=>{
   if(!owner()||!Object.keys(state.applied).length)return;
-  if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.('.cb2d-shell,.pvp2d-shell')||n.querySelector?.('.cb2d-shell,.pvp2d-shell')))))scheduleScan()
+  if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.('.cbcombat-shell[data-combat-view="canonical-v1"]')||n.querySelector?.('.cbcombat-shell[data-combat-view="canonical-v1"]')))))scheduleScan()
  });
  observer.observe(document.body,{childList:true,subtree:true});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&opened)close()});

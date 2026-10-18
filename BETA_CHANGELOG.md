@@ -1,5 +1,26 @@
 # Cellbound Beta Development Log
 
+## 2026-10-03 — Admin UX Optimization
+
+- Reworked Admin into five focused workspaces: Overview, Reports, Analytics, Players and Tools.
+- Added a sticky workspace switcher with build/environment context.
+- Beta Reports now defaults to actionable open tickets and prioritises blockers/high-impact reports.
+- Added clearer report severity/status scanning and an always-visible open-report count.
+- Beta Analytics now loads only when its workspace is opened.
+- Moved release publishing and owner-only utilities away from everyday beta operations.
+- Preserved server-side admin/owner permission checks and existing recovery safeguards.
+
+
+## 2026-10-03 — Beta Analytics
+
+- Added channel-separated gameplay telemetry for staging and production.
+- Character creation now records class, race, spec and role so popularity can be measured historically.
+- Added level, quest, profession, crafting, gear, Cell Shock, dungeon, raid, activity and screen-usage events.
+- Added an aggregate-only Beta Analytics dashboard to Admin.
+- Added class/race popularity, dungeon start/clear funnel, feature usage, level milestones, professions and daily active tester views.
+- Existing roster characters are observed once when analytics first loads so the dev dashboard has a starting baseline.
+
+
 ## 2026-10-03 — Step 9: Beta Operations
 
 - Added in-game Beta Support for tester reports.

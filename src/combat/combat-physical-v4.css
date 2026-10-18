@@ -1,0 +1,643 @@
+/* Living combat: portrait-level motion; positioned units remain engine-owned. */
+.cbl-scene{isolation:isolate}
+.cbl-effects{position:absolute;inset:0;pointer-events:none;z-index:24;overflow:hidden}
+.cbl-unit{--cbl-facing:0deg;--cbl-accent:#e86658;transition-timing-function:cubic-bezier(.32,.08,.32,1)!important}
+.cbl-unit>.cbl-ground{display:block!important;position:absolute!important;left:50%!important;top:65%!important;width:35px!important;height:12px!important;border:0!important;border-radius:50%!important;background:radial-gradient(ellipse,#0009,transparent 72%)!important;transform:translate(-50%,-50%)!important;opacity:.75!important;z-index:0!important;pointer-events:none}
+.cbl-unit.boss>.cbl-ground{width:64px!important;height:22px!important}
+.cbl-unit>.cbl-facing{display:block!important;position:absolute!important;left:50%!important;top:50%!important;width:48px!important;height:48px!important;border:0!important;border-radius:50%!important;transform:translate(-50%,-50%) rotate(var(--cbl-facing))!important;background:conic-gradient(from 76deg,transparent 0deg,var(--cbl-accent) 3deg,var(--cbl-accent) 24deg,transparent 28deg)!important;mask:radial-gradient(transparent 61%,#000 64%,#000 72%,transparent 75%);opacity:.8!important;pointer-events:none;z-index:4}
+.cbl-unit.boss>.cbl-facing{width:72px!important;height:72px!important;--cbl-accent:#f3b55e}
+.cbl-unit[data-combat-state="dead"]>.cbl-facing{opacity:0!important}
+.cbl-unit[data-combat-state="dead"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){filter:grayscale(1);opacity:.36;rotate:24deg;scale:.82}
+.cbl-unit[data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){animation:cblStep .26s ease-in-out infinite alternate!important}
+.cbl-unit[data-motion="heavy"][data-combat-state="moving"] :is(.cb-combat-portrait,.pvp2d-token){animation-duration:.38s!important}
+.cbl-unit[data-motion="dart"][data-combat-state="moving"] :is(.cb-combat-portrait,.pvp2d-token){animation-duration:.18s!important}
+.cbl-unit[data-combat-state="reviving"] :is(.cb-combat-portrait,.pvp2d-token){animation:cblRise .8s ease-out!important}
+.cbl-unit.cbl-casting>.cbl-facing{opacity:1!important;box-shadow:0 0 calc(5px + var(--cbl-charge,0)*13px) var(--cbl-accent)}
+.cbl-unit.cbl-casting :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){box-shadow:0 0 calc(4px + var(--cbl-charge,0)*16px) var(--cbl-accent)!important}
+.cbl-unit[data-control="stun"]>.cbl-facing{background:#eeb95d!important;opacity:1!important}
+.cbl-unit[data-control="root"]>.cbl-ground{background:#9bd473!important;opacity:.7!important}
+.cbl-unit[data-control="silence"]>.cbl-facing{--cbl-accent:#bbb0e9}
+.cbl-unit[data-aura="guard"]>.cbl-facing{background:#8fcbf0!important;opacity:.45!important}
+.cbl-unit[data-aura="harm"]>.cbl-ground,.cbl-unit[data-aura="vulnerable"]>.cbl-ground{background:#af423b!important;opacity:.6!important}
+.cbl-fx{position:absolute;display:block;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%);--cbl-accent:#f0c993}
+.cbl-fx[data-cbl-positioned="1"]{visibility:visible}
+.cbl-fx.connection{height:3px;transform-origin:0 50%;transform:rotate(var(--cbl-angle));background:linear-gradient(90deg,transparent,var(--cbl-accent) 35%,#fff 95%);border-radius:60%;animation:cblFade .22s ease-out both}
+.cbl-fx.connection.arrow,.cbl-fx.connection.steel,.cbl-fx.connection.blade{height:2px;clip-path:polygon(0 40%,92% 40%,92% 0,100% 50%,92% 100%,92% 60%,0 60%);height:9px}
+.cbl-fx.connection.lightning{height:12px;clip-path:polygon(0 40%,20% 10%,40% 60%,60% 20%,80% 55%,100% 30%,80% 85%,60% 50%,40% 90%,20% 40%,0 60%);background:#9ce2ff}
+.cbl-fx.connection.heal{height:6px;--cbl-accent:#7eeab0;opacity:.75;animation-duration:.4s}
+.cbl-fx.connection.fire{--cbl-accent:#ff9153;height:7px}
+.cbl-fx.connection.frost{--cbl-accent:#94e4ff}
+.cbl-fx.connection.shadow,.cbl-fx.connection.death{--cbl-accent:#b494ed;height:5px}
+.cbl-fx.connection.fel{--cbl-accent:#bde15f}
+.cbl-fx.contact{width:23px;height:23px;border:2px solid #ffe4ba;border-radius:50%;animation:cblContact .24s ease-out both}
+.cbl-fx.contact.heavy{width:38px;height:38px;border-width:3px}
+.cbl-fx.slash{width:39px;height:32px;border-top:3px solid var(--cbl-accent);border-radius:50%;rotate:-35deg;animation:cblContact .26s ease-out both}
+.cbl-fx.slash.dart,.cbl-fx.slash.rush{border-bottom:2px solid var(--cbl-accent);rotate:30deg}
+.cbl-fx.slash.heavy,.cbl-fx.slash.brutal{height:46px;border-top-width:5px}
+.cbl-fx.slash.flow{border:2px solid var(--cbl-accent)}
+.cbl-fx.heal-ring,.cbl-fx.revive,.cbl-fx.spawn{width:42px;height:42px;border:2px solid #86f3b7;border-radius:50%;animation:cblContact .5s ease-out both}
+.cbl-fx.revive{height:75px;animation-duration:.85s;border-color:#fff2ae}
+.cbl-fx.spawn{border-color:#ce958c;animation-duration:.65s}
+.cbl-fx.shield{width:46px;height:49px;border:2px solid #ace1ff;border-radius:45% 45% 60% 60%;background:#9dd9f51a;animation:cblFade .65s ease-out both}
+.cbl-fx.interrupt{width:50px;height:50px;border:3px dashed #f8cf72;border-radius:50%;animation:cblContact .55s ease-out both}
+.cbl-fx.interrupt:after{content:'INTERRUPTED';position:absolute;top:-17px;left:50%;transform:translateX(-50%);font:700 9px system-ui;color:#ffe2a0;white-space:nowrap}
+.cbl-fx.aggro{width:51px;height:51px;border:2px dotted #eeac54;border-radius:50%;animation:cblFade .65s ease-out both}
+.cbl-fx.death{width:53px;height:53px;border:2px solid #c6b0a5;border-radius:50%;animation:cblContact .65s ease-out both}
+.cbl-fx.debris{width:58px;height:58px;border:6px dotted #d5c7b0;border-radius:50%;animation:cblContact .65s ease-out both}
+/* Suppress duplicate legacy body animation, never bars or mechanic telegraphs. */
+.cbl-scene .cbl-unit:is(.attacking,.hit,.healed,.healing){animation:none!important}
+.cbl-scene .cbl-unit>i:first-child{animation:none!important}
+.cbl-scene :is(.cb2d-projectile,.pvp2d-shot,.wb2d-projectile){display:none!important}
+.cbl-scene :is(.cb2d-unit-hp,.pvp2d-hp,.wb2d-unit-hp)>i{transition:width .08s linear!important}
+@keyframes cblStep{from{translate:0 0;rotate:-1deg}to{translate:0 -2px;rotate:1deg}}
+@keyframes cblRise{from{opacity:.35;scale:.8;rotate:20deg}to{opacity:1;scale:1;rotate:0deg}}
+@keyframes cblContact{from{opacity:.95;scale:.65}to{opacity:0;scale:1.4}}
+@keyframes cblFade{from{opacity:.9}to{opacity:0}}
+@media(prefers-reduced-motion:reduce){
+ .cbl-scene .cbl-unit,.cbl-scene .cbl-unit *{animation:none!important;transition:none!important}
+ .cbl-fx{animation:none!important;opacity:.75}
+ .cbl-fx.contact,.cbl-fx.slash,.cbl-fx.debris,.cbl-fx.death{display:none}
+}
+
+.cbl-fx.cast-orb{width:11px;height:11px;border-radius:50%;background:var(--cbl-accent);box-shadow:0 0 10px var(--cbl-accent)}
+.cbl-fx.cast-orb.arrow{width:19px;height:3px;border-radius:1px}
+
+.cbl-fx.connection.channel{animation:none;opacity:.7;height:5px}
+
+.cbl-fx.avoid{font:700 10px system-ui;color:#e0d6bd;white-space:nowrap;margin-top:-26px}
+.cbl-fx.heal-ring.emergency{width:58px;height:58px;border-width:3px}
+.cbl-fx.heal-ring.periodic{width:27px;height:27px;opacity:.6}
+.cbl-fx.screech,.cbl-fx.phase{width:75px;height:75px;border:3px double #d8c1f0;border-radius:50%;animation:cblContact .8s ease-out both}
+.cbl-fx.phase{width:110px;height:110px;border-color:#f4c784;animation-duration:1s}
+.cbl-live .cbl-unit[data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){animation:cblBreathe 3.2s ease-in-out infinite alternate}
+.cbl-live .cbl-unit[data-motion="heavy"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){animation-duration:4.1s}
+@keyframes cblBreathe{from{scale:1}to{scale:1.018}}
+/* Atmosphere is scenery, never new blocking geometry. */
+.cbl-scene.theme-manor .cbvfx-layer{background:radial-gradient(ellipse at 8% 20%,#d99e5022,transparent 38%),radial-gradient(ellipse at 92% 80%,#d99e501a,transparent 35%),linear-gradient(125deg,transparent 45%,#b5cbdf0a 49%,transparent 65%)}
+.cbl-scene.theme-manor .cbvfx-motes{opacity:.18}
+.cbl-scene[data-cbvfx-theme="ashen"] .cbvfx-layer{box-shadow:inset 0 -45px 70px #ce562018}
+.cbl-scene[data-cbvfx-theme="hollow"] .cbvfx-layer{background:linear-gradient(15deg,#93bed50c,transparent 45%,#739eb30b)}
+@media(prefers-reduced-motion:reduce){.cbl-live .cbl-unit *{animation:none!important}.cbl-fx.screech,.cbl-fx.phase{animation:none;opacity:.5}}
+
+.cbl-fx.cast-orb.plate{width:18px;height:18px;background:#d7d8ce;border:3px double #fff;border-radius:50%;box-shadow:0 2px 4px #0006}
+
+.cbl-unit[data-raid-party="0"]>.cbl-ground{box-shadow:0 2px 0 #81c5ef!important}
+.cbl-unit[data-raid-party="1"]>.cbl-ground{box-shadow:0 2px 0 #d0b0e9!important}
+.cbl-unit[data-motion="brutal"][data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){animation-duration:.45s!important}
+
+/* Room dressing stays around the playable floor; it never suggests new collision. */
+.cbl-room{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;background:radial-gradient(ellipse at 50% 48%,transparent 30%,#0206096b)}
+.cbl-prop{position:absolute;width:56px;height:70px;transform:translate(-50%,-50%);color:var(--room-accent);opacity:.28}
+.cbl-prop svg{width:100%;height:100%}
+.cbl-room[data-room="manor"]{background:repeating-linear-gradient(0deg,transparent 0 59px,#baa17b09 60px 61px),linear-gradient(118deg,transparent 30%,#bacce611 35%,transparent 53%),radial-gradient(ellipse at 50% 48%,transparent 30%,#0206096b)}
+.cbl-room[data-room="ashen"]{background:repeating-linear-gradient(90deg,transparent 0 99px,#e3a2730a 100px 101px),radial-gradient(ellipse at 0 80%,#ed713420,transparent 50%)}
+.cbl-room[data-room="hollow"]{background:repeating-linear-gradient(0deg,transparent 0 69px,#a3baca0c 70px 71px),radial-gradient(ellipse at 50% 100%,#94c6dc18,transparent 60%)}
+.cbl-room[data-room="blackout"]{background:repeating-linear-gradient(90deg,transparent 0 79px,#80c3d30b 80px 81px),repeating-linear-gradient(0deg,transparent 0 79px,#80c3d30b 80px 81px)}
+.cbl-prop.candle,.cbl-prop.furnace{opacity:.5;animation:cblFirelight 3.4s ease-in-out infinite alternate}
+.cbl-prop.window{height:100px;opacity:.2;background:linear-gradient(160deg,#c5dcef14,transparent 70%)}
+.cbl-prop.crack,.cbl-prop.cable{width:95px;opacity:.24}
+@keyframes cblFirelight{to{opacity:.3}}
+.cbl-hazard{position:absolute;z-index:2;pointer-events:none;border:2px solid #ee715b;border-radius:50%;transform:translate(-50%,-50%);background:repeating-linear-gradient(135deg,#c949322e 0 6px,#d6534512 6px 12px);box-shadow:inset 0 0 16px #e0574326}
+.cbl-hazard.porcelain{background:radial-gradient(ellipse at 30% 38%,#d2c9b6 0 2%,transparent 3%),radial-gradient(ellipse at 65% 62%,#d2c9b6 0 3%,transparent 4%),repeating-linear-gradient(135deg,#c949322e 0 6px,#d6534512 6px 12px)}
+.cbl-hazard.rubble{border-radius:24%;background:repeating-linear-gradient(25deg,#443e39aa 0 9px,#9b7f6240 10px 13px,#bc3c3520 14px 24px)}
+.cbl-hazard[data-phase="expiring"]{border-style:dashed;box-shadow:none} /* Still dangerous until the engine expires it. */
+.cbl-scene [data-phase="incoming"]{border-style:dashed!important;animation:cblWarning .8s ease-in-out infinite alternate!important}
+.cbl-scene [data-phase="imminent"]{border-style:solid!important;animation:cblWarning .25s ease-in-out infinite alternate!important}
+.cbl-scene [data-phase="impact"]{border-color:#ffe0b6!important}
+.cbl-scene [data-phase="safe"]{border-color:#83cba7!important}
+@keyframes cblWarning{to{opacity:.55}}
+.cbl-scene[data-density="raid"] .cb-combat-portrait{width:30px;height:30px}
+.cbl-scene[data-density="crowded"] .cb-combat-portrait{width:26px;height:26px}
+.cbl-scene[data-density="crowded"] .cbl-unit>span{font-size:8px}
+.cbl-unit[data-control="fear"]>.cbl-facing{background:#c692de!important;border-radius:20%!important}
+.cbl-unit[data-control="incapacitate"]>.cbl-facing{background:#8daac7!important;opacity:.5!important}
+.cbl-unit[data-control="slow"]>.cbl-ground{background:#78b8dd!important}
+.cbl-unit[data-aura="enrage"]>.cbl-facing{background:#ed6450!important;opacity:1!important}
+@media(max-width:600px){.cbl-prop{width:36px;opacity:.2}.cbl-scene .cbl-unit>span{max-width:66px;overflow:hidden;text-overflow:ellipsis}}
+@media(prefers-reduced-motion:reduce){.cbl-prop,.cbl-scene [data-phase]{animation:none!important}.cbl-scene [data-phase="imminent"]{border-width:3px!important}}
+.cbl-fx.slash.thrust{height:4px;width:44px;border-radius:0;rotate:var(--cbl-angle,0deg)}
+.cbl-fx.slash.overhead{width:20px;height:48px;rotate:0deg;border-left:4px solid var(--cbl-accent);border-top:0}
+.cbl-fx.slash.sweep{width:65px;height:55px;border:3px solid var(--cbl-accent);border-bottom-color:transparent}
+.cbl-fx.slash.shield-strike{width:34px;height:38px;border:4px double #b7d6e3;border-radius:30% 30% 50% 50%;rotate:0deg}
+.cbl-fx.cast-orb.arrow,.cbl-fx.cast-orb.steel,.cbl-fx.cast-orb.blade{rotate:var(--cbl-angle);width:20px;height:3px;border-radius:0}
+.cbl-fx.cast-orb.frost{border-radius:0;rotate:45deg;background:#a3e0f7}
+.cbl-fx.cast-orb.fire{width:16px;height:12px;background:#f7a455;box-shadow:0 0 8px #df5e29}
+.cbl-fx.cast-orb.lightning{width:27px;height:7px;clip-path:polygon(0 40%,40% 0,60% 40%,100% 20%,65% 100%,40% 60%);rotate:var(--cbl-angle);background:#b7edff}
+.cbl-fx.cast-orb.shadow,.cbl-fx.cast-orb.death{background:#4b345f;border:2px solid #c6a1df}
+.cbl-fx.cast-orb.nature,.cbl-fx.cast-orb.emerald{border-radius:0 80%;width:15px;background:#8dcc95}
+.cbl-casting[data-cast-style="aim"] .cb-combat-portrait{rotate:-3deg}
+.cbl-casting[data-cast-style="shadow"] :is(.cb-combat-portrait,.cb-combat-monster-portrait){scale:.96;rotate:-4deg}
+.cbl-casting[data-cast-style="essence"] .cb-combat-portrait{scale:1.05;translate:0 -2px}
+.cbl-casting[data-cast-style="nature"] .cb-combat-portrait{rotate:3deg}
+.cbl-casting[data-cast-style="brace"] .cb-combat-portrait{scale:.97}
+.cbl-casting[data-cast-style="hostile"] .cb-combat-boss-portrait{scale:1.035}
+@media(prefers-reduced-motion:reduce){.cbl-casting :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait){rotate:0deg!important;scale:1!important;translate:0 0!important}}
+.cbl-fx.cast-orb.rubble{width:46px;height:7px;border:1px solid #b89970;border-radius:1px;background:#6e5540;rotate:24deg;box-shadow:0 8px 10px #0006}
+.cbl-room[data-wear="1"] .cbl-prop.table,.cbl-room[data-wear="2"] .cbl-prop.table,.cbl-room[data-wear="3"] .cbl-prop.table{rotate:8deg}
+.cbl-room[data-wear="2"] .cbl-prop.window,.cbl-room[data-wear="3"] .cbl-prop.window{opacity:.1}
+.cbl-room[data-wear="3"] .cbl-prop{stroke-dasharray:8 3}
+
+/* Shaman totems are persistent combat objects driven by authoritative TOTEM events. */
+.cbl-totem{position:absolute;z-index:4;width:26px;height:34px;transform:translate(-50%,-82%);pointer-events:none;filter:drop-shadow(0 3px 4px #0009)}
+.cbl-totem>i{position:absolute;left:7px;bottom:0;width:12px;height:24px;border:2px solid #8fc7e8;border-radius:3px 3px 6px 6px;background:linear-gradient(#233946,#101b22);box-shadow:inset 0 0 8px #66c5ff33,0 0 9px #65bfff45}
+.cbl-totem>b{position:absolute;left:9px;bottom:14px;width:8px;height:8px;rotate:45deg;border:1px solid #d7f5ff;background:#57baf2;box-shadow:0 0 8px #77d9ff}
+.cbl-totem>span{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);font:700 7px/1 system-ui;letter-spacing:.04em;color:#cbeeff;text-shadow:0 1px 3px #000;white-space:nowrap;opacity:.85}
+.cbl-totem:after{content:'';position:absolute;left:50%;bottom:-1px;width:31px;height:10px;transform:translateX(-50%);border:1px solid #6ac4ec80;border-radius:50%;background:#4bb9e214;animation:cblTotemPulse 1.8s ease-in-out infinite}
+.cbl-totem.windfury>b{background:#9bdcf7}.cbl-totem.stoneskin>i{border-color:#bca27c;background:linear-gradient(#4c4437,#201d19)}.cbl-totem.stoneskin>b{background:#dbbf8a;box-shadow:0 0 8px #d6b16c}
+.cbl-totem.healing-stream>i{border-color:#73d6c9}.cbl-totem.healing-stream>b{background:#80efd0;box-shadow:0 0 9px #69ebcf}.cbl-totem.spirit-link{scale:1.16}.cbl-totem.spirit-link:after{width:40px;height:16px;border-color:#9be7ff}
+.cbl-fx.connection.heal.chain{height:4px;opacity:.9;box-shadow:0 0 7px #76efac}.cbl-fx.heal-ring.chain{border-style:dashed}
+@keyframes cblTotemPulse{50%{opacity:.35;scale:1.14}}
+@media(max-width:600px){.cbl-totem>span{display:none}.cbl-totem{scale:.88}}
+@media(prefers-reduced-motion:reduce){.cbl-totem:after{animation:none;opacity:.45}}
+
+
+/* Warlock demon pets are real combat actors driven by PET_* events. */
+.cbl-pet{position:absolute;left:50%;top:50%;z-index:7;width:34px;height:42px;transform:translate(-50%,-50%);transition:none;pointer-events:none;--cbl-accent:#8788EE;will-change:left,top;backface-visibility:hidden;visibility:hidden}
+/* Pet actors are visually inert until the current renderer seeds their real
+   combat position. Never paint the legacy 0,0 or --unit-x fallback. */
+.cbl-pet[data-pet-ready="1"]{visibility:visible}
+.cbl-pet-body{position:absolute;left:50%;top:50%;display:block;width:28px;height:31px;transform:translate(-50%,-50%);border:2px solid #9b83d8;border-radius:42% 42% 34% 34%;background:linear-gradient(160deg,#392b56,#171322 72%);box-shadow:inset 0 0 10px #a488e633,0 0 10px #6f53b955}
+.cbl-pet-body:before,.cbl-pet-body:after{content:'';position:absolute;top:-10px;width:10px;height:16px;border:2px solid #aa8ee2;border-bottom:0;background:#261d39}
+.cbl-pet-body:before{left:1px;transform:rotate(-27deg);border-radius:90% 10% 0 0}.cbl-pet-body:after{right:1px;transform:rotate(27deg);border-radius:10% 90% 0 0}
+.cbl-pet-body>b{position:absolute;left:6px;right:6px;top:10px;height:5px;border-radius:50%;background:linear-gradient(90deg,#b6ff82 0 34%,transparent 35% 65%,#b6ff82 66%);box-shadow:0 0 7px #9cf269}
+.cbl-pet-name{position:absolute;left:50%;top:37px;transform:translateX(-50%);font:700 7px/1 system-ui;color:#c7b5ee;text-shadow:0 1px 3px #000;white-space:nowrap}
+.cbl-pet.dreadstalker{width:30px;height:34px}.cbl-pet.dreadstalker .cbl-pet-body{width:25px;height:22px;border-radius:55% 48% 35% 35%;background:linear-gradient(160deg,#50305f,#1b1426)}
+.cbl-pet.dreadstalker .cbl-pet-body:before,.cbl-pet.dreadstalker .cbl-pet-body:after{top:-7px;height:11px}
+.cbl-pet.tyrant{width:43px;height:52px}.cbl-pet.tyrant .cbl-pet-body{width:37px;height:42px;border-color:#b999ef;background:linear-gradient(160deg,#55397a,#21152f);box-shadow:inset 0 0 15px #b899f044,0 0 15px #9b6ce577}
+.cbl-pet.tyrant .cbl-pet-body:before,.cbl-pet.tyrant .cbl-pet-body:after{width:13px;height:21px;top:-14px}.cbl-pet.tyrant .cbl-pet-name{top:45px;color:#ddcfff}
+.cbl-pet[data-combat-state="moving"] .cbl-pet-body{animation:cblPetStep .22s ease-in-out infinite alternate}
+.cbl-pet[data-combat-state="attacking"] .cbl-pet-body{filter:brightness(1.25);box-shadow:inset 0 0 12px #b494ed55,0 0 17px #9270dbaa}
+.cbl-fx.command{width:34px;height:34px;border:2px dashed #ae8de8;border-radius:50%;animation:cblContact .42s ease-out both}
+.cbl-fx.pet-spawn{border-color:#9f7ee2;box-shadow:0 0 14px #8b6ac9}
+@keyframes cblPetStep{from{translate:0 0;rotate:-3deg}to{translate:0 -2px;rotate:3deg}}
+@media(max-width:600px){.cbl-pet{scale:.86}.cbl-pet-name{display:none}}
+@media(prefers-reduced-motion:reduce){.cbl-pet .cbl-pet-body{animation:none!important}}
+
+/* Combat Physical v4 owns event reactions inside the shared scene. Keep older
+   v2/v3 event layers from drawing a second set of hit/heal/spawn FX. */
+.cbl-scene>.cbvfx-events,.cbl-scene>.cbvfx3-events{display:none!important}
+
+
+/* Death Knight undead companions share the pet actor contract but not Warlock demon styling. */
+.cbl-pet.class-death-knight{--cbl-accent:#C41E3A}
+.cbl-pet.class-death-knight .cbl-pet-body{
+  border-color:#9aaab7;background:linear-gradient(160deg,#354248,#171d21 72%);
+  box-shadow:inset 0 0 10px #9bc5c933,0 0 11px #9b334655
+}
+.cbl-pet.class-death-knight .cbl-pet-body:before,.cbl-pet.class-death-knight .cbl-pet-body:after{
+  border-color:#8e9ca5;background:#242c31
+}
+.cbl-pet.class-death-knight .cbl-pet-body>b{
+  background:linear-gradient(90deg,#7de9e5 0 34%,transparent 35% 65%,#7de9e5 66%);
+  box-shadow:0 0 7px #67d8d5
+}
+.cbl-pet.class-death-knight .cbl-pet-name{color:#c4d3d6}
+.cbl-pet.class-death-knight.ghoul{width:32px;height:38px}
+.cbl-pet.class-death-knight.ghoul .cbl-pet-body{width:27px;height:27px;border-radius:38% 45% 34% 40%;rotate:-4deg}
+.cbl-pet.class-death-knight.army-ghoul{width:27px;height:31px;scale:.86}
+.cbl-pet.class-death-knight.army-ghoul .cbl-pet-body{width:23px;height:21px;border-style:dashed;opacity:.9}
+.cbl-pet.class-death-knight.apocalypse-ghoul{width:31px;height:37px}
+.cbl-pet.class-death-knight.apocalypse-ghoul .cbl-pet-body{
+  border-color:#c64b60;background:linear-gradient(160deg,#4d2d36,#171c21);
+  box-shadow:inset 0 0 10px #d54a5a33,0 0 13px #c41e3a66
+}
+.cbl-pet.class-death-knight[data-combat-state="attacking"] .cbl-pet-body{
+  filter:brightness(1.22);box-shadow:inset 0 0 12px #8ed9d955,0 0 16px #c41e3a88
+}
+
+
+/* Living combat cast readability v4.3 */
+.cbl-unit{--cbl-charge:0}
+.cbl-cast-glyph{
+ position:absolute;left:50%;top:50%;width:46px;height:46px;translate:-50% -50%;
+ border:2px solid color-mix(in srgb,var(--cbl-accent) 78%,white 22%);border-radius:50%;
+ pointer-events:none;z-index:-1;opacity:.34;
+ box-shadow:0 0 calc(5px + var(--cbl-charge)*13px) color-mix(in srgb,var(--cbl-accent) 72%,transparent);
+ scale:calc(.88 + var(--cbl-charge)*.16);
+ animation:cblCastOrbit 1.25s linear infinite
+}
+.cbl-cast-glyph:before,.cbl-cast-glyph:after{content:'';position:absolute;inset:5px;border:1px dashed currentColor;border-radius:50%;opacity:.7}
+.cbl-cast-glyph:after{inset:12px;border-style:solid;opacity:calc(.22 + var(--cbl-charge)*.48)}
+.cbl-cast-glyph.fire{border-color:#ff9b63}.cbl-cast-glyph.frost{border-color:#9de8ff}.cbl-cast-glyph.lightning{border-color:#aeeaff}
+.cbl-cast-glyph.arcane{border-color:#bca8ff}.cbl-cast-glyph.holy{border-color:#fff0a8}.cbl-cast-glyph.nature{border-color:#94dfa3}
+.cbl-cast-glyph.poison{border-color:#b6da69}.cbl-cast-glyph.shadow{border-color:#bd9ae8}
+.cbl-cast-name{
+ position:absolute;left:50%;bottom:calc(100% + 5px);translate:-50% 0;max-width:112px;
+ padding:2px 5px;border:1px solid #ffffff24;border-radius:5px;background:#071016d9;color:#eef5f7;
+ font:700 8px/1.15 system-ui,sans-serif;letter-spacing:.035em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ pointer-events:none;z-index:20;text-shadow:0 1px 2px #000
+}
+.cbl-unit.boss[data-boss-cast] .cbl-cast-glyph{width:76px;height:76px;border-width:3px;opacity:.55}
+.cbl-unit.boss[data-boss-cast="mechanic"] .cbl-cast-name{color:#ffd5a0;border-color:#e4aa665e;font-size:9px}
+.cbl-mechanic-callout{
+ position:absolute;left:50%;top:7%;translate:-50% 0;z-index:30;min-width:150px;max-width:min(72%,330px);
+ display:grid;gap:2px;justify-items:center;padding:6px 11px;border:1px solid #de725f80;border-radius:7px;
+ background:#100c0ae8;color:#ffe9da;pointer-events:none;text-align:center;box-shadow:0 4px 16px #0008
+}
+.cbl-mechanic-callout strong{font:800 10px/1.2 system-ui,sans-serif;letter-spacing:.045em}
+.cbl-mechanic-callout span{font:700 7px/1 system-ui,sans-serif;letter-spacing:.12em;color:#dcae91}
+.cbl-mechanic-callout[data-phase="imminent"]{border-color:#ffc17d;box-shadow:0 0 0 2px #ffae5e25,0 4px 16px #0008}
+.cbl-mechanic-callout[data-phase="safe"]{border-color:#79c99d;color:#d8ffea}
+.cbl-mechanic-callout[data-phase="impact"]{border-color:#ff775f;background:#26100ee8}
+.cbl-mechanic-marker{
+ position:absolute;left:50%;top:50%;translate:-50% -50%;width:54px;height:54px;z-index:-1;
+ border:2px dashed #ef7864;border-radius:50%;pointer-events:none;opacity:.78;animation:cblMechanicMark .72s ease-in-out infinite alternate
+}
+.cbl-mechanic-marker.line{border-radius:20%;rotate:45deg}.cbl-mechanic-marker.cone{border-radius:50% 10% 50% 50%;rotate:45deg}
+.cbl-mechanic-marker.knockback,.cbl-mechanic-marker.pull{width:62px;height:62px;border-style:double;border-width:4px}
+.cbl-mechanic-marker[data-phase="imminent"]{border-style:solid;opacity:1}
+.cbl-mechanic-marker[data-phase="safe"]{border-color:#78c99e;animation:none}
+.cbl-mechanic-marker[data-phase="impact"]{border-color:#ffbd8e;scale:1.2;animation:none}
+.cbl-fx.force{width:52px;height:52px;border:3px solid #d9b28d;border-radius:50%;animation:cblForce .42s ease-out both}
+.cbl-fx.force.pull{border-style:dashed}.cbl-fx.force.knockback{border-style:double}
+@keyframes cblCastOrbit{to{rotate:360deg}}
+@keyframes cblMechanicMark{to{scale:1.12;opacity:.46}}
+@keyframes cblForce{from{opacity:.9;scale:.65}to{opacity:0;scale:1.55}}
+@media(max-width:600px){
+ .cbl-cast-name{max-width:82px;font-size:7px}.cbl-cast-glyph{width:39px;height:39px}
+ .cbl-unit.boss[data-boss-cast] .cbl-cast-glyph{width:62px;height:62px}
+ .cbl-mechanic-callout{top:5%;max-width:76%;padding:5px 8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .cbl-cast-glyph,.cbl-mechanic-marker,.cbl-fx.force{animation:none!important}
+ .cbl-cast-glyph{opacity:.5;scale:1}.cbl-mechanic-marker{opacity:.9}
+}
+
+
+/* Living Combat fluidity v4.5
+   Presentation-only smoothing: no combat timings, hit checks or balance values change. */
+.cbl-scene .cbl-unit{
+  transition-property:left,top,transform,opacity!important;
+  transition-duration:var(--cbl-move-ms,420ms);
+  transition-timing-function:cubic-bezier(.22,.72,.22,1)!important;
+  will-change:left,top,transform!important;
+}
+.cbl-live .cbl-unit[data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){
+  animation:cblCombatIdle 2.9s ease-in-out infinite alternate!important;
+  animation-delay:var(--cbl-idle-delay,0s)!important;
+}
+.cbl-live .cbl-unit[data-motion="heavy"][data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){
+  animation-duration:3.8s!important;
+}
+.cbl-live .cbl-unit[data-motion="dart"][data-combat-state="idle"] :is(.cb-combat-portrait,.pvp2d-token){
+  animation-duration:2.15s!important;
+}
+.cbl-live .cbl-unit[data-motion="rush"][data-combat-state="idle"] :is(.cb-combat-portrait,.pvp2d-token){
+  animation-duration:2.35s!important;
+}
+.cbl-unit[data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){
+  animation:cblStride .22s ease-in-out infinite alternate!important;
+}
+.cbl-unit[data-motion="heavy"][data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token){animation-duration:.34s!important}
+.cbl-unit[data-motion="brutal"][data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){animation-duration:.39s!important}
+.cbl-unit[data-motion="dart"][data-combat-state="moving"] :is(.cb-combat-portrait,.pvp2d-token),
+.cbl-unit[data-motion="rush"][data-combat-state="moving"] :is(.cb-combat-portrait,.pvp2d-token){animation-duration:.16s!important}
+.cbl-unit[data-combat-state="attacking"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){
+  filter:brightness(1.06) saturate(1.05);
+}
+.cbl-unit[data-combat-state="healing"] :is(.cb-combat-portrait,.pvp2d-token){
+  filter:brightness(1.08);
+}
+.cbl-unit[data-combat-state="casting"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token),
+.cbl-unit[data-combat-state="channeling"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token){
+  animation:cblCastFloat 1.05s ease-in-out infinite alternate!important;
+  animation-delay:var(--cbl-idle-delay,0s)!important;
+}
+.cbl-scene :is(.cb2d-unit-hp,.pvp2d-hp,.wb2d-unit-hp)>i{transition:width .22s cubic-bezier(.22,.72,.22,1)!important}
+.cbl-fx.connection{animation-duration:.28s}
+.cbl-fx.connection.heal{animation-duration:.46s}
+.cbl-fx.contact{animation-duration:.30s}
+.cbl-fx.slash{animation-duration:.32s}
+
+@keyframes cblCombatIdle{
+  0%{translate:-.4px 0;rotate:-.35deg;scale:1}
+  45%{translate:.25px -1px;rotate:.18deg;scale:1.009}
+  100%{translate:.55px -.25px;rotate:.38deg;scale:1.014}
+}
+@keyframes cblStride{
+  from{translate:-.7px .6px;rotate:-1.25deg;scale:.995}
+  to{translate:.7px -2.2px;rotate:1.25deg;scale:1.01}
+}
+@keyframes cblCastFloat{
+  from{translate:0 .5px;scale:.992}
+  to{translate:0 -2px;scale:1.018}
+}
+@media(prefers-reduced-motion:reduce){
+  .cbl-live .cbl-unit[data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot),
+  .cbl-unit[data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot),
+  .cbl-unit[data-combat-state="casting"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token),
+  .cbl-unit[data-combat-state="channeling"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token){
+    animation:none!important;
+  }
+}
+
+/* One motion owner. Transform only artwork; never unit positions, bars or UI. */
+.cbl-scene [data-animation-owned="1"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot,.cb-paper-actor,.cb-paper-upper-body){animation:none!important;transition:none!important;scale:1;rotate:0deg}
+.cbl-scene [data-animation-owned="1"] :is(.cb-paper-doll,.cb-paper-doll svg){overflow:visible}
+.cbl-scene [data-animation-owned="1"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait){transform-origin:50% 90%}
+.cbl-scene [data-animation-state="idle"] .cb-combat-portrait{animation:cbaBreathe 4.8s ease-in-out var(--cba-phase,0s) infinite!important}
+.cbl-scene [data-animation-state="idle"] :is(.cb-combat-boss-portrait,.cb-combat-monster-portrait,.cbl-pet-body){animation:cbaCreatureBreathe 5.4s ease-in-out var(--cba-phase,0s) infinite!important}
+.cbl-scene [data-animation-state="death"],.cbl-scene [data-animation-state="dead"]{opacity:1!important;filter:grayscale(.8)}
+.cbl-scene [data-animation-owned="1"][data-combat-state="dead"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){opacity:.65;scale:1;rotate:0deg}
+.cbl-scene [data-animation-state="control"] .cb-paper-upper-body{filter:saturate(.65)}
+@keyframes cbaBreathe{0%,100%{translate:0 0;scale:var(--cbs-face,1) 1}50%{translate:0 -.7px;scale:calc(var(--cbs-face,1)*1.003) 1.006}}
+@keyframes cbaCreatureBreathe{0%,100%{scale:1}50%{scale:1.008 1.012}}
+@media(prefers-reduced-motion:reduce){
+ .cbl-scene [data-animation-owned="1"] :is(.cb-combat-portrait,.cb-paper-upper-body,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.cbl-pet-body){animation:none!important}
+}
+.cbl-scene [data-animation-owned="1"] .cb-paper-slot{transition:none!important;transform-box:view-box;transform-origin:0 0}
+.cbl-scene [data-animation-owned="1"] .cb-paper-upper-body{transform-origin:0 0}
+.cb2d-unit>.cb-combat-rigged-enemy{width:48px!important;height:82px!important;top:50%;transform:translate(-50%,-75%);border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;overflow:visible!important}
+.cb-combat-rigged-enemy .cb-paper-doll--combat{display:block;width:48px;height:82px;background:none;filter:saturate(.65)}
+.cb-combat-rigged-enemy .cb-paper-doll--combat svg{width:100%;height:100%;overflow:visible}
+/* Gameplay may mark a unit dead before the queued visual killing blow lands. */
+.cbl-scene.cbl-scene .cb2d-unit[data-animation-owned="1"]{opacity:1!important;filter:none}
+.cbl-scene [data-animation-state="idle"] .cb-paper-upper-body{transform-origin:120px 257px}
+
+/* Reuse one lightweight projectile per resolved target; clipped by battlefield. */
+.cbl-fx.class-projectile{width:9px;height:5px;border-radius:50%;background:var(--cbl-accent,#b9dded);rotate:var(--cbl-angle);box-shadow:0 0 5px currentColor;animation:none!important;pointer-events:none}
+.cbl-fx.class-projectile.arrow{width:19px;height:2px;border-radius:0;background:#d9c9a2;box-shadow:none}
+.cbl-fx.class-projectile.arrow:after{content:'';position:absolute;right:-1px;top:-2px;border-left:5px solid #e4d8bf;border-top:3px solid transparent;border-bottom:3px solid transparent}
+.cbl-fx.class-projectile.fire{background:#ffb45f}.cbl-fx.class-projectile.frost{background:#a9e5ff}.cbl-fx.class-projectile.shadow{background:#be92df}
+.cbl-scene [data-animation-owned="1"] .cb-paper-arrow{transition:none!important}
+/* One spatial owner moves unit roots; articulated poses stay inside the portrait. */
+.cbl-scene [data-spatial-owned="1"]>.cb-combat-portrait{scale:var(--cbs-face,1) 1}
+.cbl-scene [data-spatial-owned="1"]>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){
+ top:calc(50% + 30px)!important;translate:var(--cbs-label-x,0px) var(--cbs-label-y,0px);min-width:0!important;width:112px;max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.cbl-scene [data-spatial-owned="1"]>.cb2d-unit-hp{top:calc(50% - var(--cbs-head,65px))!important}
+.cbl-scene [data-spatial-owned="1"][data-spatial-state="moving"] .cb-paper-kick-L{animation:cbsWalkL .48s ease-in-out infinite;transform-origin:105px 250px}
+.cbl-scene [data-spatial-owned="1"][data-spatial-state="moving"] .cb-paper-kick-R{animation:cbsWalkR .48s ease-in-out infinite;transform-origin:135px 250px}
+.cbl-scene [data-animation-state="kick"] .cb-paper-kick-R{animation:none!important}
+@keyframes cbsWalkL{0%,100%{rotate:-9deg}50%{rotate:9deg}}
+@keyframes cbsWalkR{0%,100%{rotate:9deg}50%{rotate:-9deg}}
+@media(prefers-reduced-motion:reduce){.cbl-scene [data-spatial-owned="1"] .cb-paper-kick-L,.cbl-scene [data-spatial-owned="1"] .cb-paper-kick-R{animation:none!important}}
+
+.cbl-scene [data-spatial-owned="1"].boss>span:not(.cb-combat-boss-portrait){width:140px;max-width:140px}
+@media(max-width:480px){.cbl-scene [data-spatial-owned="1"]>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){display:block!important;font-size:9px!important;line-height:12px}}
+
+.cbl-unit>.cbs-label-link{position:absolute;left:50%;top:calc(50% + 23px);height:1px;background:#b7a57d88;transform-origin:left center;pointer-events:none}.cbl-unit>.cbs-label-link[hidden]{display:none}
+
+/* Each moving model has a fixed-size layout box. Rig/label changes must not
+   invalidate the entire command scene; overflow remains visible for swings. */
+.cbl-scene [data-spatial-owned="1"]{contain:layout style}
+/* The battlefield already owns a ground shadow. Re-filtering the complete SVG
+   silhouette (22px blur) on every bone update creates a large offscreen surface. */
+.cbl-scene .cb-paper-doll--combat{filter:none!important}
+/* Authored rooms have their own atmosphere. Do not composite two additional
+   full-arena moving blur layers over them; event warnings remain untouched. */
+.cbl-scene[data-bespoke-battlefield="1"]>.cbvfx-layer,
+.cbl-scene[data-bespoke-battlefield="1"] .cbcin-world-ray,
+.cbl-scene[data-bespoke-battlefield="1"] .cbcin-world-mist{display:none}
+
+/* Combat-size materials retain their painted shading. Re-rasterising a blur for
+   every armour piece overwhelms tablet frame budgets during joint animation. */
+.cbl-scene .cb-paper-doll :is(.cb-paper-slot,.cb-paper-set-glow,.cb-paper-glow,.cb-paper-race-detail){filter:none!important}
+.cbl-scene .cb-combat-portrait{will-change:transform}
+
+
+/* Distinct per-ability contact: two light CSS layers, no extra particle objects. */
+.cbl-fx.ability-impact{--hit:#e4bf8b;--flash:#fff3d8;width:48px;height:48px;animation:cblHitMain .38s ease-out both;z-index:2}
+.cbl-fx.ability-impact.major{width:70px;height:70px;animation-duration:.54s}
+.cbl-fx.ability-impact:before,.cbl-fx.ability-impact:after{content:"";position:absolute;display:block;pointer-events:none}
+.cbl-fx.ability-impact:before{inset:0;border:2px solid var(--hit);border-radius:50%;background:radial-gradient(circle,var(--flash) 0 6%,var(--hit) 12% 20%,transparent 54%);animation:cblHitRing .4s ease-out both}
+.cbl-fx.ability-impact:after{inset:14%;background:var(--hit);clip-path:polygon(50% 0,64% 37%,100% 19%,72% 51%,100% 72%,64% 67%,76% 100%,50% 72%,19% 100%,35% 64%,0 50%,36% 42%,20% 8%);animation:cblHitMark .4s ease-out both}
+.cbl-fx.school-fire{--hit:#ff944a;--flash:#ffe4a6}
+.cbl-fx.school-frost{--hit:#83dafa;--flash:#eafaff}
+.cbl-fx.school-storm{--hit:#9addf5;--flash:#fff2ae}
+.cbl-fx.school-holy{--hit:#efd179;--flash:#fff7ce}
+.cbl-fx.school-shadow{--hit:#ac83e0;--flash:#eed9ff}
+.cbl-fx.school-fel{--hit:#9cda52;--flash:#e9ffb4}
+.cbl-fx.school-arcane{--hit:#a7a8fa;--flash:#f2e5ff}
+.cbl-fx.school-nature{--hit:#85d4a3;--flash:#e5ffd5}
+.cbl-fx.school-earth{--hit:#c6a274;--flash:#f1e0c1}
+.cbl-fx.school-poison{--hit:#b6cf68;--flash:#f3ffac}
+.cbl-fx.school-heal{--hit:#7edbaa;--flash:#e9ffd1}
+.cbl-fx.school-guard{--hit:#9bcee7;--flash:#effbff}
+.cbl-fx.school-steel{--hit:#dfba91;--flash:#fff0d6}
+/* Class materials share the bounded effect lifecycle and two-layer budget. */
+.cbl-fx.school-blood{--hit:#d85c72;--flash:#ffd0d6}
+.cbl-fx.school-lunar{--hit:#b4b8ff;--flash:#eeefff}
+.cbl-fx.school-solar{--hit:#f2bb61;--flash:#fff0b2}
+.cbl-fx.school-emerald{--hit:#4fd5a4;--flash:#d3ffe9}
+.cbl-fx.school-bronze{--hit:#d6ad6b;--flash:#fff1ca}
+.cbl-fx.school-azure{--hit:#62c7f6;--flash:#d5f4ff}
+.cbl-fx.school-water{--hit:#6bbde6;--flash:#d4f8ff}
+.cbl-fx.school-mist{--hit:#92e7ce;--flash:#e6fff5}
+.cbl-fx.school-chi{--hit:#55deaf;--flash:#e3ffb6}
+.cbl-fx.school-brew{--hit:#dea35d;--flash:#fff0be}
+.cbl-fx.ability-impact.school-fire:after{clip-path:polygon(46% 0,65% 30%,84% 13%,72% 52%,95% 72%,59% 77%,48% 100%,25% 84%,9% 87%,23% 46%,11% 27%,37% 34%)}
+.cbl-fx.ability-impact.school-frost:after{clip-path:polygon(50% 0,61% 35%,85% 12%,68% 43%,100% 50%,68% 58%,85% 89%,57% 69%,50% 100%,40% 69%,12% 86%,32% 57%,0 50%,31% 44%,14% 14%,40% 35%)}
+.cbl-fx.ability-impact.school-storm:after{clip-path:polygon(42% 0,77% 0,53% 34%,81% 30%,30% 100%,48% 53%,17% 54%);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.school-holy:before{border:4px double var(--hit)}
+.cbl-fx.ability-impact.school-holy:after{clip-path:polygon(42% 0,58% 0,58% 42%,100% 42%,100% 58%,58% 58%,58% 100%,42% 100%,42% 58%,0 58%,0 42%,42% 42%)}
+.cbl-fx.ability-impact.school-shadow:before,.cbl-fx.ability-impact.school-fel:before{border-style:dashed}
+.cbl-fx.ability-impact.shape-fracture:after{clip-path:polygon(39% 0,53% 34%,70% 8%,60% 46%,100% 41%,64% 58%,85% 100%,49% 69%,25% 100%,39% 58%,0 65%,37% 42%,9% 6%)}
+.cbl-fx.ability-impact.shape-pierce:after{clip-path:polygon(0 46%,76% 41%,70% 17%,100% 50%,70% 83%,77% 59%,0 54%);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.shape-chain:after{clip-path:polygon(0 45%,30% 45%,39% 13%,52% 57%,70% 21%,79% 57%,100% 57%,100% 70%,72% 70%,67% 49%,47% 88%,37% 44%,34% 66%,0 66%)}
+.cbl-fx.ability-impact.shape-nova:before{border:4px dotted var(--hit)}
+.cbl-fx.ability-impact.shape-guard:before{border-radius:36% 36% 48% 48%;background:linear-gradient(125deg,transparent,var(--hit),transparent)}
+.cbl-fx.ability-impact.shape-guard:after{inset:12%;clip-path:polygon(50% 0,90% 19%,81% 73%,50% 100%,19% 73%,10% 19%);background:var(--flash)}
+.cbl-fx.ability-impact.shape-blossom:before{border:5px double var(--hit)}
+.cbl-fx.ability-impact.shape-blossom:after{clip-path:polygon(50% 0,60% 31%,88% 14%,68% 43%,100% 50%,68% 57%,88% 87%,60% 69%,50% 100%,40% 69%,12% 87%,32% 57%,0 50%,32% 43%,12% 14%,40% 31%)}
+.cbl-fx.ability-impact.shape-rune:before{border-radius:15%;border-style:double;rotate:45deg;background:none}
+.cbl-fx.ability-impact.shape-rune:after{clip-path:polygon(45% 0,55% 0,55% 31%,85% 13%,90% 23%,58% 47%,86% 73%,78% 81%,55% 61%,55% 100%,45% 100%,45% 61%,22% 81%,14% 73%,42% 47%,10% 23%,15% 13%,45% 31%)}
+.cbl-fx.ability-impact.shape-sigil:before{border:3px double var(--hit);border-radius:20%;rotate:45deg;background:none}
+.cbl-fx.ability-impact.shape-sigil:after{background:none;border:2px dashed var(--flash);border-radius:50%;clip-path:none}
+.cbl-fx.ability-impact.shape-star:after{clip-path:polygon(50% 0,61% 36%,100% 50%,61% 64%,50% 100%,39% 64%,0 50%,39% 36%)}
+.cbl-fx.ability-impact.shape-glaive:after{clip-path:polygon(0 50%,30% 8%,69% 0,49% 23%,45% 44%,100% 50%,70% 92%,31% 100%,51% 77%,55% 56%)}
+.cbl-fx.ability-impact.shape-breath:before{border:none;border-radius:50%;background:conic-gradient(from 235deg at 10% 50%,transparent 0 55deg,var(--hit) 65deg,transparent 125deg);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.shape-breath:after{inset:20%;border:2px dotted var(--flash);background:none;clip-path:none;border-radius:50%}
+.cbl-fx.ability-impact.shape-fist:before{border:3px solid var(--hit);border-left-color:transparent;border-right-color:transparent;background:none}
+.cbl-fx.ability-impact.shape-fist:after{clip-path:polygon(15% 30%,32% 24%,40% 10%,55% 12%,65% 24%,84% 24%,90% 62%,70% 88%,30% 82%,10% 57%)}
+.cbl-fx.ability-impact.school-mist:before,.cbl-fx.ability-impact.school-water:before{border-radius:40% 60%;background:radial-gradient(ellipse,var(--hit),transparent 65%);opacity:.6}
+.cbl-fx.class-projectile.shape-glaive:not(.arrow){width:23px;height:18px;border-radius:0;clip-path:polygon(0 50%,30% 8%,69% 0,49% 23%,45% 44%,100% 50%,70% 92%,31% 100%,51% 77%,55% 56%)}
+.cbl-fx.class-projectile.school-lunar:not(.arrow),.cbl-fx.class-projectile.school-bronze:not(.arrow){background:transparent;border:2px solid var(--hit)}
+.cbl-casting[data-vfx-school="blood"] .cbl-cast-glyph{border-color:#d85c72;color:#d85c72}
+.cbl-casting[data-vfx-school="lunar"] .cbl-cast-glyph{border-color:#b4b8ff;color:#b4b8ff}
+.cbl-casting[data-vfx-school="solar"] .cbl-cast-glyph{border-color:#f2bb61;color:#f2bb61}
+.cbl-casting[data-vfx-school="emerald"] .cbl-cast-glyph{border-color:#4fd5a4;color:#4fd5a4}
+.cbl-casting[data-vfx-school="bronze"] .cbl-cast-glyph{border-color:#d6ad6b;color:#d6ad6b}
+.cbl-casting[data-vfx-school="azure"] .cbl-cast-glyph{border-color:#62c7f6;color:#62c7f6}
+.cbl-casting[data-vfx-school="water"] .cbl-cast-glyph{border-color:#6bbde6;color:#6bbde6}
+.cbl-casting[data-vfx-school="mist"] .cbl-cast-glyph{border-color:#92e7ce;color:#92e7ce}
+.cbl-casting[data-vfx-school="chi"] .cbl-cast-glyph{border-color:#55deaf;color:#55deaf}
+.cbl-casting[data-vfx-school="brew"] .cbl-cast-glyph{border-color:#dea35d;color:#dea35d}
+@keyframes cblHitMain{0%{opacity:0;scale:.4}20%{opacity:1;scale:1}100%{opacity:0;scale:1.2}}
+@keyframes cblHitRing{0%{opacity:0;scale:.5}30%{opacity:.86;scale:.95}100%{opacity:0;scale:1.55}}
+@keyframes cblHitMark{0%{opacity:0;scale:.4;rotate:-18deg}40%{opacity:1;scale:1}100%{opacity:0;scale:1.24;rotate:14deg}}
+.cbl-fx.class-projectile:not(.arrow){background:var(--hit,var(--cbl-accent));border-radius:50%;width:14px;height:9px;box-shadow:none}
+.cbl-fx.class-projectile:not(.arrow):before{content:"";position:absolute;right:100%;top:2px;width:19px;height:5px;background:linear-gradient(90deg,transparent,var(--hit));opacity:.6}
+.cbl-fx.class-projectile.school-fire:not(.arrow){width:18px;height:12px;background:radial-gradient(circle at 72% 50%,#fff4c6,var(--hit) 60%,transparent 92%)}
+.cbl-fx.class-projectile.school-frost:not(.arrow){border-radius:0;clip-path:polygon(0 50%,57% 0,100% 50%,57% 100%)}
+.cbl-fx.class-projectile.school-storm:not(.arrow){width:22px;height:9px;border-radius:0;clip-path:polygon(0 34%,28% 0,47% 53%,70% 14%,100% 50%,62% 100%,39% 61%,16% 94%)}
+@media(prefers-reduced-motion:reduce){.cbl-fx.ability-impact{display:none!important}.cbl-fx.class-projectile:before{display:none!important}}
+
+
+/* Wind-ups: the existing character cast glyph gains the same school as its spell. */
+.cbl-fx.ability-charge{width:45px;height:45px;animation:cblChargePop .42s ease-out both;z-index:2}
+.cbl-fx.ability-charge.major{width:57px;height:57px;animation-duration:.55s}
+.cbl-fx.ability-charge:before,.cbl-fx.ability-charge:after{content:"";position:absolute;display:block;pointer-events:none}
+.cbl-fx.ability-charge:before{inset:1px;border:2px dashed var(--hit);border-radius:50%;animation:cblChargeRing .42s ease-out both}
+.cbl-fx.ability-charge:after{inset:23%;border:2px solid var(--flash);border-radius:24%;rotate:45deg;animation:cblChargeRing .42s ease-out both}
+@keyframes cblChargePop{0%{opacity:0;scale:.45}45%{opacity:.7;scale:.95}100%{opacity:0;scale:1.12}}
+@keyframes cblChargeRing{0%{opacity:0;rotate:-25deg;scale:.55}40%{opacity:.85}100%{opacity:0;rotate:35deg;scale:1.2}}
+.cbl-casting[data-vfx-school="fire"] .cbl-cast-glyph{border-color:#ff944a;color:#ff944a}
+.cbl-casting[data-vfx-school="frost"] .cbl-cast-glyph{border-color:#83dafa;color:#83dafa}
+.cbl-casting[data-vfx-school="storm"] .cbl-cast-glyph{border-color:#9addf5;color:#9addf5}
+.cbl-casting[data-vfx-school="holy"] .cbl-cast-glyph{border-color:#efd179;color:#efd179}
+.cbl-casting[data-vfx-school="shadow"] .cbl-cast-glyph{border-color:#ac83e0;color:#ac83e0}
+.cbl-casting[data-vfx-school="fel"] .cbl-cast-glyph{border-color:#9cda52;color:#9cda52}
+.cbl-casting[data-vfx-school="nature"] .cbl-cast-glyph{border-color:#85d4a3;color:#85d4a3}
+.cbl-casting[data-vfx-school="arcane"] .cbl-cast-glyph{border-color:#a7a8fa;color:#a7a8fa}
+@media(prefers-reduced-motion:reduce){.cbl-fx.ability-charge{display:none!important}}
+
+/* Battlefield clarity: a single focus point; the party's detail is in the HUD. */
+.cbl-scene[data-combat-clarity="1"] .cbl-unit>.cbl-facing{opacity:0!important}
+.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-primary-target>.cbl-facing{opacity:.34!important}
+.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-danger-cast>.cbl-facing{opacity:.85!important}
+.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-primary-target>.cbl-ground:after,.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-danger-cast>.cbl-ground:after{
+ content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #e4bf79;opacity:.95;pointer-events:none
+}
+.cbl-scene[data-combat-clarity="1"] .cbl-unit.cbl-danger-cast>.cbl-ground:after{border-color:#f08c6c;border-style:dashed}
+.cbl-scene[data-clarity-hud="1"] .cbl-unit.party:not(.boss)>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){opacity:0!important;pointer-events:none}
+.cbl-scene[data-clarity-hud="1"] .cbl-unit.party>.cbs-label-link{display:none!important}
+.cbl-scene[data-clarity-hud="1"] .cbl-unit.enemy:not(.boss):not(.cbl-primary-target):not(.cbl-danger-cast)>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){opacity:.3!important;font-size:9px!important}
+.cbl-scene[data-clarity-hud="1"] .cbl-unit.enemy:not(.boss):not(.cbl-primary-target):not(.cbl-danger-cast)>.cbs-label-link{display:none!important}
+.cbl-scene[data-combat-clarity="1"] .cbl-fx.ability-impact:not(.major){width:33px;height:33px}
+.cbl-scene[data-combat-clarity="1"] .cbl-fx.ability-charge:not(.major){width:30px;height:30px}
+/* Contact-led VFX: at most two decorative layers per event, no particle emitter.
+   Never use these cosmetic shapes as damage-zone indicators. */
+.cbl-fx.weapon-trail{width:54px;height:42px;rotate:var(--hit-angle,0deg);animation:cblWeaponCut var(--fx-life,290ms) ease-out both}
+.cbl-fx.weapon-trail:before,.cbl-fx.weapon-trail:after{content:"";position:absolute;inset:0;border-radius:50%;border-top:3px solid var(--hit,#e7c294);border-right:2px solid transparent;transform:rotate(-35deg);pointer-events:none}
+.cbl-fx.weapon-trail:after{inset:7px 3px;border-width:1px;opacity:.55}
+.cbl-fx.weapon-trail.heavy,.cbl-fx.weapon-trail.brutal{width:66px;height:52px}
+.cbl-fx.weapon-trail.heavy:before{border-top-width:5px}
+.cbl-fx.weapon-trail.quick{width:45px;height:24px}
+.cbl-fx.weapon-trail.quick:after{transform:rotate(35deg);border-top-color:var(--flash,#fff);opacity:.8}
+.cbl-fx.weapon-trail.thrust{height:14px}
+.cbl-fx.weapon-trail.shield-strike:before{border:3px double var(--hit);border-radius:35% 35% 50% 50%;transform:none}
+.cbl-fx.status-pulse{width:48px;height:64px;border:2px solid var(--hit,#94c9dc);border-radius:45%;background:linear-gradient(0deg,var(--hit,#94c9dc),transparent 40%);animation:cblStatusRise var(--fx-life,460ms) ease-out both;opacity:.55}
+.cbl-fx.status-pulse.harmful{width:38px;height:38px;border-style:dashed;border-radius:50%;background:none}
+.cbl-fx.status-pulse.protection{border-radius:35% 35% 50% 50%;border-style:double;border-width:3px}
+.cbl-fx.ability-impact,.cbl-fx.ability-charge,.cbl-fx.ability-impact:before,.cbl-fx.ability-impact:after,.cbl-fx.ability-charge:before,.cbl-fx.ability-charge:after{animation-duration:var(--fx-life,380ms)}
+.cbl-scene .cbl-fx.ability-impact.area{width:62px;height:50px;opacity:.75}
+.cbl-scene .cbl-fx.ability-impact.periodic{width:23px;height:23px;opacity:.55}
+.cbl-fx.ability-impact.school-fire:before{background:radial-gradient(ellipse,#fff0bf 0 5%,#ef964666 25%,transparent 65%);border-color:#e69c62aa}
+.cbl-fx.ability-impact.school-frost:before{border-style:dotted;background:radial-gradient(ellipse,#b4eaff55,transparent 65%)}
+.cbl-fx.ability-impact.school-poison:after{border-radius:50%;clip-path:polygon(50% 0,90% 55%,78% 90%,25% 100%,7% 58%);opacity:.7}
+.cbl-fx.ability-impact.shape-guard:after{background:transparent;border:2px solid var(--flash);clip-path:none;border-radius:35% 35% 50% 50%}
+.cbl-fx.class-projectile.arrow{width:27px;background:linear-gradient(90deg,transparent,var(--hit,#dfcfaf) 40%,#fff1ca)}
+.cbl-fx.class-projectile.arrow:before{content:"";position:absolute;right:100%;width:22px;height:2px;background:linear-gradient(90deg,transparent,var(--hit,#dfcfaf));opacity:.65}
+.cbl-fx.class-projectile.major:not(.arrow){width:22px;height:14px}
+.cbl-mechanic-callout:after{content:"";position:absolute;left:4px;right:4px;bottom:0;height:2px;background:#f0b477;transform:scaleX(var(--warning-left,1));transform-origin:left;pointer-events:none}
+.cbl-mechanic-callout[data-phase="safe"]:after,.cbl-mechanic-callout[data-phase="impact"]:after{display:none}
+.cbl-fx.class-projectile.school-arcane:after{content:"";position:absolute;inset:-3px;border:1px solid var(--hit);border-radius:50%;opacity:.6}
+.cbl-scene[data-fx-detail="low"] .cbl-fx:is(.weapon-trail,.ability-charge,.ability-impact):after{display:none}
+.cbl-scene:has(.cbl-mechanic-callout[data-phase="incoming"],.cbl-mechanic-callout[data-phase="imminent"]) .cbl-fx:is(.ability-charge,.weapon-trail,.status-pulse){opacity:.45}
+@keyframes cblWeaponCut{0%{opacity:0;scale:.65;translate:-7px -3px}20%{opacity:.9}100%{opacity:0;scale:1.12;translate:5px 3px}}
+@keyframes cblStatusRise{0%{opacity:0;scale:.8;translate:0 7px}25%{opacity:.6}100%{opacity:0;scale:1.08;translate:0 -7px}}
+@media(prefers-reduced-motion:reduce){
+ .cbl-fx.weapon-trail{display:none!important}
+ .cbl-scene .cbl-fx.ability-impact{display:block!important;animation:none!important;opacity:.55;width:25px!important;height:25px!important}
+ .cbl-scene .cbl-fx.ability-impact:before,.cbl-scene .cbl-fx.ability-impact:after,.cbl-fx.status-pulse{animation:none!important}
+ .cbl-scene .cbl-fx.ability-impact:after{display:none}
+}
+.cbl-combat-readout{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-width:0;max-width:56%;margin-left:auto;padding:4px 8px;border-left:1px solid rgba(205,177,123,.23);background:rgba(6,12,16,.58);pointer-events:none;color:#d7d9d4;line-height:1.25}
+.cbl-readout-target{font:700 11px/1.3 system-ui,sans-serif;color:#edcd95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:175px}
+.cbl-readout-action{font:500 10px/1.3 system-ui,sans-serif;color:#c4d0d1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:225px}
+.cbl-combat-readout[data-priority="danger"] .cbl-readout-action{color:#f3aa87;font-weight:700}
+.cbl-combat-readout[data-priority="success"] .cbl-readout-action{color:#a6deb5}
+@media(max-width:680px){
+ .cbl-combat-readout{gap:5px;padding:3px 5px;max-width:60%}
+ .cbl-readout-target{font-size:10px;max-width:105px}
+ .cbl-readout-action{font-size:9px;max-width:110px}
+ .cbl-scene[data-clarity-hud="1"] .cbl-unit.enemy:not(.boss):not(.cbl-primary-target):not(.cbl-danger-cast)>span:not(.cb-combat-portrait):not(.cb-combat-boss-portrait):not(.cb-combat-monster-portrait){opacity:0!important}
+}
+
+/* Skill choreography motifs: two paint layers, no extra particle DOM. These
+   contact marks are not mechanic warnings and never imply additional targets. */
+.cbl-fx.ability-impact[class*="skill-"]:before{border:1px solid var(--hit);border-radius:50%;background:radial-gradient(ellipse,var(--hit) 0,transparent 65%)}
+.cbl-fx.ability-impact[class*="skill-"]:after{border:0;border-radius:0;background:var(--flash);clip-path:none;inset:15%}
+.cbl-fx.ability-impact.skill-cut:after{clip-path:polygon(0 85%,40% 42%,100% 0,60% 58%);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.skill-cross:after{clip-path:polygon(0 0,50% 40%,100% 0,60% 50%,100% 100%,50% 60%,0 100%,40% 50%)}
+.cbl-fx.ability-impact.skill-pierce:after{clip-path:polygon(0 45%,70% 42%,70% 15%,100% 50%,70% 85%,70% 58%,0 55%);rotate:var(--hit-angle,0deg)}
+.cbl-fx.ability-impact.skill-cleave:after{background:none;border-top:4px solid var(--flash);border-radius:50%;rotate:var(--hit-angle,0deg);inset:0 -15%;animation-name:cblSkillSweep}
+.cbl-fx.ability-impact.skill-crush:after{clip-path:polygon(20% 0,80% 0,65% 65%,100% 100%,50% 80%,0 100%,35% 65%)}
+.cbl-fx.ability-impact.skill-fissure:after{clip-path:polygon(45% 0,60% 30%,40% 44%,70% 58%,55% 100%,45% 70%,20% 58%,48% 36%)}
+.cbl-fx.ability-impact:is(.skill-ring,.skill-ripple,.skill-sigil,.skill-summon):before{background:none;border:3px double var(--hit);translate:0 22px;scale:1.3 .55}
+.cbl-fx.ability-impact.skill-ring:after,.cbl-fx.ability-impact.skill-ripple:after{background:none;border:2px solid var(--flash);border-radius:50%;translate:0 22px;scale:1 .45}
+.cbl-fx.ability-impact.skill-ripple:after{animation-delay:calc(var(--fx-life) * .14)}
+.cbl-fx.ability-impact.skill-rain:before{background:repeating-linear-gradient(115deg,transparent 0 13px,var(--hit) 14px 17px,transparent 18px 26px);border:0;border-radius:0;inset:-35% -25%;animation-name:cblSkillFall}
+.cbl-fx.ability-impact.skill-rain:after{background:repeating-linear-gradient(115deg,transparent 0 15px,var(--flash) 16px 18px,transparent 19px 30px);inset:-20%;animation-name:cblSkillFall;animation-delay:calc(var(--fx-life) * .12)}
+.cbl-fx.ability-impact.skill-spiral:after{background:none;border:3px solid var(--flash);border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-orbit:after{background:none;border:2px dashed var(--flash);border-radius:50%;inset:-12%;animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-ray:after{inset:-40% 43%;background:linear-gradient(0deg,transparent,var(--flash),transparent)}
+.cbl-fx.ability-impact.skill-rays:after{background:repeating-conic-gradient(from 10deg,var(--flash) 0 8deg,transparent 9deg 60deg);border-radius:50%;inset:-10%}
+.cbl-fx.ability-impact.skill-shield:before{background:none;border:3px double var(--hit);border-radius:35% 35% 50% 50%;inset:-20% -5%}
+.cbl-fx.ability-impact.skill-shield:after{background:none;border:1px solid var(--flash);border-radius:35% 35% 50% 50%}
+.cbl-fx.ability-impact.skill-sigil:after{background:none;border:2px solid var(--flash);rotate:45deg;translate:0 18px;scale:1 .6}
+.cbl-fx.ability-impact.skill-bloom:after{clip-path:polygon(50% 0,65% 35%,100% 50%,65% 65%,50% 100%,35% 65%,0 50%,35% 35%);border-radius:40%}
+.cbl-fx.ability-impact.skill-petals:after{background:radial-gradient(ellipse at 20% 20%,var(--flash) 0 12%,transparent 14%),radial-gradient(ellipse at 80% 45%,var(--hit) 0 15%,transparent 17%),radial-gradient(ellipse at 35% 80%,var(--flash) 0 12%,transparent 14%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-chains:after{background:repeating-linear-gradient(45deg,transparent 0 7px,var(--flash) 8px 10px,transparent 11px 18px);border-radius:50%;animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-burst:after{clip-path:polygon(50% 0,61% 31%,95% 15%,73% 48%,100% 70%,65% 68%,50% 100%,35% 69%,0 80%,27% 48%,5% 15%,39% 31%)}
+.cbl-fx.ability-impact.skill-brands:after{background:none;border-left:3px solid var(--flash);border-right:3px solid var(--flash);border-top:2px solid var(--hit);rotate:-15deg}
+.cbl-fx.ability-impact.skill-stars:after{background:radial-gradient(circle at 20% 20%,var(--flash) 0 7%,transparent 9%),radial-gradient(circle at 80% 35%,var(--flash) 0 10%,transparent 12%),radial-gradient(circle at 45% 80%,var(--hit) 0 12%,transparent 14%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-knives:after{background:repeating-conic-gradient(var(--flash) 0 10deg,transparent 11deg 90deg);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-command:after{clip-path:polygon(45% 0,55% 0,55% 65%,45% 65%,45% 80%,55% 80%,55% 100%,45% 100%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-summon:after{background:linear-gradient(0deg,var(--hit),transparent);clip-path:polygon(0 100%,5% 35%,20% 15%,30% 35%,35% 100%,50% 100%,55% 20%,70% 0,85% 20%,90% 100%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-tracks:after{background:repeating-linear-gradient(115deg,transparent 0 7px,var(--hit) 8px 12px,transparent 13px 20px);animation-name:cblSkillSweep}
+.cbl-fx.ability-impact.skill-coil:after{background:none;border:3px dotted var(--flash);border-radius:30% 70% 30% 70%;animation-name:cblSkillOrbit}
+.cbl-fx.ability-impact.skill-drops:after{background:radial-gradient(ellipse at 20% 30%,var(--flash) 0 10%,transparent 12%),radial-gradient(ellipse at 80% 50%,var(--hit) 0 12%,transparent 14%),radial-gradient(ellipse at 45% 80%,var(--flash) 0 8%,transparent 10%);animation-name:cblSkillFall}
+.cbl-fx.ability-impact.skill-thorns:after,.cbl-fx.ability-impact.skill-shards:after{clip-path:polygon(0 100%,10% 20%,30% 65%,45% 0,55% 65%,85% 10%,100% 100%);animation-name:cblSkillRise}
+.cbl-fx.ability-impact.skill-wings:after{inset:-15% -35%;clip-path:polygon(0 0,40% 30%,50% 75%,60% 30%,100% 0,85% 70%,60% 85%,50% 100%,40% 85%,15% 70%);background:linear-gradient(90deg,transparent,var(--hit),transparent)}
+.cbl-fx.ability-impact.rhythm-double:after{animation-iteration-count:2;animation-duration:calc(var(--fx-life) / 2)}
+.cbl-fx.ability-impact.rhythm-triple:after{animation-iteration-count:3;animation-duration:calc(var(--fx-life) / 3)}
+.cbl-fx.ability-impact.rhythm-finish:before{border-width:3px}
+.cbl-fx.ability-charge.rhythm-finish:before{border-width:4px}
+.cbl-fx.ability-charge.rhythm-snap{width:25px;height:25px}
+.cbl-fx.ability-charge:is(.skill-rain,.skill-stars):after{border-radius:0;border-style:dotted}
+.cbl-fx.ability-charge:is(.skill-sigil,.skill-summon):before{border-radius:15%}
+.cbl-fx.connection.skill-link{background:linear-gradient(90deg,transparent,var(--hit),var(--flash));animation-duration:var(--fx-life);opacity:.65}
+.cbl-fx.connection.transport-beam{height:7px;border-top:1px solid var(--flash);border-bottom:1px solid var(--hit)}
+.cbl-fx.connection.transport-breath{height:28px;clip-path:polygon(0 44%,100% 0,100% 100%,0 56%);opacity:.45}
+.cbl-fx.class-projectile.skill-shield{width:22px!important;height:25px!important;border:2px solid var(--flash);border-radius:35% 35% 50% 50%!important;background:var(--hit)!important}
+.cbl-fx.class-projectile.skill-knives{width:23px!important;height:14px!important;clip-path:polygon(0 50%,75% 0,62% 40%,100% 50%,62% 60%,75% 100%);border-radius:0!important}
+.cbl-fx.class-projectile.skill-spiral:after,.cbl-fx.class-projectile.skill-orbit:after{content:'';position:absolute;inset:-4px;border:1px dashed var(--flash);border-radius:50%;animation:cblSkillOrbit var(--fx-life) linear both}
+.cbl-fx.class-projectile.skill-shards{clip-path:polygon(0 50%,65% 0,100% 50%,65% 100%)}
+@keyframes cblSkillFall{0%{opacity:0;translate:4px -22px}25%{opacity:.8}100%{opacity:0;translate:-5px 14px}}
+@keyframes cblSkillRise{0%{opacity:0;translate:0 13px;scale:.6}30%{opacity:.8}100%{opacity:0;translate:0 -16px;scale:1.15}}
+@keyframes cblSkillOrbit{0%{opacity:0;rotate:-50deg;scale:.6}30%{opacity:.8}100%{opacity:0;rotate:100deg;scale:1.2}}
+@keyframes cblSkillSweep{0%{opacity:0;rotate:-45deg;scale:.7}25%{opacity:.9}100%{opacity:0;rotate:60deg;scale:1.2}}
+@media(prefers-reduced-motion:reduce){.cbl-scene .cbl-fx.ability-impact[class*="skill-"]:before,.cbl-scene .cbl-fx.ability-impact[class*="skill-"]:after{animation:none!important}.cbl-fx.skill-link{display:none!important}}
+.cbl-scene .cbl-fx.ability-impact.rhythm-finish:not(.periodic){width:56px;height:56px}
+
+/* First Ashen Vault entry: the Beast Mastery Hunter visibly calls their
+   companion beside them. Pet root coordinates are set before reveal. */
+.cbl-pet.cbl-hunter-call-arrival{
+ animation:cblHunterCallArrival .56s cubic-bezier(.22,.8,.25,1) both;
+ transform-origin:50% 65%;
+}
+.cbl-hunter-call{
+ position:absolute;z-index:38;pointer-events:none;
+ transform:translate(-50%,-100%);white-space:nowrap;
+ padding:4px 9px;border:1px solid #a9d77f8a;border-radius:16px;
+ background:#142219de;color:#ddffb6;
+ font:800 10px/1.2 system-ui,sans-serif;letter-spacing:.12em;
+ text-shadow:0 1px 2px #000;
+ box-shadow:0 0 16px #8ed06a77;
+ animation:cblHunterCallLabel .92s ease-out both;
+}
+@keyframes cblHunterCallArrival{
+ 0%{opacity:0;scale:.4}
+ 55%{opacity:1;scale:1.12}
+ 100%{opacity:1;scale:1}
+}
+@keyframes cblHunterCallLabel{
+ 0%{opacity:0;translate:0 7px}
+ 25%,65%{opacity:1;translate:0 0}
+ 100%{opacity:0;translate:0 -9px}
+}
+@media(prefers-reduced-motion:reduce){
+ .cbl-pet.cbl-hunter-call-arrival,.cbl-hunter-call{animation:none!important;opacity:1;scale:1;translate:none}
+}

@@ -1,0 +1,2239 @@
+/* Cellbound sticky top navigation v1 — layered after immersive and layout safety. */
+html body.cb-top-nav-enabled .app-shell {
+  padding-top:64px!important;
+  padding-bottom:0!important;
+}
+html body.cb-top-nav-enabled .app-shell > .main {
+  max-width:1720px!important;
+  padding-bottom:clamp(26px,4vw,58px)!important;
+}
+body.cb-top-nav-enabled .app-shell > .main > .topbar {
+  display:none!important; /* The navigation bar replaces the duplicate heading strip. */
+}
+body.cb-top-nav-enabled #cbImmersiveDock {
+  display:none!important;
+}
+.cb-global-header {
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:95;
+  width:100%;
+  min-height:64px;
+  display:flex;
+  align-items:stretch;
+  gap:clamp(8px,1vw,18px);
+  padding:0 clamp(12px,2.1vw,32px);
+  border-bottom:1px solid rgba(224,183,112,.32);
+  background:linear-gradient(180deg,rgba(17,25,32,.985),rgba(8,16,23,.985));
+  box-shadow:0 9px 28px rgba(0,0,0,.36);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  color:#efe4d3;
+}
+.cb-global-brand {
+  display:inline-flex;align-items:center;gap:9px;flex:0 0 auto;
+  border:0;background:none;color:#f4ebdb;padding:0 7px 0 0;
+  font:normal 16px Georgia,serif;letter-spacing:.085em;
+}
+.cb-global-brand-mark {
+  display:grid;place-items:center;width:34px;height:34px;
+  color:#edca80;font:28px Georgia,serif;text-shadow:0 0 12px #eec76b66;
+  border:1px solid #c49d5866;border-radius:50%;
+  background:radial-gradient(circle,#31404b,#101923 70%);
+}
+.cb-global-brand:is(:hover,.is-active) .cb-global-brand-title{color:#ffe2a5}
+.cb-global-links {
+  display:flex;align-items:stretch;gap:2px;flex:1 1 auto;min-width:0;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.cb-global-links::-webkit-scrollbar{display:none}
+.cb-global-links button {
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  position:relative;flex:0 0 auto;min-height:62px;padding:0 clamp(8px,.85vw,14px);
+  border:0;border-bottom:2px solid transparent;background:transparent;
+  color:#c0c6c8;font-size:11px;font-weight:700;
+  white-space:nowrap;touch-action:manipulation;transition:background .15s,color .15s;
+}
+.cb-global-links button[hidden]{display:none!important}
+.cb-global-link-icon{color:#a7b2be;font:19px/1 Georgia,serif}
+.cb-global-links button:hover,.cb-global-links button.is-active{
+  color:#ffe3ad;background:linear-gradient(180deg,#bd8c3922,#bb8c3722);
+}
+.cb-global-links button.is-active{
+  border-bottom-color:#dcb778;
+}
+.cb-global-links button.is-active .cb-global-link-icon{color:#f1c77e}
+.cb-global-tools{
+  display:flex;align-items:center;gap:7px;flex:0 0 auto;
+  margin-left:auto;
+}
+.cb-global-gold{
+  display:flex;align-items:center;gap:5px;white-space:nowrap;
+  padding:7px 8px;border-left:1px solid #e3c48522;
+  font-size:12px;color:#f4d798;
+}
+.cb-global-gold>span{color:#e9b94e;font-size:19px}
+.cb-global-gold b{font-variant-numeric:tabular-nums}
+.cb-global-more{
+  border:1px solid rgba(197,162,105,.3);
+  background:#111d24;color:#d9d1c1;padding:8px 11px;
+  border-radius:4px;font-size:11px;font-weight:750;white-space:nowrap;
+}
+.cb-global-more:is(:hover,.is-active),.cb-global-more[aria-expanded="true"]{
+  border-color:#e4be7a;color:#f7dfad;background:#352b20
+}
+.cb-global-account{position:relative;flex:0 0 auto}
+.cb-global-account>summary {
+  min-height:36px;display:flex;align-items:center;gap:7px;
+  padding:5px 8px;border:1px solid #c5a26a55;border-radius:4px;
+  background:#172129;color:#dfd4bd;list-style:none;cursor:pointer;
+  font-size:11px;
+}
+.cb-global-account>summary::-webkit-details-marker{display:none}
+.cb-global-account>summary>span{
+  display:grid;place-items:center;width:23px;height:23px;border-radius:50%;
+  color:#ffe0a1;background:#54412b;font-size:15px;
+}
+.cb-global-account>summary i{font-style:normal;color:#d3b37c}
+.cb-global-account[open]>summary{border-color:#e4be7a;color:#ffe4b9}
+.cb-global-account-panel{
+  position:absolute;right:0;top:calc(100% + 13px);
+  width:min(370px,calc(100vw - 20px));padding:14px;
+  border:1px solid #bd985a;border-radius:6px;
+  background:linear-gradient(150deg,#1b252a,#0b141a);
+  box-shadow:0 22px 65px #000c;
+}
+.cb-global-account-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cb-global-account-heading b{font:normal 18px Georgia,serif}
+.cb-global-account-heading small{font-size:10px;color:#bea57b}
+.cb-global-resource-slot .resource-strip{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;width:100%;margin:0;
+}
+.cb-global-resource-slot .resource-strip>div{
+  min-width:0!important;padding:10px!important;
+  background:#0c161b;border:1px solid #bf9b6640;
+}
+.cb-global-resource-slot .resource-strip span{font-size:10px;color:#b3b8b3}
+.cb-global-resource-slot .resource-strip b{font-size:15px;color:#f2e5cc}
+.cb-global-signout{
+  width:100%;min-height:39px;margin-top:12px;
+  border:1px solid #a98b5c66;background:#1a1b1b;
+  color:#dacbac;text-align:center;cursor:pointer;
+}
+.cb-global-header button:focus-visible,.cb-global-header summary:focus-visible {
+  outline:2px solid #f1ca87;outline-offset:3px;
+}
+body.cb-top-nav-enabled #cbMorePanel{z-index:115}
+body.cb-top-nav-enabled #cbMorePanel .cb-more__panel{
+  top:74px;bottom:auto;right:clamp(10px,2vw,32px);
+  max-height:min(calc(100dvh - 86px),720px);
+}
+body.cb-top-nav-enabled #cbMorePanel .cb-more__signout{margin-top:12px}
+body.cb-top-nav-enabled #cbContextNav{margin-top:0}
+html:has(body.cb-top-nav-enabled) {scroll-padding-top:80px}
+@media(max-width:1100px){
+  .cb-global-header{gap:8px;padding:0 10px}
+  .cb-global-brand{font-size:13px}
+  .cb-global-brand-mark{width:29px;height:29px;font-size:24px}
+  .cb-global-links button{padding:0 10px}
+  .cb-global-gold{padding:5px}
+  .cb-global-account>summary b{display:none}
+}
+@media(max-width:720px){
+  .cb-global-header{min-height:54px;gap:6px;padding:0 7px}
+  .cb-global-brand{padding:0;gap:5px;font-size:11px}
+  .cb-global-brand-mark{height:27px;width:27px;font-size:22px}
+  .cb-global-links button{min-height:52px;padding:0 9px;gap:4px;font-size:10px}
+  .cb-global-link-icon{font-size:16px}
+  .cb-global-tools{gap:4px}
+  .cb-global-gold{font-size:10px;padding:4px}
+  .cb-global-gold>span{font-size:15px}
+  .cb-global-more{padding:7px;font-size:10px}
+  .cb-global-more span{display:none}
+  .cb-global-account>summary{min-height:32px;padding:4px}
+  .cb-global-account>summary i{display:none}
+  body.cb-top-nav-enabled #cbMorePanel .cb-more__panel{
+    top:58px;right:6px;width:calc(100vw - 12px);
+    bottom:auto;max-height:calc(100dvh - 64px);
+  }
+  body.cb-top-nav-enabled #cbMorePanel .cb-more__panel .cb-more__links{grid-template-columns:repeat(2,minmax(0,1fr))}
+  html body.cb-top-nav-enabled .app-shell>.main{padding:0 12px 22px!important}
+}
+@media(max-width:390px){
+  .cb-global-brand-title{display:none}
+  .cb-global-gold{font-size:9px}
+  .cb-global-links button{padding:0 8px}
+}
+@media(prefers-reduced-motion:reduce){
+  .cb-global-links button{transition:none}
+}
+/* The existing full-screen encounter/modal handlers take precedence over navigation. */
+body.cb2d-open .cb-global-header,body.hs2d-open .cb-global-header,
+body.wb2d-open .cb-global-header,body.cc2d-open .cb-global-header,
+body.bs2d-open .cb-global-header,body.qe-open .cb-global-header,
+body.quest-puzzle-open .cb-global-header,body.character-sheet-open .cb-global-header,
+body.bank-manage-open .cb-global-header{display:none!important}
+body.cb-top-nav-enabled:has(.modal-backdrop:not([hidden])) .cb-global-header,
+body.cb-top-nav-enabled:has(.recruit-modal-backdrop:not([hidden])) .cb-global-header{
+  visibility:hidden;pointer-events:none
+}
+
+/* ==========================================================================
+   Cellbound Guild Hall Vision v2 — uses the actual game, not mock data.
+   Single unified fantasy-slate interface for the whole game. 
+   ========================================================================== */
+html body.cb-top-nav-enabled {--cb-v2-gold:#dfbb79;--cb-v2-cream:#f5eadd;--cb-v2-muted:#adbcc7;--cb-v2-edge:rgba(155,178,192,.24)}
+html body.cb-top-nav-enabled .app-shell{
+  background:
+    radial-gradient(ellipse at 51% 0,rgba(46,77,103,.2),transparent 43%),
+    linear-gradient(180deg,#0e1c29 0%,#0d1a24 45%,#08121b 100%)!important;
+}
+html body.cb-top-nav-enabled .app-shell>.main{
+  max-width:1680px!important;
+  width:100%!important;
+  padding:0 clamp(12px,2.5vw,38px) clamp(42px,5vw,72px)!important;
+  background:none;
+}
+body.cb-top-nav-enabled .cb-global-header{
+  height:64px;min-height:64px;
+  background:linear-gradient(180deg,rgba(18,29,44,.99),rgba(11,19,31,.99));
+  border-bottom-color:rgba(211,183,130,.34);
+  box-shadow:0 8px 28px #0009;
+  isolation:isolate;
+}
+body.cb-top-nav-enabled .cb-global-links button{
+  font-size:clamp(10px,.8vw,12px);letter-spacing:.005em;
+}
+body.cb-top-nav-enabled .cb-global-brand-mark{color:#e5c88d;border-color:#9eafc3;background:radial-gradient(circle at 52% 30%,#314f76,#152337 64%);box-shadow:0 0 15px #658bb434}
+body.cb-top-nav-enabled .cb-global-links button:hover,
+body.cb-top-nav-enabled .cb-global-links button.is-active{
+  color:#ffe4b6;background:linear-gradient(180deg,rgba(171,133,71,.1),rgba(190,141,71,.2));
+}
+html body.cb-top-nav-enabled .cb-subnav{
+  min-height:45px;position:sticky;top:64px;z-index:63;
+  margin-inline:0;padding:5px 8px;background:rgba(10,20,31,.96);
+  border:1px solid rgba(175,178,166,.18);
+  box-shadow:0 7px 16px #0004;backdrop-filter:blur(12px);
+}
+html body.cb-top-nav-enabled .cb-subnav[hidden]{display:none!important}
+html body.cb-top-nav-enabled .cb-subnav__links button{
+  border-radius:4px;min-height:32px;padding:7px 11px;
+  background:#111e2d;color:#b9c8d2;border-color:#8b98a53d;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button[aria-current="page"]{
+  color:#ffe6ad;background:#302c27;border-color:#e2bb7a88;
+}
+html body.cb-top-nav-enabled .main>.view{max-width:100%;min-width:0;padding-top:clamp(15px,1.5vw,22px)!important}
+html body.cb-top-nav-enabled #overview{padding-top:0!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+  margin-top:6px;min-height:225px;padding:clamp(22px,3vw,43px)!important;
+  border:1px solid #b4a58768;border-radius:8px;
+  box-shadow:0 15px 43px #0009;
+  background-image:
+    linear-gradient(90deg,rgba(7,15,25,.97) 0%,rgba(8,18,28,.87) 36%,rgba(9,24,36,.35) 100%),
+    linear-gradient(0deg,#09131dbb,transparent 57%),
+    var(--cb-place-art);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro h2{
+  color:#f7e9d4;font-size:clamp(2rem,3.7vw,3.6rem);
+  text-shadow:0 4px 20px #000;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro p{
+  color:#cdd6d9!important;max-width:600px;font-size:clamp(12px,1vw,15px);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro:before{
+  background:linear-gradient(180deg,transparent,#d4b57e,transparent);
+}
+html body.cb-top-nav-enabled .main>.view .panel,
+html body.cb-top-nav-enabled .main>.view :is(.pvp-panel,.tp-panel,.bank-card,.quest-journal-shell,.roster-character-card,.admin-card,.dungeon-browser-card,.dungeon-episode){
+  border:1px solid rgba(146,170,191,.24);
+  border-radius:6px;
+  background-color:#111f2c;
+  box-shadow:0 12px 28px #0005,inset 0 1px #ffffff09;
+}
+html body.cb-top-nav-enabled .main>.view .panel{
+  background-image:linear-gradient(160deg,rgba(20,38,54,.98),rgba(10,20,31,.98));
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head){
+  min-height:55px;border-bottom:1px solid #c4d0de20;
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head) h3{
+  color:#f6eee3;font-size:clamp(1rem,1.24vw,1.35rem)
+}
+html body.cb-top-nav-enabled .main>.view :is(.panel-head,.tp-panel-head) small{color:#dec58f!important;letter-spacing:.11em}
+html body.cb-top-nav-enabled :is(.ghost-btn,.home-panel-action,.filter,.cb-subnav button):focus-visible{
+  outline:2px solid #f4d493!important;outline-offset:2px!important;
+}
+html body.cb-top-nav-enabled .main>.view button:not(:disabled){touch-action:manipulation}
+html body.cb-top-nav-enabled .main>.view button:disabled{cursor:not-allowed}
+
+/* The illustrated guild hub mirrors the approved mockup's hierarchy. */
+html body.cb-top-nav-enabled #overview .home-command{
+  max-width:none;margin:0;gap:clamp(12px,1.35vw,19px);
+}
+.cb-hub-hero{
+  position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,355px);
+  align-items:center;gap:clamp(18px,3vw,44px);min-height:clamp(350px,33vw,455px);
+  margin:0 calc(-1 * clamp(12px,2.5vw,38px));padding:clamp(30px,4vw,58px) clamp(24px,5vw,75px);
+  background:#132637 url('./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp') center 48%/cover no-repeat;
+  border-bottom:1px solid #be9a5e80;box-shadow:0 14px 40px #0007;overflow:hidden;
+}
+.cb-hub-hero:before{
+  content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,#081523e8 0%,#0c1a29bc 27%,#0e1e2d5e 57%,#0914219c 100%),
+             linear-gradient(0deg,#081522a8,transparent 50%);
+}
+.cb-hub-hero-copy{min-width:0;max-width:740px;align-self:center;text-shadow:0 3px 15px #000b}
+.cb-hub-eyebrow{font-size:12px;letter-spacing:.24em;color:#f4ddb4;font-weight:800}
+.cb-hub-hero-copy h2{
+  margin:9px 0 12px;font:normal clamp(3.8rem,7.5vw,7.5rem)/.93 Georgia,serif;
+  letter-spacing:.014em;color:#f7e6cb;text-shadow:0 5px 35px #000e;
+}
+.cb-hub-hero-copy p{max-width:460px;margin:0;font-size:clamp(13px,1.1vw,16px);line-height:1.6;color:#ecedf0}
+.cb-hub-hero-actions{display:flex;flex-wrap:wrap;gap:11px;margin-top:28px}
+.cb-hub-hero-actions button{
+  display:flex;align-items:center;justify-content:center;gap:11px;min-height:45px;
+  padding:10px 23px;border:1px solid #f4db9f99;border-radius:4px;
+  color:#211a11;background:linear-gradient(#f5d68a,#b58a40);
+  font-size:13px;font-weight:800;box-shadow:0 4px 18px #0008;
+}
+.cb-hub-hero-actions button+button{background:#0e1b2bd9;color:#f3eadc;border-color:#b5cce179}
+.cb-hub-hero-actions button:hover{filter:brightness(1.13)}
+.cb-hub-watch{
+  align-self:center;border:1px solid #809cb770;border-radius:7px;
+  padding:16px;background:rgba(9,19,31,.95);
+  box-shadow:0 17px 45px #0009;backdrop-filter:blur(9px);
+}
+.cb-hub-watch-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;border-bottom:1px solid #dde6ef27}
+.cb-hub-watch-head strong{font:normal 20px Georgia,serif;color:#f5ebdd}
+.cb-hub-watch-head small{color:#d7bd83;font-size:10px;text-transform:uppercase;letter-spacing:.09em}
+.cb-hub-watch-row{
+  display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;
+  align-items:center;width:100%;min-height:76px;margin-top:7px;
+  padding:9px 7px;border:1px solid #768fa435;border-radius:5px;
+  background:#132334ed;color:#e7edf0;text-align:left;
+}
+.cb-hub-watch-row:hover{border-color:#d4b575a8;background:#1c3449}
+.cb-hub-watch-art{display:grid;place-items:center;align-self:stretch;min-height:55px;border-radius:4px;font:30px Georgia,serif;color:#edc783;background-size:cover;background-position:center}
+.cb-hub-watch-art.mission{background-image:linear-gradient(#0b1b2c66,#0b1b2caa),url('./assets/dungeons/ashen-vault.webp')}
+.cb-hub-watch-art.quest{background-image:linear-gradient(#08142377,#081423bb),url('./assets/comics/tutorial-2026/arcane-trail.webp')}
+.cb-hub-watch-art.event{background-image:linear-gradient(#08142377,#081423bb),url('./assets/world/twelve-below-key-art.webp')}
+.cb-hub-watch-row b{display:block;margin:2px 0;color:#f8ede0;font-size:12px}
+.cb-hub-watch-row span:not(.cb-hub-watch-art){display:block;color:#d1b777;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.12em}
+.cb-hub-watch-row small{display:block;color:#adbac4;font-size:10px;line-height:1.3}
+.cb-hub-watch-row b,.cb-hub-watch-row small{overflow:hidden;text-overflow:ellipsis}
+html body.cb-top-nav-enabled #overview .cb-hub-hero+.home-command-grid{margin-top:0}
+html body.cb-top-nav-enabled #overview .home-command-grid{
+  display:grid;grid-template-columns:minmax(0,1.18fr) minmax(0,.98fr) minmax(230px,.8fr);
+  align-items:stretch;gap:12px;margin:0;
+}
+html body.cb-top-nav-enabled #overview .home-party-panel,
+html body.cb-top-nav-enabled #overview .home-objective-panel,
+html body.cb-top-nav-enabled #overview .cb-hub-actions{min-width:0}
+html body.cb-top-nav-enabled #overview .home-party-roster{
+  min-height:194px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;
+  padding:11px;background:transparent;
+}
+html body.cb-top-nav-enabled #overview .home-party-member{
+  min-width:0;min-height:168px;padding:12px 4px;border:1px solid #90a4b453;
+  border-radius:5px;background:linear-gradient(#182f40,#101d2b);
+  box-shadow:0 3px 12px #0003;text-align:center;
+}
+html body.cb-top-nav-enabled #overview .home-party-portrait{
+  width:clamp(47px,5vw,76px);height:clamp(47px,5vw,76px);margin:0 auto 9px;border-radius:5px;
+  background:#0d1b29;overflow:hidden;
+}
+html body.cb-top-nav-enabled #overview .home-party-copy b{font-size:12px;color:#f5ebdf}
+html body.cb-top-nav-enabled #overview .home-party-copy small{font-size:10px!important;color:#aebdc8!important}
+html body.cb-top-nav-enabled #overview .home-party-copy span{font-size:9px;color:#adb7c0}
+html body.cb-top-nav-enabled #overview .home-party-member>em{font-size:9px}
+html body.cb-top-nav-enabled #overview .home-objective{
+  min-height:190px;display:flex;justify-content:flex-start;gap:4px;padding:21px;
+  background:linear-gradient(115deg,#162b3a,#0e1c2a);
+}
+html body.cb-top-nav-enabled #overview .home-objective>b{font:normal 19px/1.4 Georgia,serif;color:#f4ece0;margin:12px 0;overflow-wrap:anywhere}
+.cb-hub-actions .cb-hub-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:11px}
+.cb-hub-actions .cb-hub-action-grid button{
+  min-width:0;min-height:78px;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;
+  border:1px solid #8e9faf6b;border-radius:5px;
+  background:linear-gradient(155deg,#162c40,#0b1928);
+  color:#f0e8dc;font-size:11px;font-weight:750;
+}
+.cb-hub-action-grid button span{color:#dec08e;font:24px/1 Georgia,serif}
+.cb-hub-action-grid button:hover{background:#203a50;border-color:#e3bf8b}
+.cb-hub-action-grid button:disabled{opacity:.4}
+.cb-hub-heading{
+  display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:10px;
+}
+.cb-hub-heading h3{margin:0;font:normal clamp(21px,1.75vw,28px) Georgia,serif;color:#f7e7d1}
+.cb-hub-heading p{margin:5px 0 0;color:#acbac3;font-size:12px}
+.cb-hub-heading>button{
+  min-height:35px;border:0;background:transparent;color:#dfba77;
+  font-size:12px;white-space:nowrap;padding:6px;cursor:pointer;
+}
+.cb-hub-heading>button:hover{text-decoration:underline}
+.cb-hub-featured{min-width:0;padding:2px 0 0}
+.cb-hub-dungeon-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cb-hub-dungeon{
+  display:flex;align-items:end;min-width:0;min-height:165px;position:relative;overflow:hidden;
+  padding:14px;border:1px solid #b8c8d651;border-radius:5px;
+  background-color:#122536;background-position:center;background-size:cover;
+  color:#f7ede0;text-align:left;isolation:isolate;
+}
+.cb-hub-dungeon:before{content:"";z-index:-1;inset:0;position:absolute;background:linear-gradient(0deg,#060e19f2 0%,#0b1726ad 42%,#0b162733 100%)}
+.cb-hub-dungeon[data-dungeon="ashen-vault"]{background-image:url('./assets/dungeons/ashen-vault.webp')}
+.cb-hub-dungeon[data-dungeon="hollow-sanctum"]{background-image:url('./assets/hollow-sanctum/rooms/gallery-void-v2.webp')}
+.cb-hub-dungeon[data-dungeon="chaos-canyon"]{background-image:url('./assets/dungeons/chaos-canyon.webp')}
+.cb-hub-dungeon[data-dungeon="fractured-ages"]{background-image:url('./assets/dungeons/fractured-ages.webp')}
+.cb-hub-dungeon-content{display:block;width:100%;min-width:0;text-shadow:0 3px 14px #000}
+.cb-hub-dungeon-content b{display:block;font:normal clamp(16px,1.4vw,21px) Georgia,serif}
+.cb-hub-dungeon-content small{display:block;margin-top:5px;color:#d7e0e6;font-size:11px}
+.cb-hub-dungeon-status{
+  position:absolute;top:10px;left:10px;padding:5px 9px;
+  border:1px solid #d5b98177;border-radius:4px;
+  background:#102332dc;color:#ecd7ae;font-size:9px;font-weight:900;letter-spacing:.11em;
+}
+.cb-hub-dungeon:hover:not(:disabled){border-color:#f3d19a;filter:brightness(1.12)}
+.cb-hub-dungeon:disabled{opacity:.63;filter:saturate(.55);cursor:not-allowed}
+.cb-hub-mission-row{
+  display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.75fr);
+  gap:12px;align-items:stretch;
+}
+html body.cb-top-nav-enabled #overview .home-continue-card{min-height:315px;margin:0;border-radius:6px}
+html body.cb-top-nav-enabled #overview .home-continue-copy{padding:32px 35px 26px}
+html body.cb-top-nav-enabled #overview .home-continue-copy h2{font-size:clamp(2rem,2.8vw,3.1rem)}
+html body.cb-top-nav-enabled #overview .home-readiness-panel{min-width:0}
+html body.cb-top-nav-enabled #overview .home-secondary-grid{display:block;margin:0}
+html body.cb-top-nav-enabled #overview .home-routes-panel{width:100%;min-width:0}
+html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:repeat(6,minmax(0,1fr));padding:12px;gap:10px}
+html body.cb-top-nav-enabled #overview .home-destination{
+  min-height:140px!important;border:1px solid #869db36b;
+  border-radius:5px;padding:14px!important;background-position:center!important;
+}
+html body.cb-top-nav-enabled #overview .home-destination>b{font-size:clamp(14px,1.12vw,19px)}
+html body.cb-top-nav-enabled #overview .home-destination>em{font-size:10px!important;line-height:1.35;color:#dfded9}
+html body.cb-top-nav-enabled #overview .home-destination>small{color:#e9c88b!important}
+html body.cb-top-nav-enabled #overview .home-progression-panel{min-width:0}
+html body.cb-top-nav-enabled #overview .home-bottom-grid{grid-template-columns:1fr 1fr;gap:12px}
+html body.cb-top-nav-enabled #overview .home-activity-panel .activity-log{max-height:unset;min-height:150px}
+html body.cb-top-nav-enabled #overview .home-panel-action{border-color:#ae9665aa;color:#f1dab1;font-size:11px!important}
+html body.cb-top-nav-enabled #overview .panel-head .panel-head-note{color:#9baab7;font-size:11px}
+html body.cb-top-nav-enabled #overview .home-pulse-grid b{color:#f5e6d3}
+
+/* Make the UI robust on the owner's iPad (portrait and landscape), then phone. */
+@media(max-width:1360px){
+  html body.cb-top-nav-enabled #overview .home-command-grid{grid-template-columns:minmax(0,1fr) minmax(0,.9fr)}
+  html body.cb-top-nav-enabled #overview .cb-hub-actions{grid-column:1/-1}
+  .cb-hub-actions .cb-hub-action-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .cb-hub-dungeon-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:950px){
+  .cb-hub-hero{grid-template-columns:1fr;gap:18px;min-height:0;padding:32px 25px}
+  .cb-hub-hero-copy h2{font-size:clamp(3.5rem,9vw,6rem)}
+  .cb-hub-watch{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .cb-hub-watch-head{grid-column:1/-1}
+  .cb-hub-watch-row{grid-template-columns:1fr;justify-items:start;min-height:92px;gap:5px;margin:0}
+  .cb-hub-watch-art{display:none}
+  html body.cb-top-nav-enabled #overview .home-command-grid{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled #overview .cb-hub-actions{grid-column:auto}
+  .cb-hub-mission-row{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cb-hub-dungeon-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled .app-shell{padding-top:54px!important}
+  body.cb-top-nav-enabled .cb-global-header{height:54px;min-height:54px}
+  html body.cb-top-nav-enabled .cb-subnav{top:54px}
+  html body.cb-top-nav-enabled .app-shell>.main{padding:0 12px 28px!important}
+  .cb-hub-hero{margin:0 -12px;padding:28px 18px;gap:19px}
+  .cb-hub-hero-copy h2{font-size:clamp(3.1rem,14vw,5.1rem)}
+  .cb-hub-hero-copy p{font-size:13px}
+  .cb-hub-hero-actions{gap:7px;margin-top:20px}
+  .cb-hub-hero-actions button{min-height:42px;padding:9px 12px;font-size:11px}
+  .cb-hub-watch{display:block;padding:11px}
+  .cb-hub-watch-row{display:grid;grid-template-columns:51px 1fr;min-height:66px;margin-top:7px}
+  .cb-hub-watch-art{display:grid;min-height:47px}
+  html body.cb-top-nav-enabled #overview .home-party-roster{
+    display:flex;overflow-x:auto;scroll-snap-type:x proximity;gap:7px;padding:10px;
+  }
+  html body.cb-top-nav-enabled #overview .home-party-member{
+    flex:0 0 125px;min-height:168px;scroll-snap-align:start;
+  }
+  .cb-hub-actions .cb-hub-action-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .cb-hub-actions .cb-hub-action-grid button{min-height:72px;font-size:10px}
+  .cb-hub-heading{align-items:flex-start}
+  .cb-hub-heading h3{font-size:21px}
+  .cb-hub-heading p{font-size:11px}
+  .cb-hub-dungeon-grid{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:5px}
+  .cb-hub-dungeon{min-width:220px;flex:0 0 73%;min-height:175px;scroll-snap-align:start}
+  html body.cb-top-nav-enabled #overview .home-continue-card{min-height:340px}
+  html body.cb-top-nav-enabled #overview .home-continue-copy{padding:110px 15px 17px;width:100%}
+  html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px}
+  html body.cb-top-nav-enabled #overview .home-bottom-grid{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{min-height:175px;padding:21px!important}
+}
+@media(max-width:420px){
+  .cb-hub-watch-head strong{font-size:17px}
+  html body.cb-top-nav-enabled #overview .home-destination-grid{grid-template-columns:1fr 1fr!important}
+  html body.cb-top-nav-enabled #overview .home-destination{min-height:125px!important}
+  .cb-hub-dungeon{flex-basis:85%}
+}
+@media(prefers-reduced-motion:reduce){.cb-hub-hero button,.cb-hub-dungeon{transition:none!important}}
+
+/* Supersede the earlier Guild Hall hero: no duplicate banners. */
+html body.cb-hub-v2 #overview > .cb-guild-hall{display:none!important}
+html body.cb-hub-v2 .cb-hub-hero::before{z-index:0}
+html body.cb-hub-v2 .cb-hub-hero > *{position:relative;z-index:1}
+
+
+/* ==========================================================================
+   Cellbound Premium City Hub v3 — bright fantasy ART + deep navy GAME chrome
+   Inspired by the approved image; never display fabricated live events.
+   ========================================================================= */
+html body.cb-top-nav-enabled {
+  --cb-v3-navy:#0c1927;
+  --cb-v3-panel:#132231;
+  --cb-v3-panel-hi:#1a2c3c;
+  --cb-v3-edge:#405568;
+  --cb-v3-cream:#f3e9dc;
+  --cb-v3-text:#d6e1e8;
+  --cb-v3-muted:#a3b4bf;
+  --cb-v3-gold:#e7c077;
+  --cb-v3-blue:#71b4ed;
+}
+html body.cb-top-nav-enabled .app-shell {
+  background:radial-gradient(ellipse at 50% 0,#1e3547 0%,#102235 48%,#0a1726 100%)!important;
+}
+html body.cb-top-nav-enabled .app-shell>.main {
+  max-width:1720px!important;
+  background:none!important;
+  color:var(--cb-v3-text);
+}
+html body.cb-top-nav-enabled .cb-global-header {
+  background:linear-gradient(180deg,#121d2a,#0b1521)!important;
+  border-bottom:1px solid #8a7150ab!important;
+  box-shadow:0 6px 20px #0008!important;
+}
+html body.cb-top-nav-enabled .cb-global-links button {
+  font-family:Georgia,serif;
+  font-size:clamp(11px,.85vw,14px);
+  color:#e9eced;
+}
+html body.cb-top-nav-enabled .cb-global-links .cb-global-link-icon {color:#a2bbdb}
+html body.cb-top-nav-enabled .cb-global-links button:is(.is-active,:hover) {
+  color:#ffe4ac;background:linear-gradient(#e7c07712,#e7c07724);
+  border-bottom-color:#edc876;
+}
+html body.cb-top-nav-enabled .cb-global-brand {font:normal 18px Georgia,serif;color:#f2e9de}
+html body.cb-top-nav-enabled .cb-global-brand-mark {
+  border-color:#9bc8e0;color:#f7e5a4;
+  background:radial-gradient(circle at 40% 25%,#53759e,#1a2941 67%);
+}
+html body.cb-top-nav-enabled .cb-global-more,
+html body.cb-top-nav-enabled .cb-global-account>summary {
+  color:#eaeef3;background:#18293b;border:1px solid #526879;
+}
+html body.cb-top-nav-enabled .cb-global-account-panel {
+  background:linear-gradient(150deg,#1c3041,#111f30)!important;border-color:#8b9aa6;
+}
+html body.cb-top-nav-enabled .cb-global-resource-slot .resource-strip>div {
+  background:#132334;border-color:#53697c;
+}
+html body.cb-top-nav-enabled .cb-global-more:is(.is-active,:hover),
+html body.cb-top-nav-enabled .cb-global-account[open]>summary{
+  background:#2c3c45;border-color:#e7c077;
+}
+html body.cb-top-nav-enabled .cb-subnav {
+  color:#d5e0eb;background:rgba(14,26,40,.97)!important;
+  border-color:#364c5e!important;
+  box-shadow:0 6px 15px #0006!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__label {color:#d7bd8d}
+html body.cb-top-nav-enabled .cb-subnav__links button {
+  color:#c9d7e4;background:#1b2c3d;border-color:#3b5468;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button[aria-current="page"],
+html body.cb-top-nav-enabled .cb-subnav__links button:hover {
+  color:#ffe2ad;background:#35402f;border-color:#bba065;
+}
+/* Wide, colourful city art is the welcoming element — not pale page chrome. */
+html body.cb-top-nav-enabled .cb-hub-hero {
+  min-height:clamp(350px,32vw,450px);
+  background-color:#284969;
+  background-image:url('./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp');
+  background-position:center 47%;
+  border-bottom:2px solid #c5a36c;
+  box-shadow:0 12px 34px #0008;
+}
+html body.cb-top-nav-enabled .cb-hub-hero:before {
+  background:linear-gradient(90deg,rgba(7,20,34,.86) 0%,rgba(11,28,44,.51) 27%,rgba(12,36,59,.07) 59%,rgba(8,20,34,.62) 100%),
+             linear-gradient(0deg,rgba(5,16,30,.26),transparent 48%)!important;
+}
+html body.cb-top-nav-enabled .cb-hub-eyebrow{font:normal 12px Georgia,serif;letter-spacing:.25em;color:#fff8e5}
+html body.cb-top-nav-enabled .cb-hub-hero-copy h2 {
+  font-size:clamp(4.1rem,7.3vw,7.6rem);color:#ffedca;
+  text-shadow:0 4px 15px #081a34;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-copy p {max-width:405px;color:#fff3e3}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button:first-child {
+  border-color:#fff3d0;background:linear-gradient(#f9dc9f,#ca994e);
+  color:#302519;box-shadow:0 4px 15px #0007;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button+button {
+  color:#f0ece6;background:#172a40d9;border-color:#a9bcce;
+}
+html body.cb-top-nav-enabled .cb-hub-watch {
+  max-width:362px;justify-self:end;width:100%;
+  padding:12px;border:1px solid #6c8196;
+  border-radius:5px;background:rgba(12,23,35,.94)!important;
+  box-shadow:0 15px 31px #000a;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-head {padding:4px 5px 12px;border-color:#435569}
+html body.cb-top-nav-enabled .cb-hub-watch-head strong {font:normal 21px Georgia,serif;color:#fff4e6}
+html body.cb-top-nav-enabled .cb-hub-watch-head small {color:#c7bb9e;font:normal 11px Georgia,serif;letter-spacing:0}
+html body.cb-top-nav-enabled .cb-hub-watch-row {
+  grid-template-columns:93px minmax(0,1fr);
+  gap:11px;min-height:83px;margin-top:8px;padding:5px;
+  border-color:#334c62;
+  background:linear-gradient(130deg,#1a2a3d,#101d2d)!important;
+  border-radius:4px;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row:hover{border-color:#a8bcd0;background:#203a52!important}
+html body.cb-top-nav-enabled .cb-hub-watch-art {min-height:72px;font-size:0;color:transparent}
+html body.cb-top-nav-enabled .cb-hub-watch-art.mission {
+  background-image:url('./assets/dungeons/ashen-vault.webp');
+}
+html body.cb-top-nav-enabled .cb-hub-watch-art.quest {
+  background-image:url('./assets/comics/tutorial-2026/arcane-trail.webp');
+}
+html body.cb-top-nav-enabled .cb-hub-watch-art.event {
+  background-image:url('./assets/world/twelve-below-key-art.webp');
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row b {color:#faf0e7;font:normal 16px/1.2 Georgia,serif}
+html body.cb-top-nav-enabled .cb-hub-watch-row span:not(.cb-hub-watch-art){
+  color:#dfbb7a;font-size:10px;letter-spacing:.06em;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row small {color:#b7c8d2;font-size:10px}
+
+/* Rows of premium blue cards, not parchment white. */
+html body.cb-top-nav-enabled #overview .home-command {gap:17px}
+html body.cb-top-nav-enabled #overview .home-command-grid{
+  display:grid;grid-template-columns:minmax(0,1.13fr) minmax(0,1.03fr) minmax(0,.95fr);gap:12px;
+}
+html body.cb-top-nav-enabled #overview :is(.panel,.cb-hub-actions){
+  color:#dbe5ed!important;
+  background:linear-gradient(180deg,#162635,#101e2d)!important;
+  border:1px solid #3c5063!important;
+  border-radius:5px;
+  box-shadow:0 9px 22px #0005!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head {
+  min-height:51px;
+  background:linear-gradient(90deg,#182b3b,#152637)!important;
+  border-bottom:1px solid #3d5061!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head h3 {
+  color:#f4eee6!important;font:normal clamp(17px,1.3vw,22px) Georgia,serif!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head small {color:#dec080!important}
+html body.cb-top-nav-enabled #overview .panel-head .panel-head-note {color:#adbac7!important}
+html body.cb-top-nav-enabled #overview .home-panel-action {
+  color:#9bc8f4!important;border:0!important;background:transparent!important;
+  font-size:11px!important;
+}
+html body.cb-top-nav-enabled #overview .home-panel-action:hover {color:#f5d58d!important}
+html body.cb-top-nav-enabled #overview .home-party-roster {
+  display:flex;align-items:stretch;gap:6px;padding:12px 10px;
+  background:transparent;
+}
+html body.cb-top-nav-enabled #overview .home-party-member {
+  min-width:0;min-height:178px;flex:1 1 0;padding:9px 4px 10px;
+  border:1px solid #3b5365!important;
+  border-top:2px solid color-mix(in srgb,var(--party-class) 70%,#c5c8d0)!important;
+  background:linear-gradient(170deg,#2a4151,#122333)!important;
+  border-radius:5px;
+  box-shadow:0 3px 11px #0005!important;
+}
+html body.cb-top-nav-enabled #overview .home-party-member:after{opacity:.75}
+html body.cb-top-nav-enabled #overview .home-party-portrait {
+  width:clamp(47px,4.6vw,76px);height:clamp(47px,4.6vw,76px);
+  background:#102031;border-radius:5px;
+  box-shadow:0 5px 15px #0008!important;
+}
+html body.cb-top-nav-enabled #overview .home-party-copy b{color:#fff0e0!important}
+html body.cb-top-nav-enabled #overview .home-party-copy small{color:#becbd7!important}
+html body.cb-top-nav-enabled #overview .home-party-copy span{color:#a6c0cd!important}
+html body.cb-top-nav-enabled #overview .home-party-member>em{color:#86d4af}
+html body.cb-top-nav-enabled #overview .home-party-member.recovering>em{color:#e4a592}
+html body.cb-top-nav-enabled #overview .home-party-empty{background:#17283a;color:#e9edf0}
+html body.cb-top-nav-enabled #overview .home-party-empty :is(b,span){color:#d7e2e9}
+html body.cb-top-nav-enabled #overview .home-objective {
+  display:flex;min-height:59px;max-height:none;align-items:stretch;
+  justify-content:flex-start;gap:4px;margin:0;padding:10px 14px!important;
+  background:#132538!important;border-bottom:1px solid #364d60;
+}
+html body.cb-top-nav-enabled #overview .home-objective>span {color:#d8bb83}
+html body.cb-top-nav-enabled #overview .home-objective>b{
+  margin:3px 0;color:#f4e8d6!important;font:normal 15px/1.32 Georgia,serif!important;
+}
+html body.cb-top-nav-enabled #overview .home-objective button {
+  align-self:flex-start;min-height:25px!important;margin:1px 0 0!important;
+  padding:3px 8px!important;color:#a0c6e8!important;border-color:#41647e!important;
+  background:#1e3448!important;font-size:10px;
+}
+.cb-v3-objectives {display:grid;gap:0}
+.cb-v3-objective {
+  display:grid;grid-template-columns:22px minmax(0,1fr) 13px;
+  align-items:center;gap:10px;min-height:56px;
+  width:100%;padding:9px 13px;
+  background:transparent;color:#e0e8ec;text-align:left;
+  border:0;border-bottom:1px solid #36485b;cursor:pointer;
+}
+.cb-v3-objective:hover{background:#223548}
+.cb-v3-task-icon{font-size:19px;color:#93b8d9}
+.cb-v3-task-content{min-width:0;display:block}
+.cb-v3-task-content b{display:block;color:#e6ecee;font:normal 12px Georgia,serif}
+.cb-v3-task-content small{display:block;margin-top:3px;color:#adbfcf;font-size:10px}
+.cb-v3-task-arrow{font-size:20px;color:#b2c4d1}
+.cb-v3-progress{display:block;max-width:200px;height:4px;overflow:hidden;margin-top:6px;background:#091522;border-radius:5px}
+.cb-v3-progress>i{display:block;height:100%;width:0;background:#64aef2;border-radius:5px;transition:width .2s}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:11px;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button{
+  min-height:86px;padding:9px 4px;gap:9px;
+  background:linear-gradient(140deg,#1b3044,#101f30)!important;
+  border:1px solid #49647b!important;border-radius:4px;
+  color:#f1eee9;font:normal 11px Georgia,serif;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:nth-child(3n + 1) {border-color:#587cb2!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:nth-child(3n + 2) {border-color:#806b58!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:nth-child(3n + 3) {border-color:#547c78!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button span{color:#9dc5fc;font-size:24px}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:hover{
+  border-color:#e6bf76!important;background:#273f55!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button[hidden],
+html body.cb-top-nav-enabled #overview .cb-v3-update[hidden]{display:none!important}
+
+/* Four image-led destinations, with progress badges driven by the real campaign. */
+html body.cb-top-nav-enabled #overview .cb-hub-heading h3{color:#f3ede4;font:normal clamp(21px,2vw,29px) Georgia,serif}
+html body.cb-top-nav-enabled #overview .cb-hub-heading p {color:#adbcc9;font-size:12px}
+html body.cb-top-nav-enabled #overview .cb-hub-heading>button{color:#91c8f2;font:normal 12px Georgia,serif}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-grid{gap:11px}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon {
+  min-height:164px;border:1px solid #51677b!important;border-radius:6px;
+  box-shadow:0 8px 19px #0006;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon:before{
+  background:linear-gradient(0deg,#070e19f0 0%,#0b1d31a8 40%,#1220360d 100%);
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-status{
+  border-color:#5c987d;background:#153b30df;color:#c9f1d7;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon[disabled] .cb-hub-dungeon-status{
+  border-color:#62707b;background:#1b2738df;color:#c2ccd6;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-content b{color:#f7ecdf;font:normal clamp(16px,1.3vw,21px) Georgia,serif}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-content small{color:#b8c7d7}
+
+/* The update row is linked to actual beta notes and existing adventures. */
+.cb-v3-updates{min-width:0}
+.cb-v3-update-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.cb-v3-update{
+  position:relative;display:flex;min-width:0;min-height:184px;
+  overflow:hidden;align-items:stretch;
+  padding:0;border:1px solid #46596e;border-radius:6px;
+  background:#142333;text-align:left;
+  color:#eee8de;
+  box-shadow:0 6px 22px #0005;cursor:pointer;
+}
+.cb-v3-update-picture{
+  display:block;flex:0 0 39%;background-size:cover;background-position:center;
+  border-right:1px solid #435769;
+}
+.cb-v3-update-beta .cb-v3-update-picture{background-image:url('./assets/comics/tutorial-2026/twilight-siege.webp')}
+.cb-v3-update-professions .cb-v3-update-picture{background-image:url('./assets/comics/tutorial-2026/arcane-armory.webp')}
+.cb-v3-update-manor .cb-v3-update-picture{background-image:url('./assets/manor/manor-raid-hero.webp')}
+.cb-v3-update-copy{
+  min-width:0;padding:14px 14px 12px;display:flex;flex-direction:column;align-items:flex-start;
+  background:linear-gradient(135deg,#243448,#101e2d);
+}
+.cb-v3-update-copy small{color:#e1bf7f;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.cb-v3-update-copy b{display:block;margin-top:7px;color:#fff0dc;font:normal clamp(16px,1.35vw,23px)/1.18 Georgia,serif}
+.cb-v3-update-copy em{display:block;margin-top:7px;color:#b8c7d3;font:normal 11px/1.4 system-ui,sans-serif}
+.cb-v3-news-link{margin-top:auto;padding-top:10px;font-size:11px;color:#99c8f3}
+.cb-v3-update:hover{border-color:#d8b77f;box-shadow:0 8px 25px #0008}
+.cb-v3-update:focus-visible{outline:2px solid #ffda98;outline-offset:3px}
+
+/* Leave combat itself dark, and unify normal game screens with premium navy. */
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+  background-color:#203c53;
+  border-color:#4b6377!important;
+  background-image:linear-gradient(90deg,rgba(8,22,36,.9),rgba(9,28,47,.65) 45%,rgba(12,31,47,.14)),
+    linear-gradient(0deg,rgba(8,22,39,.41),transparent),
+    var(--cb-place-art);
+  box-shadow:0 11px 27px #0006!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.panel,.tp-panel,.pvp-panel,.quest-journal-shell,.admin-card,.dungeon-episode,.dungeon-browser-card){
+  background-color:#162a3a!important;border-color:#44586b!important;
+  box-shadow:0 7px 20px #0005!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) .panel {
+  background-image:linear-gradient(160deg,#1b3143,#132434)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.panel-head,.tp-panel-head) h3{color:#f2eadd!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.ghost-btn,.filter,.home-panel-action){
+  color:#e1ebf3!important;background:#20364b!important;border-color:#506a7f!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.ghost-btn,.filter):hover:not(:disabled){
+  color:#ffe5bc!important;background:#2c465a!important;
+}
+html body.cb-top-nav-enabled #overview .home-continue-card {
+  border-color:#526478!important;box-shadow:0 8px 24px #0007!important;
+}
+html body.cb-top-nav-enabled #overview .home-continue-art:after{
+  background:linear-gradient(90deg,#0a1724ea 0%,#112538cc 39%,#10243745 79%,transparent)!important;
+}
+html body.cb-top-nav-enabled #overview .home-readiness-panel,
+html body.cb-top-nav-enabled #overview .home-progression-panel {background:#152838!important}
+html body.cb-top-nav-enabled #overview .home-readiness-score :is(small,span){color:#aec2ca}
+html body.cb-top-nav-enabled #overview .home-readiness-score strong{color:#e7e9e5}
+html body.cb-top-nav-enabled #overview .home-readiness-ring{
+  background:radial-gradient(circle at center,#102234 57%,transparent 58%),
+    conic-gradient(#c0a262 calc(var(--ready)*1%),#24374a 0);
+}
+html body.cb-top-nav-enabled #overview .home-readiness-ring b{color:#f3e8d2}
+html body.cb-top-nav-enabled #overview .home-role-check {background:#1b2c3d;border-color:#435668}
+html body.cb-top-nav-enabled #overview .home-role-check i{color:#afbeca}
+html body.cb-top-nav-enabled #overview .home-role-check b{color:#f0e5db}
+html body.cb-top-nav-enabled #overview .home-ready-list {background:#263d4c}
+html body.cb-top-nav-enabled #overview .home-ready-row{background:#192c3d}
+html body.cb-top-nav-enabled #overview .home-ready-row span{color:#bbc6ce}
+html body.cb-top-nav-enabled #overview .home-ready-row b{color:#e7e5de}
+html body.cb-top-nav-enabled #overview .home-readiness-action {
+  color:#ffe3ab;background:linear-gradient(#344150,#202d3d);border-color:#977c53;
+}
+html body.cb-top-nav-enabled #overview .home-progress-stage .node{color:#e6d7ba;background:#1e3343;border-color:#667883}
+html body.cb-top-nav-enabled #overview .home-progress-stage :is(small,b,em){color:#b4c5d0}
+html body.cb-top-nav-enabled #overview .home-progress-stage.current b{color:#f5e8d7}
+html body.cb-top-nav-enabled #overview .home-objective-panel{min-height:0}
+html body.cb-top-nav-enabled #overview .home-pulse-grid {background:#2c4050}
+html body.cb-top-nav-enabled #overview .home-pulse-grid button{background:#1a3040;color:#e8e7e0}
+html body.cb-top-nav-enabled #overview .home-pulse-grid button:hover{background:#264355}
+html body.cb-top-nav-enabled #overview .home-pulse-grid :is(b,small,span){color:#dce5ea}
+html body.cb-top-nav-enabled #overview .home-activity-panel .activity-entry :is(b,span){color:#d2e3eb}
+html body.cb-top-nav-enabled #overview .home-activity-empty{color:#bbcad2}
+
+/* iPad: a recognisable 3-panel overview on landscape, readable stacked layout on portrait. */
+@media(max-width:1300px){
+  html body.cb-top-nav-enabled #overview .home-command-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  html body.cb-top-nav-enabled #overview .cb-hub-actions{grid-column:1/-1}
+  html body.cb-top-nav-enabled #overview .cb-hub-action-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+@media(max-width:950px){
+  html body.cb-top-nav-enabled #overview .home-command-grid{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled #overview .cb-hub-actions{grid-column:auto}
+  html body.cb-top-nav-enabled #overview .cb-hub-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  html body.cb-top-nav-enabled .cb-hub-watch{max-width:none;justify-self:stretch}
+  html body.cb-top-nav-enabled .cb-hub-watch-row{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled .cb-hub-watch-art{display:none}
+  .cb-v3-update-grid{grid-template-columns:1fr 1fr}
+  .cb-v3-update:last-child{grid-column:1/-1}
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled .cb-hub-hero{background-position:62% center}
+  html body.cb-top-nav-enabled #overview .home-party-roster{overflow-x:auto;scroll-snap-type:x proximity}
+  html body.cb-top-nav-enabled #overview .home-party-member{flex:0 0 132px;scroll-snap-align:start}
+  html body.cb-top-nav-enabled .cb-hub-watch-row{grid-template-columns:72px minmax(0,1fr)}
+  html body.cb-top-nav-enabled .cb-hub-watch-art{display:block;min-height:57px}
+  .cb-v3-update-grid{grid-template-columns:1fr}
+  .cb-v3-update:last-child{grid-column:auto}
+  .cb-v3-update{min-height:145px}
+  .cb-v3-update-picture{flex-basis:36%}
+  html body.cb-top-nav-enabled #overview .cb-hub-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+
+/* ======================================================================
+   CELLBOUND UNIFIED PREMIUM THEME V4
+   App-wide game chrome: navy, warm ivory, gold and bright key art.
+   Scoped to page surfaces. Combat arenas / editors / tutorials keep their
+   dedicated mechanics, health cues, rarity colours and focus behaviour.
+   ====================================================================== */
+html body.cb-top-nav-enabled{
+  --cb-uni-bg:#0b1928;
+  --cb-uni-navy:#122537;
+  --cb-uni-panel:#182b3e;
+  --cb-uni-card:#1c3044;
+  --cb-uni-hover:#26425a;
+  --cb-uni-line:#455c72;
+  --cb-uni-line-soft:#344a5d;
+  --cb-uni-ivory:#f6ebda;
+  --cb-uni-text:#d7e0e9;
+  --cb-uni-muted:#adbfcf;
+  --cb-uni-gold:#e2bb74;
+  --cb-uni-sky:#a1cdf1;
+  --cb-uni-positive:#8fdeb6;
+  --cb-uni-shadow:0 12px 28px rgba(1,9,19,.28);
+  color:var(--cb-uni-text);
+}
+/* Give each main destination a different piece of Cellbound's real art. */
+html body.cb-top-nav-enabled #roster,
+html body.cb-top-nav-enabled #party{--cb-place-art:url('./assets/comics/tutorial-2026/sunset-briefing.webp')}
+html body.cb-top-nav-enabled #bank{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-armory.webp')}
+html body.cb-top-nav-enabled #professions{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-relic.webp')}
+html body.cb-top-nav-enabled #trading{--cb-place-art:url('./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp')}
+html body.cb-top-nav-enabled #quests{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-trail.webp')}
+html body.cb-top-nav-enabled #content{--cb-place-art:url('./assets/dungeons/ashen-vault.webp')}
+html body.cb-top-nav-enabled #world{--cb-place-art:url('./assets/world/twelve-below-key-art.webp')}
+html body.cb-top-nav-enabled #chat{--cb-place-art:url('./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp')}
+html body.cb-top-nav-enabled #pvp{--cb-place-art:url('./assets/pvp/maps/arena-shattered-crucible.svg')}
+html body.cb-top-nav-enabled #admin{--cb-place-art:url('./assets/comics/tutorial-2026/arcane-armory.webp')}
+html body.cb-top-nav-enabled #highscores{--cb-place-art:url('./assets/comics/tutorial-2026/wardstone-twilight.webp')}
+html body.cb-top-nav-enabled #support{--cb-place-art:url('./assets/comics/tutorial-2026/sunset-briefing.webp')}
+/* All non-home section intros use this layout and preserve their original copy/actions. */
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:clamp(178px,17vw,244px);
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  border:1px solid #6a8396!important;border-radius:6px;
+  background-color:#23415b;
+  background-image:linear-gradient(90deg,rgba(9,26,41,.95),rgba(14,34,51,.82) 42%,rgba(14,34,51,.12) 100%),var(--cb-place-art)!important;
+  background-size:cover,cover!important;
+  background-position:center,center 45%!important;
+  box-shadow:var(--cb-uni-shadow)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro:after{
+  content:"";position:absolute;inset:auto 0 0;height:3px;
+  background:linear-gradient(90deg,#eac784 0%,rgba(234,199,132,.45) 40%,transparent);
+  pointer-events:none;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro :is(h2,p,small){
+  text-shadow:0 2px 9px rgba(1,9,18,.65);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro small{
+  font-size:clamp(10px,.84vw,12px)!important;letter-spacing:.16em;color:#f4cf91!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro h2{
+  font:normal clamp(29px,3.1vw,48px)/1.06 Georgia,serif!important;
+  color:#fff0d7!important;margin:7px 0;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro p{
+  color:#e2e7e8!important;font-size:clamp(12px,1.05vw,15px)!important;line-height:1.5;
+}
+/* Common panels and secondary card surfaces. No gameplay canvas or modal overrides. */
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.admin-card,.tp-panel,.pvp-panel,.beta-panel,.dungeon-episode,
+      .dungeon-browser-card,.dungeon-detail-panel,.dungeon-episode-empty,
+      .quest-journal-nav,.quest-journal-detail,.quest-journal-side,.roster-character-card,
+      .bank-card-v2,.mr-card,.mr-party-panel,.report-card){
+  border-color:var(--cb-uni-line)!important;
+  border-radius:6px;
+  box-shadow:var(--cb-uni-shadow)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.admin-card,.tp-panel,.pvp-panel,.beta-panel,.dungeon-episode,.dungeon-episode-empty,.quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+  background:linear-gradient(145deg,#1c3043,#112334)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header,.dungeon-browser-heading){
+  border-bottom-color:var(--cb-uni-line-soft)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) :is(h2,h3){
+  color:var(--cb-uni-ivory)!important;font-family:Georgia,serif;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) small{
+  color:var(--cb-uni-gold)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) .panel-head-note{color:var(--cb-uni-muted)}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.ui-search,.tp-search){
+  background:#102032!important;
+  border:1px solid #516e86!important;border-radius:4px;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.ui-search,.tp-search) input{
+  color:#f2f1e9!important;caret-color:#f4d28d;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ui-select,.tp-filters input,.tp-filters select,.tp-action-form input,.tp-action-form select,
+      .beta-form input,.beta-form select,.beta-form textarea,
+      .party-finder-form input,.party-finder-form select,.guild-name-form input){
+  border-color:#537088!important;background:#102134!important;color:#f0ece5!important;
+  border-radius:4px;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) input::placeholder,
+html body.cb-top-nav-enabled .main>.view:not(#overview) textarea::placeholder{color:#a6b8c6!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.roster-role-filters,.filters,.roster-filter-primary,.bank-filter-row,.tp-filters,.tp-market-bar){
+  min-width:0;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.filter,.roster-clear-filters,.bank-clear-filters,.tp-filter-actions button,
+      .tp-refresh,.admin-workspace-nav button,.ghost-btn){
+  color:#e5eaf1!important;background:#20364b!important;
+  border:1px solid #536b82!important;border-radius:4px;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,
+      .admin-workspace-nav button.active,.chat-tabs button.active,.quest-tabs button.active,
+      .pvp-tabs button.active){
+  color:#ffdfa4!important;
+  border-color:#bf9a5f!important;
+  background:linear-gradient(180deg,#3a3832,#242d38)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ghost-btn,.tp-refresh,.roster-clear-filters,.bank-clear-filters,
+      .tp-filter-actions button):hover:not(:disabled){
+  color:#ffe2a8!important;background:#314b5f!important;border-color:#d3b06d!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(button,summary,a):focus-visible{
+  outline:3px solid #f6d89a!important;outline-offset:2px!important;
+}
+/* Roster and bank: coherent status bars, card frames and visible controls. */
+html body.cb-top-nav-enabled #roster .roster-overview-strip,
+html body.cb-top-nav-enabled #bank .bank-overview-strip{
+  border:1px solid var(--cb-uni-line)!important;border-radius:6px;
+  background:#182c3e!important;box-shadow:var(--cb-uni-shadow);
+  overflow:hidden;
+}
+html body.cb-top-nav-enabled #roster .roster-overview-strip article,
+html body.cb-top-nav-enabled #bank .bank-overview-strip article{
+  background:linear-gradient(180deg,#1f3548,#152739)!important;
+  border-right:1px solid var(--cb-uni-line-soft);
+}
+html body.cb-top-nav-enabled :is(#roster .roster-overview-strip,#bank .bank-overview-strip) span{
+  color:var(--cb-uni-gold)!important;
+}
+html body.cb-top-nav-enabled :is(#roster .roster-overview-strip,#bank .bank-overview-strip) b{
+  color:#f4ebdc!important;
+}
+html body.cb-top-nav-enabled :is(#roster .roster-overview-strip,#bank .bank-overview-strip) small{
+  color:#b7c9d6!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card,
+html body.cb-top-nav-enabled #bank .bank-card-v2{
+  background:linear-gradient(145deg,#1b3044,#102235)!important;
+  border:1px solid var(--cb-uni-line)!important;border-radius:6px;
+  box-shadow:0 9px 21px #0005!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card:hover,
+html body.cb-top-nav-enabled #bank .bank-card-v2:hover{
+  background:linear-gradient(145deg,#28445b,#142a3e)!important;border-color:#bd9a60!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card.is-active{
+  border-color:#4aab91!important;box-shadow:inset 0 0 0 1px #4aab9160,0 9px 21px #0005!important;
+}
+html body.cb-top-nav-enabled #roster .roster-card-identity h3,
+html body.cb-top-nav-enabled #bank .bank-card-v2 .bank-copy h3{
+  color:#faf0df!important;
+}
+html body.cb-top-nav-enabled :is(#roster .roster-card-metrics,#bank .bank-card-foot){
+  border-color:#3d556b!important;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs{
+  border:1px solid var(--cb-uni-line)!important;background:#14283b!important;
+  border-radius:6px;overflow-x:auto;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs button{
+  background:#182d40!important;color:#c9d9e2!important;border-color:#324a5f!important;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs button.active{
+  color:#ffdda0!important;background:#373a35!important;border-bottom-color:#e9bf71!important;
+}
+/* Party formation and the next-run route share the same blue steel look. */
+html body.cb-top-nav-enabled #party :is(.party-slot,.party-dungeon-cta,.readiness,.party-roster button){
+  border-color:#445b70!important;background-color:#172b3c!important;
+}
+html body.cb-top-nav-enabled #party :is(.party-dungeon-cta,.readiness) :is(b,span,h3){color:#e9e5dd}
+html body.cb-top-nav-enabled #party .readiness-bar{background:#0d1d2f}
+html body.cb-top-nav-enabled #party .readiness-bar i{background:linear-gradient(90deg,#5aa5dd,#c7ac73)}
+/* Quest journal: readable tabs, active quest cues and artwork remain untouched. */
+html body.cb-top-nav-enabled #quests .quest-journal-shell{
+  gap:12px;background:transparent!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-tabs,.quest-journal-list){
+  background:#102235!important;border-color:#354e64!important;
+}
+html body.cb-top-nav-enabled #quests .quest-tabs button{color:#aebfcf;background:#182c3f}
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-chain-card,.quest-v2-list-card,
+      .quest-objective-card,.quest-requirement,.quest-item){
+  background:#192d40!important;border-color:#42586d!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-list-item.selected,.quest-list-item:hover,.quest-v2-list-card.selected){
+  border-color:#caaa72!important;background:#273a4d!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card) b{color:#ece6d9!important}
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card) :is(small,em){
+  color:#acbfcb!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-detail-hero,.quest-v2-hero,.quest-v3-hero){
+  background-color:#1c3348!important;border-color:#516c7e!important;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-objective-card,.quest-current-step) :is(h3,b){
+  color:#f2e7d7!important;
+}
+/* Dungeon journal and activity choices: fantasy illustration first. */
+html body.cb-top-nav-enabled #content .dungeon-episode-summary{
+  background:linear-gradient(90deg,#21394b,#16283a)!important;border-color:#4b6173!important;
+}
+html body.cb-top-nav-enabled #content .dungeon-episode-summary :is(h3,b){
+  color:#f7e8d1!important;
+}
+html body.cb-top-nav-enabled #content .dungeon-episode-summary p{color:#b7c7d1!important}
+html body.cb-top-nav-enabled #content .dungeon-browser-card{
+  background:#1a2b3d!important;border-color:#465f76!important;
+}
+html body.cb-top-nav-enabled #content .dungeon-browser-card :is(h3,b){color:#f2e7d6!important}
+html body.cb-top-nav-enabled #content .dungeon-browser-card:hover{border-color:#d3b06e!important}
+html body.cb-top-nav-enabled #content .dungeon-browser-copy p{color:#b8c9d7!important}
+html body.cb-top-nav-enabled #world :is(.tb-world-card,.world-boss-card,.null-entry-card){
+  border-color:#475e74!important;background-color:#192d40!important;
+}
+/* Workshop: artisan selection, crafting recipes, reagents and progress. */
+html body.cb-top-nav-enabled #professions :is(.profession-char,.profession-slot-card,.reagent-card,
+      .recipe-card,.craft-project,.profession-recipe-card){
+  background:#1a2f42!important;border-color:#445c71!important;
+  border-radius:5px;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-char.active,.profession-slot-card.active,
+      .recipe-card.selected,.profession-recipe-card.selected){
+  background:#2a3b46!important;border-color:#c5a56b!important;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-char,.recipe-card,.reagent-card) :is(b,strong,h4){
+  color:#f1e8db!important;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-char,.recipe-card,.reagent-card) small{
+  color:#afc5d1;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-recipe-filters button,.recipe-filter){
+  background:#1c3246;color:#cedde5;border-color:#445e74;
+}
+html body.cb-top-nav-enabled #professions .profession-recipe-filters button.active{
+  background:#383731;color:#f6d79b;border-color:#b99a66;
+}
+/* Market: matching tabs, listings, inspector and search. */
+html body.cb-top-nav-enabled #trading :is(.tp-market-bar,.tp-delivery,.tp-tabs,.tp-market-stats>div){
+  background:#172b3e!important;border:1px solid #455f77!important;border-radius:5px;
+}
+html body.cb-top-nav-enabled #trading .tp-tabs button{color:#bdcbd6!important}
+html body.cb-top-nav-enabled #trading :is(.tp-category-list button,.tp-result-card,.tp-watch-card,
+      .tp-saved-item button,.tp-quote-grid>div){
+  background:#1b3043!important;border-color:#435d71!important;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-category-list button.active,.tp-result-card:hover,
+      .tp-result-card.selected,.tp-category-list button:hover){
+  background:#2b4353!important;border-color:#bb985e!important;color:#f4e6cd!important;
+}
+html body.cb-top-nav-enabled #trading .tp-panel-head h3{color:#f4e9dc!important}
+html body.cb-top-nav-enabled #trading .tp-result-copy :is(h3,b),
+html body.cb-top-nav-enabled #trading .tp-inspector-hero h3{color:#f6eadb!important}
+/* Social channels, guild identity and group finder. */
+html body.cb-top-nav-enabled #chat :is(.chat-tabs,.chat-form,.chat-messages,.guild-name-locked,
+      .party-finder-listings,.pf-card){
+  border-color:#435b70!important;background-color:#172c40!important;
+}
+html body.cb-top-nav-enabled #chat .chat-tabs button{color:#adbfce;background:#172b3e}
+html body.cb-top-nav-enabled #chat .chat-tabs button.active{color:#f3d296!important;background:#343a3d!important}
+html body.cb-top-nav-enabled #chat .chat-form input{color:#e9edf1!important;background:#112437}
+html body.cb-top-nav-enabled #chat :is(.guild-name-locked b,.pf-card h4){color:#f5e7d5!important}
+/* PvP framing only. The actual Combat Reborn battleground stays independent. */
+html body.cb-top-nav-enabled #pvp .pvp-hero{
+  background:linear-gradient(90deg,rgba(11,27,43,.90),rgba(15,34,51,.46)),
+    url('./assets/pvp/maps/arena-shattered-crucible.svg') center/cover!important;
+  border:1px solid #526f86;border-radius:6px;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-tabs,.pvp-mode-grid button,.pvp-size-grid button,
+      .pvp-rank-card,.pvp-rule-card,.pvp-unlock-grid>div){
+  background:#1b3044!important;border-color:#455e73!important;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-mode-grid button.active,.pvp-size-grid button.active){
+  background:#384048!important;border-color:#dbaf69!important;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-mode-grid button,.pvp-size-grid button) b{
+  color:#f5e9db!important;
+}
+/* Raid and endgame base screens; do not override room artwork/encounters. */
+html body.cb-top-nav-enabled #raids :is(.mr-card,.mr-party-panel,.mr-locked,.mr-list article){
+  background-color:#162b3d!important;border-color:#4e6479!important;
+}
+html body.cb-top-nav-enabled #raids .mr-hero{border-color:#607287!important}
+html body.cb-top-nav-enabled #endgame :is(.endgame-panel,.eg-card,.endgame-run-history,.report-card){
+  background-color:#162b3f!important;border-color:#405a70!important;
+}
+/* High scores and beta support follow the same framing. */
+html body.cb-top-nav-enabled #support :is(.beta-panel,.beta-ticket,.beta-note){
+  background-color:#1a3043!important;border-color:#435e74!important;
+}
+html body.cb-top-nav-enabled #support :is(.beta-panel-head h3,.beta-ticket b,.beta-note b){
+  color:#f6e7d6!important;
+}
+html body.cb-top-nav-enabled #highscores .hs-board{--hs-edge:#486077;--hs-gold:#edc27e}
+html body.cb-top-nav-enabled #highscores .hs-masthead{
+  background:linear-gradient(90deg,rgba(12,32,48,.9),rgba(16,40,58,.53)),
+  url('./assets/comics/tutorial-2026/wardstone-twilight.webp') center/cover!important;
+}
+/* Admin and Design Booth: retain all role gates and editor interactions. */
+html body.cb-top-nav-enabled #admin .admin-workspace-nav{
+  top:clamp(62px,calc(64px + 8px),74px);
+  border-color:#4e6576;background:rgba(17,33,48,.97)!important;
+  box-shadow:0 7px 17px #0005;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav button{
+  background:#182d40!important;color:#cbd9e1!important;border-color:#374e63!important;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav button.active{
+  color:#ffe1ad!important;background:#3b3b37!important;border-color:#bf9a5f!important;
+}
+html body.cb-top-nav-enabled #admin :is(.admin-status-grid div,.admin-market-top div,
+      .admin-workspace-meta>span){
+  border-color:#3e596f!important;background:#192e42!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell{
+  color:#e8eef1;background:#112437!important;border:1px solid #537086!important;
+  border-radius:8px;box-shadow:0 15px 38px #0007;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-master-head,.dbo-builder-top){
+  background:linear-gradient(115deg,#2c485e,#162d42)!important;border-color:#526b7b!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs{background:#10263b!important;border-color:#486075!important}
+html body.cb-top-nav-enabled #admin .dbo-tabs button{background:#193147!important;border-color:#374f65!important}
+html body.cb-top-nav-enabled #admin .dbo-tabs button.active{
+  color:#ffe5ba!important;background:#354554!important;border-bottom-color:#e2bc7b!important;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-projects,.dbo-project-editor){
+  background-color:#152c41!important;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-image-control,.dbo-comic-panel,.dbo-player-panel){
+  border-color:#4c697a!important;background-color:#1c3449!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell :is(input,select,textarea){
+  background:#102438!important;border-color:#536b83!important;color:#f6efe3!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell :is(input,select,textarea):focus-visible{
+  outline:2px solid #f2d18a!important;outline-offset:2px;
+}
+/* Supplemental 'More' menu shares the fixed navy navigation's visual hierarchy. */
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__panel{
+  background:#122639!important;border:1px solid #597285!important;
+  box-shadow:0 21px 45px #000a!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__head{
+  background:#1d354a!important;border-bottom:1px solid #4b6379!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button{
+  border-color:#445e73!important;background:#1b3246!important;color:#edf0e9!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button:hover{
+  border-color:#d6b77f!important;background:#2b4658!important;
+}
+/* Keyboard, iPad scroll, and small-screen spacing */
+html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.panel,.tp-panel,.dungeon-episode){
+  min-width:0;
+}
+html body.cb-top-nav-enabled .main>.view .ui-search input:focus-visible{
+  outline:2px solid #f5d591!important;outline-offset:-2px;
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+    min-height:158px;padding:20px 17px!important;gap:10px;
+    background-image:linear-gradient(90deg,rgba(9,26,41,.96),rgba(14,34,51,.61) 60%,rgba(14,34,51,.38)),var(--cb-place-art)!important;
+  }
+  html body.cb-top-nav-enabled #admin .admin-workspace-nav{top:60px}
+  html body.cb-top-nav-enabled #roster .roster-overview-strip,
+  html body.cb-top-nav-enabled #bank .bank-overview-strip{overflow-x:auto}
+}
+
+
+/* ======================================================================
+   CELLBOUND UI COMPLETION V5 — overlooked nested page surfaces
+   Keep encounter viewers, spell effects, minigames and rarity states intact.
+   ====================================================================== */
+html body.cb-top-nav-enabled {
+  --surface-1:#14283b;
+  --surface-2:#1b3146;
+  --surface-raised:#223a50;
+  --surface-outline:#4c6579;
+  --surface-text:#e9eef0;
+  --surface-soft:#b7c9d7;
+  --surface-highlight:#e3bd7e;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview){
+  color:var(--surface-text);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.roster-command-bar,.bank-command-bar,.bank-category-tabs,.tp-market-bar,.tp-delivery,
+      .chat-panel,.identity-panel,.party-finder-panel,.profession-roster-panel,.workshop-panel,
+      .pvp-hero,.mr-hero,.quest-journal-shell,.dungeon-episode,.admin-card){
+  border-radius:6px;border-color:var(--surface-outline)!important;
+  box-shadow:0 9px 25px rgba(0,6,16,.28);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.roster-filter-primary,.roster-filter-secondary,.bank-filter-row,
+      .tp-filters,.tp-market-stats,.pvp-grid,.profession-layout){
+  gap:clamp(7px,.85vw,13px);
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ui-select,.ui-search,.tp-filters select,.tp-filters input,
+      .tp-search,.tp-action-form input,.tp-action-form select){
+  min-height:40px;
+  box-shadow:inset 0 1px 1px #0005;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ui-select,.ui-search,.tp-filters select,.tp-filters input,
+      .tp-search,.tp-action-form input,.tp-action-form select):focus-within{
+  border-color:#e0bc77!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ui-select,.tp-filters select,.tp-action-form select){
+  color-scheme:dark;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.tp-panel,.admin-card,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head){
+  background:linear-gradient(90deg,#1c3549,#182c3e)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.tp-panel,.admin-card,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head) h3{
+  font-family:Georgia,serif;color:#f4e7d5!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.tp-panel,.admin-card,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head) small{
+  color:#dfbc82!important;
+}
+/* Roster: cards and class accents remain individual but their neutral text is consistent. */
+html body.cb-top-nav-enabled #roster :is(.roster-card-identity p,.roster-card-identity small,
+    .roster-card-metrics span,.roster-shock-line span){
+  color:#b9c9d4!important;
+}
+html body.cb-top-nav-enabled #roster .roster-card-metrics b{color:#f5e9dc}
+html body.cb-top-nav-enabled #roster .roster-filter-meta,
+html body.cb-top-nav-enabled #bank .bank-filter-meta{color:#a9bdc9}
+html body.cb-top-nav-enabled #roster .roster-filter-meta span,
+html body.cb-top-nav-enabled #bank .bank-filter-meta span{color:#eac88a}
+html body.cb-top-nav-enabled #roster .roster-card-actions button:not(:disabled),
+html body.cb-top-nav-enabled #bank .bank-card-action:not(:disabled){
+  border-color:#64809a;background:#243e53;color:#f2e8dc;
+}
+html body.cb-top-nav-enabled #roster .roster-card-actions button:hover:not(:disabled),
+html body.cb-top-nav-enabled #bank .bank-card-action:hover:not(:disabled){
+  border-color:#d7b87d;background:#304e63;color:#ffe5b4;
+}
+/* Bank / trading: item contrast without changing rarity indicators or prices. */
+html body.cb-top-nav-enabled #bank :is(.bank-card-v2 .bank-copy small,.bank-card-v2 .bank-card-foot){
+  color:#aec1d0;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-tabs,.tp-panel,.tp-inspector,.tp-market-stats>div){
+  box-shadow:0 8px 20px #0003;
+}
+html body.cb-top-nav-enabled #trading .tp-tabs{
+  padding:5px;background:#12273b!important;
+}
+html body.cb-top-nav-enabled #trading .tp-tabs button:not(.active):hover,
+html body.cb-top-nav-enabled #trading .tp-category-list button:not(.active):hover{
+  background:#2a4154!important;color:#f9e4c1!important;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-empty,.tp-inspector-empty,.tp-saved h4,
+    .tp-result-card p,.tp-market-stats span){color:#b2c3cf!important}
+html body.cb-top-nav-enabled #trading :is(.tp-market-stats b,.tp-quote-grid b){color:#efc984!important}
+/* Professions: workshop, recipe list and material vault read like one station. */
+html body.cb-top-nav-enabled #professions :is(.profession-character-list,.reagent-grid,
+    .profession-workshop,.profession-slot-grid){background:transparent}
+html body.cb-top-nav-enabled #professions :is(.profession-char,.recipe-card,.reagent-card,
+    .profession-slot-card){box-shadow:inset 0 1px #ffffff0b}
+html body.cb-top-nav-enabled #professions :is(.profession-char,.recipe-card,.reagent-card):hover{
+  background:#273e51!important;border-color:#698ca0!important;
+}
+html body.cb-top-nav-enabled #professions :is(.profession-char.active,.recipe-card.active,.profession-slot-card.active){
+  border-color:#e1bb7d!important;
+}
+/* Quests: journal copy should not fade to unreadable muddy brown. */
+html body.cb-top-nav-enabled #quests :is(.quest-detail-hero p,.quest-v2-hero p,
+    .quest-v3-hero p,.quest-stage-track small,.quest-requirement span,
+    .quest-objective-card p,.quest-journal-side p){
+  color:#b9cbd6!important;
+}
+html body.cb-top-nav-enabled #quests .quest-current-step{
+  background:#21354a;border-color:#4b647a;
+}
+html body.cb-top-nav-enabled #quests :is(.quest-detail-action>button,.quest-dialogue button,
+    .quest-unlock button):not(:disabled){
+  color:#f7e8d2;border-color:#a78958;background:#37404a;
+}
+/* Dungeon journal: readable access status and choice panels. */
+html body.cb-top-nav-enabled #content :is(.dungeon-browser-copy,.dungeon-journal-layout,
+    .dungeon-episode-grid){color:#dce6ed}
+html body.cb-top-nav-enabled #content :is(.dungeon-browser-meta,.dungeon-journal-art p){
+  color:#c6d5df;
+}
+html body.cb-top-nav-enabled #content .dungeon-detail-toolbar{
+  background:#1e3548;border-color:#4c6476;
+}
+html body.cb-top-nav-enabled #content .journal-entry-panel{
+  border-color:#4f6777;background:linear-gradient(150deg,#1e3548,#112337);
+}
+html body.cb-top-nav-enabled #content .journal-entry-panel :is(b,p,small){color:#e3e5df}
+/* Social: message region and composer, not the chat data itself. */
+html body.cb-top-nav-enabled #chat :is(.chat-panel,.social-side .panel){background:#162b40!important}
+html body.cb-top-nav-enabled #chat .chat-messages{background:#0f2234!important}
+html body.cb-top-nav-enabled #chat .chat-form{
+  background:#1c3144;border-top:1px solid #526b7f;
+}
+html body.cb-top-nav-enabled #chat .chat-form :is(input,button){
+  min-height:44px;
+}
+html body.cb-top-nav-enabled #chat :is(.social-empty,.pf-card p,.guild-name-form p){
+  color:#b9c9d5;
+}
+/* PvP menus, rank card and progression. Never touch live battleground viewport. */
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel,.pvp-rank-card,.pvp-rule-card){
+  border-color:#4c6679;background:linear-gradient(#21384c,#132638);
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel>header,.pvp-leader-head){border-color:#496277}
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel>header h3,.pvp-rank-card>b){
+  color:#ffebd4;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-rule-card>p,.pvp-rule-card>ul,
+    .pvp-mode-grid button>small){color:#bdd0dc}
+/* Admin toolbox: keep all editor controls and original permissions untouched. */
+html body.cb-top-nav-enabled #admin :is(.admin-shell,.dbo-editor-layout,
+    .dbo-project-editor,.dbo-projects){min-width:0}
+html body.cb-top-nav-enabled #admin :is(.dbo-project-list button,.dbo-stage-list button){
+  background:#1c3348;border-color:#476073;color:#e6edf0;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-project-list button.active,.dbo-stage-list button.active){
+  background:#364455;border-color:#d8b778;color:#fff0d6;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-field>span,.dbo-projects h4,.dbo-builder-top small){
+  color:#e0bf86!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell :is(.dbo-footer,.dbo-stage-actions,.dbo-builder-top){
+  border-color:#4c6376;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell :is(input,select,textarea)::placeholder{
+  color:#9db7c7;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell button:not(:disabled):focus-visible{
+  outline:3px solid #f0d391!important;outline-offset:2px;
+}
+/* All app-owned forms and section tabs should be usable by keyboard/touch. */
+html body.cb-top-nav-enabled .main>.view :is(button,summary,a,input,textarea,select){
+  -webkit-tap-highlight-color:rgba(226,187,116,.22);
+}
+html body.cb-top-nav-enabled .main>.view :is(input,textarea,select):focus-visible{
+  outline:2px solid #f5d591!important;outline-offset:1px;
+}
+html body.cb-top-nav-enabled .main>.view :is(button,summary):disabled{cursor:not-allowed}
+/* Full screen encounters and character creation intentionally have their own layout. */
+@media(max-width:950px){
+  html body.cb-top-nav-enabled #admin .dbo-editor-layout{grid-template-columns:1fr}
+  html body.cb-top-nav-enabled #trading .tp-shell{min-width:0}
+}
+@media(max-width:720px){
+  html body.cb-top-nav-enabled .main>.view:not(#overview) :is(.panel-head,.tp-panel-head){
+    gap:8px;flex-wrap:wrap;
+  }
+  html body.cb-top-nav-enabled #admin .dbo-master-head{flex-wrap:wrap}
+}
+
+
+
+
+/* =========================================================================
+   CELLBOUND ORIGINAL DARK FANTASY THEME V9
+   Restore the pre-Daybreak charcoal / old-bronze / mystic-teal colour
+   language. Preserve the V3 home arrangement and V4/V5 page UX/layout.
+   Excludes live combat canvases, rarity colours, status indicators.
+   ========================================================================= */
+html body.cb-top-nav-enabled {
+  --cb-uni-bg:#091218;
+  --cb-uni-navy:#0e1d24;
+  --cb-uni-panel:#111f25;
+  --cb-uni-card:#15262c;
+  --cb-uni-hover:#1d343b;
+  --cb-uni-line:rgba(127,163,158,.26);
+  --cb-uni-line-soft:rgba(127,163,158,.16);
+  --cb-uni-ivory:#eee8dc;
+  --cb-uni-text:#d2deda;
+  --cb-uni-muted:#96aaa6;
+  --cb-uni-gold:#bd9d6f;
+  --cb-uni-sky:#86c6c0;
+  --cb-uni-positive:#75d5a7;
+  --cb-uni-shadow:0 13px 28px #0007;
+  --cb-v3-navy:#0b151c;
+  --cb-v3-panel:#102027;
+  --cb-v3-panel-hi:#193038;
+  --cb-v3-edge:rgba(114,157,150,.3);
+  --cb-v3-cream:#f1e7d9;
+  --cb-v3-text:#d4e0dc;
+  --cb-v3-muted:#92aaa7;
+  --cb-v3-gold:#bd9d6f;
+  --cb-v3-blue:#82c1bc;
+  --surface-1:#101e24;
+  --surface-2:#14262c;
+  --surface-raised:#1d343a;
+  --surface-outline:#4a625e;
+  --surface-text:#dbe3df;
+  --surface-soft:#9daea9;
+  --surface-highlight:#bd9d6f;
+}
+html body.cb-top-nav-enabled .app-shell{
+  background:
+    radial-gradient(ellipse at 71% 5%,rgba(28,85,79,.13),transparent 46%),
+    linear-gradient(180deg,#0b161d,#091218 55%,#070e13)!important;
+}
+html body.cb-top-nav-enabled .app-shell>.main{background:none!important;color:#d4dfdc}
+html body.cb-top-nav-enabled .cb-global-header{
+  background:linear-gradient(180deg,#111d23,#090f15)!important;
+  border-bottom:1px solid rgba(171,143,99,.3)!important;
+  box-shadow:0 7px 22px #000b!important;
+}
+html body.cb-top-nav-enabled .cb-global-brand,
+html body.cb-top-nav-enabled .cb-global-links button{color:#e5e7e2}
+html body.cb-top-nav-enabled .cb-global-brand-mark{
+  color:#a4dcd1!important;border-color:#618d83!important;
+  background:radial-gradient(circle at 52% 32%,#24574f,#0a1d22 68%)!important;
+  box-shadow:inset 0 0 12px #57c6b728,0 0 11px #38bcb014!important;
+}
+html body.cb-top-nav-enabled .cb-global-links .cb-global-link-icon{color:#8aaca6!important}
+html body.cb-top-nav-enabled .cb-global-links button:is(.is-active,:hover){
+  color:#e7cf9e!important;
+  background:linear-gradient(180deg,rgba(123,94,53,.13),rgba(92,75,48,.16))!important;
+  border-bottom-color:#c5a36c!important;
+}
+html body.cb-top-nav-enabled .cb-global-links button.is-active .cb-global-link-icon{color:#e4ba81!important}
+html body.cb-top-nav-enabled :is(.cb-global-more,.cb-global-account>summary){
+  color:#e2e6e2!important;background:#17262b!important;
+  border:1px solid #4d6760!important;
+}
+html body.cb-top-nav-enabled .cb-global-account-panel{
+  background:linear-gradient(150deg,#17282d,#09161b)!important;
+  border-color:#5e7770!important;
+}
+html body.cb-top-nav-enabled .cb-global-resource-slot .resource-strip>div{
+  background:#0d1d22!important;border-color:#435952!important;
+}
+html body.cb-top-nav-enabled .cb-subnav{
+  background:rgba(10,20,24,.97)!important;
+  border-color:rgba(135,157,141,.24)!important;
+  box-shadow:0 7px 16px #0008!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button{
+  color:#bfd2ce!important;background:#16272b!important;border-color:#48635b!important;
+}
+html body.cb-top-nav-enabled .cb-subnav__links button[aria-current="page"]{
+  color:#f0d9af!important;background:#302b23!important;border-color:#a68a60!important;
+}
+/* Story artwork is atmospheric, not desaturated into a flat background. */
+html body.cb-top-nav-enabled .cb-hub-hero{
+  background-color:#11252b!important;
+  border-bottom-color:#a68c60!important;box-shadow:0 15px 35px #000a!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero:before{
+  background:
+    linear-gradient(90deg,rgba(5,13,16,.88) 0%,rgba(8,20,24,.66) 27%,rgba(9,24,29,.22) 61%,rgba(5,14,18,.75) 100%),
+    linear-gradient(0deg,rgba(6,13,17,.47),transparent 53%)!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-copy h2{color:#f2dfbe!important;text-shadow:0 5px 24px #000c}
+html body.cb-top-nav-enabled .cb-hub-eyebrow{color:#e6cfa5!important}
+html body.cb-top-nav-enabled .cb-hub-hero-copy p{color:#e0e9e3!important}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button:first-child,
+html body.cb-top-nav-enabled #overview .home-continue-actions button:first-child{
+  color:#171a17!important;border-color:#d3b47f!important;
+  background:linear-gradient(180deg,#e3c58b,#ad8450)!important;
+  box-shadow:0 5px 13px #0008!important;
+}
+html body.cb-top-nav-enabled .cb-hub-hero-actions button+button{
+  background:#101f23e8!important;color:#efe4d1!important;border-color:#778d83!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch{
+  background:rgba(7,16,21,.96)!important;border-color:#53695d!important;
+  box-shadow:0 14px 30px #000a!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-head{border-bottom-color:#384c42!important}
+html body.cb-top-nav-enabled .cb-hub-watch-head :is(strong,small){color:#f0e4d1}
+html body.cb-top-nav-enabled .cb-hub-watch-head small,
+html body.cb-top-nav-enabled .cb-hub-watch-row span:not(.cb-hub-watch-art){color:#c6a879!important}
+html body.cb-top-nav-enabled .cb-hub-watch-row{
+  background:linear-gradient(140deg,#14252c,#0b1920)!important;
+  border-color:#384e4a!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row:hover{
+  background:#1b3435!important;border-color:#8e9b78!important;
+}
+html body.cb-top-nav-enabled .cb-hub-watch-row b{color:#f2e9da!important}
+html body.cb-top-nav-enabled .cb-hub-watch-row small{color:#a9b8b0!important}
+html body.cb-top-nav-enabled .cb-hub-watch-art{background-color:transparent;background-blend-mode:normal}
+html body.cb-top-nav-enabled #overview :is(.panel,.cb-hub-actions),
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.admin-card,.tp-panel,.pvp-panel,.beta-panel,.dungeon-episode,
+      .dungeon-episode-empty,.quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+  color:#d8e0dc!important;
+  background:linear-gradient(160deg,#15262c,#0b181e)!important;
+  border-color:rgba(120,157,147,.29)!important;
+  box-shadow:0 10px 27px #0008!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel,.tp-panel,.beta-panel) :is(.panel-head,.tp-panel-head,.beta-panel-head){
+  background:linear-gradient(90deg,#182a2f,#101f25)!important;
+  border-color:#3a5149!important;
+}
+html body.cb-top-nav-enabled #overview .panel-head h3,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head) h3{color:#f0e9dd!important}
+html body.cb-top-nav-enabled #overview .panel-head small,
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.panel-head,.tp-panel-head,.beta-panel-head) small{color:#ceb486!important}
+html body.cb-top-nav-enabled #overview .home-panel-action,
+html body.cb-top-nav-enabled #overview .cb-hub-heading>button{color:#9ed5c6!important}
+html body.cb-top-nav-enabled #overview .home-party-member{
+  background:linear-gradient(#1b3034,#101e24)!important;
+  border-color:#48655c!important;box-shadow:0 4px 15px #0007!important;
+}
+html body.cb-top-nav-enabled #overview .home-party-portrait{background:#0b1b1d!important}
+html body.cb-top-nav-enabled #overview .home-party-copy :is(b,span,small){color:#d6e0dc!important}
+html body.cb-top-nav-enabled #overview .home-objective{background:#0d2024!important;border-color:#314941!important}
+html body.cb-top-nav-enabled #overview .cb-v3-objective{border-color:#344c45!important;color:#d4e1dc!important}
+html body.cb-top-nav-enabled #overview .cb-v3-objective:hover{background:#1a3333!important}
+html body.cb-top-nav-enabled #overview .cb-v3-task-icon{color:#93c3b4!important}
+html body.cb-top-nav-enabled #overview .cb-v3-progress{background:#081719!important}
+html body.cb-top-nav-enabled #overview .cb-v3-progress>i{background:#54bfb1!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button{
+  background:linear-gradient(155deg,#182a30,#0d1e23)!important;
+  border-color:#4a665d!important;color:#e6e7e0!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button span{color:#9bcebc!important}
+html body.cb-top-nav-enabled #overview .cb-hub-action-grid button:hover{
+  background:#1d3938!important;border-color:#c0a477!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-heading h3{color:#f2e5d1!important}
+html body.cb-top-nav-enabled #overview .cb-hub-heading p{color:#98ada9!important}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon{
+  border-color:#586e65!important;background-color:#142521!important;
+  box-shadow:0 8px 22px #0008!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon:before{
+  background:linear-gradient(0deg,#060b0df2 0%,#111e20bd 45%,#0e1d1b29 100%)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-hub-dungeon-status{
+  background:#192f2acc!important;border-color:#bfa8787d!important;color:#e2cd9e!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-update{
+  color:#f0e6d9;background:#101e22!important;
+  border-color:#4b6259!important;box-shadow:0 9px 23px #0008!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy{
+  background:linear-gradient(155deg,#1a2c2f,#0c181d)!important;
+}
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy b{color:#f1e8d8!important}
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy small{color:#c6a979!important}
+html body.cb-top-nav-enabled #overview .cb-v3-update-copy em{color:#a4b6ae!important}
+html body.cb-top-nav-enabled #overview .cb-v3-news-link{color:#a0d6ca!important}
+html body.cb-top-nav-enabled #overview .cb-v3-update:hover{border-color:#bba178!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro{
+  background-color:#152b2e!important;
+  background-image:linear-gradient(90deg,rgba(5,12,15,.96),rgba(8,19,23,.82) 42%,
+    rgba(11,27,27,.27) 100%),var(--cb-place-art)!important;
+  border-color:#77694c!important;
+  box-shadow:0 14px 35px #0009!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro:after{
+  background:linear-gradient(90deg,#af9466,#af94664c 43%,transparent)!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro h2{color:#f2e8d7!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro small{color:#c7ac7d!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)>.section-intro p{color:#c2ceca!important}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,
+      .tp-filter-actions button,.admin-workspace-nav button){
+  background:#172a2e!important;color:#d3dfd9!important;border-color:#4a6c62!important;
+}
+html body.cb-top-nav-enabled .main>.view:not(#overview)
+  :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,
+      .admin-workspace-nav button.active,.chat-tabs button.active,.quest-tabs button.active,.pvp-tabs button.active){
+  color:#e8d4af!important;background:#302b25!important;border-color:#b49765!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card,
+html body.cb-top-nav-enabled #bank .bank-card-v2,
+html body.cb-top-nav-enabled #trading :is(.tp-result-card,.tp-category-list button,.tp-watch-card),
+html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card,.profession-slot-card),
+html body.cb-top-nav-enabled #quests :is(.quest-list-item,.quest-v2-list-card,.quest-objective-card){
+  background:#12242b!important;border-color:#3f5e54!important;
+  box-shadow:0 7px 20px #0007!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card:hover,
+html body.cb-top-nav-enabled #bank .bank-card-v2:hover,
+html body.cb-top-nav-enabled #trading .tp-result-card:hover,
+html body.cb-top-nav-enabled #professions :is(.recipe-card,.reagent-card):hover{
+  background:#1c3535!important;border-color:#ac946b!important;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-market-bar,.tp-delivery,.tp-tabs,.tp-market-stats>div),
+html body.cb-top-nav-enabled #chat :is(.chat-tabs,.chat-form,.chat-messages,.party-finder-listings){
+  background-color:#0f2228!important;border-color:#3c5c52!important;
+}
+html body.cb-top-nav-enabled #pvp :is(.pvp-panel,.pvp-rank-card,.pvp-rule-card),
+html body.cb-top-nav-enabled #support :is(.beta-panel,.beta-ticket,.beta-note),
+html body.cb-top-nav-enabled #admin .dbo-shell{
+  background-color:#102329!important;border-color:#415c54!important;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-master-head,.dbo-builder-top){
+  background:linear-gradient(110deg,#1b3332,#102322)!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs button.active{
+  color:#e5cfaa!important;background:#332f26!important;border-color:#a99168!important;
+}
+html body.cb-top-nav-enabled .main>.view :is(button,summary,a,input,textarea,select):focus-visible{
+  outline:2px solid #e9cf92!important;outline-offset:2px!important;
+}
+/* Deliberately no font, size, position, z-index, visibility or navigation rules. */
+
+
+/* ========================================================================
+   CELLBOUND COMPLETE DARK FANTASY SKIN V10
+   Every game-facing chrome surface shares the original charcoal/teal/bronze
+   theme; gameplay visuals, rarity classes, ability/status state are excluded.
+   This is a visual layer only; no sizing, positioning, or routing changes.
+   ======================================================================== */
+html body.cb-top-nav-enabled{
+  --cb-fantasy-black:#081318;
+  --cb-fantasy-panel:#101f25;
+  --cb-fantasy-surface:#182b2e;
+  --cb-fantasy-highlight:#203638;
+  --cb-fantasy-border:rgba(128,161,149,.28);
+  --cb-fantasy-border-soft:rgba(128,161,149,.16);
+  --cb-fantasy-ivory:#f0e8db;
+  --cb-fantasy-muted:#a3b6af;
+  --cb-fantasy-teal:#96ccbd;
+  --cb-fantasy-bronze:#c6a572;
+  --cb-fantasy-shadow:0 12px 30px rgba(0,0,0,.42);
+  accent-color:#81b9a8;
+}
+/* Shared page chrome: the same depth and warmth throughout the Guild Hall. */
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel,.tp-panel,.pvp-panel,.beta-panel,.admin-card,.dungeon-episode,
+      .dungeon-detail-panel,.dungeon-browser-card,.mr-card,.mr-party-panel,
+      .eg-dungeon-card,.eg-weekly,.eg-leaderboards,.world-boss-card,
+      .null-card,.profession-roster-panel,.profession-workshop,
+      .quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+  border-color:var(--cb-fantasy-border)!important;
+  background-color:var(--cb-fantasy-panel)!important;
+  box-shadow:var(--cb-fantasy-shadow)!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel,.tp-panel,.pvp-panel,.beta-panel,.admin-card,.mr-card,.mr-party-panel,
+      .eg-dungeon-card,.eg-weekly,.eg-leaderboards,.profession-roster-panel,
+      .profession-workshop,.quest-journal-nav,.quest-journal-detail,.quest-journal-side){
+  background-image:linear-gradient(155deg,#192a2e,#0a171d)!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.dungeon-browser-heading,.pvp-panel>header){
+  background-color:#142429!important;border-bottom-color:1px solid var(--cb-fantasy-border-soft)!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header)
+  :is(h2,h3){color:var(--cb-fantasy-ivory)!important}
+html body.cb-top-nav-enabled .main>.view
+  :is(.panel-head,.tp-panel-head,.beta-panel-head,.pvp-panel>header) small{
+  color:var(--cb-fantasy-bronze)!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,
+      .tp-filter-actions button,.bank-card-action,.roster-card-actions button){
+  background-color:#172b2d!important;color:#e3e9e4!important;
+  border-color:#4c7163!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.ghost-btn,.filter,.roster-clear-filters,.bank-clear-filters,.tp-refresh,
+      .tp-filter-actions button,.bank-card-action,.roster-card-actions button):hover:not(:disabled){
+  background-color:#24413e!important;border-color:#ad9774!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.ui-search,.ui-select,.tp-search,.tp-filters input,.tp-filters select,
+      .tp-action-form input,.tp-action-form select,.beta-form input,.beta-form select,
+      .beta-form textarea,.guild-name-form input,.party-finder-form select,
+      .party-finder-form input){
+  background-color:#0b1b21!important;color:#e6ede7!important;
+  border-color:#486c61!important;color-scheme:dark;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.ui-search,.ui-select,.tp-search,.tp-filters input,.tp-filters select,
+      .beta-form input,.beta-form select,.beta-form textarea):focus-within{
+  border-color:#bca578!important;
+}
+html body.cb-top-nav-enabled .main>.view
+  :is(.filter.active,.tp-tabs button.active,.bank-category-tabs button.active,
+      .quest-tabs button.active,.chat-tabs button.active,.pvp-tabs button.active){
+  background:#2f2a21!important;color:#e9d5ac!important;border-color:#aa905f!important;
+}
+/* Roster, active party and bank inventories. Portraits/rank status untouched. */
+html body.cb-top-nav-enabled #roster :is(.roster-overview-strip,.roster-command-bar),
+html body.cb-top-nav-enabled #bank :is(.bank-overview-strip,.bank-command-bar,.bank-category-tabs){
+  background-color:#111f25!important;border-color:var(--cb-fantasy-border)!important;
+}
+html body.cb-top-nav-enabled #roster .roster-overview-strip article,
+html body.cb-top-nav-enabled #bank .bank-overview-strip article{
+  background:linear-gradient(#192b2f,#102126)!important;
+  border-color:var(--cb-fantasy-border-soft)!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card,
+html body.cb-top-nav-enabled #bank .bank-card-v2{
+  background:linear-gradient(#192c2f,#0c1b21)!important;
+  border-color:#456058!important;box-shadow:0 9px 20px #0007!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card:hover,
+html body.cb-top-nav-enabled #bank .bank-card-v2:hover{
+  background:linear-gradient(#223a39,#10282b)!important;border-color:#b49c70!important;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs button{
+  background-color:#14272b!important;color:#c5d6cd!important;border-color:#3e5b52!important;
+}
+html body.cb-top-nav-enabled #bank .bank-category-tabs button.active{
+  background-color:#322d22!important;color:#e8d2a8!important;border-color:#ab9365!important;
+}
+html body.cb-top-nav-enabled #party :is(.party-slot,.party-choice,.party-dungeon-cta){
+  background-color:#112226!important;border-color:#3f6055!important;
+}
+html body.cb-top-nav-enabled #party :is(.party-slot,.party-choice):hover:not(:disabled){
+  background-color:#1c3433!important;
+}
+/* Quests, expedition board, world bosses and raid lobby chrome. */
+html body.cb-top-nav-enabled #quests
+  :is(.quest-tabs,.quest-journal-list,.quest-v2-list-card,.quest-list-item,
+      .quest-chain-card,.quest-objective-card,.quest-requirement,.quest-item,
+      .quest-stage-panel,.quest-current-step,.quest-v3-known,.quest-v3-clue){
+  background-color:#112329!important;border-color:#436057!important;
+}
+html body.cb-top-nav-enabled #quests
+  :is(.quest-v2-list-card.selected,.quest-list-item.selected,.quest-list-item:hover,
+      .quest-v2-list-card:hover,.quest-current-step){
+  background-color:#21352f!important;border-color:#a18a60!important;
+}
+html body.cb-top-nav-enabled #quests
+  :is(.quest-v2-hero,.quest-v3-hero,.quest-detail-hero){
+  border-color:#5c7360!important;
+}
+html body.cb-top-nav-enabled #content
+  :is(.dungeon-episode-summary,.dungeon-browser-card,.dungeon-detail-toolbar,
+      .journal-entry-panel,.dungeon-journal-layout){
+  background-color:#122429!important;border-color:#4a6256!important;
+}
+html body.cb-top-nav-enabled #content :is(.dungeon-episode-summary,.dungeon-detail-toolbar){
+  background-image:linear-gradient(110deg,#1b302e,#102026)!important;
+}
+html body.cb-top-nav-enabled #content .dungeon-browser-card:hover{
+  border-color:#b39b6c!important;
+}
+html body.cb-top-nav-enabled #world
+  :is(.world-boss-card,.tb-world-card,.null-entry-card,.world-actions){
+  background-color:#122427!important;border-color:#425d53!important;
+}
+html body.cb-top-nav-enabled #raids
+  :is(.mr-card,.mr-party-panel,.mr-locked,.mr-list article,.mr-group,.mr-finder){
+  background-color:#112328!important;border-color:#445c52!important;
+}
+html body.cb-top-nav-enabled #raids .mr-stage-tabs{
+  background-color:#13272b!important;border-color:#4a6253!important;
+}
+html body.cb-top-nav-enabled #endgame
+  :is(.eg-mode-tabs,.eg-tier-picker,.eg-tier-strip button,.eg-dungeon-card,
+      .eg-leaderboards,.eg-leader-list>div,.eg-achievement-grid>div,
+      .eg-collection-list>div,.eg-prep-tabs){
+  background-color:#14272b!important;border-color:#496357!important;
+}
+html body.cb-top-nav-enabled #endgame
+  :is(.eg-mode-tabs button.active,.eg-tier-strip button.active,.eg-prep-tabs button.active){
+  background-color:#332b23!important;border-color:#b49668!important;color:#e6d2ad!important;
+}
+/* Professions: give the workshop and recipe selection original slate-metal framing.
+   Never override heat/timing tracks or gameplay reward indicators. */
+html body.cb-top-nav-enabled #professions
+  :is(.profession-command-hero,.profession-command-stats,.profession-char,.profession-slot-card,
+      .profession-choice,.profession-recipe-card,.recipe-card,.reagent-card,
+      .recipe-history,.profession-recipe-filters,.profession-result-message){
+  background-color:#13262b!important;border-color:#456157!important;
+}
+html body.cb-top-nav-enabled #professions
+  :is(.profession-char.active,.profession-slot-card.active,.profession-choice.active,
+      .recipe-card.selected,.profession-recipe-card.selected){
+  background-color:#2a3028!important;border-color:#a88f60!important;
+}
+html body.cb-top-nav-enabled #professions
+  :is(.profession-recipe-filters button,.recipe-filter){
+  background:#172c2b!important;color:#d2e0d8!important;border-color:#486b5c!important;
+}
+html body.cb-top-nav-enabled #professions
+  :is(.profession-recipe-filters button.active,.recipe-filter.active){
+  background:#342c23!important;color:#e8d1a4!important;border-color:#b79a69!important;
+}
+html body.cb-top-nav-enabled #professions .forge-workshop{
+  border-color:#576553!important;background-color:#0b1b20!important;
+}
+html body.cb-top-nav-enabled #professions
+  :is(.forge-challenge,.forge-challenge-head,.forge-stages,.forge-phase,.forge-job-summary){
+  background-color:#14242a!important;border-color:#526b5e!important;
+}
+/* Trading Post: browse, save, inspect, sell, watch and deliveries. */
+html body.cb-top-nav-enabled #trading
+  :is(.tp-shell,.tp-market-bar,.tp-tabs,.tp-delivery,.tp-market-stats>div,
+      .tp-category-list button,.tp-result-card,.tp-watch-card,.tp-saved-item button,
+      .tp-inspector,.tp-inspector-section,.tp-quote-grid>div,
+      .tp-sell-choice,.tp-sell-selected,.tp-history-row,.tp-my-row,.tp-order-row,
+      .tp-filter-actions,.tp-gear-compare){
+  background-color:#13252a!important;border-color:#426155!important;
+}
+html body.cb-top-nav-enabled #trading .tp-tabs button:not(.active){
+  color:#bfd1c7!important;background-color:#15282c!important;
+}
+html body.cb-top-nav-enabled #trading
+  :is(.tp-result-card:hover,.tp-result-card.selected,.tp-category-list button.active,
+      .tp-category-list button:hover,.tp-sell-choice:hover,.tp-sell-choice.selected){
+  background-color:#263930!important;border-color:#aa946a!important;
+}
+html body.cb-top-nav-enabled #trading
+  :is(.tp-inspector-hero,.tp-panel-head,.tp-market-bar){
+  background-image:linear-gradient(110deg,#1b302e,#0d1d24)!important;
+}
+html body.cb-top-nav-enabled #trading :is(.tp-panel-head h3,.tp-result-copy h3){
+  color:#f0e8db!important;
+}
+/* Social messaging, guild, group finder and public rankings. */
+html body.cb-top-nav-enabled #chat
+  :is(.chat-panel,.chat-tabs,.chat-messages,.chat-form,.guild-name-locked,
+      .party-finder-listings,.pf-card,.social-side .panel){
+  background-color:#101f25!important;border-color:#416156!important;
+}
+html body.cb-top-nav-enabled #chat .chat-tabs button:not(.active){
+  background:#15292a!important;color:#bbd0c5!important;
+}
+html body.cb-top-nav-enabled #chat .chat-form input{
+  background:#09171c!important;color:#e4eae3!important;border-color:#436459!important;
+}
+html body.cb-top-nav-enabled #highscores .hs-board{
+  --hs-ink:#111a1d;--hs-edge:rgba(187,153,98,.23);--hs-gold:#c5a674;
+}
+html body.cb-top-nav-enabled #support :is(.beta-panel,.beta-ticket,.beta-note,.beta-form){
+  background-color:#112128!important;border-color:#455e53!important;
+}
+/* PvP setup + shop/rank. The tactical battlefield itself is excluded. */
+html body.cb-top-nav-enabled #pvp
+  :is(.pvp-panel,.pvp-tabs,.pvp-rank-card,.pvp-mode-grid button,
+      .pvp-size-grid button,.pvp-rule-card,.pvp-equipped-grid>div,.pvp-shop-grid button,
+      .pvp-unlock-grid>div,.pvp-queue-summary,.pvp-party-mini>div,
+      .pvp-reward-card,.pvp-season-summary,.pvp-stat-strip){
+  background-color:#12262a!important;border-color:#435e53!important;
+}
+html body.cb-top-nav-enabled #pvp
+  :is(.pvp-tabs button.active,.pvp-mode-grid button.active,.pvp-size-grid button.active){
+  background-color:#352e24!important;border-color:#b29666!important;
+}
+html body.cb-top-nav-enabled #pvp .pvp-hero{
+  border-color:#786447!important;
+  background-image:linear-gradient(90deg,rgba(7,16,19,.9),rgba(11,24,26,.58)),
+    url('./assets/pvp/maps/arena-shattered-crucible.svg')!important;
+}
+/* Admin, Design Booth, Room/Comic/PvP editor chrome, publishing UI. */
+html body.cb-top-nav-enabled #admin :is(.admin-shell,.admin-card,.admin-status-grid>div,
+   .admin-market-top>div,.admin-workspace-meta>span,.admin-workspace-nav){
+  background-color:#102226!important;border-color:#40594e!important;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav{
+  background:rgba(10,22,25,.97)!important;box-shadow:0 8px 20px #0008!important;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav button{
+  background:#15282d!important;color:#cbdcd3!important;border-color:#405e54!important;
+}
+html body.cb-top-nav-enabled #admin .admin-workspace-nav button.active{
+  background:#352e24!important;border-color:#b89c6c!important;color:#efdbb8!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell{
+  color:#e5e9e2!important;background:#0c191e!important;border-color:#526759!important;
+}
+html body.cb-top-nav-enabled #admin :is(.dbo-master-head,.dbo-builder-top,.dbo-public-head,.dbo-stage-editor-header){
+  background:linear-gradient(110deg,#1a302f,#0d1c22)!important;
+  border-color:#3c594d!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs{
+  background:#101e23!important;border-color:#445e52!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs button{
+  background:#15292b!important;color:#ceddd4!important;border-color:#395347!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-tabs button.active{
+  background:#322b22!important;color:#e8d7ba!important;border-color:#b59a6d!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.dbo-projects,.dbo-project-editor,.dbo-project-list button,.dbo-stage-list button,
+      .dbo-image-control,.dbo-comic-panel,.dbo-player-panel,.dbo-template-library,
+      .dbo-public-grid>div,.dbo-review,.dbo-loot-overview,.dbo-loot-edit-panel,
+      .dbo-catalog,.dbo-library-shell,.dbo-library-panel,.dbo-quickstart,.dbo-tool-guide,
+      .dbo-drops-main,.dbo-drop-row){
+  background-color:#11242a!important;border-color:#3c5a4d!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.dbo-project-list button.active,.dbo-stage-list button.active,.dbo-more button.active){
+  background-color:#2c3027!important;border-color:#b29865!important;
+}
+html body.cb-top-nav-enabled #admin .dbo-shell
+  :is(input,textarea,select){
+  background:#0b1a20!important;color:#e5e9e2!important;border-color:#4a675c!important;
+  color-scheme:dark;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.dbo-master-head button,.dbo-builder-top button,.dbo-footer button,.dbo-stage-actions button,
+      .dbo-add button,.dbo-quick-actions button){
+  background:#19302d!important;color:#e7e9db!important;border-color:#537365!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.dbo-master-head button,.dbo-builder-top button,.dbo-footer button,.dbo-stage-actions button,
+      .dbo-add button,.dbo-quick-actions button):hover:not(:disabled){
+  background:#274338!important;border-color:#b39c70!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.rqe-shell,.rqe-toolbar,.rqe-room-nav,.rqe-inspector,.rqe-audit,.rqe-audit-item,
+      .rqe-art-upload,.cse-shell,.cse-panel,.cse-shell>header,.cse-filters,
+      .pme-shell,.pme-toolbar,.pme-stage-column,.pme-settings,.pme-create){
+  color:#dbe6de!important;background-color:#101f25!important;border-color:#426153!important;
+}
+html body.cb-top-nav-enabled #admin :is(.rqe-head,.cse-shell>header,.pme-head){
+  background:linear-gradient(100deg,#1b302c,#0a1a20)!important;
+  border-color:#4d6654!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.rqe-shell input,.rqe-shell select,.rqe-shell textarea,
+      .cse-shell input,.cse-shell select,.cse-shell textarea,
+      .pme-shell input,.pme-shell select,.pme-shell textarea){
+  background-color:#0b1a1f!important;color:#ebeee6!important;border-color:#4e6a5d!important;
+}
+html body.cb-top-nav-enabled #admin
+  :is(.rqe-head button,.rqe-toolbar button,.rqe-inspector button,.rqe-room-nav button,
+      .cse-actions button,.cse-controls button,.cse-right footer button,
+      .pme-shell button){
+  background-color:#1b322e!important;color:#e6ece1!important;border-color:#547466!important;
+}
+/* Portal dialogs: opened outside the .view tree must still match the game. */
+html body.cb-top-nav-enabled :is(.modal-card,.bank-modal,.modal-content,.modal-body,
+   .quest-puzzle,.quest-gear-card,.quest-complete-card,.quest-dialogue,
+   .quest-continuation-card,.cb-slot-drawer){
+  color:#e3e7df!important;
+  background-color:#101e23!important;border-color:#55664e!important;
+}
+html body.cb-top-nav-enabled :is(.modal-card,.bank-modal,.quest-puzzle,.quest-gear-card,
+   .quest-complete-card,.quest-dialogue,.quest-continuation-card,.cb-slot-drawer){
+  box-shadow:0 18px 55px #000c!important;
+}
+html body.cb-top-nav-enabled :is(.bank-modal,.modal-card,.quest-gear-card,
+   .quest-continuation-card,.cb-slot-drawer) :is(input,select,textarea){
+  background:#0a181e!important;border-color:#4c6a60!important;color:#e9ede6!important;
+}
+html body.cb-top-nav-enabled #characterModal .character-modal{
+  background:linear-gradient(#182528,#0a151c)!important;border-color:#786743!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-sheet{
+  background:radial-gradient(circle at 50% 28%,color-mix(in srgb,var(--cb-accent) 12%,transparent),transparent 34%),
+    linear-gradient(#202a28,#09161b)!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-sheet-header{
+  background:linear-gradient(90deg,#2a251e,#111e21 55%,#192522)!important;
+  border-color:#735e38!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-character-tabs{
+  background:#0f2023!important;border-color:#415a4d!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-character-tabs button.active{
+  background:#342d24!important;color:#ead5aa!important;border-color:#af9566!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-equip-slot{
+  background:linear-gradient(#1e2f2e,#101e22)!important;border-color:#4e6758!important;
+}
+html body.cb-top-nav-enabled #characterModal .cb-slot-icon{background:#0b1b1c!important}
+html body.cb-top-nav-enabled #bankModal :is(.bank-manage,.bank-character-list,.bank-modal){
+  background:#0c1c20!important;border-color:#4a6658!important;
+}
+/* Story comic frame + shared combat UI chrome. Keep all room art, telemetry
+   bars, VFX, skills, cooldowns and combat outcome colours untouched. */
+html body.cb-top-nav-enabled .cbcomic-shell{
+  background:linear-gradient(#192525,#0a1419)!important;border-color:#8b7954!important;
+}
+html body.cb-top-nav-enabled :is(.cbcomic-head,.cbcomic-controls,.cbcomic-dialogue){
+  background-color:#122425!important;border-color:#4b6657!important;
+}
+html body.cb-top-nav-enabled .cbcomic-party-member{
+  background:#192c29!important;border-color:#446554!important;
+}
+html body.cb-top-nav-enabled .cbcombat-shell{
+  background-color:#081419!important;border-color:#405d55!important;
+}
+html body.cb-top-nav-enabled .cbcombat-shell
+  :is(.cbcombat-header,.cbcombat-party-panel,.cbcombat-command-panel,
+      .cbcombat-meters-panel,.cbcombat-chat,.cbcombat-chat-tabs,
+      .cbcombat-chat-form){
+  background-color:#112126!important;border-color:#425f57!important;
+}
+html body.cb-top-nav-enabled .cbcombat-shell
+  :is(.cbcombat-chat-tabs button.active,.cbcombat-header-actions button){
+  border-color:#8f7950!important;
+}
+html body.cb-top-nav-enabled .cbcombat-shell .cbcombat-chat-messages{
+  background-color:#0b191e!important;
+}
+/* Tutorial already uses this historic palette; tighten its secondary chrome. */
+html body.cb-top-nav-enabled .onboard-root :is(.onboard-shell,.onboard-head){
+  border-color:#4c5b45!important;
+}
+html body.cb-top-nav-enabled .onboard-root
+  :is(.party-draft-card,.race-card,.class-choice,.profession-slot-card,
+      .tutorial-loot-card,.tutorial-recipe,.formation-preview){
+  background-color:#111f24!important;border-color:#486155!important;
+}
+html body.cb-top-nav-enabled .onboard-root
+  :is(.party-draft-card.active,.race-card.active,.class-choice.active){
+  background-color:#2b2b21!important;border-color:#a88e5b!important;
+}
+/* Standard feedback and focus retain their state-specific colours. */
+html body.cb-top-nav-enabled :is(.main>.view,.modal-card,.dbo-shell,.onboard-root)
+  :is(input,select,textarea)::placeholder{color:#91a59e}
+html body.cb-top-nav-enabled :is(.main>.view,.modal-card,.dbo-shell,.onboard-root)
+  :is(button,summary,a,input,select,textarea):focus-visible{
+  outline:2px solid #e8c98b!important;outline-offset:2px!important;
+}
+
+
+/* V10 semantic display protections — keep rarity, active team and recovery cues. */
+html body.cb-top-nav-enabled #trading .tp-result-card.rarity-uncommon{
+  border-left:2px solid #49c864!important;
+}
+html body.cb-top-nav-enabled #trading .tp-result-card.rarity-rare{
+  border-left:2px solid #3e9fff!important;
+}
+html body.cb-top-nav-enabled #trading .tp-result-card.rarity-epic{
+  border-left:2px solid #a45cff!important;
+}
+html body.cb-top-nav-enabled #trading .tp-result-card.rarity-legendary{
+  border-left:2px solid #f0a13f!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card.is-active{
+  border-color:color-mix(in srgb,var(--roster-accent,#54bca4) 54%,#d8b976)!important;
+  box-shadow:inset 0 0 0 1px #54bca450,0 9px 21px #0007!important;
+}
+html body.cb-top-nav-enabled #roster .roster-character-card.is-recovering{
+  background:radial-gradient(circle at 92% -5%,rgba(176,73,59,.15),transparent 37%),
+   linear-gradient(180deg,#221d1c,#0c171b 68%)!important;
+}
+html body.cb-top-nav-enabled #bank .bank-card-v2.bank-item-selected{
+  border-color:#c6a572!important;
+}
+
+
+/* ========================================================================
+   CELLBOUND DARK FANTASY COMPLETION V11
+   Portaled windows and nested editors use the same charcoal, patinated-teal
+   and bronze surfaces as every destination. Visuals/status are unchanged.
+   ======================================================================== */
+html body.cb-top-nav-enabled{
+  --cb-theme-bg:#081318;
+  --cb-theme-panel:#101f25;
+  --cb-theme-raised:#182b2e;
+  --cb-theme-border:#48645a;
+  --cb-theme-gold:#c6a572;
+  --cb-theme-muted:#a3b6af;
+  --cb-theme-text:#e3e9e2;
+}
+/* Account recruitment and equipment panels are mounted at the body level.
+   Scoping solely inside #roster/#bank had missed these modal windows. */
+html body.cb-top-nav-enabled
+  :is(#recruitAdventurerModal .recruit-modal,
+      #bankModal .bank-modal,#characterModal .character-modal,
+      .modal-backdrop .modal-card,
+      .quest-puzzle,.quest-dialogue,.quest-gear-card,.quest-complete-card,
+      .quest-continuation-card,.cb-slot-drawer){
+  border-color:#695c43!important;
+  color:var(--cb-theme-text)!important;
+  background-color:#101d21!important;
+  box-shadow:0 24px 55px #000b!important;
+}
+html body.cb-top-nav-enabled #recruitAdventurerModal .cellbound-character-forge{
+  background:#0e1d22!important;color:#dce7df!important;
+  border-color:var(--cb-theme-border)!important;
+}
+html body.cb-top-nav-enabled #recruitAdventurerModal
+  :is(.cf-steps,.cf-step-head,.cf-race-card,.cf-name-card,
+      .cf-confirm-card,.cf-class-grid button,.cf-sex button){
+  background-color:#142629!important;
+  border-color:#456257!important;
+}
+html body.cb-top-nav-enabled #recruitAdventurerModal
+  :is(.cf-steps button.active,.cf-race-card.active,
+      .cf-class-grid button.active,.cf-sex button.active){
+  background:#2e2a22!important;
+  border-color:#b79b6c!important;
+  color:#f0dfbf!important;
+}
+html body.cb-top-nav-enabled
+  :is(#recruitAdventurerModal,#bankModal,.modal-backdrop,
+      .quest-gear-card,.quest-complete-card,.quest-continuation-card,.cb-slot-drawer)
+  :is(input:not([type=checkbox]):not([type=radio]),select,textarea){
+  color:#e8eee8!important;background:#0c191e!important;
+  border-color:#4c665a!important;color-scheme:dark;
+}
+/* Parent-independent editor styling: room/map/comic tools can be mounted
+   inside #admin or temporarily moved to an overlay without changing theme. */
+html body.cb-top-nav-enabled
+  :is(.rqe-shell,.cse-shell,.pme-shell){
+  color:#e1e9e1!important;background:#0b1b20!important;
+  border-color:#4d6659!important;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-head,.rqe-toolbar,.rqe-inspector,.rqe-audit,.rqe-audit-item,
+      .rqe-room-nav,.rqe-art-upload,.rqe-room-meta,
+      .cse-shell>header,.cse-panel,.cse-filters,.cse-controls,
+      .pme-head,.pme-toolbar,.pme-settings,.pme-create,.pme-stage-column){
+  background-color:#112228!important;border-color:#3e5b50!important;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-head,.cse-shell>header,.pme-head){
+  background-image:linear-gradient(110deg,#1b302b,#0a1a20)!important;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-shell,.cse-shell,.pme-shell)
+  :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){
+  background:#09191e!important;color:#e8e8df!important;
+  border-color:#4d675c!important;color-scheme:dark;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-shell,.cse-shell,.pme-shell)
+  button:not(:disabled):not(.rqe-marker):not(.pme-marker){
+  border-color:#47665a;color:#e3e9df;
+}
+html body.cb-top-nav-enabled
+  :is(.rqe-toolbar,.rqe-inspector,.rqe-room-nav,.cse-actions,.cse-controls,.pme-toolbar)
+  button:not(:disabled):hover{
+  border-color:#bda06f!important;background-color:#244037!important;
+}
+/* Design Booth's deeply nested catalogs, reviews and release controls. */
+html body.cb-top-nav-enabled .dbo-shell
+  :is(.dbo-catalog-scroll,.dbo-catalog-table,.dbo-catalog-filters,.dbo-catalog-pager,
+      .dbo-loot-table-head,.dbo-loot-table-row,.dbo-drops-picker,.dbo-drop-grid,
+      .dbo-review-list,.dbo-library-actions,.dbo-template-library,.dbo-quick-actions,
+      .dbo-public-grid,.dbo-library-header,.dbo-stage-editor-header){
+  background-color:#13252a!important;border-color:#3f5a50!important;
+}
+html body.cb-top-nav-enabled .dbo-shell
+  :is(.dbo-project-list button.active,.dbo-stage-list button.active,.dbo-tabs button.active){
+  background:#332d23!important;border-color:#ac9467!important;color:#ead9b7!important;
+}
+/* More/secondary menus are part of the game interface too. */
+html body.cb-top-nav-enabled #cbMorePanel :is(.cb-more__panel,.cb-more__head){
+  background-color:#0e2024!important;border-color:#405c51!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button{
+  background:#15282b!important;border-color:#476255!important;color:#dde6de!important;
+}
+html body.cb-top-nav-enabled #cbMorePanel .cb-more__links button:hover{
+  background:#243930!important;border-color:#b39b73!important;
+}
+/* Only frames and neutral surfaces change. No battlefield art, cooldowns,
+   telegraphs, markers, HP/mana, rarity or state-dependent colours are restyled. */

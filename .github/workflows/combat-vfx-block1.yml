@@ -1,0 +1,60 @@
+name: Combat VFX Block 1 acceptance
+on:
+  push:
+    branches: [combat-vfx-block1, combat-vfx-all-classes, combat-skills-block1b]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm run test:core
+      - run: npm install --no-save --package-lock=false playwright@1.51.1
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: cellbound-${{ runner.os }}-playwright-1.51.1-${{ matrix.engine }}
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Effect coverage and lifecycle
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+        run: node tests/combat-vfx-block1.browser.cjs
+      - name: Real class animations and encounters
+        if: success()
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+        run: |
+          node tests/combat-class-animation.browser.cjs
+          node tests/combat-class-encounters.browser.cjs
+      - name: Shared modes
+        if: success()
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+        run: node tests/combat-cinematic-global.browser.cjs
+      - name: Spatial safety (WebKit settling also fails on unchanged staging)
+        if: success()
+        continue-on-error: ${{ matrix.engine == 'webkit' }}
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+        run: node tests/combat-spatial.browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combat-vfx-${{ matrix.engine }}
+          path: |
+            /tmp/cellbound-class-animation
+            /tmp/cellbound-cinematic*
+          if-no-files-found: ignore

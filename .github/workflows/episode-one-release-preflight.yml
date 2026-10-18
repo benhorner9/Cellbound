@@ -1,0 +1,82 @@
+name: Episode 1 Production Release Preflight
+on:
+  push:
+    branches:
+      - release/episode1-site-production-ready-20261018
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - 'build-site.js'
+      - 'build.js'
+      - '.github/workflows/deploy-live.yml'
+      - 'index.html'
+      - 'guild.html'
+      - 'tools/check-public-copy.cjs'
+permissions:
+  contents: read
+jobs:
+  production-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      CELLBOUND_TARGET: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --ignore-scripts
+      - name: Run language and landing page audit
+        run: node tools/check-public-copy.cjs
+      - name: Run whole-runtime language inventory
+        run: node tools/audit-runtime-copy.cjs
+      - name: Save copy inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-language-inventory
+          path: docs/qa/release/language-inventory.json
+          if-no-files-found: ignore
+      - name: Build the website
+        run: npm run build:site
+      - name: Build production-configured game
+        run: npm run build
+      - name: Validate two independent deliverables and production account isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist-site/index.html
+          test -f dist-site/website-v1.css
+          test -f dist-site/assets/manor/manor-raid-hero.webp
+          ! test -f dist-site/auth.js
+          ! test -f dist-site/guild.html
+          grep -F 'href="./game/"' dist-site/index.html
+          test -f dist/index.html
+          test -f dist/guild.html
+          test -f dist/auth.js
+          grep -F 'jvydqeikdpelmtloulnd.supabase.co' dist/auth.js
+          grep -F 'jvydqeikdpelmtloulnd.supabase.co' dist/guild-v4.js
+          ! grep -R -l -F 'zrvehixcthljiktcctne.supabase.co' dist/ dist-site/
+          grep -F 'window.CELLBOUND_SECURE_SAVES=false' dist/guild.html
+          grep -F "BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])" dist/guild-v4.js
+          ! grep -F 'CELLBOUND_EPISODE_SERVICE_URL=' dist/guild.html
+          echo 'Public website and isolated production game package ready.'
+      - name: Inspect current public host (read-only)
+        shell: bash
+        run: |
+          if curl --silent --show-error --location --max-time 20 https://playcellbound.com/ -o /tmp/existing-public.html; then
+            echo "Current homepage bytes: $(wc -c < /tmp/existing-public.html)"
+            if grep -Eiq 'wp-content|wp-includes|<meta[^>]+generator[^>]+wordpress' /tmp/existing-public.html; then
+              echo 'NOTICE: WordPress content detected; production FTP root must not be published until hosting is reviewed.'
+            else
+              echo 'No obvious WordPress markup detected on the current public homepage.'
+            fi
+          else
+            echo 'NOTICE: The current public website could not be reached from the CI runner. Do not publish until resolved.'
+          fi
+      - name: Test talents and core gameplay rules
+        run: |
+          npm run test:talents
+          npm run test:core

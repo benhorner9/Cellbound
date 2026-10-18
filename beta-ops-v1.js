@@ -2,7 +2,7 @@
 'use strict';
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-let Game=null,db=null,user=null,bound=false,loading=false,reportOrigin=null,launcherOpen=false;
+let Game=null,db=null,user=null,bound=false,loading=false,submitting=false,reportOrigin=null,launcherOpen=false;
 const PATCH_NOTES=[
  {label:'Beta Operations',date:'3 Oct 2026',title:'Ready for real testers',items:[
   'Added an always-available Report Bug / Request button with automatic build and screen context.',
@@ -11,7 +11,7 @@ const PATCH_NOTES=[
   'Completed the beta progression, economy and UI polish passes.'
  ]},
  {label:'Founding Beta',date:'2 Oct 2026',title:'Launch content locked',items:[
-  'Beta classes: Warrior, Paladin, Hunter, Rogue and Mage.',
+  'Balance testing: all classes and specialisations are temporarily unlocked on dev.',
   'All current dungeon content remains available as progression unlocks it.',
   'Null Complex opens after The Manor progression requirement is met.'
  ]}
@@ -22,8 +22,11 @@ function buildLabel(){
 }
 function activeView(){return document.querySelector('.view.active')?.id||'unknown'}
 function contextSnapshot(view=reportOrigin||activeView()){
- const state=Game?.getState?.()||{},party=Game?.getPartyCharacters?.()||[];
- return{url:location.pathname,view,viewport:{width:window.innerWidth,height:window.innerHeight},platform:navigator.platform||'',userAgent:String(navigator.userAgent||'').slice(0,320),rosterCount:Array.isArray(state.roster)?state.roster.length:0,partyCount:party.length,partyItemLevel:Number(Game?.partyItemLevel?.())||0,averagePartyLevel:Number(Game?.averagePartyLevel?.())||0,online:navigator.onLine!==false}
+ const basic={url:location.pathname,view:String(view||'unknown'),viewport:{width:Number(window.innerWidth)||0,height:Number(window.innerHeight)||0},online:navigator.onLine!==false};
+ try{
+  const state=Game?.getState?.()||{},party=Game?.getPartyCharacters?.()||[];
+  return{...basic,platform:String(navigator.platform||'').slice(0,120),userAgent:String(navigator.userAgent||'').slice(0,320),rosterCount:Array.isArray(state.roster)?state.roster.length:0,partyCount:Array.isArray(party)?party.length:0,partyItemLevel:Number(Game?.partyItemLevel?.())||0,averagePartyLevel:Number(Game?.averagePartyLevel?.())||0}
+ }catch(error){console.warn('Beta report context was reduced',error);return basic}
 }
 function statusLabel(v){return({new:'NEW',triaged:'TRIAGED',in_progress:'IN PROGRESS',fixed:'FIXED',closed:'CLOSED'})[v]||String(v||'NEW').toUpperCase()}
 function severityLabel(v){return({low:'MINOR',medium:'NORMAL',high:'HIGH',blocker:'BLOCKER'})[v]||String(v||'NORMAL').toUpperCase()}
@@ -78,23 +81,29 @@ async function refreshReports(){
  finally{loading=false}
 }
 async function submitReport(event){
- event?.preventDefault?.();if(!db||!user)return;
+ event?.preventDefault?.();if(submitting||!db||!user)return;
  const form=$('#betaReportForm'),submit=$('#betaReportSubmit'),category=$('#betaReportCategory')?.value||'bug',severity=$('#betaReportSeverity')?.value||'medium',summary=String($('#betaReportSummary')?.value||'').trim(),details=String($('#betaReportDetails')?.value||'').trim();
  if(summary.length<4){setMessage('Give the report a short title so we can find it later.','error');return}
  if(details.length<8){setMessage('Add a little more detail: what you did, what happened and what you expected.','error');return}
+ submitting=true;
  if(submit){submit.disabled=true;submit.textContent='SENDING REPORT…'}
- const sourceView=reportOrigin||activeView();
- const payload={category,severity,summary,details,page_view:sourceView,build_id:String(window.CELLBOUND_BUILD||'development').slice(0,80),build_number:Number(window.CELLBOUND_BUILD_NUMBER||0)||0,context:contextSnapshot(sourceView)};
+ setMessage('Sending report…','pending');
  try{
+  const sourceView=reportOrigin||activeView();
+  let context={url:location.pathname,view:String(sourceView||'unknown')};
+  try{context=contextSnapshot(sourceView)}catch(error){console.warn('Beta report context failed',error)}
+  const payload={category,severity,summary,details,page_view:sourceView,build_id:String(window.CELLBOUND_BUILD||'development').slice(0,80),build_number:Number(window.CELLBOUND_BUILD_NUMBER||0)||0,context};
   const {data,error}=await db.from('beta_reports').insert(payload).select('id,created_at').single();if(error)throw error;
   if(form)form.reset();if($('#betaReportSeverity'))$('#betaReportSeverity').value='medium';
-  setMessage('Report sent'+(data?.id?' · reference '+String(data.id).slice(0,8):'')+'. Thanks — it is now in the beta queue.','ok');reportOrigin=null;renderBuild();await refreshReports()
+  setMessage('Report sent'+(data?.id?' · reference '+String(data.id).slice(0,8):'')+'. Thanks — it is now in the beta queue.','ok');reportOrigin=null;renderBuild();refreshReports()
  }catch(error){setMessage(error?.message||'The report could not be sent. Try again after reconnecting.','error')}
- finally{if(submit){submit.disabled=false;submit.textContent='SEND BETA REPORT →'}}
+ finally{submitting=false;if(submit){submit.disabled=false;submit.textContent='SEND BETA REPORT →'}}
 }
 function bind(){
  if(bound)return;bound=true;
- $('#betaReportForm')?.addEventListener('submit',submitReport);
+ const form=$('#betaReportForm'),submit=$('#betaReportSubmit');
+ form?.addEventListener('submit',submitReport);
+ submit?.addEventListener('click',event=>{event.preventDefault();submitReport(event)});
  $('#betaRefreshReports')?.addEventListener('click',refreshReports);
  document.addEventListener('pointerdown',e=>{if(launcherOpen&&!e.target.closest?.('#betaQuickReport'))setLauncherOpen(false)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&launcherOpen)setLauncherOpen(false)});
@@ -104,7 +113,7 @@ function bind(){
 async function init(){
  Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,120);return}
  db=Game.getSupabase?.();user=Game.getUser?.();if(!db||!user)return;
- ensureLauncher();bind();renderBuild();refreshReports();window.CellboundBetaOps={refresh:refreshReports,patchNotes:PATCH_NOTES,contextSnapshot,openReport}
+ ensureLauncher();bind();renderBuild();refreshReports();window.CellboundBetaOps={refresh:refreshReports,patchNotes:PATCH_NOTES,contextSnapshot,openReport,submitReport}
 }
 init();
 })();

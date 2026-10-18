@@ -1,0 +1,99 @@
+(()=>{
+'use strict';
+
+const MODEL='Combat Reborn';
+const CONTRACT_VERSION='1.1.0';
+// Shared presentation pacing: the Combat Reborn simulation remains unchanged.
+// Normal battles run at 0.7x (30% slower); the optional faster mode is 1.4x.
+const NORMAL_PLAYBACK_RATE=0.7;
+const playbackRate=selection=>{const speed=Number(selection);return Math.max(.25,Math.min(4,(Number.isFinite(speed)&&speed>0?speed:1)*NORMAL_PLAYBACK_RATE))};
+const playbackLabel=selection=>Number(playbackRate(selection).toFixed(2))+'×';
+const zones=new Map();
+
+function core(){
+  const engine=window.CellboundCombatReborn;
+  if(!engine||typeof engine.simulate!=='function')throw new Error('Combat Reborn engine is unavailable');
+  return engine
+}
+function engineVersion(){
+  const engine=window.CellboundCombatReborn;
+  return engine?.VERSION||engine?.version||'unknown'
+}
+function simulate(options={},meta={}){
+  const engine=core();
+  const result=engine.simulate(meta?.zone?{...options,professionZone:meta.zone}:options);
+  if(!result||!Array.isArray(result.events)||!result.finalState)throw new Error('Combat Reborn returned an invalid combat result');
+  result.combatModel=MODEL;
+  result.engineVersion=result.engineVersion||engineVersion();
+  result.combatContract=CONTRACT_VERSION;
+  if(meta?.zone)result.combatZone=meta.zone;
+  return result
+}
+function dispatchCombatEvents(events,meta={}){
+  if(!Array.isArray(events)||!events.length)return;
+  events.forEach(event=>{
+    try{window.dispatchEvent(new CustomEvent('cellbound:combat-event',{detail:{event,zone:meta?.zone||null,profile:meta?.profile||'pve'}}))}catch(_){}
+  })
+}
+function instrumentLiveSession(session,meta={}){
+  if(!session||session.__cellboundHudInstrumented)return session;
+  session.__cellboundHudInstrumented=true;
+  const wrap=name=>{
+    if(typeof session[name]!=='function')return;
+    const raw=session[name].bind(session);
+    session[name]=(...args)=>{
+      const out=raw(...args);
+      dispatchCombatEvents(out?.events,meta);
+      return out
+    }
+  };
+  ['advance','drainEvents'].forEach(wrap);
+  return session
+}
+function createLiveSession(options={},meta={}){
+  const engine=core();
+  if(typeof engine.createLiveSession!=='function')throw new Error('Combat Reborn live-session API is unavailable');
+  const session=engine.createLiveSession(meta?.zone?{...options,professionZone:meta.zone}:options);
+  if(!session||typeof session.advance!=='function'||(typeof session.command!=='function'&&typeof session.pvpCommand!=='function'))throw new Error('Combat Reborn returned an invalid live session');
+  return instrumentLiveSession(session,meta)
+}
+// Development-only symmetric Arena session. Ratings and rewards MUST be server-authoritative.
+function createPvpSession(options={},meta={}){
+ if(!options?.pvp||!window.CellboundPvPRuleset?.MODES.includes(options.pvp.mode)||!window.CellboundPvPObjectives)throw new Error('PvP game mode rules contract is unavailable');
+ const session=createLiveSession(options,{...meta,profile:'pvp'});
+ if(typeof session.pvpCommand!=='function')throw new Error('Combat Reborn failed to create a PvP session');
+ return session
+}
+function assertServerPayload(payload,zone='server-combat'){
+  if(!payload||payload.combatModel!==MODEL){
+    throw new Error(zone+' did not return the required Combat Reborn combat model');
+  }
+  return payload
+}
+function register(id,meta={}){
+  const key=String(id||'').trim();
+  if(!key)return;
+  zones.set(key,{id:key,model:MODEL,contract:CONTRACT_VERSION,...meta})
+}
+function audit(){
+  return{
+    model:MODEL,
+    contract:CONTRACT_VERSION,
+    engineReady:!!window.CellboundCombatReborn?.simulate,
+    liveReady:!!window.CellboundCombatReborn?.createLiveSession,
+    pvpPrototypeReady:!!window.CellboundCombatReborn?.createLiveSession&&!!window.CellboundPvPRuleset&&!!window.CellboundPvPObjectives,
+    engineVersion:engineVersion(),
+    zones:[...zones.values()]
+  }
+}
+
+window.CellboundCombatStandard={
+  MODEL,CONTRACT_VERSION,NORMAL_PLAYBACK_RATE,playbackRate,playbackLabel,core,simulate,createLiveSession,createPvpSession,assertServerPayload,register,audit,dispatchCombatEvents,
+  UI:{
+    shell:'shared CB2D combat shell',
+    vitals:'HP above class resource',
+    panels:['Enemy Cast','Damage Meter','Healing Meter','Threat Meter','Party Actions','Party Condition','Combat Feed'],
+    rules:['real arena geometry','real positions','real line of sight','red harmful statuses','green beneficial statuses']
+  }
+};
+})();

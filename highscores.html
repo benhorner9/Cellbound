@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#102235">
+ <meta name="description" content="Cellbound High Scores — live profession leaderboards ranked by skill level and experience. Follow the leading artisans of Zeltira.">
+ <meta property="og:title" content="Cellbound — High Scores">
+ <meta property="og:description" content="Explore live profession high scores from the guilds of Zeltira.">
+ <title>High Scores · Cellbound</title>
+ <link rel="stylesheet" href="./highscores-v1.css?v=5">
+</head>
+<body class="hs-site">
+ <header class="hs-site-header">
+  <a class="hs-site-brand" href="./index.html" aria-label="Cellbound homepage">CELLBOUND<small>THE GUILDS OF ZELTIRA</small></a>
+  <a class="hs-site-nav" href="./index.html">← BACK TO CELLBOUND</a>
+ </header>
+ <main class="hs-site-main">
+  <div id="publicHighScores" aria-label="Cellbound profession high scores"></div>
+ </main>
+ <footer class="hs-site-footer">CELLBOUND · FOUNDING SEASON · MORE HIGH SCORES TO COME</footer>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
+ <script src="./highscores-v1.js?v=1"></script>
+ <script>window.CellboundHighScores?.mount('#publicHighScores');</script>
+</body>
+</html>

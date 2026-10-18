@@ -98,7 +98,51 @@ function chrome(label,title,body,cls=''){
   return'<section class="nwb-shell '+cls+'"><header class="nwb-head"><div><small>'+esc(label)+'</small><h2>'+esc(title)+'</h2></div><button data-nwb-close aria-label="Close">×</button></header>'+body+'</section>'
 }
 function bindClose(){root?.querySelector('[data-nwb-close]')?.addEventListener('click',close)}
-function story(label,title,speaker,lines,onDone,button='CONTINUE →'){
+const NWB_STORY_ART={
+ silas:'./assets/bosses/no-way-back-silas-vane-v3.jpg',
+ hounds:'./assets/bosses/no-way-back-three-hounds-v3.jpg',
+ manor:'./assets/manor/manor-raid-hero.webp',
+ master:'./assets/manor/manor-master.webp'
+};
+const NWB_COMIC_STORY_ART={
+ 'A Sailor With A Story':[
+  './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
+  './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
+  './assets/comics/no-way-back-2026/sailor-trusted-crew.svg',
+  './assets/comics/no-way-back-2026/sailor-black-buoy.svg',
+  './assets/comics/no-way-back-2026/manor-island-landing.svg'
+ ],
+ 'More Than A Crew':[
+  './assets/comics/no-way-back-2026/boat-weathered-hull.svg',
+  './assets/comics/no-way-back-2026/boat-hull-inspection.svg',
+  './assets/comics/no-way-back-2026/boat-missing-chart.svg',
+  './assets/comics/no-way-back-2026/boat-lost-chart.svg',
+  './assets/comics/no-way-back-2026/return-damaged-sail.svg'
+ ],
+ 'Washed Back To Harbour':[
+  './assets/comics/no-way-back-2026/return-stormwreck.svg',
+  './assets/comics/no-way-back-2026/boat-missing-chart.svg',
+  './assets/comics/no-way-back-2026/return-damaged-sail.svg',
+  './assets/comics/no-way-back-2026/boat-weathered-hull.svg'
+ ],
+ 'Homecoming':[
+  './assets/comics/no-way-back-2026/manor-island-landing.svg',
+  './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
+  './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
+  './assets/comics/no-way-back-2026/silas-manor-master.svg',
+  './assets/comics/no-way-back-2026/silas-trap-closes.svg'
+ ]
+};
+function nwbStoryArt(label,title){
+ const dedicated=NWB_COMIC_STORY_ART[String(title||'')];
+ if(dedicated?.length)return dedicated;
+ const key=(String(label||'')+' '+String(title||'')).toLowerCase();
+ if(/hounds|chase|iron gate/.test(key))return[NWB_STORY_ART.hounds,NWB_STORY_ART.manor];
+ if(/master|after the fight|understand/.test(key))return[NWB_STORY_ART.silas,NWB_STORY_ART.master,NWB_STORY_ART.manor];
+ if(/manor island|homecoming/.test(key))return[NWB_STORY_ART.manor,NWB_STORY_ART.silas];
+ return[NWB_STORY_ART.silas,NWB_STORY_ART.manor]
+}
+function legacyStory(label,title,speaker,lines,onDone,button='CONTINUE →'){
   const r=ensureRoot();let i=0;
   const draw=()=>{
     const last=i===lines.length-1;
@@ -107,6 +151,35 @@ function story(label,title,speaker,lines,onDone,button='CONTINUE →'){
     r.querySelector('[data-nwb-story]').onclick=async()=>{if(!last){i++;draw();return}if(onDone)await onDone()}
   };
   r.hidden=false;document.body.classList.add('nwb-open');draw()
+}
+function story(label,title,speaker,lines,onDone,button='CONTINUE →'){
+ const C=window.CellboundComicScenes;
+ if(typeof C?.show!=='function'){legacyStory(label,title,speaker,lines,onDone,button);return}
+ const r=ensureRoot(),art=nwbStoryArt(label,title),panels=art.map((artwork,i)=>({
+  kind:i===0?'npc':'location',artwork,
+  eyebrow:i===0?label:'MANOR ISLAND',
+  title:i===0?speaker:'',
+  text:''
+ }));
+ const placements=['bottom-left','top-right','bottom-right','top-left'];
+ r.hidden=true;document.body.classList.remove('nwb-open');
+ C.show({
+  eyebrow:'CELLBOUND · RAID ATTUNEMENT',
+  title,subtitle:speaker,page:'NO WAY BACK',theme:'manor',
+  panels,
+  reveals:(Array.isArray(lines)?lines:[lines]).map((text,i)=>({
+   panel:i%panels.length,placement:placements[i%placements.length],speaker,
+   eyebrow:i===0?label:'',text:String(text||'')
+  })),
+  progressive:true,cinematicSequence:true,panelOnly:true,allowSkip:true,skipLabel:'SKIP STORY',nextLabel:'NEXT →',continueLabel:button
+ }).then(async()=>{
+  if(r?.isConnected){r.hidden=false;document.body.classList.add('nwb-open')}
+  if(onDone)await onDone()
+ }).catch(error=>{
+  console.warn('No Way Back comic presentation recovered',error);
+  if(r?.isConnected){r.hidden=false;document.body.classList.add('nwb-open')}
+  legacyStory(label,title,speaker,lines,onDone,button)
+ })
 }
 async function start(){
   const n=ensure();if(!available()&&!n.started)return;
@@ -181,7 +254,7 @@ function repairStatus(){
 function renderRepairs(){
   const n=ensure(),ready=repairStatus()===3;
   root.innerHTML=chrome('SILAS’S BOAT · HARBOUR','Make Her Seaworthy',
-    '<div class="nwb-boat-hero"><div class="nwb-boat-art"><div class="nwb-sail '+(n.sailRepaired?'fixed':'torn')+'"></div><div class="nwb-hull '+(n.repairKit?'fixed':'holed')+'"></div><span class="nwb-mast"></span><span class="nwb-water"></span></div><div><small>REPAIRS '+repairStatus()+' / 3</small><h3>The island is still out of reach.</h3><p>Everything needed for the crossing can be solved from here. The route chart, once recovered, will remain known even if the boat is later lost at sea.</p></div></div>'+
+    '<div class="nwb-boat-hero"><div class="nwb-boat-art"><div class="nwb-sail '+(n.sailRepaired?'fixed':'torn')+'"></div><div class="nwb-hull '+(n.repairKit?'fixed':'holed')+'"></div><span class="nwb-mast"></span><span class="nwb-water"></span></div><div><small>REPAIRS '+repairStatus()+' / 3</small><h3>The island is still out of reach.</h3><p>Repair the hull, rebuild the sail and find the route chart. The chart remains recorded if the crossing fails.</p></div></div>'+
     '<div class="nwb-repair-grid">'+
       repairCard('hull','HULL','Timber & Nails',n.repairKit,'The hull is taking water. A Shipwright’s Repair Kit is permanently stocked at the Trading Post for '+SHIPWRIGHT_KIT_COST_LABEL+' gold.',n.repairKit?'HULL REPAIRED':'BUY AT TRADING POST')+
       repairCard('sail','SAIL','Torn Canvas',n.sailRepaired,'Rebuild the torn sail before the wind tears it apart completely.',n.sailRepaired?'SAIL REPAIRED':'STITCH THE SAIL')+
@@ -619,10 +692,26 @@ async function completeQuest(){
   s.progression.manorRaidUnlocked=true;s.progression.manorKey=true;
   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Quest complete: No Way Back. The Manor raid attunement was unlocked.');
   await save('The Manor Key was recovered from Silas Vane. The Manor is now permanently attuned to this guild.');
-  renderComplete()
+  const C=window.CellboundComicScenes;
+  if(typeof C?.show==='function'){
+   try{
+    close();
+    await C.show({
+     eyebrow:'QUEST COMPLETE',title:'No Way Back',subtitle:'The Manor has been awakened.',page:'COMPLETE',theme:'manor',
+     panels:[
+      {kind:'npc',artwork:NWB_STORY_ART.silas,eyebrow:'SILAS VANE',title:'“I only needed to come home.”',text:'The black iron key slips from his coat as the courtyard falls silent.'},
+      {kind:'location',artwork:NWB_STORY_ART.manor,eyebrow:'PERMANENT ATTUNEMENT',title:'THE MANOR',text:'The windows ignite. The front doors open. Your guild is now permanently attuned to the island raid.'},
+      {kind:'reveal',artwork:NWB_STORY_ART.master,eyebrow:'QUEST ITEM',title:'THE MANOR KEY',text:'The key is bound to your guild. Whatever waits inside is awake.'}
+     ],
+     progressive:true,panelOnly:true,allowSkip:false,nextLabel:'NEXT →',continueLabel:'RETURN TO QUEST JOURNAL →'
+    });
+    Game.switchView?.('quests');return
+   }catch(error){console.warn('No Way Back completion comic recovered',error)}
+  }
+  const r=ensureRoot();r.hidden=false;document.body.classList.add('nwb-open');renderComplete()
 }
 function renderComplete(){
-  root.innerHTML='<section class="nwb-complete"><div class="nwb-key">⚿</div><small>QUEST COMPLETE</small><h2>No Way Back</h2><p>The windows of the Manor ignite all at once. Its front doors open into darkness. Whatever Silas needed to wake is now awake.</p><div class="nwb-complete-rewards"><article><span>QUEST ITEM</span><b>THE MANOR KEY</b></article><article><span>ATTUNEMENT</span><b>PERMANENT</b></article></div><section><small>RAID UNLOCKED</small><h3>The Manor</h3><p>The black iron key is bound to your guild. Beyond the opened doors, the Manor is waiting.</p></section><button data-nwb-complete-close>RETURN TO QUEST JOURNAL →</button></section>';
+  root.innerHTML='<section class="nwb-complete"><div class="nwb-key">⚿</div><small>QUEST COMPLETE</small><h2>No Way Back</h2><p>The windows of the Manor ignite all at once. Its front doors open into darkness. Whatever Silas needed to wake is now awake.</p><div class="nwb-complete-rewards"><article><span>QUEST ITEM</span><b>THE MANOR KEY</b></article><article><span>ATTUNEMENT</span><b>PERMANENT</b></article></div><section><small>RAID UNLOCKED</small><h3>The Manor</h3><p>The black iron key now belongs to your guild. The Manor raid is unlocked.</p></section><button data-nwb-complete-close>RETURN TO QUEST JOURNAL →</button></section>';
   root.hidden=false;document.body.classList.add('nwb-open');root.querySelector('[data-nwb-complete-close]').onclick=()=>{close();Game.switchView?.('quests')}
 }
 function renderDetail(main,side){

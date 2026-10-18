@@ -1,5 +1,8 @@
 (()=>{
 'use strict';
+const combatRate=value=>window.CellboundCombatStandard?.playbackRate?.(value)??Math.max(.25,(Number(value)||1)*.7);
+const combatLabel=value=>window.CellboundCombatStandard?.playbackLabel?.(value)||Number(combatRate(value).toFixed(2))+'×';
+
 
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
@@ -32,12 +35,14 @@ const SLOTS=[
 ];
 const ROLE_LABEL={tank:'Tank',healer:'Healer',dps:'Damage'};
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
-let draft=[],activeSlot=0,builderStep='race',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
+let draft=[],activeSlot=0,builderStep='form',introPage='guild',introPreview=false,tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
 const raceById=id=>RACES.find(r=>r.id===id)||RACES[0];
 const portraitHTML=(c,size='md')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+esc(c?.portrait||initials(c?.name))+'</b></span>';
+const forgeAppearance=(race,gender=0,prior=null)=>window.CellboundCharacterForge?.appearance?.(race,gender,prior)||{...(prior||{}),race,gender:Number(gender)===1?1:0};
+const forgeAvatar=c=>'<span class="cf-party-avatar" aria-hidden="true">'+(window.CellboundCharacterForge?.modelSVG?.(c.race,c.appearance?.gender||0,c.klass)||'<span class="cf-party-avatar-fallback">'+esc(initials(c.name))+'</span>')+'</span>';
 
 function roleOptions(role){
   const out=[];
@@ -64,7 +69,7 @@ function defaultDraft(){
     const race=RACES.find(r=>r.roles.includes(slot.role))||RACES[0];
     const option=roleOptions(slot.role)[0];
         const name=randomName(race.id,rows.map(x=>x.name));
-    rows.push({slot:slot.key,role:slot.role,race:race.id,klass:option?.klass||'Warrior',spec:option?.spec||'Arms',name,appearance:CP?.randomAppearance?.(race.id)||{race:race.id}});
+    rows.push({slot:slot.key,role:slot.role,race:race.id,klass:option?.klass||'Warrior',spec:option?.spec||'Arms',name,appearance:forgeAppearance(race.id,0)});
   });
   return rows;
 }
@@ -74,7 +79,7 @@ function restoreDraft(){
     draft=saved.map((d,i)=>{
       const slot=SLOTS[i],race=RACES.some(r=>r.id===d.race&&r.roles.includes(slot.role))?d.race:(RACES.find(r=>r.roles.includes(slot.role))?.id||'Veyren');
       const opts=roleOptions(slot.role),valid=opts.find(o=>o.klass===d.klass)||opts[0];
-      const name=String(d.name||randomName(race)).slice(0,24);return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name,appearance:CP?.normalizeAppearance?.(d.appearance,name,race)||d.appearance||{race}};
+      const name=String(d.name||randomName(race)).slice(0,24);return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name,appearance:forgeAppearance(race,d.appearance?.gender,d.appearance)};
     });
   }else draft=defaultDraft();
 }
@@ -90,6 +95,7 @@ function ensureRoot(){
 }
 function stageTitle(stage){
   const labels={
+    'guild-introduction':'The Guild Master’s Charter',
     'party-builder':'Build Your Party',
     'zeltira-arrival':'The Gate at Dusk',
     'first-expedition':'The First Resonance',
@@ -107,20 +113,25 @@ function stageTitle(stage){
   return labels[stage]||'Zeltira';
 }
 function chrome(body,stage){
+  // The actual Chapter 0 learning milestones, not only its story chapters.
   const steps=[
-    ['party-builder','Charter'],
-    ['first-expedition','Mystery'],
-    ['gear','Loadout'],
-    ['dungeon-briefing','Descent'],
-    ['loot-review','Spoils'],
+    ['guild-introduction','Guild'],
+    ['party-builder','Party'],
+    ['first-expedition','Investigate'],
+    ['gear','Equipment'],
+    ['dungeon-briefing','Combat'],
+    ['loot-review','Loot'],
+    ['recovery-lesson','Recovery'],
+    ['profession-choice','Crafting'],
     ['quest-lesson','Contract']
   ];
-  const order={'party-builder':0,'zeltira-arrival':1,'first-expedition':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'loot-review':4,'recovery-lesson':4,'profession-choice':4,'craft':4,'profession-use':4,'quest-lesson':5,'departure':5};
+  const order={'guild-introduction':0,'party-builder':1,'zeltira-arrival':2,'first-expedition':2,'gear':3,'dungeon-briefing':4,'dungeon-running':4,'loot-review':5,'recovery-lesson':6,'profession-choice':7,'craft':7,'profession-use':7,'quest-lesson':8,'departure':8};
   const objectives={
-    'party-builder':['FORM THE FIVE','Build a Tank, Healer and three Damage adventurers.'],
+    'guild-introduction':['YOUR ROLE','You lead a guild of five adventurers. Their decisions are yours to make.'],
+    'party-builder':['BUILD THE PARTY','Choose one Tank, one Healer and three Damage adventurers.'],
     'zeltira-arrival':['WRONG NIGHT TO ARRIVE','Meet Warden Elara at Zeltira’s gate.'],
     'first-expedition':['READ THE RESONANCE','Inspect the west wall and make a field deduction.'],
-    'gear':['MAKE THE LOADOUT CALL','Choose gear for the job, not just the number.'],
+    'gear':['CHOOSE YOUR EQUIPMENT','Compare item stats before equipping your Tank.'],
     'dungeon-briefing':['YOUR FIRST DESCENT','Set three commands, then watch them play out in live combat.'],
     'dungeon-running':['COMMAND THE HOLLOWS','Choose the approach. Combat Reborn handles the fight.'],
     'loot-review':['DECIDE WHAT THE DROP MEANS','Read, compare and assign the reward.'],
@@ -132,7 +143,21 @@ function chrome(body,stage){
     'departure':['CHAPTER 0 COMPLETE','Leave Zeltira with a guild that is actually yours.']
   };
   const at=order[stage]??0,obj=objectives[stage]||['FIRST EXPEDITION','Follow the trail beneath Zeltira.'];
-  return '<section class="onboard-shell onboard-v4"><header class="onboard-head"><div><small>CHAPTER 0 · THE FIRST RESONANCE</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header><div class="onboard-objective"><span>'+esc(obj[0])+'</span><b>'+esc(obj[1])+'</b><em>PATHFINDER WARD · TRAINING SAFETY ACTIVE</em></div>'+body+'</section>';
+  const lesson={
+    'party-builder':'The Tank draws enemy attacks, the Healer keeps everyone alive, and the Damage characters bring enemies down.',
+    'first-expedition':'Inspect the clues before making a decision. Later quests use the same approach.',
+    'gear':'Check the item’s stats against the character’s class and specialisation before equipping it.',
+    'dungeon-briefing':'Your party fights automatically. You command its strategy, respond to danger, and decide when to change tactics.',
+    'dungeon-running':'Watch enemy casts, threat and health. Use commands to interrupt, change targets and keep the party alive.',
+    'loot-review':'Boss drops go into the Guild Bank. Choose who gets the item.',
+    'recovery-lesson':'Losing a fight adds Cell Shock. You may need to recover or change the party before trying again.',
+    'profession-choice':'Each adventurer has one profession slot. Learn a trade to turn materials from your adventures into useful items.',
+    'craft':'Gather ingredients, learn recipes and craft. Professions grow alongside your characters.',
+    'profession-use':'Equipment is long-term progress. Potions, flasks and enhancements help you tackle the next difficult encounter.',
+    'quest-lesson':'Complete quests to unlock locations. Run dungeons to earn equipment and test your party.',
+    'departure':'You’ll arrive in the Quest Journal for Ashes on the East Road. Use Adventure for quests and dungeons, Heroes for your party and bank, and Professions for crafting.'
+  }[stage];
+  return '<section class="onboard-shell onboard-v5"><header class="onboard-head"><div><small>CHAPTER 0 · THE FIRST RESONANCE</small><h1>'+esc(stageTitle(stage))+'</h1></div><nav class="onboard-progress" aria-label="Chapter 0 lesson progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"'+(i===at?' aria-current="step"':'')+'><i aria-hidden="true">'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</nav></header><div class="onboard-objective"><span>'+esc(obj[0])+'</span><b>'+esc(obj[1])+'</b><em>CHAPTER 0 · GUIDED EXPEDITION</em></div>'+(lesson?'<div class="onboard-lesson" role="note"><span>WHY THIS MATTERS</span><p>'+esc(lesson)+'</p></div>':'')+body+'</section>';
 }
 function show(){
   const root=ensureRoot();root.hidden=false;document.documentElement.dataset.onboarding='1';
@@ -141,52 +166,83 @@ function hide(){
   const root=ensureRoot();root.hidden=true;delete document.documentElement.dataset.onboarding;
 }
 
+
+const INTRO_PAGES=[
+  {
+    id:'guild',tab:'Your Role',eyebrow:'YOU ARE THE GUILD MASTER',title:'You’re responsible for all five.',
+    copy:'Recruit adventurers, choose who joins the active party and decide what equipment they use. They have their own classes and abilities. You manage the team.',
+    detail:'Choose the party, assign equipment and set its strategy.',art:'./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp',
+    bullets:['Create and manage your own roster.','Put together a balanced five-person party.','Build each adventurer through gear, talents and professions.']
+  },
+  {
+    id:'combat',tab:'How Combat Works',eyebrow:'REAL-TIME TACTICAL COMBAT',title:'Combat runs live. You issue orders.',
+    copy:'Each adventurer uses their class abilities automatically. As commander, you choose targets and issue party orders. Watch enemy casts, health and threat; interrupt or change position when needed.',
+    detail:'Use the Command Centre to change targets, positioning and interrupts.',art:'./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp',
+    bullets:['Tank holds attention and keeps danger away.','Healer keeps the group standing.','Three Damage dealers defeat enemies while you issue commands.']
+  },
+  {
+    id:'journey',tab:'Progression',eyebrow:'QUESTS · DUNGEONS · GEAR',title:'What you bring back matters.',
+    copy:'Quests open new locations. Dungeons drop gear with different stats. You assign those drops from the Guild Bank, craft supplies and improve the party before trying harder difficulties.',
+    detail:'Take a quest, clear a dungeon, equip the drops and prepare for the next difficulty.',art:'./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp',
+    bullets:['Follow quests to uncover the mystery of the Cells.','Collect, equip and improve gear, then learn professions.','Work towards difficult dungeons, raids and other challenges.']
+  }
+];
+function renderGuildIntroduction(){
+  show();
+  const selected=INTRO_PAGES.find(p=>p.id===introPage)||INTRO_PAGES[0];
+  const body='<div class="onboard-intro">'+
+    '<div class="onboard-intro__hero">'+
+      '<img src="./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp" alt="The illuminated city of Zeltira at dusk" decoding="async">'+
+      '<div class="onboard-intro__hero-shade"></div>'+
+      '<div class="onboard-intro__hero-copy"><small>CELLBOUND · ZELTIRA</small>'+
+        '<h2>You don’t play one hero.<br>You lead the guild.</h2>'+
+        '<p>Manage five adventurers, give orders in live combat and prepare them for harder fights.</p>'+
+        '<span class="onboard-intro__crest">◇ &nbsp; GUILD CHARTER &nbsp; ◇</span>'+
+      '</div></div>'+
+    '<div class="onboard-intro__below">'+
+      '<section class="onboard-intro__lesson"><div class="onboard-intro__tabs" role="group" aria-label="Discover Cellbound">'+
+      INTRO_PAGES.map((p,i)=>'<button type="button" data-intro-page="'+p.id+'" aria-pressed="'+(p.id===selected.id)+'" class="'+(p.id===selected.id?'active':'')+'"><span>0'+(i+1)+'</span>'+p.tab+'</button>').join('')+
+      '</div><div class="onboard-intro__lesson-body"><div class="onboard-intro__lesson-copy"><small>'+esc(selected.eyebrow)+'</small>'+
+      '<h3>'+esc(selected.title)+'</h3><p>'+esc(selected.copy)+'</p><div class="onboard-intro__insight">'+esc(selected.detail)+'</div></div>'+
+      '<img src="'+selected.art+'" alt="" decoding="async"></div></section>'+
+      '<aside class="onboard-intro__charter"><small>THE GUILD MASTER’S ROAD</small>'+
+      '<h3>What you’ll be doing</h3>'+
+      '<ul>'+selected.bullets.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>'+
+      '<div class="onboard-intro__roles" aria-label="Your five-person party"><span>TANK × 1</span><span>HEALER × 1</span><span>DAMAGE × 3</span></div>'+
+      '<p>This introduction covers party creation, a short investigation, combat, loot and one crafting job.</p>'+
+      '<button type="button" id="startGuildCharter" class="on-primary">'+(introPreview?'CLOSE PREVIEW · RETURN TO GAME':'BUILD MY GUILD →')+'</button>'+
+      '<small class="onboard-intro__footnote">Your choices and progress are saved. No need to memorise everything now.</small>'+
+      '</aside></div></div>';
+  const root=ensureRoot();root.innerHTML=chrome(body,'guild-introduction');
+  root.querySelectorAll('[data-intro-page]').forEach(button=>button.addEventListener('click',()=>{
+    introPage=button.dataset.introPage;renderGuildIntroduction();
+    root.querySelector('[data-intro-page="'+introPage+'"]')?.focus({preventScroll:true});
+  }));
+  root.querySelector('#startGuildCharter')?.addEventListener('click',()=>{
+    if(introPreview){introPreview=false;hide();return}
+    setStage('party-builder',{introSeen:true,introVersion:1});
+  });
+}
+
+function previewIntroduction(){
+  if(!window.CellboundAdmin?.isAdmin||state()?.onboarding?.complete!==true)return false;
+  introPreview=true;introPage='guild';renderGuildIntroduction();
+  return true;
+}
 function renderPartyBuilder(){
   show();restoreDraft();
-  const d=draft[activeSlot],slot=SLOTS[activeSlot],availableRaces=RACES;
-  const classes=roleOptions(slot.role);
-  const steps=['race','class','appearance','confirm'];
-  if(!steps.includes(builderStep))builderStep='race';
-  const stepIndex=steps.indexOf(builderStep);
-  const allValid=draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
-  d.appearance=CP?.normalizeAppearance?.(d.appearance,d.name||d.race,d.race)||d.appearance||{race:d.race};
-
-  const stepNav=steps.map((step,i)=>{
-    const labels={race:'Race',class:'Class',appearance:'Appearance',confirm:'Confirm'};
-    const unlocked=i<=stepIndex||(step==='class'&&d.race)||(step==='appearance'&&d.klass)||(step==='confirm'&&d.appearance);
-    return '<button class="creator-step '+(step===builderStep?'active':'')+' '+(i<stepIndex?'done':'')+'" data-builder-step="'+step+'" '+(unlocked?'':'disabled')+'><i>'+(i+1)+'</i><span>'+labels[step]+'</span></button>';
-  }).join('');
-
-  const portrait=portraitHTML({name:d.name,race:d.race,class:d.klass,appearance:d.appearance},'lg');
-  const hero='<aside class="creator-hero">'+portrait+'<small>'+ROLE_LABEL[d.role]+' '+(slot.number||'')+'</small><h2>'+esc(d.name||'Unnamed')+'</h2><p>'+raceById(d.race).icon+' '+esc(d.race)+' · '+esc(d.klass)+'</p><div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div></aside>';
-
-  let panel='';
-  if(builderStep==='race'){
-    panel='<section class="creator-panel"><header><small>STEP 1 OF 4</small><h2>Choose a race</h2><p>Choose the ancestry and passive that fits this adventurer.</p></header><div class="race-grid creator-choice-grid">'+availableRaces.map(r=>{const identity=window.CellboundIdentities?.getRace?.(r.id);return '<button class="race-card '+(d.race===r.id?'active':'')+'" data-race="'+r.id+'"><strong>'+r.icon+'</strong><div><b>'+r.id+'</b><small>'+r.trait+'</small><p>'+esc(identity?.strength||r.lore)+'</p></div></button>'}).join('')+'</div><footer><span></span><button class="on-primary" data-next-step="class">CONTINUE TO CLASS →</button></footer></section>';
-  }else if(builderStep==='class'){
-    panel='<section class="creator-panel"><header><small>STEP 2 OF 4</small><h2>Choose a class</h2><p>Choose the class for this '+ROLE_LABEL[slot.role].toLowerCase()+'. Talent paths are chosen later in the game.</p></header><div class="class-grid creator-choice-grid">'+classes.map(o=>{const ci=window.CellboundIdentities?.getSpec?.(o.klass,o.spec);return '<button class="class-choice '+(d.klass===o.klass?'active':'')+'" data-class="'+o.klass+'" data-spec="'+o.spec+'" style="--class-glow:'+o.glow+'"><strong>'+o.icon+'</strong><div><b>'+o.klass+'</b><small>'+esc(ROLE_LABEL[slot.role])+' · TALENTS CHOSEN IN GAME</small><p>'+esc(ci?.strength||'Reliable in this role.')+'</p></div></button>'}).join('')+'</div><footer><button class="creator-back" data-prev-step="race"><span class="creator-back-arrow">←</span><span>BACK TO RACE</span></button><button class="on-primary" data-next-step="appearance">CONTINUE TO APPEARANCE →</button></footer></section>';
-  }else if(builderStep==='appearance'){
-    const appearanceEditor=CP?.editorHTML?.(d.appearance,{characterClass:d.klass,name:d.name,race:d.race})||'';
-    panel='<section class="creator-panel creator-appearance"><header><small>STEP 3 OF 4</small><h2>Appearance</h2><p>Shape the face you will recognise throughout Cellbound.</p></header><div class="creator-editor">'+appearanceEditor+'</div><footer><button class="creator-back" data-prev-step="class"><span class="creator-back-arrow">←</span><span>BACK TO CLASS</span></button><button class="on-primary" data-next-step="confirm">CONTINUE TO CONFIRM →</button></footer></section>';
-  }else{
-    const formation=draft.map((x,i)=>'<button class="creator-confirm-member '+(i===activeSlot?'active':'')+'" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('');
-    panel='<section class="creator-panel creator-confirm"><header><small>STEP 4 OF 4</small><h2>Confirm your party</h2><p>Name this adventurer, then check all five before entering Zeltira.</p></header><div class="name-builder creator-name"><input id="onboardName" maxlength="24" value="'+esc(d.name)+'" autocomplete="off" placeholder="Adventurer name"><button id="randomiseName">RANDOMISE</button></div><div class="creator-confirm-grid">'+formation+'</div><footer><button class="creator-back" data-prev-step="appearance"><span class="creator-back-arrow">←</span><span>BACK TO APPEARANCE</span></button><button id="confirmParty" class="on-primary" '+(allValid?'':'disabled')+'>CONFIRM PARTY & ENTER ZELTIRA →</button></footer><p class="builder-hint">'+(allValid?'Your charter is ready.':'All five characters need unique names of at least 2 characters.')+'</p></section>';
-  }
-
-  const body='<div class="character-creator"><nav class="creator-steps">'+stepNav+'</nav><div class="creator-stage">'+hero+'<main>'+panel+'</main></div></div>';
-  const root=ensureRoot();root.innerHTML=chrome(body,'party-builder');
-
-  root.querySelectorAll('[data-builder-step]').forEach(btn=>btn.onclick=()=>{if(!btn.disabled){builderStep=btn.dataset.builderStep;renderPartyBuilder()}});
-  root.querySelectorAll('[data-next-step]').forEach(btn=>btn.onclick=()=>{builderStep=btn.dataset.nextStep;renderPartyBuilder()});
-  root.querySelectorAll('[data-prev-step]').forEach(btn=>btn.onclick=()=>{builderStep=btn.dataset.prevStep;renderPartyBuilder()});
-  root.querySelectorAll('[data-slot]').forEach(btn=>btn.onclick=()=>{activeSlot=Number(btn.dataset.slot);builderStep='race';renderPartyBuilder()});
-  root.querySelectorAll('[data-race]').forEach(btn=>btn.onclick=()=>{d.race=btn.dataset.race;d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));d.appearance=CP?.randomAppearance?.(d.race)||{race:d.race};saveDraft();renderPartyBuilder()});
-  root.querySelectorAll('[data-class]').forEach(btn=>btn.onclick=()=>{d.klass=btn.dataset.class;d.spec=btn.dataset.spec;saveDraft();renderPartyBuilder()});
-  const input=$('#onboardName');
-  if(input)input.oninput=e=>{d.name=e.target.value;saveDraft();const btn=$('#confirmParty');if(btn)btn.disabled=!(draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5)};
-  $('#randomiseName')?.addEventListener('click',()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));saveDraft();renderPartyBuilder()});
-  if(builderStep==='appearance')CP?.bindEditor?.(root,d.appearance,()=>{saveDraft();renderPartyBuilder()},{characterClass:d.klass,name:d.name,race:d.race});
-  $('#confirmParty')?.addEventListener('click',createParty);
+  const d=draft[activeSlot],slot=SLOTS[activeSlot];
+  const valid=()=>draft.every(x=>x.name.trim().length>=2&&x.name.trim().length<=24)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
+  const root=ensureRoot();root.innerHTML=chrome('<div data-creation-mount></div>','party-builder');
+  window.CellboundCharacterForge.render({mount:root.querySelector('[data-creation-mount]'),draft:d,step:builderStep,
+    races:RACES,classes:roleOptions(slot.role),title:'Assemble your five adventurers',confirmTitle:'Confirm your founding guild',confirmLabel:'CONFIRM THE FIVE & ENTER ZELTIRA →',
+    partyHTML:'<div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+forgeAvatar(x)+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div>',
+    confirmHTML:'<div class="creator-confirm-grid">'+draft.map((x,i)=>'<button class="creator-confirm-member" data-slot="'+i+'">'+forgeAvatar(x)+'<span><b>'+esc(x.name)+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('')+'</div>',
+    hint:valid()?'Your charter is ready.':'All five characters need unique names of at least 2 characters.',valid:valid(),isValid:valid,
+    onStep:step=>{builderStep=step;renderPartyBuilder()},onSlot:i=>{activeSlot=i;builderStep='form';renderPartyBuilder()},
+    onChange:()=>{saveDraft();renderPartyBuilder()},onName:()=>saveDraft(),
+    onRandomName:()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name))},onConfirm:createParty
+  });
 }
 function emptyEquipment(){
   return{Head:null,Chest:null,Weapon:null,Shoulders:null,Hands:null,Waist:null,Legs:null,Feet:null,OffHand:null,Ring1:null,Ring2:null,Trinket1:null,Trinket2:null,Relic:null};
@@ -233,7 +289,7 @@ async function createParty(){
   s.renown=0;s.gold=250;s.bank=[];s.materials={};s.consumables=[];s.recipeScrolls=[];s.discoveredRecipes=[];s.tradeInbox=[];s.collectionHistory=[];s.reports=[];s.bossKills={ashwarden:false,embermaw:false,vaultheart:false};s.progression={ashenVaultUnlocked:false};s.questSystem=null;
   s.activity=['Your first party has been formed.','The road to Zeltira is open.'];
   s.onboarding={version:3,complete:false,stage:'zeltira-arrival',zone:'zeltira',startedAt:s.onboarding?.startedAt||new Date().toISOString(),partyCreatedAt:new Date().toISOString(),firstExpeditionClues:[]};
-  Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);render();
+  Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);roster.forEach(ch=>window.CellboundAnalytics?.characterCreated?.(ch,'onboarding'));render();
   window.CellboundFX?.story?.('The Gate at Dusk','Five names are on the charter. Zeltira is waiting.',{eyebrow:'WELCOME TO CELLBOUND',tone:'story',duration:1600,particles:true});
 }
 
@@ -249,8 +305,8 @@ function tutorialComicConfig(id){
       line:'Five names, fresh ink. I was going to give you a quiet first night.',
       panels:[
         {kind:'location',artwork:'./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp',eyebrow:'ZELTIRA · DUSK',title:'A city that should be settling down.',text:'Instead, wardens are clearing the western streets and the Cell Well has gone strangely quiet.',icon:'◇'},
-        {kind:'npc',speaker:'ELARA VEY',eyebrow:'PATHFINDER',title:'A warning at the gate',text:'The Cell Well flashed twice before sunset. Something beneath the west wall answered it.'},
-        {kind:'gate',eyebrow:'WEST WALL',title:'A dead wardstone is awake.',text:'It has not answered the Cell Well in living memory.',icon:'⌁'}
+        {artwork:'./assets/comics/tutorial-2026/twilight-evacuation.webp',kind:'npc',speaker:'ELARA VEY',eyebrow:'PATHFINDER',title:'A warning at the gate',text:'The Cell Well flashed twice before sunset. Something beneath the west wall answered it.'},
+        {artwork:'./assets/comics/tutorial-2026/wardstone-twilight.webp',kind:'gate',eyebrow:'WEST WALL',title:'A dead wardstone is awake.',text:'It has not answered the Cell Well in living memory.',icon:'⌁'}
       ],
       choices:[
         {id:'what-happened',icon:'?',label:'What happened at the west wall?',reply:'A wardstone woke. Patrol lanterns died. I need eyes on the scene before I send soldiers underground.'},
@@ -264,8 +320,8 @@ function tutorialComicConfig(id){
       line:'Do not tell me what you think is down there. Tell me what the stone is doing.',
       panels:[
         {kind:'location',artwork:'./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp',eyebrow:'AFTER SUNSET',title:'The street is empty.',text:'Three details do not belong here. None means much alone.',icon:'☾'},
-        {kind:'clue',eyebrow:'EVIDENCE',title:'Fresh fracture',text:'Pale roots grow out of a new crack — away from something below.',icon:'⌁'},
-        {kind:'clue',eyebrow:'EVIDENCE',title:'Dead lantern & warm wardstone',text:'One has been drained white. The other pulses toward the Hollows.',icon:'◇'}
+        {artwork:'./assets/comics/tutorial-2026/investigating-tracks.webp',kind:'clue',eyebrow:'EVIDENCE',title:'Fresh fracture',text:'Pale roots grow out of a new crack — away from something below.',icon:'⌁'},
+        {artwork:'./assets/comics/tutorial-2026/arcane-trail.webp',kind:'clue',eyebrow:'EVIDENCE',title:'Dead lantern & warm wardstone',text:'One has been drained white. The other pulses toward the Hollows.',icon:'◇'}
       ],
       choices:[
         {id:'fracture',icon:'⌁',label:'Start with the fresh fracture.',reply:'Then ask why the roots are growing away from the crack. The direction matters.'},
@@ -279,8 +335,8 @@ function tutorialComicConfig(id){
       line:'Same Item Level does not mean same value. Read the roll before you hand steel to '+leadName+'.',
       panels:[
         {kind:'loot',artwork:'./assets/comics/tutorial/the_quartermaster_s_choice.webp',eyebrow:'QUARTERMASTER',title:'Two weapons. One decision.',text:'Both are equally advanced. Their bonus stats are not equally useful.',icon:'⚔'},
-        {kind:'npc',eyebrow:'THE LESSON',title:'Item Level tells you power.',text:'The stat roll tells you who actually wants the item.'},
-        {kind:'clue',eyebrow:'YOUR FRONT LINE',title:leadName,text:'Choose the roll that supports what your Tank is trying to do.',icon:'◆'}
+        {artwork:'./assets/comics/tutorial-2026/arcane-armory.webp',kind:'npc',eyebrow:'THE LESSON',title:'Item Level tells you power.',text:'The stat roll tells you who actually wants the item.'},
+        {artwork:'./assets/comics/tutorial-2026/sunset-briefing.webp',kind:'clue',eyebrow:'YOUR FRONT LINE',title:leadName,text:'Choose the roll that supports what your Tank is trying to do.',icon:'◆'}
       ],
       choices:[
         {id:'explain-rolls',icon:'?',label:'Explain the difference in rolls.',reply:'Threat, Block, Stamina and Armour help a Tank do the job. A different spec may chase entirely different stats.'},
@@ -294,8 +350,8 @@ function tutorialComicConfig(id){
       line:'The Pathfinder ward can pull you out if all five fall. It cannot make good decisions for you.',
       panels:[
         {kind:'gate',artwork:'./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp',eyebrow:'SEALED DESCENT',title:'The resonance ends underground.',text:'Roots press through masonry older than modern Zeltira.',icon:'▽'},
-        {kind:'npc',eyebrow:'ELARA',title:'Watch the party, not just the boss.',text:'Threat, healing, interrupts and movement tell you why a fight succeeds.'},
-        {kind:'location',eyebrow:'THREE ENCOUNTERS',title:'Nest · Gallery · Warden',text:'The tutorial uses the same combat language as the rest of Cellbound.',icon:'⚔'}
+        {artwork:'./assets/comics/tutorial-2026/descent.webp',kind:'npc',eyebrow:'ELARA',title:'Watch the party, not just the boss.',text:'Threat, healing, interrupts and movement tell you why a fight succeeds.'},
+        {artwork:'./assets/comics/tutorial-2026/violet-catacombs.webp',kind:'location',eyebrow:'THREE ENCOUNTERS',title:'Nest · Gallery · Warden',text:'The tutorial uses the same combat language as the rest of Cellbound.',icon:'⚔'}
       ],
       choices:[
         {id:'wipe',icon:'◇',label:'What happens if all five fall?',reply:'The ward extracts you this once. Outside training, failure leaves Cell Shock on everyone who went in.'},
@@ -306,11 +362,11 @@ function tutorialComicConfig(id){
     loot:{
       theme:'zeltira',eyebrow:'AFTER THE HOLLOW WARDEN',title:'What the Warden Kept',subtitle:'Zeltira · Guild Bank',page:'V · SPOILS',
       speaker:'Warden Elara Vey',speakerRole:'POST-EXPEDITION',speakerMark:'EV',
-      line:'A drop is not progress until you decide what to do with it.',
+      line:'Found something useful? Check who can equip it.',
       panels:[
         {kind:'loot',artwork:'./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp',eyebrow:'BOSS DROP',title:'A new item reaches the Guild Bank.',text:'Nothing equips itself. The guild owns the decision.',icon:'✦'},
-        {kind:'clue',eyebrow:'RANDOM ROLLS',title:'The name can repeat. The stats can change.',text:'A future copy at the same Item Level may still be an upgrade.'},
-        {kind:'location',eyebrow:'GUILD BANK',title:'Read · compare · assign',text:'Class restrictions and spec fit matter before the item leaves storage.',icon:'▦'}
+        {artwork:'./assets/comics/tutorial-2026/lost-crystal-vault.webp',kind:'clue',eyebrow:'RANDOM ROLLS',title:'The name can repeat. The stats can change.',text:'A future copy at the same Item Level may still be an upgrade.'},
+        {artwork:'./assets/comics/tutorial-2026/arcane-relic.webp',kind:'location',eyebrow:'GUILD BANK',title:'Read · compare · assign',text:'Class restrictions and spec fit matter before the item leaves storage.',icon:'▦'}
       ],
       choices:[
         {id:'why-bank',icon:'▦',label:'Why does loot go to the Bank first?',reply:'Because your guild manages the roster. Drops should create decisions, not silently replace equipment.'},
@@ -324,8 +380,8 @@ function tutorialComicConfig(id){
       line:'The ward spared your roster the penalty. It did not erase what failure normally costs.',
       panels:[
         {kind:'shock',artwork:'./assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp',eyebrow:'ONE WIPE',title:'25% Cell Shock',text:'Failure creates pressure instead of deleting your progress.',icon:'◇'},
-        {kind:'shock',eyebrow:'PRESSURE BUILDS',title:'25 · 50 · 75 · 100',text:'At the cap, that adventurer cannot immediately go back in.'},
-        {kind:'npc',eyebrow:'THE POINT',title:'Your next decision changes.',text:'Use another character, recover, or prepare better for the next attempt.'}
+        {artwork:'./assets/comics/tutorial-2026/twilight-siege.webp',kind:'shock',eyebrow:'PRESSURE BUILDS',title:'25 · 50 · 75 · 100',text:'At the cap, that adventurer cannot immediately go back in.'},
+        {artwork:'./assets/comics/tutorial-2026/wardstone-twilight.webp',kind:'npc',eyebrow:'THE POINT',title:'Your next decision changes.',text:'Use another character, recover, or prepare better for the next attempt.'}
       ],
       choices:[
         {id:'delete',icon:'?',label:'Does a wipe delete our progress?',reply:'No. Your items and completed objectives remain. Cell Shock changes availability, not ownership.'},
@@ -339,8 +395,8 @@ function tutorialComicConfig(id){
       line:'Dungeon reagents are not vendor rubbish. They become preparation for the next fight.',
       panels:[
         {kind:'craft',artwork:'./assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp',eyebrow:'REAGENTS',title:'The Hollows left materials behind.',text:'Faded Cell Fragments and Zeltiran Iron are useful because professions consume them.',icon:'⚒'},
-        {kind:'npc',eyebrow:'PROFESSIONS',title:'Power with an expiry date',text:'Enhancements, flasks, runes and potions complement dungeon gear rather than replacing it.'},
-        {kind:'loot',eyebrow:'FIRST CRAFT',title:'Choose who learns.',text:'Profession ownership belongs to a character and persists beyond the tutorial.',icon:'⚗'}
+        {artwork:'./assets/comics/tutorial-2026/arcane-armory.webp',kind:'npc',eyebrow:'PROFESSIONS',title:'Power with an expiry date',text:'Enhancements, flasks, runes and potions complement dungeon gear rather than replacing it.'},
+        {artwork:'./assets/comics/tutorial-2026/arcane-relic.webp',kind:'loot',eyebrow:'FIRST CRAFT',title:'Choose who learns.',text:'Profession ownership belongs to a character and persists beyond the tutorial.',icon:'⚗'}
       ],
       choices:[
         {id:'replace',icon:'?',label:'Does crafting replace dungeon gear?',reply:'No. The strongest foundation still comes from quests and dungeons. Professions prepare that gear and the people wearing it.'},
@@ -354,8 +410,8 @@ function tutorialComicConfig(id){
       line:'No more training contract. Three supply carts are missing, and the ash in their wheel ruts came from a forge that has been cold for eighteen years.',
       panels:[
         {kind:'location',artwork:'./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp',eyebrow:'EAST ROAD',title:'Three carts never arrived.',text:'Patrols found wreckage beyond the city as the sun came up.',icon:'♜'},
-        {kind:'clue',eyebrow:'THE ODD DETAIL',title:'Furnace ash in the ruts',text:'The nearest matching forge should have been dead for eighteen years.',icon:'✦'},
-        {kind:'gate',eyebrow:'YOUR FIRST REAL QUEST',title:'Ashes on the East Road',text:'Story, investigation, combat and the road toward The Ashen Vault.',icon:'→'}
+        {artwork:'./assets/comics/tutorial-2026/investigating-tracks.webp',kind:'clue',eyebrow:'THE ODD DETAIL',title:'Furnace ash in the ruts',text:'The nearest matching forge should have been dead for eighteen years.',icon:'✦'},
+        {artwork:'./assets/comics/tutorial-2026/arcane-trail.webp',kind:'gate',eyebrow:'YOUR FIRST REAL QUEST',title:'Ashes on the East Road',text:'Story, investigation, combat and the road toward The Ashen Vault.',icon:'→'}
       ],
       choices:[
         {id:'what-happened',icon:'?',label:'What happened to the carts?',reply:'That is what I am paying you to discover. Start with the first wreck and do not assume the obvious answer is the right one.'},
@@ -369,8 +425,8 @@ function tutorialComicConfig(id){
       line:'You have five people, a little gear and enough experience to know what can go wrong. That is more than most charters get.',
       panels:[
         {kind:'location',artwork:'./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp',eyebrow:'DAWN',title:'The eastern gate opens.',text:'For the first time, the route ahead belongs entirely to your guild.',icon:'☼'},
-        {kind:'npc',eyebrow:'ELARA',title:'No more training ward',text:'The systems you learned remain. The safety net does not.'},
-        {kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Raid',text:'Your first real adventure starts here.',icon:'→'}
+        {artwork:'./assets/comics/tutorial-2026/sunset-briefing.webp',kind:'npc',eyebrow:'ELARA',title:'No more training ward',text:'The systems you learned remain. The safety net does not.'},
+        {artwork:'./assets/comics/tutorial-2026/twilight-evacuation.webp',kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Raid',text:'Elara has given you a contract: Ashes on the East Road.',icon:'→'}
       ],
       choices:[
         {id:'advice',icon:'?',label:'Any final advice?',reply:'Read the fight. Read the item. Read the room. Most bad outcomes tell you what you missed.'},
@@ -379,7 +435,11 @@ function tutorialComicConfig(id){
       ]
     }
   };
-  return scenes[id]||null
+  const scene=scenes[id];if(!scene)return null;
+  // Preserve newer hand-curated scene artwork; only make the three-panel
+  // reading order explicit rather than replacing the illustrations.
+  scene.progressive=true;scene.nextLabel='NEXT PANEL →';scene.continueLabel='CONTINUE →';
+  return scene
 }
 function comicSeen(id){
   const s=state();return Boolean(s?.onboarding?.comicSeen?.[id])
@@ -400,7 +460,7 @@ function maybeTutorialComic(id){
 }
 async function previewTutorialComics(){
   const C=window.CellboundComicScenes;if(!C?.show)return false;
-  const ids=['arrival','west-wall','gear','hollows','loot','contract','departure'];
+  const ids=['arrival','west-wall','gear','hollows','loot','shock','craft','contract','departure'];
   for(const id of ids){const cfg=tutorialComicConfig(id);if(cfg)await C.show({...cfg,eyebrow:'DEV PREVIEW · '+cfg.eyebrow})}
   return true
 }
@@ -423,17 +483,17 @@ async function setStage(next,extra){
   const moments={
     'first-expedition':['FIELD CONTRACT','The First Resonance','Read the scene. Follow what the Cell is telling you.','story'],
     'dungeon-briefing':['EXPEDITION READY','Below Zeltira','Your first real descent is waiting.','danger'],
-    'loot-review':['FIRST SPOILS','What the Warden Kept','Power is only useful if you understand what dropped.','gold'],
+    'loot-review':['FIRST SPOILS','What the Warden Kept','Check the item before choosing who wears it.','gold'],
     'recovery-lesson':['CONSEQUENCE','The Cost of Failure','Cell Shock turns a wipe into a decision that follows your party home.','danger'],
     'profession-choice':['PROFESSIONS','Craft Row','Turn recovered materials into preparation for the next fight.','cell'],
-    'quest-lesson':['THE WORLD OPENS','The East Road','Dungeons are not the whole story. Follow contracts, clues and people.','story'],
+    'quest-lesson':['EAST ROAD CONTRACT','The East Road','Quests unlock new areas and lead to the next dungeon.','story'],
     'departure':['FIRST CONTRACT','Beyond Zeltira','Your guild is ready to choose its own path.','gold']
   },m=moments[next];
   if(m)window.CellboundFX?.story?.(m[1],m[2],{eyebrow:m[0],tone:m[3],duration:1350});
 }
 function renderArrival(){
   if(maybeTutorialComic('arrival'))return;
-  const body='<div class="zeltira-layout"><main>'+zeltiraMap('gate')+'</main><aside class="z-guide"><small>ZELTIRA · OUTER GATE</small><h2>Your charter arrives at the wrong moment.</h2><p class="guide-quote">“Five names, fresh ink. I was going to give you a quiet first night.”</p><div class="guide-name"><b>Warden Elara Vey</b><span>Zeltira Pathfinder</span></div><p>The Cell Well flashed twice before sunset. A wardstone beneath the west wall answered it. That stone has been dead longer than anyone here has been alive.</p><div class="first-expedition-hook"><span>NEW CONTRACT</span><b>The First Resonance</b><small>Inspect the west wall before whatever is below it reaches the city proper.</small></div><div class="z-party-list">'+partySummary()+'</div><button id="answerResonance" class="on-primary">GO TO THE WEST WALL →</button></aside></div>';
+  const body='<div class="zeltira-layout"><main>'+zeltiraMap('gate')+'</main><aside class="z-guide"><small>ZELTIRA · OUTER GATE</small><h2>Something is wrong at Zeltira’s west wall.</h2><p class="guide-quote">“Five names, fresh ink. I was going to give you a quiet first night.”</p><div class="guide-name"><b>Warden Elara Vey</b><span>Zeltira Pathfinder</span></div><p>The Cell Well flashed twice before sunset. A wardstone beneath the west wall answered it. That stone has been dead longer than anyone here has been alive.</p><div class="first-expedition-hook"><span>NEW CONTRACT</span><b>The First Resonance</b><small>Inspect the west wall before whatever is below it reaches the city proper.</small></div><div class="z-party-list">'+partySummary()+'</div><button id="answerResonance" class="on-primary">GO TO THE WEST WALL →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'zeltira-arrival');
   $('#answerResonance')?.addEventListener('click',()=>setStage('first-expedition'));
 }
@@ -448,8 +508,8 @@ function renderFirstExpedition(){
   ];
   const cards=clues.map(x=>'<button class="resonance-clue '+(seen.has(x.id)?'seen':'')+'" data-resonance-clue="'+x.id+'"><i>'+x.icon+'</i><span><small>'+(seen.has(x.id)?'INSPECTED':'UNKNOWN')+'</small><b>'+x.title+'</b><p>'+(seen.has(x.id)?x.text:'Inspect this part of the scene.')+'</p></span></button>').join('');
   const ready=seen.size===clues.length;
-  const deduction=ready?'<section class="resonance-deduction"><small>FIELD DEDUCTION</small><h3>What connects the three signs?</h3><button data-resonance-answer="wrong">The west wall is simply failing from age.</button><button data-resonance-answer="correct">Something below Zeltira is drawing Cell energy and the wardstone is pointing toward the Hollows.</button><button data-resonance-answer="wrong">The patrol deliberately disabled the wardstone.</button><p id="resonanceHint">Elara asked for evidence, not a guess.</p></section>':'<section class="resonance-deduction locked"><small>FIELD DEDUCTION</small><h3>Inspect all three signs first.</h3><p>Nothing here is dramatic on its own. The pattern matters.</p></section>';
-  const body='<div class="first-expedition-layout"><main><div class="resonance-scene"><div class="resonance-scene-head"><small>WEST WALL · AFTER SUNSET</small><h2>The First Resonance</h2><p>The street has been cleared. The Cell Well is quiet now, but the old stone beneath your feet is not.</p></div><div class="resonance-clue-grid">'+cards+'</div>'+deduction+'</div></main><aside class="z-guide"><small>WARDEN ELARA VEY</small><h2>Read the scene before you move.</h2><p class="guide-quote">“Do not tell me what you think is down there. Tell me what the stone is doing.”</p><div class="resonance-progress"><span>Evidence found</span><b>'+seen.size+' / '+clues.length+'</b><div><i style="width:'+(seen.size/clues.length*100)+'%"></i></div></div><p>Cellbound is a management game, but your decisions come from what the world shows you. This is the first one.</p></aside></div>';
+  const deduction=ready?'<section class="resonance-deduction"><small>FIELD DEDUCTION</small><h3>What connects the three signs?</h3><button data-resonance-answer="wrong">The west wall is simply failing from age.</button><button data-resonance-answer="correct">Something below Zeltira is drawing Cell energy and the wardstone is pointing toward the Hollows.</button><button data-resonance-answer="wrong">The patrol deliberately disabled the wardstone.</button><p id="resonanceHint">Elara asked for evidence, not a guess.</p></section>':'<section class="resonance-deduction locked"><small>FIELD DEDUCTION</small><h3>Inspect all three signs first.</h3><p>Look at the fracture, lantern and wardstone together.</p></section>';
+  const body='<div class="first-expedition-layout"><main><div class="resonance-scene"><div class="resonance-scene-head"><small>WEST WALL · AFTER SUNSET</small><h2>The First Resonance</h2><p>The street has been cleared. The Cell Well is quiet now, but the old stone beneath your feet is not.</p></div><div class="resonance-clue-grid">'+cards+'</div>'+deduction+'</div></main><aside class="z-guide"><small>WARDEN ELARA VEY</small><h2>Read the scene before you move.</h2><p class="guide-quote">“Do not tell me what you think is down there. Tell me what the stone is doing.”</p><div class="resonance-progress"><span>Evidence found</span><b>'+seen.size+' / '+clues.length+'</b><div><i style="width:'+(seen.size/clues.length*100)+'%"></i></div></div><p>Inspect the three clues, then choose the explanation that fits.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'first-expedition');
   $$('[data-resonance-clue]').forEach(b=>b.onclick=()=>{
     const set=new Set(Array.isArray(s.onboarding.firstExpeditionClues)?s.onboarding.firstExpeditionClues:[]);
@@ -499,7 +559,7 @@ function renderDungeonBriefing(){
   const body='<div class="tutorial-descent-brief">'+
     '<main class="tutorial-descent-hero"><div class="tutorial-descent-art"><img src="./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp" alt=""><div></div><span>THE ZELTIRAN HOLLOWS</span><h2>The wardstone is pointing down.</h2><p>Your first descent is a real fight. Choose the party’s focus, read the mechanics and carry the result forward.</p></div>'+
     '<div class="tutorial-route-v4"><article><i>01</i><span><small>THREAT</small><b>Rootling Nest</b><p>Call the opening pull and watch who owns the enemies.</p></span></article><article><i>02</i><span><small>INTERRUPTS</small><b>Collapsed Gallery</b><p>A dangerous cast forces you to decide what deserves attention.</p></span></article><article><i>03</i><span><small>MOVEMENT</small><b>Hollow Warden</b><p>Read real telegraphs while the party fights the boss.</p></span></article></div></main>'+
-    '<aside class="tutorial-command-brief"><small>WARDEN ELARA · FIELD BRIEF</small><h2>You give the order. Then you watch what it costs.</h2><p class="guide-quote">“A guild master does not swing five weapons. You make the call that decides where those weapons are when it matters.”</p>'+
+    '<aside class="tutorial-command-brief"><small>WARDEN ELARA · FIELD BRIEF</small><h2>Set the party’s orders.</h2><p class="guide-quote">“Your Tank takes the first hit. The others need to know what to do when things go wrong.”</p>'+
     '<div class="tutorial-party-check"><div><span>TANK</span><b>'+esc(tank?.name||'Your Tank')+'</b></div><div><span>HEALER</span><b>'+esc(healer?.name||'Your Healer')+'</b></div><div><span>DAMAGE</span><b>'+Math.max(0,roster.filter(c=>tdRole(c)==='dps').length)+' ready</b></div></div>'+
     '<div class="tutorial-live-contract"><strong>LIVE COMBAT</strong><span>Real positions · threat · class resources · casts · interrupts · healing · telegraphs · damage meters</span></div>'+
     '<button id="enterTutorialDungeon" class="on-primary">OPEN THE DESCENT →</button></aside></div>';
@@ -931,8 +991,9 @@ function tdMechanicTelegraph(e){
 function tdRenderCombatEvent(e,telegraphs){
   if(tutorialCombatStats)tutorialCombatStats.elapsed=Math.max(Number(tutorialCombatStats.elapsed)||0,Number(e.timestamp)||0);
   const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
-  try{window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tdArena'),resolve:id=>{const sel=tdSelectorFor(id);return sel?$(sel):null},speed:1})}catch(error){console.warn('First Expedition living combat visual skipped',e?.type,error)}
-  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:1}))return}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
+  try{window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tdArena'),resolve:id=>{const sel=tdSelectorFor(id);return sel?$(sel):null},speed:combatRate(1)})}catch(error){console.warn('First Expedition living combat visual skipped',e?.type,error)}
+ const present=fn=>{const feedback=window.CellboundCombatFX?.presentImpact;feedback?feedback(e,fn):fn()};
+  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:combatRate(1)}))return}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
   switch(e.type){
     case'COMBAT_START':tdFeed('The pull begins.');break;
     case'MOVEMENT_START':
@@ -942,14 +1003,14 @@ function tdRenderCombatEvent(e,telegraphs){
       break;
     case'DAMAGE_DEALT':
       if(targetSel){
-        const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdFloat(targetSel,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');
+        const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));present(()=>tdFloat(targetSel,(/miss|dodg|immune|resist/.test(e.result||'')?String(e.result).toUpperCase():(e.result==='blocked'?'BLOCK ':'')+'-'+Math.round(Number(e.amount)||0)),targetChar?'incoming':'damage'));
         if(targetChar)tdSetPartyHpByEvent(targetChar,p);
         else{const idx=Number(String(e.target||'').slice(2));if(Number.isInteger(idx))setTdHp(idx,(Number(e.payload?.targetHp)||0))}
       }
       if(srcChar&&tutorialCombatStats){tutorialCombatStats.damage[srcChar.id]=(Number(tutorialCombatStats.damage[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
       break;
     case'HEAL_RECEIVED':
-      if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
+      if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);present(()=>tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal'))}
       if(srcChar&&tutorialCombatStats){tutorialCombatStats.healing[srcChar.id]=(Number(tutorialCombatStats.healing[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
       break;
     case'THREAT_GENERATED':
@@ -994,36 +1055,36 @@ function tdRenderCombatEvent(e,telegraphs){
     case'COMBAT_END':tdGlobalCastClear();tdFeed(e.result==='victory'?'Encounter clear.':'The Pathfinder ward pulls the party clear.');break;
   }
 }
-async function tdPlayCombat(result,my){
-  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0)),telegraphs={};
-  if(!events.length)return result?.outcome==='victory';
-  return await new Promise(resolve=>{
-    let index=0,simTime=0,wallAnchor=Date.now(),finished=false,raf=0;
-    const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
-    const frame=()=>{
-      if(finished)return;
-      if(my!==tutorialToken){finish(false);return}
-      simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor));
-      const frameStarted=performance.now();let handled=0;
-      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
-        const event=events[index++];handled++;
-        try{tdRenderCombatEvent(event,telegraphs)}
-        catch(error){console.warn('First Expedition combat visual recovered',event?.type,event?.ability,error)}
-      }
-      if(index>=events.length){finish(result?.outcome==='victory');return}
-      raf=requestAnimationFrame(frame)
-    };
-    raf=requestAnimationFrame(frame)
-  })
+async function tdPlayCombat(session,result,my){
+ const telegraphs={};if(!session?.advance)return false;
+ const renderEvents=events=>{for(const event of events||[]){try{tdRenderCombatEvent(event,telegraphs)}catch(error){console.warn('First Expedition live combat visual recovered',event?.type,event?.ability,error)}}};
+ renderEvents(session.drainEvents?.()||[]);
+ return await new Promise(resolve=>{
+  let finished=false,raf=0,lastWall=performance.now();
+  const finish=(value,finalResult=null)=>{
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+   const final=finalResult||session.snapshot?.()||result;if(final)try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}
+   resolve(value)
+  };
+  const frame=now=>{
+   if(finished)return;if(my!==tutorialToken){finish(false);return}
+   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   const delta=Math.max(0,Math.min(250,now-lastWall))*combatRate(1);lastWall=now;
+   const step=session.advance(delta);if(step.events?.length)renderEvents(step.events);
+   if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
+   raf=requestAnimationFrame(frame)
+  };
+  raf=requestAnimationFrame(frame)
+ })
 }
 async function fightTdPack(encounter,my){
   spawnTdEnemies(encounter);await sleep(350);
-  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+  const C=window.CellboundCombatStandard;if(!C?.createLiveSession)throw new Error('Real-time Combat Reborn standard gateway unavailable');
   const roster=state().roster;
   roster.forEach(c=>tdSetPartyHpByEvent(c,100));
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
   if(tutorialCombatStats){tutorialCombatStats.threat=Object.fromEntries(roster.map(c=>[c.id,0]));tutorialCombatStats.aggro=null;tutorialCombatStats.currentEnemy=encounter.name;tdRenderMeters()}
-  const result=C.simulate({
+  const liveOptions={
     party:combatParty,
     encounter:{
       id:encounter.id,title:encounter.name,kind:encounter.combatKind||(encounter.boss?'boss':'trash'),
@@ -1032,8 +1093,8 @@ async function fightTdPack(encounter,my){
     },
     tactics:{interruptPriority:'high',addPriority:'immediate',defensiveUsage:'aggressive',pullStyle:'safe',movementDiscipline:'safety'},
     seed:['zeltira-first-expedition',my,encounter.id].join(':')
-  },{zone:'zeltira-first-expedition'});
-  const won=await tdPlayCombat(result,my);
+  },liveMeta={zone:'zeltira-first-expedition'},session=C.createLiveSession(liveOptions,liveMeta),result=session.snapshot();
+  const won=await tdPlayCombat(session,result,my);
   if(!won){
     tdFeed('The Pathfinder ward pulls the five back from the brink. Elara resets the approach.');
     return false
@@ -1048,15 +1109,15 @@ async function runTutorialDungeon(){
 }
 function tutorialLootItem(){
   const s=state(),id=s?.onboarding?.tutorialLootBankId;
-  return (s?.bank||[]).find(x=>x.id===id)||null;
+  return (s?.bank||[]).find(x=>x.id===id)||[...(s?.bank||[])].reverse().find(x=>x.source==='Zeltiran Hollows · Hollow Warden')||null;
 }
 function renderLootReview(){
   if(maybeTutorialComic('loot'))return;
   const s=state(),item=tutorialLootItem();
-  if(!item){s.onboarding.stage='quest-lesson';s.onboarding.coreTrainingComplete=true;Game.save();render();return}
+  if(!item){s.onboarding.stage='recovery-lesson';Game.save();render();return}
   const eligible=s.roster.filter(ch=>item.class===ch.class||item.classes==='all'||item.classes?.includes?.(ch.class));
   const stats=(G.statLines?.(item)||[]).map(x=>x.text).join(' · ')||'No bonus stats';
-  const body='<div class="loot-school"><main><small>ZELTIRA · GUILD BANK</small><h2>The boss dropped an item. It does not equip itself.</h2><p>Drops are secured in the Guild Bank first. Read the roll, choose who benefits, then assign the item.</p><article class="tutorial-loot-card">'+G.artHTML(item,104)+'<div><small>'+esc(item.rarity||'GEAR')+' · '+esc(item.slot)+' · ITEM LEVEL '+(item.itemLevel||0)+'</small><h3>'+esc(item.name)+'</h3><div class="tutorial-loot-stats">'+(G.statLines?.(item)||[]).map(x=>'<span>'+esc(x.text)+'</span>').join('')+'</div><p>Dropped by the Hollow Warden · currently stored in the Guild Bank</p></div></article><div class="gear-school-rule"><b>Dungeon rolls are not fixed</b><span>If this same item drops again, its bonus stat can be different. A bad roll can be replaced later even when the Item Level is unchanged.</span></div></main><aside class="z-guide"><small>ASSIGN THE DROP</small><h2>Who should wear it?</h2><p>This item is restricted by class. The labels below compare its rolled stat against each compatible character’s current spec.</p><div class="tutorial-loot-characters">'+eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return '<button data-tutorial-loot-char="'+ch.id+'"><span>'+esc(ch.portrait)+'</span><div><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+'</small><em class="'+esc(fit?.tone||'')+'">'+esc(fit?.label||'COMPATIBLE')+'</em></div></button>'}).join('')+'</div><p class="tutorial-roll-summary">'+esc(stats)+'</p></aside></div>';
+  const body='<div class="loot-school"><main><small>ZELTIRA · GUILD BANK</small><h2>The boss dropped equipment. Choose who gets it.</h2><p>Drops are secured in the Guild Bank first. Read the roll, choose who benefits, then assign the item.</p><article class="tutorial-loot-card">'+G.artHTML(item,104)+'<div><small>'+esc(item.rarity||'GEAR')+' · '+esc(item.slot)+' · ITEM LEVEL '+(item.itemLevel||0)+'</small><h3>'+esc(item.name)+'</h3><div class="tutorial-loot-stats">'+(G.statLines?.(item)||[]).map(x=>'<span>'+esc(x.text)+'</span>').join('')+'</div><p>Dropped by the Hollow Warden · currently stored in the Guild Bank</p></div></article><div class="gear-school-rule"><b>Dungeon rolls are not fixed</b><span>If this same item drops again, its bonus stat can be different. A bad roll can be replaced later even when the Item Level is unchanged.</span></div></main><aside class="z-guide"><small>ASSIGN THE DROP</small><h2>Who should wear it?</h2><p>This item is restricted by class. The labels below compare its rolled stat against each compatible character’s current spec.</p><div class="tutorial-loot-characters">'+eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return '<button data-tutorial-loot-char="'+ch.id+'"><span>'+esc(ch.portrait)+'</span><div><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+'</small><em class="'+esc(fit?.tone||'')+'">'+esc(fit?.label||'COMPATIBLE')+'</em></div></button>'}).join('')+'</div><p class="tutorial-roll-summary">'+esc(stats)+'</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'loot-review');
   $$('[data-tutorial-loot-char]').forEach(b=>b.onclick=()=>equipTutorialLoot(b.dataset.tutorialLootChar));
 }
@@ -1068,14 +1129,14 @@ async function equipTutorialLoot(charId){
   ch.equipment=ch.equipment||emptyEquipment();ch.equipment[item.slot]={...equipped,source:'Equipped'};
   ch.gearItems=['Head','Chest','Weapon'].map(slot=>ch.equipment[slot]?.name||'Empty');
   item.quantity=(Number(item.quantity)||1)-1;if(item.quantity<=0)s.bank=s.bank.filter(x=>x.id!==item.id);
-  s.onboarding.tutorialLootEquippedTo=ch.id;s.onboarding.stage='quest-lesson';s.onboarding.coreTrainingComplete=true;
+  s.onboarding.tutorialLootEquippedTo=ch.id;s.onboarding.stage='recovery-lesson';
   s.activity.push(ch.name+' equipped '+item.name+' from the Zeltiran Hollows.');
   Game.save();await Game.persistState();render();
 }
 function renderRecoveryLesson(){
   if(maybeTutorialComic('shock'))return;
   const mins=Game.getEntitlements?.().recoveryMinutes||60,lead=state().roster.find(c=>tdRole(c)==='tank')||state().roster[0];
-  const body='<div class="growth-school shock-story"><main><small>ZELTIRA · PATHFINDER WARD</small><h2>The ward saved the party from the penalty. Elara wants you to see what it absorbed.</h2><p>A failed run adds Cell Shock to every participating character. This training record does not change your roster.</p><div class="shock-simulation" id="shockSimulation"><div class="shock-sim-character"><span>'+esc(lead?.portrait||'??')+'</span><div><b>'+esc(lead?.name||'Your Tank')+'</b><small>TRAINING PROJECTION · NOT REAL SHOCK</small></div></div><div class="shock-sim-meter"><div><i id="shockSimFill" style="width:0%"></i></div><strong id="shockSimValue">0%</strong></div><p id="shockSimCopy">Run the ward record to see how repeated wipes create recovery pressure.</p><button id="runShockSimulation" class="on-primary">PLAY FAILURE RECORD →</button><button id="clearShockSimulation" class="on-primary" hidden>DISCHARGE THE WARD & CONTINUE →</button></div></main><aside class="z-guide"><small>CELL SHOCK</small><h2>Failure changes roster decisions.</h2><div class="growth-cards compact"><article><strong>25% PER WIPE</strong><b>Pressure accumulates</b><p>A failed run adds shock instead of deleting progress.</p></article><article><strong>100%</strong><b>Character unavailable</b><p>At the cap, that adventurer must recover before entering again.</p></article><article><strong>'+mins+' MIN</strong><b>Your current recovery</b><p>Recovery time depends on your account.</p></article></div><p>Failure changes your next decision without erasing progress.</p></aside></div>';
+  const body='<div class="growth-school shock-story"><main><small>ZELTIRA · PATHFINDER WARD</small><h2>The ward saved the party from the penalty. Elara wants you to see what it absorbed.</h2><p>A failed run adds Cell Shock to every participating character. This training record does not change your roster.</p><div class="shock-simulation" id="shockSimulation"><div class="shock-sim-character"><span>'+esc(lead?.portrait||'??')+'</span><div><b>'+esc(lead?.name||'Your Tank')+'</b><small>TRAINING PROJECTION · NOT REAL SHOCK</small></div></div><div class="shock-sim-meter"><div><i id="shockSimFill" style="width:0%"></i></div><strong id="shockSimValue">0%</strong></div><p id="shockSimCopy">Run the ward record to see how repeated wipes create recovery pressure.</p><button id="runShockSimulation" class="on-primary">PLAY FAILURE RECORD →</button><button id="clearShockSimulation" class="on-primary" hidden>DISCHARGE THE WARD & CONTINUE →</button></div></main><aside class="z-guide"><small>CELL SHOCK</small><h2>Failure changes roster decisions.</h2><div class="growth-cards compact"><article><strong>25% PER WIPE</strong><b>Pressure accumulates</b><p>A failed run adds shock instead of deleting progress.</p></article><article><strong>100%</strong><b>Character unavailable</b><p>At the cap, that adventurer must recover before entering again.</p></article><article><strong>'+mins+' MIN</strong><b>Your current recovery</b><p>Recovery time depends on your account.</p></article></div><p>A wipe adds Cell Shock, but your quest progress remains.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'recovery-lesson');
   $('#runShockSimulation')?.addEventListener('click',async e=>{
     e.currentTarget.disabled=true;
@@ -1109,7 +1170,9 @@ async function learnTutorialProfession(){
   if(!c||!P.PROFESSIONS[name])return;
   c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];c.professions[0]={name,level:1,xp:0};
   s.onboarding.stage='craft';s.activity.push(c.name+' learned '+name+' in Zeltira.');
-  Game.save();await Game.persistState();render();
+  Game.save();await Game.persistState();
+  window.CellboundAnalytics?.track?.('profession_learned',{character_id:c.id,class:c.class,race:c.race,profession:name,source:'onboarding'},{key:'profession_learned:'+c.id+':'+name});
+  render();
 }
 function recipeInputs(recipe){
   return Object.entries(recipe.inputs).map(([key,q])=>{
@@ -1120,6 +1183,17 @@ function recipeInputs(recipe){
 function renderCraft(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=c?.professions?.[0],def=P.PROFESSIONS[prof?.name],recipe=def?.recipes?.[0];
   if(!c||!recipe){s.onboarding.stage='profession-choice';Game.save();render();return}
+  // Training must not dead-end when the saved Hollows reagent reward is absent.
+  // Top up only the deficit for the player's chosen first recipe, once per
+  // onboarding run, rather than minting another full reward bundle on refresh.
+  s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};
+  if(!s.onboarding.craftSupplyPrepared){
+    for(const [key,quantity] of Object.entries(recipe.inputs||{})){
+      const have=Math.max(0,Number(s.materials[key])||0);
+      if(have<quantity)s.materials[key]=quantity;
+    }
+    s.onboarding.craftSupplyPrepared=true;Game.save();
+  }
   const can=Object.entries(recipe.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q);
   const body='<div class="craft-tutorial"><aside class="craft-character"><small>APPRENTICE</small><span class="craft-avatar">'+esc(c.portrait)+'</span><h2>'+esc(c.name)+'</h2><p>'+def.icon+' '+esc(prof.name)+' · Skill 1</p><div class="skill-preview"><i style="width:0%"></i></div><small>CRAFTING EARNS PROFESSION XP</small></aside><main><small>ZELTIRA · CRAFT ROW</small><h2>Craft your first preparation item.</h2><p>The reagents from your dungeon are enough for a level 1 recipe. The result is tradeable and useful, but it will not last forever.</p><article class="tutorial-recipe"><div class="recipe-title"><strong>'+def.icon+'</strong><div><small>SKILL 1 RECIPE</small><h3>'+esc(recipe.name)+'</h3><p>'+esc(prof.name)+'</p></div></div><div class="recipe-inputs">'+recipeInputs(recipe)+'</div><div class="craft-output">'+(recipe.output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(recipe.output.key,52,'tutorial-output-art'):'')+'<span>CREATES</span><b>'+esc(recipe.output.name)+' ×'+(recipe.output.quantity||1)+'</b></div><button id="craftTutorialItem" class="on-primary" '+(can?'':'disabled')+'>CRAFT '+esc(recipe.output.name).toUpperCase()+' →</button></article></main></div>';
   ensureRoot().innerHTML=chrome(body,'craft');
@@ -1143,13 +1217,26 @@ async function craftTutorialItem(){
   prof.xp=(Number(prof.xp)||0)+(recipe.xp||0);
   s.onboarding.craftedItem=out.name;s.onboarding.craftedKey=out.key;s.onboarding.stage='profession-use';s.onboarding.professionComplete=true;
   s.activity.push(c.name+' crafted '+out.name+' — a profession preparation item is ready to use.');
+  window.CellboundAnalytics?.track?.('craft_completed',{character_id:c.id,class:c.class,profession:prof.name,recipe_id:recipe.id,recipe_name:recipe.name,quantity:1,output_category:out.category||'',source:'onboarding'});
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_stage:'tutorial_complete',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   render();
 }
 function renderProfessionUse(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),key=s.onboarding.craftedKey,stack=s.consumables.find(x=>x.key===key),p=stack?.payload||{};
-  if(!c||!stack){s.onboarding.stage='quest-lesson';Game.save();render();return}
+  if(!c||!stack){
+    // Recovered saves may have consumed or lost the training item. Never skip
+    // the lesson automatically or trap a player behind an unavailable item.
+    const hasCrafted=Boolean(s.onboarding.professionComplete);
+    const body='<div class="growth-school"><main><small>ZELTIRA · PREPARATION</small><h2>'+ (hasCrafted?'Your training item is no longer in the bag.':'Your training craft needs attention.') +'</h2><p>'+ (hasCrafted?'You already completed your first craft. Review what you learned, then continue to the east-gate contract.':'Choose a profession and craft a training item before leaving Zeltira.') +'</p></main><aside class="z-guide"><small>RECOVER YOUR TRAINING</small><button id="recoverTutorialCraft" class="on-primary">'+(hasCrafted?'I UNDERSTAND · CONTINUE →':'RETURN TO THE CRAFTMASTER →')+'</button></aside></div>';
+    ensureRoot().innerHTML=chrome(body,'profession-use');
+    $('#recoverTutorialCraft')?.addEventListener('click',async()=>{
+      s.onboarding.stage=hasCrafted?'quest-lesson':'profession-choice';
+      if(hasCrafted){s.onboarding.professionUseComplete=true;s.onboarding.coreTrainingComplete=true}
+      Game.save();await Game.persistState?.();render();
+    });
+    return
+  }
   const bonus=P?.bonusText?.(p.bonuses)||'',charges=Number(p.charges)||3;
   let actionTitle='Pack it for the next dungeon',actionCopy=p.description||'This crafted item will be consumed through play.',button='PACK FOR ADVENTURE →';
   if(p.effect==='gear-enhancement'){actionTitle='Apply it to real equipment';actionCopy=(p.description||'')+' Another '+p.slot+' enhancement replaces the current one.';button='APPLY TO '+String(p.slot||'ITEM').toUpperCase()+' →'}
@@ -1171,7 +1258,7 @@ function renderProfessionUse(){
       stack.quantity--;if(stack.quantity<=0)s.consumables=s.consumables.filter(x=>x!==stack);
       s.activity.push(c.name+' drank '+stack.name+' during training.');
     }
-    s.onboarding.stage='quest-lesson';Game.save();await Game.persistState();render();
+    s.onboarding.stage='quest-lesson';s.onboarding.professionUseComplete=true;s.onboarding.coreTrainingComplete=true;Game.save();await Game.persistState();render();
   });
 }
 
@@ -1183,12 +1270,14 @@ function renderQuestLesson(){
 }
 function renderDeparture(){
   if(maybeTutorialComic('departure'))return;
-  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>CHAPTER 0 · COMPLETE</small><h2>Your guild is ready. The world is not waiting.</h2><p class="guide-quote">“You know enough to make your own mistakes now. That is the useful kind of ready.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>You built the active five</b><small>Tank · Healer · three Damage roles</small></span></div><div><i>✓</i><span><b>You read a live fight</b><small>Threat · healing · interrupts · telegraphs</small></span></div><div><i>✓</i><span><b>You made a gear decision</b><small>Item Level matters, but the roll and the character matter too</small></span></div><div><i>✓</i><span><b>You assigned your first drop</b><small>Loot belongs to the guild until you decide who wears it</small></span></div></div><div class="first-expedition-hook"><span>NEXT</span><b>Ashes on the East Road</b><small>Your first real quest begins the moment you leave this screen.</small></div><button id="beginAdventure" class="on-primary">BEGIN CELLBOUND →</button></aside></div>';
+  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>CHAPTER 0 · COMPLETE</small><h2>Training is finished. Take the east-road contract.</h2><p class="guide-quote">“You know enough to make your own mistakes now. That is the useful kind of ready.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>You built the active five</b><small>Tank · Healer · three Damage roles</small></span></div><div><i>✓</i><span><b>You read a live fight</b><small>Threat · healing · interrupts · telegraphs</small></span></div><div><i>✓</i><span><b>You made a gear decision</b><small>Item Level matters, but the roll and the character matter too</small></span></div><div><i>✓</i><span><b>You assigned your first drop</b><small>Loot belongs to the guild until you decide who wears it</small></span></div></div><div class="first-expedition-hook"><span>NEXT · QUEST JOURNAL</span><b>Ashes on the East Road</b><small>Follow the story quest to unlock your next dungeon. The rest of your guild is waiting in the main menu.</small></div><div class="onboard-next-steps"><div><b>01 · QUEST JOURNAL</b><span>Take contracts, solve mysteries and unlock new places.</span></div><div><b>02 · PARTY & BANK</b><span>Equip loot, improve your characters and plan a stronger team.</span></div><div><b>03 · PROFESSIONS</b><span>Turn materials from adventures into useful items.</span></div><div><b>04 · DUNGEONS & BEYOND</b><span>Challenge bosses, collect better rolls and prepare for harder content.</span></div></div><button id="beginAdventure" class="on-primary">OPEN QUEST JOURNAL →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'departure');
   $('#beginAdventure')?.addEventListener('click',completeOnboarding);
 }
 async function completeOnboarding(){
-  const s=state();s.onboarding.complete=true;s.onboarding.stage='complete';s.onboarding.completedAt=new Date().toISOString();s.renown=Math.max(10,Number(s.renown)||0);s.activity.push('The First Expedition is complete. The guild accepted Ashes on the East Road.');
+  const s=state();
+  if(!s.onboarding?.coreTrainingComplete){render();return}
+  s.onboarding.complete=true;s.onboarding.stage='complete';s.onboarding.completedAt=new Date().toISOString();s.renown=Math.max(10,Number(s.renown)||0);s.activity.push('The First Expedition is complete. The guild accepted Ashes on the East Road.');
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_complete:true,tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   hide();Game.renderAll();Game.switchView('quests');
@@ -1198,8 +1287,15 @@ function render(){
   const s=state();if(!s)return;
   if(s.onboarding?.complete===true){hide();return}
   show();
-  const stage=s.onboarding?.stage||'party-builder';
-  if(stage==='party-builder')renderPartyBuilder();
+  let stage=s.onboarding?.stage||'party-builder';
+  // Existing unfinished saves may already be at the quest screen because an
+  // earlier build skipped the recovery/profession lessons. Resume them safely.
+  if(['quest-lesson','departure'].includes(stage)&&!s.onboarding?.coreTrainingComplete){
+    stage=!s.onboarding.shockLessonComplete?'recovery-lesson':!s.onboarding.professionComplete?'profession-choice':'profession-use';
+    s.onboarding.stage=stage;Game.save();
+  }
+  if(stage==='guild-introduction')renderGuildIntroduction();
+  else if(stage==='party-builder')renderPartyBuilder();
   else if(stage==='zeltira-arrival')renderArrival();
   else if(stage==='first-expedition')renderFirstExpedition();
   else if(stage==='gear')renderGear();
@@ -1212,7 +1308,7 @@ function render(){
   else if(stage==='profession-use')renderProfessionUse();
   else if(stage==='quest-lesson')renderQuestLesson();
   else if(stage==='departure')renderDeparture();
-  else{s.onboarding.stage='party-builder';Game.save();renderPartyBuilder()}
+  else{s.onboarding.stage=Array.isArray(s.roster)&&s.roster.length?'zeltira-arrival':'guild-introduction';Game.save();render()}
 }
 async function init(){
   Game=window.CellboundGame;
@@ -1221,7 +1317,7 @@ async function init(){
   if(!G||!P)return;
   window.CellboundCombatStandard?.register?.('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-cb2d'});
   render();
-  window.CellboundOnboarding={render,RACES,previewTutorialComics,tutorialComicConfig};
+  window.CellboundOnboarding={render,RACES,previewIntroduction,previewTutorialComics,tutorialComicConfig,introductionPages:INTRO_PAGES.map(({id,tab})=>({id,tab}))};
 }
 init();
 })();

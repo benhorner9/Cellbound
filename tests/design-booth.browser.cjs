@@ -1,0 +1,260 @@
+'use strict';
+const {chromium,webkit}=require('playwright');
+const assert=require('node:assert/strict');
+const {mount,matureState}=require('./full-playthrough.browser.cjs');
+const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
+(async()=>{
+ const browser=await engine.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
+ const page=await browser.newPage({viewport:{width:1024,height:1366}});
+ page.on('dialog',dialog=>dialog.accept());
+ const errors=await mount(page,matureState(),true);
+ try{
+  await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner'&&window.CellboundDesignBooth&&window.CellboundDesignedContent,{},{timeout:12000});
+  await page.evaluate(()=>CellboundGame.switchView('admin'));
+  await page.locator('[data-admin-panel-tab="tools"]').click();
+  await page.waitForSelector('#designBoothEntry:not([hidden])',{timeout:5000});
+  assert.equal(await page.locator('#designBoothEntry').isVisible(),true,'Owner gets a Design Booth entry');
+  for(const old of ['#roomEditorEntry','#comicSceneEditorEntry','#dungeonGeneratorEntry','#characterFitViewerEntry']){
+   assert.equal(await page.locator(old).isVisible(),false,'Retired separate tool card stays hidden: '+old)
+  }
+  await page.locator('#openDesignBooth').click();
+  await page.waitForSelector('#designBoothMount:not([hidden]) .dbo-shell',{timeout:6000});
+  assert.equal(await page.locator('[data-dbo-tool]').count(),13,'Master booth includes a complete Game Build Hub and existing content tools');
+  assert.equal(await page.locator('[data-dbo-go]').count(),9,'New editors see the full game build hub among starter tasks');
+  assert(await page.locator('#dboToolGuide').innerText().then(t=>t.includes('Save Draft')&&t.includes('Publish')),'Builder explains its draft and publish actions before editing');
+  assert.equal(await page.locator('.dbo-more').count(),1,'Advanced tools are grouped separately');
+  // A unified combat shell must dock live text and cast OUTSIDE illustrated
+  // art, with the existing real global chat accessible during encounters.
+  const combatDock=await page.evaluate(()=>{
+   const host=document.createElement('div');document.body.appendChild(host);
+   const shell=CellboundCombatViewer.mount(host,{
+    arenaMarkup:'<div class="cb2d-arena"><div class="cb2d-caption"><span>EVENT</span><b>Combat live</b></div><div class="cb2d-cast"><small>ENEMY CAST</small><div>Testing</div><div class="cb2d-castbar"></div></div></div>',
+    battleTopbarMarkup:'<div class="cbcombat-battle-topbar"><div class="cb2d-room-tag">Room</div></div>'
+   });
+   const art=shell.querySelector('.cbcombat-arena-wrap'),caption=shell.querySelector('.cb2d-caption'),cast=shell.querySelector('.cb2d-cast'),chat=shell.querySelector('[data-combat-chat]');
+   const out={captionOutside:!art.contains(caption)&&!!caption.closest('.cbcombat-battle-topbar'),
+    castOutside:!art.contains(cast)&&cast.parentElement===shell.querySelector('.cbcombat-battle-panel'),
+    worldSelected:chat.querySelector('[data-combat-chat-channel="world"]').getAttribute('aria-pressed')==='true',
+    form:!!chat.querySelector('[data-combat-chat-form]'),aspect:getComputedStyle(art).aspectRatio};
+   host.remove();return out
+  });
+  assert.equal(combatDock.captionOutside,true,'Combat status is outside the artwork');
+  assert.equal(combatDock.castOutside,true,'Enemy cast bar is below the artwork');
+  assert.equal(combatDock.worldSelected,true,'Global chat is the default combat channel');
+  assert.equal(combatDock.form,true,'Combat contains a real chat composer');
+  assert.equal(combatDock.aspect,'auto','Immersive combat arena adapts to the viewport');
+  // Canonical Combat UI editor is a real owner-only Design Booth tool.
+  await page.locator('[data-dbo-tool="combat-ui"]').click();
+  await page.waitForSelector('#cbeOverlay:not([hidden]) .cbe-panel[data-slot="battlefield"]',{timeout:5000});
+  assert.equal(await page.locator('#cbeMode option').count(),4,'Combat UI supports PvE and three PvP modes');
+  await page.locator('#cbeMode').selectOption('ctf');
+  assert((await page.locator('#cbeOverlay .cbe-panel[data-slot="meters"] .cbe-panel-head').textContent()).includes('Red roster'),'CTF layout targets the shared PvP red roster');
+  await page.locator('#cbeMode').selectOption('pve');
+  await page.locator('.cbe-panel[data-slot="battlefield"]').click();
+  await page.locator('[data-field="x"]').fill('4');
+  await page.locator('[data-field="x"]').press('Tab');
+  await page.locator('#cbeSave').click();
+  await page.locator('#cbePublish').click();
+  const liveLayout=await page.evaluate(()=>{
+    const host=document.createElement('div');document.body.appendChild(host);
+    const shell=CellboundCombatViewer.mount(host,{profile:'pve',title:'Canonical editor QA',arenaMarkup:'<div class="cb2d-arena" data-combat-arena="canonical"></div>'});
+    CellboundCombatUILayoutEditor.refreshLive();
+    const result={applied:shell.classList.contains('cbe-live'),left:shell.querySelector('.cbcombat-arena-wrap').style.left,controls:!!shell.querySelector('.cbcombat-command-panel')};
+    host.remove();return result
+  });
+  assert.deepEqual(liveLayout,{applied:true,left:'4%',controls:true},'Applied owner layout repositions the canonical combat window, not the retired viewer');
+  await page.locator('#cbeRevert').click();
+  await page.locator('#cbeClose').click();
+  assert.equal(await page.locator('#cbeOverlay').isVisible(),false,'Combat UI editor closes without hiding the Design Booth');
+  assert(await page.locator('#cbeReopenEditor').isVisible(),'Combat UI can be reopened from its booth tab');
+  await page.locator('[data-dbo-tool="director"]').click();
+  await page.waitForSelector('#dboDirectorMount:not([hidden]) .gdh-shell',{timeout:5000});
+  assert.equal(await page.locator('#dboDirectorMount .gdh-domain').count(),20,'Game Build Hub inventories 20 distinct game systems');
+  const coverage=await page.evaluate(()=>CellboundGameBuildHub.report());
+  assert(coverage.total>=10&&coverage.available>=8,'Build Hub checks the real mounted editor modules');
+  assert(coverage.itemCount>100&&coverage.bossCount>=10&&coverage.knownRooms>=10,'Build Hub reports actual registered game assets');
+  assert(await page.locator('#dboDirectorMount .gdh-tag.planned').count()>0,'Non-editable engine systems are correctly marked as design-brief only');
+  await page.locator('#dboDirectorMount [data-gdh-plan="abilities"]').click();
+  await page.waitForSelector('#dboDirectorMount [data-gdh-field="title"]',{timeout:5000});
+  await page.locator('#dboDirectorMount [data-gdh-field="title"]').fill('QA skills planning');
+  await page.locator('#dboDirectorMount [data-gdh-field="requirements"]').fill('Class talent tree rule planned only');
+  await page.locator('#dboDirectorMount [data-gdh-save]').click();
+  assert((await page.evaluate(()=>CellboundGameBuildHub.briefs())).some(x=>x.title==='QA skills planning'&&x.area==='abilities'),'System brief saves as a local design artifact');
+  await page.locator('#dboDirectorMount [data-gdh-check="mechanics"]').check();
+  assert(await page.locator('#dboDirectorMount .gdh-progress').innerText().then(t=>t.includes('1 / 8')),'Owner release QA checklist saves completion status');
+  await page.locator('#dboDirectorMount [data-gdh-go="items"]').first().click();
+  await page.waitForSelector('#dboCatalog:not([hidden]) .dbo-catalog-table',{timeout:6000});
+  assert(await page.locator('#dboDirectorMount').isHidden(),'Game Build Hub navigation opens the existing real tool');
+  await page.locator('[data-dbo-tool="items"]').click();
+  assert(await page.locator('#dboToolGuide').innerText().then(t=>t.includes('Read-only catalogue')),'Catalogue clearly identifies read-only actions');
+  await page.waitForSelector('#dboCatalog:not([hidden]) .dbo-catalog-table');
+  assert(await page.locator('#dboCatalog').innerText().then(t=>t.includes('Item Catalogue')&&t.includes('catalogue entries')),'Item Catalogue appears in owner admin tools');
+  assert.equal(await page.locator('#dboCatalogTier option').count(),7,'Index includes Tier 1–5 and untiered materials');
+  assert((await page.locator('.dbo-catalog-table tbody tr').count())>20,'Item catalogue lists existing item definitions');
+  await page.locator('#dboCatalogSearch').fill('Frostbound Sigil');
+  assert(await page.locator('.dbo-catalog-table tbody').innerText().then(t=>t.includes('Frostbound Sigil')),'Owner can find unique Tier 4 equipment by name');
+  await page.locator('#dboCatalogSearch').fill('');
+  await page.locator('#dboCatalogCategory').selectOption('Equipment');
+  await page.locator('#dboCatalogTier').selectOption('5');
+  assert(await page.locator('.dbo-catalog-table tbody tr').first().innerText().then(t=>t.includes('T5')),'Tier 5 equipment is visible in admin catalogue although excluded from normal boss drops');
+  await page.locator('#dboCatalogTier').selectOption('all');
+  await page.locator('#dboCatalogClass').selectOption('Warrior');
+  assert(await page.locator('.dbo-catalog-table tbody tr').first().innerText().then(t=>t.includes('Warrior')),'Class filter narrows catalogue to Warrior');
+  await page.locator('#dboCatalogCategory').selectOption('all');
+  await page.locator('#dboCatalogClass').selectOption('all');
+  const exportPromise=page.waitForEvent('download');
+  await page.locator('#dboExportCatalog').click();
+  const downloaded=await exportPromise;
+  assert.equal(downloaded.suggestedFilename(),'cellbound-item-catalogue.csv','CSV export downloads an importable Google Sheets file');
+  await page.locator('[data-dbo-tool="build"]').click();
+  await page.locator('#dboNewDungeon').click();
+  assert(await page.locator('#dboWorkbench').innerText().then(t=>t.includes('Untitled dungeon')),'Dungeon builder opens');
+  assert(await page.locator('#dboReview').innerText().then(t=>t.includes('thing')&&t.includes('Stage 1')),'Builder explains publication blockers in a readable checklist');
+  await page.locator('[data-db-step="1"]').click();
+  assert.equal(await page.locator('#dboWorkbench [data-db-drop]').count(),0,'Loot is no longer embedded in the fight editor');
+  await page.locator('#dboGoToDrops').click();
+  await page.waitForSelector('#dboDrops:not([hidden]) #dboBossPicker',{timeout:5000});
+  assert((await page.locator('#dboBossPicker option').count())>=19,'Central boss dropdown includes built-in game bosses and a new custom boss');
+  const customBoss=await page.locator('#dboBossPicker').inputValue();
+  assert(customBoss.startsWith('local:'),'Opened current custom encounter in central loot editor');
+  await page.locator('#dboAddLoot').click();
+  assert.equal(await page.locator('[data-db-loot-row]').count(),1,'A boss has a compact item row');
+  assert.equal(await page.locator('[data-db-drop-row]').count(),1,'Adding an item opens just that item editor');
+  assert(await page.locator('[data-db-drop="0.key"] option').count()>0,'Boss gear picker uses approved catalogue items');
+  assert(!(await page.locator('[data-db-drop="0.key"]').innerText()).includes('undefined'),'Item picker displays the item names instead of undefined');
+  assert(await page.locator('[data-db-loot-row="0"]').innerText().then(t=>t.includes('T1')&&t.includes('25%')),'Tier and drop chance visible without opening editor');
+  await page.locator('[data-db-drop="0.kind"]').selectOption('material');
+  await page.locator('[data-db-drop="0.key"]').selectOption('hollowroot');
+  await page.locator('[data-db-drop="0.chance"]').fill('42');
+  await page.locator('[data-db-drop="0.quantity"]').fill('3');
+  await page.locator('#dboCloseLootEdit').click();
+  assert(await page.locator('[data-db-loot-row="0"]').innerText().then(t=>t.includes('Hollowroot')&&t.includes('42%')&&t.includes('MATERIAL')),'Boss overview immediately lists item name, tier and percentage');
+  await page.locator('#dboLootSearch').fill('missing-gear-xyz');
+  assert.equal(await page.locator('[data-db-loot-row="0"]').isVisible(),false,'Searching hides non-matching items');
+  assert.equal(await page.locator('#dboLootNoMatches').isVisible(),true,'No matches explains empty search');
+  await page.locator('#dboLootSearch').fill('hollowroot');
+  assert.equal(await page.locator('[data-db-loot-row="0"]').isVisible(),true,'Name search finds the specific material');
+  await page.locator('#dboLootTierFilter').selectOption('T1');
+  assert.equal(await page.locator('[data-db-loot-row="0"]').isVisible(),false,'Tier filter excludes materials');
+  await page.locator('#dboLootTierFilter').selectOption('MATERIAL');
+  assert.equal(await page.locator('[data-db-loot-row="0"]').isVisible(),true,'Material filter finds a reagent');
+  await page.locator('#dboLootSearch').fill('');
+  await page.locator('#dboLootSort').selectOption('chance');
+  await page.locator('[data-dbo-tool="build"]').click();
+  await page.locator('[data-db-step="0"]').click();
+  await page.locator('[data-dbo-tool="drops"]').click();
+  await page.locator('#dboBossPicker').selectOption(customBoss);
+  assert(await page.locator('[data-db-loot-row="0"]').innerText().then(t=>t.includes('Hollowroot')&&t.includes('42%')),'Item name and percentage survive stage switching');
+  await page.locator('[data-db-edit-row="0"]').click();
+  assert.equal(await page.locator('[data-db-drop="0.kind"]').inputValue(),'material','Boss drop type survives stage switching');
+  assert.equal(await page.locator('[data-db-drop="0.key"]').inputValue(),'hollowroot','Specific reagent selection survives');
+  assert.equal(await page.locator('[data-db-drop="0.chance"]').inputValue(),'42','Loot chance survives stage switching');
+  assert.equal(await page.locator('[data-db-drop="0.quantity"]').inputValue(),'3','Boss drop quantity survives stage switching');
+  await page.locator('#dboBossPicker').selectOption('native:ashen-vault:ashwarden');
+  assert(await page.locator('#dboToolGuide').innerText().then(t=>t.includes('Save Boss Drops')&&t.includes('Custom adventure bosses')),'Boss-drop workflow distinguishes native save from custom publish');
+  assert(await page.locator('#dboDrops').innerText().then(t=>t.includes('Ash Warden Kael')&&t.includes('extra boss drops')&&t.includes('EXISTING GAME REWARDS')),'Existing dungeon boss is available, with clear default-drop policy');
+  await page.locator('#dboAddLoot').click();
+  assert.equal(await page.locator('[data-db-loot-row]').count(),1,'Existing boss supports optional owner drop rows');
+  assert.equal(await page.locator('#dboSaveNative').isEnabled(),true,'Unsaved boss changes expose an enabled save action');
+  assert.equal(await page.locator('#dboDiscardNative').isEnabled(),true,'Unsaved boss changes can safely be discarded');
+  await page.locator('#dboDiscardNative').click();
+  assert.equal(await page.locator('[data-db-loot-row]').count(),0,'Discard restores the saved boss table without publishing changes');
+  await page.locator('#dboAddLoot').click();
+  await page.locator('[data-db-remove-drop="0"]').click();
+  assert.equal(await page.locator('[data-db-loot-row]').count(),0,'Existing boss row can be removed');
+  await page.locator('[data-dbo-tool="build"]').click();
+  await page.locator('#dboAddType').selectOption('minigame');
+  await page.locator('#dboAddStep').click();
+  assert(await page.locator('[data-db-field="step.template"]').count()===1,'Minigame stage editor supports reusable templates');
+  assert.equal(await page.locator('[data-db-field="step.answerFriendly"]').count(),1,'Puzzle answer is explained using user-friendly choice numbers');
+  await page.locator('[data-db-field="step.answerFriendly"]').fill('2');
+  assert.equal(await page.evaluate(()=>CellboundDesignBooth.current().steps.at(-1).answer),1,'Choice 2 maps to the correct zero-based runtime answer');
+  await page.locator('[data-db-field="step.template"]').selectOption('sequence');
+  await page.locator('[data-db-field="step.sequenceFriendly"]').fill('2, 1, 3');
+  assert.equal(await page.evaluate(()=>CellboundDesignBooth.current().steps.at(-1).sequence.join(',')),'1,0,2','New editors enter sequence order using familiar 1-based numbers');
+  const beforeCopy=await page.evaluate(()=>CellboundDesignBooth.current());
+  await page.locator('#dboCopyStage').click();
+  const withStageCopy=await page.evaluate(()=>CellboundDesignBooth.current());
+  assert.equal(withStageCopy.steps.length,beforeCopy.steps.length+1,'Editor can duplicate an encounter or story stage for reuse');
+  assert.equal(withStageCopy.steps.at(-1).type,beforeCopy.steps.at(-1).type,'Duplicated stage retains its type and settings');
+  assert.notEqual(withStageCopy.steps.at(-1).id,beforeCopy.steps.at(-1).id,'Duplicated stage gets a unique stage identity');
+  await page.locator('#dboCopyAdventure').click();
+  const newDraft=await page.evaluate(()=>CellboundDesignBooth.current());
+  assert.equal(newDraft.id,null,'Copying an adventure does not overwrite an existing cloud project');
+  assert(newDraft.title.startsWith('Copy of '),'Copied adventure is clearly labelled');
+  assert.equal(newDraft.status,'draft','Copied adventure starts unpublished');
+  assert.equal(newDraft.steps.length,withStageCopy.steps.length,'Copied adventure keeps all its original stages');
+  assert.notEqual(newDraft.steps[0].id,withStageCopy.steps[0].id,'Copied adventure has new stage identities');
+  assert(await page.locator('[data-dbo-save-state]').innerText().then(t=>t.includes('Not yet saved to cloud')),'New copy correctly prompts a cloud save');
+  await page.locator('.dbo-more > summary').click();
+  await page.locator('[data-dbo-tool="templates"]').click();
+  assert(await page.locator('#dboTemplates').innerText().then(t=>t.includes('Choice Puzzle')&&t.includes('Sequence Puzzle')),'Template library exposes built-in games');
+  await page.locator('[data-dbo-tool="rooms"]').click();
+  assert.equal(await page.locator('#roomEditorMount .rqe-shell').count(),1,'Existing room editor is a Design Booth tab');
+  // PvP maps share Combat Reborn objective positions; owner test cannot change public maps.
+  await page.locator('[data-dbo-tool="pvp-maps"]').click();
+  await page.waitForSelector('#pvpMapEditorMount:not([hidden]) #pmeCanvas',{timeout:8000});
+  assert.equal(await page.locator('#pmeCanvas [data-pme-marker^="spawn-blue"]').count(),5,'PvP studio supplies five editable blue spawns');
+  assert.equal(await page.locator('#pmeCanvas [data-pme-marker^="spawn-red"]').count(),5,'PvP studio supplies five editable red spawns');
+  await page.locator('#pmeMap').selectOption('crucible-ctf');
+  assert.equal(await page.locator('#pmeCanvas [data-pme-marker^="flag-"]').count(),2,'CTF mode supplies both real flag positions');
+  assert.equal(await page.locator('#pmeCanvas [data-pme-marker^="lane-"]').count(),3,'CTF mode supplies editable route waypoints');
+  await page.locator('#pmeMarker').selectOption('flag-blue');
+  await page.locator('#pmeX').fill('23');
+  await page.locator('#pmeX').press('Tab');
+  assert.equal(await page.evaluate(()=>CellboundPvPMapEditor.current().layout.flags.blue.x),23,'Changing a coordinate edits the actual map layout');
+  await page.locator('#pmeTest').click();
+  assert.equal(await page.evaluate(()=>CellboundPvPMaps.isTesting('crucible-ctf')),true,'Test Map activates only owner preview');
+  await page.locator('#pmeClearTest').click();
+  assert.equal(await page.evaluate(()=>CellboundPvPMaps.isTesting('crucible-ctf')),false,'Stop Owner Test restores default published map');
+  await page.locator('#pmeMap').selectOption('crucible-hill');
+  assert.equal(await page.locator('#pmeCanvas [data-pme-marker^="hill-"]').count(),5,'KOTH mode exposes five movable hills');
+  await page.locator('#pmeMap').selectOption('crucible-arena');
+  assert.equal(await page.locator('#pmeCanvas [data-pme-marker="storm"]').count(),1,'Arena mode supplies editable Cellstorm centre');
+  await page.locator('[data-dbo-tool="comics"]').click();
+  await page.waitForFunction(()=>document.querySelector('#comicSceneEditorMount .cse-shell')!=null,{},{timeout:12000});
+  await page.locator('[data-dbo-tool="models"]').click();
+  assert.equal(await page.locator('#characterFitViewerMount').isVisible(),true,'Character fit viewer is a Design Booth tab');
+  await page.locator('[data-dbo-go="library"]').click();
+  await page.waitForSelector('#dboLibrary:not([hidden]) .dbo-library-shell');
+  assert.equal(await page.locator('[data-lib-new]').count(),5,'Content Creator supports new rooms, encounters, comics, puzzles and items');
+  assert(await page.locator('#dboLibrary').innerText().then(t=>t.includes('SAVE CLOUD DRAFT')&&t.includes('SUBMIT FOR REVIEW')),'Creator separates draft saves from publishing');
+  await page.locator('[data-lib-new="item"]').click();
+  assert.equal(await page.locator('[data-lib-field="baseItemId"] option').count()>20,true,'New equipment picks from existing balanced gear templates');
+  await page.locator('[data-lib-field="title"]').fill('QA New Gear Variant');
+  await page.locator('[data-lib-field="baseItemId"]').selectOption({index:1});
+  assert.equal(await page.locator('#dboLibraryPublish').isEnabled(),true,'Valid balanced equipment can be published without source-code editing');
+  await page.locator('[data-lib-new="room"]').click();
+  assert.equal(await page.locator('#dboLibraryPublish').isEnabled(),false,'Missing room artwork blocks publication');
+  await page.locator('[data-lib-new="comic"]').click();
+  assert.equal(await page.locator('#dboLibraryPublish').isEnabled(),false,'Missing comic panel artwork blocks publication');
+  await page.locator('[data-dbo-tool="build"]').click();
+  await page.locator('#dboSaveStageTemplate').click();
+  assert.equal(await page.locator('#dboLibrary:not([hidden]) .dbo-library-shell').count(),1,'Adventure stage can be saved as a reusable template');
+  assert(await page.locator('[data-lib-field="title"]').inputValue().then(t=>t.includes('Reusable')),'Saved-stage draft preserves the stage identity for naming');
+  const stagesBefore=await page.evaluate(()=>CellboundDesignBooth.current().steps.length);
+  await page.locator('#dboLibraryInsert').click();
+  assert.equal(await page.evaluate(()=>CellboundDesignBooth.current().steps.length),stagesBefore+1,'Creator inserts a reusable stage into the active adventure');
+  assert.equal(await page.locator('#dboWorkbench').isVisible(),true,'Content insertion returns to Adventure Builder');
+  await page.locator('#dboClose').click();
+  assert.equal(await page.locator('#designBoothMount').isVisible(),false,'Design Booth closes cleanly');
+  await page.evaluate(()=>{
+    void CellboundDesignedContent.play('qa-preview',{
+      content_type:'quest',title:'Design Booth QA',blueprint:{level:1,summary:'Room and puzzle regression',steps:[
+        {id:'qa-room',type:'room',title:'Gatehouse',text:'The party enters the chamber.'},
+        {id:'qa-minigame',type:'minigame',template:'choice',title:'Rune Door',prompt:'Pick the safe lever',choices:['Left','Right'],answer:1}
+      ]}
+    });
+  });
+  await page.waitForSelector('#designAdventureOverlay:not([hidden]) .dbo-player-panel');
+  await page.locator('[data-db-advance]').click();
+  await page.waitForSelector('#designAdventureOverlay:not([hidden]) [data-db-pick="1"]');
+  await page.locator('[data-db-pick="1"]').click();
+  await page.locator('[data-db-done]').click();
+  await page.waitForFunction(()=>document.querySelector('#designAdventureOverlay .dbo-player-panel')?.textContent?.includes('Adventure complete'),{},{timeout:5000});
+  await page.locator('[data-db-finish]').click();
+  assert.equal(await page.locator('#designAdventureOverlay').isVisible(),false,'Designed room/minigame run exits cleanly');
+  assert.deepEqual(errors,[],'No browser exceptions in owner creative suite');
+  console.log(engine===webkit?'WebKit':'Chromium','Design Booth browser regression passed: one entry, twelve tabs with Game Build Hub and Combat UI editing and PvP map authoring, searchable item catalogue with CSV export, tier/name/drop-chance boss tables, item filtering, editing and native rewards, newcomer shortcuts, publication checklist, grouped advanced tools, minigames, room/comic/model editors and clean close.');
+ }finally{await browser.close()}
+})().catch(e=>{console.error(e);process.exitCode=1});

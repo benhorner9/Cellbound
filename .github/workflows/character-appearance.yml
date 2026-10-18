@@ -1,0 +1,49 @@
+name: Character appearance and universal fitting
+on:
+  push:
+    branches: [character-appearance-overhaul]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm run test:core
+      - run: npm install --no-save --package-lock=false playwright@1.51.1
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: cellbound-${{ runner.os }}-playwright-1.51.1-${{ matrix.engine }}
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Rendered appearance, equipment, creation and combat acceptance
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+        run: |
+          status=0
+          for test in equipment-fit race-identity character-appearance-overhaul item-visuals-v2 weapon-attachments combat-class-animation combat-class-encounters combat-cinematic-global onboarding-beta pvp-practice-window ui-performance; do
+            node "tests/${test}.browser.cjs" || status=1
+          done
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: character-appearance-${{ matrix.engine }}
+          path: |
+            /tmp/cellbound-appearance
+            /tmp/cellbound-equipment-fit*.png
+            /tmp/cellbound-race-identity*.png
+            /tmp/cellbound-item-visuals*.png
+            /tmp/cellbound-class-animation
+            /tmp/cellbound-cinematic*
+          if-no-files-found: ignore

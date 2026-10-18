@@ -1,0 +1,632 @@
+/* Cellbound UI Block 4 — Adventure + Combat Reborn, shared dark fantasy
+   presentation. Gameplay, room geometry and Design Booth controls untouched. */
+html body.cb-top-nav-enabled.cb-adventure-v4{
+ --cb-av-ink:#eee5d7;--cb-av-muted:#b8c5b9;
+ --cb-av-edge:rgba(193,158,103,.33);
+ --cb-av-gold:#c7a775;
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#raids,#endgame){
+ max-width:1680px;margin-inline:auto
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#endgame)>.section-intro{
+ min-height:clamp(170px,17vw,215px)!important;margin:2px 0 13px!important;
+ border-color:var(--cb-av-edge)!important;border-radius:5px!important;
+ background-color:#121d1f!important;
+ background-image:linear-gradient(90deg,#080e11f5,#0a1316d5 40%,#0b151898),
+   var(--cb-place-art)!important;
+ background-size:cover!important;background-position:center,center 45%!important;
+ box-shadow:0 13px 36px #0008!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#endgame)>.section-intro h2{
+ color:#f2e7d4!important;font:normal clamp(2rem,3.4vw,3.5rem)/1.1 Georgia,serif!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#endgame)>.section-intro p{
+ color:#bbcabd!important;font-size:clamp(12px,1.1vw,15px)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 :is(#content,#quests,#world,#endgame)>.section-intro small{
+ color:#d7b987!important;font-size:10px!important;letter-spacing:.16em!important
+}
+/* Actual party iLvl/readiness/dungeon status; original combat rules own them. */
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .cb-adventure-brief{
+ display:grid;grid-template-columns:minmax(0,1.3fr) minmax(285px,.8fr);
+ align-items:center;gap:15px;margin:0 0 14px;padding:17px 19px;
+ background:linear-gradient(110deg,#1f302b,#111f20);
+ border:1px solid var(--cb-av-edge);border-radius:5px;
+ box-shadow:0 10px 27px #0006
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__copy small{
+ color:#d4b787;font:700 10px system-ui,sans-serif;letter-spacing:.13em
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__copy h3{
+ margin:5px 0 7px;color:#f2e6d2;
+ font:normal clamp(19px,1.85vw,26px) Georgia,serif
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__copy p{
+ max-width:650px;margin:0;color:#b8c7b9;font:400 12px/1.5 system-ui,sans-serif
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__tools{min-width:0}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__figures{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__figures>div{
+ min-width:0;padding:9px 7px;background:#101d1e;
+ border:1px solid rgba(193,160,110,.2);border-radius:4px
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__figures small{
+ display:block;color:#bdc9bd;font:700 9px system-ui,sans-serif
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__figures b{
+ display:block;overflow:hidden;margin-top:4px;
+ color:#eee1ce;font:normal clamp(12px,1.1vw,18px) Georgia,serif;
+ white-space:nowrap;text-overflow:ellipsis
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons{
+ display:flex;gap:7px;margin-top:8px
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons button{
+ flex:1 1 0;min-height:44px;padding:8px 9px;
+ border:1px solid #a48b61;border-radius:4px;
+ background:#29352e;color:#ead9be;
+ font:700 11px system-ui,sans-serif
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons button:first-child{
+ color:#2b2117;background:linear-gradient(#d9bc8a,#ad8a56)
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons button:hover:not(:disabled){
+ background:#453b2d;border-color:#dfbd85;color:#fff0d6
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons button[hidden]{display:none!important}
+/* Dungeon routes: art and difficulty badges remain authored by the game. */
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode{
+ border:1px solid var(--cb-av-edge)!important;
+ border-radius:5px;background:#152122!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-summary{
+ background:linear-gradient(90deg,#23312c,#172322)!important;
+ border-color:var(--cb-av-edge)!important;padding:17px!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-summary h3{
+ color:#f4e9d7!important;font:normal clamp(19px,2vw,27px) Georgia,serif!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-summary p{
+ color:#b7c6ba!important;font-size:12px!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-grid{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;padding:13px
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card{
+ min-width:0;border:1px solid rgba(185,152,104,.4)!important;
+ border-radius:5px;background:linear-gradient(#21302d,#121d20)!important;
+ box-shadow:0 9px 24px #0007!important;overflow:hidden
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card:hover{
+ border-color:#d0ad79!important;background:#2b3731!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card :is(h3,b){
+ color:#f1e6d6!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card p{
+ color:#b6c7bb!important;font-size:12px!important;line-height:1.5
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-actions button{
+ min-height:44px;border-color:#a1875d!important;
+ background:#2c352c!important;color:#e9dcc2!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-actions button:hover:not(:disabled){
+ background:#45402f!important;border-color:#d2ad75!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #content :is(.dungeon-detail-panel,.dungeon-journal-hero){
+ background-color:#182826!important;border-color:var(--cb-av-edge)!important
+}
+/* Story journal: legible selected objectives without inventing quest content. */
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-journal-shell{gap:12px}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests :is(.quest-journal-nav,.quest-journal-list,.quest-journal-detail,.quest-journal-side){
+ min-width:0;background:#152324!important;border-color:var(--cb-av-edge)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-tabs{
+ background:#1a2b2a!important;border-color:var(--cb-av-edge)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-tabs button{
+ min-height:44px;color:#c6cec0!important;background:#1d2c2b!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-tabs button.active{
+ background:#453626!important;color:#f8e7c8!important;
+ box-shadow:inset 0 -3px #c09e6b
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests :is(.quest-list-item,.quest-v2-list-card,.quest-chain-card,.quest-objective-card,.quest-current-step){
+ background:#1b2b2a!important;border-color:#8173548a!important;color:#eae6db!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests :is(.quest-list-item.selected,.quest-list-item:hover,.quest-v2-list-card.selected){
+ background:#323b30!important;border-color:#d0ae7b!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #quests :is(.quest-detail-hero,.quest-v2-hero,.quest-v3-hero){
+ background-color:#24322e!important;border-color:var(--cb-av-edge)!important
+}
+/* Existing raids, activities, endgame screens keep their original controls. */
+html body.cb-top-nav-enabled.cb-adventure-v4 #raids :is(.mr-card,.mr-current,.mr-group,.mr-finder,.mr-lockout){
+ background-color:#172423!important;border-color:rgba(195,161,104,.35)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #raids .mr-hero{
+ border:1px solid #b18e57a6!important;border-radius:5px;
+ box-shadow:0 15px 38px #0008!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #raids :is(.mr-hero p,.mr-card p){
+ color:#b7c2b4!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #world :is(.tb-world-card,.null-entry-card,.world-boss-card){
+ background-color:#192828!important;border-color:var(--cb-av-edge)!important
+}
+html body.cb-top-nav-enabled.cb-adventure-v4 #endgame :is(.eg-card,.eg-dungeon-card,.endgame-panel,.endgame-run-history){
+ background-color:#192727!important;border-color:var(--cb-av-edge)!important
+}
+/* Canonical Combat Reborn chrome only. Saved layout geometry, arena pixels,
+   animations, PvP and editor controls retain their own engines. */
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode){
+ background-color:#0c1719!important;
+ border-color:rgba(198,160,103,.34)!important;color:#ede8da
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ :is(.cbcombat-header,.cbcombat-route,.cbcombat-battle-topbar,.cbcombat-party-panel,
+ .cbcombat-command-panel,.cbcombat-meters-panel,.cbcombat-chat){
+ background-color:#142224!important;border-color:rgba(192,157,104,.34)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-party-rows>.cb2d-party-row{
+ background:#122123!important;border-color:rgba(190,158,105,.22)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cb2d-meter-panel{
+ background:#162628!important;border-color:rgba(187,155,107,.2)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cb2d-meter-label b{
+ color:#e8e5d8!important;font-size:max(9px,.62rem)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command-group{
+ background:#142526!important;border-color:rgba(190,154,106,.23)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command-group>small{color:#d2b585!important;letter-spacing:.07em}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command{
+ background:#1b2c2d!important;border-color:rgba(193,153,103,.37)!important;
+ color:#eee7da!important;border-radius:4px
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command b{
+ color:#e9e4da!important;font-size:max(10px,.68rem)!important;line-height:1.2!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command small{
+ color:#b8c6ba!important;font-size:max(9px,.58rem)!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command.recommended:not(:disabled){
+ background:#3f3425!important;border-color:#d0ad77!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command.active:not(:disabled){
+ background:#254438!important;border-color:#84bb9b!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbr-command:disabled{opacity:.47!important;filter:saturate(.7)}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat{
+ background:linear-gradient(#16292b,#101d1f)!important;border-color:#a18d654f!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-tabs{background:#1a2a2b!important}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-tabs button{color:#c0cbbd!important}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-tabs button[aria-pressed="true"]{
+ color:#f4dcb5!important;background:#403325!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-messages{
+ background:#101f20!important;color:#bfcbbe!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-form input{
+ background:#101d1f!important;color:#eee8dc!important;font-size:12px!important
+}
+html body.cb-top-nav-enabled .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)
+ .cbcombat-chat-form button{
+ background:#594529!important;color:#f7e8c9!important;border-color:#af9164!important
+}
+/* Keep native 16:9 paintings, but allow a less cramped default iPad
+   battlefield. Owner-edited .cbe-live view is exempt from this sizing. */
+@media(min-width:850px) and (min-height:700px) and (max-width:1500px){
+ html body.cb-top-nav-enabled
+ .cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode):not(.cbe-live)
+ .cbcombat-battle-panel>.cbcombat-arena-wrap{
+ width:min(100%,max(220px,calc(177.7778dvh - 590px)))!important;
+ aspect-ratio:16 / 9!important
+ }
+}
+@media(max-width:1100px){
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-grid{
+ grid-template-columns:repeat(2,minmax(0,1fr))
+ }
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .cb-adventure-brief{
+ grid-template-columns:1fr
+ }
+}
+@media(max-width:650px){
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-episode-grid{
+ grid-template-columns:1fr
+ }
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .cb-adventure-brief{
+ padding:13px;gap:12px
+ }
+ html body.cb-top-nav-enabled.cb-adventure-v4 .cb-adventure-brief__buttons{
+ flex-direction:column
+ }
+ html body.cb-top-nav-enabled.cb-adventure-v4 #quests .quest-journal-shell{
+ grid-template-columns:1fr!important
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html body.cb-top-nav-enabled.cb-adventure-v4 #content .dungeon-browser-card{
+ transition:none!important
+ }
+}
+
+/* Immersive shared combat HUD. The arena remains the coordinate owner;
+   saved Design Booth layouts and results keep their own presentation. */
+.cbcombat-backdrop:has([data-combat-layout="immersive"]){padding:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live){position:relative!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;min-height:0!important;border-radius:0!important;display:grid!important;grid-template-rows:48px 28px minmax(0,1fr)!important;overflow:hidden!important;padding:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) > .cbcombat-header{z-index:30;min-height:0!important;height:48px!important;padding:3px max(10px,env(safe-area-inset-right)) 3px max(10px,env(safe-area-inset-left))!important;gap:8px!important;background:linear-gradient(90deg,#101b2a,#0a111d)!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-title h2{font-size:18px!important;margin:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-title small{font-size:8px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-header-actions{gap:5px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-header-actions button{min-width:44px!important;min-height:40px!important;height:40px!important;padding:4px 9px!important;color:#e7d3ac!important;font-size:11px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-header-actions button[aria-expanded="true"]{background:#584729!important;border-color:#d3ae69!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) > .cbcombat-route{z-index:25;height:28px!important;min-height:0!important;padding:2px 8px!important;background:#0a1320!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) > .cbcombat-grid{position:relative!important;display:block!important;inset:auto!important;height:100%!important;width:100%!important;min-height:0!important;padding:0!important;overflow:hidden!important;background:#0b1220!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-left-column,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-right-column,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel{display:contents!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > .cbcombat-arena-wrap{position:absolute!important;inset:0 0 134px!important;width:100%!important;height:calc(100% - 134px)!important;align-self:stretch!important;display:block!important;min-height:0!important;max-height:none!important;aspect-ratio:auto!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:hidden!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-arena-wrap > :is(.cb2d-arena,[data-combat-arena]){position:absolute!important;inset:0!important;transform:none!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;aspect-ratio:auto!important;margin:0!important;border:0!important;border-radius:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-arena-wrap:after{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar{position:absolute!important;left:210px!important;right:18px!important;top:8px!important;z-index:12!important;min-height:0!important;width:auto!important;max-height:60px!important;padding:6px 10px!important;border:0!important;border-radius:5px!important;background:linear-gradient(90deg,#08101bd9,#08101b40)!important;pointer-events:none}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar .cb2d-room-tag{background:transparent!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar .cb2d-ground-legend{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party-panel{position:absolute!important;left:max(8px,env(safe-area-inset-left))!important;top:8px!important;bottom:146px!important;width:190px!important;height:auto!important;max-height:none!important;z-index:15!important;padding:5px!important;overflow:auto!important;background:#0b1524d9!important;border-color:#c7a15a55!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party{display:flex!important;flex-direction:column!important;height:auto!important;min-height:0!important;overflow:visible!important;padding:0!important;gap:3px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party > small{font-size:9px!important;margin:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){display:grid!important;grid-template-columns:1fr!important;grid-template-rows:none!important;grid-auto-rows:auto!important;height:auto!important;min-height:0!important;gap:4px!important;overflow:visible!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows) > .cb2d-party-row{min-height:57px!important;height:auto!important;margin:0!important;padding:4px!important;grid-template-columns:26px minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:3px!important;background:#0e1b2be6!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-main b{font-size:11px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-main small{font-size:9px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbstd-party-target{padding:2px 4px!important;min-height:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows{height:auto!important;max-height:none!important;flex:none!important;overflow:visible!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel{position:absolute!important;inset:auto 0 0!important;z-index:20!important;display:flex!important;flex-direction:column!important;gap:4px!important;width:100%!important;height:134px!important;max-height:none!important;min-height:0!important;padding:6px max(10px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;overflow:auto!important;border-radius:0!important;background:linear-gradient(#0b1829f5,#080f1d)!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel > small{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel :is(.cbr-command-groups,.cbstd-command-groups){display:grid!important;grid-template-columns:1fr 1fr!important;grid-template-rows:auto!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;gap:8px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-group{padding:0!important;border:0!important;background:transparent!important;min-height:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-group > small{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-column{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:auto!important;gap:5px!important;height:auto!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel :is(.cbr-command,.cb2d-potion-button){height:54px!important;min-height:44px!important;padding:4px 6px!important;border-radius:5px!important;overflow:hidden!important;background:#15263b!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command b{font-size:11px!important;line-height:1.2!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command small{font-size:9px!important;line-height:1.2!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbr-command-meta,.cbr-command-target,.cbr-inline-power){min-height:0!important;margin:0!important;padding:2px 4px!important;font-size:10px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > :is(.cb2d-cast,.cbcombat-cast){position:absolute!important;left:210px!important;right:12px!important;bottom:140px!important;z-index:16!important;width:auto!important;height:auto!important;min-height:0!important;padding:5px 8px!important;background:#0b1424ee!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-chat{display:none!important;position:absolute!important;left:8px!important;bottom:142px!important;z-index:40!important;width:min(440px,calc(100% - 16px))!important;height:min(260px,calc(100% - 152px))!important;min-height:0!important;max-height:none!important;grid-template-rows:auto minmax(0,1fr) auto auto!important;background:#101b2af5!important;border:1px solid #b89b67!important;border-radius:8px!important;overflow:hidden!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-chat-messages{min-height:0!important;overflow:auto!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-chat-form input{font-size:16px!important;min-width:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-meters-panel{display:none!important;position:absolute!important;right:8px!important;top:8px!important;bottom:142px!important;width:min(260px,calc(100% - 16px))!important;height:auto!important;max-height:none!important;min-height:0!important;z-index:40!important;overflow:auto!important;padding:8px!important;background:#0b1524f5!important;border:1px solid #b89b67!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-meter-stack{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(3,auto)!important;height:auto!important;overflow:visible!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-meter-panel{min-height:100px!important;height:auto!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-open-drawer="chat"] .cbcombat-chat{display:grid!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-open-drawer="meters"] .cbcombat-meters-panel{display:block!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) [data-combat-drawer]:focus-visible{outline:2px solid #f4d58a;outline-offset:2px}
+@media(max-width:849px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-live-dot,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-title small{display:none!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-title h2{font-size:14px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-header-actions button{padding:3px 6px!important;font-size:10px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party-panel{left:4px!important;right:4px!important;top:4px!important;bottom:auto!important;width:auto!important;height:88px!important;padding:3px!important;overflow:auto!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party > small{display:none!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows) > .cb2d-party-row{display:block!important;min-height:0!important;height:auto!important;padding:3px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-avatar,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbstd-party-target{display:none!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-main{min-width:0!important;display:block!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-main b{font-size:10px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;display:block!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-main small{font-size:8px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows{display:flex!important;gap:4px!important;font-size:9px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows[hidden]{display:none!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > .cbcombat-arena-wrap{inset:94px 0 184px!important;height:calc(100% - 278px)!important;min-height:0!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar{top:96px!important;left:6px!important;right:6px!important;padding:3px 6px!important;max-height:36px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar small{display:none!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel{height:162px!important;padding:4px 5px max(4px,env(safe-area-inset-bottom))!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel :is(.cbr-command-groups,.cbstd-command-groups){gap:5px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-column{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(2,44px)!important;gap:4px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel :is(.cbr-command,.cb2d-potion-button){height:44px!important;min-height:44px!important;padding:3px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command b{font-size:10px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command small{font-size:8px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > :is(.cb2d-cast,.cbcombat-cast){left:5px!important;right:5px!important;bottom:164px!important;padding:3px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-chat{bottom:168px!important;height:min(260px,calc(100% - 172px))!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-meters-panel{bottom:168px!important}
+}
+@media(max-height:540px) and (min-width:600px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live){grid-template-rows:44px 24px minmax(0,1fr)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-header{height:44px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party-panel{width:150px!important;left:4px!important;right:auto!important;top:4px!important;bottom:100px!important;height:auto!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){grid-template-columns:1fr!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > .cbcombat-arena-wrap{inset:0 0 94px!important;height:calc(100% - 94px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar{left:162px!important;top:4px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-command-panel{height:94px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-column{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:44px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-panel > :is(.cb2d-cast,.cbcombat-cast){left:162px!important;bottom:98px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-chat{bottom:100px!important;height:calc(100% - 104px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-meters-panel{bottom:100px!important}
+}
+
+.cbcombat-shell[data-combat-layout="classic"] [data-combat-drawer],.cbcombat-shell.cbe-live [data-combat-drawer]{display:none!important}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) > [hidden]{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) > .cbcombat-grid{grid-row:3!important;grid-column:1!important;align-self:stretch!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) > .cbcombat-header{grid-row:1!important;grid-column:1!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) > .cbcombat-route{grid-row:2!important;grid-column:1!important}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-statline :is(small,b){font-size:9px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-condition{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party :is(.cbcombat-party-rows,#cb2dRows) > .cb2d-party-row:nth-child(n+6){display:grid!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-party-panel{width:286px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] :is(.cbcombat-party-rows,#cb2dRows){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-battle-topbar{left:304px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-overlay{top:38px!important;width:min(450px,calc(100% - 16px))!important;padding:4px!important;gap:3px!important;backdrop-filter:none!important;background:#0b1425e8!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-head b{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-card{padding:4px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-card :is(header,footer){gap:3px!important;margin-top:2px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-stats{margin-top:2px!important;grid-template-columns:1fr 1fr!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-head small,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-card :is(header,footer) :is(span,b,em),html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-stats span,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-event{font-size:9px!important}
+@media(max-width:849px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-party-panel{width:auto!important;height:146px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] :is(.cbcombat-party-rows,#cb2dRows){grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-battle-panel > .cbcombat-arena-wrap{top:152px!important;height:calc(100% - 336px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-battle-topbar{left:6px!important;top:154px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party :is(.cbcombat-party-rows,#cb2dRows) > .cb2d-party-row:nth-child(n+6){display:block!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-statline :is(small,b){font-size:8px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-overlay{top:30px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-card>header b{display:none!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .mr-maid-link-card>footer{display:flex!important}
+}
+@media(max-height:540px) and (min-width:600px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-party-panel{width:240px!important;height:auto!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] :is(.cbcombat-party-rows,#cb2dRows){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-battle-panel > .cbcombat-arena-wrap{top:0!important;height:calc(100% - 94px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-battle-topbar{left:252px!important;top:4px!important}
+}
+
+/* Cards size to their contents instead of stretching down the entire scene. */
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party-panel{bottom:auto!important;height:max-content!important;max-height:calc(100% - 154px)!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){flex:0 0 auto!important;align-content:start!important;grid-auto-rows:76px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows) > .cb2d-party-row{height:76px!important;grid-template-rows:minmax(0,1fr) 18px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row > strong{position:absolute!important;right:5px!important;bottom:23px!important;margin:0!important;font-size:8px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbstd-party-target{height:18px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbstd-party-target small{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.q2d-side-resource,.td-side-resource,.tb-side-resource){display:block!important;position:relative!important;width:100%!important;height:4px!important;margin:3px 0 0!important;overflow:hidden!important;background:#15273c!important;border-radius:3px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.q2d-side-resource,.td-side-resource,.tb-side-resource)>i{display:block!important;height:100%!important;background:#6cafff!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) [class*="side-resource"][class*="rage"]>i{background:#f07360!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) [class*="side-resource"][class*="energy"]>i{background:#e4ce62!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) [class*="side-resource"][class*="focus"]>i{background:#e7ad5b!important}
+@media(max-width:849px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party-panel{height:88px!important;max-height:none!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-party-panel{height:146px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){grid-auto-rows:64px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows) > .cb2d-party-row{height:64px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row > strong{bottom:3px!important}
+}
+@media(max-height:540px) and (min-width:600px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-party-panel,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"] .cbcombat-party-panel{height:auto!important;max-height:calc(100% - 104px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){grid-auto-rows:40px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows) > .cb2d-party-row{height:40px!important;padding:2px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row > strong{display:none!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-main small{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+}
+
+@media(max-width:849px){html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-target{display:none!important}}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows:not([hidden]){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important;padding:3px 0!important;min-height:0!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows>small,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-target,html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-main>small{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-row{display:flex!important;align-items:center!important;gap:3px!important;height:22px!important;min-height:22px!important;padding:2px!important;overflow:hidden!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-main b{font-size:9px!important;white-space:nowrap!important;text-overflow:ellipsis!important;overflow:hidden!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-icon{width:12px!important;height:12px!important;font-size:10px!important}
+@media(max-width:849px) and (min-height:541px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-pet-rows:not([hidden]){grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live):has(.cbcombat-pet-row) .cbcombat-party-panel{height:114px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live):has(.cbcombat-pet-row) .cbcombat-battle-panel>.cbcombat-arena-wrap{top:120px!important;height:calc(100% - 304px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live):has(.cbcombat-pet-row) .cbcombat-battle-topbar{top:122px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"]:has(.cbcombat-pet-row) .cbcombat-party-panel{height:172px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"]:has(.cbcombat-pet-row) .cbcombat-battle-panel>.cbcombat-arena-wrap{top:178px!important;height:calc(100% - 362px)!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live)[data-party-size="10"]:has(.cbcombat-pet-row) .cbcombat-battle-topbar{top:180px!important}
+}
+@media(max-height:540px) and (min-width:600px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){grid-auto-rows:34px!important}
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows)>.cb2d-party-row{height:34px!important}
+}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows){grid-auto-flow:row!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame{top:48px!important;grid-template-columns:minmax(0,1fr) 40px!important;grid-template-rows:auto 6px!important;width:min(430px,calc(100% - 24px))!important;gap:4px 8px!important;padding:5px 8px!important;backdrop-filter:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame>small{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame>b{grid-column:1!important;grid-row:1!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;font-size:12px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame>strong{grid-column:2!important;grid-row:1!important;font-size:11px!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame>em{grid-column:1/-1!important;grid-row:2!important;height:6px!important}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-copy{display:none!important}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-target{min-height:40px!important;font-size:11px!important;width:auto!important;flex:0 1 60%!important}
+@media(max-height:540px) and (min-width:600px){html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-target{min-height:30px!important}}
+
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-meta{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;flex:0 0 44px!important;height:44px!important;gap:8px!important}
+@media(max-height:540px) and (min-width:600px){html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-command-meta{flex-basis:30px!important;height:30px!important}}
+
+.cbcombat-backdrop:has([data-combat-layout="immersive"]){grid-template-rows:minmax(0,1fr)!important;grid-template-columns:minmax(0,1fr)!important}
+.cbcombat-backdrop:has([data-combat-layout="immersive"])>.cbpvp-feed{position:absolute;bottom:6px;left:12px;right:12px;z-index:25;padding:2px 6px;font-size:10px;pointer-events:none}
+
+html body .cbcombat-shell[data-combat-layout="immersive"] #cbrCommandPower{flex-shrink:0;white-space:nowrap}
+
+/* Distinct immersive HUD lanes for room info, live target and boss health. */
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar{
+  box-sizing:border-box!important;
+  left:210px!important;right:280px!important;top:8px!important;
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)!important;
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr)!important;
+  align-items:center!important;gap:1px 10px!important;
+  height:60px!important;max-height:60px!important;
+  overflow:hidden!important;padding:5px 10px!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar>.cb2d-room-tag{
+  grid-column:1!important;grid-row:1!important;max-width:100%!important;
+  min-width:0!important;overflow:hidden!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar>.cb2d-caption{
+  grid-column:1!important;grid-row:2!important;
+  min-width:0!important;max-width:100%!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar>.cbl-combat-readout{
+  grid-column:2!important;grid-row:1 / 3!important;
+  display:flex!important;flex-direction:column!important;
+  justify-content:center!important;align-items:flex-end!important;
+  gap:4px!important;min-width:0!important;width:100%!important;
+  max-width:100%!important;margin:0!important;padding:0 0 0 8px!important;
+  overflow:hidden!important;border-left:1px solid rgba(205,177,123,.22)!important;
+  background:transparent!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar .cbl-combat-readout :is(.cbl-readout-target,.cbl-readout-action){
+  box-sizing:border-box!important;display:block!important;max-width:100%!important;
+  min-width:0!important;width:100%!important;text-align:right!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame{
+  top:84px!important;z-index:13!important;
+  max-width:calc(100% - 24px)!important;
+}
+@media(min-width:850px) and (max-width:1100px){
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar{left:204px!important;right:228px!important}
+}
+@media(max-width:849px){
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar{
+    left:8px!important;right:8px!important;top:97px!important;
+    height:49px!important;max-height:49px!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    padding:4px 6px!important;gap:1px 6px!important;
+  }
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar>.cbl-combat-readout{
+    gap:2px!important;padding-left:5px!important;
+  }
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar .cbl-combat-readout :is(.cbl-readout-target,.cbl-readout-action){
+    font-size:9px!important;
+  }
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame{
+    top:158px!important;width:min(340px,calc(100% - 20px))!important;
+  }
+}
+@media(max-height:540px) and (min-width:600px){
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbcombat-battle-topbar{height:43px!important;max-height:43px!important}
+  html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cbr-boss-frame{top:61px!important}
+}
+
+
+/* One-stop dungeon launch and role-based party orders. */
+.cb-adventure-quick{display:flex!important;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 16px!important}
+.cb-adventure-quick .cb-adventure-brief__copy{flex:1 1 220px}
+.cb-adventure-quick .cb-adventure-brief__copy h3{margin:2px 0!important;font-size:1rem!important}
+.cb-adventure-quick .cb-adventure-brief__copy p{font-size:.81rem;max-width:380px}
+.cb-dungeon-quick-list{flex:3 1 480px;display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px}
+.cb-dungeon-quick-list button{min-height:46px;border:1px solid #8c9ab04d;color:#e4e9ed;background:#18222edc;border-radius:7px;padding:8px 10px;text-align:left;font-weight:650;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.cb-dungeon-quick-list button:hover,.cb-dungeon-quick-list button:focus-visible{background:#303340;border-color:#b9a17e;outline-offset:2px}
+.cb-dungeon-quick-list button:disabled{opacity:.45;cursor:not-allowed}
+.cb-party-orders{border:1px solid #b9a17e42;border-radius:10px;padding:13px;background:linear-gradient(140deg,#141c27e8,#12151ee8);margin:14px 0;color:#e5e2db}
+.cb-party-orders-head{display:flex;justify-content:space-between;gap:10px;align-items:start;margin:0 0 12px}
+.cb-party-orders-head h3{font-size:1.05rem!important;margin:3px 0 4px!important;color:#f0e5d3}
+.cb-party-orders-head p{font-size:.8rem;line-height:1.4;color:#bcbcc4;max-width:58ch;margin:0}
+.cb-party-orders-head small{font-size:.66rem;color:#c8a979;letter-spacing:.12em;font-weight:700}
+.cb-party-orders-head button{border:1px solid #ada38b66;border-radius:6px;background:#262b34;color:#ddd3c5;padding:7px 12px;cursor:pointer}
+.cb-party-orders-list{display:grid;gap:9px}
+.cb-party-order{display:grid;grid-template-columns:minmax(105px,145px) minmax(0,1fr);gap:10px;align-items:center;border-top:1px solid #d1c1a01d;padding-top:9px}
+.cb-party-order-name b{display:block;font-size:.86rem;overflow-wrap:anywhere;color:#f4eee6}
+.cb-party-order-name small{font-size:.64rem;letter-spacing:.09em;color:#bda88d}
+.cb-party-order-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.cb-party-order-options button{border:1px solid #75859d4d;border-radius:7px;min-height:58px;text-align:left;background:#202a36;color:#d4dbe0;padding:7px;cursor:pointer}
+.cb-party-order-options button b{display:block;font-size:.74rem;line-height:1.2}
+.cb-party-order-options button small{display:block;font-size:.66rem;line-height:1.3;margin-top:3px;color:#a8b7c5}
+.cb-party-order-options button.active,.cb-party-order-options button[aria-pressed=true]{border-color:#cead74;background:#4b3b2c;color:#fff0d6;box-shadow:inset 0 0 0 1px #d9b58540}
+.cb-party-order-options button.active small{color:#e5d1b6}
+.cb-party-order-options button:hover,.cb-party-order-options button:focus-visible{outline:2px solid #d9b58570;outline-offset:0}
+.cb-party-orders-note{color:#aab2ba;font-size:.72rem;margin:10px 0 0}
+.cb-dungeon-intel-details{margin:14px 0;border-top:1px solid #b9a17e33;padding-top:10px}
+.cb-dungeon-intel-details>summary{cursor:pointer;color:#d4b88b;font-size:.85rem;font-weight:650}
+@media(max-width:700px){
+ .cb-party-orders{padding:10px}
+ .cb-party-order{display:block}
+ .cb-party-order-name{display:flex;gap:8px;align-items:baseline;margin-bottom:6px}
+ .cb-party-order-options button{min-height:55px;padding:6px 4px}
+ .cb-party-order-options button b{font-size:.7rem}
+ .cb-party-order-options button small{font-size:.6rem}
+ .cb-adventure-quick{display:block!important}
+ .cb-dungeon-quick-list{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+}
+
+/* Shared overall approach for encounters that previously skipped strategy choice. */
+.cb-party-stance{border:1px solid #8c9ab04d;border-radius:9px;background:#141b24;padding:11px;margin:12px 0}
+.cb-party-stance>small{display:block;font-size:.68rem;color:#d3b07e;letter-spacing:.1em;font-weight:700;margin-bottom:8px}
+.cb-party-stance-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.cb-party-stance-options button{border:1px solid #8c9ab04d;background:#202934;color:#e4e6ea;padding:9px;border-radius:7px;min-height:64px;text-align:left;cursor:pointer}
+.cb-party-stance-options button b{font-size:.8rem;display:block}
+.cb-party-stance-options button small{display:block;margin-top:4px;color:#adb5c0;font-size:.68rem;line-height:1.35}
+.cb-party-stance-options button.active{border-color:#d6b27c;background:#493d30;color:#fff0d6}
+.cb-party-stance-options button.active small{color:#ead3b5}
+.cb-party-stance-options button:focus-visible{outline:2px solid #dcb576;outline-offset:2px}
+@media(max-width:500px){.cb-party-stance-options button{padding:7px 4px;min-height:68px}.cb-party-stance-options button b{font-size:.72rem}.cb-party-stance-options button small{font-size:.62rem}}
+
+/* Two actions per card: direct launch first, journal optional. */
+.dungeon-browser-card .cb-dungeon-card-launch{display:inline-flex;align-items:center;justify-content:center;min-height:39px;margin:5px 0 0 6px;padding:8px 13px;border:1px solid #c9a772;border-radius:6px;background:#4a3826;color:#f4e5c9;font-weight:750;font-size:.75rem;letter-spacing:.04em;cursor:pointer}
+.dungeon-browser-card .cb-dungeon-card-launch:hover,.dungeon-browser-card .cb-dungeon-card-launch:focus-visible{background:#644a2e;outline:2px solid #dec18d;outline-offset:2px}
+.dungeon-browser-card .cb-dungeon-card-launch:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:650px){.dungeon-browser-card .cb-dungeon-card-launch{width:100%;margin:7px 0 0}}
+
+/* Compact optional tactical planner: accessible on tablet, touch and narrow mobile. */
+.cb-advanced-plan{margin:13px 0;border:1px solid #7d715e90;border-radius:10px;background:linear-gradient(135deg,#18202a,#111923);color:#e8e2d8;overflow:hidden}
+.cb-advanced-plan>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;list-style:none}
+.cb-advanced-plan>summary::-webkit-details-marker{display:none}
+.cb-advanced-plan>summary span{display:grid;gap:4px}
+.cb-advanced-plan>summary b{color:#ecd5ae;font-size:.85rem;letter-spacing:.08em}
+.cb-advanced-plan>summary small{font-size:.73rem;color:#aeb9c4}
+.cb-advanced-plan>summary em{font-style:normal;color:#e3c08d;font-size:.72rem;font-weight:700}
+.cb-advanced-body{border-top:1px solid #b5a08345;padding:13px;display:grid;gap:13px}
+.cb-advanced-enable{display:flex!important;align-items:center;gap:8px;color:#f1e5d1;font-weight:650;font-size:.82rem}
+.cb-advanced-enable input{width:18px;height:18px;accent-color:#c9a36c;flex:none}
+.cb-advanced-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.cb-advanced-presets>span{grid-column:1/-1;color:#c8af8c;letter-spacing:.08em;font-size:.66rem;font-weight:750}
+.cb-advanced-presets button,.cb-advanced-save button{min-height:38px;border:1px solid #a9926f80;border-radius:7px;color:#e9dcc7;background:#2c313b;cursor:pointer;font-size:.75rem;padding:8px}
+.cb-advanced-presets button:hover,.cb-advanced-save button:hover{background:#544431}
+.cb-advanced-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cb-advanced-fields label{display:flex;flex-direction:column;gap:5px;color:#f0e5d3;font-weight:600;font-size:.78rem}
+.cb-advanced-fields select{background:#222e3c;border:1px solid #7b8895;color:#faf5ec;border-radius:7px;padding:9px;min-height:40px;max-width:100%;font-size:.82rem}
+.cb-advanced-fields label small{font-size:.67rem;font-weight:400;color:#aeb9c4;line-height:1.35}
+.cb-advanced-save{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.cb-advanced-save output{display:block;flex-basis:100%;color:#bdc8ca;font-size:.72rem;line-height:1.4}
+.cb-advanced-hint{font-size:.72rem;line-height:1.4;color:#b3bdc7;margin:0}
+.cb-advanced-plan button:focus-visible,.cb-advanced-plan select:focus-visible,.cb-advanced-plan input:focus-visible,.cb-advanced-plan summary:focus-visible{outline:2px solid #e2bf82;outline-offset:2px}
+@media(max-width:650px){.cb-advanced-fields{grid-template-columns:minmax(0,1fr)}.cb-advanced-presets button{padding:6px 4px;font-size:.7rem}.cb-advanced-save button{flex:1}}
+
+/* iPad party frames: portraits and character names must never collide. */
+@media (min-width:850px) and (min-height:541px){
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) :is(.cbcombat-party-rows,#cb2dRows)>.cb2d-party-row{
+   grid-template-columns:38px minmax(0,1fr)!important;
+   column-gap:7px!important;align-items:center!important;
+ }
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row>.cb2d-party-avatar{
+   grid-column:1!important;grid-row:1!important;
+   width:36px!important;height:36px!important;align-self:center!important;
+ }
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row>.cb2d-party-main{
+   grid-column:2!important;grid-row:1!important;min-width:0!important;overflow:hidden!important;
+ }
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row>.cb2d-party-target,
+ html body .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-layout="immersive"]:not(.results-mode):not(.cbe-live) .cb2d-party-row>.cbstd-party-target{
+   grid-column:1/-1!important;grid-row:2!important;min-width:0!important;
+ }
+}

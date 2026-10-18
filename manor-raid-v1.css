@@ -46,3 +46,49 @@
 .mr-requirements strong{font:600 1.05rem Georgia,serif;color:#f0c18c}
 .mr-requirements span{color:#71817d;font-size:.52rem;line-height:1.35}
 @media(max-width:760px){.mr-requirements{grid-template-columns:1fr 1fr}.mr-requirements>div{min-height:70px}}
+
+
+/* Manor linked Maids live-sync overlay */
+.mr-maid-link-overlay{position:absolute;z-index:38;left:50%;top:46px;width:min(570px,calc(100% - 28px));transform:translateX(-50%);display:grid;gap:5px;padding:7px;border:1px solid rgba(220,132,42,.3);background:rgba(4,9,11,.9);box-shadow:0 12px 34px #0009;backdrop-filter:blur(9px);pointer-events:none}
+.mr-maid-link-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:1px 2px 4px}.mr-maid-link-head small,.mr-maid-link-head b{display:block}.mr-maid-link-head small{color:#d9944c;font-size:.38rem;font-weight:900;letter-spacing:.13em}.mr-maid-link-head b{margin-top:2px;color:#9baaa5;font-size:.42rem}.mr-maid-link-head>strong{padding:3px 6px;border:1px solid #ffffff12;color:#d6b07d;font-size:.38rem;letter-spacing:.07em;white-space:nowrap}
+.mr-maid-link-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}.mr-maid-link-card{min-width:0;padding:7px;border:1px solid #ffffff0d;background:#071013d9}.mr-maid-link-card.is-empowered{border-color:rgba(221,75,54,.42);background:linear-gradient(180deg,rgba(53,15,13,.88),rgba(7,16,19,.94));box-shadow:inset 0 0 18px rgba(218,66,44,.08)}
+.mr-maid-link-card>header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:5px}.mr-maid-link-card>header span{color:#788a84;font-size:.34rem;font-weight:900;letter-spacing:.08em}.mr-maid-link-card>header b{overflow:hidden;text-overflow:ellipsis;color:#c7d2ce;font-size:.42rem;white-space:nowrap}.mr-maid-link-card>header em{font-style:normal;color:#78c88c;font-size:.34rem;font-weight:900}.mr-maid-link-card.is-empowered>header em{color:#f0795d}
+.mr-maid-link-hp{margin-top:5px}.mr-maid-link-hp>span{display:flex;align-items:center;justify-content:space-between}.mr-maid-link-hp>span b{color:#d7dedb;font-size:.39rem}.mr-maid-link-hp>span strong{color:#e7b27d;font-size:.42rem}.mr-maid-link-hp>i{display:block;height:5px;margin-top:3px;overflow:hidden;border:1px solid #ffffff12;background:#210d0d}.mr-maid-link-hp>i>u{display:block;height:100%;background:linear-gradient(90deg,#7c241f,#d14838);text-decoration:none;transition:width .2s linear}
+.mr-maid-link-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px}.mr-maid-link-stats span{padding:3px 4px;background:#ffffff05;color:#71827d;font-size:.32rem}.mr-maid-link-stats b{float:right;color:#adbcb7}.mr-maid-link-card.is-empowered .mr-maid-link-stats b{color:#f07b61}
+.mr-maid-link-card>footer{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:5px;color:#647670;font-size:.32rem}.mr-maid-link-card>footer b{color:#d2a46e;font-size:.32rem;white-space:nowrap}.mr-maid-link-event{padding:4px 6px;border-top:1px solid #ffffff0c;color:#d7b482;font-size:.36rem;font-weight:900;letter-spacing:.035em;text-align:center}
+.mr-maid-link-overlay.penalty-flash{animation:mrMaidPenaltyFlash .8s ease}@keyframes mrMaidPenaltyFlash{0%,100%{box-shadow:0 12px 34px #0009}35%{border-color:#ef674a;box-shadow:0 0 30px rgba(239,83,57,.5)}}
+@media(max-width:620px){.mr-maid-link-overlay{top:58px;width:calc(100% - 16px);padding:5px}.mr-maid-link-head b{display:none}.mr-maid-link-head>strong{font-size:.34rem}.mr-maid-link-card{padding:5px}.mr-maid-link-card>header{grid-template-columns:1fr auto}.mr-maid-link-card>header span{grid-column:1/-1}.mr-maid-link-card>header b{font-size:.38rem}.mr-maid-link-stats{grid-template-columns:1fr}.mr-maid-link-card>footer{display:grid;gap:2px}.mr-maid-link-event{font-size:.33rem}}
+
+
+/* Step 4 · Manor room presentation and owner QA */
+.mr-owner-qa{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;border-color:rgba(163,93,201,.42);background:linear-gradient(110deg,rgba(52,28,68,.34),rgba(8,16,19,.96) 56%)}
+.mr-owner-qa small{color:#c18be1}.mr-owner-qa h3{margin:4px 0 5px}.mr-owner-qa p{max-width:760px}.mr-owner-qa button{border-color:#9f63c5;background:linear-gradient(180deg,#6c3f86,#482857)}
+.mr-owner-qa-controls{position:fixed;z-index:2147483000;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));width:min(440px,calc(100vw - 24px));padding:10px;border:1px solid rgba(185,118,224,.55);background:rgba(10,7,14,.95);box-shadow:0 18px 60px #000a;backdrop-filter:blur(10px);color:#e9e1ef}
+.mr-owner-qa-controls small,.mr-owner-qa-controls b{display:block}.mr-owner-qa-controls small{color:#bd84dc;font-size:9px;font-weight:900;letter-spacing:.14em}.mr-owner-qa-controls b{margin-top:3px;font:600 15px Georgia,serif}.mr-owner-qa-controls>div{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.mr-owner-qa-controls button{min-height:32px;padding:0 9px;border:1px solid #ffffff1a;background:#17101d;color:#d9c4e5;font-size:9px;font-weight:900;letter-spacing:.055em}.mr-owner-qa-controls [data-qa-wipe]{border-color:#8b433d;color:#e6a39a}.mr-owner-qa-controls [data-qa-exit]{margin-left:auto}
+
+.cb2d-manor-arena .cb2d-environment{z-index:2!important;filter:none!important;background:#080c0d}
+.cb2d-manor-arena #cb2dUnits{z-index:7}
+.mr-room-scene{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#080b0c}
+.mr-room-scene>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;filter:none;opacity:1;transform:none;pointer-events:none}
+
+.mr-master-status-overlay{position:absolute;z-index:39;left:50%;top:48px;width:min(520px,calc(100% - 30px));transform:translateX(-50%);padding:8px 10px;border:1px solid rgba(210,115,55,.34);background:rgba(6,9,11,.91);box-shadow:0 12px 34px #0009;backdrop-filter:blur(8px);pointer-events:none}
+.mr-master-status-overlay>small{display:block;color:#e49a59;font-size:8px;font-weight:900;letter-spacing:.15em;text-align:center}.mr-master-status-overlay>div{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:5px;margin-top:6px}.mr-master-status-overlay>div>*{padding:5px 6px;border:1px solid #ffffff0d;background:#0a1113;color:#84958f;font-size:9px}.mr-master-status-overlay b{color:#cdd7d3}.mr-master-status-overlay strong{float:right;color:#e57d5f}.mr-master-status-overlay p{margin:5px 0 0;color:#be9b78;font-size:9px;text-align:center}
+
+.mr-victory-art{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(180deg,rgba(5,8,10,.4),rgba(5,8,10,.96)),url('./assets/manor/manor-master.webp') center 28%/cover no-repeat}
+.mr-victory-art>*{position:relative;z-index:1}.mr-wipe{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(180deg,rgba(12,4,4,.56),rgba(5,7,8,.98)),url('./assets/manor/manor-raid-hero.webp') center 42%/cover no-repeat}.mr-wipe>*{position:relative;z-index:1}
+
+@media(max-width:700px){
+ .mr-owner-qa{grid-template-columns:1fr}.mr-owner-qa-controls{right:8px;bottom:max(8px,env(safe-area-inset-bottom));width:calc(100vw - 16px)}
+ .mr-owner-qa-controls>div{display:grid;grid-template-columns:1fr 1fr}.mr-owner-qa-controls [data-qa-exit]{margin-left:0}
+ .mr-master-status-overlay{top:58px;width:calc(100% - 16px)}.mr-master-status-overlay>div{grid-template-columns:1fr 1fr}
+ 
+}
+
+/* Owner tools remain accessible without covering combat commands. */
+.mr-owner-qa-controls{bottom:142px;width:auto;max-width:calc(100vw - 24px);padding:6px 10px}
+.mr-owner-qa-controls summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:#d9b1ef;font-size:10px;font-weight:800}
+.mr-owner-qa-controls details>div{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.mr-owner-qa-controls details[open]{max-width:420px}
+@media(max-width:849px){.mr-owner-qa-controls{bottom:184px}.mr-owner-qa-controls details>div{display:grid;grid-template-columns:1fr 1fr}}
+@media(max-height:540px) and (min-width:600px){.mr-owner-qa-controls{bottom:98px}}

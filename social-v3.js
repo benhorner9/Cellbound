@@ -125,6 +125,90 @@ async function joinGroup(id){
 async function leaveGroup(id){const {error}=await db.rpc('leave_party_finder_listing',{p_listing_id:id});if(error){alert(error.message);return;}await loadGroups();}
 
 async function refreshAll(markSeen=false){await Promise.all([loadChat(markSeen),loadGroups()]);renderTargetOptions();}
+
+/* Same moderated channels as Social: world, trade and party finder. */
+function mountCombatChat(shell){
+ const panel=shell?.querySelector('[data-combat-chat]');
+ if(!panel||panel.dataset.combatChatReady==='1')return;
+ panel.dataset.combatChatReady='1';
+ const messages=panel.querySelector('[data-combat-chat-messages]');
+ const input=panel.querySelector('[data-combat-chat-input]');
+ const form=panel.querySelector('[data-combat-chat-form]');
+ const status=panel.querySelector('[data-combat-chat-error]');
+ const label=panel.querySelector('[data-combat-chat-label]');
+ const allowed=new Set(['world','trade','party']);
+ const labels={world:'GLOBAL',trade:'TRADE',party:'PARTY FINDER'};
+ let selected='world',lastSignature='',busy=false,inflight=false,closed=false;
+ function report(note){status.textContent=note||'';status.hidden=!note}
+ function messageRows(rows){
+  const nearBottom=messages.scrollHeight-messages.scrollTop-messages.clientHeight<48;
+  messages.replaceChildren();
+  if(!rows.length){
+   const note=document.createElement('p');note.className='cbcombat-chat-info';
+   note.textContent='No messages in '+labels[selected].toLowerCase()+' yet.';
+   messages.appendChild(note);
+  }
+  for(const m of rows){
+   const line=document.createElement('p');line.className='cbcombat-chat-line';
+   const time=document.createElement('time');time.className='cbcombat-chat-time';
+   const d=new Date(m.created_at);
+   time.textContent=Number.isFinite(d.getTime())?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+   const name=document.createElement('b');name.className='cbcombat-chat-speaker';
+   name.textContent=String(m.guild_label||'Adventurer');
+   if(['owner','mod','player_mod'].includes(m.sender_badge))name.dataset.badge=m.sender_badge;
+   const body=document.createElement('span');body.textContent=String(m.body||'');
+   line.append(time,name,body);messages.appendChild(line);
+  }
+  if(nearBottom||!lastSignature)messages.scrollTop=messages.scrollHeight;
+ }
+ async function refresh(force=false){
+  if(closed||!panel.isConnected||shell.classList.contains('results-mode')||inflight)return;
+  if(!db||!user){report('Connect to Cellbound to use global chat.');return}
+  inflight=true;const requestChannel=selected;
+  try{
+   const {data,error}=await db.from('chat_messages').select('id,guild_label,channel,body,sender_badge,created_at').eq('channel',requestChannel).order('created_at',{ascending:false}).limit(50);
+   if(error)throw error;
+   if(requestChannel!==selected)return;
+   report('');
+   const rows=(data||[]).reverse();
+   const signature=requestChannel+'|'+rows.map(m=>String(m.id||'')+':'+String(m.created_at||'')).join('|');
+   if(force||signature!==lastSignature){messageRows(rows);lastSignature=signature}
+  }catch(error){report('Unable to load chat. Please try again.');console.warn('Combat global chat read unavailable',error)}
+  finally{inflight=false}
+ }
+ panel.querySelectorAll('[data-combat-chat-channel]').forEach(button=>button.addEventListener('click',()=>{
+  const next=button.dataset.combatChatChannel;
+  if(!allowed.has(next)||next===selected)return;
+  selected=next;lastSignature='';
+  panel.querySelectorAll('[data-combat-chat-channel]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.combatChatChannel===selected)));
+  label.textContent=labels[selected];
+  input.placeholder='Message '+labels[selected].toLowerCase()+'…';
+  messages.textContent='';
+  refresh(true);
+ }));
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();if(busy||!db||!user)return;
+  const body=input.value.trim();if(!body)return;
+  busy=true;const send=form.querySelector('[data-combat-chat-send]');send.disabled=true;report('');
+  try{
+   const {error}=await db.rpc('post_chat_message',{p_channel:selected,p_body:body});
+   if(error)throw error;
+   input.value='';lastSignature='';await refresh(true);
+   if(channel===selected)loadChat(false);
+  }catch(error){
+   const blocked=String(error?.message||'').toLowerCase().includes('chat filter');
+   report(blocked?'Message blocked by the chat filter. Please reword it.':String(error?.message||'Message could not be sent.'));
+  }finally{busy=false;send.disabled=false}
+ });
+ const interval=setInterval(()=>{
+  if(!panel.isConnected||!shell.isConnected||shell.classList.contains('results-mode')){closed=true;clearInterval(interval);return}
+  const backdrop=shell.closest('.cbcombat-backdrop');
+  if(backdrop?.hidden||backdrop?.getAttribute('aria-hidden')==='true')return;
+  refresh();
+ },5000);
+ refresh(true);
+}
+
 function bind(){
   $$('[data-chat-channel]').forEach(b=>b.addEventListener('click',()=>setChannel(b.dataset.chatChannel)));
   $('#chatForm')?.addEventListener('submit',sendChat);
@@ -142,7 +226,8 @@ async function init(){
   bind();await refreshAll(false);
   timer=setInterval(()=>refreshAll(false),5000);
   window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
-  window.CellboundSocial={refreshAll,loadGroups,loadChat};
+  window.CellboundSocial={refreshAll,loadGroups,loadChat,mountCombatChat};
 }
+window.CellboundSocial={mountCombatChat};
 init();
 })();

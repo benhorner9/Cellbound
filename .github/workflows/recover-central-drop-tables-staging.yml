@@ -1,0 +1,112 @@
+name: Recover Central Drop Tables Staging
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/recover-central-drop-tables-staging.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cellbound-boss-drops-one-time-recovery
+  cancel-in-progress: true
+
+jobs:
+  recover:
+    if: startsWith(github.event.head_commit.message, 'Deliver central Drop Tables from validated staging release')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the exact staging commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Confirm complete PR validation already passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for run_id in 37784160688; do
+            curl --fail --silent --show-error --location \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/benhorner9/Cellbound/actions/runs/$run_id" \
+              > "/tmp/validation-$run_id.json"
+            RUN_ID="$run_id" node -e "const r=require('/tmp/validation-'+process.env.RUN_ID+'.json');if(r.status!=='completed'||r.conclusion!=='success')process.exit(1)"
+          done
+
+      - name: Verify deployed source descends from validated PR
+        run: git merge-base --is-ancestor c76497b6a4d823878354efa3440b182bd000f765 "$GITHUB_SHA"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Rebuild and run all static regressions
+        run: |
+          npm run build
+          npm run test:appearance
+          node tests/design-booth.cjs
+
+      - name: Verify the exact Design Booth package
+        run: |
+          set -euo pipefail
+          test -f dist/guild.html
+          test -f dist/admin-design-booth-v1.js
+          test -f dist/design-booth-content-v1.js
+          test -f dist/boss-drop-tables-v1.js
+          grep -F "boss-drop-tables-v1.js?b=$GITHUB_SHA" dist/guild.html
+          grep -F 'dboBossPicker' dist/admin-design-booth-v1.js
+          grep -F 'CellboundBossDropTables' dist/boss-drop-tables-v1.js
+          grep -F 'id="designBoothEntry"' dist/guild.html
+          grep -F "admin-design-booth-v1.js?b=$GITHUB_SHA" dist/guild.html
+          ! grep -F 'class="admin-card admin-room-editor-entry"' dist/guild.html
+          ! grep -F 'class="admin-card admin-generator-entry"' dist/guild.html
+          node -e "const fs=require('fs');fs.writeFileSync('dist/build-meta.json',JSON.stringify({commit:process.env.GITHUB_SHA,branch:'staging',deployedAt:new Date().toISOString(),release:'central-boss-drop-tables'},null,2)+'\n')"
+
+      - name: Deploy exact validated staging build
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.STAGING_FTP_SERVER }}
+          username: ${{ secrets.STAGING_FTP_USERNAME }}
+          password: ${{ secrets.STAGING_FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.STAGING_FTP_PORT || 21 }}
+          server-dir: ./cb/
+          local-dir: ./dist/
+          log-level: standard
+
+      - name: Verify live staging serves the Design Booth
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for attempt in $(seq 1 18); do
+            if curl --fail --silent --show-error --location --max-time 20 \
+              "https://cb.athleticsmanagergame.com/build-meta.json?designbooth=$GITHUB_SHA" \
+              --output /tmp/design-booth-build-meta.json; then
+              if node -e "const m=require('/tmp/design-booth-build-meta.json');if(m.commit!==process.env.GITHUB_SHA)process.exit(1)"; then
+                ok=1
+                break
+              fi
+            fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          curl --fail --silent --show-error --location --max-time 20 \
+            "https://cb.athleticsmanagergame.com/guild.html?designbooth=$GITHUB_SHA" \
+            --output /tmp/design-booth-guild.html
+          grep -F 'id="designBoothEntry"' /tmp/design-booth-guild.html
+          grep -F "admin-design-booth-v1.js?b=$GITHUB_SHA" /tmp/design-booth-guild.html
+          ! grep -F 'class="admin-card admin-room-editor-entry"' /tmp/design-booth-guild.html
+          grep -F "boss-drop-tables-v1.js?b=$GITHUB_SHA" /tmp/design-booth-guild.html
+          curl --fail --silent --show-error --location --max-time 20 "https://cb.athleticsmanagergame.com/admin-design-booth-v1.js?dropcheck=$GITHUB_SHA" --output /tmp/boss-editor.js
+          grep -F "dboBossPicker" /tmp/boss-editor.js
+          curl --fail --silent --show-error --location --max-time 20 "https://cb.athleticsmanagergame.com/boss-drop-tables-v1.js?dropcheck=$GITHUB_SHA" --output /tmp/boss-drop-tables.js
+          grep -F "CellboundBossDropTables" /tmp/boss-drop-tables.js
+          echo "Live staging verified: Central Drop Tables are served at commit $GITHUB_SHA"

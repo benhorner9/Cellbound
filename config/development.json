@@ -1,0 +1,6 @@
+{
+ "backend":"https://zrvehixcthljiktcctne.supabase.co",
+ "publishableKey":"sb_publishable_eOHVHE2YrFhRDSWHrPjmXw_1snF8OiR",
+ "chapterService":"https://zrvehixcthljiktcctne.supabase.co/functions/v1/episode-opening",
+ "authorityBuild":"dev-opening-20261017"
+}

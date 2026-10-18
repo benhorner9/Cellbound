@@ -69,9 +69,9 @@ async function mount(page,seedState=null,owner=false,options={}){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed,simulateDungeonRuntime})=>{
+  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed,simulateDungeonRuntime,userId,episodeBridge})=>{
     window.__CELLBOUND_TEST_SEED=seed;
-    const user={id:'playthrough-user',email:'playthrough@example.test'};
+    const user={id:userId||'playthrough-user',email:'playthrough@example.test'};
     if(localSeed){
       localStorage.setItem('cellbound-management-owner',user.id);
       localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(localSeed));
@@ -100,29 +100,34 @@ async function mount(page,seedState=null,owner=false,options={}){
     }
     const client={
       auth:{
-        getSession:async()=>({data:{session:{user}},error:null}),
+        getSession:async()=>({data:{session:{user,access_token:episodeBridge?'local-test-token':undefined}},error:null}),
         getUser:async()=>({data:{user},error:null}),
         signOut:async()=>({error:null}),
         onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})
       },
       from:query,
       rpc:async(name,args={})=>{
+        if(episodeBridge&&name==='cellbound_episodes')return window.episodeDatabaseRpc(args.p_action,args.p_payload);
+        if(name==='cellbound_booth'){if(args.p_action==='access')return{data:{role:owner?'owner':'none',scopes:owner?['adventure','template','room-layout','room-art','comic-art','comic-text','pvp-map','boss-drops']:[],can_publish:owner},error:null};if(args.p_action==='list'||args.p_action==='members')return{data:[],error:null};return{data:null,error:{message:'Workflow test fixture does not implement this mutation'}}}
         if(name==='cellbound_social_identity')return{data:{staff_member:owner,chat_badge:owner?'owner':'player',player_mod_discount_eligible:false},error:null};
         if(name==='cellbound_admin_status')return{data:owner?{is_admin:true,role:'owner',auto_clear_cell_shock:false}:{is_admin:false,role:null,auto_clear_cell_shock:false},error:null};
         if(name==='cellbound_release_status')return{data:null,error:null};
         if(name==='cellbound_admin_market_summary')return{data:{active_gear:0,buy_orders:0,sell_orders:0,trades_24:0,volume_24:0,tax_24:0,top_items:[]},error:null};
+        if(name==='cellbound_admin_analytics_summary')return{data:{channel:args.p_channel||'staging',days:Number(args.p_days)||30,since:new Date(Date.now()-86400000).toISOString(),overview:{active_testers:3,sessions:7,events:48,characters_tracked:15,quests_completed:4,crafts_completed:6,items_equipped:9,items_dismantled:3},classes:[{name:'Warrior',count:5},{name:'Mage',count:4}],races:[{name:'Veyren',count:6},{name:'Nymari',count:3}],class_race:[{class:'Warrior',race:'Veyren',count:3}],dungeons:[{id:'ashen-vault',name:'The Ashen Vault',starts:8,completions:6,unique_players:3,completion_rate:75}],quests:[{id:'ashes-east-road',name:'Ashes on the East Road',completions:3,unique_players:3}],features:[{name:'content',opens:12,unique_players:3}],levels:[{level:5,characters:4,players:3}],professions:[{name:'Alchemy',learned:2,crafts:5,players:2}],daily_activity:[{date:'2026-10-03',players:3,sessions:7}]},error:null};
         if(simulateDungeonRuntime&&name==='resume_dungeon_attempt'){
           const saved=readAttempt();return{data:saved?.active?saved:{active:false},error:null};
         }
         if(simulateDungeonRuntime&&name==='begin_dungeon_attempt'){
           const count=Math.max(0,Number(localStorage.getItem(TEST_BEGIN_KEY))||0)+1;localStorage.setItem(TEST_BEGIN_KEY,String(count));
           const existing=readAttempt();if(existing?.active)return{data:existing,error:null};
-          const attempt={active:true,attemptId:'qa-attempt-1',seed:'qa-resume-seed',difficulty:args.p_difficulty||'normal',tier:Number(args.p_tier)||0,dungeonVersion:Number(args.p_dungeon_version)||2,seasonId:args.p_season_id||'qa',targetTimeMs:720000,runtimeState:{}};
+          const attempt={active:true,attemptId:'qa-attempt-'+count,seed:'qa-resume-seed-'+count,difficulty:args.p_difficulty||'normal',tier:Number(args.p_tier)||0,dungeonVersion:Number(args.p_dungeon_version)||2,seasonId:args.p_season_id||'qa',targetTimeMs:720000,runtimeState:{}};
           writeAttempt(attempt);return{data:attempt,error:null};
         }
         if(simulateDungeonRuntime&&name==='save_dungeon_attempt_runtime'){
           const saved=readAttempt()||{active:true,attemptId:args.p_attempt_id||'qa-attempt-1'};
-          const next={...saved,active:true,runtimeState:args.p_runtime_state||{},runtimeUpdatedAt:new Date().toISOString()};writeAttempt(next);return{data:{ok:true},error:null};
+          const phase=String(args.p_runtime_state?.phase||'');
+          const active=!['abandoned','failed','completed'].includes(phase);
+          const next={...saved,active,runtimeState:args.p_runtime_state||{},runtimeUpdatedAt:new Date().toISOString()};writeAttempt(next);return{data:{ok:true},error:null};
         }
         if(simulateDungeonRuntime&&name==='record_dungeon_run_v3'){
           const saved=readAttempt();if(saved)writeAttempt({...saved,active:false});
@@ -136,16 +141,16 @@ async function mount(page,seedState=null,owner=false,options={}){
       storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})}
     };
     window.supabase={createClient:()=>client};
-  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null,simulateDungeonRuntime:Boolean(options.simulateDungeonRuntime)});
+  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null,simulateDungeonRuntime:Boolean(options.simulateDungeonRuntime),userId:options.userId||null,episodeBridge:Boolean(options.episodeBridge)});
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
     if(relative==='guild.html'){
-      const shell=path.resolve(root,'guild.html');
-      const html=fs.readFileSync(shell,'utf8')
+      const shell=path.resolve(root,options.useBuiltGuild?'dist/guild.html':'guild.html');
+      const html=fs.readFileSync(shell,'utf8').replaceAll('__CELLBOUND_SECURE_SAVES__','false')
         .replace(/<meta\s+http-equiv=["']refresh["'][^>]*>/i,'')
         .replace(/<script>\s*window\.location\.replace\(["']\.\/index\.html["']\);?\s*<\/script>/i,'');
-      await route.fulfill({status:200,contentType:'text/html',body:html});return;
+      await route.fulfill({status:200,contentType:'text/html',body:options.transformGuild?options.transformGuild(html):html});return;
     }
     const file=path.resolve(root,'dist',relative);
     if(!file.startsWith(path.resolve(root,'dist')+path.sep)||!fs.existsSync(file)){
@@ -159,36 +164,69 @@ async function mount(page,seedState=null,owner=false,options={}){
   return errors;
 }
 
-async function creatorPlaythrough(browser){
-  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
+  const page=await browser.newPage({viewport});
   const errors=await mount(page,null);
-  await page.waitForSelector('#cellboundOnboarding:not([hidden]) .character-creator');
-  assert.equal(await page.locator('.creator-party-dots button').count(),5,'creator shows all five party roles');
+  await page.waitForSelector('#cellboundOnboarding:not([hidden]) #startGuildCharter');
+  assert.equal(await page.locator('.onboard-intro__tabs button').count(),3,'Introduction explains guild, combat and long-term progression');
+  assert.match(await page.locator('.onboard-intro__hero-copy h2').innerText(),/lead the guild/i,'New players learn who they are before creating characters');
+  await page.locator('[data-intro-page="combat"]').click();
+  assert.match(await page.locator('.onboard-intro__lesson-body').innerText(),/commander/i,'Combat tab explains the player’s role');
+  await page.locator('[data-intro-page="journey"]').click();
+  assert.match(await page.locator('.onboard-intro__lesson-body').innerText(),/gear/i,'Progression tab explains why players return');
+  await page.locator('#startGuildCharter').click();
+  await page.waitForSelector('#cellboundOnboarding:not([hidden]) .cellbound-character-forge');
+  assert.equal(await page.evaluate(()=>CellboundGame.getState().onboarding.stage),'party-builder','Intro transitions into the existing creator without skipping the tutorial');
+  assert.equal(await page.locator('.creator-party-dots button').count(),5,'Character Forge shows all five party roles');
+  // Equipment remains on the existing rig while base character artwork migrates.
+  const plateFit=await page.evaluate(()=>{
+    const P=CellboundPortraits,host=document.createElement('div'),failures=[];
+    host.style.cssText='position:fixed;left:-2000px;width:240px;height:410px;visibility:hidden';document.body.append(host);
+    let checked=0;
+    for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame of [0,1,2])for(const tier of [1,2,3,4,5]){
+      const c={id:'plate-fit-'+checked,race,class:'Warrior',appearance:{gender,frame},equipment:{Chest:{id:'plate-chest-'+tier,slot:'Chest',class:'Warrior',tier}}};
+      host.innerHTML=P.paperDollSVG(c);
+      const chest=host.querySelector('.cb-paper-slot-chest'),box=chest?.getBBox();
+      if(!box||box.width<20||box.height<20||box.y+box.height>266)failures.push({race,gender,frame,tier,reason:'classic chest exceeds waist band',bottom:box?.y+box?.height});
+      checked++;
+    }
+    host.remove();return {checked,failures};
+  });
+  assert.equal(plateFit.checked,180);assert.deepEqual(plateFit.failures,[],'Classic paper-doll armour remains bounded at the waist band');
 
-  await page.locator('[data-next-step="class"]').click();
-  assert(await page.locator('[data-class]').count()>=1,'class choices render');
-  assert(await page.locator('[data-class]').count()>=1,'damage/tank/healer class choices remain usable');
+  for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']){
+    await page.locator('[data-forge-race="'+race+'"]').click();
+    for(const gender of [0,1]){
+      await page.locator('[data-forge-sex="'+gender+'"]').click();
+      const model=page.locator('.cf-preview>.cf-model').first();
+      assert.equal(await model.getAttribute('data-gender'),gender?'female':'male','Classic Forge preview tracks selected sex');
+      const svg=model.locator('svg').first();
+      assert.equal(await svg.getAttribute('data-race'),race,'Classic Forge preview tracks '+race);
+      assert.equal(await svg.getAttribute('data-character-style'),'classic-paper-doll','Forge preview uses the restored classic paper-doll style');
+    }
+  }
+  assert.equal(await page.locator('[data-appearance-field]').count(),0,'Beta Character Forge exposes no unfinished appearance controls');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Character Forge fits the viewport');
 
-  await page.locator('[data-next-step="appearance"]').click();
-  await page.waitForSelector('[data-appearance-editor]');
-  const before=await page.locator('[data-appearance-editor]').innerHTML();
-  await page.locator('[data-appearance-field]').first().click();
-  await page.waitForTimeout(30);
-  const after=await page.locator('[data-appearance-editor]').innerHTML();
-  assert.notEqual(after,before,'appearance controls rerender the preview');
-  await page.locator('[data-appearance-randomize]').click();
-  await page.waitForSelector('[data-appearance-editor]');
-
-  await page.locator('[data-next-step="confirm"]').click();
+  await page.locator('[data-forge-step="class"]').click();
+  assert(await page.locator('[data-forge-class]').count()>=1,'class choices render');
+  await page.locator('[data-forge-step="identity"]').click();
+  await page.waitForSelector('#cfCharacterName');
+  await page.locator('[data-forge-step="confirm"]').click();
   assert.equal(await page.locator('.creator-confirm-member').count(),5,'confirm screen includes all five adventurers');
-  assert.equal(await page.locator('#confirmParty').isDisabled(),false,'generated party is valid');
-  await page.locator('#confirmParty').click();
+  assert.equal(await page.locator('[data-forge-confirm]').isDisabled(),false,'generated party is valid');
+  await page.locator('[data-forge-confirm]').click();
   await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
   const fresh=await page.evaluate(()=>({slots:CellboundGame.getState().roster.map(c=>c.professions?.length),classes:CellboundGame.getState().roster.map(c=>c.class),allBeta:CellboundGame.getState().roster.every(c=>CellboundGame.isCharacterBetaPlayable(c))}));
   assert.deepEqual(fresh.slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
-  assert.equal(fresh.allBeta,true,'fresh guild creator only produces beta-playable classes');
+  assert.equal(fresh.allBeta,true,'fresh guild creator only produces currently playable classes');
   assert(fresh.classes.includes('Paladin'),'Paladin can fill the beta healer role');
-  assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party contains only the five beta classes');
+  assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party uses valid playable classes');
+  const createdAppearance=await page.evaluate(()=>CellboundGame.getState().roster.map(c=>({id:c.id,race:c.race,appearance:c.appearance})));
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.CellboundGame?.ready===true);
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.getState().roster.map(c=>({id:c.id,race:c.race,appearance:c.appearance}))),createdAppearance,'Created appearances survive refresh');
+  await page.screenshot({path:'/tmp/cellbound-creator-'+viewport.width+'.png',fullPage:true});
   assert.deepEqual(errors,[],'creator/onboarding emitted no browser errors');
   await page.close();
 }
@@ -282,13 +320,21 @@ async function mainGamePlaythrough(browser){
   assert(allOrder[0].startsWith('gear:'),'All Items puts equipment before crafting stock');
 
   await page.locator('[data-bank-category="Reagent"]').click();
-  await page.waitForTimeout(80);
+  await page.waitForFunction(()=>{
+    const select=document.querySelector('#bankCategory');
+    const visible=[...document.querySelectorAll('#bankGrid .bank-item')].filter(x=>x.dataset.hidden!=='1');
+    return select?.value==='Reagent'&&visible.length>0&&visible.every(x=>(x.dataset.evoKey||'').startsWith('mat:'));
+  },{},{timeout:5000,polling:25});
   const materialView=await page.evaluate(()=>[...document.querySelectorAll('#bankGrid .bank-item')]
     .filter(x=>x.dataset.hidden!=='1').map(x=>x.dataset.evoKey||''));
   assert(materialView.length>0&&materialView.every(x=>x.startsWith('mat:')),'Materials tab isolates reagents');
 
   await page.locator('[data-bank-category="Gear"]').click();
-  await page.waitForTimeout(80);
+  await page.waitForFunction(()=>{
+    const select=document.querySelector('#bankCategory');
+    const visible=[...document.querySelectorAll('#bankGrid .bank-item')].filter(x=>x.dataset.hidden!=='1');
+    return select?.value==='Gear'&&visible.length>0&&visible.every(x=>(x.dataset.evoKey||'').startsWith('gear:'));
+  },{},{timeout:5000,polling:25});
   const gearView=await page.evaluate(()=>[...document.querySelectorAll('#bankGrid .bank-item')]
     .filter(x=>x.dataset.hidden!=='1').map(x=>x.dataset.evoKey||''));
   assert(gearView.length>0&&gearView.every(x=>x.startsWith('gear:')),'Equipment tab contains only equipment');
@@ -304,9 +350,12 @@ async function mainGamePlaythrough(browser){
   const craft=page.locator('#professionWorkshop [data-craft]:not([disabled])').first();
   if(await craft.count()){
     await craft.click();
-    await page.waitForTimeout(40);
-    assert(await page.locator('#professionWorkshop .craft-project').count()>0,'craft project can start');
-    const abandon=page.locator('#professionWorkshop [data-craft-abandon]');
+    await page.locator('#cbCraftModal:not([hidden]) .craft-project').waitFor({timeout:7000});
+    assert(await page.locator('#cbCraftModal .craft-project').count()>0,'craft project starts in the focused work window');
+    assert.equal(await page.evaluate(()=>window.CellboundCraftOverlay.isReady()),false,'recipe selection reserves materials without spending focused time');
+    await page.locator('#cbCraftModalBegin').click();
+    assert.equal(await page.evaluate(()=>window.CellboundCraftOverlay.isReady()),true,'Begin Work activates the existing craft clock');
+    const abandon=page.locator('#cbCraftModal [data-craft-abandon]');
     if(await abandon.count())await abandon.click();
   }
 
@@ -328,7 +377,8 @@ async function mainGamePlaythrough(browser){
   assert(await page.locator('#chat').isVisible(),'social view renders');
 
   await page.evaluate(()=>CellboundGame.switchView('content'));
-  await page.waitForSelector('#betaQuickReportTrigger',{timeout:5000});
+  await page.waitForFunction(()=>Boolean(window.CellboundBetaOps),{},{timeout:10000,polling:50});
+  await page.waitForSelector('#betaQuickReportTrigger',{timeout:10000});
   assert(await page.locator('#betaQuickReportTrigger').isVisible(),'persistent Report Bug / Request button is visible');
   await page.locator('#betaQuickReportTrigger').click();
   await page.locator('[data-quick-report="feature"]').click();
@@ -337,10 +387,18 @@ async function mainGamePlaythrough(browser){
   assert.equal((await page.locator('#betaSupportView').textContent()).trim(),'content','quick report preserves the originating screen');
   assert(await page.locator('#betaReportForm').isVisible(),'beta support form renders');
   assert(await page.locator('#betaPatchNotes .beta-note').count()>=1,'beta patch notes render');
+  // openReport schedules focus after opening. Wait for that UI transition so
+  // it cannot steal focus between Playwright selecting and filling Details.
+  await page.waitForFunction(()=>document.activeElement?.id==='betaReportSummary',{},{timeout:5000,polling:20});
   await page.locator('#betaReportSummary').fill('QA support ticket');
   await page.locator('#betaReportDetails').fill('The automated beta operations playthrough is testing the support submission path.');
-  await page.locator('#betaReportSubmit').click();
-  await page.waitForFunction(()=>document.querySelector('#betaReportMessage')?.textContent?.includes('Report sent'),{},{timeout:5000,polling:50});
+  assert.equal(await page.locator('#betaReportSummary').inputValue(),'QA support ticket');
+  assert((await page.locator('#betaReportDetails').inputValue()).includes('automated beta operations'));
+  await page.evaluate(async()=>{await window.CellboundBetaOps.submitReport({preventDefault(){}})});
+  await page.waitForFunction(()=>{
+    const message=document.querySelector('#betaReportMessage')?.textContent||'';
+    return message.includes('Report sent');
+  },{},{timeout:5000,polling:50});
   assert((await page.locator('#betaReportMessage').textContent()).includes('Report sent'),'beta report submission path completes');
 
   for(const size of [{width:768,height:1024},{width:390,height:844},{width:1024,height:1366}]){
@@ -425,6 +483,9 @@ async function coreGameplayLoopPlaythrough(browser){
   assert.equal(craftReady.disabled,false,'dismantled materials must make the first Alchemy recipe craftable: '+JSON.stringify(craftReady));
   await page.locator('#professionWorkshop [data-craft="alc-field-potion"]').click();
   await page.waitForFunction(()=>Boolean(CellboundGame.getState().workshopCraftProject),{},{timeout:5000,polling:50});
+  await page.locator('#cbCraftModal:not([hidden]) .craft-project').waitFor({timeout:7000});
+  await page.locator('#cbCraftModalBegin').click();
+  assert.equal(await page.evaluate(()=>window.CellboundCraftOverlay.isReady()),true,'focused crafting must be started intentionally');
   await page.evaluate(()=>{CellboundGame.getState().workshopCraftProject.remainingMs=1});
   await page.waitForFunction(()=>{
     const s=CellboundGame.getState();
@@ -454,7 +515,7 @@ async function coreGameplayLoopPlaythrough(browser){
   await page.close();
 }
 
-async function betaClassAndNullGatePlaythrough(browser){
+async function classAvailabilityAndNullGatePlaythrough(browser){
   const seed=matureState();
   seed.progression.manorRaidCleared=false;
   seed.progression.nullComplexUnlocked=false;
@@ -464,8 +525,8 @@ async function betaClassAndNullGatePlaythrough(browser){
   const errors=await mount(page,seed);
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
 
-  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),['Warrior','Paladin','Hunter','Rogue','Mage'],'beta exposes exactly the five selected classes');
-  assert.equal(await page.evaluate(()=>['Priest','Druid','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'].every(x=>!CellboundGame.isBetaClassPlayable(x))),true,'all other classes are unavailable during beta');
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),await page.evaluate(()=>Object.keys(CellboundGame.classes)),'staging balance pass exposes the full class roster');
+  assert.equal(await page.evaluate(()=>Object.keys(CellboundGame.classes).every(x=>CellboundGame.isBetaClassPlayable(x))),true,'every class is playable during the staging balance pass');
 
   const oldSaveLock=await page.evaluate(()=>{
     const s=CellboundGame.getState(),healer=s.roster.find(c=>c.id==='heal');
@@ -475,8 +536,8 @@ async function betaClassAndNullGatePlaythrough(browser){
     healer.class=original.class;healer.spec=original.spec;CellboundGame.renderAll();
     return result;
   });
-  assert.equal(oldSaveLock.playable,false,'future-class characters from old saves remain preserved but unavailable');
-  assert.equal(oldSaveLock.partyCount,4,'an unavailable old-save class cannot participate in the active five');
+  assert.equal(oldSaveLock.playable,true,'all-class staging balance pass keeps legacy class characters playable');
+  assert.equal(oldSaveLock.partyCount,5,'all-class staging balance pass preserves a complete active party');
 
   const contentRuntime=await page.evaluate(()=>({
     hollow:typeof window.CellboundHollowSanctum,
@@ -495,12 +556,12 @@ async function betaClassAndNullGatePlaythrough(browser){
   await page.waitForTimeout(80);
   assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('AVAILABLE'),'The Manor clear unlocks Signal From Nowhere');
 
-  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'beta class/Null gate validation emitted no unexpected browser errors');
+  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'class availability/Null gate validation emitted no unexpected browser errors');
   await page.close();
 }
 
 async function breakGamePlaythrough(browser){
-  // Corrupted/legacy save: duplicate party ids, unavailable beta class, negative stacks and currencies.
+  // Corrupted/legacy save: duplicate party ids, mixed class data, negative stacks and currencies.
   const corrupt=matureState();
   corrupt.roster[1]={...corrupt.roster[1],class:'Priest',spec:'Holy',level:99,xp:999};
   corrupt.party={tank:'tank',healer:'heal',dps:['mage','mage','rogue']};
@@ -523,12 +584,12 @@ async function breakGamePlaythrough(browser){
     };
   });
   assert.equal(repaired.unique,true,'corrupted saves cannot duplicate the same adventurer across party slots');
-  assert.equal(repaired.oldPriestInParty,false,'locked beta classes are removed from corrupted active-party state');
+  assert.equal(repaired.oldPriestInParty,true,'playable classes remain in the repaired active-party state');
   assert.equal(repaired.badQty,1,'negative Bank stack quantities are repaired to one');
   assert.equal(repaired.shards,0,'negative material balances are clamped to zero');
   assert.equal(repaired.hollowroot,3,'fractional material balances are normalised');
   assert.deepEqual(repaired.consumables,[['good-potion',2]],'invalid consumable stacks are removed');
-  assert.equal(repaired.oldPriestLevel,15,'legacy over-cap levels are clamped to the beta cap');
+  assert.equal(repaired.oldPriestLevel,30,'legacy over-cap levels are clamped to the Level 30 cap');
   assert.equal(corruptErrors.filter(e=>!e.includes('Endgame state failed')).length,0,'corrupted save recovery emitted no unexpected browser errors');
   await corruptPage.close();
 
@@ -616,42 +677,32 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
   await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner',{},{timeout:10000,polling:50});
   await page.evaluate(()=>CellboundGame.switchView('admin'));
-  await page.waitForSelector('#combatUILayoutEntry:not([hidden])',{timeout:5000});
-  await page.locator('#openCombatUILayoutEditor').click();
-  await page.waitForSelector('#cbeOverlay:not([hidden]) .cbe-panel[data-slot="battlefield"]',{timeout:5000});
-  assert.equal(await page.locator('#cbeMode option').count(),4,'combat UI editor has PvE, Arena, CTF and Hill modes');
-  await page.locator('#cbeMode').selectOption('ctf');
-  assert(await page.locator('.cbe-panel[data-slot="red"]').count(),'CTF layout has a red team roster');
-  await page.locator('#cbeMode').selectOption('pve');
-  await page.locator('.cbe-panel[data-slot="battlefield"]').click();
-  await page.locator('#cbeFields input[data-field="x"]').fill('4');
-  await page.locator('#cbeFields input[data-field="x"]').dispatchEvent('change');
-  await page.locator('#cbeSave').click();
-  await page.locator('#cbePublish').click();
-  const applied=await page.evaluate(()=>{
-    const key='cellbound-owner-combat-ui-layout-v1-'+CellboundGame.getUser().id;
-    const value=JSON.parse(localStorage.getItem(key)||'{}');
-    return value.applied?.pve?.tablet?.slots?.battlefield?.x
-  });
-  assert.equal(applied,4,'owner can save and apply a tablet Combat Reborn battlefield position');
-  const live=await page.evaluate(()=>{
-    const host=document.createElement('div');
-    host.innerHTML='<section class="cb2d-shell"><header class="cb2d-head">Heading</header><div class="cb2d-route">Route</div><div class="cb2d-layout"><main><div class="cb2d-arena"></div><div class="cb2d-controls"></div><div class="cb2d-feed"></div></main><aside><div class="cb2d-cast"></div><div class="cb2d-combat-meters"></div><div class="cb2d-actions"></div><div class="cb2d-party"></div><div class="cb2d-plan"></div></aside></div></section>';
-    document.body.appendChild(host);
-    CellboundCombatUILayoutEditor.refreshLive();
-    const shell=host.querySelector('.cb2d-shell');
-    const answer={live:shell.classList.contains('cbe-live'),left:host.querySelector('.cb2d-arena').style.left};
-    host.remove();return answer
-  });
-  assert.deepEqual(live,{live:true,left:'4%'},'applied owner layout repositions the actual shared combat viewer DOM');
-  await page.locator('#cbeClose').click();
-
-  await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
   await page.waitForFunction(()=>Boolean(window.CellboundAdminBetaOps),{},{timeout:5000,polling:50});
-  assert(await page.locator('#adminBetaReportQueue').isVisible(),'owner can access the beta report triage queue');
-  assert(await page.locator('#adminPlayerLookup').isVisible(),'owner can access targeted player recovery');
+  await page.waitForFunction(()=>Boolean(window.CellboundAdminAnalytics),{},{timeout:5000,polling:50});
+  assert(await page.locator('.admin-workspace-nav').isVisible(),'Admin opens with focused workspace navigation');
+  assert(await page.locator('[data-admin-panel-tab="overview"]').evaluate(el=>el.classList.contains('active')),'Admin defaults to Overview');
+
+  await page.locator('[data-admin-panel-tab="reports"]').click();
+  assert(await page.locator('#adminBetaReportQueue').isVisible(),'Reports workspace exposes beta triage');
+  assert.equal(await page.locator('#adminBetaStatus').inputValue(),'open','Reports defaults to actionable open tickets');
+
+  await page.locator('[data-admin-panel-tab="players"]').click();
+  assert(await page.locator('#adminPlayerLookup').isVisible(),'Players workspace exposes targeted recovery');
   assert.equal(await page.locator('#adminPlayerRecoveryActions [data-recover-player]').count(),3,'recovery console exposes only the three audited support actions');
-  await page.locator('#openDungeonGenerator').click();
+
+  await page.locator('[data-admin-panel-tab="analytics"]').click();
+  assert(await page.locator('#adminAnalyticsKpis').isVisible(),'Analytics workspace exposes Beta Analytics');
+  await page.waitForFunction(()=>document.querySelector('#adminAnalyticsClasses')?.textContent?.includes('Warrior'),{},{timeout:5000,polling:50});
+  assert((await page.locator('#adminAnalyticsDungeons').innerText()).includes('The Ashen Vault'),'analytics dashboard renders dungeon starts and clears');
+  assert((await page.locator('#adminAnalyticsRaces').innerText()).includes('Veyren'),'analytics dashboard renders race popularity');
+  assert.equal(await page.locator('#adminAnalyticsChannel').inputValue(),'staging','dev analytics defaults to the staging channel');
+
+  await page.locator('[data-admin-panel-tab="tools"]').click();
+  await page.waitForSelector('#designBoothEntry:not([hidden])',{timeout:5000});
+  assert(await page.locator('#designBoothEntry').isVisible(),'owner Design Booth appears inside Tools workspace');
+  await page.locator('#openDesignBooth').click();
+  await page.locator('.dbo-more > summary').click();
+  await page.locator('[data-dbo-tool="generator"]').click();
   await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
 
   const values={
@@ -686,16 +737,21 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.close();
 }
 
+module.exports={mount,matureState,coreLoopState};
+
+if(require.main===module){
 (async()=>{
   const browser=await engine.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
   try{
     await creatorPlaythrough(browser);
+    await creatorPlaythrough(browser,{width:390,height:844});
     await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
     await coreGameplayLoopPlaythrough(browser);
-    await betaClassAndNullGatePlaythrough(browser);
+    await classAvailabilityAndNullGatePlaythrough(browser);
     await breakGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, all-class staging access, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, beta analytics, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
+}

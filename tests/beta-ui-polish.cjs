@@ -2,13 +2,14 @@ const fs=require('fs');
 const path=require('path');
 const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
-const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+const RuntimeManifest=require('../tools/runtime-manifest.cjs');
+const read=file=>fs.readFileSync(RuntimeManifest.sourcePath(root,file),'utf8');
 
 const shell=read('guild.html');
 assert(!shell.includes('maximum-scale=1'),'beta shell must allow browser zoom');
 assert(!shell.includes('user-scalable=no'),'beta shell must not disable pinch zoom');
-assert(shell.includes('CHAPTER PATH'),'home screen uses player-facing chapter language');
-assert(shell.includes('Clear quests and dungeons to push the guild deeper.'),'home chapter guidance is concrete');
+assert(shell.includes('<small>CAMPAIGN</small>'),'home screen shows the campaign progress heading');
+assert(shell.includes('id="overviewProgress"'),'home screen keeps the campaign progress panel');
 assert(shell.includes('<b>Activities</b>'),'Activities must not be labelled Side Content');
 assert(!shell.includes('<b>Side Content</b>'),'developer-facing Side Content label returned');
 assert(shell.includes('<small>RAIDS</small><b>Raids</b>'),'raid shortcut uses the raid label');
@@ -33,7 +34,7 @@ for(const stale of [
 ])assert(!joined.includes(stale),'developer-facing beta copy returned: '+stale);
 
 const onboarding=read('onboarding-v1.js');
-assert(onboarding.includes('Your first real adventure starts here.'),'tutorial handoff should feel like the game, not a prototype');
+assert(onboarding.includes('Elara has given you a contract: Ashes on the East Road.'),'tutorial handoff names the next quest');
 assert(onboarding.includes('The fight could not start. Refresh and try this room again.'),'tutorial errors should be plain and actionable');
 
 for(const file of ['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js']){

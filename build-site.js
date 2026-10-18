@@ -4,12 +4,12 @@ const path=require('path');
 const root=__dirname;
 const out=path.join(root,'dist-site');
 const files=[
-  'index.html',
-  'website-v1.css',
+  'website/index.html',
+  'website/website-v1.css',
   'assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp',
-  'assets/ashen-vault/battlefields/hall-embers.avif',
+  'assets/ashen-vault/rooms/hall-embers.webp',
   'assets/dungeons/ashen-vault.webp',
-  'assets/hollow-sanctum/rooms/gallery.webp',
+  'assets/hollow-sanctum/rooms/gallery-void-v2.webp',
   'assets/chaos-canyon/rooms/canyon-mouth.webp',
   'assets/blackout-station/rooms/vex-calder-room.avif',
   'assets/fractured-ages/rooms/high-noon.webp',
@@ -24,16 +24,16 @@ fs.mkdirSync(out,{recursive:true});
 for(const file of files){
   const src=path.join(root,file);
   if(!fs.existsSync(src))throw new Error('Missing public website file: '+file);
-  const dest=path.join(out,file);
+  const dest=path.join(out,file.startsWith('website/')?file.slice('website/'.length):file);
   fs.mkdirSync(path.dirname(dest),{recursive:true});
   fs.copyFileSync(src,dest);
 }
 
-const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const html=fs.readFileSync(path.join(root,'website/index.html'),'utf8');
 for(const match of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"]*)?"/g)){
   const local=match[1];
-  if(local.startsWith('#'))continue;
-  if(!files.includes(local))throw new Error('Website references an unshipped local file: '+local);
+  if(local.startsWith('#')||local==='game/'||local.startsWith('game/'))continue;
+  if(!files.includes(local)&&!files.includes('website/'+local))throw new Error('Website references an unshipped local file: '+local);
 }
 
 if(/guild\.html|auth\.js|supabase/i.test(html)){

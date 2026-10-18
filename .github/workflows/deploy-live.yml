@@ -1,48 +1,109 @@
 name: Deploy Cellbound Production
-
 on:
+  push:
+    branches:
+      - publish/episode-one-20261018
   workflow_dispatch:
-
+    inputs:
+      confirm_release:
+        description: 'Enter RELEASE_EPISODE_ONE to approve publishing the public site and /game/'
+        required: true
+        type: string
 permissions:
   contents: read
-
 concurrency:
   group: cellbound-production-deploy
   cancel-in-progress: false
-
 jobs:
   build-and-deploy:
-    name: Promote approved build to playcellbound.com
+    name: Publish public website and isolated game
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirm_release == 'RELEASE_EPISODE_ONE')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/publish/episode-one-20261018')
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 20
+    env:
+      CELLBOUND_TARGET: production
     steps:
-      - name: Check out approved Cellbound build
+      - name: Check out exact approved main commit
         uses: actions/checkout@v4
         with:
-          ref: main
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+          ref: ${{ github.sha }}
+      - name: Verify this release ref is the approved main commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          approved="$(git ls-remote origin refs/heads/main | cut -f1)"
+          test -n "$approved"
+          test "$GITHUB_SHA" = "$approved"
+          echo "Publishing approved main commit $approved"
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Build public Cellbound website
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts
+      - name: Build the public website
         run: npm run build:site
-
-      - name: Verify deployment package
+      - name: Build the production game with existing production account storage
+        run: npm run build
+      - name: Check both release bundles and production backend isolation
         shell: bash
         run: |
           set -euo pipefail
           test -f dist-site/index.html
           test -f dist-site/website-v1.css
-          test -f dist-site/assets/dungeons/ashen-vault.webp
-          test -f dist-site/assets/manor/manor-raid-hero.webp
-          ! test -f dist-site/guild.html
-          ! test -f dist-site/auth.js
-          ! grep -R --line-number -E 'guild\.html|auth\.js|supabase' dist-site/index.html
-
-      - name: Deploy approved build to playcellbound.com
+          test -f dist/index.html
+          test -f dist/guild.html
+          test -f dist/auth.js
+          test -f dist/guild-v4.js
+          grep -F 'href="./game/"' dist-site/index.html
+          grep -F 'jvydqeikdpelmtloulnd.supabase.co' dist/auth.js
+          grep -F 'jvydqeikdpelmtloulnd.supabase.co' dist/guild-v4.js
+          ! grep -R -l -F 'zrvehixcthljiktcctne.supabase.co' dist/ dist-site/
+          ! grep -F 'https://zrvehixcthljiktcctne.supabase.co/functions/v1/episode-opening' dist/guild.html
+          grep -F 'window.CELLBOUND_SECURE_SAVES=false' dist/guild.html
+          grep -F "BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])" dist/guild-v4.js
+          ! grep -F 'guild.html' dist-site/index.html
+          node tools/check-public-copy.cjs
+          node tools/audit-runtime-copy.cjs
+          node -e "const fs=require('fs');fs.writeFileSync('dist/build-meta.json',JSON.stringify({commit:process.env.GITHUB_SHA,branch:'main',deployedAt:new Date().toISOString(),channel:'production'},null,2))"
+      - name: Verify website is reachable before transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 25 https://playcellbound.com/ -o /tmp/cellbound-previous-home.html
+          test -s /tmp/cellbound-previous-home.html
+          if grep -Eiq 'wp-content|wp-includes|<meta[^>]+generator[^>]+wordpress' /tmp/cellbound-previous-home.html; then
+            echo 'WordPress detected on production host. Refusing to overwrite its document root.' >&2
+            exit 1
+          fi
+      - name: Deploy game to /game/ (website root left alone)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          server-dir: ./game/
+          local-dir: ./dist/
+          state-name: .ftp-deploy-game-sync-state.json
+          log-level: standard
+      - name: Check game build identity over HTTPS
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 12); do
+            if curl --fail --silent --show-error --location --max-time 20 "https://playcellbound.com/game/build-meta.json?verify=$GITHUB_SHA" -o /tmp/prod-build.json \
+              && node -e "const x=require('/tmp/prod-build.json');if(x.commit!==process.env.GITHUB_SHA||x.channel!=='production')process.exit(1)"; then
+              break
+            fi
+            sleep 5
+          done
+          node -e "const x=require('/tmp/prod-build.json');if(x.commit!==process.env.GITHUB_SHA)process.exit(1)"
+          curl --fail --silent --show-error --location --max-time 20 "https://playcellbound.com/game/index.html?verify=$GITHUB_SHA" -o /tmp/prod-game.html
+          grep -F 'auth.js' /tmp/prod-game.html
+      - name: Publish refreshed public website (after verified game)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -52,4 +113,15 @@ jobs:
           port: ${{ secrets.FTP_PORT || 21 }}
           server-dir: ./
           local-dir: ./dist-site/
+          state-name: .ftp-deploy-site-sync-state.json
           log-level: standard
+      - name: Smoke check public website and live game
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 20 "https://playcellbound.com/?release=$GITHUB_SHA" -o /tmp/prod-site.html
+          grep -F 'Episode 1' /tmp/prod-site.html
+          grep -F 'href="./game/"' /tmp/prod-site.html
+          curl --fail --silent --show-error --location --max-time 20 "https://playcellbound.com/game/guild.html?verify=$GITHUB_SHA" -o /tmp/prod-guild.html
+          grep -F 'CELLBOUND_SECURE_SAVES=false' /tmp/prod-guild.html
+          echo "Production site and game verified at $GITHUB_SHA"

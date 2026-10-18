@@ -85,7 +85,7 @@ const trees={
       {id:'Executioner',icon:'☠',tier:2,col:3,max:3,req:'Deep Wounds',desc:'Deal more damage to weakened bosses.'},
       {id:'Mortal Strike',icon:'✕',tier:3,col:1,max:1,req:'Sweeping Blows',desc:'Unlock the signature Arms attack.'},
       {id:'Blood Frenzy',icon:'🔥',tier:3,col:3,max:2,req:'Executioner',desc:'Bleeding targets increase attack speed.'},
-      {id:'Bladestorm',icon:'✹',tier:4,col:2,max:1,req:'Mortal Strike',desc:'Capstone: unleash a devastating weapon storm.'}
+      {id:'Bladestorm',icon:'✹',tier:4,col:2,max:1,req:'Mortal Strike',desc:'Capstone: hit nearby enemies repeatedly with a spinning weapon attack.'}
     ]
   },
   Paladin:{
@@ -109,7 +109,7 @@ const trees={
       {id:'Sacred Hands',icon:'✋',tier:2,col:3,max:3,req:'Grace',desc:'Increase healing on low-health allies.'},
       {id:'Aura Mastery',icon:'✺',tier:3,col:1,max:1,req:'Beacon',desc:'Empower your active aura.'},
       {id:'Radiance',icon:'☼',tier:3,col:3,max:2,req:'Sacred Hands',desc:'Spread healing to nearby party members.'},
-      {id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Aura Mastery',desc:'Capstone: unleash a raid-saving wave of holy healing.'}
+      {id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Aura Mastery',desc:'Capstone: heal the whole party with a powerful holy hymn.'}
     ]
   },
   Priest:{
@@ -359,6 +359,8 @@ const trees={
     ]
   }
 };
+// Shared alternatives work for every class and specialisation.
+Object.entries(trees).forEach(([klass,specs])=>Object.entries(specs).forEach(([spec,nodes])=>{specs[spec]=B?.expandTalentTree?.(klass,spec,nodes)||nodes}));
 
 const leftSlots=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'];
 const rightSlots=['Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
@@ -480,7 +482,7 @@ const UI_SKILL_FALLBACKS={
     {id:'flame-shock',name:'Flame Shock',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:6,desc:'Burn the target with fire that continues dealing damage and generates Maelstrom.',range:35,damage:12,cost:0,gain:8,gcd:1500,cast:0,cd:8000,damageType:'magic'},
     {id:'earthquake',name:'Earthquake',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Spend Maelstrom to rupture the ground beneath the enemy pack.',range:35,damage:34,cost:60,gcd:1500,cast:900,cd:6000,cleave:4,damageType:'magic',talentReq:'Earthquake'},
     {id:'stormkeeper',name:'Stormkeeper',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Call down a storm and enter a short lightning burst window.',range:35,damage:30,cost:0,gain:10,gcd:1500,cast:900,cd:45000,cleave:2,damageType:'magic',talentReq:'Stormkeeper'},
-    {id:'ascendance',name:'Ascendance',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Become a living storm and unleash a major Elemental burst window.',range:35,damage:42,cost:30,gcd:1500,cast:900,cd:60000,cleave:3,damageType:'magic',talentReq:'Ascendance'},
+    {id:'ascendance',name:'Ascendance',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Transform for a short burst of increased Elemental damage.',range:35,damage:42,cost:30,gcd:1500,cast:900,cd:60000,cleave:3,damageType:'magic',talentReq:'Ascendance'},
     {id:'wind-shear',name:'Wind Shear',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a sharp burst of wind.',range:30,cost:0,gcd:0,cd:18000},
     {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:8,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
   ],
@@ -524,7 +526,7 @@ const UI_SKILL_FALLBACKS={
     {id:'windwalker-blackout-kick',name:'Blackout Kick',kind:'damage',role:'dps',unlockLevel:1,desc:'A fast finishing kick in the Windwalker rotation.',range:5,damage:20,cost:26,gcd:1000,cd:3000},
     {id:'windwalker-rising-sun-kick',name:'Rising Sun Kick',kind:'damage',role:'dps',unlockLevel:1,desc:'A heavy martial strike with a short cooldown.',range:5,damage:31,cost:32,gcd:1000,cd:8000},
     {id:'spinning-crane-kick',name:'Spinning Crane Kick',kind:'damage',role:'dps',unlockLevel:5,desc:'Spin through the target and nearby enemies.',range:7,damage:17,cost:28,gcd:1000,cd:7000,cleave:3},
-    {id:'fists-of-fury',name:'Fists of Fury',kind:'damage',role:'dps',unlockLevel:1,desc:'Unleash a powerful flurry that cleaves nearby enemies.',range:6,damage:34,cost:38,gcd:1000,cast:1300,cd:18000,cleave:2,talentReq:'Fists of Fury'},
+    {id:'fists-of-fury',name:'Fists of Fury',kind:'damage',role:'dps',unlockLevel:1,desc:'Strike nearby enemies with a rapid series of blows.',range:6,damage:34,cost:38,gcd:1000,cast:1300,cd:18000,cleave:2,talentReq:'Fists of Fury'},
     {id:'touch-of-death',name:'Touch of Death',kind:'damage',role:'dps',unlockLevel:1,desc:'A devastating finishing technique against weakened enemies.',range:5,damage:30,cost:20,gcd:1000,cd:30000,executeBelow:.20,executeMultiplier:2.4,talentReq:'Touch of Death'},
     {id:'touch-of-karma',name:'Touch of Karma',kind:'defensive',role:'dps',unlockLevel:9,desc:'Reduce incoming damage for a short period.',duration:7000,damageReduction:.25,gcd:0,cd:75000},
     {id:'spear-hand-strike',name:'Spear Hand Strike',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a precise hand strike.',range:5,cost:0,gcd:0,cd:15000}
@@ -547,7 +549,7 @@ const UI_SKILL_FALLBACKS={
     {id:'remorseless-winter',name:'Remorseless Winter',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Surround yourself with a freezing storm that cleaves nearby enemies.',range:8,damage:24,cost:18,gcd:1200,cd:14000,cleave:3,damageType:'magic',talentReq:'Remorseless Winter'},
     {id:'frostscythe',name:'Frostscythe',kind:'damage',role:'dps',spec:'Frost',unlockLevel:7,desc:'Sweep a frozen blade through several enemies.',range:7,damage:21,cost:0,gain:10,gcd:1200,cd:9000,cleave:3,damageType:'magic'},
     {id:'frostwyrms-fury',name:"Frostwyrm's Fury",kind:'damage',role:'dps',spec:'Frost',unlockLevel:11,desc:'Call a frostwyrm across the battlefield for heavy cleave damage.',range:30,damage:38,cost:35,gcd:1500,cast:1000,cd:45000,cleave:4,damageType:'magic'},
-    {id:'breath-of-sindragosa',name:'Breath of Sindragosa',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Unleash a devastating cone of frost into the enemy pack.',range:20,damage:45,cost:50,gcd:1500,cast:1200,cd:60000,cleave:4,damageType:'magic',talentReq:'Breath of Sindragosa'},
+    {id:'breath-of-sindragosa',name:'Breath of Sindragosa',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Deal heavy frost damage in a cone in front of you.',range:20,damage:45,cost:50,gcd:1500,cast:1200,cd:60000,cleave:4,damageType:'magic',talentReq:'Breath of Sindragosa'},
     {id:'icebound-fortitude',name:'Icebound Fortitude',kind:'defensive',role:'dps',unlockLevel:8,desc:'Harden yourself against incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
 
     {id:'festering-strike',name:'Festering Strike',kind:'damage',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Strike the target, generate Runic Power and apply Festering Wounds.',range:5,damage:20,cost:0,gain:15,gcd:1200,cd:3500},
@@ -566,7 +568,7 @@ const UI_SKILL_FALLBACKS={
     {id:'blade-dance',name:'Blade Dance',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Dance through the target and nearby enemies with both warglaives.',range:6,damage:20,cost:25,gcd:1000,cd:8000,cleave:3},
     {id:'throw-glaive',name:'Throw Glaive',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:4,desc:'Throw a warglaive at a distant target while repositioning.',range:20,damage:15,cost:0,gain:8,gcd:1000,cd:6000},
     {id:'eye-beam',name:'Eye Beam',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:6,desc:'Channel fel energy through enemies in front of you.',range:18,damage:32,cost:30,gcd:1000,cast:1200,cd:18000,cleave:3,damageType:'magic'},
-    {id:'fel-barrage',name:'Fel Barrage',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Unleash a violent fel barrage across the enemy pack.',range:18,damage:38,cost:35,gcd:1000,cd:22000,cleave:4,damageType:'magic',talentReq:'Fel Barrage'},
+    {id:'fel-barrage',name:'Fel Barrage',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Fire a barrage of fel damage across several enemies.',range:18,damage:38,cost:35,gcd:1000,cd:22000,cleave:4,damageType:'magic',talentReq:'Fel Barrage'},
     {id:'havoc-metamorphosis',name:'Metamorphosis',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Transform and crash into the target, opening a major demonic burst window.',range:12,damage:40,cost:20,gcd:1000,cd:60000,cleave:2,damageType:'magic',talentReq:'Metamorphosis'},
     {id:'blur',name:'Blur',kind:'defensive',role:'dps',spec:'Havoc',unlockLevel:10,desc:'Blur your form, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:75000},
     {id:'disrupt',name:'Disrupt',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with fel force.',range:10,cost:0,gcd:0,cd:15000},
@@ -598,7 +600,7 @@ const UI_SKILL_FALLBACKS={
     {id:'fire-breath',name:'Fire Breath',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:4,desc:'Breathe red dragonfire through the enemy pack.',range:22,damage:27,cost:1,gcd:1500,cast:1200,cd:14000,cleave:3,damageType:'magic'},
     {id:'pyre',name:'Pyre',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:6,desc:'Spend Essence to explode dragonfire across nearby enemies.',range:30,damage:25,cost:2,gcd:1500,cd:6000,cleave:3,damageType:'magic'},
     {id:'eternity-surge',name:'Eternity Surge',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Release a devastating blast of blue dragon magic.',range:30,damage:40,cost:3,gcd:1500,cast:1700,cd:18000,cleave:2,damageType:'magic',talentReq:'Eternity Surge'},
-    {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Unleash the full fury of the dragonflights and enter a major burst window.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic',talentReq:'Dragonrage'}
+    {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Enter a burst phase with increased dragon damage.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic',talentReq:'Dragonrage'}
   ]
 };
 const CLASS_BUFF_QUESTS={
@@ -670,6 +672,7 @@ function ensureCharacter(c){
   [...leftSlots,...rightSlots].forEach(slot=>{if(!(slot in c.equipment))c.equipment[slot]=null});
   c.talents=c.talents||{};
   Object.keys(specs[c.class]||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});
+  B?.migrateTalentBuilds?.(c,Object.keys(specs[c.class]||{}));
   B?.syncLegacyTalentCounter?.(c);
   c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
   c.classBuffProgress=c.classBuffProgress&&typeof c.classBuffProgress==='object'?c.classBuffProgress:{unlocked:[]};
@@ -916,23 +919,13 @@ function talentBudget(c){return B?.talentBudgetForLevel?.(c?.level)??Math.max(1,
 function talentRemaining(c,spec){return B?.talentRemaining?.(c,spec)??Math.max(0,talentBudget(c)-totalSpent(c,spec))}
 function tierNeed(node){return B?.tierRequirement?.(node?.tier)??Math.max(0,Number(node?.tier)||0)*2}
 function treeNodeState(c,spec,node){
-  const ranks=c.talents?.[spec]||{},rank=ranks[node.id]||0,spent=totalSpent(c,spec);
-  const prereq=!node.req||(ranks[node.req]||0)>0;
-  const tierOk=spent>=tierNeed(node);
-  return {rank,available:prereq&&tierOk,complete:rank>=node.max};
+  return B?.nodeState?.(c,spec,node,trees[c.class]?.[spec]||[])||{rank:0,available:false,complete:false,canInvest:false,reason:'Talent rules unavailable.'}
 }
-function talentLockReason(c,spec,node,s){
-  if(s.complete)return'Maximum rank reached.';
-  if(node.req&&!(c.talents?.[spec]?.[node.req]>0))return'Requires '+node.req+'.';
-  const spent=totalSpent(c,spec),need=tierNeed(node);
-  if(spent<need)return'Requires '+need+' points spent in this tree.';
-  if(!(talentRemaining(c,spec)>0))return'No build points available for this specialisation.';
-  return'Ready to invest.';
-}
+function talentLockReason(c,spec,node,s){return s.reason||'Talent rules unavailable.'}
 function talentInspector(c,spec,node){
   if(!node)return `<aside class="cb-talent-inspector cb-talent-inspector-v2 empty"><span>SELECT A TALENT</span><h3>Build your specialisation.</h3><p>Choose a talent to inspect its combat effect, ranks and requirements before spending a point.</p></aside>`;
   const s=treeNodeState(c,spec,node),reason=talentLockReason(c,spec,node,s);
-  const canInvest=s.available&&!s.complete&&(talentRemaining(c,spec)>0),combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
+  const canInvest=s.canInvest,combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
   const rankPips=Array.from({length:node.max},(_,i)=>`<i class="${i<s.rank?'filled':''}"></i>`).join('');
   const status=s.complete?'MAX RANK':canInvest?'READY TO LEARN':s.available?'NO POINTS':'LOCKED';
   return `<aside class="cb-talent-inspector cb-talent-inspector-v2 ${canInvest?'investable':''}">
@@ -952,6 +945,7 @@ function talentInspector(c,spec,node){
 function talentTree(c,spec){
   const nodes=(trees[c.class]?.[spec]||[]).slice().sort((a,b)=>a.tier-b.tier||a.col-b.col);
   const spent=totalSpent(c,spec),role=roleLabel(specs[c.class]?.[spec]||'dps');
+  const member=Boolean(window.CellboundGame?.getEntitlements?.()?.member),reset=B?.respecStatus?.(c,member)||{used:0,limit:1,remaining:1};
   let selected=nodes.find(n=>n.id===selectedTalentId&&selectedTalentSpec===spec);
   if(!selected)selected=nodes.find(n=>treeNodeState(c,spec,n).available&&!treeNodeState(c,spec,n).complete)||nodes[0]||null;
   if(selected){selectedTalentId=selected.id;selectedTalentSpec=spec}
@@ -959,7 +953,7 @@ function talentTree(c,spec){
   const tiers=[0,1,2,3,4].map(tier=>{
     const tierNodes=nodes.filter(n=>n.tier===tier),need=B?.tierRequirement?.(tier)??tier*2,open=spent>=need;
     const cards=tierNodes.map(node=>{
-      const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id,canInvest=s.available&&!s.complete&&(c.talent>0);
+      const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id,canInvest=s.canInvest;
       const rankPips=Array.from({length:node.max},(_,i)=>`<i class="${i<s.rank?'filled':''}"></i>`).join('');
       const combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
       const stateLabel=s.complete?'MAX':canInvest?'READY':s.available?'NO POINTS':'LOCKED';
@@ -980,13 +974,14 @@ function talentTree(c,spec){
   }).join('');
   return `<div class="cb-talent-command-v2">
     <section class="cb-talent-command-hero">
-      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Build through five tiers. Locked talents can still be inspected before you commit.</p><div class="cb-spec-activate-row">${spec===c.spec?'<span class="cb-spec-active-pill">ACTIVE SPECIALISATION</span>':`<button type="button" class="cb-activate-spec" data-activate-spec="${spec}">ACTIVATE ${spec.toUpperCase()}</button>`}</div></div>
+      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Eight points at Level 15; twelve at Level 30. Choose one capstone; every point matters.</p><div class="cb-spec-activate-row">${spec===c.spec?'<span class="cb-spec-active-pill">ACTIVE SPECIALISATION</span>':`<button type="button" class="cb-activate-spec" data-activate-spec="${spec}">ACTIVATE ${spec.toUpperCase()}</button>`}</div></div>
       <div class="cb-talent-command-metrics">
         <div><span>AVAILABLE</span><b>${talentRemaining(c,spec)}</b><small>${spec} build points</small></div>
         <div><span>SPENT</span><b>${spent}/${talentBudget(c)}</b><small>In ${spec}</small></div>
         <div><span>ROLE</span><b>${role}</b><small>${spec===c.spec?'Active specialisation':'Inactive specialisation'}</small></div>
       </div>
     </section>
+    <div class="cb-talent-respec-bar"><span>${c.talentRebuildNotice?'Your old allocation was reset free for Talent System V2. ':'Each specialisation has its own build. '}Respecs remaining: <b>${reset.remaining}/${reset.limit}</b> in 24 hours.</span><button type="button" data-respec-talents="${spec}" ${(reset.remaining&&spent>0)?'':'disabled'}>RESET ${spec.toUpperCase()} TALENTS</button></div>
     <div class="cb-talent-board">
       <div class="cb-talent-tier-stack">${tiers}</div>
       ${talentInspector(c,spec,selected)}
@@ -1248,11 +1243,24 @@ function investTalent(spec,nodeId){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!(talentRemaining(c,spec)>0))return;
   const node=(trees[c.class]?.[spec]||[]).find(n=>n.id===nodeId);if(!node)return;
-  const s=treeNodeState(c,spec,node);if(!s.available||s.complete)return;
+  const s=treeNodeState(c,spec,node);if(!s.canInvest)return;
   c.talents[spec][node.id]=(c.talents[spec][node.id]||0)+1;
   B?.syncLegacyTalentCounter?.(c);
   state.activity=state.activity||[];state.activity.push(`${c.name} invested a ${spec} build point in ${node.id}.`);
   writeState(state);renderSheet();window.CellboundFX?.callout?.({eyebrow:'TALENT LEARNED',title:node.id,tone:'arcane'});window.CellboundFX?.flash?.('arcane');
+}
+function resetTalents(spec){
+  if(!characterEditable())return;
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
+  if(!state||!c||!Object.prototype.hasOwnProperty.call(c.talents,spec))return;
+  const member=Boolean(window.CellboundGame?.getEntitlements?.()?.member),status=B?.respecStatus?.(c,member);
+  if(!status?.remaining||!(totalSpent(c,spec)>0))return;
+  if(!confirm('Reset all '+spec+' talents? You have '+status.remaining+' respec(s) remaining in the current 24-hour window.'))return;
+  if(!B?.respec?.(c,spec,member))return;
+  c.skillLoadouts=c.skillLoadouts||{};delete c.skillLoadouts[spec];
+  selectedTalentId=null;selectedTalentSpec=spec;
+  state.activity=state.activity||[];state.activity.push(c.name+' reset their '+spec+' talent build.');
+  writeState(state);renderSheet();window.CellboundFX?.micro?.('Talents reset','gold');
 }
 function changeSpec(spec){
   if(!characterEditable())return;
@@ -1300,7 +1308,7 @@ function equipClassBuff(buffId){
 function openCharacter(id){
   document.body.classList.add('character-sheet-open');
   returnView=document.querySelector('.view.active')?.id||'roster';
-  currentId=id;currentTab='overview';activeSlot=null;armouryModelMode='base';activeSkillSlot=0;activeLoadoutSlot='skill';selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()
+  currentId=id;currentTab='overview';activeSlot=null;armouryModelMode='equipped';activeSkillSlot=0;activeLoadoutSlot='skill';selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()
 }
 function closeCharacter(targetView=returnView){
   modal.hidden=true;document.body.classList.remove('character-sheet-open');activeSlot=null;
@@ -1313,6 +1321,8 @@ function closeCharacter(targetView=returnView){
 }
 
 document.addEventListener('click',event=>{
+  const equipmentButton=event.target.closest('[data-char-equip]');
+  if(equipmentButton){event.preventDefault();event.stopImmediatePropagation();openCharacter(equipmentButton.dataset.charEquip);currentTab='equipment';armouryModelMode='equipped';renderSheet();return}
   const charBtn=event.target.closest('[data-char]');
   if(charBtn){event.preventDefault();event.stopImmediatePropagation();openCharacter(charBtn.dataset.char);return}
   if(!modal.hidden){
@@ -1335,6 +1345,7 @@ document.addEventListener('click',event=>{
     const slot=event.target.closest('[data-slot]');if(slot){event.preventDefault();event.stopImmediatePropagation();activeSlot=slot.dataset.slot;renderSheet();return}
     const node=event.target.closest('[data-talent-node]');if(node){selectedTalentId=node.dataset.talentNode;selectedTalentSpec=node.dataset.treeSpec;renderSheet();return}
     const invest=event.target.closest('[data-invest-talent]');if(invest){investTalent(invest.dataset.treeSpec,invest.dataset.investTalent);return}
+    const talentReset=event.target.closest('[data-respec-talents]');if(talentReset){resetTalents(talentReset.dataset.respecTalents);return}
     const spec=event.target.closest('[data-spec-tab]');if(spec){selectedTreeSpec=spec.dataset.specTab;selectedTalentId=null;selectedTalentSpec=selectedTreeSpec;renderSheet();return}
     const activateSpec=event.target.closest('[data-activate-spec]');if(activateSpec){changeSpec(activateSpec.dataset.activateSpec);return}
     const close=event.target.closest('[data-close]');if(close){event.preventDefault();event.stopImmediatePropagation();closeCharacter();return}

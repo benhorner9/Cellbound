@@ -2,7 +2,7 @@
 'use strict';
 
 const PVP_ENABLED=false;
-const pvpEnabled=()=>PVP_ENABLED||window.CellboundAdmin?.role==='owner';
+const pvpEnabled=()=>false;
 const PVP_LOCK_MESSAGE='PvP is currently locked while the launch game is being finished. Battlegrounds, Arena, PvP gear and progression will return in a future update.';
 
 const $=s=>document.querySelector(s);
@@ -11,6 +11,7 @@ const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const ARENA_UNLOCK_RANK=5;
 const ARENA_UNLOCK_T1_PIECES=5;
+const PVP_EQUIPMENT_LEVELS=window.CellboundEpisodeTwo?.PVP_EQUIPMENT_LEVELS||Object.freeze({1:20,2:25,3:30});
 const SEASON_LENGTH_DAYS=56;
 const PVP_GEAR_SLOTS=['Head','Shoulders','Chest','Hands','Legs','Weapon','Trinket','Relic'];
 const MODE_DEFS={
@@ -88,7 +89,7 @@ function bgRankProgress(p=ensureState()){const xp=Number(p?.bgXp)||0;return {ran
 function arenaUnlocked(p=ensureState()){return bgRank(p)>=ARENA_UNLOCK_RANK&&(Number(p?.t1Purchases)||0)>=ARENA_UNLOCK_T1_PIECES}
 function gearPiece(tier,slot){
   const t=TIER_META[tier],s=SLOT_META[slot],m=s.mult;
-  return {id:`pvp-t${tier}-${String(slot).toLowerCase()}`,name:`${t.name} ${slot}`,tier,slot,pvpOnly:true,rarity:tier===3?'Epic':tier===2?'Rare':'Uncommon',pvpPower:Math.round(t.power*m),pvpDefence:Math.round(t.defence*m),controlResistance:Math.round(t.control*m),acquiredAt:nowIso()}
+  return {id:`pvp-t${tier}-${String(slot).toLowerCase()}`,name:`${t.name} ${slot}`,tier,slot,requiredLevel:PVP_EQUIPMENT_LEVELS[tier],pvpOnly:true,rarity:tier===3?'Epic':tier===2?'Rare':'Uncommon',pvpPower:Math.round(t.power*m),pvpDefence:Math.round(t.defence*m),controlResistance:Math.round(t.control*m),acquiredAt:nowIso()}
 }
 function pvpGearArt(item,tier,slot,size=46){
   const piece=item||gearPiece(tier,slot);
@@ -147,7 +148,7 @@ function arenaRequirementMarkup(p){
 function currencyStrip(p){return `<div class="pvp-currency-strip"><div><span>War Marks</span><b>${Math.floor(p.warMarks)}</b><small>Battleground currency</small></div><div><span>Arena Seals</span><b>${Math.floor(p.arenaSeals)}</b><small>Rated Arena currency</small></div><div><span>Season Crests</span><b>${Math.floor(p.seasonCrests)}</b><small>End-of-season currency</small></div><div><span>Arena Rating</span><b>${Math.round(p.arenaRating)}</b><small>${p.arenaWins}W · ${p.arenaLosses}L</small></div></div>`}
 function pvpHeader(p){
   const progress=bgRankProgress(p);
-  return `<div class="pvp-hero"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>Build a PvP loadout, fight objective battlegrounds and earn your way into rated Arena. PvP equipment is isolated from PvE and never raises dungeon Item Level.</p></div><div class="pvp-rank-card"><span>PVP RANK</span><b>${progress.rank}</b><div><i style="width:${progress.pct}%"></i></div><small>${progress.inRank} / 300 XP to next rank</small></div></div>${currencyStrip(p)}<nav class="pvp-tabs"><button data-pvp-tab="battlegrounds" class="${activeTab==='battlegrounds'?'active':''}">BATTLEGROUNDS</button><button data-pvp-tab="arena" class="${activeTab==='arena'?'active':''}">ARENA</button><button data-pvp-tab="armoury" class="${activeTab==='armoury'?'active':''}">PVP ARMOURY</button><button data-pvp-tab="leaderboard" class="${activeTab==='leaderboard'?'active':''}">SEASON LADDER</button></nav>`
+  return `<div class="pvp-hero"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>Choose your five, select a battleground or Arena mode and manage a separate PvP equipment set. PvP gear does not change dungeon Item Level.</p></div><div class="pvp-rank-card"><span>PVP RANK</span><b>${progress.rank}</b><div><i style="width:${progress.pct}%"></i></div><small>${progress.inRank} / 300 XP to next rank</small></div></div>${currencyStrip(p)}<nav class="pvp-tabs"><button data-pvp-tab="battlegrounds" class="${activeTab==='battlegrounds'?'active':''}">BATTLEGROUNDS</button><button data-pvp-tab="arena" class="${activeTab==='arena'?'active':''}">ARENA</button><button data-pvp-tab="armoury" class="${activeTab==='armoury'?'active':''}">PVP ARMOURY</button><button data-pvp-tab="leaderboard" class="${activeTab==='leaderboard'?'active':''}">SEASON LADDER</button></nav>`
 }
 function squadStatus(chars){
   if(chars.length!==5)return {ok:false,text:`Active party ${chars.length}/5`};
@@ -176,8 +177,8 @@ function armouryMarkup(p){
   return `<section class="pvp-grid armoury-layout"><aside class="pvp-panel"><header><div><small>PVP LOADOUT</small><h3>Choose Adventurer</h3></div></header><div class="pvp-armoury-roster">${roster.map(x=>`<button data-armoury-char="${x.id}" class="${x.id===armouryCharacterId?'active':''}"><span class="pvp-avatar">${portraitHTML(x,'xs')}</span><span><b>${esc(x.name)}</b><small>${esc(x.class)} · ${pvpGearScore(x).pieces}/8 equipped</small></span></button>`).join('')}</div></aside><div class="pvp-main-stack"><article class="pvp-panel"><header><div><small>DEDICATED PVP EQUIPMENT</small><h3>${esc(c?.name||'No Adventurer')}</h3></div><b>PVP POWER ${Math.round(characterPvpPower(c||{}))}</b></header><div class="pvp-stat-strip"><div><span>PvP Power</span><b>${score.power}</b></div><div><span>PvP Defence</span><b>${score.defence}</b></div><div><span>Control Resist</span><b>${score.control}</b></div><div><span>Pieces</span><b>${score.pieces}/8</b></div></div><div class="pvp-equipped-grid">${PVP_GEAR_SLOTS.map(slot=>{const item=c?.pvpEquipment?.[slot];return `<div class="${item?'filled':''}"><span>${item?pvpGearArt(item,item.tier,slot,42):SLOT_META[slot].icon}</span><small>${slot}</small><b>${item?esc(item.name):'Empty'}</b><em>${item?`T${item.tier} · +${item.pvpPower} power`:'PvP only'}</em></div>`}).join('')}</div></article>${[1,2,3].map(tier=>armouryTierMarkup(p,c,tier)).join('')}</div></section>`
 }
 function armouryTierMarkup(p,c,tier){
-  const t=TIER_META[tier],locked=tier===2&&!arenaUnlocked(p),seasonLocked=tier===3&&p.seasonCrests<=0;
-  const lockCopy=tier===2?'Unlock Arena to buy Tier 2 equipment.':tier===3?'Season Crests are awarded when a rated season ends.':'';
+  const t=TIER_META[tier],levelLocked=(Number(c?.level)||1)<PVP_EQUIPMENT_LEVELS[tier],locked=levelLocked||tier===2&&!arenaUnlocked(p),seasonLocked=tier===3&&p.seasonCrests<=0;
+  const lockCopy=levelLocked?'Requires character Level '+PVP_EQUIPMENT_LEVELS[tier]+'.':tier===2?'Unlock Arena to buy Tier 2 equipment.':tier===3?'Season Crests are awarded when a rated season ends.':'';
   return `<article class="pvp-panel pvp-shop-tier ${t.className}"><header><div><small>TIER ${tier} · ${esc(t.currencyName.toUpperCase())}</small><h3>${esc(t.name)} Equipment</h3></div><b>${Math.floor(p[t.currency])} AVAILABLE</b></header>${locked||seasonLocked?`<div class="pvp-tier-lock">◇ ${esc(lockCopy)}</div>`:''}<div class="pvp-shop-grid">${PVP_GEAR_SLOTS.map(slot=>{const cost=SLOT_META[slot].cost[tier-1],owned=c?.pvpEquipment?.[slot],better=owned&&Number(owned.tier)>=tier;return `<button data-buy-pvp="${tier}:${slot}" ${!c||locked||seasonLocked||p[t.currency]<cost||better?'disabled':''}><span>${pvpGearArt(null,tier,slot,46)}</span><b>${esc(t.name)} ${slot}</b><small>+${Math.round(t.power*SLOT_META[slot].mult)} Power · +${Math.round(t.defence*SLOT_META[slot].mult)} Defence · +${Math.round(t.control*SLOT_META[slot].mult)} Control</small><em>${better?`EQUIPPED T${owned.tier}`:`${cost} ${esc(t.currencyName)}`}</em></button>`}).join('')}</div></article>`
 }
 function leaderboardMarkup(p){
@@ -189,11 +190,17 @@ function matchResultMarkup(m){
   return `<article class="pvp-panel pvp-result ${colour}"><header><div><small>${m.kind==='arena'?'RATED ARENA':'BATTLEGROUND COMPLETE'}</small><h3>${win?'VICTORY':'DEFEAT'}</h3></div><b>${m.kind==='arena'?`${m.ratingBefore} → ${m.ratingAfter}`:`+${m.rankXp} RANK XP`}</b></header><div class="pvp-result-grid"><div><span>Score</span><b>${esc(m.scoreText)}</b></div><div><span>${m.kind==='arena'?'Arena Seals':'War Marks'}</span><b>+${m.currency}</b></div><div><span>Cell Shock</span><b>${m.shockDelta>0?'+':''}${m.shockDelta}%</b></div><div><span>${m.kind==='arena'?'Rating':'Objectives'}</span><b>${m.kind==='arena'?(m.ratingDelta>0?'+':'')+m.ratingDelta:m.objectives}</b></div></div><p>${esc(m.summary)}</p></article>`
 }
 function lockedMarkup(){
-  return `<div class="pvp-hero"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>${esc(PVP_LOCK_MESSAGE)}</p></div><div class="pvp-rank-card"><span>STATUS</span><b>LOCKED</b><small>Coming in a future update</small></div></div><div class="pvp-body"><article class="pvp-panel"><header><div><small>FEATURE PAUSED</small><h3>PvP is not available yet</h3></div><b>LOCKED</b></header><p>The Crucible is staying in the game, but matchmaking and PvP progression are disabled for now. Your existing PvP systems have not been removed.</p></article></div>`;
+  return `<div class="pvp-hero"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>${esc(PVP_LOCK_MESSAGE)}</p></div><div class="pvp-rank-card"><span>STATUS</span><b>LOCKED</b><small>Coming in a future update</small></div></div><div class="pvp-body"><article class="pvp-panel"><header><div><small>FEATURE PAUSED</small><h3>PvP is not available yet</h3></div><b>LOCKED</b></header><p>Matchmaking and PvP rewards are temporarily disabled while the new combat integration is being tested.</p></article></div>`;
 }
 function render(){
   const mount=$('#pvpMount');if(!mount||!game()?.ready)return;
-  if(!pvpEnabled()){mount.innerHTML=lockedMarkup();return}
+  if(!pvpEnabled()){
+   // Owner sandbox grants practice access independently. The public PvP
+   // feature flag and all queue/reward entry points remain disabled.
+   mount.replaceChildren();
+   if(window.CellboundPvPOwnerQA?.render?.(mount)!==true)mount.innerHTML=lockedMarkup();
+   return
+  }
   const p=ensureState();if(!p)return;maybeSettleSeason(p);
   mount.innerHTML=`${pvpHeader(p)}<div class="pvp-body">${activeTab==='battlegrounds'?battlegroundMarkup(p):activeTab==='arena'?arenaMarkup(p):activeTab==='armoury'?armouryMarkup(p):leaderboardMarkup(p)}</div>`;
   bind();
@@ -282,6 +289,7 @@ function runArena(){
 }
 function buyGear(tier,slot){
   const p=ensureState(),c=state()?.roster?.find(x=>x.id===armouryCharacterId),t=TIER_META[tier],meta=SLOT_META[slot];if(!c||!t||!meta)return;
+  if((Number(c.level)||1)<PVP_EQUIPMENT_LEVELS[tier])return;
   if(tier===2&&!arenaUnlocked(p))return;if(tier===3&&p.seasonCrests<=0)return;
   const cost=meta.cost[tier-1],currency=t.currency,current=c.pvpEquipment?.[slot];if((Number(current?.tier)||0)>=tier||p[currency]<cost)return;
   p[currency]-=cost;c.pvpEquipment[slot]=gearPiece(tier,slot);p.purchaseHistory.unshift({at:nowIso(),characterId:c.id,characterName:c.name,tier,slot,cost,currency});p.purchaseHistory=p.purchaseHistory.slice(0,80);if(tier===1)p.t1Purchases++;
@@ -290,8 +298,8 @@ function buyGear(tier,slot){
   game()?.save?.();render()
 }
 
-window.CellboundPvP={version:'1.3.1',get enabled(){return pvpEnabled()},render,arenaUnlocked,getRank:()=>pvpEnabled()?bgRank(ensureState()):null,getState:()=>pvpEnabled()?ensureState():null};
-window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render()});
-window.addEventListener('cellbound:admin-status',()=>{if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()});
+window.CellboundPvP={version:'1.4.0',get enabled(){return pvpEnabled()},render,arenaUnlocked,getRank:()=>pvpEnabled()?bgRank(ensureState()):null,getState:()=>pvpEnabled()?ensureState():null};
+window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render();else window.CellboundPvPOwnerQA?.stop?.()});
+window.addEventListener('cellbound:admin-status',()=>{if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active')&&(!$('#pvpMount .cbpvp-qa')||!window.CellboundPvPOwnerQA?.allowed?.()))render()});
 let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);
 })();

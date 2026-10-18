@@ -951,3 +951,278 @@
   .recipe-batch-order>button{grid-column:1;grid-row:auto}
   .craft-timer-head{align-items:center}
 }
+
+
+/* Job 12A — interactive Blacksmithing forge, illustrated with real Ashen Vault art.
+   Separate from combat: all rewards still go through the existing work order. */
+.forge-workshop{--forge-gold:#e6b26c;--forge-orange:#ed884a;margin:13px 14px 14px;border:1px solid rgba(237,159,90,.35);border-radius:10px;overflow:hidden;background:#0b1014;box-shadow:0 12px 26px rgba(0,0,0,.3)}
+.forge-scene{position:relative;min-height:175px;aspect-ratio:16/5;overflow:hidden;isolation:isolate;
+ background:linear-gradient(0deg,rgba(4,6,9,.63),rgba(4,6,9,.12)),url('./assets/ashen-vault/rooms/furnace.webp') center 49% / cover no-repeat,#171012}
+.forge-scene:before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(90deg,rgba(5,8,10,.45),transparent 34% 70%,rgba(4,5,8,.48)),linear-gradient(0deg,#080c0d 0,transparent 44%)}
+.forge-heat-glow{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 28% 65% at 28% 55%,rgba(242,111,35,.56),transparent 85%),radial-gradient(ellipse 30% 55% at 62% 80%,rgba(245,143,44,.33),transparent 77%);animation:forgeGlow 1.9s ease-in-out infinite alternate}
+.forge-furnace{position:absolute;z-index:2;left:18%;bottom:-10%;width:18%;height:71%;border:9px solid #27272a;border-bottom:0;border-radius:53% 53% 8% 8%;box-shadow:inset 0 0 16px 4px #f17a30,0 0 20px rgba(221,88,25,.32);background:radial-gradient(ellipse at 50% 89%,#ffd478,#e86228 28%,#7b291a 60%,#1c1717 85%);opacity:.83}
+.forge-anvil{position:absolute;z-index:3;width:32%;height:17%;bottom:10%;left:46%;background:linear-gradient(180deg,#bac1bb 0 14%,#62716f 23%,#323d3c 66%,#171c20);border-radius:6px 7px 17% 17%;box-shadow:0 11px 15px #03070a,0 0 20px rgba(247,137,60,.16);transform:perspective(90px) rotateX(7deg)}
+.forge-anvil-horn{position:absolute;left:-40%;top:5%;width:50%;height:57%;clip-path:polygon(0 48%,100% 0,100% 100%);background:linear-gradient(#9aa29a,#455151)}
+.forge-anvil-leg{position:absolute;top:75%;left:25%;width:50%;height:105%;background:linear-gradient(90deg,#212a2b,#54615b,#1f292a);box-shadow:0 10px 10px rgba(0,0,0,.5)}
+.forge-hot-steel{position:absolute;top:-19%;left:12%;width:86%;height:21%;border-radius:40% 10% 10% 45%;transform:rotate(-4deg);background:linear-gradient(90deg,#ffe6b3,#ffb658 48%,#e76b35);box-shadow:0 0 18px rgba(250,142,65,.76),0 5px 6px rgba(0,0,0,.65)}
+.forge-sparks{position:absolute;z-index:3;left:58%;top:28%;width:22%;height:46%;pointer-events:none;
+ background:radial-gradient(circle at 7% 22%,#f8d78b 0 1px,transparent 3px),radial-gradient(circle at 74% 40%,#eea05a 0 1px,transparent 3px),radial-gradient(circle at 38% 63%,#e7b368 0 1px,transparent 3px),radial-gradient(circle at 65% 80%,#fbdc99 0 1px,transparent 3px);animation:forgeGlow .9s alternate infinite}
+.forge-scene-label{position:absolute;z-index:5;left:14px;top:10px;color:#f1c188;text-shadow:0 2px 4px #000;font:700 10px/1.2 Georgia,serif;letter-spacing:.17em}
+.forge-challenge{padding:15px;background:linear-gradient(140deg,#1b1716,#0c1216 45% 100%)}
+.forge-challenge-head{display:flex;gap:14px;justify-content:space-between;align-items:start}
+.forge-challenge-head small{font-size:10px!important;letter-spacing:.13em;color:#c48c5a}
+.forge-challenge-head h4{margin:4px 0 5px;font:normal clamp(17px,2.5vw,24px)/1.1 Georgia,serif;color:#ffddaa}
+.forge-challenge-head p{color:#aaa79e;font-size:12px;line-height:1.4;margin:0;max-width:510px}
+.forge-result{border:1px solid rgba(239,174,99,.34);border-radius:5px;padding:6px 9px;color:#f1c18f;font-size:11px;font-weight:800;white-space:nowrap}
+.forge-stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:13px}
+.forge-phase{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid #343039;border-radius:6px;background:rgba(9,15,19,.7);min-width:0;opacity:.55}
+.forge-phase.current{opacity:1;border-color:#cf9a5b;background:rgba(118,68,27,.19)}
+.forge-phase.done{opacity:1;border-color:rgba(143,199,139,.35)}
+.forge-step-icon{font-size:21px;color:#d6a46f;flex-shrink:0}
+.forge-phase span:nth-child(2){min-width:0}.forge-phase small{display:block;font-size:9px!important;color:#92938d}.forge-phase b{display:block;font-size:10px;line-height:1.3;color:#e6d5bb}
+.forge-phase em{font-size:9px;color:#9aca9d;font-style:normal;margin-left:auto;text-align:right}
+.forge-gauge{margin-top:18px}
+.forge-gauge-legend{display:flex;justify-content:space-between;gap:8px;font-size:10px;letter-spacing:.09em;color:#7d8987}
+.forge-gauge-legend strong{color:#ffbc75;font-size:10px}
+.forge-timing-track{position:relative;height:44px;margin-top:7px;border:1px solid rgba(228,168,105,.45);border-radius:8px;overflow:hidden;
+ background:linear-gradient(90deg,#213b46,#7f493a 28%,#a26036 49%,#823d30 72%,#243541);box-shadow:inset 0 3px 8px rgba(0,0,0,.55)}
+.forge-timing-track:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9.8%,rgba(255,255,255,.07) 10%);pointer-events:none}
+.forge-target-band{position:absolute;top:0;bottom:0;left:calc(var(--forge-target) - 10%);width:20%;background:rgba(237,203,105,.20);border-inline:1px solid rgba(246,208,121,.5)}
+.forge-target-core{position:absolute;top:0;bottom:0;left:calc(var(--forge-target) - 4%);width:8%;background:rgba(255,232,139,.40);box-shadow:0 0 17px rgba(255,181,79,.44)}
+.forge-needle{position:absolute;z-index:2;top:3px;bottom:3px;left:11%;width:5px;border-radius:3px;box-shadow:0 0 0 1px #090c0e,0 0 8px 3px rgba(253,237,192,.75);background:#fff7dc;animation:forgeSweep var(--forge-period,1450ms) ease-in-out infinite alternate}
+.forge-instructions{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:9px 0;color:#a7aea8;font-size:11px;line-height:1.45}
+.forge-instructions button{flex-shrink:0;border:0;background:none;color:#e3ad70;text-decoration:underline;font-size:11px;padding:6px;cursor:pointer}
+.forge-strike{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;min-height:52px;border:1px solid #f2c782;border-radius:6px;
+ background:linear-gradient(180deg,#a75a32,#603120);color:#fff3d7;font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.06em;cursor:pointer;touch-action:manipulation;box-shadow:0 8px 18px rgba(0,0,0,.3)}
+.forge-strike:active{transform:translateY(1px);filter:brightness(1.1)}.forge-strike:focus-visible,.forge-instructions button:focus-visible{outline:3px solid #fff1b4;outline-offset:3px}
+.forge-strike:disabled{opacity:.4;cursor:not-allowed}.forge-strike span{font-size:21px}
+.forge-manual-control{display:none;color:#d5be95;font-size:12px;margin-top:10px}
+.forge-manual-control input{display:block;width:100%;min-height:38px;accent-color:#f5b65f;touch-action:pan-y}
+.forge-workshop.manual .forge-manual-control{display:block}
+.forge-workshop.manual .forge-needle{animation:none!important;left:calc(var(--forge-target) - 2px)}
+.forge-workshop.manual .forge-timing-track{opacity:.68}
+.forge-complete{margin-top:14px;padding:18px;border:1px solid rgba(151,220,153,.24);border-radius:8px;background:rgba(38,71,53,.22);display:grid;gap:5px}
+.forge-complete b{color:#d6ecbb;font:normal 23px Georgia,serif}
+.forge-complete small{font-size:12px;color:#aac8aa}
+@keyframes forgeSweep{from{left:10%}to{left:90%}}
+@keyframes forgeGlow{from{opacity:.58}to{opacity:1}}
+@media(max-width:710px){.forge-stages{grid-template-columns:1fr}.forge-phase{padding:7px}.forge-scene{aspect-ratio:16/7;min-height:140px}.forge-challenge-head{flex-wrap:wrap}.forge-instructions{flex-wrap:wrap}.forge-workshop{margin:9px 6px}}
+@media(prefers-reduced-motion:reduce){.forge-heat-glow,.forge-sparks,.forge-needle{animation:none!important}.forge-workshop:not(.manual) .forge-needle{left:var(--forge-target)}.forge-workshop .forge-manual-control{display:block}}
+
+
+/* Job 12B — actual roster adventurer works the forge. The full-body model is
+   rendered by CellboundPortraits from race, appearance and equipped gear. */
+.forge-scene{min-height:204px}
+.forge-artisan{
+ position:absolute;z-index:4;left:32%;bottom:9%;width:clamp(95px,16%,152px);height:88%;
+ transform:translateX(-50%);transform-origin:55% 92%;pointer-events:none;
+ animation:forgeArtisanIdle 3.8s ease-in-out infinite alternate;
+ filter:drop-shadow(0 9px 9px rgba(0,0,0,.7)) drop-shadow(0 0 9px rgba(255,151,79,.24));
+}
+.forge-artisan-model{position:absolute;inset:0;display:flex;justify-content:center;align-items:end}
+.forge-artisan-model>.cb-paper-doll{
+ display:block!important;position:relative;width:100%!important;height:100%!important;
+ margin:0!important;max-width:none;max-height:none;filter:none!important;
+}
+.forge-artisan-model>.cb-paper-doll svg{display:block;width:100%;height:100%;overflow:visible}
+.forge-artisan-model>.cb-portrait{width:94%;height:84%;margin:auto}
+.forge-artisan-silhouette{display:grid;place-items:center;width:100%;height:100%;font-size:64px;color:#b8af9f;text-shadow:0 0 18px rgba(255,143,70,.42)}
+.forge-artisan-shadow{position:absolute;left:20%;right:12%;bottom:-3%;height:11px;border-radius:50%;background:rgba(0,0,0,.69);filter:blur(6px)}
+.forge-artisan-identity{
+ position:absolute;z-index:8;bottom:8px;left:10px;max-width:48%;
+ padding:6px 10px;border-left:2px solid #dfa66d;
+ background:linear-gradient(90deg,rgba(12,12,15,.91),rgba(12,12,15,.52));
+ box-shadow:0 5px 12px rgba(0,0,0,.25);pointer-events:none;
+}
+.forge-artisan-identity b{display:block;font:600 clamp(11px,1.7vw,16px)/1.15 Georgia,serif;color:#ffe1b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forge-artisan-identity small{display:block;margin-top:3px;color:#dfb27e;font:700 clamp(8px,.95vw,10px)/1.2 system-ui,sans-serif;letter-spacing:.04em;white-space:normal}
+.forge-scene .forge-anvil{z-index:5}
+.forge-scene .forge-sparks{z-index:6}
+.forge-reaction-fx{position:absolute;z-index:7;inset:0;pointer-events:none;overflow:hidden;isolation:isolate}
+.forge-fx-burst,.forge-fx-steam,.forge-fx-shockwave,.forge-fx-hammer{position:absolute;opacity:0;pointer-events:none}
+.forge-fx-burst{
+ left:64%;top:57%;width:36%;height:42%;transform:translate(-50%,-50%) scale(.35);
+ background:radial-gradient(circle at center,#fff6d6 0 3%,#ffdb89 7%,rgba(255,127,47,.83) 12%,rgba(253,92,40,.33) 35%,transparent 70%);
+ filter:drop-shadow(0 0 18px rgba(255,124,55,.65));
+}
+.forge-fx-shockwave{
+ left:63%;top:64%;width:24%;height:34%;border:3px solid #ffd59e;
+ border-radius:50%;box-shadow:0 0 16px rgba(255,173,72,.88);
+ transform:translate(-50%,-50%) scale(.45);
+}
+.forge-fx-steam{
+ left:63%;top:26%;width:45%;height:62%;
+ border-radius:48%;filter:blur(13px);
+ background:radial-gradient(ellipse at 42% 66%,rgba(204,235,232,.90),rgba(145,185,182,.37) 41%,transparent 75%);
+ transform:translateY(18px) scale(.6);
+}
+.forge-fx-hammer{
+ left:52%;top:5%;width:9px;height:44%;
+ transform:rotate(-55deg);transform-origin:50% 87%;
+ border-radius:3px;
+ background:linear-gradient(90deg,#442c23,#b68151 45%,#4c3429);
+ box-shadow:0 0 0 1px rgba(15,14,14,.65),0 7px 17px rgba(0,0,0,.55);
+}
+.forge-fx-hammer:after{
+ content:"";position:absolute;top:-10%;left:-190%;width:480%;height:22%;
+ border-radius:3px;background:linear-gradient(#d7c9ac,#717879,#333d3e 60%,#1a262a);
+ box-shadow:0 3px 6px rgba(0,0,0,.6);
+}
+.forge-action-popup{
+ position:absolute;z-index:9;left:52%;top:9%;transform:translateX(-10%);
+ padding:6px 11px;max-width:44%;text-align:center;pointer-events:none;
+ color:#fff2d5;background:rgba(20,12,10,.77);border:1px solid rgba(255,211,131,.36);
+ border-radius:6px;font:800 clamp(10px,1.4vw,15px)/1.3 system-ui,sans-serif;
+ letter-spacing:.05em;text-shadow:0 1px 3px #000;box-shadow:0 5px 13px rgba(0,0,0,.32);
+ animation:forgePopup .91s ease-out both;
+}
+.forge-scene.is-reacting.forge-action-heat .forge-furnace{animation:forgeFurnaceBlast .84s ease-out}
+.forge-scene.is-reacting.forge-action-heat .forge-heat-glow{animation:forgeHeatBlast .9s ease-out}
+.forge-scene.is-reacting.forge-action-heat .forge-fx-burst{left:28%;top:59%;animation:forgeFlash .8s ease-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-artisan{animation:forgeArtisanStrike .78s ease-in-out}
+.forge-scene.is-reacting.forge-action-strike .forge-anvil{animation:forgeAnvilHit .52s ease-out}
+.forge-scene.is-reacting.forge-action-strike .forge-fx-hammer{animation:forgeHammerStrike .62s ease-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-fx-burst{animation:forgeFlash .85s ease-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-fx-shockwave{animation:forgeShockwave .58s ease-out both}
+.forge-scene.is-reacting.forge-action-temper .forge-artisan{animation:forgeArtisanQuench .88s ease-in-out}
+.forge-scene.is-reacting.forge-action-temper .forge-hot-steel{animation:forgeSteelCooling .9s ease-out forwards}
+.forge-scene.is-reacting.forge-action-temper .forge-fx-steam{animation:forgeSteamBlast .95s ease-out both}
+.forge-scene.forge-grade-fine .forge-fx-burst{filter:brightness(1.22)}
+.forge-scene.forge-grade-perfect .forge-fx-burst,.forge-scene.forge-grade-perfect .forge-fx-shockwave{filter:brightness(1.45) drop-shadow(0 0 15px rgba(255,215,120,.58))}
+.forge-scene.forge-grade-standard .forge-fx-burst{filter:brightness(.73);opacity:.55}
+@keyframes forgeArtisanIdle{from{translate:0 0}to{translate:0 -3px}}
+@keyframes forgeArtisanStrike{0%,100%{rotate:0deg;translate:0 0}20%{rotate:-7deg;translate:-3px 0}46%{rotate:9deg;translate:4px 3px}70%{rotate:-3deg;translate:0 0}}
+@keyframes forgeArtisanQuench{0%,100%{rotate:0}36%{rotate:8deg;translate:5px 4px}66%{rotate:5deg;translate:2px 1px}}
+@keyframes forgeFurnaceBlast{0%,100%{filter:brightness(1)}30%{filter:brightness(2.5)}}
+@keyframes forgeHeatBlast{0%,100%{opacity:.8}28%{opacity:1;filter:brightness(2)}}
+@keyframes forgeAnvilHit{0%,100%{translate:0 0}40%{translate:0 4px}60%{translate:0 0}}
+@keyframes forgeHammerStrike{0%{opacity:0;rotate:-24deg}12%{opacity:1}45%{opacity:1;rotate:75deg}78%{opacity:.9;rotate:76deg}100%{opacity:0;rotate:76deg}}
+@keyframes forgeFlash{0%{opacity:0;scale:.35}23%{opacity:1;scale:1}100%{opacity:0;scale:1.7}}
+@keyframes forgeShockwave{0%{opacity:.8;scale:.4}100%{opacity:0;scale:1.7}}
+@keyframes forgeSteelCooling{0%{filter:brightness(1)}80%,100%{filter:brightness(.40) saturate(.38)}}
+@keyframes forgeSteamBlast{0%{opacity:0;scale:.6;translate:0 14px}22%{opacity:.92}100%{opacity:0;scale:1.6;translate:0 -38px}}
+@keyframes forgePopup{0%{opacity:0;translate:0 12px}16%,72%{opacity:1}100%{opacity:0;translate:0 -8px}}
+@media(max-width:710px){
+ .forge-scene{min-height:166px}
+ .forge-artisan{left:34%;width:24%;height:81%;bottom:14%}
+ .forge-artisan-identity{max-width:63%;padding:5px 7px}
+ .forge-action-popup{top:8%;left:59%;max-width:38%;padding:4px 6px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .forge-artisan,.forge-scene.is-reacting .forge-artisan,
+ .forge-scene.is-reacting .forge-anvil,
+ .forge-scene.is-reacting .forge-furnace,
+ .forge-scene.is-reacting .forge-heat-glow,
+ .forge-scene.is-reacting .forge-hot-steel,
+ .forge-scene.is-reacting .forge-fx-burst,
+ .forge-scene.is-reacting .forge-fx-shockwave,
+ .forge-scene.is-reacting .forge-fx-hammer,
+ .forge-scene.is-reacting .forge-fx-steam,
+ .forge-action-popup{animation:none!important;translate:none!important;rotate:0deg!important}
+ .forge-scene.is-reacting .forge-fx-burst,
+ .forge-scene.is-reacting .forge-fx-shockwave,
+ .forge-scene.is-reacting .forge-fx-hammer,
+ .forge-scene.is-reacting .forge-fx-steam{display:none!important}
+ .forge-action-popup{opacity:1!important}
+}
+
+
+/* Job 12C — forge temperature, repeated stoking and active worker motion. */
+.forge-heat-status{margin:14px 0 1px;display:flex;align-items:center;flex-wrap:wrap;gap:9px 12px;color:#dca976;font:800 11px/1.3 system-ui,sans-serif;letter-spacing:.07em}
+.forge-heat-status b{font-size:15px;color:#ffddaa}
+.forge-heat-status small{flex-basis:100%;font:600 10px/1.25 system-ui,sans-serif;color:#bc9b7b;letter-spacing:0}
+.forge-heat-track{flex:1 1 170px;height:13px;border:1px solid #95623f;border-radius:9px;overflow:hidden;background:linear-gradient(90deg,#35252b,#201e23);box-shadow:inset 0 2px 5px #090809}
+.forge-heat-track i{display:block;height:100%;min-width:0;border-radius:9px;background:linear-gradient(90deg,#b34727,#f09b40 65%,#ffda8a);box-shadow:0 0 12px #e47a39;transition:width .25s linear}
+.forge-workshop[data-forge-reheat="true"] .forge-heat-status b,.forge-workshop[data-forge-reheat="true"] .forge-heat-status small{color:#ff9380}
+.forge-workshop[data-forge-reheat="true"] .forge-heat-track{border-color:#c25947;box-shadow:0 0 12px rgba(234,67,47,.22)}
+.forge-workshop[data-forge-reheat="true"] .forge-strike{box-shadow:0 0 18px rgba(255,125,65,.25);animation:forgeStokePrompt 1.35s ease-in-out infinite alternate}
+.forge-artisan-model{transform-origin:50% 83%}
+.forge-artisan-tool{position:absolute;z-index:5;left:90%;top:34%;width:8px;height:66px;border:1px solid #493123;border-radius:3px;background:linear-gradient(90deg,#322320,#bd7b47,#513223);transform-origin:50% 87%;transform:rotate(-50deg);opacity:0;filter:drop-shadow(0 3px 5px #000);pointer-events:none}
+.forge-artisan-tool:before{content:"";position:absolute;width:33px;height:17px;top:-10px;left:-13px;border:1px solid #252d2b;border-radius:3px;background:linear-gradient(180deg,#d9d7ca,#646d69,#293333)}
+.forge-scene.is-reacting.forge-action-heat .forge-artisan{animation:forgeSmithLeanHeat 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-heat .forge-artisan-model{animation:forgeSmithReach 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-heat .forge-artisan-tool{opacity:1;animation:forgeStokeTool 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-artisan{animation:forgeSmithSwing 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-artisan-model{animation:forgeSmithHammerMotion 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-strike .forge-artisan-tool{opacity:1;animation:forgeSmithHammer 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-temper .forge-artisan{animation:forgeSmithDip 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-temper .forge-artisan-model{animation:forgeSmithQuench 1.28s ease-in-out both}
+.forge-scene.is-reacting.forge-action-temper .forge-artisan-tool{opacity:1;animation:forgeSmithTongs 1.28s ease-in-out both}
+.forge-scene.is-working .forge-artisan{animation:forgeArtisanLabour 2.7s ease-in-out infinite}
+.forge-scene.is-working .forge-artisan-tool{animation:forgeLabourHammer 2.7s ease-in-out infinite}
+@keyframes forgeStokePrompt{from{filter:brightness(1)}to{filter:brightness(1.23)}}
+@keyframes forgeSmithLeanHeat{0%,100%{translate:0 0;rotate:0deg}34%,58%{translate:-9px 1px;rotate:-9deg}}
+@keyframes forgeSmithReach{0%,100%{transform:rotate(0deg)}36%,63%{transform:rotate(-12deg) translateX(-6px)}}
+@keyframes forgeStokeTool{0%,100%{opacity:0;transform:rotate(-60deg)}16%,70%{opacity:1}35%,58%{transform:rotate(-135deg) translateY(-7px)}}
+@keyframes forgeSmithSwing{0%,100%{translate:0 0;rotate:0deg}18%{rotate:-7deg;translate:-5px -1px}48%{rotate:12deg;translate:8px 5px}64%{rotate:-3deg;translate:0 0}}
+@keyframes forgeSmithHammerMotion{0%,100%{transform:rotate(0)}28%{transform:rotate(-9deg)}52%{transform:rotate(9deg)}}
+@keyframes forgeSmithHammer{0%{opacity:0;transform:rotate(-60deg)}12%,68%{opacity:1}27%{transform:rotate(-100deg) translateY(-5px)}51%{transform:rotate(75deg) translateY(14px)}100%{opacity:0;transform:rotate(75deg)}}
+@keyframes forgeSmithDip{0%,100%{rotate:0deg;translate:0 0}40%,68%{rotate:8deg;translate:7px 5px}}
+@keyframes forgeSmithQuench{0%,100%{transform:rotate(0)}45%,69%{transform:rotate(10deg) translateY(7px)}}
+@keyframes forgeSmithTongs{0%{opacity:0;transform:rotate(-40deg)}15%,80%{opacity:1}45%,70%{transform:rotate(46deg) translateY(20px)}100%{opacity:0;transform:rotate(46deg)}}
+@keyframes forgeArtisanLabour{0%,100%{translate:0 0;rotate:0}28%{translate:0 -3px;rotate:-2deg}56%{translate:1px 3px;rotate:4deg}}
+@keyframes forgeLabourHammer{0%,8%,100%{opacity:0;transform:rotate(-75deg)}20%,60%{opacity:.9}34%{transform:rotate(38deg)}68%{opacity:0;transform:rotate(38deg)}}
+@media(prefers-reduced-motion:reduce){
+ .forge-scene.is-working .forge-artisan,.forge-scene.is-working .forge-artisan-tool,
+ .forge-scene.is-reacting .forge-artisan-model,.forge-scene.is-reacting .forge-artisan-tool,
+ .forge-workshop[data-forge-reheat="true"] .forge-strike{animation:none!important}
+ .forge-artisan-tool{display:none!important}
+ .forge-heat-track i{transition:none}
+}
+
+
+/* Job 12D — precision furnace bonuses and end-of-order results. */
+.forge-workshop[data-forge-reheat="true"] .forge-gauge-legend strong{color:#ffd491}
+.forge-workshop[data-forge-reheat="true"] .forge-heat-status small{font-weight:800}
+.forge-job-summary{margin:15px 12px 26px;overflow:hidden;border:1px solid #8e613c;border-radius:12px;background:#131719;box-shadow:0 18px 45px rgba(0,0,0,.28);color:#f0dfc5}
+.forge-summary-head{position:relative;padding:28px clamp(18px,4vw,37px) 25px;text-align:center;background:linear-gradient(180deg,rgba(19,20,22,.35) 0%,#15191a 95%),url('./assets/ashen-vault/rooms/furnace.webp') center 48% / cover no-repeat}
+.forge-summary-head:after{content:"";position:absolute;bottom:0;left:7%;right:7%;height:1px;background:linear-gradient(90deg,transparent,#c39455,transparent)}
+.forge-summary-head small{display:block;color:#e5ae69;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.17em}
+.forge-summary-head h3{margin:7px 0 8px;color:#ffe6b5;font:500 clamp(30px,5vw,43px)/1.2 Georgia,serif;letter-spacing:.065em;text-shadow:0 3px 8px rgba(0,0,0,.7)}
+.forge-summary-head h3:focus{outline:0}
+.forge-summary-head p{margin:0;color:#e6ccb1;font-size:13px}
+.forge-summary-reward{display:flex;align-items:center;gap:22px;margin:20px clamp(15px,3vw,35px);padding:20px;border:1px solid #665139;border-radius:9px;background:linear-gradient(125deg,#28241e,#171a1b)}
+.forge-summary-art{flex:0 0 104px;width:104px;height:104px;display:grid;place-items:center;border:1px solid rgba(244,176,88,.32);border-radius:7px;background:radial-gradient(circle,#47321d,#171c1e);overflow:hidden}
+.forge-summary-art img,.forge-summary-art svg{max-width:94%;max-height:94%;object-fit:contain}
+.forge-summary-item-fallback{font-size:51px;color:#e6af6f}
+.forge-summary-reward-copy{min-width:0}
+.forge-summary-reward-copy small{font:800 10px/1.4 system-ui,sans-serif;color:#c69d6d;letter-spacing:.12em}
+.forge-summary-reward-copy h4{margin:6px 0;color:#ffe0ad;font:500 clamp(21px,3vw,30px)/1.2 Georgia,serif;overflow-wrap:anywhere}
+.forge-summary-reward-copy strong{display:block;color:#fff;font:800 28px/1.2 system-ui,sans-serif}
+.forge-summary-reward-copy p{margin:6px 0 0;color:#c2b6a3;font-size:12px}
+.forge-summary-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 clamp(15px,3vw,35px) 20px}
+.forge-summary-stats>div{min-width:0;padding:14px 10px;border:1px solid #443d34;border-radius:7px;background:#1c2020;text-align:center}
+.forge-summary-stats small{display:block;color:#b2a28f;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.08em}
+.forge-summary-stats b{display:block;margin-top:5px;font:600 clamp(20px,3vw,27px)/1.1 Georgia,serif;color:#ffca82}
+.forge-summary-section{margin:17px clamp(15px,3vw,35px)}
+.forge-summary-section h4{margin:0 0 8px;color:#c9bca6;font:800 11px/1.3 system-ui,sans-serif;letter-spacing:.13em}
+.forge-summary-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.forge-summary-stage,.forge-summary-reheat{display:grid;gap:3px;min-width:0;padding:12px;border-radius:5px;border:1px solid #393c39;background:#1c2223}
+.forge-summary-stage span,.forge-summary-reheat span{font-size:10px;color:#b9ab95;line-height:1.3}
+.forge-summary-stage b,.forge-summary-reheat b{color:#f6cf93;font:700 17px/1.2 Georgia,serif}
+.forge-summary-stage small,.forge-summary-reheat small{color:#b4b9ac;font-size:10px}
+.forge-summary-empty{grid-column:1/-1;margin:6px 0;color:#adb2ac;font-size:12px}
+.forge-summary-extra{margin:20px clamp(15px,3vw,35px);color:#b2ad9f;font-size:12px;line-height:1.6}
+.forge-summary-continue{display:block;width:calc(100% - 30px);max-width:370px;margin:18px auto 26px;padding:15px 18px;min-height:51px;border:1px solid #e8b475;border-radius:7px;background:linear-gradient(#aa673d,#70402b);color:#fff5df;font:800 12px/1.2 system-ui,sans-serif;letter-spacing:.1em;cursor:pointer;touch-action:manipulation}
+.forge-summary-continue:focus-visible{outline:3px solid #ffe1a7;outline-offset:3px}
+@media(max-width:710px){
+ .forge-job-summary{margin:10px 6px 22px}
+ .forge-summary-reward{gap:11px;padding:12px}
+ .forge-summary-art{flex-basis:79px;width:79px;height:79px}
+ .forge-summary-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .forge-summary-steps{grid-template-columns:1fr}
+}
+
+
+/* Admin-only reagent-free profession testing — kept within the workshop. */
+.admin-craft-toggle{margin:13px 14px 10px;padding:15px 18px;border:1px solid rgba(156,142,91,.6);border-radius:8px;background:linear-gradient(120deg,rgba(41,45,37,.96),rgba(22,29,29,.97));display:flex;gap:12px;align-items:center;justify-content:space-between}
+.admin-craft-toggle>div{min-width:0;flex:1}
+.admin-craft-toggle small{display:block;color:#d4b879;font:800 10px/1.3 system-ui,sans-serif;letter-spacing:.14em}
+.admin-craft-toggle strong{display:block;margin-top:3px;color:#f7e1bc;font:600 18px/1.2 Georgia,serif}
+.admin-craft-toggle p{margin:6px 0 0;color:#cbc6b6;font:400 12px/1.5 system-ui,sans-serif}
+.admin-craft-toggle button{flex:none;min-width:174px;padding:12px 13px;min-height:44px;border:1px solid #98886c;border-radius:6px;background:#282f30;color:#e1d1b5;font:800 11px/1.2 system-ui,sans-serif;letter-spacing:.05em;cursor:pointer;touch-action:manipulation}
+.admin-craft-toggle button[aria-pressed="true"]{background:#4f6449;color:#e8f5d9;border-color:#adc198}
+.admin-craft-toggle button:disabled{cursor:not-allowed;opacity:.55}
+.admin-craft-toggle button:focus-visible{outline:3px solid #ffdb9b;outline-offset:3px}
+.admin-reagents-waived{font:800 10px/1.35 system-ui,sans-serif;color:#afca9e;letter-spacing:.035em}
+@media(max-width:710px){.admin-craft-toggle{margin:9px 6px;flex-direction:column;align-items:stretch}.admin-craft-toggle button{width:100%}}

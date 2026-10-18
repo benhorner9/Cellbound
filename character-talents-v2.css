@@ -272,3 +272,10 @@
   .cb-talent-inline-detail>div{align-items:flex-start;flex-direction:column}
   .cb-talent-inline-detail button{width:100%;min-height:44px}
 }
+
+/* Talent system V2: visible respec status and capstone decisions */
+.cb-talent-respec-bar{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid rgba(216,185,118,.15);background:rgba(9,17,19,.78);padding:12px 16px;border-radius:10px;margin-bottom:12px;color:#a6b8b0;font-size:.75rem}
+.cb-talent-respec-bar b{color:#e7d1a0}
+.cb-talent-respec-bar button{border:1px solid rgba(214,170,100,.45);border-radius:7px;background:#1d211c;color:#f1dcae;padding:10px 13px;font-weight:700;font-size:.69rem;cursor:pointer;min-height:40px}
+.cb-talent-respec-bar button:disabled{opacity:.35;cursor:not-allowed}
+@media(max-width:650px){.cb-talent-respec-bar{flex-direction:column;align-items:stretch}.cb-talent-respec-bar button{width:100%}}

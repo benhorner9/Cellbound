@@ -722,3 +722,217 @@ linear-gradient(180deg,#142019,#09110e)}
   .tutorial-report-detail{grid-template-columns:1fr}
   .tutorial-descent-hero{padding:12px}.tutorial-descent-art{min-height:260px;padding:18px}.tutorial-descent-art>h2{font-size:1.28rem}
 }
+
+
+/* Cellbound Chapter Zero — Guild Master introduction and learning clarity */
+.onboard-root .onboard-v5{--ob-gold:#e0bb7d;--ob-ink:#e9e4d7;color:var(--ob-ink)}
+.onboard-v5 .onboard-head{
+  grid-template-columns:minmax(170px,.5fr) minmax(400px,1.5fr);
+  gap:15px;padding:14px clamp(14px,2.4vw,32px);
+}
+.onboard-v5 .onboard-head small{font-size:10px!important;letter-spacing:.12em}
+.onboard-v5 .onboard-head h1{font-size:clamp(20px,2.4vw,30px)}
+.onboard-v5 .onboard-progress{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
+.onboard-v5 .onboard-progress span{gap:5px;font-size:10px;font-weight:700;padding:6px 8px}
+.onboard-v5 .onboard-progress span i{width:19px;height:19px;font-size:10px}
+.onboard-v5 .onboard-objective{grid-template-columns:auto minmax(0,1fr) auto;gap:15px;padding:12px clamp(14px,2.4vw,32px)}
+.onboard-v5 .onboard-objective>span{font-size:10px;letter-spacing:.1em;color:var(--ob-gold)}
+.onboard-v5 .onboard-objective>b{font-size:12px;color:#d9dfd6}
+.onboard-v5 .onboard-objective>em{font-size:9px;color:#a2afa4}
+.onboard-v5 .onboard-lesson{
+  display:flex;gap:16px;align-items:center;padding:10px clamp(14px,2.4vw,32px);
+  background:#0d1b1b;border-bottom:1px solid #a78c5730;
+}
+.onboard-v5 .onboard-lesson span{flex:0 0 auto;color:#e0b979;font-size:10px;font-weight:900;letter-spacing:.1em}
+.onboard-v5 .onboard-lesson p{margin:0;color:#c3cfc4;font-size:12px;line-height:1.5}
+.onboard-v5 .on-primary{font-size:12px;letter-spacing:.06em;cursor:pointer}
+.onboard-v5 .on-primary:focus-visible,.onboard-v5 .onboard-intro button:focus-visible{outline:2px solid #eed293;outline-offset:3px}
+.onboard-intro{max-width:1520px;margin:0 auto;padding:clamp(12px,2.2vw,28px)}
+.onboard-intro__hero{position:relative;isolation:isolate;min-height:clamp(250px,33vh,380px);overflow:hidden;border:1px solid #dfad6560;border-radius:7px;display:flex;align-items:center;background:#172327}
+.onboard-intro__hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 42%;z-index:-2}
+.onboard-intro__hero-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#071013f2 0%,#071013d9 35%,#07101350 74%),linear-gradient(0deg,#050a0ab0,transparent 50%)}
+.onboard-intro__hero-copy{max-width:740px;padding:clamp(22px,4vw,56px)}
+.onboard-intro__hero-copy>small,.onboard-intro__lesson-copy>small,.onboard-intro__charter>small{font-size:11px;color:#e6b977;font-weight:900;letter-spacing:.16em}
+.onboard-intro__hero h2{margin:13px 0 14px;color:#f8ebd0;font:normal clamp(2.4rem,5.4vw,5.2rem)/1.04 Georgia,serif;letter-spacing:-.04em;text-shadow:0 5px 22px #000}
+.onboard-intro__hero p{font-size:clamp(14px,1.65vw,18px);line-height:1.6;color:#e0d8c8;max-width:600px;text-shadow:0 2px 10px #000}
+.onboard-intro__crest{display:inline-block;margin-top:18px;color:#f2d7a1;font-size:11px;font-weight:800;letter-spacing:.12em}
+.onboard-intro__below{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:14px;margin-top:14px}
+.onboard-intro__lesson,.onboard-intro__charter{border:1px solid #c9a26844;background:linear-gradient(160deg,#162325,#090f12);border-radius:6px;min-width:0}
+.onboard-intro__tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid #c9a26833}
+.onboard-intro__tabs button{min-height:55px;border:0;border-bottom:2px solid transparent;border-right:1px solid #c9a26822;background:#10191a;color:#b5c3bd;cursor:pointer;font-size:12px;font-weight:800}
+.onboard-intro__tabs button span{color:#d1b178;margin-right:8px}
+.onboard-intro__tabs button.active,.onboard-intro__tabs button[aria-pressed=true]{color:#ffe6b5;background:#2b281e;border-bottom-color:#dfb775}
+.onboard-intro__tabs button:hover{color:#f5e2bb;background:#26302c}
+.onboard-intro__lesson-body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(175px,.75fr);gap:14px;align-items:center;padding:22px;min-height:262px}
+.onboard-intro__lesson-copy h3{margin:10px 0 12px;color:#f6e7ca;font:normal clamp(1.5rem,2.5vw,2.3rem)/1.08 Georgia,serif}
+.onboard-intro__lesson-copy p{font-size:14px;line-height:1.6;color:#c5d0c7;margin:0 0 12px}
+.onboard-intro__insight{color:#ebc98f;font-size:12px;font-weight:750;border-left:2px solid #c4a268;padding-left:12px;line-height:1.5}
+.onboard-intro__lesson-body>img{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid #d3b57a55;border-radius:4px;box-shadow:0 10px 25px #0009}
+.onboard-intro__charter{padding:24px;display:flex;flex-direction:column;align-items:stretch}
+.onboard-intro__charter h3{margin:9px 0 11px;font:normal clamp(1.45rem,2vw,2rem) Georgia,serif;color:#f2e7d2}
+.onboard-intro__charter ul{padding:0;margin:0 0 14px 19px;color:#c8d1c5;font-size:13px;line-height:1.65}
+.onboard-intro__charter li{padding-left:2px;margin:4px 0}
+.onboard-intro__roles{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.onboard-intro__roles span{border:1px solid #c6a76a50;padding:6px 9px;color:#eccb90;font-size:10px;font-weight:900;white-space:nowrap}
+.onboard-intro__charter>p{font-size:12px;line-height:1.55;color:#adbfb5;margin:0 0 12px}
+.onboard-intro__charter>.on-primary{margin-top:auto;min-height:54px;background:linear-gradient(#73562f,#3b2b1b);border-color:#e3b977;box-shadow:0 8px 24px #0007}
+.onboard-intro__footnote{display:block;text-align:center;color:#b7c2b4!important;letter-spacing:0!important;font-size:11px!important;line-height:1.4;padding:12px 0 0}
+.onboard-next-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0 20px}
+.onboard-next-steps>div{background:#0a1719;border:1px solid #bca06f4d;padding:12px}
+.onboard-next-steps b{display:block;color:#ebcd94;font-size:11px;letter-spacing:.04em}
+.onboard-next-steps span{display:block;color:#c3d0c5;font-size:11px;line-height:1.45;margin-top:6px}
+.onboard-v5 .departure .z-guide .on-primary{min-height:52px;font-size:13px}
+@media(max-width:1000px){
+  .onboard-v5 .onboard-head{grid-template-columns:1fr}
+  .onboard-v5 .onboard-progress{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;max-width:100%;scrollbar-width:thin}
+  .onboard-v5 .onboard-progress span{flex-shrink:0}
+  .onboard-intro__below{grid-template-columns:1fr}
+  .onboard-intro__charter{max-width:none}
+  .onboard-intro__lesson-body{grid-template-columns:minmax(0,1.1fr) minmax(0,.7fr)}
+}
+@media(max-width:640px){
+  .onboard-v5 .onboard-head{position:relative;padding:12px}
+  .onboard-v5 .onboard-objective{grid-template-columns:1fr;gap:4px;padding:9px 12px}
+  .onboard-v5 .onboard-objective>em{display:none}
+  .onboard-v5 .onboard-lesson{display:block;padding:10px 12px}
+  .onboard-v5 .onboard-lesson p{margin:4px 0 0}
+  .onboard-intro{padding:8px}
+  .onboard-intro__hero{min-height:360px;align-items:flex-end}
+  .onboard-intro__hero-shade{background:linear-gradient(0deg,#061011f5 0%,#071113cc 63%,#07111388 100%)}
+  .onboard-intro__hero-copy{padding:22px}
+  .onboard-intro__hero h2{font-size:clamp(2.2rem,10vw,3.2rem)}
+  .onboard-intro__hero p{font-size:14px}
+  .onboard-intro__tabs button{font-size:10px;min-height:54px;padding:8px 4px}
+  .onboard-intro__tabs button span{display:block;margin:0 0 3px}
+  .onboard-intro__lesson-body{grid-template-columns:1fr;padding:15px}
+  .onboard-intro__lesson-body>img{display:none}
+  .onboard-intro__charter{padding:18px}
+  .onboard-next-steps{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.onboard-intro *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* Block 7 — Chapter 0 guided introduction: readable nine-step map,
+ * tap-friendly controls and clear continuity with the dark-fantasy game. */
+html[data-onboarding="1"] #cellboundOnboarding.onboard-root{
+ color:#ebe4d7;
+ background:#080f11;
+ overscroll-behavior:contain;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-head{
+ min-height:76px;gap:13px;
+ border-bottom:1px solid rgba(191,160,111,.36);
+ background:#0d191add;backdrop-filter:blur(10px);
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-head h1{
+ font:normal clamp(21px,1.95vw,29px)/1.1 Georgia,serif;
+ color:#f2e8d7;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress{
+ display:flex;flex-wrap:nowrap;align-items:stretch;
+ min-width:0;max-width:100%;gap:5px;
+ overflow-x:auto;overflow-y:hidden;
+ scrollbar-color:#a68857 #132021;
+ scroll-snap-type:x proximity;
+ padding:3px 1px 7px;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span{
+ display:flex;flex:0 0 auto;align-items:center;
+ min-width:75px;min-height:42px;
+ padding:7px 9px;gap:6px;
+ border:1px solid rgba(180,150,108,.18);
+ border-radius:4px;
+ background:#162224;
+ color:#9daea4;
+ font:700 10px/1.35 system-ui,sans-serif;
+ text-transform:none;
+ scroll-snap-align:start;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span i{
+ flex:0 0 20px;min-width:20px;width:20px;height:20px;
+ font-size:10px;background:#28302b;border-radius:50%;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span.done{
+ color:#bdd9c1;background:#1a3028;border-color:#5d8b6480;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span.done i{
+ background:#2b5439;color:#d1edca;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span[aria-current="step"]{
+ border-color:#d0aa71;
+ background:#483927;
+ color:#f8e3c0;
+ box-shadow:inset 0 -2px #d2aa73;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress span[aria-current="step"] i{
+ background:#c5a36f;color:#191814;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-objective{
+ background:linear-gradient(90deg,#26322a,#121e20)!important;
+ border-bottom:1px solid rgba(194,161,112,.36)!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-objective>b{
+ font:600 13px/1.5 system-ui,sans-serif!important;
+ color:#efe7d8!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-lesson{
+ background:#121f20!important;
+ border-bottom:1px solid rgba(190,159,111,.25)!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-lesson span{
+ font-size:10px;color:#d7b584!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-lesson p{
+ font:400 12px/1.55 system-ui,sans-serif!important;color:#c6d2c5!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 :is(.on-primary,button,select,input):focus-visible{
+ outline:2px solid #efce90!important;
+ outline-offset:3px!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 :is(.on-primary,button){
+ touch-action:manipulation;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .on-primary{
+ min-height:48px;color:#f7e6c8!important;
+ border-color:#cbac79!important;
+ background:linear-gradient(#6c5130,#422f1f)!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps{
+ grid-template-columns:repeat(3,minmax(0,1fr));
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps>div{
+ background:#182627!important;border:1px solid #a68c6266!important;
+ border-radius:4px;padding:13px;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps b{
+ color:#e9c88f!important;font-size:11px!important;
+}
+html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps span{
+ color:#becbbf!important;font-size:12px!important;
+}
+@media(max-width:1200px){
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-head{
+  grid-template-columns:1fr!important;
+ }
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress{
+  max-width:calc(100vw - 42px);
+ }
+}
+@media(max-width:700px){
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-head{
+  position:relative;padding:13px!important;
+ }
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-progress{
+  max-width:calc(100vw - 26px);
+ }
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-objective{
+  grid-template-columns:1fr;gap:4px;
+ }
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 .onboard-next-steps{
+  grid-template-columns:1fr;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-onboarding="1"] #cellboundOnboarding .onboard-v5 *{
+  scroll-behavior:auto!important;
+ }
+}

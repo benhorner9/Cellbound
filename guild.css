@@ -197,7 +197,7 @@ body.recruit-adventurer-open{overflow:hidden}
   background:linear-gradient(90deg,rgba(8,17,19,.96) 0%,rgba(8,17,19,.84) 46%,rgba(8,17,19,.55) 100%),linear-gradient(0deg,rgba(6,13,16,.55),rgba(6,13,16,.12));
 }
 .hero-stat[data-dungeon-art="ashen-vault"]:before{background-image:url('./assets/dungeons/ashen-vault.webp')}
-.hero-stat[data-dungeon-art="hollow-sanctum"]:before{background-image:url('./assets/dungeons/hollow-sanctum.webp')}
+.hero-stat[data-dungeon-art="hollow-sanctum"]:before{background-image:url('./assets/hollow-sanctum/rooms/gallery-void-v2.webp')}
 .hero-stat[data-dungeon-art="chaos-canyon"]:before{background-image:url('./assets/dungeons/chaos-canyon.webp')}
 .hero-stat[data-dungeon-art="blackout-station"]:before{background-image:url('./assets/dungeons/blackout-station.webp')}
 .hero-stat[data-dungeon-art="fractured-ages"]:before{background-image:url('./assets/dungeons/fractured-ages.webp')}

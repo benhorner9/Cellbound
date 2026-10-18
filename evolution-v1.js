@@ -148,7 +148,9 @@ function enhanceRoster(){
   const targetOrder=filtered.map(card=>card.dataset.charId).join('|');
   filtered.forEach(card=>{card.style.display=''});
   if(currentOrder!==targetOrder)filtered.forEach(card=>root.appendChild(card));
-  if(showRecruitCards)recruitCards.forEach(card=>root.appendChild(card));
+  // Moving existing recruit cards emits childList mutations too. Only repair an
+  // incorrect order; otherwise this observer schedules itself forever in combat.
+  if(showRecruitCards){const tail=[...root.children].slice(-recruitCards.length);if(recruitCards.some((card,i)=>tail[i]!==card))recruitCards.forEach(card=>root.appendChild(card))}
 
   let empty=root.querySelector('.roster-empty-state');
   if(!filtered.length&&!showRecruitCards){

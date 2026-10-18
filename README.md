@@ -11,13 +11,24 @@ Players build and manage a roster of adventurers, form five-character parties, e
 - GitHub Actions for validation and production deployment
 - Shared-host FTPS deployment
 
-## Production
+## Dev/test deployment
 
-`main` is the production branch. Every push to `main` runs `.github/workflows/deploy-live.yml`, which builds the game, verifies the generated package and deploys `dist/` to the live `./cb/` directory.
+`staging` is the **automatic game deployment branch**. Every push to `staging` runs `.github/workflows/deploy-staging.yml`:
 
-Production URL: `https://athleticsmanagergame.com/cb/`
+1. Build the game with `npm run build` and run the configured QA checks.
+2. Rebuild the exact approved `staging` commit into `dist/`.
+3. Upload over FTPS to the dedicated staging `./cb/` directory using **only** the `STAGING_FTP_*` GitHub Actions secrets.
+4. Verify `https://cb.athleticsmanagergame.com/build-meta.json` reports the exact commit and smoke-test the deployed game files.
 
-The `cb.athleticsmanagergame.com` alias may point at the same lowercase `/cb` document root. Vercel is not part of the current production deployment.
+**Dev game:** `https://cb.athleticsmanagergame.com/`
+
+FTPS releases are serialised and never cancelled halfway through upload when new commits arrive. A failed build, browser regression, missing staging credential or smoke test fails the workflow. The `main` branch is **not** automatically copied into `staging`; changes merged only into `main` will **not** appear in the dev game until those changes are deliberately integrated into `staging`.
+
+## Public website / production
+
+The public `playcellbound.com` website is a **separate, manually approved deployment**. Its `.github/workflows/deploy-live.yml` runs on `workflow_dispatch`, builds `dist-site/` via `npm run build:site` and intentionally excludes the playable guild/auth application. The `FTP_*` credentials are reserved for that website; dev deployments never use them.
+
+Do not enable automatic live/public deployment when changing the dev workflow. Do not merge `staging` blindly into `main` or vice versa; the two branches currently have different runtime and site histories.
 
 ## Validation
 

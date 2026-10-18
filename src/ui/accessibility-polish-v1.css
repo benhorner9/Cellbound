@@ -1,0 +1,62 @@
+/* Cellbound accessibility and responsive interaction polish v1
+   Shared focus, touch, overflow and reduced-motion rules. */
+
+:where(button,a,input,select,textarea,[role="button"],[tabindex]):focus-visible{
+  outline:2px solid rgba(240,215,154,.92)!important;
+  outline-offset:2px!important;
+  box-shadow:0 0 0 4px rgba(216,185,118,.12)!important;
+}
+:where(input,select,textarea):focus-visible{
+  border-color:rgba(216,185,118,.48)!important;
+}
+.main,.view,.panel,.panel-head,.section-intro,.resource-strip{min-width:0}
+.view p,.view li,.view dd,.view .panel{overflow-wrap:anywhere}
+.view img{max-width:100%;height:auto}
+.sidebar .primary-nav{
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+  touch-action:pan-y;
+}
+@media (min-width:721px){
+  .sidebar{contain:layout paint style}
+  .main{min-width:0;max-width:100vw}
+}
+@media (pointer:coarse){
+  .nav-btn,
+  .ghost-btn,
+  .home-panel-action,
+  .filter,
+  .filters button,
+  .tabs button,
+  .quest-tabs button,
+  .tp-tabs button,
+  .party-finder-form button,
+  .party-finder-form select,
+  .party-finder-form input,
+  .view input,
+  .view select,
+  .view textarea{
+    min-height:44px;
+  }
+  .cbcombat-shell .cbr-command,
+  .cbcombat-shell .cb2d-potion-button{
+    min-height:44px!important;
+  }
+}
+@media (max-width:720px){
+  html,body,.app-shell,.main{max-width:100%;overflow-x:hidden}
+  .view{max-width:100%;min-width:0}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto!important}
+  .app-shell *,
+  .mobile-nav-sheet *,
+  .modal *,
+  .cellbound-character-forge *{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "map",
+    "src": "assets/episodes/morrowfields/map.webp",
+    "sha256": "bfb221994c1893eb4f26122f9feb6d8ae983cf958bd49bccc5d92f6451378d70"
+  },
+  {
+    "id": "fenstead",
+    "src": "assets/episodes/morrowfields/fenstead.webp",
+    "sha256": "1571a885da6f515c663068d12fd5d9226453a7a08c36e63ac2f4496b644ced2a"
+  },
+  {
+    "id": "east-fields",
+    "src": "assets/episodes/morrowfields/east-fields.webp",
+    "sha256": "d7f219f2083215721627ff4b29328837db4b776f9197190d12a65d9a67172398"
+  },
+  {
+    "id": "wagon",
+    "src": "assets/episodes/morrowfields/wagon.webp",
+    "sha256": "7f6c32867090b5a5d0f5e9f5278aac9c160602a41c03a7c134a30bb7fa0f5708"
+  },
+  {
+    "id": "comic-01",
+    "src": "assets/episodes/morrowfields/comic-01.webp",
+    "sha256": "ab0dc02b832f6d8f2895355ed991f161810dbfab118641aeb1c1403582c08fec"
+  },
+  {
+    "id": "comic-02",
+    "src": "assets/episodes/morrowfields/comic-02.webp",
+    "sha256": "2594baeac5abad3861198d82260cee1d8f0351624dd737960db2206213e442f0"
+  },
+  {
+    "id": "comic-03",
+    "src": "assets/episodes/morrowfields/comic-03.webp",
+    "sha256": "717f0f5fb2dbfe457d27ba484d0364ab6f68971fa00550ff9bea258c441d6756"
+  },
+  {
+    "id": "comic-04",
+    "src": "assets/episodes/morrowfields/comic-04.webp",
+    "sha256": "03b3517d21e7d9b3bf50c2397410e01b8eff0df9221e3f3db7827c0afff03e4e"
+  },
+  {
+    "id": "comic-05",
+    "src": "assets/episodes/morrowfields/comic-05.webp",
+    "sha256": "e008f3d84357c31c4f539ec11e3f3b7cd8db43f295ea31940bdfec594205ae9e"
+  },
+  {
+    "id": "comic-06",
+    "src": "assets/episodes/morrowfields/comic-06.webp",
+    "sha256": "c32523c99ae125d21fbdc657b5abc1122901fabd74cb3787c449cebe47e0572e"
+  },
+  {
+    "id": "mara",
+    "src": "assets/episodes/morrowfields/mara.webp",
+    "sha256": "93514a405b9484d626a5c5e3fb762b0648d834add6065473211b0ff857c59177"
+  },
+  {
+    "id": "voss",
+    "src": "assets/episodes/morrowfields/voss.webp",
+    "sha256": "78fcdd5ac24ea1d3fd575f20ac18e8a9cb1d6e377681b7bf6d17d4b2f770b2d1"
+  },
+  {
+    "id": "vey",
+    "src": "assets/episodes/morrowfields/vey.webp",
+    "sha256": "d5ff34e65bb5701ffd5522384917930d7704653d494b7caa2701a6dd77328080"
+  },
+  {
+    "id": "tessa",
+    "src": "assets/episodes/morrowfields/tessa.webp",
+    "sha256": "1d9ab36e9b6310046fd44872bcb34cfd5e9866b72faefa645fc25ebe78dc941b"
+  }
+]

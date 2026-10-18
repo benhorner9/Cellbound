@@ -3,6 +3,7 @@ name: Validate Cellbound
 on:
   pull_request:
     branches:
+      - staging
       - main
   workflow_dispatch:
 
@@ -14,11 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Production build validation
+  preflight:
+    name: Build, gameplay and asset validation
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 15
     steps:
       - name: Check out Cellbound
         uses: actions/checkout@v4
@@ -28,8 +28,22 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build and run regressions
-        run: npm run build
+      - name: Install pinned test dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build and run appearance regressions
+        run: |
+          npm run build
+          npm run test:appearance
+
+      - name: Talent overhaul tests (all classes)
+        run: npm run test:talents
+
+      - name: Tank, healer and DPS balance across classes and game modes
+        run: npm run test:role-balance
+
+      - name: Core gameplay, PvP, loot, quest and editor regressions
+        run: npm run test:core
 
       - name: Verify deployment package
         shell: bash
@@ -40,37 +54,80 @@ jobs:
           test -f dist/auth.js
           test -f dist/guild-v4.js
           test -f dist/combat-reborn-v1.js
-          test -f dist/assets/gear/cellbound-gear-atlas.webp
+          test -f dist/item-atlas-v2.js
+          test -f dist/item-visuals-v2.js
+          for atlas in warrior paladin hunter rogue mage weapons secondary heads accessories resources; do test -f "dist/assets/items/illustrated-v2/$atlas.webp"; done
           test -f dist/assets/combat/status-icons-v1.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 
-      - name: Install browser test tools
-        run: |
-          npm install --no-save --package-lock=false playwright@1.51.1
-          npx playwright install --with-deps chromium webkit
 
-      - name: Living combat browser regression
-        run: |
-          node tests/living-combat.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/living-combat.browser.cjs
+  browser:
+    name: Complete ${{ matrix.engine }} browser regressions
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - name: Check out Cellbound
+        uses: actions/checkout@v4
 
-      - name: Full game browser playthrough
-        run: |
-          node tests/full-playthrough.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/full-playthrough.browser.cjs
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Login screen browser regression
-        run: |
-          node tests/login-screen.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/login-screen.browser.cjs
+      - name: Build testable game
+        run: npm run build
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --package-lock=false playwright@1.51.1
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: cellbound-${{ runner.os }}-playwright-1.51.1-${{ matrix.engine }}
+
+      - name: Install browser and system dependencies
+        run: npx playwright install --with-deps ${{ matrix.engine }}
+
+      - name: Run complete browser regressions
+        env:
+          CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+        run: npm run test:browser
 
       - name: Save combat and playthrough captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cellbound-release-review
+          name: cellbound-release-review-${{ matrix.engine }}
           path: |
             /tmp/cellbound-living-combat.png
+            /tmp/cellbound-equipment-fit-*.png
+            /tmp/cellbound-race-identity-v2-*.png
+            /tmp/cellbound-item-visuals-v2-*.png
             /tmp/cellbound-full-playthrough.png
             /tmp/cellbound-login-screen.png
+            /tmp/cellbound-creator-*.png
           if-no-files-found: ignore
+
+  validate:
+    # Preserve the existing required-check name and only pass once BOTH
+    # browser engines and the core preflight have succeeded.
+    name: Cellbound build validation
+    if: always()
+    needs: [preflight, browser]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce full PR release gate
+        env:
+          PREFLIGHT: ${{ needs.preflight.result }}
+          BROWSERS: ${{ needs.browser.result }}
+        run: |
+          echo "Preflight: $PREFLIGHT"
+          echo "Chromium and WebKit: $BROWSERS"
+          test "$PREFLIGHT" = "success"
+          test "$BROWSERS" = "success"

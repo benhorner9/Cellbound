@@ -67,7 +67,7 @@ function card(){
 }
 function stageText(){
   const b=ensure();if(!b)return'';
-  if(b.complete)return'Greywake has returned to the world. The thirteenth hour is silent.';
+  if(b.complete)return'Greywake has returned. The thirteenth hour is silent.';
   if(!b.started)return'A letter names a village that does not exist on any current map.';
   if(b.stage==='letter')return'Travel to Greywake and find out why the clock stopped at 11:47 PM.';
   if(b.stage==='loops')return solvedCount()<5?'Investigate Greywake. What your guild learns survives every reset.':'Find the house that only exists after midnight.';
@@ -84,7 +84,7 @@ function renderDetail(main,side){
   main.innerHTML='<div class="quest-v3-hero bell-journal-hero"><div><small>MASTERWORK · GREYWAKE</small><h2>'+TITLE+'</h2><p>Greywake · A village erased from every living map</p></div><span class="quest-v3-status '+(b.complete?'complete':'')+'">'+c.status+'</span></div>'+
     '<div class="quest-v3-story bell-story"><p>A letter reaches the guild with seven words: <strong>“When the thirteenth bell rings, forget us.”</strong> The village named on the seal no longer exists. An older map says it once did.</p></div>'+
     '<section class="quest-v3-clue"><small>'+(!b.started?'UNOPENED LETTER':b.complete?'AFTERMATH':'CURRENT THREAD')+'</small><h3>'+esc(!b.started?'A Village Missing From The Map':b.complete?'Greywake Returned':stageText())+'</h3><p>'+esc(!b.started?'Take the letter to the old road and look for the village of Greywake.':b.complete?'The loop has ended. What remains depends on the choice your guild made beneath the clocktower.':'Loop '+b.loop+' · '+formatClock(b.minute)+' · '+count+'/6 major discoveries secured.')+'</p></section>'+
-    '<section class="bell-evidence-board"><div class="quest-v3-section-head"><span>GREYWAKE INVESTIGATION</span><small>Knowledge survives the bell.</small></div><div class="bell-clue-grid">'+(facts.length?facts.slice(-8).map((f,i)=>'<article><i>'+(i+1)+'</i><p>'+esc(f.text)+'</p></article>').join(''):'<p class="quest-v3-unknown">No evidence yet. The clock in Greywake is waiting at 11:47 PM.</p>')+'</div></section>'+
+    '<section class="bell-evidence-board"><div class="quest-v3-section-head"><span>GREYWAKE INVESTIGATION</span><small>Knowledge survives the bell.</small></div><div class="bell-clue-grid">'+(facts.length?facts.slice(-8).map((f,i)=>'<article><i>'+(i+1)+'</i><p>'+esc(f.text)+'</p></article>').join(''):'<p class="quest-v3-unknown">No clues recorded yet. The clock is stopped at 11:47 PM.</p>')+'</div></section>'+
     '<div class="quest-detail-action">'+actionHtml(b,c)+'</div>';
   side.innerHTML='<section><small>WHAT TO EXPECT</small><div class="quest-reward-list"><p>Investigate Greywake across repeated loops</p><p>Solve five distinct puzzles</p><p>Connect evidence between loops</p><p>Finish the final loop before midnight</p><p>Face the Bellkeeper</p></div></section>'+
     '<section><small>DISCOVERIES</small><div class="bell-side-progress">'+SOLVE_ORDER.map(id=>'<p class="'+(b.solved[id]?'done':'')+'"><i>'+(b.solved[id]?'✓':'·')+'</i><span>'+esc(LOCATION_META[id].name)+'</span></p>').join('')+'</div></section>'+
@@ -125,7 +125,7 @@ function formatClock(minute){
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')
 }
 const BELL_COMIC_ROOT='./assets/comics/thirteenth-bell/';
-function bellArt(name){return BELL_COMIC_ROOT+name+'.jpg?v=7'}
+function bellArt(name){return BELL_COMIC_ROOT+name+(name==='greywake_arrival'?'-restored.svg?v=9':'.webp?v=8')}
 function bellPanel(art,eyebrow,title,text,extra={}){
   return{kind:extra.kind||'location',artwork:bellArt(art),eyebrow,title,text,icon:extra.icon||'',speaker:extra.speaker||'',wide:!!extra.wide}
 }
@@ -424,7 +424,7 @@ async function renderChoice(){
   });
   if(result?.choiceId){finish(result.choiceId);return}
   root.innerHTML=chrome('CLOCKTOWER · 12:01 AM','The bell is yours',
-    '<div class="bell-choice-intro"><small>THE LOOP HAS STOPPED</small><h3>Greywake waits for a future.</h3><p>Choose what becomes of the Bell.</p></div><div class="bell-choice-grid">'+
+    '<div class="bell-choice-intro"><small>THE LOOP HAS STOPPED</small><h3>Greywake remains trapped.</h3><p>Choose what becomes of the Bell.</p></div><div class="bell-choice-grid">'+
     endingCard('break','BREAK THE BELL','Destroy the time mechanism. Greywake returns cleanly to the present, but the Bell can never be used again.')+
     endingCard('complete','COMPLETE THE BELL','Stabilise the mechanism. Greywake returns permanently touched by small temporal anomalies.')+
     endingCard('silence','SILENCE THE THIRTEENTH HOUR','Use every discovery to remove the missing hour from the mechanism itself. Some villagers will remember every loop.')+
@@ -441,7 +441,7 @@ async function finish(ending){
   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Quest complete: '+TITLE+'. Greywake returned to the world.');
   history('The guild chose to '+({break:'break the Bell and return Greywake cleanly',complete:'complete the Bell and stabilise Greywake',silence:'silence the Thirteenth Hour itself'}[ending])+'.');
   await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.thirteenthBell||2550,{source:'Quest complete · '+TITLE});
-  await save(false);renderCompletion();window.CellboundFX?.victory?.({eyebrow:'QUEST COMPLETE',title:TITLE,copy:'Greywake has returned to the world.'})
+  await save(false);renderCompletion();window.CellboundFX?.victory?.({eyebrow:'QUEST COMPLETE',title:TITLE,copy:'Greywake has returned.'})
 }
 async function renderCompletion(){
   const b=ensure(),ending={break:'The Bell was broken.',complete:'The Bell was completed.',silence:'The Thirteenth Hour was silenced.'}[b.ending]||'The loop ended.';

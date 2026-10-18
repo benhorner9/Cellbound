@@ -1,0 +1,24 @@
+'use strict';
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+let uid='owner-a',resolveSave,fail=false;
+const storage=new Map(),timers=new Map();let timerId=0;
+const window={CellboundGame:{getUser:()=>({id:uid})},CellboundBoothWorkflow:{save:async()=>{if(fail)throw Error('offline');return new Promise(resolve=>{resolveSave=resolve})}}};
+const source=fs.readFileSync('admin-room-editor-v1.js','utf8').replace('init()\n})();',`window.testRoom={setDirty,saveRoom,load,storageKey,scheduleSave,read:()=>state,select:(r)=>{roomId=r;activeDraft={markers:[{x:10,y:20,kind:'party'}]}},edit:(x)=>{activeDraft.markers[0].x=x;setDirty()},draft:()=>activeDraft};\n})();`);
+vm.runInNewContext(source,{window,document:{querySelector:()=>null},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},setTimeout:fn=>{timers.set(++timerId,fn);return timerId},clearTimeout:id=>timers.delete(id),URL,console});
+(async()=>{
+ const t=window.testRoom;
+ t.select('broken-gate');t.edit(30);
+ assert.equal(t.load().rooms['ashen-vault::broken-gate'].markers[0].x,30,'pointer edits backed up before navigation');
+ const save=t.saveRoom(t.draft(),'unreviewed');t.edit(40);resolveSave({revision:1});await save;
+ assert.equal(t.read().rooms['ashen-vault::broken-gate'].workflow_revision,1);
+ assert.equal(t.read().rooms['ashen-vault::broken-gate'].cloudSaved,false,'in-flight save must not mark newer edits saved');
+ const followup=t.saveRoom(t.draft(),'unreviewed');t.select('kael');t.edit(70);resolveSave({revision:2});await followup;
+ assert.equal(t.read().rooms['ashen-vault::broken-gate'].workflow_revision,2);
+ assert.equal(t.read().rooms['ashen-vault::kael'].workflow_revision,undefined,'response belongs to original room');
+ fail=true;await t.saveRoom(t.draft(),'unreviewed');
+ assert.equal(t.load().rooms['ashen-vault::kael'].markers[0].x,70,'offline edits survive reload');
+ assert.equal(t.load().rooms['ashen-vault::kael'].cloudSaved,false);
+ uid='owner-b';assert.equal(Object.keys(t.load()).length,0,'recovery is account scoped');
+ uid='owner-a';assert.equal(t.load().rooms['ashen-vault::kael'].markers[0].x,70);
+ console.log('Room draft recovery: account isolation, navigation, offline persistence and in-flight edits passed.');
+})().catch(e=>{console.error(e);process.exitCode=1});

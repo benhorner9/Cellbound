@@ -1,0 +1,80 @@
+{
+  "environment": "Chromium 134 / Playwright 1.51.1, Linux software renderer. Serial production Mercer fixture, 0.7x pace, no video recording during measurements. Physical iPad Safari unverified.",
+  "runs": [
+    {
+      "label": "baseline",
+      "fps": 32.02214073755818,
+      "p95": 50.100000000000364,
+      "max": 99.90000000000146,
+      "longTasks": 17,
+      "poses": 39,
+      "durationMs": 20017.400000000092,
+      "frames": 641,
+      "over33ms": 186,
+      "over50ms": 38,
+      "simulationSteps": 642,
+      "maxEffects": 12,
+      "commandMs": null
+    },
+    {
+      "label": "full-landscape",
+      "fps": 33.33749843808525,
+      "p95": 50.100000000000364,
+      "max": 100,
+      "longTasks": 21,
+      "poses": 44,
+      "durationMs": 20007.50000000028,
+      "frames": 667,
+      "over33ms": 155,
+      "over50ms": 35,
+      "simulationSteps": 669,
+      "maxEffects": 11,
+      "commandMs": 3.3000000002793968
+    },
+    {
+      "label": "full-portrait",
+      "fps": 44.3220770914326,
+      "p95": 49.899999999999636,
+      "max": 116.69999999999982,
+      "longTasks": 22,
+      "poses": 55,
+      "durationMs": 20012.599999999908,
+      "frames": 887,
+      "over33ms": 81,
+      "over50ms": 17,
+      "simulationSteps": 889,
+      "maxEffects": 10,
+      "commandMs": 2.3999999999068677
+    },
+    {
+      "label": "full-mobile",
+      "fps": 46.09907801843963,
+      "p95": 33.400000000001455,
+      "max": 100,
+      "longTasks": 25,
+      "poses": 48,
+      "durationMs": 20000.4,
+      "frames": 922,
+      "over33ms": 65,
+      "over50ms": 22,
+      "simulationSteps": 924,
+      "maxEffects": 10,
+      "commandMs": 2.2000000001862645
+    },
+    {
+      "label": "full-extended",
+      "fps": 36.72256138199479,
+      "p95": 50,
+      "max": 233.29999999999563,
+      "longTasks": 63,
+      "poses": 251,
+      "durationMs": 60017.59999999972,
+      "frames": 2204,
+      "over33ms": 456,
+      "over50ms": 82,
+      "simulationSteps": 2143,
+      "maxEffects": 12,
+      "commandMs": null
+    }
+  ]
+}

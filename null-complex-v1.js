@@ -94,7 +94,7 @@ async function fight(room){
  run.lastCombat={outcome:result.outcome,enemies:enc.enemies.map(e=>e.name),damage:result.summary?.totalDamage||0,healing:result.summary?.totalHealing||0};persist();
  const roomVisual=room.type==='breach'?'breach':(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4]);
  const outcome=await viewer.playSharedEncounter({
-   party,encounter:enc,result,
+   party,encounter:enc,result,zone:'null-complex',
    header:'THE NULL COMPLEX · FLOOR '+run.floor,
    title:room.type==='breach'?'Containment Breach':'Experiment Chamber',
    subtitle:'NULL COMPLEX EXPEDITION',
@@ -159,7 +159,7 @@ function extractionSummary(data){
  window.CellboundDungeon2D?.closeShared?.(true);
  const old=document.getElementById('nullRunComplete');if(old)old.remove();
  const total=Object.values(data.materials).reduce((a,b)=>a+Number(b||0),0),loot=Object.entries(data.materials).sort((a,b)=>b[1]-a[1]).map(([k,q])=>'<div class="null-result-loot"><span><i></i><b>'+materialLabel(k)+'</b></span><strong>×'+q+'</strong></div>').join('')||'<p class="null-result-empty">No materials recovered.</p>';
- const el=document.createElement('div');el.id='nullRunComplete';el.className='null-result-backdrop';el.innerHTML='<section class="null-result-card"><small>EXPEDITION COMPLETE</small><h2>THE NULL COMPLEX</h2><p>Extraction successful. Everything recovered during the expedition has been secured.</p><div class="null-result-stats"><div><span>FLOOR REACHED</span><b>'+data.floor+'</b></div><div><span>ROOMS EXPLORED</span><b>'+data.rooms+'</b></div><div><span>COMPONENTS</span><b>3 / 3</b></div><div><span>MATERIALS</span><b>'+total+'</b></div></div><div class="null-result-title"><span>EXTRACTED LOOT</span><i></i></div><div class="null-result-loot-list">'+loot+'</div><button data-null-result-close>RETURN TO ACTIVITIES</button></section>';document.body.appendChild(el);
+ const el=document.createElement('div');el.id='nullRunComplete';el.className='null-result-backdrop';el.innerHTML='<section class="null-result-card"><small>EXPEDITION COMPLETE</small><h2>THE NULL COMPLEX</h2><p>Extracted safely. Materials have been added to your inventory.</p><div class="null-result-stats"><div><span>FLOOR REACHED</span><b>'+data.floor+'</b></div><div><span>ROOMS EXPLORED</span><b>'+data.rooms+'</b></div><div><span>COMPONENTS</span><b>3 / 3</b></div><div><span>MATERIALS</span><b>'+total+'</b></div></div><div class="null-result-title"><span>EXTRACTED LOOT</span><i></i></div><div class="null-result-loot-list">'+loot+'</div><button data-null-result-close>RETURN TO ACTIVITIES</button></section>';document.body.appendChild(el);
  el.querySelector('[data-null-result-close]').onclick=()=>{el.remove();render()}
 }
 function extract(){
@@ -231,7 +231,7 @@ function render(){
   const isUnlocked=unlocked();
   mount.innerHTML='<article class="tb-world-card null-world-card">'+
    '<div class="tb-world-art null-world-art"><span>'+(isUnlocked?'ABANDONED RESEARCH FACILITY':'QUEST LOCKED · SIGNAL FROM NOWHERE')+'</span><b>THE NULL COMPLEX</b></div>'+
-   '<div class="tb-world-copy"><div class="tb-world-kicker"><span>ROGUELIKE EXTRACTION EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Null Complex</h3><p>Explore a shifting 3 × 3 facility, recover the three teleporter components and decide whether to extract your profession materials or descend deeper and risk everything.</p>'+
+   '<div class="tb-world-copy"><div class="tb-world-kicker"><span>ROGUELIKE EXTRACTION EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Null Complex</h3><p>Search nine rooms for three teleporter components. Extract with your materials or continue down and risk losing them.</p>'+
    '<div class="tb-world-stats"><span><small>ATTEMPTS</small><b>'+attemptsLeft()+' / '+ATTEMPTS+'</b></span><span><small>RESET</small><b>EVERY 5 DAYS</b></span><span><small>PERSONAL BEST</small><b>FLOOR '+(n.bestFloor||'—')+' / '+MAX_FLOOR+'</b></span><span><small>CHASE REWARD</small><b>PROFESSION MATERIALS</b></span></div>'+
    '<div class="tb-world-actions">'+(isUnlocked?'<button data-null-start '+(attemptsLeft()<=0?'disabled':'')+'>ENTER THE NULL COMPLEX →</button><small>'+(attemptsLeft()<=0?'Attempts exhausted until the next reset.':'Wipe before extraction and all unbanked materials are lost.')+'</small>':'<button data-null-quest>BEGIN SIGNAL FROM NOWHERE →</button><small>Investigate NULL//07 to unlock this activity.</small>')+'<p data-null-notice hidden></p></div></div></article>';
   mount.querySelector('[data-null-start]')?.addEventListener('click',start);mount.querySelector('[data-null-quest]')?.addEventListener('click',()=>{Game()?.switchView?.('quests');setTimeout(()=>window.CellboundQuests?.selectAdventure?.('null-complex-quest'),100)});return

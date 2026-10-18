@@ -1,0 +1,79 @@
+{
+  "environment": "Headless Chromium 134.0.6998.35 / Playwright 1.51.1, Linux container, ANGLE Vulkan SwiftShader software GPU. Physical iPad Safari unavailable. Serial runs, no video capture during measurement.",
+  "runs": [
+    {
+      "label": "monster-baseline",
+      "fps": 27.447941404394623,
+      "p95": 66.70000000000073,
+      "max": 99.90000000000146,
+      "longTasks": 40,
+      "poses": 31,
+      "durationMs": 20001.500000000036,
+      "frames": 549,
+      "over33ms": 225,
+      "over50ms": 76,
+      "maxEffects": 13,
+      "simulationSteps": 550,
+      "commandMs": 4.100000000034925
+    },
+    {
+      "label": "final-landscape",
+      "fps": 30.064824155737508,
+      "p95": 66.69999999999982,
+      "max": 116.79999999999927,
+      "longTasks": 32,
+      "poses": 40,
+      "durationMs": 20023.400000000187,
+      "frames": 602,
+      "over33ms": 170,
+      "over50ms": 54,
+      "maxEffects": 10,
+      "simulationSteps": 605,
+      "commandMs": 3.1000000000931323
+    },
+    {
+      "label": "final-portrait",
+      "fps": 43.766081287002784,
+      "p95": 50,
+      "max": 150,
+      "longTasks": 21,
+      "poses": 50,
+      "durationMs": 20015.499999999905,
+      "frames": 876,
+      "over33ms": 71,
+      "over50ms": 23,
+      "maxEffects": 11,
+      "simulationSteps": 878,
+      "commandMs": 2.1000000000931323
+    },
+    {
+      "label": "final-mobile",
+      "fps": 42.1759597029699,
+      "p95": 50,
+      "max": 100,
+      "longTasks": 33,
+      "poses": 48,
+      "durationMs": 20011.39999999972,
+      "frames": 844,
+      "over33ms": 91,
+      "over50ms": 31,
+      "maxEffects": 10,
+      "simulationSteps": 846,
+      "commandMs": 3.2000000001862645
+    },
+    {
+      "label": "final-extended",
+      "fps": 37.981325848124435,
+      "p95": 50,
+      "max": 166.6999999999971,
+      "longTasks": 53,
+      "poses": 262,
+      "durationMs": 60029.50000000037,
+      "frames": 2280,
+      "over33ms": 423,
+      "over50ms": 78,
+      "maxEffects": 11,
+      "simulationSteps": 2214
+    }
+  ]
+}
