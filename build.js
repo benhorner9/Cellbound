@@ -49,7 +49,7 @@ for(const [label,list] of [['runtime file',files],['asset',assets]]){
   const duplicates=[...new Set(list.filter((entry,index)=>list.indexOf(entry)!==index))];
   if(duplicates.length)throw new Error('Duplicate '+label+' entries in build manifest: '+duplicates.join(', '));
 }
-const rootRuntimeFiles=fs.readdirSync(__dirname).filter(name=>/\.(?:js|css)$/.test(name)&&name!=='build.js');
+const rootRuntimeFiles=fs.readdirSync(__dirname).filter(name=>/\.(?:js|css)$/.test(name)&&!['build.js','build-site.js'].includes(name));
 const orphanRuntimeFiles=rootRuntimeFiles.filter(name=>!files.includes(name));
 if(orphanRuntimeFiles.length)throw new Error('Unshipped root runtime files must be linked or removed: '+orphanRuntimeFiles.join(', '));
 const misplacedMovedRuntime=RuntimeManifest.moved.filter(name=>fs.existsSync(path.join(__dirname,name)));
