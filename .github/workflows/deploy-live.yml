@@ -59,6 +59,10 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --location --max-time 25 https://playcellbound.com/ -o /tmp/cellbound-previous-home.html
           test -s /tmp/cellbound-previous-home.html
+          if grep -Eiq 'wp-content|wp-includes|<meta[^>]+generator[^>]+wordpress' /tmp/cellbound-previous-home.html; then
+            echo 'WordPress detected on production host. Refusing to overwrite its document root.' >&2
+            exit 1
+          fi
       - name: Deploy game to /game/ (website root left alone)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
