@@ -40,37 +40,37 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.equal(await page.locator('#questJournalList [data-adventure="e2_q01"]').count(),0,'Unreleased Episode II must not appear without the episode service');
   await page.evaluate(()=>{window.CELLBOUND_SECURE_SAVES=true;CellboundMorrowfields.refresh();CellboundQuests.render()});
   await click('#questJournalList [data-adventure="e2_q01"]');
-  await click('#questJournalDetail [data-episode-quest-open]');
-  await page.waitForSelector('#morrowfields [data-mf="intro-panel"]',{timeout:8000}).catch(async error=>{
-    console.error('EPISODE JOURNAL START DIAGNOSTICS',await page.evaluate(()=>({
-      dialog:document.querySelector('#morrowfields')?.innerText?.slice(0,2000),
-      dialogOpen:document.querySelector('#morrowfields')?.open,
-      rootBusy:document.querySelector('#morrowfields')?.getAttribute('aria-busy'),
-      journalDetail:document.querySelector('#questJournalDetail')?.innerText?.slice(0,1400),
-      state:CellboundGame?.getState?.()?.episode2?.quests?.e2_q01||null,
-      finaleVerified:CellboundGame?.getState?.()?.questSystem?.nullComplex?.authoritative||false
-    })));throw error;
-  });
+  await page.locator('#questJournalDetail [data-episode-quest-open]').click();
+  await page.waitForSelector('#cellboundComicScene:not([hidden])');
+  assert.equal(await page.locator('#cellboundComicScene .cbcomic-panel').count(),3,'The whole opening plays inside one shared comic sequence');
   await shot('opening');
-  for(let panel=0;panel<3;panel++){
-   await page.locator('#morrowfields [data-mf="intro-panel"]').click();
-   await page.locator('#cellboundComicScene [data-comic-continue]').click();
-   await page.waitForFunction(()=>!document.getElementById('morrowfields').hasAttribute('aria-busy'));
-  }
-  await click('#morrowfields [data-mf="briefing"]');await shot('map');
-  assert.equal(await page.locator('#morrowfields [data-mf="location"]').count(),8);
-  await click('#morrowfields [data-location="heart"]');assert((await page.locator('.mf-notice').textContent()).includes('not open'));
-  await click('#morrowfields [data-mf="dismiss"]');
-  await click('#morrowfields [data-location="fenstead"]');await shot('farm');
+  for(let panel=0;panel<3;panel++)await page.locator('#cellboundComicScene [data-comic-continue]').click();
+  await page.waitForSelector('#morrowfields[open] [data-mf="briefing"]');
+  await shot('briefing');
+  await click('#morrowfields [data-mf="briefing"]');
+  await shot('farm');
+  assert.equal(await page.locator('#morrowfields .mf-dialogue').count(),1,'One farm conversation, no redundant map screen');
   await click('#morrowfields [data-mf="meet-mara"]');
-  await click('#morrowfields [data-location="east-fields"]');
-  await click('#morrowfields [data-location="wagon"].mf-spot');
+  await click('#morrowfields [data-mf="follow-wagon"]');
+  await page.waitForSelector('#morrowfields [data-clue="tracks"]');
+  assert.equal((await store.load(PLAYER)).account.state.episode2.quests.e2_q01.objectives.length,3,
+   'Purposeful guided travel preserves exact server progress');
+  // Regional map is an optional discovery interface, not required between objectives.
+  await click('#morrowfields [data-mf="map"]');
+  assert.equal(await page.locator('#morrowfields [data-mf="location"]').count(),8);
+  await click('#morrowfields [data-location="heart"]');
+  assert((await page.locator('.mf-notice').textContent()).includes('not open'));
+  await click('#morrowfields [data-mf="dismiss"]');
+  await click('#morrowfields [data-mf="objective"]');
+  await page.waitForSelector('#morrowfields [data-clue="tracks"]');
   for(const clue of ['tracks','container'])await click('#morrowfields [data-clue="'+clue+'"]');
+  await shot('investigation');
   // Reload the actual shell mid-investigation. State comes back from PostgreSQL.
   await page.reload();await page.waitForFunction(()=>CellboundGame?.ready);await page.evaluate(()=>CellboundGame.switchView('quests'));
   await click('#questJournalList [data-adventure="e2_q01"]');
   await click('#questJournalDetail [data-episode-quest-open]');
   await page.waitForSelector('#morrowfields [data-clue="soil"]');
+  assert.equal(await page.locator('#morrowfields .mf-progress').count(),1,'Resume uses the same stage progress strip');
   assert((await page.locator('.mf-clue small').textContent()).includes('2 / 4'));
   for(const clue of ['soil','device'])await click('#morrowfields [data-clue="'+clue+'"]');
   await shot('wagon');
@@ -92,12 +92,15 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.equal(Object.keys(observed.frames).length,3);
   assert(Object.values(observed.frames).every(f=>f.length>=2),'Every enemy animates through authored frames');
   assert(observed.events.includes('DAMAGE_DEALT'));assert(observed.events.includes('HEAL_RECEIVED'));
-  await click('#morrowfields [data-mf="recover"]');await click('#morrowfields [data-mf="closing"]');await shot('closing');
-  for(let panel=0;panel<3;panel++){
-   await page.locator('#morrowfields [data-mf="outro-panel"]').click();
-   await page.locator('#cellboundComicScene [data-comic-continue]').click();
-   await page.waitForFunction(()=>!document.getElementById('morrowfields').hasAttribute('aria-busy'));
-  }
+  await click('#morrowfields [data-mf="recover"]');
+  await page.waitForSelector('#morrowfields [data-mf="closing"]');
+  await shot('tessa');
+  await page.locator('#morrowfields [data-mf="closing"]').click();
+  await page.waitForSelector('#cellboundComicScene:not([hidden])');
+  assert.equal(await page.locator('#cellboundComicScene .cbcomic-panel').count(),3,'Conclusion comics play as one story');
+  await shot('closing');
+  for(let panel=0;panel<3;panel++)await page.locator('#cellboundComicScene [data-comic-continue]').click();
+  await page.waitForSelector('#morrowfields[open] [data-mf="quest-journal"]');
   await shot('rewards');
   const final=(await store.load(PLAYER)).account.state;
   assert.equal(final.gold,5180);assert(final.roster.every(c=>c.level===16&&c.xp===0));
@@ -106,11 +109,12 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.equal(await page.locator('#questJournalList [data-adventure="e2_q03"]').count(),1,'Second investigation appears in the normal journal');
   assert.equal(await page.locator('#quests [data-morrowfields-entry]').count(),0,'No duplicate chapter launcher above the journal');
   assert.equal(await page.locator('.mf-branches button').count(),0,'Unbuilt branches have no start actions');
+  assert.equal(await page.locator('#morrowfields [data-mf="quest-journal"]').count(),1,'Quest conclusion returns to the original journal');
   assert(await page.evaluate(()=>{const d=document.querySelector('#morrowfields');return d.scrollWidth<=d.clientWidth+2&&document.documentElement.scrollWidth<=innerWidth+2}));
   assert.deepEqual(errors,[]);
   results.push({viewport,objectives:final.episode2.quests.e2_q01.objectives,enemyFrames:observed.frames,gold:final.gold,roster:final.roster.map(c=>({id:c.id,level:c.level,xp:c.xp}))});
   await page.close();await db.close();
  }}finally{await browser.close()}
  fs.writeFileSync('docs/qa/morrowfields/browser-results.json',JSON.stringify({engine:process.env.CELLBOUND_TEST_ENGINE||'chromium',auth:'mocked shell; explicit trusted finale fixture; real local PostgreSQL and canonical worker',results},null,2)+'\n');
- console.log('Morrowfields actual UI playthrough PASS: three viewports, six objectives, investigation reload, shared live combat, rendered enemy frames, server replay, rewards and both branch records. Local auth/finale fixtures; no live hosting or physical iPad claim.');
+ console.log('After the Breach guided journey PASS: unified opening/closing comics, direct farm travel, optional map, investigation reload, live shared combat, verified rewards, unlocked branches and responsive layouts across three viewports. Mocked auth, real local PostgreSQL; no physical iPad claim.');
 })().catch(e=>{console.error(e);process.exitCode=1});
