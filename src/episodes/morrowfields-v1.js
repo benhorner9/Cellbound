@@ -128,7 +128,7 @@ function wagon(){
     '<span>'+(found?'✓':'◇')+'</span><strong>'+esc(clue.name)+'</strong><small>'+(found?'Recorded in your journal':'Investigate clue →')+'</small></button>';
   }).join('');
   return illustration+'<section class="mf-evidence" aria-live="polite"><div><small>INVESTIGATE THE WAGON</small><strong>'+p.clues.length+' / 4</strong></div>'+
-    '<p>'+esc(lastClue||'Examine each lead to learn why the wagon vanished. There is no need to explore a map.')+'</p>'+
+    '<p>'+esc(lastClue||'Select each piece of evidence to uncover what happened to the missing workers.')+'</p>'+
     '<div class="mf-evidence-choices">'+choices+'</div></section>';
  }
  if(step==='creatures')return illustration+
