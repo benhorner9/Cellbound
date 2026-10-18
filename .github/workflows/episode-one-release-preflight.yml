@@ -1,0 +1,59 @@
+name: Episode 1 Production Release Preflight
+on:
+  push:
+    branches:
+      - release/episode1-site-production-ready-20261018
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - 'build-site.js'
+      - 'build.js'
+      - '.github/workflows/deploy-live.yml'
+      - 'index.html'
+      - 'guild.html'
+      - 'tools/check-public-copy.cjs'
+permissions:
+  contents: read
+jobs:
+  production-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      CELLBOUND_TARGET: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --ignore-scripts
+      - name: Run language and landing page audit
+        run: node tools/check-public-copy.cjs
+      - name: Build the website
+        run: npm run build:site
+      - name: Build production-configured game
+        run: npm run build
+      - name: Validate two independent deliverables and production account isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist-site/index.html
+          test -f dist-site/website-v1.css
+          test -f dist-site/assets/manor/manor-raid-hero.webp
+          ! test -f dist-site/auth.js
+          ! test -f dist-site/guild.html
+          grep -F 'href="./game/"' dist-site/index.html
+          test -f dist/index.html
+          test -f dist/guild.html
+          test -f dist/auth.js
+          grep -F 'jvydqeikdpelmtloulnd.supabase.co' dist/auth.js
+          grep -F 'jvydqeikdpelmtloulnd.supabase.co' dist/guild-v4.js
+          ! grep -R -l -F 'zrvehixcthljiktcctne.supabase.co' dist/ dist-site/
+          grep -F 'window.CELLBOUND_SECURE_SAVES=false' dist/guild.html
+          ! grep -F 'CELLBOUND_EPISODE_SERVICE_URL=' dist/guild.html
+          echo 'Public website and isolated production game package ready.'
+      - name: Test talents and core gameplay rules
+        run: |
+          npm run test:talents
+          npm run test:core
