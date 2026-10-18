@@ -1,5 +1,7 @@
 -- Cellbound public player figures always exclude staff and admin testers.
 -- Does not delete, alter or reveal private account identity/auth data.
+create schema if not exists cellbound_internal;
+revoke all on schema cellbound_internal from public, anon, authenticated;
 alter table public.cellbound_profession_highscores add column if not exists owner_user_id uuid;
 with actual_scores as (
  select encode(sha256(convert_to(ga.user_id::text || ':' ||
