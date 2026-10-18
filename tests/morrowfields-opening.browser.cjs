@@ -77,7 +77,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await page.waitForSelector('#morrowfields [data-clue="soil"]');
   assert.equal(await page.locator('#morrowfields .mf-progress').count(),1,'Resume uses the same stage progress strip');
   assert.equal(await page.locator('#morrowfields [data-mf="map"], #morrowfields .mf-hotspots').count(),0,'Legacy map state never returns after reloading');
-  assert((await page.locator('#morrowfields .mf-evidence strong').textContent()).includes('2 / 4'),'Evidence UI restores two previously recorded clues');
+  assert((await page.locator('#morrowfields .mf-evidence > div:first-child > strong').textContent()).includes('2 / 4'),'Evidence UI restores two previously recorded clues');
   for(const clue of ['soil','device'])await click('#morrowfields [data-clue="'+clue+'"]');
   await shot('wagon');
   // Observe real rendered animation frames, commands and pet placement.
