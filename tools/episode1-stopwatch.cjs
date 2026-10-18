@@ -79,6 +79,45 @@ const fs=require('node:fs');
    if(did)stall=0;else if(++stall>65){reason='No player action available in '+info.stage;break;}
    await page.waitForTimeout(did?140:260);
   }
+  // After the complete, real fresh-account tutorial, continue the actual
+  // Episode I opening quest. Never seed quest completion or experience.
+  if(await page.evaluate(()=>CellboundGame.getState().onboarding?.complete)){
+   step('ashes-on-the-east-road');
+   const questStart=Date.now();let quiet=0,selected=false;
+   while(Date.now()-questStart<5*60*1000){
+    const current=await page.evaluate(()=>{const s=CellboundGame.getState();return {stage:s.questSystem?.ashfall?.stage,complete:s.questSystem?.ashfall?.complete,level:s.roster[0]?.level||1,xp:s.roster[0]?.xp||0}});
+    if(current.complete){step('ashes-complete');console.log('ASHES_DONE',Math.round((Date.now()-questStart)/1000)+'s',JSON.stringify(current));break;}
+    let progressed=false;
+    const comic=page.locator('#cellboundComicScene:not([hidden])');
+    if(await comic.count()&&await comic.isVisible()){
+      if(await page.locator('#cellboundComicScene [data-comic-continue]').isEnabled())progressed=await click('#cellboundComicScene [data-comic-continue]');
+    }else if(await page.locator('#questGearReward:not([hidden]) [data-qgr-claim]').count()){
+     progressed=await click('#questGearReward [data-qgr-claim]');
+    }else if(await page.locator('#questPuzzleRoot:not([hidden]) [data-deduction]').count()){
+     const index=await page.locator('.quest-deduction small').first().innerText().catch(()=>'DEDUCTION 1 / 3');
+     const which=Math.max(0,(Number((index.match(/(\d+)\s*\//)||[])[1])||1)-1);
+     const answer=[1,2,0][which]||0;
+     progressed=await click('#questPuzzleRoot:not([hidden]) [data-deduction="'+answer+'"]');
+    }else if(await page.locator('[data-q-continue]').count()&&await page.locator('[data-q-continue]').first().isVisible()){
+     progressed=await click('[data-q-continue]');
+    }else{
+     if(!selected){await page.evaluate(()=>{CellboundGame.switchView('quests');CellboundQuests.selectAdventure('ashfall')});selected=true;progressed=true;}
+     else{
+       const actionSelector={
+        warning:'[data-ashfall-start]',tracks:'[data-ashfall-tracks]',
+        ambush:'[data-ashfall-ambush]',key:'[data-ashfall-finish]'
+       }[current.stage];
+       if(actionSelector){
+        const btn=page.locator('#questJournalDetail '+actionSelector);
+        if(await btn.count()&&await btn.isVisible())progressed=await click('#questJournalDetail '+actionSelector);
+       }
+     }
+    }
+    if(progressed)quiet=0;else if(++quiet>80){reason='Opening Episode I quest stalled at '+current.stage;break;}
+    await page.waitForTimeout(progressed?180:220);
+   }
+   console.log('ASHES_TIMING',JSON.stringify({elapsedSeconds:Math.round((Date.now()-questStart)/1000),reason}));
+  }
   const final=await page.evaluate(()=>{const s=CellboundGame.getState();return{onboarding:s.onboarding?.stage,onboardingComplete:s.onboarding?.complete,levels:s.roster.map(c=>c.level),xp:s.roster.map(c=>c.xp),ashenVaultUnlocked:s.progression?.ashenVaultUnlocked,quest:s.questSystem?.ashfall?.stage,roster:s.roster.length}});
   const report={startedAt:new Date(started).toISOString(),elapsedSeconds:Math.round((Date.now()-started)/1000),combatSeconds:Math.round(combatMs/1000),actions,chapters:results,final,reason,errors:[...browserErrors,...errors]};
   console.log('CELLBOUND_TIMED_FRESH_PLAYTHROUGH',JSON.stringify(report));
