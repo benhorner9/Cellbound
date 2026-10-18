@@ -1,0 +1,35 @@
+name: Episode Continuity Integration
+on:
+  pull_request:
+    branches: [staging]
+    paths:
+      - 'quests-v2.js'
+      - 'guild.html'
+      - 'src/episodes/**'
+      - 'tests/morrowfields-opening.browser.cjs'
+      - '.github/workflows/episode-continuity-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verified-quest-journey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm install --no-save --package-lock=false playwright@1.51.1
+      - run: npx playwright install --with-deps chromium
+      - name: Verify unified journal and actual six-objective Episode II playthrough
+        run: node tests/morrowfields-opening.browser.cjs
+      - name: Preserve failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: episode-continuity-diagnostic
+          path: docs/qa/morrowfields/*.png
+          if-no-files-found: ignore

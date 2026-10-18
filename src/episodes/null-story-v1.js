@@ -37,17 +37,16 @@ root.addEventListener('click',e=>{
  const b=e.target.closest('[data-null-story]');if(!b||busy)return;const action=b.dataset.nullStory;
  if(action==='close'){root.close();return;}
  if(action==='reload'){open();return;}
- if(action==='opening'){root.close();window.CellboundMorrowfields.open();return;}
+ if(action==='opening'){root.close();G().switchView('quests');window.CellboundQuests?.selectAdventure?.('e2_q01');return;}
  act(async()=>{const step=D.steps[record.run.index];if(action==='fight')await fight();else await call(action==='choice'?'null-choice':'null-panel',{step:step.id,choice:Number(b.dataset.choice)});});
 });
 root.addEventListener('cancel',e=>{if(busy||fighting)e.preventDefault();});
 function refresh(){
- if(!window.CELLBOUND_SECURE_SAVES||!window.CELLBOUND_EPISODE_SERVICE_URL||!G()?.ready)return;
- const parent=document.getElementById('quests');if(!parent)return;
- let card=parent.querySelector('[data-verified-null-entry]');if(!card){card=document.createElement('section');card.className='mf-entry';card.dataset.verifiedNullEntry='';parent.prepend(card);card.addEventListener('click',e=>{if(e.target.closest('button'))open();});}
- const state=G().getState(),eligible=state.progression?.manorRaidCleared||Object.keys(state.raidRewardClaims||{}).length,complete=state.questSystem?.nullComplex?.authoritative;
- card.innerHTML=`<img src="${D.steps[0].art}" alt="The Null Complex signal"><div><small>EPISODE 1 FINALE</small><h3>Signal From Nowhere</h3><p>${complete?'The agricultural relay is responding. Continue to the Morrowfields.':eligible?'Follow the NULL//07 transmission and escape the facility to reach the Morrowfields.':'Complete The Manor to investigate the NULL//07 signal.'}</p>${button(complete?'View completed story':'Continue the investigation','open',eligible||complete?'':'disabled')}</div>`;
+ // The verified finale uses the original Quest Journal, not a duplicate card.
+ document.querySelector('#quests [data-verified-null-entry]')?.remove();
+ window.CellboundQuests?.render?.();
 }
+
 window.CellboundNullStory={open,refresh};window.addEventListener('cellbound:view-changed',refresh);
 const timer=setInterval(()=>{if(G()?.ready){clearInterval(timer);refresh();}},250);
 })();

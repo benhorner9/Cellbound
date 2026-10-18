@@ -41,7 +41,16 @@ function npc(id,text,actions){const n=D.npc[id];return `<div class="mf-dialogue"
 function objective(){return `<div class="mf-objective"><span>${q()?.complete?'CHAPTER COMPLETE':`AFTER THE BREACH · ${(q()?.objectives.length||0)+1} / 6`}</span><strong>${esc(q()?.complete?'Two investigations await.':current()?.text||'Receive the transmission.')}</strong>${!q()?.complete?button('Go to objective','objective'):''}</div>`;}
 function comic(outro=false){
  const index=outro?progress().outro:progress().intro,panels=outro?D.closing:D.opening,p=panels[Math.min(index,2)];
- return `<section class="mf-comic"><img src="${p.art}" alt="${esc(p.title)}"><div class="mf-comic-caption"><small>${outro?'TWO TRAILS':'THE TRANSMISSION'} · ${index+1} / 3</small><h3>${esc(p.title)}</h3><p>${esc(p.text)}</p>${button(index===2?(outro?'Complete After the Breach':'Find Voss and Vey'):'Continue →',outro?'outro-panel':'intro-panel',`data-panel="${index}"`)}</div></section>`;
+ return '<section class="quest-v3-story"><small>EPISODE II · STORY PANEL '+(index+1)+' / 3</small><h3>'+esc(p.title)+'</h3><p>'+esc(p.text)+'</p><div class="quest-detail-action">'+button('VIEW STORY PANEL →',outro?'outro-panel':'intro-panel','data-panel="'+index+'"')+'</div></section>';
+}
+async function playComicPanel(outro,index){
+ const p=(outro?D.closing:D.opening)[index];
+ if(!p||!window.CellboundComicScenes?.show)throw Error('Story presentation unavailable. Progress was not advanced.');
+ const reopen=root.open;if(reopen)root.close();
+ try{
+  const result=await window.CellboundComicScenes.show({eyebrow:'EPISODE II · INVASION ON THE FARM',title:outro?'Two Trails':'After the Breach',page:(index+1)+' / 3',theme:'zeltira',storyOnly:true,allowSkip:false,panels:[{kind:'location',title:p.title,text:p.text,artwork:p.art}]});
+  if(result?.skipped)throw Error('Comic was interrupted. Try again.');
+ }finally{if(reopen&&!root.open)root.showModal();}
 }
 function branches(){return `<div class="mf-branches">${['e2_q02','e2_q03'].map(id=>{const d=E.CONTENT[id];return `<article><small>INVESTIGATION DISCOVERED</small><h3>${esc(d.name)}</h3><p>${esc(d.objectives[0].text)}</p><span>Further exploration is coming soon.</span></article>`}).join('')}</div>`;}
 function map(){return scene('map','The Morrowfields: farms, orchard, canals and distant harvest facilities',D.locations.map(l=>spot(l.name,'location',l.x,l.y,`data-location="${l.id}"`,!l.ready)).join(''),'mf-map')+`<p class="mf-map-note">Choose a landmark. Unexplored routes show what opens them.</p>`;}
@@ -97,7 +106,7 @@ root.addEventListener('click',event=>{
  const b=event.target.closest('[data-mf]');if(!b||busy)return;const key=b.dataset.mf;
  if(key==='close'){close();return}if(key==='reload'){record=null;open();return}
  action(async()=>{
-  if(key==='intro-panel'||key==='outro-panel'){await call(key,{panel:Number(b.dataset.panel)});screen=key==='outro-panel'&&!q().complete?'outro':route();}
+  if(key==='intro-panel'||key==='outro-panel'){const outro=key==='outro-panel',panel=Number(b.dataset.panel);await playComicPanel(outro,panel);await call(key,{panel});screen=outro&&!q().complete?'outro':route();}
   else if(key==='briefing'||key==='meet-mara'||key==='recover'){await call(key);screen=route();}
   else if(key==='visit')await visit(b.dataset.location);
   else if(key==='location'){
@@ -122,18 +131,45 @@ root.addEventListener('click',event=>{
  });
 });
 root.addEventListener('cancel',e=>{if(busy||fighting)e.preventDefault();});
-function syncEntries(){
- const state=G()?.getState?.();if(!state)return;
- for(const id of ['quests','world']){
-  const parent=document.getElementById(id);if(!parent)continue;
-  let card=parent.querySelector('[data-morrowfields-entry]');
-  if(!card){card=document.createElement('section');card.className='mf-entry';card.dataset.morrowfieldsEntry='';parent.prepend(card);card.addEventListener('click',e=>{if(e.target.closest('button'))open()});}
-  const available=window.CELLBOUND_SECURE_SAVES===true&&Boolean(window.CELLBOUND_EPISODE_SERVICE_URL);
-  const eligible=E.finaleCompleted(state),s=E.status(state,'e2_q01');
-  card.innerHTML=`<img src="${D.asset('map')}" alt="The Morrowfields"><div><small>EPISODE 2 · INVASION ON THE FARM</small><h3>${id==='world'?'The Morrowfields':'After the Breach'}</h3><p>${esc(!available?'Episode 2 is not yet available.':eligible?s.complete?'Two trails: Ash in the Wheat · Water That Moves.':s.nextObjective.text:'Complete Signal From Nowhere — escape the Null Complex.')}</p>${button(!available?'Coming soon':s.complete?'Return to Fenstead':'Continue the story','open',available&&eligible?'':'disabled')}${available&&s.complete?branches():''}</div>`;
+function renderEpisodeDungeons(){
+ const host=document.getElementById('episodeTwoDungeonSlots'),s=G()?.getState?.();
+ if(!host||!s)return;
+ const summary=host.closest('[data-dungeon-episode="2"]')?.querySelector('summary span b');
+ const available=window.CELLBOUND_SECURE_SAVES===true&&Boolean(window.CELLBOUND_EPISODE_SERVICE_URL);
+ if(!available||!E.finaleCompleted(s)||s.questSystem?.nullComplex?.authoritative!==true){
+  if(summary)summary.textContent='LOCKED';
+  host.innerHTML='<div class="dungeon-episode-empty"><div><b>Episode II locked.</b><span>Complete Signal From Nowhere and await episode release.</span></div></div>';
+  return;
  }
+ if(summary)summary.textContent='NEW DUNGEONS';
+ host.innerHTML=Object.values(E.CONTENT).filter(d=>d.kind==='dungeon').map(d=>{
+  const st=E.status(s,d.id),required=st.missing.map(x=>x.name).join(' + ');
+  return '<article class="dungeon-browser-card" data-episode-dungeon="'+esc(d.id)+'"><div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>EPISODE II · DUNGEON</small><h3>'+esc(d.name)+'</h3></div><b>'+esc(st.unlocked?'IN DEVELOPMENT':'LOCKED')+'</b></div>'+
+   '<p>'+esc(st.unlocked?'This dungeon has been discovered. Its playable encounters are still in development.':required||'Complete the preceding quest to discover this dungeon.')+'</p>'+
+   '<div class="dungeon-browser-meta"><span>Levels '+esc(d.levels.join('–'))+'</span><span>'+d.rooms.length+' planned rooms</span></div></div></article>';
+ }).join('');
 }
-window.CellboundMorrowfields={open,close,refresh:syncEntries};
+function syncEntries(){
+ const s=G()?.getState?.(),parent=document.getElementById('world');
+ if(!s)return;
+ // Refresh the existing Quest Journal after the authoritative episode snapshot
+ // and once this quest's shared adapter has registered on initial page load.
+ window.CellboundQuests?.render?.();
+ const available=window.CELLBOUND_SECURE_SAVES===true&&Boolean(window.CELLBOUND_EPISODE_SERVICE_URL);
+ const eligible=E.finaleCompleted(s)&&s.questSystem?.nullComplex?.authoritative===true,started=Boolean(s.episode2?.quests?.e2_q01?.startedAt);
+ const old=parent?.querySelector('[data-morrowfields-entry]');
+ // Quest start happens in the journal, not by opening the map or the chapter.
+ if(!parent||!available||!eligible||!started){old?.remove();renderEpisodeDungeons();return;}
+ let card=old;
+ if(!card){card=document.createElement('section');card.className='mf-entry';card.dataset.morrowfieldsEntry='';parent.prepend(card);}
+ const status=E.status(s,'e2_q01');
+ card.innerHTML='<img src="'+D.asset('map')+'" alt="The Morrowfields"><div><small>DISCOVERED LOCATION · EPISODE II</small><h3>The Morrowfields</h3><p>'+
+  esc(status.complete?'Return to Fenstead Farm. The next investigations are recorded in your Quest Journal.':status.nextObjective?.text||'Continue the investigation.')+
+  '</p>'+button('TRAVEL TO THE MORROWFIELDS','open')+'</div>';
+ card.querySelector('[data-mf="open"]')?.addEventListener('click',open);
+ renderEpisodeDungeons();
+}
+window.CellboundMorrowfields={open,close,refresh:syncEntries,renderDungeons:renderEpisodeDungeons};
 window.CellboundEpisodeAdapters=window.CellboundEpisodeAdapters||{};
 window.CellboundEpisodeAdapters.e2_q01={start:open,authoritativeStart:true};
 window.addEventListener('cellbound:view-changed',syncEntries);
