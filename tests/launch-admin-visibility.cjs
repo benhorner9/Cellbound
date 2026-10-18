@@ -1,0 +1,16 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const sql=fs.readFileSync(path.join(root,'supabase/migrations/20261018214000_exclude_admins_from_public_scores_analytics.sql'),'utf8');
+assert(sql.includes('create policy cellbound_scores_public_read'),'public profession scoreboard must filter rows via RLS');
+assert(sql.includes('cellbound_internal.is_public_player_score(owner_user_id)'),'score visibility follows protected admin role status');
+assert(sql.includes('owner_user_id = excluded.owner_user_id'),'score projection persists its real owner');
+assert(sql.includes("grant select (guild_name,character_name,profession,level,xp,updated_at)"),'only the redacted leaderboard fields may be exposed');
+assert(!/grant select\s+on public\.cellbound_profession_highscores/i.test(sql),'owner identifiers must never be readable by public clients');
+assert(sql.includes("and not exists(select 1 from public.cellbound_admins a where a.user_id=new.user_id)"),'staff saves cannot create public scores');
+assert((sql.match(/hidden_admin\.user_id=analytics_events\.user_id/g)||[]).length>=10,'all analytic aggregations must exclude admins, not just totals');
+assert(sql.includes('then return false; end if;'),'server must stop recording activity from admin accounts');
+assert((sql.match(/hidden_admin\.user_id=r\.user_id/g)||[]).length===2,'both dungeon leaderboard APIs must remove admin attempts before ranking');
+assert(sql.includes('where event_name=\'app_open\''),'preserve active-user analytics semantics');
+console.log('Launch admin-exclusion contracts PASS: scores, both dungeon rankings, event writer, all dashboard sections and restricted public score columns.');
