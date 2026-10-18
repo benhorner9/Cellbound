@@ -3,7 +3,7 @@
 alter table public.cellbound_profession_highscores add column if not exists owner_user_id uuid;
 with actual_scores as (
  select encode(sha256(convert_to(ga.user_id::text || ':' ||
-   coalesce(nullif(ch.item->>'id',''), ch.n::text) || ':' || prof.item->>'name', 'UTF8')), 'hex') as score_key,ga.user_id
+   coalesce(nullif(ch.item->>'id',''), ch.n::text) || ':' || (prof.item->>'name'), 'UTF8')), 'hex') as score_key,ga.user_id
  from public.guild_accounts ga
  cross join lateral jsonb_array_elements(case when jsonb_typeof(ga.game_state->'roster')='array' then ga.game_state->'roster' else '[]'::jsonb end) with ordinality ch(item,n)
  cross join lateral jsonb_array_elements(case when jsonb_typeof(ch.item->'professions')='array' then ch.item->'professions' else '[]'::jsonb end) prof(item)
