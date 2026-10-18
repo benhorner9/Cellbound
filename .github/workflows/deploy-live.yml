@@ -1,5 +1,8 @@
 name: Deploy Cellbound Production
 on:
+  push:
+    branches:
+      - publish/episode-one-20261018
   workflow_dispatch:
     inputs:
       confirm_release:
@@ -14,7 +17,9 @@ concurrency:
 jobs:
   build-and-deploy:
     name: Publish public website and isolated game
-    if: github.ref == 'refs/heads/main' && inputs.confirm_release == 'RELEASE_EPISODE_ONE'
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirm_release == 'RELEASE_EPISODE_ONE')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/publish/episode-one-20261018')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -24,6 +29,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+      - name: Verify this release ref is the approved main commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          approved="$(git ls-remote origin refs/heads/main | cut -f1)"
+          test -n "$approved"
+          test "$GITHUB_SHA" = "$approved"
+          echo "Publishing approved main commit $approved"
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
