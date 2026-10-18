@@ -8,7 +8,8 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
  const browser=await engine.launch({headless:true});const results=[];
  fs.mkdirSync('docs/qa/morrowfields',{recursive:true});
  try{for(const viewport of [{width:1366,height:1024},{width:390,height:844},{width:1440,height:900}]){
-  const fixture=await createStore(),{db,store,proof}=fixture;await proof(PLAYER);
+  const initial=seed();initial.questSystem.nullComplex.authoritative=true;
+  const fixture=await createStore(initial),{db,store,proof}=fixture;await proof(PLAYER);
   const authority=createOpeningAuthority({store});
   const page=await browser.newPage({viewport});
   await page.exposeFunction('episodeDatabaseRpc',async(action,payload)=>{
@@ -22,7 +23,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
    try{const r=await authority.act(PLAYER,route.request().postDataJSON());await route.fulfill({headers:{'access-control-allow-origin':'https://cellbound.test'},json:r});}
    catch(e){await route.fulfill({status:409,headers:{'access-control-allow-origin':'https://cellbound.test'},json:{error:e.message}});}
   });
-  const errors=await mount(page,seed(),false,{userId:PLAYER,episodeBridge:true,useBuiltGuild:true,transformGuild:html=>html.replace('window.CELLBOUND_SECURE_SAVES=false','window.CELLBOUND_SECURE_SAVES=true').replace('</head>','<script>window.CELLBOUND_SECURE_SAVES=true;window.CELLBOUND_EPISODE_SERVICE_URL="https://opening.test/opening";</script></head>')});
+  const errors=await mount(page,initial,false,{userId:PLAYER,episodeBridge:true,useBuiltGuild:true,transformGuild:html=>html.replace('window.CELLBOUND_SECURE_SAVES=false','window.CELLBOUND_SECURE_SAVES=true').replace('</head>','<script>window.CELLBOUND_SECURE_SAVES=true;window.CELLBOUND_EPISODE_SERVICE_URL="https://opening.test/opening";</script></head>')});
   const click=async selector=>{await page.locator(selector).click();await page.waitForFunction(()=>!document.getElementById('morrowfields').hasAttribute('aria-busy'));};
   const shot=async name=>{
    await page.evaluate(async()=>{
