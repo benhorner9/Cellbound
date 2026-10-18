@@ -93,11 +93,11 @@ const fs=require('node:fs');
       if(await page.locator('#cellboundComicScene [data-comic-continue]').isEnabled())progressed=await click('#cellboundComicScene [data-comic-continue]');
     }else if(await page.locator('#questGearReward:not([hidden]) [data-qgr-claim]').count()){
      progressed=await click('#questGearReward [data-qgr-claim]');
-    }else if(await page.locator('#questPuzzleRoot:not([hidden]) [data-deduction]').count()){
+    }else if(await page.locator('#questPuzzle:not([hidden]) [data-deduction]').count()){
      const index=await page.locator('.quest-deduction small').first().innerText().catch(()=>'DEDUCTION 1 / 3');
      const which=Math.max(0,(Number((index.match(/(\d+)\s*\//)||[])[1])||1)-1);
      const answer=[1,2,0][which]||0;
-     progressed=await click('#questPuzzleRoot:not([hidden]) [data-deduction="'+answer+'"]');
+     progressed=await click('#questPuzzle:not([hidden]) [data-deduction="'+answer+'"]');
     }else if(await page.locator('[data-q-continue]').count()&&await page.locator('[data-q-continue]').first().isVisible()){
      progressed=await click('[data-q-continue]');
     }else{
