@@ -12,3 +12,69 @@
 @media(prefers-reduced-motion:reduce){.mf-scene,.mf-comic,.mf-combat-entry{animation:none}.mf-combat-entry{display:none}}
 
 #verified-null-story .null-story-choices{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;grid-column:1/-1}#verified-null-story .null-story-choices button{position:static;transform:none;grid-area:auto;margin:0;flex:1 1 180px}
+
+
+/* After the Breach: Episode I-compatible quest flow, not a second adventure UI. */
+#morrowfields.mf{--mf-gold:#c9a96d;--mf-ink:#e9e3d5;background:#10191b;border-color:#71603f}
+#morrowfields .mf-heading{background:#172323f7;border-bottom:1px solid #786543}
+#morrowfields .mf-body{max-width:1180px;margin:0 auto}
+#morrowfields .mf-primary{background:#71603e;border-color:#d9bb80;color:#fff7e6;font-weight:800;letter-spacing:.035em}
+#morrowfields .mf-primary:hover,#morrowfields .mf-primary:focus-visible{background:#997c49}
+#morrowfields .mf-progress{background:#152223;border:1px solid #514a39;border-radius:9px;margin:0 0 19px;padding:13px 16px 11px;display:grid;gap:9px}
+#morrowfields .mf-progress>div:first-child{display:flex;justify-content:space-between;gap:12px;align-items:center}
+#morrowfields .mf-progress>div:first-child span{font-size:10px;letter-spacing:.12em;color:#d8c29a;font-weight:700;white-space:nowrap}
+#morrowfields .mf-progress strong{font:600 clamp(15px,1.7vw,18px)/1.4 Georgia,serif;color:#f0eadf}
+#morrowfields .mf-progress-track{height:4px;overflow:hidden;border-radius:9px;background:#3e4340}
+#morrowfields .mf-progress-track span{display:block;height:100%;background:#d4b679;transition:width .3s ease}
+#morrowfields .mf-next,#morrowfields .mf-evidence{margin:17px 0;padding:20px 23px;background:linear-gradient(120deg,#1a302d,#1b2423);border:1px solid #776343;border-radius:9px}
+#morrowfields .mf-next h3{margin:8px 0}
+#morrowfields .mf-next p{margin:10px 0 20px;color:#dbd3c4;max-width:75ch}
+#morrowfields .mf-next .mf-primary{min-width:230px}
+#morrowfields .mf-danger{border-color:#a8785f;background:linear-gradient(115deg,#372b29,#23282a)}
+#morrowfields .mf-briefing{display:grid;gap:12px}
+#morrowfields .mf-briefing .mf-dialogue{margin:0}
+#morrowfields .mf-briefing>.mf-primary{justify-self:end;margin-top:4px}
+#morrowfields .mf-secondary-actions{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
+#morrowfields .mf-secondary-actions button{background:transparent;border-color:#4b625c;font-weight:600;color:#d7d3c5}
+#morrowfields .mf-secondary-actions button:hover{background:#25342e}
+#morrowfields .mf-map-header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+#morrowfields .mf-map-header p{color:#d6cdbd;max-width:60ch;font-size:13px}
+#morrowfields .mf-map-header .mf-primary{flex:none}
+#morrowfields .mf-evidence{background:#172726}
+#morrowfields .mf-evidence>div:first-child{display:flex;align-items:center;justify-content:space-between}
+#morrowfields .mf-evidence strong{font-size:22px;color:#e4c68d}
+#morrowfields .mf-evidence p{margin:10px 0 17px;color:#ebe4d7}
+#morrowfields .mf-evidence-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#morrowfields .mf-evidence-list span{font-size:12px;padding:9px 12px;border:1px solid #42554d;border-radius:5px;color:#aebbb0}
+#morrowfields .mf-evidence-list span.found{border-color:#82704b;color:#f6e3ba;background:#25352e}
+#morrowfields .mf-scene{border-radius:9px;overflow:hidden}
+#morrowfields .mf-scene>img{display:block}
+#morrowfields .mf-story-intro,#morrowfields .mf-complete{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:23px;align-items:center;padding:15px;border:1px solid #5d5039;background:#182525;border-radius:9px}
+#morrowfields .mf-story-intro>img,#morrowfields .mf-complete>img{display:block;width:100%;max-height:470px;object-fit:cover;border-radius:6px}
+#morrowfields .mf-story-intro h3,#morrowfields .mf-complete h3{margin:10px 0 16px}
+#morrowfields .mf-story-intro p,#morrowfields .mf-complete p{margin:10px 0 18px;line-height:1.65;color:#e3dbcd}
+#morrowfields .mf-complete{align-items:start}
+#morrowfields .mf-complete>div{min-width:0}
+#morrowfields .mf-complete .mf-branches{gap:10px;margin:14px 0}
+#morrowfields .mf-complete .mf-branches article{padding:12px 14px}
+#morrowfields .mf-complete .mf-branches h3{font-size:18px}
+#morrowfields .mf-complete .mf-branches p{font-size:12px}
+#morrowfields .mf-complete .mf-primary{margin-top:6px}
+@media(max-width:800px){
+ #morrowfields .mf-story-intro,#morrowfields .mf-complete{grid-template-columns:1fr}
+ #morrowfields .mf-story-intro>img,#morrowfields .mf-complete>img{max-height:320px}
+ #morrowfields .mf-complete .mf-branches{grid-template-columns:1fr 1fr}
+ #morrowfields .mf-map-header{align-items:stretch;flex-direction:column}
+}
+@media(max-width:650px){
+ #morrowfields .mf-progress{margin-bottom:10px}
+ #morrowfields .mf-progress>div:first-child{align-items:start;flex-direction:column;gap:3px}
+ #morrowfields .mf-next,#morrowfields .mf-evidence{padding:15px}
+ #morrowfields .mf-next .mf-primary,#morrowfields .mf-briefing>.mf-primary,#morrowfields .mf-complete .mf-primary{width:100%;min-width:0}
+ #morrowfields .mf-evidence-list{grid-template-columns:1fr}
+ #morrowfields .mf-complete .mf-branches{grid-template-columns:1fr}
+ #morrowfields .mf-briefing .mf-dialogue{margin:0}
+ #morrowfields .mf-story-intro,#morrowfields .mf-complete{padding:11px}
+ #morrowfields .mf-map-header .mf-primary{width:100%}
+}
+@media(prefers-reduced-motion:reduce){#morrowfields .mf-progress-track span{transition:none}}
