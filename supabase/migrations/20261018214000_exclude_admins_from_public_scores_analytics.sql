@@ -143,8 +143,8 @@ begin
   v_since := now() - make_interval(days=>v_days);
 
   select jsonb_build_object(
-    'active_testers',count(distinct user_id),
-    'sessions',count(distinct nullif(session_id,'')),
+    'active_testers',count(distinct user_id) filter(where event_name='app_open'),
+    'sessions',count(distinct nullif(session_id,'')) filter(where event_name='app_open'),
     'events',count(*),
     'characters_tracked',count(*) filter(where event_name='character_created'),
     'quests_completed',count(*) filter(where event_name='quest_completed'),
