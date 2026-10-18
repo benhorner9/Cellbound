@@ -136,7 +136,7 @@ function renderEpisodeDungeons(){
  if(!host||!s)return;
  const summary=host.closest('[data-dungeon-episode="2"]')?.querySelector('summary span b');
  const available=window.CELLBOUND_SECURE_SAVES===true&&Boolean(window.CELLBOUND_EPISODE_SERVICE_URL);
- if(!available||!E.finaleCompleted(s)){
+ if(!available||!E.finaleCompleted(s)||s.questSystem?.nullComplex?.authoritative!==true){
   if(summary)summary.textContent='LOCKED';
   host.innerHTML='<div class="dungeon-episode-empty"><div><b>Episode II locked.</b><span>Complete Signal From Nowhere and await episode release.</span></div></div>';
   return;
@@ -156,7 +156,7 @@ function syncEntries(){
  // and once this quest's shared adapter has registered on initial page load.
  window.CellboundQuests?.render?.();
  const available=window.CELLBOUND_SECURE_SAVES===true&&Boolean(window.CELLBOUND_EPISODE_SERVICE_URL);
- const eligible=E.finaleCompleted(s),started=Boolean(s.episode2?.quests?.e2_q01?.startedAt);
+ const eligible=E.finaleCompleted(s)&&s.questSystem?.nullComplex?.authoritative===true,started=Boolean(s.episode2?.quests?.e2_q01?.startedAt);
  const old=parent?.querySelector('[data-morrowfields-entry]');
  // Quest start happens in the journal, not by opening the map or the chapter.
  if(!parent||!available||!eligible||!started){old?.remove();renderEpisodeDungeons();return;}
