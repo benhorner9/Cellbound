@@ -273,7 +273,7 @@ begin
   get diagnostics v_inserted = row_count;
   return v_inserted;
 end;
-$function$
+$function$;
 
 -- Both dungeon leaderboards filter admins before assigning ranks.
 CREATE OR REPLACE FUNCTION public.get_dungeon_leaderboard(p_dungeon_id text, p_season_id text DEFAULT 'foundations-1'::text, p_limit integer DEFAULT 50)
@@ -288,7 +288,7 @@ begin
   select row_number() over(order by r.score desc,r.tier desc,r.completion_time_ms asc,r.created_at asc) rank,r.guild_label,r.difficulty,r.tier,r.score,r.completion_time_ms,r.deaths,r.mechanics_failed,r.created_at
   from public.dungeon_runs r where r.valid=true and not exists(select 1 from public.cellbound_admins hidden_admin where hidden_admin.user_id=r.user_id) and r.dungeon_id=p_dungeon_id and r.season_id=p_season_id
  )ranked order by rank limit greatest(1,least(coalesce(p_limit,50),100));
-end $function$
+end $function$;
 
 CREATE OR REPLACE FUNCTION public.get_dungeon_leaderboard_v2(p_dungeon_id text, p_season_id text DEFAULT 'foundations-1'::text, p_scope text DEFAULT 'overall'::text, p_tier integer DEFAULT NULL::integer, p_class text DEFAULT NULL::text, p_limit integer DEFAULT 50)
  RETURNS TABLE(rank bigint, guild_label text, difficulty text, tier integer, score integer, completion_time_ms integer, deaths integer, mechanics_failed integer, party_classes text[], created_at timestamp with time zone)
@@ -319,5 +319,5 @@ begin
   order by rank
   limit greatest(1,least(coalesce(p_limit,50),100));
 end
-$function$
+$function$;
 
