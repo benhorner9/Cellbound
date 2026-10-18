@@ -41,7 +41,7 @@ const fs=require('node:fs');
     switch(info.stage){
      case 'zeltira-arrival':did=await click('#answerResonance');break;
      case 'first-expedition':
-      for(const id of ['fracture','lantern','ward'])if(await click('[data-resonance-clue="'+id+'"]')){did=true;break;}
+      if(await click('[data-resonance-clue]:not(.seen)'))did=true;
       if(await page.locator('[data-resonance-answer="correct"]').count()){did=await click('[data-resonance-answer="correct"]')||did}break;
      case 'gear':did=await click('[data-training-gear="good"]');break;
      case 'dungeon-briefing':did=await click('#enterTutorialDungeon');break;
