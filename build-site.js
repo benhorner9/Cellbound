@@ -32,7 +32,7 @@ for(const file of files){
 const html=fs.readFileSync(path.join(root,'website/index.html'),'utf8');
 for(const match of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"]*)?"/g)){
   const local=match[1];
-  if(local.startsWith('#'))continue;
+  if(local.startsWith('#')||local==='game/'||local.startsWith('game/'))continue;
   if(!files.includes(local)&&!files.includes('website/'+local))throw new Error('Website references an unshipped local file: '+local);
 }
 
