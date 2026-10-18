@@ -51,6 +51,7 @@ jobs:
           grep -F 'jvydqeikdpelmtloulnd.supabase.co' dist/guild-v4.js
           ! grep -R -l -F 'zrvehixcthljiktcctne.supabase.co' dist/ dist-site/
           grep -F 'window.CELLBOUND_SECURE_SAVES=false' dist/guild.html
+          grep -F "BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])" dist/guild-v4.js
           ! grep -F 'CELLBOUND_EPISODE_SERVICE_URL=' dist/guild.html
           echo 'Public website and isolated production game package ready.'
       - name: Test talents and core gameplay rules
