@@ -71,7 +71,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await click('#questJournalDetail [data-episode-quest-open]');
   await page.waitForSelector('#morrowfields [data-clue="soil"]');
   assert.equal(await page.locator('#morrowfields .mf-progress').count(),1,'Resume uses the same stage progress strip');
-  assert((await page.locator('.mf-clue small').textContent()).includes('2 / 4'));
+  assert((await page.locator('#morrowfields .mf-evidence strong').textContent()).includes('2 / 4'),'Evidence UI restores two previously recorded clues');
   for(const clue of ['soil','device'])await click('#morrowfields [data-clue="'+clue+'"]');
   await shot('wagon');
   // Observe real rendered animation frames, commands and pet placement.
