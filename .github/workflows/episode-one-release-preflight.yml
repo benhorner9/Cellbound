@@ -30,6 +30,15 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Run language and landing page audit
         run: node tools/check-public-copy.cjs
+      - name: Run whole-runtime language inventory
+        run: node tools/audit-runtime-copy.cjs
+      - name: Save copy inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-language-inventory
+          path: docs/qa/release/language-inventory.json
+          if-no-files-found: ignore
       - name: Build the website
         run: npm run build:site
       - name: Build production-configured game
