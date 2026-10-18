@@ -21,7 +21,7 @@ async function call(action,payload={}){
  const data=await result.json();if(!result.ok||data.error)throw Error(data.error||'Could not save chapter progress. Please retry.');
  if(G().getUser()?.id!==user.id)throw Error('Account changed. Reopen the chapter.');
  if(!data.account?.state?.episode2||data.account.user_id!==user.id)throw Error('Chapter account verification failed.');
- record=data;G().acceptEpisodeSnapshot(data.account);syncEntries();window.CellboundQuests?.render?.();return data;
+ record=data;G().acceptEpisodeSnapshot(data.account);syncEntries();return data;
 }
 async function action(fn){
  if(busy)return;busy=true;error='';root.setAttribute('aria-busy','true');root.querySelectorAll('button').forEach(b=>b.disabled=true);
@@ -134,11 +134,14 @@ root.addEventListener('cancel',e=>{if(busy||fighting)e.preventDefault();});
 function renderEpisodeDungeons(){
  const host=document.getElementById('episodeTwoDungeonSlots'),s=G()?.getState?.();
  if(!host||!s)return;
+ const summary=host.closest('[data-dungeon-episode="2"]')?.querySelector('summary span b');
  const available=window.CELLBOUND_SECURE_SAVES===true&&Boolean(window.CELLBOUND_EPISODE_SERVICE_URL);
  if(!available||!E.finaleCompleted(s)){
+  if(summary)summary.textContent='LOCKED';
   host.innerHTML='<div class="dungeon-episode-empty"><div><b>Episode II locked.</b><span>Complete Signal From Nowhere and await episode release.</span></div></div>';
   return;
  }
+ if(summary)summary.textContent='NEW DUNGEONS';
  host.innerHTML=Object.values(E.CONTENT).filter(d=>d.kind==='dungeon').map(d=>{
   const st=E.status(s,d.id),required=st.missing.map(x=>x.name).join(' + ');
   return '<article class="dungeon-browser-card" data-episode-dungeon="'+esc(d.id)+'"><div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>EPISODE II · DUNGEON</small><h3>'+esc(d.name)+'</h3></div><b>'+esc(st.unlocked?'IN DEVELOPMENT':'LOCKED')+'</b></div>'+
@@ -149,6 +152,9 @@ function renderEpisodeDungeons(){
 function syncEntries(){
  const s=G()?.getState?.(),parent=document.getElementById('world');
  if(!s)return;
+ // Refresh the existing Quest Journal after the authoritative episode snapshot
+ // and once this quest's shared adapter has registered on initial page load.
+ window.CellboundQuests?.render?.();
  const available=window.CELLBOUND_SECURE_SAVES===true&&Boolean(window.CELLBOUND_EPISODE_SERVICE_URL);
  const eligible=E.finaleCompleted(s),started=Boolean(s.episode2?.quests?.e2_q01?.startedAt);
  const old=parent?.querySelector('[data-morrowfields-entry]');
