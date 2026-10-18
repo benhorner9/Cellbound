@@ -41,7 +41,16 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await page.evaluate(()=>{window.CELLBOUND_SECURE_SAVES=true;CellboundMorrowfields.refresh();CellboundQuests.render()});
   await click('#questJournalList [data-adventure="e2_q01"]');
   await click('#questJournalDetail [data-episode-quest-open]');
-  await page.waitForSelector('#morrowfields [data-mf="intro-panel"]');
+  await page.waitForSelector('#morrowfields [data-mf="intro-panel"]',{timeout:8000}).catch(async error=>{
+    console.error('EPISODE JOURNAL START DIAGNOSTICS',await page.evaluate(()=>({
+      dialog:document.querySelector('#morrowfields')?.innerText?.slice(0,2000),
+      dialogOpen:document.querySelector('#morrowfields')?.open,
+      rootBusy:document.querySelector('#morrowfields')?.getAttribute('aria-busy'),
+      journalDetail:document.querySelector('#questJournalDetail')?.innerText?.slice(0,1400),
+      state:CellboundGame?.getState?.()?.episode2?.quests?.e2_q01||null,
+      finaleVerified:CellboundGame?.getState?.()?.questSystem?.nullComplex?.authoritative||false
+    })));throw error;
+  });
   await shot('opening');
   for(let panel=0;panel<3;panel++){
    await page.locator('#morrowfields [data-mf="intro-panel"]').click();
