@@ -80,6 +80,11 @@ for(const file of files){
     contents=contents.replace('</head>','<script>window.CELLBOUND_EPISODE_BUILD='+JSON.stringify(require('./config/development.json').authorityBuild)+';window.CELLBOUND_EPISODE_SERVICE_URL='+JSON.stringify(endpoint.href).replace(/</g,'\\u003c')+';</script></head>');
   }
   if(file==='guild.html')contents=contents.replace('__CELLBOUND_SECURE_SAVES__',process.env.CELLBOUND_STAGING_SUPABASE_URL?'true':'false');
+  if(productionBuild&&file==='guild-v4.js'){
+    const allClasses='const BETA_PLAYABLE_CLASSES=Object.freeze(Object.keys(classes));';
+    if(!contents.includes(allClasses))throw new Error('Production playable-class gate changed; review launch access before shipping');
+    contents=contents.replace(allClasses,"const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage']);");
+  }
 
   if(file.endsWith('.js')){
     try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}
