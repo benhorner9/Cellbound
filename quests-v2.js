@@ -1550,10 +1550,56 @@ function renderNullQuestDetail(root,side){
  side.innerHTML='<section><small>REQUIREMENT</small><div class="quest-reward-list"><p>'+(manorCleared()?'✓ The Manor cleared':'The Manor raid must be completed first')+'</p></div></section><section><small>REWARDS</small><div class="quest-reward-list">'+NULL_QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>TELEPORTER COMPONENTS</small><div class="quest-reward-list">'+[['cable','Conduit Cable'],['cell','Power Cell'],['fuse','Reactor Fuse']].map(x=>'<p>'+esc(x[1])+' · '+(n.components[x[0]]?'RECOVERED':'MISSING')+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(n.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No entries yet.</p>')+'</div></section>'
 }
 
+
+/* Episode II is rendered by the original journal. Progress and rewards remain
+ * server-authoritative; a journal card never mutates a completion flag. */
+const episodeJournalEnabled=()=>Boolean(window.CELLBOUND_SECURE_SAVES===true&&window.CELLBOUND_EPISODE_SERVICE_URL&&window.CellboundEpisodeTwo);
+function episodeQuestCards(){
+ const E=window.CellboundEpisodeTwo,s=state();
+ if(!episodeJournalEnabled()||!s||!E.finaleCompleted(s))return [];
+ return Object.values(E.CONTENT).filter(d=>d.kind==='quest').filter(d=>d.id==='e2_q01'||d.requires.every(id=>id===E.FINALE||E.CONTENT[id]&&E.status(s,id).complete)).map(d=>{
+  const info=E.status(s,d.id),q=s.episode2?.quests?.[d.id],playable=Boolean(window.CellboundEpisodeAdapters?.[d.id]);
+  return{id:d.id,title:d.name,meta:'Episode II · Invasion on the Farm · Level '+d.levels.join('–'),difficulty:'Intermediate',
+    status:info.complete?'COMPLETE':!playable?'COMING SOON':q?.startedAt?'IN PROGRESS':info.unlocked?'AVAILABLE':'LOCKED',
+    complete:info.complete,locked:!info.unlocked||!playable,icon:'✧'};
+ });
+}
+function renderEpisodeQuestDetail(root,side){
+ const E=window.CellboundEpisodeTwo,s=state(),d=E.CONTENT[selectedAdventure],info=E.status(s,d.id);
+ const q=s.episode2?.quests?.[d.id],done=q?.objectives||[],next=info.nextObjective,playable=Boolean(window.CellboundEpisodeAdapters?.[d.id]);
+ const status=info.complete?'COMPLETE':!playable?'IN DEVELOPMENT':q?.startedAt?'IN PROGRESS':info.unlocked?'AVAILABLE':'LOCKED';
+ const description=d.id==='e2_q01'?'The Null Complex has answered a signal beneath the farmlands. Follow the transmission to Fenstead Farm.':d.objectives[0]?.dialogue||'Continue your guild’s investigation.';
+ const action=info.complete&&d.id==='e2_q01'?'<button class="quest-primary" data-episode-quest-open>RETURN TO FENSTEAD →</button>':
+  !info.unlocked?'<div class="quest-action-block locked"><b>LOCKED</b><small>Complete the previous adventures to continue.</small></div>':
+  !playable?'<div class="quest-action-block locked"><b>COMING SOON</b><small>This quest is planned but not yet playable.</small></div>':
+  '<button class="quest-primary" data-episode-quest-open>'+(q?.startedAt?'CONTINUE QUEST →':'START QUEST →')+'</button>';
+ root.innerHTML='<div class="quest-v3-hero"><div><small>EPISODE II · INVASION ON THE FARM</small><h2>'+esc(d.name)+'</h2><p>'+esc(d.npc||'The Morrowfields')+'</p></div><span class="quest-v3-status '+(info.complete?'complete':'')+'">'+status+'</span></div>'+
+  '<div class="quest-v3-story"><p>'+esc(description)+'</p></div>'+
+  '<section class="quest-v3-clue"><small>'+(info.complete?'WHERE IT LED':'CURRENT OBJECTIVE')+'</small><h3>'+esc(info.complete?'The investigation continues':next?.text||'Awaiting new leads')+'</h3><p>'+esc(info.complete?'Your progress and rewards have been saved.':next?.dialogue||'Complete the prerequisites to continue.')+'</p></section>'+
+  '<section class="quest-v3-known"><div class="quest-v3-section-head"><span>QUEST OBJECTIVES</span><small>Recorded as you progress.</small></div><div>'+
+  d.objectives.map(o=>'<p>'+(done.includes(o.id)?'✓ ':next?.id===o.id?'➜ ':'◇ ')+esc(o.text)+'</p>').join('')+'</div></section>'+
+  '<div class="quest-detail-action">'+action+'</div>';
+ side.innerHTML='<section><small>REQUIREMENTS</small><div class="quest-reward-list">'+(info.missing.map(x=>'<p>'+esc(x.name)+'</p>').join('')||'<p>✓ Prerequisites satisfied</p>')+'</div></section>'+
+  '<section><small>REWARDS</small><div class="quest-reward-list"><p>'+esc(info.rewards.firstXp)+' XP per eligible character on first completion</p><p>'+esc(info.rewards.gold)+' Gold</p></div></section>'+
+  '<section><small>QUEST HISTORY</small><div class="quest-history">'+(done.map(id=>d.objectives.find(x=>x.id===id)).filter(Boolean).map(o=>'<p>✓ '+esc(o.text)+'</p>').join('')||'<p>No objectives completed.</p>')+'</div></section>';
+ root.querySelector('[data-episode-quest-open]')?.addEventListener('click',()=>window.CellboundEpisodeAdapters?.[d.id]?.start?.());
+}
+function renderVerifiedNullDetail(root,side){
+ const s=state(),completed=Boolean(s?.questSystem?.nullComplex?.authoritative),ready=Boolean(s?.progression?.manorRaidCleared||Object.keys(s?.raidRewardClaims||{}).length);
+ root.innerHTML='<div class="quest-v3-hero"><div><small>EPISODE I · FINALE</small><h2>Signal From Nowhere</h2><p>Dr. Elara Voss · Null Complex</p></div><span class="quest-v3-status '+(completed?'complete':'')+'">'+(completed?'COMPLETE':ready?'AVAILABLE':'LOCKED')+'</span></div>'+
+ '<div class="quest-v3-story"><p>Investigate the impossible transmission and escape the Null Complex. This quest uses verified encounters and a server-recorded finale.</p></div>'+
+ '<section class="quest-v3-clue"><small>'+(completed?'WHERE IT LED':'CURRENT OBJECTIVE')+'</small><h3>'+(completed?'The Morrowfields':'Escape the Null Complex')+'</h3><p>'+(completed?'A new quest becomes available in the journal.':'Complete the Manor and follow the transmission.')+'</p></section>'+
+ '<div class="quest-detail-action">'+(completed?'<button class="quest-primary" data-verified-null-next>VIEW NEXT QUEST →</button>':ready?'<button class="quest-primary" data-verified-null-open>CONTINUE QUEST →</button>':'<div class="quest-action-block locked"><b>REQUIRES THE MANOR</b></div>')+'</div>';
+ side.innerHTML='<section><small>REQUIREMENT</small><div class="quest-reward-list"><p>'+(ready?'✓ The Manor cleared':'Clear The Manor raid')+'</p></div></section>';
+ root.querySelector('[data-verified-null-open]')?.addEventListener('click',()=>window.CellboundNullStory?.open?.());
+ root.querySelector('[data-verified-null-next]')?.addEventListener('click',()=>{selectedTab='active';selectedAdventure='e2_q01';render()});
+}
+
 function questCards(){
  const q=ensure(),a=q.ashfall;
  return [
-  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Requires The Manor',difficulty:NULL_QUEST.difficulty,status:nullQ().complete?'COMPLETE':!nullQuestAvailable()?'LOCKED':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:nullQ().complete,locked:!nullQuestAvailable()&&!nullQ().complete,icon:'◈'},
+  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Requires The Manor',difficulty:NULL_QUEST.difficulty,status:episodeJournalEnabled()&&state()?.questSystem?.nullComplex?.authoritative?'COMPLETE':nullQ().complete?'COMPLETE':!nullQuestAvailable()?'LOCKED':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:Boolean((episodeJournalEnabled()&&state()?.questSystem?.nullComplex?.authoritative)||nullQ().complete),locked:!nullQuestAvailable()&&!nullQ().complete,icon:'◈'},
+  ...episodeQuestCards(),
   {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
   {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
   window.CellboundThirteenthBell?.card?.(),
@@ -1582,7 +1628,8 @@ function renderDetail(){
     root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'Select a completed quest to review its story and rewards.':selectedTab==='active'?'No active quest selected. Completed quests are available from the Completed tab.':'Select an adventure to view its details.')+'</div>';
     side.innerHTML='';return
   }
-  if(selectedAdventure==='null-complex-quest'){renderNullQuestDetail(root,side);bindActions();return}
+  if(String(selectedAdventure).startsWith('e2_q')&&window.CellboundEpisodeTwo?.CONTENT?.[selectedAdventure]){renderEpisodeQuestDetail(root,side);return}
+  if(selectedAdventure==='null-complex-quest'){if(episodeJournalEnabled()&&window.CellboundNullStory){renderVerifiedNullDetail(root,side);return}renderNullQuestDetail(root,side);bindActions();return}
   if(selectedAdventure==='ashfall'){renderAshfallDetail(root,side);bindActions();return}
   if(String(selectedAdventure).startsWith('class-trial:')){const t=classTrialDefs().find(x=>x.key===selectedAdventure);if(t){renderClassTrialDetail(t,root,side);return}}
   if(selectedAdventure==='thirteenth-bell'){window.CellboundThirteenthBell?.renderDetail?.(root,side);return}
@@ -1631,6 +1678,7 @@ function renderHome(){
     else if(q.started){title=stageDef(stage).objective;if(stage==='vault'){button='OPEN DUNGEON →';jump='content'}}
     else title='A glass-sealed letter from Bram Kel begins the road toward your next dungeon.';
   }else{small='ADVENTURE COMPLETE';title='The Hollow Sanctum is open beneath Zeltira.';button='VIEW DUNGEON →';jump='content'}
+  if(episodeQuestCards().some(x=>x.id==='e2_q01'&&!x.complete)){const e2=window.CellboundEpisodeTwo.status(state(),'e2_q01');small='EPISODE II · NEXT ADVENTURE';title=e2.nextObjective?.text||'Continue to the Morrowfields.';button='OPEN QUEST JOURNAL →';jump='quests';homeAdventure='e2_q01'}
   const homeDungeon=jump==='content'?(complete()?'hollow-sanctum':'ashen-vault'):'';
   if(homeDungeon)root.dataset.dungeonArt=homeDungeon;else delete root.dataset.dungeonArt;
   root.innerHTML='<span>'+small+'</span><b>'+esc(title)+'</b><button data-quest-home>'+button+'</button>';
@@ -1648,7 +1696,8 @@ function render(){
   if(!Game?.ready)return;const q=ensure();if(!q)return;
   $$('.quest-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.questTab===selectedTab));
   const bellCard=window.CellboundThirteenthBell?.card?.(),fourfoldCard=window.CellboundFourfoldLock?.card?.(),nwbCard=window.CellboundNoWayBack?.card?.(),classActive=classTrialDefs().filter(classTrialAvailable).length,activeCount=(q.ashfall.complete?0:1)+(complete()?0:1)+(bellCard&&!bellCard.complete&&!bellCard.locked?1:0)+(fourfoldCard&&!fourfoldCard.complete&&!fourfoldCard.locked?1:0)+(nwbCard&&!nwbCard.complete&&!nwbCard.locked?1:0)+classActive;
-  const status=$('#questCampaignStatus');if(status)status.textContent=activeCount?activeCount+' ADVENTURE'+(activeCount===1?'':'S')+' IN PROGRESS':'CURRENT STORY COMPLETE';
+  const totalActive=activeCount+episodeQuestCards().filter(x=>!x.complete&&!x.locked).length;
+  const status=$('#questCampaignStatus');if(status)status.textContent=totalActive?totalActive+' ADVENTURE'+(totalActive===1?'':'S')+' IN PROGRESS':'CURRENT STORY COMPLETE';
   renderList();renderDetail();renderHome();window.CellboundHollowSanctum?.renderCard?.();
 }
 function bind(){
