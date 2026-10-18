@@ -23,7 +23,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
    try{const r=await authority.act(PLAYER,route.request().postDataJSON());await route.fulfill({headers:{'access-control-allow-origin':'https://cellbound.test'},json:r});}
    catch(e){await route.fulfill({status:409,headers:{'access-control-allow-origin':'https://cellbound.test'},json:{error:e.message}});}
   });
-  const errors=await mount(page,initial,false,{userId:PLAYER,episodeBridge:true,useBuiltGuild:true,transformGuild:html=>html.replace('window.CELLBOUND_SECURE_SAVES=false','window.CELLBOUND_SECURE_SAVES=true').replace('</head>','<script>window.CELLBOUND_SECURE_SAVES=true;window.CELLBOUND_EPISODE_SERVICE_URL="https://opening.test/opening";</script></head>')});
+  const errors=await mount(page,initial,false,{userId:PLAYER,episodeBridge:true,useBuiltGuild:true,transformGuild:html=>html.replace('window.CELLBOUND_SECURE_SAVES=false','window.CELLBOUND_SECURE_SAVES=true').replace('</head>','<script>window.CELLBOUND_SECURE_SAVES=true;window.CELLBOUND_EPISODE_BUILD="local-dev";window.CELLBOUND_EPISODE_SERVICE_URL="https://opening.test/opening";</script></head>')});
   const click=async selector=>{await page.locator(selector).click();await page.waitForFunction(()=>!document.getElementById('morrowfields').hasAttribute('aria-busy'));};
   const shot=async name=>{
    await page.evaluate(async()=>{
