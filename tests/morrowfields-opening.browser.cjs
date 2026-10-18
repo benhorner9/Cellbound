@@ -35,13 +35,18 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
    return page.screenshot({path:`docs/qa/morrowfields/${viewport.width}-${name}.png`,fullPage:false});
   };
   await page.evaluate(()=>CellboundGame.switchView('quests'));
-  await page.evaluate(()=>{window.CELLBOUND_SECURE_SAVES=false;CellboundMorrowfields.refresh()});
-  assert(await page.locator('#quests [data-morrowfields-entry] button').isDisabled(),'An unprovisioned official game must not offer a chapter start');
-  await page.evaluate(()=>{window.CELLBOUND_SECURE_SAVES=true;CellboundMorrowfields.refresh()});
-  await click('#quests [data-morrowfields-entry] button');
-  await page.waitForSelector('#morrowfields .mf-comic');
+  await page.evaluate(()=>{window.CELLBOUND_SECURE_SAVES=false;CellboundMorrowfields.refresh();CellboundQuests.render()});
+  assert.equal(await page.locator('#questJournalList [data-adventure="e2_q01"]').count(),0,'Unreleased Episode II must not appear without the episode service');
+  await page.evaluate(()=>{window.CELLBOUND_SECURE_SAVES=true;CellboundMorrowfields.refresh();CellboundQuests.render()});
+  await click('#questJournalList [data-adventure="e2_q01"]');
+  await click('#questJournalDetail [data-episode-quest-open]');
+  await page.waitForSelector('#morrowfields [data-mf="intro-panel"]');
   await shot('opening');
-  for(let panel=0;panel<3;panel++)await click('#morrowfields [data-mf="intro-panel"]');
+  for(let panel=0;panel<3;panel++){
+   await page.locator('#morrowfields [data-mf="intro-panel"]').click();
+   await page.locator('#cellboundComicScene [data-comic-continue]').click();
+   await page.waitForFunction(()=>!document.getElementById('morrowfields').hasAttribute('aria-busy'));
+  }
   await click('#morrowfields [data-mf="briefing"]');await shot('map');
   assert.equal(await page.locator('#morrowfields [data-mf="location"]').count(),8);
   await click('#morrowfields [data-location="heart"]');assert((await page.locator('.mf-notice').textContent()).includes('not open'));
@@ -53,7 +58,8 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   for(const clue of ['tracks','container'])await click('#morrowfields [data-clue="'+clue+'"]');
   // Reload the actual shell mid-investigation. State comes back from PostgreSQL.
   await page.reload();await page.waitForFunction(()=>CellboundGame?.ready);await page.evaluate(()=>CellboundGame.switchView('quests'));
-  await click('#quests [data-morrowfields-entry] button');
+  await click('#questJournalList [data-adventure="e2_q01"]');
+  await click('#questJournalDetail [data-episode-quest-open]');
   await page.waitForSelector('#morrowfields [data-clue="soil"]');
   assert((await page.locator('.mf-clue small').textContent()).includes('2 / 4'));
   for(const clue of ['soil','device'])await click('#morrowfields [data-clue="'+clue+'"]');
@@ -77,11 +83,18 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert(Object.values(observed.frames).every(f=>f.length>=2),'Every enemy animates through authored frames');
   assert(observed.events.includes('DAMAGE_DEALT'));assert(observed.events.includes('HEAL_RECEIVED'));
   await click('#morrowfields [data-mf="recover"]');await click('#morrowfields [data-mf="closing"]');await shot('closing');
-  for(let panel=0;panel<3;panel++)await click('#morrowfields [data-mf="outro-panel"]');
+  for(let panel=0;panel<3;panel++){
+   await page.locator('#morrowfields [data-mf="outro-panel"]').click();
+   await page.locator('#cellboundComicScene [data-comic-continue]').click();
+   await page.waitForFunction(()=>!document.getElementById('morrowfields').hasAttribute('aria-busy'));
+  }
   await shot('rewards');
   const final=(await store.load(PLAYER)).account.state;
   assert.equal(final.gold,5180);assert(final.roster.every(c=>c.level===16&&c.xp===0));
   assert.deepEqual(final.episode2.unlocked,['e2_q01','e2_q02','e2_q03']);
+  assert.equal(await page.locator('#questJournalList [data-adventure="e2_q02"]').count(),1,'First investigation appears in the normal journal');
+  assert.equal(await page.locator('#questJournalList [data-adventure="e2_q03"]').count(),1,'Second investigation appears in the normal journal');
+  assert.equal(await page.locator('#quests [data-morrowfields-entry]').count(),0,'No duplicate chapter launcher above the journal');
   assert.equal(await page.locator('.mf-branches button').count(),0,'Unbuilt branches have no start actions');
   assert(await page.evaluate(()=>{const d=document.querySelector('#morrowfields');return d.scrollWidth<=d.clientWidth+2&&document.documentElement.scrollWidth<=innerWidth+2}));
   assert.deepEqual(errors,[]);
