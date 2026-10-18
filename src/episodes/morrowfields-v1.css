@@ -78,3 +78,23 @@
  #morrowfields .mf-map-header .mf-primary{width:100%}
 }
 @media(prefers-reduced-motion:reduce){#morrowfields .mf-progress-track span{transition:none}}
+
+/* Episode II linear quest: landscapes are illustrative story panels, never maps. */
+#morrowfields .mf-illustration{margin:0 0 14px;border:1px solid #62553e;background:#121b1c;border-radius:8px;overflow:hidden;line-height:0}
+#morrowfields .mf-illustration img{display:block;width:100%;height:clamp(190px,28vw,350px);object-fit:cover;object-position:center}
+#morrowfields .mf-illustration+.mf-dialogue{margin-top:0}
+#morrowfields .mf-evidence-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#morrowfields .mf-evidence-choice{min-height:76px;display:grid;grid-template-columns:24px 1fr;align-content:center;gap:1px 9px;text-align:left;background:#172826;border-color:#686046}
+#morrowfields .mf-evidence-choice>span{grid-row:span 2;color:#e9c27f;font-size:22px;align-self:center}
+#morrowfields .mf-evidence-choice>strong{font:600 15px/1.3 Georgia,serif;color:#f6ead5}
+#morrowfields .mf-evidence-choice>small{font-size:10px;letter-spacing:.04em;color:#c9bea9}
+#morrowfields .mf-evidence-choice.found{background:#26352e;border-color:#50715b;opacity:1;cursor:default}
+#morrowfields .mf-evidence-choice.found>small{color:#c7e2cb}
+#morrowfields .mf-evidence-choice:focus-visible{outline:3px solid #e0bc7a;outline-offset:2px}
+#morrowfields .mf-next .mf-primary{display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:650px){
+ #morrowfields .mf-illustration img{height:200px}
+ #morrowfields .mf-evidence-choices{grid-template-columns:1fr}
+ #morrowfields .mf-evidence-choice{min-height:66px}
+ #morrowfields .mf-dialogue{margin-top:0}
+}
