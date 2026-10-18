@@ -91,6 +91,10 @@ const fs=require('node:fs');
     const comic=page.locator('#cellboundComicScene:not([hidden])');
     if(await comic.count()&&await comic.isVisible()){
       if(await page.locator('#cellboundComicScene [data-comic-continue]').isEnabled())progressed=await click('#cellboundComicScene [data-comic-continue]');
+    }else if(await page.locator('#questEncounterBackdrop:not([hidden])').isVisible().catch(()=>false)){
+      if(await page.locator('#q2dEnd:not([hidden]) [data-q-continue]').isVisible().catch(()=>false))
+        progressed=await click('#q2dEnd:not([hidden]) [data-q-continue]');
+      else {await page.waitForTimeout(550);progressed=true;}
     }else if(await page.locator('#questGearReward:not([hidden]) [data-qgr-claim]').count()){
      progressed=await click('#questGearReward [data-qgr-claim]');
     }else if(await page.locator('#questPuzzle:not([hidden]) [data-deduction]').count()){
