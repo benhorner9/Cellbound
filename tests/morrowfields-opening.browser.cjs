@@ -48,21 +48,26 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await page.waitForSelector('#morrowfields[open] [data-mf="briefing"]');
   await shot('briefing');
   await click('#morrowfields [data-mf="briefing"]');
+  // Older saves can still contain a 'map' location. Resuming must show a
+  // normal Continue Quest action instead of opening the old regional map.
+  assert.equal(await page.locator('#morrowfields [data-mf="to-fenstead"]').count(),1,
+   'Finishing the briefing presents the next story action, not a map');
+  assert.equal(await page.locator('#morrowfields .mf-map, #morrowfields .mf-hotspots, #morrowfields [data-mf="map"], #morrowfields [data-mf="location"]').count(),0,
+   'The linear quest never mounts interactive navigation maps');
+  await shot('farm-arrival');
+  await click('#morrowfields [data-mf="to-fenstead"]');
   await shot('farm');
-  assert.equal(await page.locator('#morrowfields .mf-dialogue').count(),1,'One farm conversation, no redundant map screen');
+  assert.equal(await page.locator('#morrowfields .mf-dialogue').count(),1,'Mara appears in one story dialogue');
   await click('#morrowfields [data-mf="meet-mara"]');
-  await click('#morrowfields .mf-next [data-mf="follow-wagon"]');
+  assert.equal(await page.locator('#morrowfields [data-mf="go-wagon"]').count(),1,'One next-objective action replaces map travel');
+  await click('#morrowfields [data-mf="go-wagon"]');
   await page.waitForSelector('#morrowfields [data-clue="tracks"]');
   assert.equal((await store.load(PLAYER)).account.state.episode2.quests.e2_q01.objectives.length,3,
-   'Purposeful guided travel preserves exact server progress');
-  // Regional map is an optional discovery interface, not required between objectives.
-  await click('#morrowfields [data-mf="map"]');
-  assert.equal(await page.locator('#morrowfields [data-mf="location"]').count(),8);
-  await click('#morrowfields [data-location="heart"]');
-  assert((await page.locator('.mf-notice').textContent()).includes('not open'));
-  await click('#morrowfields [data-mf="dismiss"]');
-  await click('#morrowfields [data-mf="objective"]');
-  await page.waitForSelector('#morrowfields [data-clue="tracks"]');
+   'Linear quest continues to use exact server-authorised progression');
+  assert.equal(await page.locator('#morrowfields .mf-illustration').count(),1,
+   'Wagon artwork is a noninteractive illustration');
+  assert.equal(await page.locator('#world [data-morrowfields-entry]').count(),0,
+   'There is no separate open-world entry in the World panel');
   for(const clue of ['tracks','container'])await click('#morrowfields [data-clue="'+clue+'"]');
   await shot('investigation');
   // Reload the actual shell mid-investigation. State comes back from PostgreSQL.
@@ -71,6 +76,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   await click('#questJournalDetail [data-episode-quest-open]');
   await page.waitForSelector('#morrowfields [data-clue="soil"]');
   assert.equal(await page.locator('#morrowfields .mf-progress').count(),1,'Resume uses the same stage progress strip');
+  assert.equal(await page.locator('#morrowfields [data-mf="map"], #morrowfields .mf-hotspots').count(),0,'Legacy map state never returns after reloading');
   assert((await page.locator('#morrowfields .mf-evidence strong').textContent()).includes('2 / 4'),'Evidence UI restores two previously recorded clues');
   for(const clue of ['soil','device'])await click('#morrowfields [data-clue="'+clue+'"]');
   await shot('wagon');
@@ -110,11 +116,12 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.equal(await page.locator('#quests [data-morrowfields-entry]').count(),0,'No duplicate chapter launcher above the journal');
   assert.equal(await page.locator('.mf-branches button').count(),0,'Unbuilt branches have no start actions');
   assert.equal(await page.locator('#morrowfields [data-mf="quest-journal"]').count(),1,'Quest conclusion returns to the original journal');
+  assert.equal(await page.locator('#morrowfields [data-mf="explore"], #morrowfields [data-mf="map"]').count(),0,'Quest ending has no free-roam links');
   assert(await page.evaluate(()=>{const d=document.querySelector('#morrowfields');return d.scrollWidth<=d.clientWidth+2&&document.documentElement.scrollWidth<=innerWidth+2}));
   assert.deepEqual(errors,[]);
   results.push({viewport,objectives:final.episode2.quests.e2_q01.objectives,enemyFrames:observed.frames,gold:final.gold,roster:final.roster.map(c=>({id:c.id,level:c.level,xp:c.xp}))});
   await page.close();await db.close();
  }}finally{await browser.close()}
  fs.writeFileSync('docs/qa/morrowfields/browser-results.json',JSON.stringify({engine:process.env.CELLBOUND_TEST_ENGINE||'chromium',auth:'mocked shell; explicit trusted finale fixture; real local PostgreSQL and canonical worker',results},null,2)+'\n');
- console.log('After the Breach guided journey PASS: unified opening/closing comics, direct farm travel, optional map, investigation reload, live shared combat, verified rewards, unlocked branches and responsive layouts across three viewports. Mocked auth, real local PostgreSQL; no physical iPad claim.');
+ console.log('After the Breach linear quest PASS: continuous comics, one-click stage transitions, no maps or free roam, illustrated dialogue, clue choices, reload, canonical combat, rewards, two branches and three viewports. Mocked auth, real local PostgreSQL; no physical iPad claim.');
 })().catch(e=>{console.error(e);process.exitCode=1});
