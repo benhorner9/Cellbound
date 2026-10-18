@@ -65,6 +65,7 @@ jobs:
           grep -F "BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])" dist/guild-v4.js
           ! grep -F 'guild.html' dist-site/index.html
           node tools/check-public-copy.cjs
+          node tools/audit-runtime-copy.cjs
           node -e "const fs=require('fs');fs.writeFileSync('dist/build-meta.json',JSON.stringify({commit:process.env.GITHUB_SHA,branch:'main',deployedAt:new Date().toISOString(),channel:'production'},null,2))"
       - name: Verify website is reachable before transfer
         shell: bash
