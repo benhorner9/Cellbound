@@ -137,6 +137,14 @@ const fs=require('node:fs');
     console.log('ASHEN_BLOCKED',(await page.locator('#cb2dBackdrop .cb2d-blocked').innerText()).replace(/\s+/g,' '));
    }else if(await page.locator('#cb2dBackdrop [data-start]').isEnabled()){
     const startedDungeon=Date.now();step('ashen-vault-first-run');
+    // The previous story's completion comic can still be visible when the
+    // quest state becomes complete. Finish its panels as the player would.
+    for(let i=0;i<25&&await page.locator('#cellboundComicScene:not([hidden])').isVisible().catch(()=>false);i++){
+      const choice=page.locator('#cellboundComicScene [data-comic-choice]:not([disabled])').first();
+      if(await choice.count()&&await choice.isVisible())await choice.click();
+      else await click('#cellboundComicScene [data-comic-continue]');
+      await page.waitForTimeout(110);
+    }
     await click('#cb2dBackdrop [data-start]');
     try{
      await page.waitForFunction(()=>{
