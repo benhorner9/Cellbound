@@ -933,7 +933,25 @@ FX.movePresentation=(el,p,duration=600)=>{
 window.addEventListener('scroll',()=>{for(const scene of scenes.values())scene.bounds=null},{passive:true,capture:true});
 window.addEventListener('resize',()=>{for(const scene of scenes.values())scene.bounds=null},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf){if(window.CellboundCombatFrame)CellboundCombatFrame.cancel(frame);else cancelAnimationFrame(raf)}raf=0}else{for(const scene of scenes.values())scene.spatialFrameAt=now();wake()}});
+function preserveEntryPose(arena){
+ if(!arena||arena.dataset.authoritativeControl==='1')return;
+ const bounds=arena.getBoundingClientRect();if(!bounds.width||!bounds.height)return;
+ // Capture every painted centre before mounting animation/spatial owners. On
+ // WebKit, disabling an unfinished CSS entrance transition otherwise commits
+ // its distant endpoint before the spatial solver can read the current pose.
+ const entries=[...arena.querySelectorAll(UNIT)].map(el=>{const r=el.getBoundingClientRect();return{el,x:r.left+r.width/2-bounds.left,y:r.top+r.height/2-bounds.top}});
+ for(const {el,x,y} of entries){
+  el.style.setProperty('transition','none','important');
+  el.style.setProperty('margin','0','important');
+  el.style.setProperty('transform','translate(-50%,-50%)','important');
+  el.style.setProperty('left',(x/bounds.width*100)+'%','important');
+  el.style.setProperty('top',(y/bounds.height*100)+'%','important');
+  const spatial=scenes.get(arena)?.units.get(el)?.spatial;
+  if(spatial){spatial.visual=null;spatial.entryVisual={x,y};spatial.drawn=null;spatial.reserved=null;spatial.waypoint=null;spatial.route=null}
+ }
+}
 function combatEvent(e,opts={}){try{
+ if(e?.type==='COMBAT_START')preserveEntryPose(opts.arena||opts.root?.querySelector?.(ARENA));
  const animation=window.CellboundCombatAnimation,arena=mount(opts.arena||opts.root?.querySelector?.(ARENA));
  if(animation&&arena)animation.route(e,{...opts,arena,source:resolve(e.source,opts,arena),target:resolve(e.target,opts,arena)},()=>livingEvent(e,{...opts,arena}));
  else livingEvent(e,opts);

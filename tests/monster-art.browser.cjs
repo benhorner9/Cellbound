@@ -65,10 +65,25 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
    await page.screenshot({path:dir+'/batch-'+start+'-death.png'});
    await page.evaluate(()=>CellboundDungeon2D.closeShared(true));await page.waitForTimeout(150);
   }
-  // Decode failures retain the existing fallback, rather than invisible combatants.
-  await page.route('**/assets/monsters/v1/deadeye-mercer.webp',route=>route.abort());
-  await page.evaluate(async()=>{await CellboundMonsterVisuals.preload(CellboundMonsterVisuals.art.slice(1).map(a=>a.id));const el=document.createElement('div');el.className='cb2d-unit enemy';el.innerHTML='<i>fallback</i><span>Deadeye Mercer</span>';document.body.appendChild(el);window.failedActor=el;CellboundMonsterVisuals.mount(el)});
-  await page.waitForTimeout(2000);assert.equal(await page.locator('body>div.enemy.cb-monster-illustrated').count(),0,'failed image keeps fallback');
+  // Verify an actual failed request in a fresh context. WebKit can reuse a
+  // decoded atlas even after our LRU evicts it, so a warm-page route abort does
+  // not establish that an image failed to load.
+  const fallback=await browser.newPage();let aborted=false;
+  try{
+   fallback.on('pageerror',e=>errors.push(String(e)));
+   await fallback.setContent('<base href="https://cellbound.test/"><body></body>');
+   await fallback.route('**/assets/monsters/v1/deadeye-mercer.webp',route=>{aborted=true;return route.abort()});
+   await fallback.addScriptTag({path:path.join(dist,'monster-visuals-v1.js')});
+   const failed=await fallback.evaluate(async()=>{
+    const loaded=await CellboundMonsterVisuals.preload(['Deadeye Mercer']);
+    const el=document.createElement('div');el.className='cb2d-unit enemy';el.innerHTML='<i>fallback</i><span>Deadeye Mercer</span>';document.body.appendChild(el);
+    return{loaded,mounted:CellboundMonsterVisuals.mount(el)};
+   });
+   assert(aborted,'fallback test reaches the failing image request');
+   assert.deepEqual(failed,{loaded:[false],mounted:false});
+   assert.equal(await fallback.locator('div.enemy.cb-monster-illustrated').count(),0,'failed image keeps fallback');
+   assert.equal(await fallback.locator('div.enemy > i').textContent(),'fallback');
+  }finally{await fallback.close()}
   assert(await page.evaluate(()=>CellboundMonsterVisuals.diagnostics().decoded<=12));
   await page.emulateMedia({reducedMotion:'reduce'});
   const reduced=await page.evaluate(async()=>{await CellboundMonsterVisuals.preload(['Lunar Drone']);const scene=document.createElement('div');scene.className='cbl-scene';scene.innerHTML='<div class="cb2d-unit enemy" data-animation-owned="1" data-animation-state="idle"><span>Lunar Drone</span></div>';document.body.appendChild(scene);const el=scene.firstChild;CellboundMonsterVisuals.mount(el);CellboundMonsterVisuals.apply(el,{clip:'thrust',progress:.5,reduced:true});const ready=el.querySelector('[data-sprite-frame]').dataset.spriteFrame,animation=getComputedStyle(el.querySelector('.cb-monster-sprite')).animationName;CellboundMonsterVisuals.apply(el,{clip:'death',progress:1,dead:true,reduced:true});return{ready,animation,dead:el.querySelector('[data-sprite-frame]').dataset.spriteFrame}});

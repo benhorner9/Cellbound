@@ -68,6 +68,8 @@ The first PR run passed build, 79 core suites, Episode continuity and all 36 Chr
 
 The follow-up retains every browser suite and the final required gate, dividing each browser's sorted inventory into three disjoint groups. Timing checks wait for the same movement/attack conditions instead of assuming a fixed number of seconds is sufficient. The realtime animation probe counts changing poses across both arms of all heroes instead of only the first tank's weapon arm. Asynchronous encounter teardown errors are now observed before the test closes. Deployment must wait for all six groups and the final gate to succeed.
 
+The second CI run completed all groups: Chromium 36/36; WebKit 34/36. Remaining failures were a native WebKit renderer crash during Ashen transitions and a warm-cache image-fallback fixture. The follow-up preserves painted entry centres before the animation/spatial handover, preventing an observed 391 px entry jump. Image failure is tested in a fresh browser context with an asserted aborted network request. Playwright is pinned to 1.64.1 for the main PR, staging-browser and Episode continuity workflows. The old WebKit crashed with JIT enabled; its diagnostic JIT-disabled run passed, and the newer WebKit passed the unchanged room/pet/departure assertions with default JIT enabled. CI does not disable JIT or skip tests. The full final validation remains mandatory before deployment.
+
 The configured development target is `https://cb.athleticsmanagergame.com/`. Before merge it still serves baseline `09a4be6d556ed3e35852e42308ec3a0e44d4dd55`. Deployment success must be confirmed by its HTTPS `build-meta.json` and served assets, not inferred from local metadata or PR publication.
 
 ## Remaining work, in requested order
