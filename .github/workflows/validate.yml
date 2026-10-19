@@ -62,7 +62,7 @@ jobs:
 
 
   browser:
-    name: Complete ${{ matrix.engine }} browser regressions
+    name: Complete ${{ matrix.engine }} browser regressions (${{ matrix.shard }}/3)
     needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -70,6 +70,7 @@ jobs:
       fail-fast: false
       matrix:
         engine: [chromium, webkit]
+        shard: [1, 2, 3]
     steps:
       - name: Check out Cellbound
         uses: actions/checkout@v4
@@ -97,15 +98,19 @@ jobs:
       - name: Run complete browser regressions
         env:
           CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+          CELLBOUND_TEST_SHARD: ${{ matrix.shard }}/3
         run: npm run test:browser
 
       - name: Save combat and playthrough captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cellbound-release-review-${{ matrix.engine }}
+          name: cellbound-release-review-${{ matrix.engine }}-${{ matrix.shard }}
           path: |
             /tmp/cellbound-control-evidence/**
+            /tmp/cellbound-realtime/**
+            /tmp/cellbound-spatial/**
+            /tmp/cellbound-monster/coverage/**
             /tmp/cellbound-living-combat.png
             /tmp/cellbound-equipment-fit-*.png
             /tmp/cellbound-race-identity-v2-*.png

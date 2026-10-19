@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   browser:
-    name: Full ${{ matrix.engine }} browser QA (non-blocking)
+    name: Full ${{ matrix.engine }} browser QA (${{ matrix.shard }}/3, non-blocking)
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -25,6 +25,7 @@ jobs:
       fail-fast: false
       matrix:
         engine: [chromium, webkit]
+        shard: [1, 2, 3]
     steps:
       - name: Check out exact pushed commit
         uses: actions/checkout@v4
@@ -57,13 +58,14 @@ jobs:
       - name: Run complete ${{ matrix.engine }} browser regressions
         env:
           CELLBOUND_TEST_ENGINE: ${{ matrix.engine }}
+          CELLBOUND_TEST_SHARD: ${{ matrix.shard }}/3
         run: npm run test:browser
 
       - name: Save browser QA captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cellbound-staging-browser-${{ matrix.engine }}
+          name: cellbound-staging-browser-${{ matrix.engine }}-${{ matrix.shard }}
           path: |
             /tmp/cellbound-monster/**
             /tmp/cellbound-realtime/*.png
@@ -77,6 +79,9 @@ jobs:
             /tmp/cellbound-animation/*.png
             /tmp/cellbound-animation/*.webm
             /tmp/cellbound-control-evidence/**
+            /tmp/cellbound-realtime/**
+            /tmp/cellbound-spatial/**
+            /tmp/cellbound-monster/coverage/**
             /tmp/cellbound-living-combat.png
             /tmp/cellbound-equipment-fit-*.png
             /tmp/cellbound-weapon-*.png

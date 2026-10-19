@@ -60,13 +60,15 @@ The source tests live in `tests/living-control-v2.cjs` and `tests/living-control
 - Local WebKit could be downloaded but cannot launch because system libraries are missing. The dependency installer fails in this environment. Real iPad Safari/hardware validation remains required unless CI subsequently supplies WebKit evidence.
 - The engine size budget increases from 350 KB to a bounded 370 KB to accommodate the control/geometry/replay integration. CSS joins the existing bundle, retaining the 50-request stylesheet limit.
 
-### Publication status
+### Publication and release status
 
-Changes are committed locally only. Automatic approval review rejected publishing the new source to the public `benhorner9/Cellbound` repository, requiring explicit permission for that public source disclosure. No remote implementation branch, pull request, CI run or development deployment was created. Do not treat local build metadata as a deployed version.
+The owner explicitly approved publishing the source to the public repository and deploying to development only. Branch `overhaul/living-combat-2` is published; PR #236 targets `staging`. The rollback branch `checkpoint/pre-living-combat-2` retains the baseline. No production deployment or database migration is included.
 
-The configured development target remains `https://cb.athleticsmanagergame.com/`. Its running version was not verified; the direct HTTP metadata request returned 403. The local environment verifier passed with the isolated development backend. Production data and release controls were not changed.
+The first PR run passed build, 79 core suites, Episode continuity and all 36 Chromium browser suites. The new control journey also passed WebKit: seven victories, five heroes per chamber, iPad/phone/desktop layouts, no runtime errors or missing resources, and unchanged fixture account. The complete WebKit gate failed: fixed-delay animation/spatial checks failed, a room browser closed, and the job exhausted its 20-minute budget. The log also exposed a real timeline cleanup ReferenceError from an undefined listener; that is corrected in the follow-up commit.
 
-The review archive contains the execution report, delta patch, incremental git bundle and test logs. The bundle depends on the recorded baseline commit and does not duplicate the repository or its assets.
+The follow-up retains every browser suite and the final required gate, dividing each browser's sorted inventory into three disjoint groups. Timing checks wait for the same movement/attack conditions instead of assuming a fixed number of seconds is sufficient. The realtime animation probe counts changing poses across both arms of all heroes instead of only the first tank's weapon arm. Asynchronous encounter teardown errors are now observed before the test closes. Deployment must wait for all six groups and the final gate to succeed.
+
+The configured development target is `https://cb.athleticsmanagergame.com/`. Before merge it still serves baseline `09a4be6d556ed3e35852e42308ec3a0e44d4dd55`. Deployment success must be confirmed by its HTTPS `build-meta.json` and served assets, not inferred from local metadata or PR publication.
 
 ## Remaining work, in requested order
 

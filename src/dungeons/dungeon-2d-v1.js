@@ -2842,7 +2842,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
    };
    if(!replayMode)run.rebornPlayback={issueCommand,now:readClock,result:()=>activeResult};
    const finishPlayback=value=>{
-     if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',resume);
+     if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
      if(run){run.combatActive=false;run.rebornPlayback=null;run.rebornResult=activeResult}
      resolve(value)
    };

@@ -140,6 +140,8 @@ const isWebkit=process.env.CELLBOUND_TEST_ENGINE==='webkit';
  await page.emulateMedia({reducedMotion:'no-preference'});
  if(!isWebkit)await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
  await page.evaluate(()=>CellboundDungeon2D.closeShared(true));
+ // Observe asynchronous playback teardown errors before ending the test.
+ await page.waitForTimeout(200);
  assert.deepEqual(errors,[]);
  await browser.close();console.log('Living combat browser checks passed: visible portraits, one impact, misses, CC, readable casts, targeted mechanics, travel, interrupts, deaths, revival, forced movement, reduced motion, cleanup.');
 })().catch(e=>{console.error(e);process.exit(1)});

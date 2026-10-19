@@ -46,7 +46,8 @@ const root=path.resolve(__dirname,'..'),dist=process.env.CELLBOUND_ANIMATION_DIS
     window.playback=CellboundDungeon2D.playSharedEncounter({party,encounter,result,theme:'ashen',room:'hall-embers',zone:'ashen-vault',environmentHtml:'<img alt="" src="assets/ashen-vault/rooms/hall-embers.webp" style="width:100%;height:100%;object-fit:cover">'});
    },batch);
    await page.waitForFunction(n=>document.querySelectorAll('#cb2dArena [data-monster-id]').length===n,batch.length);
-   await page.waitForTimeout(6500);
+   // Require every real engine attack, allowing a slow renderer to reach it.
+   await page.waitForFunction(ids=>ids.every(id=>coverageFrames[id]?.some(f=>f===1||f===2)),batch.map(a=>a.id),{timeout:30000});
    await page.screenshot({path:dir+'/batch-'+start+'-combat.png'});
    const observed=await page.evaluate(()=>coverageFrames);
    for(const a of batch){assert(observed[a.id]?.some(f=>f===1||f===2),a.id+' must perform a real engine-driven attack: '+JSON.stringify(observed));coverage.push({id:a.id,liveFrames:observed[a.id]})}

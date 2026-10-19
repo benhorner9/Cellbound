@@ -53,15 +53,19 @@ const viewport=process.env.CELLBOUND_REALTIME_MOBILE?{width:390,height:844}:proc
   }
   const duration=Number(process.env.CELLBOUND_REALTIME_DURATION)||20000;
   const result=await page.evaluate(duration=>new Promise(resolve=>{
-   const frames=[],long=[],poses=new Set(),states=new Set(),start=performance.now();let last=start,maxEffects=0;
+   const frames=[],long=[],poses=new Map(),states=new Set(),start=performance.now();let last=start,maxEffects=0;
    const observer=typeof PerformanceObserver!=='undefined'&&PerformanceObserver.supportedEntryTypes.includes('longtask')?new PerformanceObserver(list=>long.push(...list.getEntries().map(e=>e.duration))):null;
    observer?.observe({type:'longtask'});
    function frame(t){
     frames.push(t-last);last=t;
     maxEffects=Math.max(maxEffects,document.querySelectorAll('.cbl-fx').length);
     document.querySelectorAll('#q2dArena [data-animation-state]').forEach(n=>states.add(n.dataset.animationState));
-    const arm=document.querySelector('#q2dArena .cb-paper-upper-right');if(arm)poses.add(arm.getAttribute('transform'));
-    if(t-start<duration)requestAnimationFrame(frame);else{observer?.disconnect();resolve({frames,long,elapsed:t-start,probe:realtimeProbe,poses:poses.size,states:[...states],maxEffects})}
+    // Track changing poses across the party; the first tank's weapon arm can
+    // remain held while its shield arm blocks. Static arms contribute nothing.
+    document.querySelectorAll('#q2dArena .cb-paper-upper-right,#q2dArena .cb-paper-upper-left').forEach(arm=>{
+     if(!poses.has(arm))poses.set(arm,new Set());poses.get(arm).add(arm.getAttribute('transform'));
+    });
+    if(t-start<duration)requestAnimationFrame(frame);else{observer?.disconnect();resolve({frames,long,elapsed:t-start,probe:realtimeProbe,poses:[...poses.values()].reduce((n,p)=>n+Math.max(0,p.size-1),0),states:[...states],maxEffects})}
    }requestAnimationFrame(frame);
   }),duration);
   const sorted=[...result.frames].sort((a,b)=>a-b);
