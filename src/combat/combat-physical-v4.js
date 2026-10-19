@@ -419,6 +419,7 @@ function spatialLabels(scene,units,g){
  }
 }
 function spatialFrame(scene,bounds,time){
+ if(scene.arena.dataset.authoritativeControl==='1')return;
  const S=window.CellboundCombatSpatial;if(!S||scene.departing&&!scene.traversing)return;
  const width=bounds.width,height=bounds.height;if(width<1||height<1)return;
  if(scene.arena.dataset.spatialArena!=='1'){scene.arena.dataset.spatialArena='1';scene.arena.closest('.cbcombat-arena-wrap')?.classList.add('cbs-spatial-wrap');scene.arena.closest('.cbcombat-battle-panel')?.classList.add('cbs-spatial-panel')}
@@ -491,6 +492,15 @@ function spatialFrame(scene,bounds,time){
 
 function setPosition(scene,u,p,duration=0){
  if(!u||!p||!Number.isFinite(Number(p.x))||!Number.isFinite(Number(p.y)))return;
+ if(scene.arena.dataset.authoritativeControl==='1'){
+  // Control mode renders simulation positions. The cosmetic formation solver must
+  // never move actors away from the coordinates used for targeting and hazards.
+  u.position={x:Number(p.x),y:Number(p.y)};u.spatial=null;
+  const el=u.el;delete el.dataset.spatialOwned;el.dataset.x=String(p.x);el.dataset.y=String(p.y);
+  el.style.setProperty('transition','left 100ms linear, top 100ms linear','important');
+  el.style.setProperty('left',p.x+'%','important');el.style.setProperty('top',p.y+'%','important');
+  el.style.setProperty('transform','translate(-50%,-50%)','important');return
+ }
  if(spatialUpdate(scene,u,p,duration))return;
  u.position={x:Number(p.x),y:Number(p.y)};
  if(scene.position){scene.position(u.el,p,reduce()?0:duration/scene.speed);return}
@@ -923,7 +933,25 @@ FX.movePresentation=(el,p,duration=600)=>{
 window.addEventListener('scroll',()=>{for(const scene of scenes.values())scene.bounds=null},{passive:true,capture:true});
 window.addEventListener('resize',()=>{for(const scene of scenes.values())scene.bounds=null},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf){if(window.CellboundCombatFrame)CellboundCombatFrame.cancel(frame);else cancelAnimationFrame(raf)}raf=0}else{for(const scene of scenes.values())scene.spatialFrameAt=now();wake()}});
+function preserveEntryPose(arena){
+ if(!arena||arena.dataset.authoritativeControl==='1')return;
+ const bounds=arena.getBoundingClientRect();if(!bounds.width||!bounds.height)return;
+ // Capture every painted centre before mounting animation/spatial owners. On
+ // WebKit, disabling an unfinished CSS entrance transition otherwise commits
+ // its distant endpoint before the spatial solver can read the current pose.
+ const entries=[...arena.querySelectorAll(UNIT)].map(el=>{const r=el.getBoundingClientRect();return{el,x:r.left+r.width/2-bounds.left,y:r.top+r.height/2-bounds.top}});
+ for(const {el,x,y} of entries){
+  el.style.setProperty('transition','none','important');
+  el.style.setProperty('margin','0','important');
+  el.style.setProperty('transform','translate(-50%,-50%)','important');
+  el.style.setProperty('left',(x/bounds.width*100)+'%','important');
+  el.style.setProperty('top',(y/bounds.height*100)+'%','important');
+  const spatial=scenes.get(arena)?.units.get(el)?.spatial;
+  if(spatial){spatial.visual=null;spatial.entryVisual={x,y};spatial.drawn=null;spatial.reserved=null;spatial.waypoint=null;spatial.route=null}
+ }
+}
 function combatEvent(e,opts={}){try{
+ if(e?.type==='COMBAT_START')preserveEntryPose(opts.arena||opts.root?.querySelector?.(ARENA));
  const animation=window.CellboundCombatAnimation,arena=mount(opts.arena||opts.root?.querySelector?.(ARENA));
  if(animation&&arena)animation.route(e,{...opts,arena,source:resolve(e.source,opts,arena),target:resolve(e.target,opts,arena)},()=>livingEvent(e,{...opts,arena}));
  else livingEvent(e,opts);
@@ -942,6 +970,7 @@ FX.launchAction=(e,arena,source,target,profile,flight)=>{
  f.n.style.setProperty('--cbl-accent',/heal/.test(profile.kind)?'#76efac':u?.p.accent||'#ddd');wake();
 };
 FX.presentImpact=(e,fn)=>window.CellboundCombatAnimation?window.CellboundCombatAnimation.present(e,fn):fn();
+FX.authoritativeFrame=(arena,positions=[])=>{const scene=scenes.get(arena);if(!scene||arena.dataset.authoritativeControl!=='1')return;for(const data of positions){const u=unit(scene,resolve(data.id,{},arena));if(u)setPosition(scene,u,data.position,100)}};
 FX.syncPositions=(arena,units,objectives={})=>{mount(arena);const scene=scenes.get(arena);if(!scene)return;const zones=[];if(objectives.storm)zones.push({position:objectives.storm.centre||{x:50,y:50},radius:objectives.storm.radius});if(objectives.hill?.radius)zones.push({position:objectives.hill,radius:objectives.hill.radius});const signature=JSON.stringify(zones);if(signature!==scene.spatialZoneSignature){scene.spatialZoneSignature=signature;scene.spatialZones=zones;scene.spatialDirty=true}for(const data of units){const u=unit(scene,resolve(data.id,{},arena));if(u){u.spatialMeta={...u.spatialMeta,...data};u.dead=data.alive===false;setPosition(scene,u,data.position,200)}}wake()};
 if(window.CellboundCombatSpatial)window.CellboundCombatSpatial.inspect=arena=>{const s=scenes.get(arena);return s?{checks:s.spatialChecks,unresolved:s.spatialUnresolved,units:(s.spatialUnits||[]).map(u=>({id:u.id,role:u.role,style:u.style,logical:u.logical,visual:u.visual,reserved:u.reserved,rx:u.rx,ry:u.ry,conflict:u.conflict,state:u.el.dataset.spatialState}))}:null};
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;

@@ -22,7 +22,7 @@ jobs:
           node-version: '20'
       - run: npm ci --ignore-scripts
       - run: npm run build
-      - run: npm install --no-save --package-lock=false playwright@1.51.1
+      - run: npm install --no-save --package-lock=false playwright@1.64.1
       - run: npx playwright install --with-deps chromium
       - name: Verify unified journal and actual six-objective Episode II playthrough
         run: node tests/morrowfields-opening.browser.cjs

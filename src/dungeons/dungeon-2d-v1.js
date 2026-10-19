@@ -1050,6 +1050,9 @@ function briefing(){
  r.querySelector('[data-close]').onclick=close;
  r.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const a=b.dataset.pick.split(':');if(a[0]==='preset')applyTacticsPreset(a[1]);else tactics[a[0]]=a[1];r.querySelectorAll('[data-plan="'+a[0]+'"] button').forEach(x=>x.classList.toggle('active',x===b))});
  r.querySelector('[data-start]').onclick=start;
+ if(window.CellboundLivingControl?.allowed?.()){
+  const trial=document.createElement('button');trial.type='button';trial.dataset.controlTrial='';trial.className='cb2d-start';trial.textContent='TEST HERO CONTROL · NO REWARDS';trial.onclick=()=>startControlTrial().catch(error=>alert(error.message));r.querySelector('aside').appendChild(trial)
+ }
  window.CellboundPartyTactics?.bind?.(r,party());window.CellboundPartyTactics?.advancedBind?.(r,'ashen-vault',party());
  try{bindEndgamePrep()}catch(error){console.warn('Dungeon difficulty controls failed to bind',error)}
 }
@@ -2479,6 +2482,7 @@ function rebornCastClear(label='—'){
  if(n)n.textContent=label;if(tm)tm.textContent='—';if(f){f.style.transition='none';f.style.width='0%'}
 }
 function rebornTelegraph(e){
+ if(e.payload?.controlGeometry){const v=window.CellboundLivingControl?.telegraph?.($('#cb2dArena'),e);if(v){run.rebornTelegraphs=run.rebornTelegraphs||{};run.rebornTelegraphs[e.payload.token]=v;return v}}
  const type=e.payload?.mechanicType,tokenId=e.payload?.token||('tg-'+e.timestamp),source=e.source||'e-0',target=e.payload?.targetId||e.target;let v=null;
  if(type==='cone')v=coneTelegraph(source,target||'p-'+party()[0]?.id,'FRONTAL · TANK FACE AWAY');
  else if(type==='line')v=lineTelegraph(source,target||'p-'+party().find(c=>role(c)!=='tank')?.id,'LINE ATTACK · SIDESTEP');
@@ -2733,6 +2737,7 @@ async function playLiveRebornSession(result,tok){
  const playbackRun=run;
  const stageMeta={stageId:result?.stageId,stageTitle:result?.stageTitle,startHp:result?.startHp};
  run.combatActive=true;run.rebornResult=result;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer(false);
+ const controlHud=window.CellboundLivingControl?.mount?.({root:root(),arena:$('#cb2dArena'),session,characters:party()});
  let activeResult=result,finished=false,raf=0,lastWall=performance.now();
  const resume=()=>{lastWall=performance.now()};document.addEventListener('visibilitychange',resume);
  const renderEvents=events=>{
@@ -2763,6 +2768,7 @@ async function playLiveRebornSession(result,tok){
  return await new Promise(resolve=>{
   const finishPlayback=(value,finalResult=null)=>{
    if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',resume);
+   controlHud?.dispose?.();
    const final=finalResult||session.snapshot?.()||activeResult;
    if(final){
     final.stageId=stageMeta.stageId;final.stageTitle=stageMeta.stageTitle;final.startHp=stageMeta.startHp;
@@ -2783,10 +2789,11 @@ async function playLiveRebornSession(result,tok){
     }
     approachComplete=true;lastWall=now;
    }
-   const speed=combatPlaybackSpeed(run?.speed||1),delta=Math.max(0,Math.min(250,now-lastWall))*speed;lastWall=now;
+   const speed=run.controlTrial?1:combatPlaybackSpeed(run?.speed||1),delta=Math.max(0,Math.min(250,now-lastWall))*speed;lastWall=now;
    const step=session.advance(delta);
    refreshCombatCommandCooldowns();
    if(step.events?.length)renderEvents(step.events);
+   controlHud?.update?.();
    if(step.result)activeResult=step.result;
    if(step.finished){
     const final=step.result||session.snapshot?.()||activeResult;
@@ -2835,7 +2842,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
    };
    if(!replayMode)run.rebornPlayback={issueCommand,now:readClock,result:()=>activeResult};
    const finishPlayback=value=>{
-     if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',resume);
+     if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
      if(run){run.combatActive=false;run.rebornPlayback=null;run.rebornResult=activeResult}
      resolve(value)
    };
@@ -3206,8 +3213,9 @@ async function playSharedEncounter(options={}){
  const extParty=Array.isArray(options.party)?options.party.filter(Boolean):[],encounter=options.encounter,result=options.result;
  if(!extParty.length||!encounter||!result)throw new Error('Shared combat viewer requires party, encounter and result.');
  token++;const tok=token;
+ const controlTrial=options.controlTrial===true&&window.CellboundLivingControl?.allowed?.();
  const resources=Object.fromEntries(extParty.map(c=>{const d=resourceDefFor(c);return[c.id,{name:d.name,max:d.max,value:d.start}]}));
- run={token:tok,stage:0,speed:1,externalMode:true,externalParty:extParty,externalStage:{...encounter,enemies:(encounter.enemies||[]).map(x=>typeof x==='object'?{...x}:x)},externalOnClose:options.onClose||null,externalOnEvent:typeof options.onEvent==='function'?options.onEvent:null,
+ run={token:tok,stage:0,speed:1,controlTrial,externalMode:true,externalParty:extParty,externalStage:{...encounter,enemies:(encounter.enemies||[]).map(x=>typeof x==='object'?{...x}:x)},externalOnClose:options.onClose||null,externalOnEvent:typeof options.onEvent==='function'?options.onEvent:null,
    resources,cooldowns:Object.fromEntries(extParty.map(c=>[c.id,{}])),statuses:Object.fromEntries(extParty.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(extParty.map(c=>[c.id,0])),
    expeditionTimeMs:0,condition:Object.fromEntries(extParty.map(c=>[c.id,100])),hp:Object.fromEntries(extParty.map(c=>[c.id,Math.max(0,Math.min(100,Number(c?._combatHealthPct??100))) ])),enemyHp:[],enemyMax:[],threat:[],aggro:[],
    damageDone:Object.fromEntries(extParty.map(c=>[c.id,0])),healingDone:Object.fromEntries(extParty.map(c=>[c.id,0])),overhealing:Object.fromEntries(extParty.map(c=>[c.id,0])),
@@ -3216,7 +3224,7 @@ async function playSharedEncounter(options={}){
    rebornHistory:[],rebornReplay:null,rebornResult:result,rebornTelegraphs:{},groundHazards:{},rebornCastTimer:null,
    runtimeStageStartedAt:Number(options.startAt)||0,rebornCommands:[],commandSeq:0,commandCooldownUntil:0};
  const startTactics=result?.events?.find(e=>e.type==='COMBAT_START')?.payload?.tactics||options.tactics||{};
- run.rebornSimulation={options:{party:extParty,encounter:copyObject(encounter),tactics:copyObject(startTactics),seed:result.seed},meta:options.zone?{zone:options.zone}:{}};
+ run.rebornSimulation={options:{party:extParty,encounter:copyObject(encounter),tactics:copyObject(startTactics),seed:result.seed,...(controlTrial?{directControl:true}:{})},meta:options.zone?{zone:options.zone}:{}};
  const C=window.CellboundCombatStandard;if(C?.createLiveSession){
    run.rebornLiveSession=C.createLiveSession(run.rebornSimulation.options,run.rebornSimulation.meta);
    if(typeof options.onCommand==='function'){
@@ -3227,6 +3235,7 @@ async function playSharedEncounter(options={}){
    try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,liveStart)}catch(_){}
  }
  sharedViewerShell(options);
+ if(controlTrial){const speed=$('[data-speed]');if(speed){speed.disabled=true;speed.textContent='1×'};const potion=$('[data-shared-potion]');if(potion)potion.remove()}
  if(options.disableConsumables){const potion=$('[data-shared-potion]');if(potion){potion.disabled=true;potion.hidden=true}}
  spawnSharedEncounter(run.externalStage,result,options);
  const outcome=await playRebornTimeline(result,tok);
@@ -3234,6 +3243,31 @@ async function playSharedEncounter(options={}){
  run.resolved=true;status(outcome==='victory'?'Encounter cleared':'Party defeated');
  if(typeof options.onComplete==='function'){try{options.onComplete(outcome,result)}catch(error){console.warn('Shared combat completion callback failed',error)}}
  return outcome
+}
+// Development owner trial: clones the saved party and uses shared encounters only.
+// There is no Endgame attempt, reward, consumable, injury or account-save call here.
+async function startControlTrial(index=0,carriedParty=null){
+ if(!window.CellboundLivingControl?.allowed?.())throw Error('Hero control testing is available to the development owner.');
+ if(run&&!run.externalMode&&!run.resolved)throw Error('Finish or leave the current expedition first.');
+ const stage=STAGES[index];if(!stage)throw Error('Unknown Ashen Vault chamber.');
+ const source=carriedParty||Game?.getPartyCharacters?.();if(!source||source.length!==5)throw Error('Choose a party of five first.');
+ const trialParty=copyObject(source).map((c,i)=>({...c,_combatPosition:stagePartyPosition(stage,c,i)}));
+ const encounter=rebornEncounter(stage),room=ashenRoomConfig(stage.id),result={seed:'living-control-v2:'+stage.id,events:[],finalState:{players:[],enemies:[]}};
+ close(true);
+ await playSharedEncounter({party:trialParty,encounter,result,controlTrial:true,disableConsumables:true,zone:'ashen-control-trial',theme:'ashen',room:stage.id,title:stage.title,subtitle:'HERO CONTROL TEST · NO REWARDS',
+  environmentHtml:'<img class="cb2d-stage-image" src="'+esc(room.art)+'" alt="" draggable="false">',
+  onComplete(outcome,final){
+   const panel=$('.cb2d-controls');if(!panel)return;
+   panel.innerHTML='<p>'+esc(outcome==='victory'?'Chamber cleared.':'The party was defeated.')+' This test does not change your saved party or award loot.</p><button type="button" data-trial-again>Retry chamber</button>'+(outcome==='victory'&&index<STAGES.length-1?'<button type="button" data-trial-next>Next chamber →</button>':'')+'<button type="button" data-trial-leave>Leave test</button>';
+   panel.querySelector('[data-trial-again]').onclick=()=>startControlTrial(index).catch(error=>alert(error.message));
+   panel.querySelector('[data-trial-leave]').onclick=()=>close(true);
+   const next=panel.querySelector('[data-trial-next]');if(next)next.onclick=()=>{
+    const carried=trialParty.map(c=>{const u=final.finalState.players.find(u=>u.characterId===c.id||u.id==='p-'+c.id);return u?{...c,_combatHealthPct:u.health/u.maxHealth*100,_combatResource:u.resource,_combatCooldowns:u.cooldowns,_combatStatuses:rebornPersistentStatuses(u,final.durationMs),_combatTalentTimers:Object.fromEntries(Object.entries(u.talentTimers||{}).map(([k,v])=>[k,Math.max(0,Number(v)-final.durationMs)])),_combatTalentFlags:u.talentFlags,_combatTalentCounters:u.talentCounters}:c});
+    startControlTrial(index+1,carried).catch(error=>alert(error.message))
+   }
+  }
+ });
+ return result
 }
 function externalCharacters(){return Array.isArray(run?.externalParty)?run.externalParty:[]}
 
@@ -3262,7 +3296,7 @@ function init(){
  document.documentElement.dataset.cb2d='ready';
  syncEntryButton();
  setInterval(syncEntryButton,400);
- window.CellboundDungeon2D={open:openDungeon,briefing,currentRun:()=>run,openSharedExploration,playSharedEncounter,externalCharacters,combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,refreshExternalCommandCooldowns,useCombatPotion,dockFullscreenCombatMeta,closeShared:(silent=false)=>{if(run?.externalMode)close(Boolean(silent))}};
+ window.CellboundDungeon2D={startControlTrial,open:openDungeon,briefing,currentRun:()=>run,openSharedExploration,playSharedEncounter,externalCharacters,combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,refreshExternalCommandCooldowns,useCombatPotion,dockFullscreenCombatMeta,closeShared:(silent=false)=>{if(run?.externalMode)close(Boolean(silent))}};
 }
 init();
 })();

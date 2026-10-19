@@ -6,6 +6,7 @@ const {mount,coreLoopState}=require('./full-playthrough.browser.cjs');
  try{
   fs.mkdirSync('/tmp/cellbound-realtime',{recursive:true});
   const page=await browser.newPage({viewport:{width:1366,height:1024}});
+  page.on('crash',()=>console.error('Room-transition renderer crashed'));
   const missing=[];page.on('response',r=>{if(r.status()===404){missing.push(r.url());console.log('Missing resource',r.url())}});
   const errors=await mount(page,coreLoopState(),false,{simulateDungeonRuntime:true});
   await page.evaluate(()=>{

@@ -79,6 +79,7 @@ for(const file of files){
     if(endpoint.protocol!=='https:'||!process.env.CELLBOUND_STAGING_SUPABASE_URL)throw Error('Chapter service requires isolated development configuration and HTTPS');
     contents=contents.replace('</head>','<script>window.CELLBOUND_EPISODE_BUILD='+JSON.stringify(require('./config/development.json').authorityBuild)+';window.CELLBOUND_EPISODE_SERVICE_URL='+JSON.stringify(endpoint.href).replace(/</g,'\\u003c')+';</script></head>');
   }
+  if(file==='guild.html'&&!productionBuild&&(process.env.GITHUB_REF==='refs/heads/staging'||process.env.CELLBOUND_TARGET==='development'))contents=contents.replace('</head>','<script>window.CELLBOUND_CONTROL_PREVIEW=true;</script></head>');
   if(file==='guild.html')contents=contents.replace('__CELLBOUND_SECURE_SAVES__',process.env.CELLBOUND_STAGING_SUPABASE_URL?'true':'false');
 
   if(file.endsWith('.js')){
@@ -340,7 +341,7 @@ if(file==='quests-v2.js'){
     for(const hook of ["spec:'Outlaw'","id:'sinister-strike'","id:'pistol-shot'","id:'dispatch'","id:'roll-the-bones'","id:'blade-flurry'","id:'between-the-eyes'","id:'adrenaline-rush'","id:'killing-spree'","COMBO_POINTS_CHANGED","Opportunity","Quick Draw","Ruthlessness","Outlaw Rogue Combo Points","Outlaw Roll the Bones","Outlaw Blade Flurry","Outlaw Between the Eyes","Outlaw Killing Spree","Outlaw Rogue Talent Skill Gates"])if(!combatFeatureSource.includes(hook))throw new Error('Outlaw Rogue combat migration is incomplete: '+hook);
     if(!combatFeatureSource.includes("_combatPosition")||!combatFeatureSource.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!combatFeatureSource.includes("focusSelectedDamageOnly")||!combatFeatureSource.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!combatFeatureSource.includes("const VERSION='1.7.0'")||!combatFeatureSource.includes('tests:{run:runSelfTests}'))throw new Error('Canonical pre-direct-control Combat Reborn engine/version is missing');
+    if(!combatFeatureSource.includes("const VERSION='1.8.0-control-preview'")||!combatFeatureSource.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn control-preview engine/version is missing');
     for(const hook of ['function createCombatContext(','function advanceCombatTick(','function createLiveSession(','const advance=deltaMs=>','spawnEnemy,addMechanics,setMechanicInterval,signal','version:VERSION,seed:ctx.seed,advance,command,commandState,commandPowerState:powerState,heal','get timeMs(){return ctx.time}'])if(!combatFeatureSource.includes(hook))throw new Error('Real-time Combat Reborn session contract is missing '+hook);
     for(const hook of ['function applyPartyCommand(','function schedulePartyCommands(','PARTY_COMMAND','COMMAND_POWER','commandFocusId','mechanicRng','refillMechanicBag','combatBehaviour','const COMMAND_RULES=','COMMAND_POWER_MAX=5','COMMAND_POWER_START=2','function gainCommandPower(','function tickCommandPower(','commandCooldowns:{}','commandPower:clamp(','commandRemainingMs','sharedRemainingMs',"type==='stack'","type==='regroup'"])if(!combatFeatureSource.includes(hook))throw new Error('Commander v2 combat contract is missing '+hook);
     for(const hook of ['function lateBalanceFactor(','function specEndgameDamageAdjustment(','function specEndgameHealingAdjustment(','function specEndgameTankTakenAdjustment(','specEndgameDamageAdjustment(u)','specEndgameHealingAdjustment(healer)','specEndgameTankTakenAdjustment(target)'])if(!combatFeatureSource.includes(hook))throw new Error('Post real-time level-15 balance contract is missing '+hook);
@@ -775,7 +776,7 @@ const UI_BUNDLE_SOURCES=[
   'readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css',
   'roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','monster-visuals-v1.css','bank-v2.css','character-command-v1.css',
   'character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','character-forge-v1.css',
-  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','combat-cinematic-v1.css','layout-safety-v1.css','highscores-v1.css','top-navigation-v1.css','ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css','adventure-combat-v1.css','workshop-economy-v1.css','community-workspace-v1.css','morrowfields-v1.css','ui-polish-block8.css'
+  'cellbound-ui-art-v1.css','accessibility-polish-v1.css','admin-design-booth-v1.css','combat-cinematic-v1.css','layout-safety-v1.css','highscores-v1.css','top-navigation-v1.css','ui-foundation-v1.css','guild-hall-v2.css','heroes-workspace-v1.css','adventure-combat-v1.css','workshop-economy-v1.css','community-workspace-v1.css','morrowfields-v1.css','living-control-v2.css','ui-polish-block8.css'
 ];
 {
   const bundle=UI_BUNDLE_SOURCES.map(file=>'/* ===== '+file+' ===== */\n'+fs.readFileSync(sourcePath(file),'utf8')).join('\n\n');

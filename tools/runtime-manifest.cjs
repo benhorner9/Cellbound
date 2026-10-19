@@ -167,6 +167,8 @@ const groups=Object.freeze({
   "combat-identities-v1.js",
   "combat-data-v1.js",
   "combat-reborn-v1.js",
+  "living-control-v2.js",
+  "living-control-v2.css",
   "combat-standard-v1.js",
   "pvp-ruleset-v1.js",
   "pvp-objectives-v1.js",
@@ -217,6 +219,8 @@ const files=Object.freeze([
 ]);
 
 const sourceOverrides=Object.freeze({
+  "living-control-v2.js":"src/combat/living-control-v2.js",
+  "living-control-v2.css":"src/combat/living-control-v2.css",
   "null-story-data-v1.js":"src/episodes/null-story-data-v1.js",
   "null-story-v1.js":"src/episodes/null-story-v1.js",
   "morrowfields-data-v1.js":"src/episodes/morrowfields-data-v1.js",

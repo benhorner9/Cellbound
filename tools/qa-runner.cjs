@@ -54,7 +54,15 @@ const suites={
   core:all.filter(x=>!x.endsWith('.browser.cjs')&&!appearance.has(x)),
   browser:all.filter(x=>x.endsWith('.browser.cjs'))
 };
-const suite=suites[category];
+let suite=suites[category];
+const shardText=process.env.CELLBOUND_TEST_SHARD;
+if(shardText){
+ const match=/^([1-9]\d*)\/([1-9]\d*)$/.exec(shardText);
+ if(category!=='browser'||!match||+match[1]>+match[2]||+match[2]>suite.length)throw Error('Invalid browser shard: '+shardText);
+ const index=+match[1]-1,total=+match[2];
+ suite=suite.filter((_,i)=>i%total===index);
+ console.log('Browser shard '+shardText+'; '+suite.length+' of '+suites.browser.length+' tests.');
+}
 const engine=category==='browser'?(process.env.CELLBOUND_TEST_ENGINE==='webkit'?'WebKit':'Chromium'):'Node';
 const results=[];
 const started=Date.now();

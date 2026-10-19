@@ -1,0 +1,51 @@
+/* Scoped to the opt-in control trial; existing release layouts stay intact. */
+#cb2dBackdrop .living-control{height:100dvh!important;max-height:100dvh!important;width:100%!important;max-width:none!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;background:#101719!important}
+#cb2dBackdrop .living-control .cbcombat-header{flex:0 0 auto!important;min-height:48px!important;padding:6px 12px!important}
+#cb2dBackdrop .living-control .cbcombat-route,#cb2dBackdrop .living-control .cbcombat-left-column,#cb2dBackdrop .living-control .cb2d-controls,#cb2dBackdrop .living-control .cb2d-plan{display:none!important}
+#cb2dBackdrop .living-control .cbcombat-grid{display:flex!important;flex:1 1 0!important;min-height:0!important;padding:0!important;gap:0!important;overflow:hidden!important}
+#cb2dBackdrop .living-control .cbcombat-battle-panel{display:flex!important;flex-direction:column!important;width:100%!important;min-height:0!important;padding:0!important}
+#cb2dBackdrop .living-control .cbcombat-arena-wrap{flex:1 1 auto!important;min-height:0!important;height:auto!important;aspect-ratio:auto!important;overflow:hidden!important}
+#cb2dBackdrop .living-control #cb2dArena{width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;aspect-ratio:auto!important;touch-action:manipulation}
+#cb2dBackdrop .living-control .cbcombat-battle-topbar{min-height:22px!important;padding:3px 10px!important}
+#cb2dBackdrop .living-control .cbcombat-right-column{display:none!important}
+#cb2dBackdrop .living-control[data-open-drawer="meters"] .cbcombat-right-column{display:block!important;position:absolute!important;right:8px!important;top:60px!important;width:min(320px,85vw)!important;max-height:55vh!important;overflow:auto!important;z-index:80!important;background:#101719!important}
+.lc-hud{flex:0 0 auto;position:relative;z-index:70;padding:6px max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom));background:#111c20;border-top:1px solid #587069;color:#e6ece7;font:13px system-ui;max-height:48dvh;overflow:auto}
+.lc-hud button{touch-action:manipulation;color:#e6ece7;background:#1a2a2d;border:1px solid #405957;border-radius:7px;min-height:46px;padding:5px 9px;font:inherit;cursor:pointer}
+.lc-hud button:focus-visible{outline:3px solid #f2ce80;outline-offset:-3px}
+.lc-hud button:disabled{opacity:.48;cursor:default}
+.lc-heroes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.lc-heroes button{display:grid;grid-template-columns:30px 1fr;text-align:left;gap:2px 5px;min-width:0}
+.lc-heroes button[aria-pressed="true"]{border-color:#f2ce80;background:#35413a;box-shadow:inset 0 0 0 1px #f2ce80}
+.lc-avatar{grid-row:1/4;align-self:center;display:grid;place-items:center;background:#344744;border-radius:50%;width:28px;height:28px;font-size:11px;color:#f2ce80}
+.lc-heroes b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.lc-heroes em{height:4px;background:#0a1012;border-radius:3px;overflow:hidden}
+.lc-heroes em i{height:100%;display:block;background:#74bf91}
+.lc-heroes small{font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lc-context{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px}
+.lc-context>[data-lc-target]{margin-right:auto}
+.lc-context button{min-height:44px}
+.lc-abilities{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.lc-abilities button{flex:0 0 118px;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.lc-abilities small,.lc-orders small{display:block;font-size:10px;color:#bed0c8}
+.lc-abilities b{font-size:11px}
+.lc-orders:not([hidden]){display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;margin-top:5px}
+.lc-orders button{font-size:11px}
+.lc-status{margin:4px 0 0!important;font-size:11px!important;line-height:1.3!important;color:#bcd0c8!important}
+#cb2dArena .lc-controlled{filter:drop-shadow(0 0 5px #f8d886)!important}
+#cb2dArena .lc-targeted:after{content:'▼';position:absolute;top:-24px;left:50%;color:#ffb56d;font-size:22px;transform:translateX(-50%)}
+.lc-telegraph{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:10;fill:#ee592b55;stroke:#ffb66b;stroke-width:.35}
+@media(max-width:600px){.lc-heroes button{display:flex;flex-direction:column;align-items:stretch;padding:4px;min-height:53px}.lc-avatar{display:none}.lc-heroes b{font-size:10px}.lc-heroes small{font-size:8px}.lc-context{flex-wrap:wrap;gap:4px}.lc-context b{font-size:11px}.lc-context>[data-lc-target]{font-size:10px}.lc-context button{padding:4px 6px;font-size:11px}.lc-orders:not([hidden]){grid-template-columns:repeat(4,minmax(0,1fr))}.lc-abilities button{flex-basis:96px}.lc-status{font-size:10px!important}}
+@media(max-height:500px){.lc-hud{max-height:48dvh}.lc-heroes button{min-height:44px}.lc-context{margin:2px 0}.lc-context button{min-height:36px}.lc-status{display:none}.lc-abilities button{min-height:44px}}
+/* Reset the older immersive absolute anchors before sizing the control HUD. */
+#cb2dBackdrop .living-control .cbcombat-grid{align-items:stretch!important}
+#cb2dBackdrop .living-control .cbcombat-battle-panel{flex:1 1 auto!important;height:100%!important;align-self:stretch!important;min-width:0!important;border:0!important}
+#cb2dBackdrop .living-control .cbcombat-arena-wrap{position:relative!important;inset:auto!important;width:100%!important;margin:0!important}
+#cb2dBackdrop .living-control .cbcombat-battle-topbar{position:relative!important;inset:auto!important;flex:0 0 auto!important;margin:0!important;max-height:52px!important}
+#cb2dBackdrop .living-control .cb2d-cast{position:relative!important;inset:auto!important;width:100%!important;margin:0!important;flex:0 0 auto!important;min-height:30px!important;box-sizing:border-box!important}
+#cb2dBackdrop .living-control .cbcombat-chat{display:none!important}
+#cb2dBackdrop .living-control[data-open-drawer="chat"] .cbcombat-chat{display:block!important;position:absolute!important;bottom:0!important;left:0!important;width:min(450px,100%)!important;z-index:90!important}
+
+.lc-hud .lc-avatar{width:32px;height:36px;grid-row:1/5;border-radius:6px;overflow:hidden}
+.lc-hud .lc-avatar .cb-portrait{width:100%!important;height:100%!important;border:0!important;border-radius:6px!important}
+.lc-hud .lc-resource{height:3px}.lc-hud .lc-resource i{background:#77aee0}
+@media(max-width:600px){.lc-hud .lc-avatar{display:block;width:26px;height:28px;align-self:center}.lc-hud .lc-heroes button{min-height:80px}.lc-hud .lc-heroes em{width:100%}}
