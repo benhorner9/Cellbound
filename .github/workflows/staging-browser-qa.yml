@@ -76,6 +76,7 @@ jobs:
             /tmp/cellbound-class-animation/*.json
             /tmp/cellbound-animation/*.png
             /tmp/cellbound-animation/*.webm
+            /tmp/cellbound-control-evidence/**
             /tmp/cellbound-living-combat.png
             /tmp/cellbound-equipment-fit-*.png
             /tmp/cellbound-weapon-*.png

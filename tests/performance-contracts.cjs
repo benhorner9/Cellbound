@@ -12,7 +12,8 @@ assert(!rig.includes('forge-bases'),'Character rig must not retain obsolete rast
 
 const combatEngine=read('src/combat/combat-reborn-v1.js');
 const combatData=read('src/combat/combat-data-v1.js');
-assert(Buffer.byteLength(combatEngine)<350000,'Combat Reborn engine should stay below 350 KB after static data extraction');
+// The opt-in control/replay path adds ~14 KB to the 349 KB baseline. Keep a bounded budget.
+assert(Buffer.byteLength(combatEngine)<370000,'Combat Reborn with direct control should stay below 370 KB');
 assert(Buffer.byteLength(combatData)>60000&&Buffer.byteLength(combatData)<100000,'Combat static data split has an unexpected size');
 assert(combatEngine.includes('CellboundCombatData')&&combatData.includes('window.CellboundCombatData'),'Combat engine/data split contract is missing');
 

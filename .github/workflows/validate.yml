@@ -105,6 +105,7 @@ jobs:
         with:
           name: cellbound-release-review-${{ matrix.engine }}
           path: |
+            /tmp/cellbound-control-evidence/**
             /tmp/cellbound-living-combat.png
             /tmp/cellbound-equipment-fit-*.png
             /tmp/cellbound-race-identity-v2-*.png
