@@ -213,12 +213,36 @@ jobs:
           test "$(wc -c < /tmp/oakrest-dev-three.js)" -gt 100000
           echo "DEV OK: $base/ ($EXPECTED_SHA)" >> "$GITHUB_STEP_SUMMARY"
 
+  deployment-gate-diagnostics:
+    name: Check public release gate conditions
+    needs: [build-and-test, deploy-dev]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record why public promotion is allowed or blocked
+        env:
+          DEV_RESULT: ${{ needs['deploy-dev'].result }}
+          BUILD_RESULT: ${{ needs['build-and-test'].result }}
+          BROWSER_OUTCOME: ${{ needs['build-and-test'].outputs.browser_outcome }}
+          EVENT: ${{ github.event_name }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        shell: bash
+        run: |
+          {
+            echo "### Oakrest release gate"
+            echo "Build: $BUILD_RESULT"
+            echo "Chromium: $BROWSER_OUTCOME"
+            echo "Dev deployment: $DEV_RESULT"
+            echo "Trigger: $EVENT"
+            echo "Approved public push: $(case "$COMMIT_MESSAGE" in *'[oakrest-public-approved]'*) echo yes;; *) echo no;; esac)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   deploy-public:
     name: Publish ONLY /oakrest/ after passing dev checks
     needs: [build-and-test, deploy-dev]
     if: >-
-      needs.deploy-dev.result == 'success' &&
-      needs.build-and-test.outputs.browser_outcome == 'success' &&
+      needs['deploy-dev'].result == 'success' &&
+      needs['build-and-test'].outputs.browser_outcome == 'success' &&
       (
         (github.event_name == 'push' && contains(github.event.head_commit.message, '[oakrest-public-approved]')) ||
         (github.event_name == 'workflow_dispatch' && inputs.channel == 'both' && inputs.confirm_public == 'PUBLISH_OAKREST')
