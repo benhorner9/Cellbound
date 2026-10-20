@@ -1,0 +1,113 @@
+name: Deploy Oakrest development to shared hosting
+
+on:
+  push:
+    branches:
+      - deploy/oakrest-dev-20261020
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oakrest-dev-shared-host
+  cancel-in-progress: false
+
+jobs:
+  oakrest-development-only:
+    name: Publish Oakrest to /oakrest-dev/ only
+    if: github.repository == 'benhorner9/Cellbound' && github.ref == 'refs/heads/deploy/oakrest-dev-20261020'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the verified Oakrest development commit
+        uses: actions/checkout@v4
+        with:
+          repository: benhorner9/Projectoakrest
+          ref: 9b3b2b5e29c89f6c477d2387214d69be7a422568
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify Oakrest static build and regression tests
+        run: |
+          set -euo pipefail
+          npm run check
+          npm test
+          npm run build
+
+      - name: Verify isolated deployment files and stamp commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -f dist/characters.html
+          test -f dist/src/main.js
+          test -f dist/src/town-services.js
+          test -f dist/src/town-world.js
+          test -f dist/src/town-ui.js
+          test -f dist/asset-version.json
+          ! test -f dist/guild.html
+          node - <<'NODE'
+          const fs = require('fs');
+          fs.writeFileSync('dist/build-meta.json', JSON.stringify({
+            project: 'oakrest',
+            environment: 'development',
+            branch: 'overhaul/greenwood-gameplay-visuals',
+            commit: '9b3b2b5e29c89f6c477d2387214d69be7a422568',
+            deployedAt: new Date().toISOString()
+          }, null, 2) + '\n');
+          NODE
+
+      - name: Check existing shared-host credentials
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$FTP_SERVER"
+          test -n "$FTP_USERNAME"
+          test -n "$FTP_PASSWORD"
+
+      - name: Upload only to the separate Oakrest development directory
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./dist/
+          server-dir: ./oakrest-dev/
+          state-name: .ftp-deploy-oakrest-dev-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+
+      - name: Verify the deployed Oakrest development build
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 2 --max-time 25 \
+            'https://playcellbound.com/oakrest-dev/build-meta.json' \
+            -o /tmp/oakrest-dev-build-meta.json
+          node - <<'NODE'
+          const fs = require('fs');
+          const meta = JSON.parse(fs.readFileSync('/tmp/oakrest-dev-build-meta.json', 'utf8'));
+          if (meta.project !== 'oakrest' ||
+              meta.environment !== 'development' ||
+              meta.commit !== '9b3b2b5e29c89f6c477d2387214d69be7a422568') {
+            throw new Error('Oakrest development URL does not serve the expected commit');
+          }
+          console.log('Verified isolated Oakrest dev build', meta.commit);
+          NODE
+          curl --fail --silent --show-error --location --retry 2 --max-time 25 \
+            'https://playcellbound.com/oakrest-dev/index.html' -o /tmp/oakrest-dev-index.html
+          grep -F 'Oakrest' /tmp/oakrest-dev-index.html
