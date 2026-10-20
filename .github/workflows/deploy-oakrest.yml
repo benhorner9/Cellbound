@@ -22,7 +22,7 @@ on:
         description: 'Oakrest commit SHA to deploy (PR #1 remains unmerged)'
         required: true
         type: string
-        default: '461ec71ea6b67583f28c097d46a93e2a8ff3dff0'
+        default: 'e2b780b9f8b121ed24d8b2e5bb0a2c5c9da33ece'
       confirm_public:
         description: 'For both, enter PUBLISH_OAKREST'
         required: false
@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: ${{ inputs.oakrest_ref || '461ec71ea6b67583f28c097d46a93e2a8ff3dff0' }}
+          ref: ${{ inputs.oakrest_ref || 'e2b780b9f8b121ed24d8b2e5bb0a2c5c9da33ece' }}
           path: oakrest
           persist-credentials: false
 
@@ -162,7 +162,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: ${{ inputs.oakrest_ref || '461ec71ea6b67583f28c097d46a93e2a8ff3dff0' }}
+          ref: ${{ inputs.oakrest_ref || 'e2b780b9f8b121ed24d8b2e5bb0a2c5c9da33ece' }}
           path: oakrest
           persist-credentials: false
       - uses: actions/setup-node@v4
