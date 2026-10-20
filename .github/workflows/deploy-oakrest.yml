@@ -1,0 +1,269 @@
+# Project Oakrest deploys into two isolated subdirectories of the existing
+# Cellbound FTPS document root. It NEVER uploads to ./ or ./game/.
+# Do not add production FTP credentials to the Oakrest repository.
+name: Oakrest - Shared Host Deploy
+
+on:
+  # First-time setup can deliberately publish both destinations with an approved
+  # commit message. Future edits do not automatically publish the public game.
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/deploy-oakrest.yml
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Deploy the dev game, or dev followed by public'
+        required: true
+        type: choice
+        options: [dev, both]
+        default: dev
+      oakrest_ref:
+        description: 'Oakrest commit SHA to deploy (PR #1 remains unmerged)'
+        required: true
+        type: string
+        default: 'f3c32eeaf270c1c67af10eb6a834f3c21060f47d'
+      confirm_public:
+        description: 'For both, enter PUBLISH_OAKREST'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oakrest-shared-host-deployment
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    name: Build and test exact Oakrest revision
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      oakrest_sha: ${{ steps.identity.outputs.sha }}
+      browser_outcome: ${{ steps.browser.outcome }}
+    steps:
+      - name: Check out selected Project Oakrest revision (NOT Cellbound)
+        uses: actions/checkout@v4
+        with:
+          repository: benhorner9/Projectoakrest
+          ref: ${{ inputs.oakrest_ref || 'f3c32eeaf270c1c67af10eb6a834f3c21060f47d' }}
+          path: oakrest
+          persist-credentials: false
+
+      - name: Identify exact deployed revision
+        id: identity
+        working-directory: oakrest
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          test -n "$sha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Oakrest source commit: $sha" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: oakrest/package-lock.json
+
+      - name: Install locked dependencies
+        working-directory: oakrest
+        run: npm ci --ignore-scripts
+
+      - name: JavaScript syntax and regression tests
+        working-directory: oakrest
+        run: |
+          npm run check
+          npm test
+
+      - name: Install Chromium for real-browser QA
+        id: browser-setup
+        continue-on-error: true
+        working-directory: oakrest
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser gameplay, touch simulation and stability checks
+        id: browser
+        if: steps.browser-setup.outcome == 'success'
+        continue-on-error: true
+        working-directory: oakrest
+        run: |
+          mkdir -p qa
+          timeout 210s npm run test:browser
+
+      - name: Record browser QA limitations and outcome
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Oakrest QA"
+            echo "- JS syntax and unit/regression checks must pass for publication."
+            echo "- Chromium setup: ${{ steps.browser-setup.outcome }}"
+            echo "- Chromium browser suite: ${{ steps.browser.outcome }}"
+            echo "- WebKit and physical iPad hardware are NOT claimed as tested by this workflow."
+            echo "- If Chromium fails, the dev build may still deploy for diagnosis; public promotion is blocked."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build relocatable static Oakrest package
+        working-directory: oakrest
+        run: npm run build
+
+      - name: Stamp exact build identity and verify isolated assets
+        working-directory: oakrest
+        env:
+          OAKREST_SHA: ${{ steps.identity.outputs.sha }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync,existsSync,statSync} from 'node:fs';
+          import {join} from 'node:path';
+          const dist='dist';
+          const mandatory=['index.html','src/main.js','src/rules.js','src/greenwood.css','vendor/three.module.min.js'];
+          for(const path of mandatory) {
+            if(!existsSync(join(dist,path)) || statSync(join(dist,path)).size===0)
+              throw Error('Missing build asset: '+path);
+          }
+          const html=readFileSync(join(dist,'index.html'),'utf8');
+          if(!html.includes('./src/main.js') || !html.includes('./vendor/three.module.min.js'))
+            throw Error('Expected relative module asset paths are missing.');
+          if(/(?:src|href)=["']\/(?!\/)/.test(html))
+            throw Error('Root-relative HTML assets would break subdirectory deployment.');
+          if(!/^[0-9a-f]{40}$/.test(process.env.OAKREST_SHA))
+            throw Error('Invalid source SHA.');
+          writeFileSync(join(dist,'build-meta.json'),JSON.stringify({
+            project:'oakrest',commit:process.env.OAKREST_SHA,
+            builtAt:new Date().toISOString(),source:'benhorner9/Projectoakrest'
+          },null,2)+'\n');
+          console.log('Static build verified for /oakrest-dev/ and /oakrest/');
+          NODE
+
+      - name: Store deployable build for isolated FTP jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: oakrest-static-build
+          path: oakrest/dist/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save browser evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oakrest-browser-qa
+          path: oakrest/qa/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  deploy-dev:
+    name: Deploy ONLY /oakrest-dev/
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Confirm shared host credentials exist
+        env:
+          HOST: ${{ secrets.FTP_SERVER }}
+          USER: ${{ secrets.FTP_USERNAME }}
+          PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          test -n "$HOST" && test -n "$USER" && test -n "$PASS"
+
+      - name: Download approved game build
+        uses: actions/download-artifact@v4
+        with:
+          name: oakrest-static-build
+          path: dist
+
+      - name: Transfer to dedicated development folder
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          server-dir: ./oakrest-dev/
+          local-dir: ./dist/
+          state-name: .ftp-deploy-oakrest-dev-sync-state.json
+          log-level: standard
+
+      - name: Verify dev game AND its assets from public HTTPS
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ needs.build-and-test.outputs.oakrest_sha }}
+        run: |
+          set -euo pipefail
+          base='https://playcellbound.com/oakrest-dev'
+          found=0
+          for attempt in 1 2 3; do
+            if curl -fsSL --retry 0 --max-time 20 "$base/build-meta.json?verify=$EXPECTED_SHA" -o /tmp/oakrest-dev-meta.json \
+              && node -e "const m=require('/tmp/oakrest-dev-meta.json');if(m.project!=='oakrest'||m.commit!==process.env.EXPECTED_SHA)process.exit(1)"; then
+              found=1; break
+            fi
+            sleep 5
+          done
+          test "$found" = 1
+          curl -fsSL --retry 0 --max-time 20 "$base/" -o /tmp/oakrest-dev-index.html
+          grep -F './src/main.js' /tmp/oakrest-dev-index.html >/dev/null
+          curl -fsSL --retry 0 --max-time 20 "$base/src/main.js" -o /tmp/oakrest-dev-main.js
+          grep -F "from 'three'" /tmp/oakrest-dev-main.js >/dev/null
+          curl -fsSL --retry 0 --max-time 20 "$base/vendor/three.module.min.js" -o /tmp/oakrest-dev-three.js
+          test "$(wc -c < /tmp/oakrest-dev-three.js)" -gt 100000
+          echo "DEV OK: $base/ ($EXPECTED_SHA)" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-public:
+    name: Publish ONLY /oakrest/ after passing dev checks
+    needs: [build-and-test, deploy-dev]
+    if: >-
+      needs.deploy-dev.result == 'success' &&
+      needs.build-and-test.outputs.browser_outcome == 'success' &&
+      (
+        (github.event_name == 'push' && contains(github.event.head_commit.message, '[oakrest-public-approved]')) ||
+        (github.event_name == 'workflow_dispatch' && inputs.channel == 'both' && inputs.confirm_public == 'PUBLISH_OAKREST')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download exactly the build verified on dev
+        uses: actions/download-artifact@v4
+        with:
+          name: oakrest-static-build
+          path: dist
+
+      - name: Transfer ONLY to dedicated public Oakrest folder
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          server-dir: ./oakrest/
+          local-dir: ./dist/
+          state-name: .ftp-deploy-oakrest-public-sync-state.json
+          log-level: standard
+
+      - name: Verify public game without touching Cellbound
+        env:
+          EXPECTED_SHA: ${{ needs.build-and-test.outputs.oakrest_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://playcellbound.com/oakrest'
+          found=0
+          for attempt in 1 2 3; do
+            if curl -fsSL --retry 0 --max-time 20 "$base/build-meta.json?verify=$EXPECTED_SHA" -o /tmp/oakrest-public-meta.json \
+              && node -e "const m=require('/tmp/oakrest-public-meta.json');if(m.project!=='oakrest'||m.commit!==process.env.EXPECTED_SHA)process.exit(1)"; then
+              found=1; break
+            fi
+            sleep 5
+          done
+          test "$found" = 1
+          curl -fsSL --retry 0 --max-time 20 "$base/" -o /tmp/oakrest-public-index.html
+          grep -F './src/main.js' /tmp/oakrest-public-index.html >/dev/null
+          curl -fsSL --retry 0 --max-time 20 "$base/src/main.js" -o /tmp/oakrest-public-main.js
+          curl -fsSL --retry 0 --max-time 20 "$base/vendor/three.module.min.js" -o /tmp/oakrest-public-three.js
+          test "$(wc -c < /tmp/oakrest-public-three.js)" -gt 100000
+          echo "PUBLIC OK: $base/ ($EXPECTED_SHA)" >> "$GITHUB_STEP_SUMMARY"
