@@ -33,7 +33,7 @@ Rerun the workflow with the SHA of a known-good Oakrest release; choose **both**
 
 ### Save-data caution
 
-Oakrest currently stores local player data in each browser's `localStorage` (key `oakrest-v1`). Data stored under an earlier `projectoakrest.vercel.app` origin will **not** automatically follow the move to `playcellbound.com`; it needs a save export/import feature or another explicitly consented migration path before users rely on it. Both `/oakrest-dev/` and `/oakrest/` are paths on the **same origin**, so they share localStorage if opened in the same browser/profile. This means they are *deployment-isolated but not save-isolated*. Avoid testing destructive/reset scenarios in the same browser profile as the public game until separate save keys are implemented.
+Oakrest currently stores local player data in each browser's `localStorage` (key `oakrest-v1`). Data stored under an earlier `projectoakrest.vercel.app` origin will **not** automatically follow the move to `playcellbound.com`; it needs a save export/import feature or another explicitly consented migration path before users rely on it. Both URLs are paths on the **same origin**. The Oct 20 Oakrest storage-isolation fix uses `oakrest-dev-v1` for `/oakrest-dev/`, while the public game keeps `oakrest-v1`; graphics and look-speed settings are similarly namespaced. Unit tests cover this separation. Do not deploy a version from before that fix back to dev without considering local save collisions.
 
 ### Limitations
 
