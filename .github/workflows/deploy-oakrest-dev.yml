@@ -1,83 +1,66 @@
 name: Deploy Oakrest development to shared hosting
-
 on:
   push:
-    branches:
-      - deploy/oakrest-dev-20261020
-
+    branches: [deploy/oakrest-dev-20261020]
 permissions:
   contents: read
-
 concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
-
+env:
+  OAKREST_COMMIT: fda62e0fa6b9f4c5c1d055d4e53ea6d2a00a9f48
 jobs:
   oakrest-development-only:
-    name: Publish Oakrest to /oakrest-dev/ only
+    name: QA and publish only /oakrest-dev/
     if: github.repository == 'benhorner9/Cellbound' && github.ref == 'refs/heads/deploy/oakrest-dev-20261020'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Check out the verified Oakrest development commit
+      - name: Check out reviewed Oakrest development commit
         uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: 9b3b2b5e29c89f6c477d2387214d69be7a422568
+          ref: ${{ env.OAKREST_COMMIT }}
           persist-credentials: false
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-
       - name: Install pinned dependencies
         run: npm ci --ignore-scripts
-
-      - name: Verify Oakrest static build and regression tests
+      - name: Check source, rules and build
         run: |
-          set -euo pipefail
           npm run check
           npm test
           npm run build
-
-      - name: Verify isolated deployment files and stamp commit
-        shell: bash
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Exercise built development release
+        run: node tests/browser-release.cjs
+      - name: Stamp reviewed development release
         run: |
-          set -euo pipefail
-          test -f dist/index.html
-          test -f dist/characters.html
-          test -f dist/src/main.js
-          test -f dist/src/town-services.js
-          test -f dist/src/town-world.js
-          test -f dist/src/town-ui.js
-          test -f dist/asset-version.json
-          ! test -f dist/guild.html
-          node - <<'NODE'
-          const fs = require('fs');
-          fs.writeFileSync('dist/build-meta.json', JSON.stringify({
-            project: 'oakrest',
-            environment: 'development',
-            branch: 'overhaul/greenwood-gameplay-visuals',
-            commit: '9b3b2b5e29c89f6c477d2387214d69be7a422568',
-            deployedAt: new Date().toISOString()
-          }, null, 2) + '\n');
+          node --input-type=module - <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          writeFileSync('dist/build-meta.json',JSON.stringify({project:'oakrest',environment:'development',branch:'dev',commit:process.env.OAKREST_COMMIT,deployedAt:new Date().toISOString()},null,2)+'\n');
           NODE
-
-      - name: Check existing shared-host credentials
-        shell: bash
+          test -f dist/src/equipment-ui.js
+          test -f dist/src/storage-key.js
+          test -f dist/.htaccess
+          ! test -f dist/guild.html
+      - name: Snapshot public release before development upload
+        run: python3 scripts/public-snapshot.py qa/public-before.json
+      - name: Check existing secure hosting connection
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          set -euo pipefail
           test -n "$FTP_SERVER"
           test -n "$FTP_USERNAME"
           test -n "$FTP_PASSWORD"
-
-      - name: Upload only to the separate Oakrest development directory
+      - name: Upload only the isolated development directory
+        id: upload
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -90,24 +73,24 @@ jobs:
           state-name: .ftp-deploy-oakrest-dev-state.json
           dangerous-clean-slate: false
           log-level: standard
-
-      - name: Verify the deployed Oakrest development build
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --location --retry 2 --max-time 25 \
-            'https://playcellbound.com/oakrest-dev/build-meta.json' \
-            -o /tmp/oakrest-dev-build-meta.json
-          node - <<'NODE'
-          const fs = require('fs');
-          const meta = JSON.parse(fs.readFileSync('/tmp/oakrest-dev-build-meta.json', 'utf8'));
-          if (meta.project !== 'oakrest' ||
-              meta.environment !== 'development' ||
-              meta.commit !== '9b3b2b5e29c89f6c477d2387214d69be7a422568') {
-            throw new Error('Oakrest development URL does not serve the expected commit');
-          }
-          console.log('Verified isolated Oakrest dev build', meta.commit);
-          NODE
-          curl --fail --silent --show-error --location --retry 2 --max-time 25 \
-            'https://playcellbound.com/oakrest-dev/index.html' -o /tmp/oakrest-dev-index.html
-          grep -F 'Oakrest' /tmp/oakrest-dev-index.html
+      - name: Verify every hosted development file
+        run: node scripts/verify-hosted.mjs
+      - name: Hosted development gameplay and persistence
+        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
+        env:
+          OAKREST_TEST_URL: https://playcellbound.com/oakrest-dev/
+        run: node tests/browser-release.cjs
+      - name: Confirm public site unchanged
+        if: ${{ !cancelled() && steps.upload.outcome != 'skipped' }}
+        run: python3 scripts/public-snapshot.py qa/public-before.json --compare
+      - name: Preserve tested build and QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oakrest-development-release
+          include-hidden-files: true
+          path: |
+            dist/
+            qa/*.png
+            qa/*.json
+            qa/*.log
