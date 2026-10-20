@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: fda62e0fa6b9f4c5c1d055d4e53ea6d2a00a9f48
+  OAKREST_COMMIT: 830ba49aab063c46aa8e4079608d9d153c07807d
 jobs:
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
@@ -80,6 +80,33 @@ jobs:
         env:
           OAKREST_TEST_URL: https://playcellbound.com/oakrest-dev/
         run: node tests/browser-release.cjs
+      - name: Hosted melee, ranged and magic contact verification
+        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
+        run: |
+          node --input-type=commonjs - <<'NODE'
+          const {chromium}=require('playwright'),assert=require('node:assert/strict');
+          (async()=>{
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+            try{
+              const {defaultSave}=await import('./src/rules.js');
+              const context=await browser.newContext({viewport:{width:1366,height:1024},hasTouch:true});
+              await context.addInitScript(d=>localStorage.setItem('oakrest-dev-v1',JSON.stringify(d)),defaultSave());
+              const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+              await page.goto('https://playcellbound.com/oakrest-dev/?qa=1');
+              await page.waitForFunction(()=>window.oakrestQA);await page.locator('#begin').click();
+              for(const style of ['melee','ranged','magic']){
+                const result=await page.evaluate(style=>{
+                  oakrestQA.step(3);oakrestQA.style(style);oakrestQA.teleport(-6,-1);oakrestQA.aim(-6,1.25,-3);oakrestQA.step(1);
+                  const before=oakrestQA.state().enemies[0].hp;oakrestQA.basic();oakrestQA.step(1.5);
+                  return {style,before,after:oakrestQA.state().enemies[0].hp,version:oakrestDiagnostics().version};
+                },style);
+                assert.ok(result.after<result.before,JSON.stringify(result));assert.equal(result.version,'combat-reborn-1');console.log('HOSTED COMBAT PASS',JSON.stringify(result));
+              }
+              await page.screenshot({path:'qa/hosted-combat-reborn.png'});assert.deepEqual(errors,[]);
+              await context.close();
+            }finally{await browser.close()}
+          })().catch(e=>{console.error(e);process.exitCode=1});
+          NODE
       - name: Confirm public site unchanged
         if: ${{ !cancelled() && steps.upload.outcome != 'skipped' }}
         run: python3 scripts/public-snapshot.py qa/public-before.json --compare
