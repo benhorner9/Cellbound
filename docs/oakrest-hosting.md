@@ -13,7 +13,7 @@ It is **not** part of the Cellbound game, login or Supabase backend.
 - Source: [benhorner9/Projectoakrest](https://github.com/benhorner9/Projectoakrest), with the current overhaul in open **PR #1**, `overhaul/greenwood-gameplay-visuals`.
 - Deployment controller: `.github/workflows/deploy-oakrest.yml` in **this Cellbound repository**.
 - Host credentials: the existing `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` and optional `FTP_PORT` **GitHub Actions secrets in Cellbound**. No credentials are copied into Oakrest's repository.
-- Oakrest build: `npm ci --ignore-scripts`, `npm run check`, `npm test`, Chromium browser QA, then `npm run build`. The deployable output is `dist/`.
+- Oakrest build: `npm ci --ignore-scripts`, `npm run check`, `npm test`, **required bounded Chromium browser smoke**, then `npm run build`. The full browser/viewport/stability suite runs separately with a time limit and reports failures without blocking independent release checks. The deployable output is `dist/`.
 - No change to either Cellbound release workflow. The Oakrest workflow never uploads to `./`, `./game/` or `./cb/`.
 
 ## Deploy a new Oakrest revision
@@ -25,7 +25,7 @@ It is **not** part of the Cellbound game, login or Supabase backend.
 5. When ready to publish the **same approved SHA**, choose **both**, enter that SHA, and enter `PUBLISH_OAKREST` in `confirm_public`. The workflow rebuilds and tests it, verifies the dev deployment, then publishes the *identical build artifact* to `/oakrest/` only if the Chromium suite also passed.
 6. Review the GitHub run summary and check `/oakrest/build-meta.json` matches the SHA.
 
-The workflow also triggers on changes to its own file on `main` for deployment maintenance. Public promotion on this push trigger requires the explicit `[oakrest-public-approved]` commit-message marker. Ordinary changes to the workflow do not release the public game.
+The workflow currently pins Oakrest commit `aa135d45048ce89bf226f2c2e08320d8071958db` by default (save-isolated PR #1). The workflow also triggers on changes to its own file on `main` for deployment maintenance. Public promotion on this push trigger requires the explicit `[oakrest-public-approved]` commit-message marker. Ordinary changes to the workflow do not release the public game.
 
 ### Rollback
 
