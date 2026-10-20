@@ -131,6 +131,27 @@ const NWB_COMIC_STORY_ART={
   './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
   './assets/comics/no-way-back-2026/silas-manor-master.svg',
   './assets/comics/no-way-back-2026/silas-trap-closes.svg'
+ ],
+ 'Behind The Iron Gate':[
+  './assets/comics/no-way-back-2026/gate-hounds-fall.svg',
+  './assets/comics/no-way-back-2026/gate-silas-bars.svg'
+ ],
+ 'Master Of The Manor':[
+  './assets/comics/no-way-back-2026/courtyard-torches.svg',
+  './assets/comics/no-way-back-2026/silas-anchor-stance.svg',
+  './assets/comics/no-way-back-2026/manor-crest-reveal.svg'
+ ],
+ 'You Still Do Not Understand':[
+  './assets/comics/no-way-back-2026/silas-falls.svg',
+  './assets/comics/no-way-back-2026/silas-final-warning.svg',
+  './assets/comics/no-way-back-2026/manor-awakens.svg'
+ ],
+ 'Homecoming':[
+  './assets/comics/no-way-back-2026/manor-island-landing.svg',
+  './assets/comics/no-way-back-2026/sailor-hidden-island.svg',
+  './assets/comics/no-way-back-2026/sailor-harbour-warning.svg',
+  './assets/comics/no-way-back-2026/silas-manor-master.svg',
+  './assets/comics/no-way-back-2026/silas-trap-closes.svg'
  ]
 };
 function nwbStoryArt(label,title){
