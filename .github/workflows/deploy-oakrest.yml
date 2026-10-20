@@ -22,7 +22,7 @@ on:
         description: 'Oakrest commit SHA to deploy (PR #1 remains unmerged)'
         required: true
         type: string
-        default: 'b77a33537b69b05d7dd7dcdb09a56a08ad490a27'
+        default: '27b36dfe79b4fff027bae75710bc0ac8f366a012'
       confirm_public:
         description: 'For both, enter PUBLISH_OAKREST'
         required: false
@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: ${{ inputs.oakrest_ref || 'b77a33537b69b05d7dd7dcdb09a56a08ad490a27' }}
+          ref: ${{ inputs.oakrest_ref || '27b36dfe79b4fff027bae75710bc0ac8f366a012' }}
           path: oakrest
           persist-credentials: false
 
@@ -90,6 +90,12 @@ jobs:
         working-directory: oakrest
         run: timeout 150s node tests/browser-smoke.cjs
 
+      - name: iPad-sized controller and camera smoke test
+        id: controller
+        if: steps.browser-setup.outcome == 'success'
+        working-directory: oakrest
+        run: timeout 120s node tests/browser-controller.cjs
+
       - name: Record smoke gate and platform limitations
         if: always()
         shell: bash
@@ -117,7 +123,7 @@ jobs:
           import {readFileSync,writeFileSync,existsSync,statSync} from 'node:fs';
           import {join} from 'node:path';
           const dist='dist';
-          const mandatory=['index.html','characters.html','src/character-standalone.js','src/character-standalone.css','src/main.js','src/rules.js','src/greenwood.css','vendor/three.module.min.js'];
+          const mandatory=['index.html','characters.html','src/character-standalone.js','src/character-standalone.css','src/main.js','src/rules.js','src/control-config.js','src/camera-controller.css','src/greenwood.css','vendor/three.module.min.js'];
           for(const path of mandatory) {
             if(!existsSync(join(dist,path)) || statSync(join(dist,path)).size===0)
               throw Error('Missing build asset: '+path);
@@ -162,7 +168,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: ${{ inputs.oakrest_ref || 'b77a33537b69b05d7dd7dcdb09a56a08ad490a27' }}
+          ref: ${{ inputs.oakrest_ref || '27b36dfe79b4fff027bae75710bc0ac8f366a012' }}
           path: oakrest
           persist-credentials: false
       - uses: actions/setup-node@v4
