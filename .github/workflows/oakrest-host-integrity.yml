@@ -17,7 +17,7 @@ jobs:
           base='https://playcellbound.com/'
           for branch in ['oakrest/','oakrest-dev/']:
             for path in ['','index.html','asset-version.json','build-meta.json','src/main.js','src/town-layout.js']:
-              url=base+branch+path+'?diagnostic=20261021c'
+              url=base+branch+path+'?diagnostic=20261021well15'
               try:
                 with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache','User-Agent':'OakrestIntegrityProbe/1.0'}),timeout=20) as resp:
                   blob=resp.read()
@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: 65209aad13adc37554e0224adff2dcd7a518d4e1
+          ref: 7a1408c59f4b220df23460d36093ff1a853ecf59
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -48,7 +48,7 @@ jobs:
             passed=False
             for attempt in range(4):
               try:
-                url=base+rel+'?verify_static=20261021c_'+str(attempt)
+                url=base+rel+'?verify_static=20261021well15_'+str(attempt)
                 with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=18) as r:
                   payload=r.read()
                 if hashlib.sha256(payload).hexdigest()==expected:
