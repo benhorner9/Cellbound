@@ -1,0 +1,31 @@
+name: Oakrest Host Read-Only Diagnostics
+on:
+  push:
+    branches:
+      - diagnostic/oakrest-host-integrity
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect public and development endpoints without changing them
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,hashlib
+          base='https://playcellbound.com/'
+          for branch in ['oakrest/','oakrest-dev/']:
+            for path in ['','index.html','asset-version.json','build-meta.json','src/main.js','src/town-layout.js']:
+              url=base+branch+path+'?diagnostic=20261021b'
+              try:
+                with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache','User-Agent':'OakrestIntegrityProbe/1.0'}),timeout=20) as resp:
+                  blob=resp.read()
+                  print(f'{branch}{path or "(root)"}: HTTP={resp.status} content-type={resp.headers.get("content-type")} length={len(blob)} sha256={hashlib.sha256(blob).hexdigest()[:18]}')
+                  if path in ['asset-version.json','build-meta.json']:
+                    print('   bytes:',repr(blob[:400]))
+                  if path in ['', 'index.html']:
+                    print('   title/meta:',repr(blob[:120]))
+              except Exception as exc:
+                print(f'{branch}{path or "(root)"}: ERROR={type(exc).__name__} {exc}')
+          PY
