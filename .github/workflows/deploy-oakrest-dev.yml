@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 5c17d8a011cce843d3d62388da8b3adbb0b8fa1f
+  OAKREST_COMMIT: f038366c6d46b775c09723edae43dc4bca6c0210
 jobs:
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
@@ -46,6 +46,9 @@ jobs:
           NODE
           test -f dist/src/equipment-ui.js
           test -f dist/src/storage-key.js
+          test -f dist/src/minimap.js
+          test -f dist/src/hud-minimap.css
+          grep -q 'id="minimap-button"' dist/index.html
           test -f dist/.htaccess
           ! test -f dist/guild.html
       - name: Snapshot public release before development upload
