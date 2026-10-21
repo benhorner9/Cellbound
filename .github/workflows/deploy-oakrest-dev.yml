@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 65209aad13adc37554e0224adff2dcd7a518d4e1
+  OAKREST_COMMIT: c1f3745ac33f7b9f695708023e2c154f70e47775
 jobs:
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
