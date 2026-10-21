@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: f038366c6d46b775c09723edae43dc4bca6c0210
+  OAKREST_COMMIT: 01d6e97c32b6478bc1421c390e3ce366e816ab43
 jobs:
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
@@ -100,10 +100,12 @@ jobs:
               for(const style of ['melee','ranged','magic']){
                 const result=await page.evaluate(style=>{
                   oakrestQA.step(3);oakrestQA.style(style);oakrestQA.teleport(-6,-1);oakrestQA.aim(-6,1.25,-3);oakrestQA.step(1);
-                  const before=oakrestQA.state().enemies[0].hp;oakrestQA.basic();oakrestQA.step(1.5);
-                  return {style,before,after:oakrestQA.state().enemies[0].hp,version:oakrestDiagnostics().version};
+                  const before=oakrestQA.state().enemies[0].hp;
+                  if(!oakrestQA.state().autoCombat&&!oakrestQA.target('dummy'))throw Error('Cannot lock practice dummy');
+                  oakrestQA.step(8);
+                  return {style,before,after:oakrestQA.state().enemies[0].hp,autoCombat:oakrestQA.state().autoCombat,version:oakrestDiagnostics().version};
                 },style);
-                assert.ok(result.after<result.before,JSON.stringify(result));assert.equal(result.version,'combat-reborn-1');console.log('HOSTED COMBAT PASS',JSON.stringify(result));
+                assert.ok(result.after<result.before,JSON.stringify(result));assert.equal(result.autoCombat,true);assert.equal(result.version,'auto-combat-1');console.log('HOSTED COMBAT PASS',JSON.stringify(result));
               }
               await page.screenshot({path:'qa/hosted-combat-reborn.png'});assert.deepEqual(errors,[]);
               await context.close();
