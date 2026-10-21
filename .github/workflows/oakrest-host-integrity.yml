@@ -8,7 +8,7 @@ permissions:
 jobs:
   inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Inspect public and development endpoints without changing them
         run: |
@@ -17,15 +17,52 @@ jobs:
           base='https://playcellbound.com/'
           for branch in ['oakrest/','oakrest-dev/']:
             for path in ['','index.html','asset-version.json','build-meta.json','src/main.js','src/town-layout.js']:
-              url=base+branch+path+'?diagnostic=20261021b'
+              url=base+branch+path+'?diagnostic=20261021c'
               try:
                 with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache','User-Agent':'OakrestIntegrityProbe/1.0'}),timeout=20) as resp:
                   blob=resp.read()
                   print(f'{branch}{path or "(root)"}: HTTP={resp.status} content-type={resp.headers.get("content-type")} length={len(blob)} sha256={hashlib.sha256(blob).hexdigest()[:18]}')
-                  if path in ['asset-version.json','build-meta.json']:
-                    print('   bytes:',repr(blob[:400]))
-                  if path in ['', 'index.html']:
-                    print('   title/meta:',repr(blob[:120]))
-              except Exception as exc:
-                print(f'{branch}{path or "(root)"}: ERROR={type(exc).__name__} {exc}')
+                  if path in ['asset-version.json','build-meta.json']:print('   bytes:',repr(blob[:400]))
+              except Exception as exc:print(f'{branch}{path or "(root)"}: ERROR={type(exc).__name__} {exc}')
           PY
+      - uses: actions/checkout@v4
+        with:
+          repository: benhorner9/Projectoakrest
+          ref: 65209aad13adc37554e0224adff2dcd7a518d4e1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Validate all hosted static modules with retry (read-only)
+        run: |
+          python3 - <<'PY'
+          import hashlib,urllib.request,urllib.error,time
+          from pathlib import Path
+          base='https://playcellbound.com/oakrest-dev/'
+          paths=[p for p in Path('dist').rglob('*') if p.is_file() and not p.name.startswith('.') and p.name!='build-meta.json']
+          differences=[]
+          for file in paths:
+            expected=hashlib.sha256(file.read_bytes()).hexdigest()
+            rel=str(file.relative_to('dist'))
+            passed=False
+            for attempt in range(4):
+              try:
+                url=base+rel+'?verify_static=20261021c_'+str(attempt)
+                with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=18) as r:
+                  payload=r.read()
+                if hashlib.sha256(payload).hexdigest()==expected:
+                  passed=True;break
+              except Exception as exc:print(rel,'attempt',attempt+1,type(exc).__name__,str(exc)[:120])
+              if attempt<3:time.sleep(2+attempt)
+            if not passed:
+              differences.append(rel)
+              print('DIFF',rel,'expected',expected[:16])
+          print('Validated',len(paths)-len(differences),'of',len(paths),'static development files; differences:',differences)
+          if differences:raise SystemExit(1)
+          PY
+      - run: npx playwright install --with-deps chromium
+      - name: Hosted gameplay and save test without deployment
+        env:
+          OAKREST_TEST_URL: https://playcellbound.com/oakrest-dev/
+        run: node tests/browser-release.cjs
