@@ -8,13 +8,14 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 0de2d11cde330dc735d03ada38a5551a1c694a96
+  OAKREST_COMMIT: 8cdd8c73daf03d53080b07e892d3493755b1db8f
 jobs:
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
     if: github.repository == 'benhorner9/Cellbound' && github.ref == 'refs/heads/deploy/oakrest-dev-20261020'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Browser provisioning and separate hosted smoke passes can exceed 20 minutes.
+    timeout-minutes: 35
     steps:
       - name: Check out reviewed Oakrest development commit
         uses: actions/checkout@v4
