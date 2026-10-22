@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 0ded957245f65cba8621480abe57d303bd8dcb33
+  OAKREST_COMMIT: 4c80440a53202d73babeeb1dd19c3f53647e11ee
 jobs:
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
@@ -36,7 +36,7 @@ jobs:
           npm test
           npm run build
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       - name: Exercise built development release
         run: node tests/browser-release.cjs
       - name: Stamp reviewed development release
