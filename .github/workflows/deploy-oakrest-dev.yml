@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: e78024717a74fcd47a0b618dd3c9aa4f9c5d4dff
+  OAKREST_COMMIT: 530bed9ee6f810f4e683af174cce33cdf2ef0171
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: e78024717a74fcd47a0b618dd3c9aa4f9c5d4dff
+          ref: 530bed9ee6f810f4e683af174cce33cdf2ef0171
           persist-credentials: false
       - name: Set up Node
         uses: actions/setup-node@v4
