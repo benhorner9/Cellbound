@@ -32,6 +32,59 @@ jobs:
               except urllib.error.HTTPError as err:
                 print(json.dumps({'section':section,'path':path,'status':err.code,'reason':str(err.reason)}))
           PY
+  host-readonly-browser-diagnostic:
+    name: Read-only remote browser and byte-integrity diagnosis
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout restored Oakrest source (READ ONLY for hosting)
+        uses: actions/checkout@v4
+        with:
+          repository: benhorner9/Projectoakrest
+          ref: 67d74031ca7c72db1d827a29b3ed892245d741b6
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare tested local build
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npx playwright install chromium
+      - name: Compare actual hosted bytes and report browser errors
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright'),{readFileSync}=require('node:fs'),{createHash}=require('node:crypto');
+          const hash=v=>createHash('sha256').update(v).digest('hex');
+          (async()=>{
+            const base='https://playcellbound.com/oakrest-dev/';
+            for(const path of ['index.html','src/main.js','assets/kaykit-adventurers/arrow.gltf','assets/kaykit-adventurers/sword_1handed.gltf','build-meta.json']){
+              const res=await fetch(base+path+'?oakrest_integrity='+Date.now(),{headers:{'Cache-Control':'no-cache'}});
+              const bytes=Buffer.from(await res.arrayBuffer());
+              const expected=path==='build-meta.json'?null:readFileSync('dist/'+path);
+              console.log('HOSTED INTEGRITY',JSON.stringify({path,status:res.status,bytes:bytes.length,sha:hash(bytes),
+                expectedBytes:expected?.length,expectedSha:expected?hash(expected):null,match:expected?hash(bytes)===hash(expected):null,contentType:res.headers.get('content-type'),
+                sample:path==='build-meta.json'?bytes.toString('utf8').slice(0,300):null}));
+            }
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+            try{
+              const ctx=await browser.newContext({viewport:{width:1366,height:1024},hasTouch:true});
+              const page=await ctx.newPage();
+              page.on('console',msg=>{if(msg.type()==='error')console.log('BROWSER CONSOLE ERROR',msg.text().slice(0,500));});
+              page.on('pageerror',err=>console.log('BROWSER PAGE ERROR',err.stack?.slice(0,1000)||String(err)));
+              page.on('requestfailed',request=>console.log('BROWSER REQUEST FAILURE',request.url(),request.failure()?.errorText));
+              page.on('response',res=>{if(res.status()>=400)console.log('BROWSER HTTP',res.status(),res.url());});
+              await page.goto(base+'?qa=1&diagnostic='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
+              await page.waitForTimeout(8000);
+              console.log('BROWSER RESULT',JSON.stringify(await page.evaluate(()=>({
+               page:location.pathname,qa:typeof window.oakrestQA,error:document.getElementById('error')?.textContent?.slice(0,400),
+               game:!!document.querySelector('#game canvas'),intro:!!document.getElementById('begin')}))));
+              await ctx.close();
+            }finally{await browser.close();}
+          })().catch(e=>{console.error('READ ONLY DIAGNOSTIC FAILED',e.stack||String(e));process.exitCode=1});
+          NODE
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
     if: ${{ false }} # SAFETY HOLD: 2026-10-23 hosted/public mismatch during rollback; do not upload until host isolation is investigated
