@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 780545670c82b884e4b412a6859d6e790a71358e
+  OAKREST_COMMIT: 53f336de9a6f488a776261967671a9ca89adc243
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -118,6 +118,15 @@ jobs:
         run: npx playwright install chromium
       - name: Exercise built development release
         run: node tests/browser-release.cjs
+      - name: Verify isolated Classic prototype before any upload
+        run: |
+          test -f dist/classic.html
+          test -f dist/src/classic-prototype.js
+          test -f dist/src/classic-combat.js
+          test -f dist/src/classic-combat-view.js
+          test -f dist/src/gameplay-core.js
+          grep -q 'classic-prototype.js?v=' dist/classic.html
+          node tests/browser-classic.cjs
       - name: Gate release on original Oakrest visuals and retained combat upgrade
         run: |
           node --input-type=module - <<'NODE'
@@ -139,7 +148,7 @@ jobs:
         run: |
           node --input-type=module - <<'NODE'
           import {writeFileSync} from 'node:fs';
-          writeFileSync('dist/build-meta.json',JSON.stringify({project:'oakrest',environment:'development',branch:'dev',commit:process.env.OAKREST_COMMIT,deployedAt:new Date().toISOString()},null,2)+'\n');
+          writeFileSync('dist/build-meta.json',JSON.stringify({project:'oakrest',environment:'development',branch:'classic-preview',commit:process.env.OAKREST_COMMIT,deployedAt:new Date().toISOString()},null,2)+'\n');
           NODE
           test -f dist/src/equipment-ui.js
           test -f dist/src/storage-key.js
@@ -214,6 +223,36 @@ jobs:
               await context.close();
             }finally{await browser.close()}
           })().catch(e=>{console.error(e);process.exitCode=1});
+          NODE
+      - name: Verify hosted Classic combat route on the development host
+        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
+        run: |
+          node --input-type=commonjs - <<'NODE'
+          const {chromium}=require('playwright'),assert=require('node:assert/strict');
+          (async()=>{
+            const base='https://playcellbound.com/oakrest-dev/';
+            const meta=await (await fetch(base+'build-meta.json?cache='+Date.now(),{cache:'no-store'})).json();
+            assert.equal(meta.commit,process.env.OAKREST_COMMIT,'the hosted commit must match the pinned preview');
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+            try{
+              const context=await browser.newContext({viewport:{width:1194,height:834},hasTouch:true});
+              const page=await context.newPage(),errors=[];
+              page.on('pageerror',error=>errors.push(error.message));
+              const response=await page.goto(base+'classic.html?qa=1&preview='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
+              assert.equal(response.status(),200,'Classic preview HTML must be hosted');
+              await page.waitForFunction(()=>!!window.oakrestClassicQA,{timeout:30000});
+              assert.equal(await page.locator('#classic-game canvas').count(),1);
+              await page.evaluate(()=>oakrestClassicQA.teleport(-1,71));
+              assert.equal(await page.evaluate(()=>oakrestClassicQA.lockMonster('practice')),true);
+              const first=await page.evaluate(()=>oakrestClassicQA.combatState().monsters.find(m=>m.id==='practice').hp);
+              await page.evaluate(()=>{for(let i=0;i<28;i++)oakrestClassicQA.step(.08)});
+              const after=await page.evaluate(()=>oakrestClassicQA.combatState().monsters.find(m=>m.id==='practice').hp);
+              assert.ok(after<first,'hosted melee must inflict real damage');
+              assert.deepEqual(errors,[],'no browser runtime errors');
+              console.log('HOSTED CLASSIC PREVIEW PASSED',JSON.stringify({commit:meta.commit,first,after,route:base+'classic.html'}));
+              await context.close();
+            }finally{await browser.close();}
+          })().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
       - name: Confirm public site unchanged
         if: ${{ !cancelled() && steps.upload.outcome != 'skipped' }}
