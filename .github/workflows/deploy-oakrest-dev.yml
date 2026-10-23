@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 53f336de9a6f488a776261967671a9ca89adc243
+  OAKREST_COMMIT: 2defebd22503a3bfd365d58ba1aec4200f1dd00e
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -124,6 +124,10 @@ jobs:
           test -f dist/src/classic-prototype.js
           test -f dist/src/classic-combat.js
           test -f dist/src/classic-combat-view.js
+          test -f dist/src/classic-item-state.js
+          test -f dist/src/classic-items-ui.js
+          test -f dist/src/classic-loot-view.js
+          test -f dist/tests/classic-items.test.js || test -f tests/classic-items.test.js
           test -f dist/src/gameplay-core.js
           grep -q 'classic-prototype.js?v=' dist/classic.html
           node tests/browser-classic.cjs
@@ -248,6 +252,16 @@ jobs:
               await page.evaluate(()=>{for(let i=0;i<28;i++)oakrestClassicQA.step(.08)});
               const after=await page.evaluate(()=>oakrestClassicQA.combatState().monsters.find(m=>m.id==='practice').hp);
               assert.ok(after<first,'hosted melee must inflict real damage');
+              await page.locator('#classic-inventory-toggle').click();
+              assert.equal(await page.locator('#classic-item-content .classic-four-grid').first().locator('.classic-item-cell').count(),28);
+              await page.locator('#classic-item-close').click();
+              await page.locator('#classic-equipment-toggle').click();
+              assert.equal(await page.locator('.classic-paper-slot').count(),9);
+              await page.locator('#classic-item-close').click();
+              await page.evaluate(()=>oakrestClassicQA.teleport(-30,14));
+              assert.equal(await page.evaluate(()=>oakrestClassicQA.selectTarget('service:bank')),true);
+              assert.equal(await page.locator('#classic-item-title').textContent(),'Oakrest Bank');
+              await page.locator('#classic-item-close').click();
               assert.deepEqual(errors,[],'no browser runtime errors');
               console.log('HOSTED CLASSIC PREVIEW PASSED',JSON.stringify({commit:meta.commit,first,after,route:base+'classic.html'}));
               await context.close();
