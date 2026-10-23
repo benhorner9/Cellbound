@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 1f7a27bb4da9a8aff44687fdb5e0bbae80ca8d27
+  OAKREST_COMMIT: e78024717a74fcd47a0b618dd3c9aa4f9c5d4dff
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -37,11 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Checkout combined Oakrest source (READ ONLY for hosting)
+      - name: Checkout restored original-art and opposed-combat source (READ ONLY for hosting)
         uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: 1f7a27bb4da9a8aff44687fdb5e0bbae80ca8d27
+          ref: e78024717a74fcd47a0b618dd3c9aa4f9c5d4dff
           persist-credentials: false
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -118,8 +118,23 @@ jobs:
         run: npx playwright install chromium
       - name: Exercise built development release
         run: node tests/browser-release.cjs
-      - name: Gate release on the actual Universal, civilian, village and Ultimate Monsters visuals
-        run: timeout --signal=TERM --kill-after=10s 3m node tests/browser-quaternius.cjs
+      - name: Gate release on original Oakrest visuals and retained combat upgrade
+        run: |
+          node --input-type=module - <<'NODE'
+          import assert from 'node:assert/strict';
+          import {existsSync,readFileSync} from 'node:fs';
+          const html=readFileSync('dist/index.html','utf8');
+          const main=readFileSync('dist/src/main.js','utf8');
+          assert.ok(!html.includes('quaternius-art-toggle'),'Quaternius graphics toggle must be removed');
+          assert.ok(!existsSync('dist/src/quaternius-hero.js'),'Quaternius hero model integration must be absent');
+          assert.ok(!existsSync('dist/src/quaternius-town.js'),'Quaternius civilian rig must be absent');
+          assert.ok(!existsSync('dist/src/quaternius-architecture.js'),'Quaternius medieval overlays must be absent');
+          assert.ok(!existsSync('dist/assets/quaternius'),'Quaternius model pack must be absent');
+          assert.ok(existsSync('dist/src/osrs-combat-math.js'),'Latest combat math must be retained');
+          assert.ok(main.includes("accuracyFor(source.level,e.level,source.weaponBasic"),'Opposed combat accuracy must remain active');
+          console.log('PASS: Original visuals restored, Quaternius removed, opposed combat retained');
+          NODE
+          timeout --signal=TERM --kill-after=10s 4m node tests/visual-browser-qa.cjs
       - name: Stamp reviewed development release
         run: |
           node --input-type=module - <<'NODE'
