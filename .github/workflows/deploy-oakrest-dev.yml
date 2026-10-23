@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: afbca8a4f2f7aa7d53601a322307e5706cc134a6
+  OAKREST_COMMIT: 1f7a27bb4da9a8aff44687fdb5e0bbae80ca8d27
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -37,11 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Checkout restored Oakrest source (READ ONLY for hosting)
+      - name: Checkout combined Oakrest source (READ ONLY for hosting)
         uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
-          ref: 67d74031ca7c72db1d827a29b3ed892245d741b6
+          ref: 1f7a27bb4da9a8aff44687fdb5e0bbae80ca8d27
           persist-credentials: false
       - name: Set up Node
         uses: actions/setup-node@v4
