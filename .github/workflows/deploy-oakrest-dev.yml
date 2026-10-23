@@ -85,6 +85,10 @@ jobs:
             }finally{await browser.close();}
           })().catch(e=>{console.error('READ ONLY DIAGNOSTIC FAILED',e.stack||String(e));process.exitCode=1});
           NODE
+      - name: Run restored hosted gameplay regression without uploading anything
+        env:
+          OAKREST_TEST_URL: https://playcellbound.com/oakrest-dev/
+        run: node tests/browser-release.cjs
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
     if: ${{ false }} # SAFETY HOLD: 2026-10-23 hosted/public mismatch during rollback; do not upload until host isolation is investigated
