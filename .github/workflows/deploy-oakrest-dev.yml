@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: b9f7609d28bead04d11833d99f0a85108d4d5060
+  OAKREST_COMMIT: f5fd21b9cf253021560c7bf2e5acc2b16032038c
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
