@@ -1,0 +1,145 @@
+# Automatic Oakrest development-only promotion. Runs on Cellbound's default
+# branch so GitHub's scheduled events actually execute (a schedule on the
+# non-default deploy bridge branch would never fire).
+name: Oakrest — auto-deploy reviewed dev
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: oakrest-dev-shared-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    name: Detect newly integrated Classic dev commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      sha: ${{ steps.plan.outputs.sha }}
+      deploy: ${{ steps.plan.outputs.deploy }}
+    steps:
+      - name: Compare Oakrest dev HEAD to hosted dev release
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(git ls-remote https://github.com/benhorner9/Projectoakrest.git refs/heads/dev | cut -f1)"
+          test "${#sha}" -eq 40
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          # Do not overwrite an unmerged Classic preview with the old 3D
+          # dev branch. Automatic releases begin when the Classic creator
+          # AND completed village masterplan have actually landed on dev.
+          for file in src/classic-character-ui.js src/classic-town-plan.js; do
+            if ! curl -fsSL --max-time 15 "https://raw.githubusercontent.com/benhorner9/Projectoakrest/$sha/$file" -o /dev/null; then
+              echo "Classic integration not on dev; preserve current dev preview."
+              echo "deploy=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          hosted="$(curl -fsSL --max-time 15 "https://playcellbound.com/oakrest-dev/build-meta.json?compare=$sha" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("commit",""))' || true)"
+          if [ "$hosted" = "$sha" ]; then
+            echo "Dev already publishes $sha; no upload required."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New tested dev revision required: $sha (current $hosted)"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+  publish:
+    name: Validate and publish exclusively /oakrest-dev/
+    needs: inspect
+    if: needs.inspect.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OAKREST_COMMIT: ${{ needs.inspect.outputs.sha }}
+    steps:
+      - name: Check out immutable Oakrest dev SHA
+        uses: actions/checkout@v4
+        with:
+          repository: benhorner9/Projectoakrest
+          ref: ${{ env.OAKREST_COMMIT }}
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts
+      - name: Validate source, saves, collision, equipment and packaging
+        run: |
+          npm run check
+          npm test
+          npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run original and Classic browser release gates
+        run: |
+          node tests/browser-release.cjs
+          node tests/browser-classic.cjs
+          node tests/browser-classic-hud.cjs
+          node tests/browser-classic-creator.cjs
+      - name: Verify isolated target and stamp build identity
+        run: |
+          test -f dist/classic.html
+          test -f dist/src/classic-character-ui.js
+          test -f dist/src/classic-town-plan.js
+          test -f dist/src/classic-village.js
+          test -f dist/src/classic-minimap.js
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          writeFileSync('dist/build-meta.json',JSON.stringify({
+            project:'oakrest',environment:'development',branch:'dev',
+            commit:process.env.OAKREST_COMMIT,deployedAt:new Date().toISOString()
+          },null,2)+'\n');
+          NODE
+      - name: Capture public-game fingerprint before dev release
+        run: |
+          mkdir -p qa
+          python3 scripts/public-snapshot.py qa/public-before.json
+      - name: Confirm safe FTP credential configuration
+        env:
+          HOST: ${{ secrets.FTP_SERVER }}
+          USER: ${{ secrets.FTP_USERNAME }}
+          PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          test -n "$HOST" && test -n "$USER" && test -n "$PASS"
+      - name: Upload only development path — never public
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./dist/
+          server-dir: ./oakrest-dev/
+          state-name: .ftp-deploy-oakrest-dev-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+      - name: Verify all remote asset hashes, not just the HTML
+        run: |
+          for attempt in 1 2 3 4; do
+            if node scripts/verify-hosted.mjs; then exit 0; fi
+            echo "Hosted cache not converged; attempt $attempt"
+            sleep 15
+          done
+          exit 1
+      - name: Confirm exact published SHA and Classic route
+        run: |
+          curl -fsSL "https://playcellbound.com/oakrest-dev/build-meta.json?sha=$OAKREST_COMMIT" -o /tmp/oakrest-dev-build.json
+          node -e "const m=require('/tmp/oakrest-dev-build.json');if(m.commit!==process.env.OAKREST_COMMIT||m.environment!=='development')process.exit(1)"
+          curl -fsSL https://playcellbound.com/oakrest-dev/classic.html | grep -q 'classic-character.css'
+      - name: Prove public-game files were not modified
+        run: python3 scripts/public-snapshot.py qa/public-before.json --compare
+      - name: Preserve built assets and QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oakrest-automatic-dev-release
+          include-hidden-files: true
+          path: |
+            dist/
+            qa/
