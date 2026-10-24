@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 27b0837ea4e14296ce8ff7e6bf8cce89e18b6aed
+  OAKREST_COMMIT: 2f08858eebe72d1bcdbdbec3f0122cfa76ec76c7
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -143,6 +143,7 @@ jobs:
           node tests/browser-classic-save.cjs
           node tests/browser-classic-hud.cjs
           node tests/browser-classic-creator.cjs
+          node tests/browser-classic-camera.cjs
       - name: Gate release on original Oakrest visuals and retained combat upgrade
         run: |
           node --input-type=module - <<'NODE'
@@ -252,6 +253,10 @@ jobs:
             const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
             try{
               const context=await browser.newContext({viewport:{width:1194,height:834},hasTouch:true});
+              // An isolated legacy test save skips the new-player Creator modal.
+              // This verifies real gameplay projection, not a paused avatar picker.
+              const {defaultSave:classicFixture}=await import('./src/rules.js');
+              await context.addInitScript(save=>localStorage.setItem('oakrest-dev-v1',JSON.stringify(save)),classicFixture());
               const page=await context.newPage(),errors=[];
               page.on('pageerror',error=>errors.push(error.message));
               const response=await page.goto(base+'classic.html?qa=1&preview='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
