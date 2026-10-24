@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 9795650e70a7381249ed7d2fe8e947be85c3285e
+  OAKREST_COMMIT: 29a16febf5c1285210cb6a9913e0e8f9c419fe77
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -128,12 +128,17 @@ jobs:
           test -f dist/src/classic-items-ui.js
           test -f dist/src/classic-loot-view.js
           test -f dist/src/classic-save-manager.js
+          test -f dist/src/classic-hud.css
+          test -f dist/src/classic-minimap.js
+          test -f dist/src/classic-ui-controller.js
+          grep -q 'classic-hud.css' dist/classic.html
           test -f tests/classic-save-manager.test.js
           test -f dist/tests/classic-items.test.js || test -f tests/classic-items.test.js
           test -f dist/src/gameplay-core.js
           grep -q 'classic-prototype.js?v=' dist/classic.html
           node tests/browser-classic.cjs
           node tests/browser-classic-save.cjs
+          node tests/browser-classic-hud.cjs
       - name: Gate release on original Oakrest visuals and retained combat upgrade
         run: |
           node --input-type=module - <<'NODE'
@@ -255,8 +260,15 @@ jobs:
               await page.evaluate(()=>{for(let i=0;i<28;i++)oakrestClassicQA.step(.08)});
               const after=await page.evaluate(()=>oakrestClassicQA.combatState().monsters.find(m=>m.id==='practice').hp);
               assert.ok(after<first,'hosted melee must inflict real damage');
+              assert.equal(await page.locator('#classic-minimap-canvas').isVisible(),true);
+              const map=await page.evaluate(()=>oakrestClassicQA.minimapState());
+              assert.ok(map.features.buildings.length>=16);
+              assert.ok(map.features.services.some(x=>x.id==='bank'));
+              await page.locator('#classic-minimap-expand').click();
+              assert.equal(await page.locator('#classic-map-window').isVisible(),true);
               await page.locator('#classic-inventory-toggle').click();
               assert.equal(await page.locator('#classic-item-content .classic-four-grid').first().locator('.classic-item-cell').count(),28);
+              assert.equal(await page.locator('#classic-map-window').isVisible(),false);
               await page.locator('#classic-item-close').click();
               await page.locator('#classic-equipment-toggle').click();
               assert.equal(await page.locator('.classic-paper-slot').count(),9);
