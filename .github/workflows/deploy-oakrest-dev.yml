@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 38d2341ad7b75a89a13d49bf0265567f36411f4e
+  OAKREST_COMMIT: 97889fa18875b9cc52a0ac5fcfe60f31ff8293f3
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -144,6 +144,7 @@ jobs:
           node tests/browser-classic-hud.cjs
           node tests/browser-classic-creator.cjs
           node tests/browser-classic-camera.cjs
+          node tests/browser-adventure.cjs
       - name: Gate release on original Oakrest visuals and retained combat upgrade
         run: |
           node --input-type=module - <<'NODE'
@@ -350,6 +351,11 @@ jobs:
             }finally{await browser.close();}
           })().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
+      - name: Verify hosted First Adventure with a new isolated character
+        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
+        env:
+          OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
+        run: node tests/browser-adventure.cjs
       - name: Confirm public site unchanged
         if: ${{ !cancelled() && steps.upload.outcome != 'skipped' }}
         run: python3 scripts/public-snapshot.py qa/public-before.json --compare
