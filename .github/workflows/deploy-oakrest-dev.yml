@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 29a16febf5c1285210cb6a9913e0e8f9c419fe77
+  OAKREST_COMMIT: 918fff6228a3e23a8b9ed61bfffdbb790c7f861c
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -254,6 +254,18 @@ jobs:
               assert.equal(response.status(),200,'Classic preview HTML must be hosted');
               await page.waitForFunction(()=>!!window.oakrestClassicQA,{timeout:30000});
               assert.equal(await page.locator('#classic-game canvas').count(),1);
+              const direction=await page.evaluate(()=>{
+                const here=oakrestClassicQA.projectWorld(0,39);
+                const north=oakrestClassicQA.projectWorld(0,45);
+                const south=oakrestClassicQA.projectWorld(0,33);
+                return {here,north,south};
+              });
+              assert.ok(direction.north.y<direction.here.y,'north MUST appear up on screen');
+              assert.ok(direction.south.y>direction.here.y,'south MUST appear down on screen');
+              await page.keyboard.down('w');
+              await page.evaluate(()=>{for(let i=0;i<7;i++)oakrestClassicQA.step(.05);});
+              await page.keyboard.up('w');
+              assert.ok(await page.evaluate(()=>oakrestClassicQA.state().z)>39,'W must travel map north');
               await page.evaluate(()=>oakrestClassicQA.teleport(-1,71));
               assert.equal(await page.evaluate(()=>oakrestClassicQA.lockMonster('practice')),true);
               const first=await page.evaluate(()=>oakrestClassicQA.combatState().monsters.find(m=>m.id==='practice').hp);
