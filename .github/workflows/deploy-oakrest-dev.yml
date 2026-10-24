@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 918fff6228a3e23a8b9ed61bfffdbb790c7f861c
+  OAKREST_COMMIT: a0920f4908d8916998e90c49305be0b9af975db0
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -276,6 +276,19 @@ jobs:
               const map=await page.evaluate(()=>oakrestClassicQA.minimapState());
               assert.ok(map.features.buildings.length>=16);
               assert.ok(map.features.services.some(x=>x.id==='bank'));
+              // Regression: A/left in game must point LEFT on the corner minimap,
+              // even though the expanded geographic map stays north-up.
+              await page.evaluate(()=>oakrestClassicQA.teleport(0,39));
+              const beforeLeft=await page.evaluate(()=>oakrestClassicQA.state());
+              await page.keyboard.down('a');
+              await page.evaluate(()=>{for(let i=0;i<8;i++)oakrestClassicQA.step(.05);});
+              await page.keyboard.up('a');
+              const afterLeft=await page.evaluate(()=>oakrestClassicQA.state());
+              const miniLeft=await page.evaluate(async ({from,to})=>{
+                const {worldToMinimap}=await import('./src/classic-minimap.js');
+                return worldToMinimap(to,from);
+              },{from:beforeLeft,to:afterLeft});
+              assert.ok(miniLeft.x<80,'hosted minimap must match left movement');
               await page.locator('#classic-minimap-expand').click();
               assert.equal(await page.locator('#classic-map-window').isVisible(),true);
               await page.locator('#classic-inventory-toggle').click();
