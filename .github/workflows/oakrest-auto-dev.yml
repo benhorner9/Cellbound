@@ -81,6 +81,7 @@ jobs:
           node tests/browser-classic.cjs
           node tests/browser-classic-hud.cjs
           node tests/browser-classic-creator.cjs
+          if test -f tests/browser-classic-camera.cjs; then node tests/browser-classic-camera.cjs; fi
       - name: Verify isolated target and stamp build identity
         run: |
           test -f dist/classic.html
