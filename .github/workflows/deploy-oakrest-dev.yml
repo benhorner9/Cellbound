@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: a0920f4908d8916998e90c49305be0b9af975db0
+  OAKREST_COMMIT: 0ecbfaf744b521fe6f57ce96100e59f8ed6de8a7
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -131,6 +131,9 @@ jobs:
           test -f dist/src/classic-hud.css
           test -f dist/src/classic-minimap.js
           test -f dist/src/classic-ui-controller.js
+          test -f dist/src/classic-town-plan.js
+          test -f dist/src/classic-character-ui.js
+          test -f dist/src/classic-character.css
           grep -q 'classic-hud.css' dist/classic.html
           test -f tests/classic-save-manager.test.js
           test -f dist/tests/classic-items.test.js || test -f tests/classic-items.test.js
@@ -139,6 +142,7 @@ jobs:
           node tests/browser-classic.cjs
           node tests/browser-classic-save.cjs
           node tests/browser-classic-hud.cjs
+          node tests/browser-classic-creator.cjs
       - name: Gate release on original Oakrest visuals and retained combat upgrade
         run: |
           node --input-type=module - <<'NODE'
