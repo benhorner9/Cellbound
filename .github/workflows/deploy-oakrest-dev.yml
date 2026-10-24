@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 2defebd22503a3bfd365d58ba1aec4200f1dd00e
+  OAKREST_COMMIT: 9795650e70a7381249ed7d2fe8e947be85c3285e
 jobs:
   host-isolation-diagnostic:
     name: Read-only Oakrest public/dev routing fingerprint
@@ -127,10 +127,13 @@ jobs:
           test -f dist/src/classic-item-state.js
           test -f dist/src/classic-items-ui.js
           test -f dist/src/classic-loot-view.js
+          test -f dist/src/classic-save-manager.js
+          test -f tests/classic-save-manager.test.js
           test -f dist/tests/classic-items.test.js || test -f tests/classic-items.test.js
           test -f dist/src/gameplay-core.js
           grep -q 'classic-prototype.js?v=' dist/classic.html
           node tests/browser-classic.cjs
+          node tests/browser-classic-save.cjs
       - name: Gate release on original Oakrest visuals and retained combat upgrade
         run: |
           node --input-type=module - <<'NODE'
@@ -262,6 +265,39 @@ jobs:
               assert.equal(await page.evaluate(()=>oakrestClassicQA.selectTarget('service:bank')),true);
               assert.equal(await page.locator('#classic-item-title').textContent(),'Oakrest Bank');
               await page.locator('#classic-item-close').click();
+              // Synthetic, isolated browser character: prove hosted Block 6
+              // persist/reload without touching a real player's browser data.
+              const {defaultSave}=await import('./src/rules.js');
+              const fixture=defaultSave();fixture.coins=111;
+              const fixtureId='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+              const fixtureRaw=JSON.stringify(fixture);
+              const savedCtx=await browser.newContext({viewport:{width:1194,height:834},hasTouch:true});
+              await savedCtx.addInitScript(({fixtureId,fixtureRaw})=>{
+                const p='oakrest-dev-';
+                localStorage.setItem(p+'characters-v1',JSON.stringify([{id:fixtureId,name:'Release Tester'}]));
+                localStorage.setItem(p+'active-character',fixtureId);
+                // Only seed once: reload must retain the changed save.
+                if(localStorage.getItem(p+'character-save-'+fixtureId)===null)
+                  localStorage.setItem(p+'character-save-'+fixtureId,fixtureRaw);
+              },{fixtureId,fixtureRaw});
+              const savedPage=await savedCtx.newPage();
+              savedPage.on('pageerror',err=>errors.push('save:' + err.message));
+              await savedPage.goto(base+'classic.html?qa=1&save='+Date.now(),{waitUntil:'domcontentloaded'});
+              await savedPage.waitForFunction(()=>!!window.oakrestClassicQA,{timeout:30000});
+              assert.equal(await savedPage.evaluate(()=>oakrestClassicQA.enableSaving().ok),true);
+              await savedPage.evaluate(()=>oakrestClassicQA.teleport(-30,14));
+              const deposited=await savedPage.evaluate(()=>oakrestClassicQA.itemAction({
+                type:'bank',kind:'coins',direction:'deposit',quantity:10
+              }));
+              assert.equal(deposited.ok,true);
+              assert.equal(await savedPage.evaluate(()=>oakrestClassicQA.saveNow()),true);
+              await savedPage.reload({waitUntil:'domcontentloaded'});
+              await savedPage.waitForFunction(()=>!!window.oakrestClassicQA,{timeout:30000});
+              assert.equal(await savedPage.evaluate(()=>oakrestClassicQA.itemState().coins),101);
+              assert.equal(await savedPage.evaluate(()=>oakrestClassicQA.itemState().bankCoins),10);
+              assert.equal(await savedPage.evaluate(id=>
+                localStorage.getItem('oakrest-dev-classic-before-block6-'+id),fixtureId),fixtureRaw);
+              await savedCtx.close();
               assert.deepEqual(errors,[],'no browser runtime errors');
               console.log('HOSTED CLASSIC PREVIEW PASSED',JSON.stringify({commit:meta.commit,first,after,route:base+'classic.html'}));
               await context.close();
