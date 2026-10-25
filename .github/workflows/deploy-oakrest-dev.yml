@@ -263,6 +263,31 @@ jobs:
               const response=await page.goto(base+'classic.html?qa=1&preview='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
               assert.equal(response.status(),200,'Classic preview HTML must be hosted');
               await page.waitForFunction(()=>!!window.oakrestClassicQA,{timeout:30000});
+              // Fresh Classic adventurers must earn visibly owned training gear.
+              // Do not rely on old invisible practice loans for the hosted smoke.
+              if(await page.locator('#classic-creator').isVisible()){
+                await page.locator('#classic-creator-name').fill('Hosted Rebirth Test');
+                await page.locator('#classic-creator-form button[type=submit]').click();
+                await page.waitForFunction(()=>document.getElementById('classic-creator').hidden);
+              }
+              await page.evaluate(async()=>{
+                const {findClassicInteractable}=await import('./src/classic-interactions.js');
+                const act=(kind,id)=>{
+                  const t=findClassicInteractable(id);
+                  if(!t)throw Error('Missing onboarding NPC '+id);
+                  oakrestClassicQA.teleport(t.x,t.z-1.6);
+                  const result=oakrestClassicQA.adventureAction(kind,id);
+                  if(!result?.ok)throw Error('Cannot complete '+kind+' '+id+': '+JSON.stringify(result));
+                };
+                act('accept','citizen:guard');
+                for(const id of ['service:bank','service:store','service:forester']){
+                  const t=findClassicInteractable(id);
+                  oakrestClassicQA.teleport(t.x,t.z-1);
+                  oakrestClassicQA.selectTarget(id);
+                }
+                act('finish','citizen:guard');
+                act('accept','adventure:rowan');
+              });
               assert.equal(await page.locator('#classic-game canvas').count(),1);
               const direction=await page.evaluate(()=>{
                 const here=oakrestClassicQA.projectWorld(0,39);
