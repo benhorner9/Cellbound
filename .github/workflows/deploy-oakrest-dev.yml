@@ -381,6 +381,11 @@ jobs:
         env:
           OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
         run: node tests/browser-adventure.cjs
+      - name: Verify hosted Block 3 inventory equipment and character quick slots
+        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
+        env:
+          OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
+        run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-classic-equipment-ui.cjs
       - name: Confirm public site unchanged
         if: ${{ !cancelled() && steps.upload.outcome != 'skipped' }}
         run: python3 scripts/public-snapshot.py qa/public-before.json --compare
