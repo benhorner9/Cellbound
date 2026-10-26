@@ -329,14 +329,14 @@ jobs:
               await page.locator('#classic-inventory-toggle').click();
               assert.equal(await page.locator('#classic-item-content .classic-four-grid').first().locator('.classic-item-cell').count(),28);
               assert.equal(await page.locator('#classic-map-window').isVisible(),false);
-              await page.locator('#classic-item-close').click();
+              await page.keyboard.press('Escape');
               await page.locator('#classic-equipment-toggle').click();
               assert.equal(await page.locator('.classic-paper-slot').count(),9);
-              await page.locator('#classic-item-close').click();
+              await page.keyboard.press('Escape');
               await page.evaluate(()=>oakrestClassicQA.teleport(-30,14));
               assert.equal(await page.evaluate(()=>oakrestClassicQA.selectTarget('service:bank')),true);
               assert.equal(await page.locator('#classic-item-title').textContent(),'Oakrest Bank');
-              await page.locator('#classic-item-close').click();
+              await page.keyboard.press('Escape');
               // Synthetic, isolated browser character: prove hosted Block 6
               // persist/reload without touching a real player's browser data.
               const {defaultSave}=await import('./src/rules.js');
