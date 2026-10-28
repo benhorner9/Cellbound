@@ -1,0 +1,59 @@
+name: Read-only Oakrest hosted release verification
+on:
+  push:
+    branches: [ai/diagnostic/oakrest-host-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OAKREST_COMMIT: 9252471234af51f71b37de8f119dc35a14c92fec
+    steps:
+      - name: Check out exact Oakrest source for trustworthy verification scripts
+        uses: actions/checkout@v4
+        with:
+          repository: benhorner9/Projectoakrest
+          ref: 9252471234af51f71b37de8f119dc35a14c92fec
+          persist-credentials: false
+      - name: Download exactly the uploaded release artifact, without rebuilding or reuploading
+        uses: actions/download-artifact@v4
+        with:
+          name: oakrest-development-release
+          run-id: 40745013125
+          github-token: \${{ github.token }}
+          repository: benhorner9/Cellbound
+          path: .
+      - name: Validate exact artifact metadata and preupload public snapshot
+        shell: bash
+        run: |
+          test -f dist/build-meta.json
+          test -f qa/public-before.json
+          node -e "const m=require('./dist/build-meta.json');if(m.commit!==process.env.OAKREST_COMMIT||m.environment!=='development')process.exit(1);console.log('Artifact pin matches',m.commit)"
+      - name: Verify hosted assets byte-for-byte against the uploaded build
+        run: node scripts/verify-hosted.mjs
+      - name: Set up Node and browser for read-only hosted gameplay checks
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install test tooling without modifying hosted content
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install chromium
+      - name: Verify hosted Classic launch and saves
+        env:
+          OAKREST_TEST_URL: https://playcellbound.com/oakrest-dev/
+        run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-classic-dev-launch.cjs
+      - name: Verify hosted First Adventure and quest panel
+        env:
+          OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
+        run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-adventure.cjs
+      - name: Verify hosted equipment and quick slots
+        env:
+          OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
+        run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-classic-equipment-ui.cjs
+      - name: Verify public site is unchanged versus preupload fingerprint
+        run: python3 scripts/public-snapshot.py qa/public-before.json --compare
