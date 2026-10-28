@@ -8,100 +8,27 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: a8dc61b2d4b3b91c4875147a795abb63280f45d3
+  OAKREST_COMMIT: 6bb8960c08b45fa2198b9ee6c0c5fecc39bee033
 jobs:
-  host-isolation-diagnostic:
-    name: Read-only Oakrest public/dev routing fingerprint
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Inspect HTTP routing and content without uploads
-        run: |
-          python3 - <<'PY'
-          import hashlib,urllib.request,urllib.error,time,json
-          for section in ('oakrest','oakrest-dev'):
-            for path in ('build-meta.json','index.html','src/main.js','assets/kaykit-adventurers/arrow.gltf'):
-              url='https://playcellbound.com/'+section+'/'+path+'?oakrest_diagnostic='+str(int(time.time()))
-              req=urllib.request.Request(url,headers={'Cache-Control':'no-cache','Pragma':'no-cache','User-Agent':'Oakrest-ReadOnly-Diagnostic/1'})
-              try:
-                with urllib.request.urlopen(req,timeout=20) as res:
-                  data=res.read()
-                  print(json.dumps({'section':section,'path':path,'url':res.url.split('?')[0],
-                    'status':res.status,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),
-                    'content_type':res.headers.get('Content-Type'),'sample':data[:110].decode('utf-8','replace') if path.endswith('.json') else None}))
-              except urllib.error.HTTPError as err:
-                print(json.dumps({'section':section,'path':path,'status':err.code,'reason':str(err.reason)}))
-          PY
-  host-readonly-browser-diagnostic:
-    name: Read-only remote browser and byte-integrity diagnosis
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    steps:
-      - name: Checkout restored original-art and opposed-combat source (READ ONLY for hosting)
-        uses: actions/checkout@v4
-        with:
-          repository: benhorner9/Projectoakrest
-          ref: 530bed9ee6f810f4e683af174cce33cdf2ef0171
-          persist-credentials: false
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - name: Prepare tested local build
-        run: |
-          npm ci --ignore-scripts
-          npm run build
-          npx playwright install chromium
-      - name: Compare actual hosted bytes and report browser errors
-        run: |
-          node <<'NODE'
-          const {chromium}=require('playwright'),{readFileSync}=require('node:fs'),{createHash}=require('node:crypto');
-          const hash=v=>createHash('sha256').update(v).digest('hex');
-          (async()=>{
-            const base='https://playcellbound.com/oakrest-dev/';
-            for(const path of ['index.html','src/main.js','assets/kaykit-adventurers/arrow.gltf','assets/kaykit-adventurers/sword_1handed.gltf','build-meta.json']){
-              const res=await fetch(base+path+'?oakrest_integrity='+Date.now(),{headers:{'Cache-Control':'no-cache'}});
-              const bytes=Buffer.from(await res.arrayBuffer());
-              const expected=path==='build-meta.json'?null:readFileSync('dist/'+path);
-              console.log('HOSTED INTEGRITY',JSON.stringify({path,status:res.status,bytes:bytes.length,sha:hash(bytes),
-                expectedBytes:expected?.length,expectedSha:expected?hash(expected):null,match:expected?hash(bytes)===hash(expected):null,contentType:res.headers.get('content-type'),
-                sample:path==='build-meta.json'?bytes.toString('utf8').slice(0,300):null}));
-            }
-            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-            try{
-              const ctx=await browser.newContext({viewport:{width:1366,height:1024},hasTouch:true});
-              const page=await ctx.newPage();
-              page.on('console',msg=>{if(msg.type()==='error')console.log('BROWSER CONSOLE ERROR',msg.text().slice(0,500));});
-              page.on('pageerror',err=>console.log('BROWSER PAGE ERROR',err.stack?.slice(0,1000)||String(err)));
-              page.on('requestfailed',request=>console.log('BROWSER REQUEST FAILURE',request.url(),request.failure()?.errorText));
-              page.on('response',res=>{if(res.status()>=400)console.log('BROWSER HTTP',res.status(),res.url());});
-              await page.goto(base+'?qa=1&diagnostic='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
-              await page.waitForTimeout(8000);
-              console.log('BROWSER RESULT',JSON.stringify(await page.evaluate(()=>({
-               page:location.pathname,qa:typeof window.oakrestQA,error:document.getElementById('error')?.textContent?.slice(0,400),
-               game:!!document.querySelector('#game canvas'),intro:!!document.getElementById('begin')}))));
-              await ctx.close();
-            }finally{await browser.close();}
-          })().catch(e=>{console.error('READ ONLY DIAGNOSTIC FAILED',e.stack||String(e));process.exitCode=1});
-          NODE
-      - name: Run restored hosted gameplay regression without uploading anything
-        env:
-          OAKREST_TEST_URL: https://playcellbound.com/oakrest-dev/
-        run: node tests/browser-release.cjs
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
     if: github.repository == 'benhorner9/Cellbound' && github.ref == 'refs/heads/deploy/oakrest-dev-20261020'
     runs-on: ubuntu-latest
-    # Browser provisioning and separate hosted smoke passes can exceed 20 minutes.
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - name: Check out reviewed Oakrest development commit
         uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
           ref: ${{ env.OAKREST_COMMIT }}
+          fetch-depth: 0
           persist-credentials: false
+      - name: Reject a release that is not integrated into dev
+        run: |
+          test "$(git rev-parse HEAD)" = "$OAKREST_COMMIT"
+          git fetch origin dev
+          git merge-base --is-ancestor "$OAKREST_COMMIT" origin/dev
+          test ! -f src/main.js
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -114,67 +41,24 @@ jobs:
           npm run check
           npm test
           npm run build
+      - name: Stamp exact checked-out Classic development release
+        run: node scripts/stamp-development-release.mjs
       - name: Install Chromium
         run: npx playwright install chromium
-      - name: Exercise built development release
-        run: node tests/browser-release.cjs
-      - name: Verify isolated Classic prototype before any upload
+      - name: Exercise normal built entry, creation, three styles and persistence
+        run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-classic-dev-launch.cjs
+      - name: Exercise Classic gameplay, ownership, combat and adventure
         run: |
-          test -f dist/classic.html
-          test -f dist/src/classic-prototype.js
-          test -f dist/src/classic-combat.js
-          test -f dist/src/classic-combat-view.js
-          test -f dist/src/classic-item-state.js
-          test -f dist/src/classic-items-ui.js
-          test -f dist/src/classic-loot-view.js
-          test -f dist/src/classic-save-manager.js
-          test -f dist/src/classic-hud.css
-          test -f dist/src/classic-minimap.js
-          test -f dist/src/classic-ui-controller.js
-          test -f dist/src/classic-town-plan.js
-          test -f dist/src/classic-character-ui.js
-          test -f dist/src/classic-character.css
-          grep -q 'classic-hud.css' dist/classic.html
-          test -f tests/classic-save-manager.test.js
-          test -f dist/tests/classic-items.test.js || test -f tests/classic-items.test.js
-          test -f dist/src/gameplay-core.js
-          grep -q 'classic-prototype.js?v=' dist/classic.html
-          node tests/browser-classic.cjs
           node tests/browser-classic-save.cjs
-          node tests/browser-classic-hud.cjs
-          node tests/browser-classic-creator.cjs
           node tests/browser-classic-camera.cjs
-          node tests/browser-adventure.cjs
-      - name: Gate release on original Oakrest visuals and retained combat upgrade
-        run: |
-          node --input-type=module - <<'NODE'
-          import assert from 'node:assert/strict';
-          import {existsSync,readFileSync} from 'node:fs';
-          const html=readFileSync('dist/index.html','utf8');
-          const main=readFileSync('dist/src/main.js','utf8');
-          assert.ok(!html.includes('quaternius-art-toggle'),'Quaternius graphics toggle must be removed');
-          assert.ok(!existsSync('dist/src/quaternius-hero.js'),'Quaternius hero model integration must be absent');
-          assert.ok(!existsSync('dist/src/quaternius-town.js'),'Quaternius civilian rig must be absent');
-          assert.ok(!existsSync('dist/src/quaternius-architecture.js'),'Quaternius medieval overlays must be absent');
-          assert.ok(!existsSync('dist/assets/quaternius'),'Quaternius model pack must be absent');
-          assert.ok(existsSync('dist/src/osrs-combat-math.js'),'Latest combat math must be retained');
-          assert.ok(main.includes("accuracyFor(source.level,e.level,source.weaponBasic"),'Opposed combat accuracy must remain active');
-          console.log('PASS: Original visuals restored, Quaternius removed, opposed combat retained');
-          NODE
-          timeout --signal=TERM --kill-after=10s 4m node tests/visual-browser-qa.cjs
-      - name: Stamp reviewed development release
-        run: |
-          node --input-type=module - <<'NODE'
-          import {writeFileSync} from 'node:fs';
-          writeFileSync('dist/build-meta.json',JSON.stringify({project:'oakrest',environment:'development',branch:'classic-preview',commit:process.env.OAKREST_COMMIT,deployedAt:new Date().toISOString()},null,2)+'\n');
-          NODE
-          test -f dist/src/equipment-ui.js
-          test -f dist/src/storage-key.js
-          test -f dist/src/minimap.js
-          test -f dist/src/hud-minimap.css
-          grep -q 'id="minimap-button"' dist/index.html
-          test -f dist/.htaccess
-          ! test -f dist/guild.html
+          node tests/browser-classic-equipment-ui.cjs
+          node tests/browser-classic-free-combat.cjs
+          node tests/browser-classic-combat-overhaul.cjs
+          node tests/browser-classic-combat-impacts.cjs
+          timeout --signal=TERM --kill-after=10s 4m node tests/browser-classic-combat-engagement.cjs
+          timeout --signal=TERM --kill-after=10s 4m node tests/browser-classic-abilities.cjs
+          timeout --signal=TERM --kill-after=10s 6m node tests/browser-adventure-complete.cjs
+          timeout --signal=TERM --kill-after=10s 6m node tests/browser-adventure.cjs
       - name: Snapshot public release before development upload
         run: python3 scripts/public-snapshot.py qa/public-before.json
       - name: Check existing secure hosting connection
@@ -200,7 +84,7 @@ jobs:
           state-name: .ftp-deploy-oakrest-dev-state.json
           dangerous-clean-slate: false
           log-level: standard
-      - name: Verify every hosted development file (retry transient cache propagation)
+      - name: Verify pinned hosted commit and every development asset
         run: |
           for attempt in 1 2 3 4; do
             if node scripts/verify-hosted.mjs; then exit 0; fi
@@ -208,185 +92,22 @@ jobs:
             sleep 15
           done
           exit 1
-      - name: Hosted development gameplay and persistence
+      - name: Verify hosted normal Classic entry, gameplay and save reload
         if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
         env:
           OAKREST_TEST_URL: https://playcellbound.com/oakrest-dev/
-        run: node tests/browser-release.cjs
-      - name: Hosted melee, ranged and magic contact verification
-        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
-        run: |
-          node --input-type=commonjs - <<'NODE'
-          const {chromium}=require('playwright'),assert=require('node:assert/strict');
-          (async()=>{
-            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-            try{
-              const {defaultSave}=await import('./src/rules.js');
-              const context=await browser.newContext({viewport:{width:1366,height:1024},hasTouch:true});
-              await context.addInitScript(d=>localStorage.setItem('oakrest-dev-v1',JSON.stringify(d)),defaultSave());
-              const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-              await page.goto('https://playcellbound.com/oakrest-dev/?qa=1');
-              await page.waitForFunction(()=>window.oakrestQA);await page.locator('#begin').click();
-              for(const style of ['melee','ranged','magic']){
-                const result=await page.evaluate(style=>{
-                  oakrestQA.step(3);oakrestQA.style(style);oakrestQA.teleport(-6,-1);oakrestQA.aim(-6,1.25,-3);oakrestQA.step(1);
-                  const before=oakrestQA.state().enemies[0].hp;
-                  if(!oakrestQA.state().autoCombat&&!oakrestQA.target('dummy'))throw Error('Cannot lock practice dummy');
-                  oakrestQA.step(8);
-                  return {style,before,after:oakrestQA.state().enemies[0].hp,autoCombat:oakrestQA.state().autoCombat,version:oakrestDiagnostics().version};
-                },style);
-                assert.ok(result.after<result.before,JSON.stringify(result));assert.equal(result.autoCombat,true);assert.equal(result.version,'auto-combat-1');console.log('HOSTED COMBAT PASS',JSON.stringify(result));
-              }
-              await page.screenshot({path:'qa/hosted-combat-reborn.png'});assert.deepEqual(errors,[]);
-              await context.close();
-            }finally{await browser.close()}
-          })().catch(e=>{console.error(e);process.exitCode=1});
-          NODE
-      - name: Verify hosted Classic combat route on the development host
-        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
-        run: |
-          node --input-type=commonjs - <<'NODE'
-          const {chromium}=require('playwright'),assert=require('node:assert/strict');
-          (async()=>{
-            const base='https://playcellbound.com/oakrest-dev/';
-            const meta=await (await fetch(base+'build-meta.json?cache='+Date.now(),{cache:'no-store'})).json();
-            assert.equal(meta.commit,process.env.OAKREST_COMMIT,'the hosted commit must match the pinned preview');
-            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-            try{
-              const context=await browser.newContext({viewport:{width:1194,height:834},hasTouch:true});
-              // An isolated legacy test save skips the new-player Creator modal.
-              // This verifies real gameplay projection, not a paused avatar picker.
-              const {defaultSave:classicFixture}=await import('./src/rules.js');
-              await context.addInitScript(save=>localStorage.setItem('oakrest-dev-v1',JSON.stringify(save)),classicFixture());
-              const page=await context.newPage(),errors=[];
-              page.on('pageerror',error=>errors.push(error.message));
-              const response=await page.goto(base+'classic.html?qa=1&preview='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
-              assert.equal(response.status(),200,'Classic preview HTML must be hosted');
-              await page.waitForFunction(()=>!!window.oakrestClassicQA,{timeout:30000});
-              // Fresh Classic adventurers must earn visibly owned training gear.
-              // Do not rely on old invisible practice loans for the hosted smoke.
-              if(await page.locator('#classic-creator').isVisible()){
-                await page.locator('#classic-creator-name').fill('Hosted Rebirth Test');
-                await page.locator('#classic-creator-form button[type=submit]').click();
-                await page.waitForFunction(()=>document.getElementById('classic-creator').hidden);
-              }
-              await page.evaluate(async()=>{
-                const {findClassicInteractable}=await import('./src/classic-interactions.js');
-                const act=(kind,id)=>{
-                  const t=findClassicInteractable(id);
-                  if(!t)throw Error('Missing onboarding NPC '+id);
-                  oakrestClassicQA.teleport(t.x,t.z-1.6);
-                  const result=oakrestClassicQA.adventureAction(kind,id);
-                  if(!result?.ok)throw Error('Cannot complete '+kind+' '+id+': '+JSON.stringify(result));
-                };
-                act('accept','citizen:guard');
-                for(const id of ['service:bank','service:store','service:forester']){
-                  const t=findClassicInteractable(id);
-                  oakrestClassicQA.teleport(t.x,t.z-1);
-                  oakrestClassicQA.selectTarget(id);
-                }
-                act('finish','citizen:guard');
-                act('accept','adventure:rowan');
-              });
-              assert.equal(await page.locator('#classic-game canvas').count(),1);
-              const direction=await page.evaluate(()=>{
-                const here=oakrestClassicQA.projectWorld(0,39);
-                const north=oakrestClassicQA.projectWorld(0,45);
-                const south=oakrestClassicQA.projectWorld(0,33);
-                return {here,north,south};
-              });
-              assert.ok(direction.north.y<direction.here.y,'north MUST appear up on screen');
-              assert.ok(direction.south.y>direction.here.y,'south MUST appear down on screen');
-              await page.keyboard.down('w');
-              await page.evaluate(()=>{for(let i=0;i<7;i++)oakrestClassicQA.step(.05);});
-              await page.keyboard.up('w');
-              assert.ok(await page.evaluate(()=>oakrestClassicQA.state().z)>39,'W must travel map north');
-              await page.evaluate(()=>oakrestClassicQA.teleport(-1,71));
-              assert.equal(await page.evaluate(()=>oakrestClassicQA.lockMonster('practice')),true);
-              const first=await page.evaluate(()=>oakrestClassicQA.combatState().monsters.find(m=>m.id==='practice').hp);
-              await page.evaluate(()=>{for(let i=0;i<28;i++)oakrestClassicQA.step(.08)});
-              const after=await page.evaluate(()=>oakrestClassicQA.combatState().monsters.find(m=>m.id==='practice').hp);
-              assert.ok(after<first,'hosted melee must inflict real damage');
-              assert.equal(await page.locator('#classic-minimap-canvas').isVisible(),true);
-              const map=await page.evaluate(()=>oakrestClassicQA.minimapState());
-              assert.ok(map.features.buildings.length>=16);
-              assert.ok(map.features.services.some(x=>x.id==='bank'));
-              // Regression: A/left in game must point LEFT on the corner minimap,
-              // even though the expanded geographic map stays north-up.
-              await page.evaluate(()=>oakrestClassicQA.teleport(0,39));
-              const beforeLeft=await page.evaluate(()=>oakrestClassicQA.state());
-              await page.keyboard.down('a');
-              await page.evaluate(()=>{for(let i=0;i<8;i++)oakrestClassicQA.step(.05);});
-              await page.keyboard.up('a');
-              const afterLeft=await page.evaluate(()=>oakrestClassicQA.state());
-              const miniLeft=await page.evaluate(async ({from,to})=>{
-                const {worldToMinimap}=await import('./src/classic-minimap.js');
-                return worldToMinimap(to,from);
-              },{from:beforeLeft,to:afterLeft});
-              assert.ok(miniLeft.x<80,'hosted minimap must match left movement');
-              await page.locator('#classic-minimap-expand').click();
-              assert.equal(await page.locator('#classic-map-window').isVisible(),true);
-              await page.locator('#classic-inventory-toggle').click();
-              assert.equal(await page.locator('#classic-item-content .classic-four-grid').first().locator('.classic-item-cell').count(),28);
-              assert.equal(await page.locator('#classic-map-window').isVisible(),false);
-              await page.keyboard.press('Escape');
-              await page.locator('#classic-equipment-toggle').click();
-              assert.equal(await page.locator('.classic-paper-slot').count(),9);
-              await page.keyboard.press('Escape');
-              await page.evaluate(()=>oakrestClassicQA.teleport(-30,14));
-              assert.equal(await page.evaluate(()=>oakrestClassicQA.selectTarget('service:bank')),true);
-              assert.equal(await page.locator('#classic-item-title').textContent(),'Oakrest Bank');
-              await page.keyboard.press('Escape');
-              // Synthetic, isolated browser character: prove hosted Block 6
-              // persist/reload without touching a real player's browser data.
-              const {defaultSave}=await import('./src/rules.js');
-              const fixture=defaultSave();fixture.coins=111;
-              const fixtureId='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
-              const fixtureRaw=JSON.stringify(fixture);
-              const savedCtx=await browser.newContext({viewport:{width:1194,height:834},hasTouch:true});
-              await savedCtx.addInitScript(({fixtureId,fixtureRaw})=>{
-                const p='oakrest-dev-';
-                localStorage.setItem(p+'characters-v1',JSON.stringify([{id:fixtureId,name:'Release Tester'}]));
-                localStorage.setItem(p+'active-character',fixtureId);
-                // Only seed once: reload must retain the changed save.
-                if(localStorage.getItem(p+'character-save-'+fixtureId)===null)
-                  localStorage.setItem(p+'character-save-'+fixtureId,fixtureRaw);
-              },{fixtureId,fixtureRaw});
-              const savedPage=await savedCtx.newPage();
-              savedPage.on('pageerror',err=>errors.push('save:' + err.message));
-              await savedPage.goto(base+'classic.html?qa=1&save='+Date.now(),{waitUntil:'domcontentloaded'});
-              await savedPage.waitForFunction(()=>!!window.oakrestClassicQA,{timeout:30000});
-              assert.equal(await savedPage.evaluate(()=>oakrestClassicQA.enableSaving().ok),true);
-              await savedPage.evaluate(()=>oakrestClassicQA.teleport(-30,14));
-              const deposited=await savedPage.evaluate(()=>oakrestClassicQA.itemAction({
-                type:'bank',kind:'coins',direction:'deposit',quantity:10
-              }));
-              assert.equal(deposited.ok,true);
-              assert.equal(await savedPage.evaluate(()=>oakrestClassicQA.saveNow()),true);
-              await savedPage.reload({waitUntil:'domcontentloaded'});
-              await savedPage.waitForFunction(()=>!!window.oakrestClassicQA,{timeout:30000});
-              assert.equal(await savedPage.evaluate(()=>oakrestClassicQA.itemState().coins),101);
-              assert.equal(await savedPage.evaluate(()=>oakrestClassicQA.itemState().bankCoins),10);
-              assert.equal(await savedPage.evaluate(id=>
-                localStorage.getItem('oakrest-dev-classic-before-block6-'+id),fixtureId),fixtureRaw);
-              await savedCtx.close();
-              assert.deepEqual(errors,[],'no browser runtime errors');
-              console.log('HOSTED CLASSIC PREVIEW PASSED',JSON.stringify({commit:meta.commit,first,after,route:base+'classic.html'}));
-              await context.close();
-            }finally{await browser.close();}
-          })().catch(error=>{console.error(error);process.exitCode=1;});
-          NODE
+        run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-classic-dev-launch.cjs
       - name: Verify hosted First Adventure with a new isolated character
         if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
         env:
           OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
-        run: node tests/browser-adventure.cjs
-      - name: Verify hosted Block 3 inventory equipment and character quick slots
+        run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-adventure.cjs
+      - name: Verify hosted equipment and eight character quick slots
         if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
         env:
           OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
         run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-classic-equipment-ui.cjs
-      - name: Confirm public site unchanged
+      - name: Confirm public site unchanged even after a partial upload
         if: ${{ !cancelled() && steps.upload.outcome != 'skipped' }}
         run: python3 scripts/public-snapshot.py qa/public-before.json --compare
       - name: Preserve tested build and QA evidence
@@ -397,6 +118,4 @@ jobs:
           include-hidden-files: true
           path: |
             dist/
-            qa/*.png
-            qa/*.json
-            qa/*.log
+            qa/
