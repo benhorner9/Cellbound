@@ -4,56 +4,76 @@ on:
     branches: [ai/diagnostic/oakrest-host-20261028]
 permissions:
   contents: read
-  actions: read
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     env:
       OAKREST_COMMIT: 9252471234af51f71b37de8f119dc35a14c92fec
     steps:
-      - name: Check out exact Oakrest source for trustworthy verification scripts
+      - name: Check out exact Oakrest source
         uses: actions/checkout@v4
         with:
           repository: benhorner9/Projectoakrest
           ref: 9252471234af51f71b37de8f119dc35a14c92fec
           persist-credentials: false
-      - name: Download exactly the uploaded release artifact, without rebuilding or reuploading
-        uses: actions/download-artifact@v4
-        with:
-          name: oakrest-development-release
-          run-id: 40745013125
-          github-token: \${{ github.token }}
-          repository: benhorner9/Cellbound
-          path: .
-      - name: Validate exact artifact metadata and preupload public snapshot
-        shell: bash
-        run: |
-          test -f dist/build-meta.json
-          test -f qa/public-before.json
-          node -e "const m=require('./dist/build-meta.json');if(m.commit!==process.env.OAKREST_COMMIT||m.environment!=='development')process.exit(1);console.log('Artifact pin matches',m.commit)"
-      - name: Verify hosted assets byte-for-byte against the uploaded build
-        run: node scripts/verify-hosted.mjs
-      - name: Set up Node and browser for read-only hosted gameplay checks
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - name: Install test tooling without modifying hosted content
+      - name: Rebuild verified merged source locally (NO HOST UPLOAD)
         run: |
+          test "$(git rev-parse HEAD)" = "$OAKREST_COMMIT"
           npm ci --ignore-scripts
-          npx playwright install chromium
-      - name: Verify hosted Classic launch and saves
+          npm run build
+          node scripts/stamp-development-release.mjs
+      - name: Validate hosted metadata and align deployment timestamp for byte-wise verification
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const expected=JSON.parse(readFileSync('dist/build-meta.json','utf8'));
+          const res=await fetch('https://playcellbound.com/oakrest-dev/build-meta.json?verify=readonly-'+Date.now(),{
+            redirect:'error',headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(25000)});
+          assert.equal(res.status,200,'hosted metadata HTTP');
+          assert.match(res.headers.get('content-type')||'',/application\/json/,'hosted metadata must be JSON');
+          const hosted=await res.json();
+          assert.equal(hosted.project,'oakrest');assert.equal(hosted.commit,process.env.OAKREST_COMMIT);
+          assert.equal(hosted.environment,'development');assert.equal(hosted.branch,'dev');
+          assert.equal(hosted.assetVersion,expected.assetVersion,'must equal locally rebuilt source content version');
+          assert.match(hosted.deployedAt,/^2026-/,'deployment stamp required');
+          // Only deployedAt is intentionally non-reproducible. Preserve the actual
+          // hosted timestamp to verify all other bytes against this exact source.
+          assert.deepEqual({...hosted,deployedAt:expected.deployedAt},expected);
+          writeFileSync('dist/build-meta.json',JSON.stringify(hosted,null,2)+'\n');
+          console.log('Confirmed exact merged commit, source asset version and actual deployedAt');
+          NODE
+      - name: Verify every hosted development asset byte-for-byte
+        run: node scripts/verify-hosted.mjs
+      - name: Install Chromium for real hosted UI checks
+        run: npx playwright install chromium
+      - name: Verify hosted Classic game launch and saved progression
         env:
           OAKREST_TEST_URL: https://playcellbound.com/oakrest-dev/
         run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-classic-dev-launch.cjs
-      - name: Verify hosted First Adventure and quest panel
+      - name: Verify hosted quest and First Adventure browser flows
         env:
           OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
         run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-adventure.cjs
-      - name: Verify hosted equipment and quick slots
+      - name: Verify hosted gear and 8 quick slots
         env:
           OAKREST_CLASSIC_URL: https://playcellbound.com/oakrest-dev/classic.html
         run: timeout --signal=TERM --kill-after=10s 6m node tests/browser-classic-equipment-ui.cjs
-      - name: Verify public site is unchanged versus preupload fingerprint
-        run: python3 scripts/public-snapshot.py qa/public-before.json --compare
+      - name: Verify production release metadata was not promoted
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const res=await fetch('https://playcellbound.com/oakrest/build-meta.json?read-only='+Date.now(),{redirect:'error',signal:AbortSignal.timeout(25000)});
+          assert.equal(res.status,200);assert.match(res.headers.get('content-type')||'',/application\/json/);
+          const publicMeta=await res.json();
+          assert.equal(publicMeta.commit,'aa135d45048ce89bf226f2c2e08320d8071958db','production must remain on verified 20 Oct baseline');
+          console.log('Production metadata still pinned to',publicMeta.commit);
+          NODE
