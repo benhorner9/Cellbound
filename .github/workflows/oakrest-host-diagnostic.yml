@@ -1,0 +1,21 @@
+name: Read-only Oakrest host response diagnostics
+on:
+  push:
+    branches:
+      - ai/diagnostic/oakrest-host-20261028
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect HTTP status, redirects, MIME and first response lines (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in /oakrest-dev/build-meta.json /oakrest-dev/classic.html /oakrest/build-meta.json /oakrest/classic.html /oakrest/src/classic-prototype.js; do
+            echo "===== $path ====="
+            curl --retry 2 --retry-delay 2 -sSL --max-time 25 -H 'Cache-Control: no-cache'               -A 'Mozilla/5.0 (Oakrest read-only release diagnostics)'               -D /tmp/oakrest-headers -o /tmp/oakrest-body               -w 'status=%{http_code} type=%{content_type} final=%{url_effective} bytes=%{size_download}\n'               "https://playcellbound.com$path?diag=oakrest"
+            grep -Ei '^(HTTP/|content-type:|location:|server:|cache-control:|cf-ray:|x-cache:)' /tmp/oakrest-headers | tail -15 || true
+            head -c 140 /tmp/oakrest-body | tr '\n' ' ' | sed 's/[^[:print:]]/./g'
+            echo
+          done
