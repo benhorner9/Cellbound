@@ -8,7 +8,7 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: dd2081fff79e1219e70c016cbaa698bc91c0d19c
+  OAKREST_COMMIT: 6bb8960c08b45fa2198b9ee6c0c5fecc39bee033
 jobs:
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
@@ -58,6 +58,7 @@ jobs:
           timeout --signal=TERM --kill-after=10s 4m node tests/browser-classic-combat-engagement.cjs
           timeout --signal=TERM --kill-after=10s 4m node tests/browser-classic-abilities.cjs
           timeout --signal=TERM --kill-after=10s 6m node tests/browser-adventure-complete.cjs
+          timeout --signal=TERM --kill-after=10s 6m node tests/browser-adventure.cjs
       - name: Snapshot public release before development upload
         run: python3 scripts/public-snapshot.py qa/public-before.json
       - name: Check existing secure hosting connection
