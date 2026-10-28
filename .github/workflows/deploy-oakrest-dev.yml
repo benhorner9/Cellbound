@@ -8,13 +8,13 @@ concurrency:
   group: oakrest-dev-shared-host
   cancel-in-progress: false
 env:
-  OAKREST_COMMIT: 8bf49654a82d25b975e298071fd6a7da0b283afa
+  OAKREST_COMMIT: dd2081fff79e1219e70c016cbaa698bc91c0d19c
 jobs:
   oakrest-development-only:
     name: QA and publish only /oakrest-dev/
     if: github.repository == 'benhorner9/Cellbound' && github.ref == 'refs/heads/deploy/oakrest-dev-20261020'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - name: Check out reviewed Oakrest development commit
         uses: actions/checkout@v4
@@ -55,6 +55,8 @@ jobs:
           node tests/browser-classic-free-combat.cjs
           node tests/browser-classic-combat-overhaul.cjs
           node tests/browser-classic-combat-impacts.cjs
+          timeout --signal=TERM --kill-after=10s 4m node tests/browser-classic-combat-engagement.cjs
+          timeout --signal=TERM --kill-after=10s 4m node tests/browser-classic-abilities.cjs
           timeout --signal=TERM --kill-after=10s 6m node tests/browser-adventure-complete.cjs
       - name: Snapshot public release before development upload
         run: python3 scripts/public-snapshot.py qa/public-before.json
