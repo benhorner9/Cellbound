@@ -83,13 +83,16 @@ jobs:
           npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Run original and Classic browser release gates
+      - name: Run Classic-only browser release gates (no retired 3D suite)
         run: |
-          node tests/browser-release.cjs
+          set -euo pipefail
           node tests/browser-classic.cjs
           node tests/browser-classic-hud.cjs
           node tests/browser-classic-creator.cjs
+          node tests/browser-classic-navigation.cjs
           if test -f tests/browser-classic-camera.cjs; then node tests/browser-classic-camera.cjs; fi
+          if test -f tests/browser-classic-world-atlas.cjs; then node tests/browser-classic-world-atlas.cjs; fi
+          if test -f tests/browser-classic-block3.cjs; then node tests/browser-classic-block3.cjs; fi
       - name: Verify isolated target and stamp build identity
         run: |
           test -f dist/classic.html
