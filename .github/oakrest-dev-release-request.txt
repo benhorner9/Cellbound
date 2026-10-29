@@ -2,8 +2,8 @@ Oakrest Classic — development-only release request
 Requested on: 2026-10-29
 Source repository: benhorner9/Projectoakrest
 Branch: dev
-Requested commit: ba0611d18ffca1d7af4fd6e06592f75455aca8ff
-Includes: Block 2 World Atlas (#191), Block 3 terrain / collisions / town life (#192)
-Approval: Game Director waived independent review and physical iPad Safari sign-off for these two blocks on dev only, subject to all applicable CI passing.
+Requested commit: 5cb20d420fa4dedc59e92ea1372992d023eb3108
+Includes: One-tap Woodcutting, hidden next-log countdown, randomized chop attempts (#193 / PR #194)
+Approval: Game Director approved dev-only release and the scoped independent review/physical iPad Safari sign-off waiver in response to the release authorization question; all seven required CI workflows passed.
 Target path: ./oakrest-dev/
 Never deploy to: ./oakrest/ or ./game/
