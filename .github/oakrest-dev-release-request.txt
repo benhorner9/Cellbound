@@ -2,9 +2,9 @@ Oakrest Classic — development-only release request
 Requested on: 2026-10-29
 Source repository: benhorner9/Projectoakrest
 Branch: dev
-Requested commit: 13203f0de0604c86013a4992d77d28149f926080
-Includes: Visual Overhaul Block 1, issue #197, PR #198 — improved town/woodland terrain colour, deterministic instanced shrubs/ferns/fallen leaves/pebbles, redesigned building roofs/trim/gables, gates, atmosphere; gameplay/physics/save rules preserved.
-Authorization: Game Director explicitly approved the PR #198-specific independent review and physical iPad Safari sign-off waiver for development deployment only. All 10 of 10 required GitHub head CI workflow suites passed. Physical Safari remains unverified.
+Requested commit: 0aa624bfe6f3e88b2fb223ab372cb72430bfb1a4
+Includes: Visual Overhaul Block 2 — issue #199 / PR #200, upgraded Classic 2.5D character silhouettes, appearance previews, equipment-tier palettes, realistic equipped-gear-only visuals, weapon-family differentiation, animations; ownership, progression and save compatibility preserved.
+Director authorization: Explicit PR #200-specific waiver of independent review and physical iPad Safari sign-off for DEVELOPMENT DEPLOYMENT ONLY. All 9 required PR-head automated CI suites passed; physical iPad Safari remains untested.
 Target path: ./oakrest-dev/
 Never deploy to: ./oakrest/ or ./game/
-Release guard: verify exact pinned merged SHA, real hosted asset hashes, and unchanged production fingerprints.
+Release guard: pin exact merged dev SHA; verify all published development asset hashes and hosted build identity; prove public/production fingerprints unchanged.
