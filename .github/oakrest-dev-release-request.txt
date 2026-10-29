@@ -2,8 +2,9 @@ Oakrest Classic — development-only release request
 Requested on: 2026-10-29
 Source repository: benhorner9/Projectoakrest
 Branch: dev
-Requested commit: 5cb20d420fa4dedc59e92ea1372992d023eb3108
-Includes: One-tap Woodcutting, hidden next-log countdown, randomized chop attempts (#193 / PR #194)
-Approval: Game Director approved dev-only release and the scoped independent review/physical iPad Safari sign-off waiver in response to the release authorization question; all seven required CI workflows passed.
+Requested commit: 5e6c5b2228d5134b5db6357afd7d24baaa5e63b3
+Includes: PR #196 / issue #195 — always-on inventory management, ordered combat skills, skill unlock popups, grouped quest journal, enlarged minimap popup, top-right character logout, cleaned city pathways, natural smoothed trails throughout wilderness and consistent minimap/Atlas.
+Approval: Game Director requested "Get it all deployed" in direct response to a PR #196 dev-only physical iPad Safari and independent-review waiver question, covering the expanded wilderness changes; all 10 required PR head CI workflows green. Waiver applies only to this development release.
 Target path: ./oakrest-dev/
 Never deploy to: ./oakrest/ or ./game/
+Safety: Preserve production/public fingerprints. Verify exact hosted source SHA, asset hashes, canonical Classic-only browser gates and no production changes.
