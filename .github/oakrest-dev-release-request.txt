@@ -2,9 +2,9 @@ Oakrest Classic — development-only release request
 Requested on: 2026-10-29
 Source repository: benhorner9/Projectoakrest
 Branch: dev
-Requested commit: 5e6c5b2228d5134b5db6357afd7d24baaa5e63b3
-Includes: PR #196 / issue #195 — always-on inventory management, ordered combat skills, skill unlock popups, grouped quest journal, enlarged minimap popup, top-right character logout, cleaned city pathways, natural smoothed trails throughout wilderness and consistent minimap/Atlas.
-Approval: Game Director requested "Get it all deployed" in direct response to a PR #196 dev-only physical iPad Safari and independent-review waiver question, covering the expanded wilderness changes; all 10 required PR head CI workflows green. Waiver applies only to this development release.
+Requested commit: 13203f0de0604c86013a4992d77d28149f926080
+Includes: Visual Overhaul Block 1, issue #197, PR #198 — improved town/woodland terrain colour, deterministic instanced shrubs/ferns/fallen leaves/pebbles, redesigned building roofs/trim/gables, gates, atmosphere; gameplay/physics/save rules preserved.
+Authorization: Game Director explicitly approved the PR #198-specific independent review and physical iPad Safari sign-off waiver for development deployment only. All 10 of 10 required GitHub head CI workflow suites passed. Physical Safari remains unverified.
 Target path: ./oakrest-dev/
 Never deploy to: ./oakrest/ or ./game/
-Safety: Preserve production/public fingerprints. Verify exact hosted source SHA, asset hashes, canonical Classic-only browser gates and no production changes.
+Release guard: verify exact pinned merged SHA, real hosted asset hashes, and unchanged production fingerprints.
