@@ -3,6 +3,14 @@
 # non-default deploy bridge branch would never fire).
 name: Oakrest — auto-deploy reviewed dev
 on:
+  # Owner-reviewed dev releases can be requested immediately using a small
+  # marker commit, rather than relying on GitHub's best-effort cron timing.
+  # This workflow only writes to /oakrest-dev/ and verifies public unchanged.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/oakrest-auto-dev.yml'
+      - '.github/oakrest-dev-release-request.txt'
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
