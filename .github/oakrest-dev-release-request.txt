@@ -2,9 +2,9 @@ Oakrest Classic — development-only release request (ISSUE 208 APPROVED)
 Requested on: 2026-10-30
 Source repository: benhorner9/Projectoakrest
 Branch: dev
-Requested exact commit: 5899627b9156367b886d5742a65adee568aaa598
-Includes: issue #208, implementation PR #209, combat HUD, touch UI cleanup, collision and monster habitats.
-Automated QA: 14/14 PR-head GitHub Actions workflows passed at 1487469540fdf4b29d9ba81341695ec185bcdc63.
+Requested exact commit: 82d1455995b4cca94da2edc9a1bf347381e1e0ec
+Includes: issue #208, implementation PR #209, combat HUD, touch UI cleanup, collision and monster habitats, plus removal of obsolete logout styles.
+Automated QA: 14/14 PR-head workflows passed at 1487469540fdf4b29d9ba81341695ec185bcdc63; latest CSS cleanup requires release workflow checks.
 Director authorization: Independent code review and physical iPad Safari sign-off explicitly waived for issue #208 DEVELOPMENT DEPLOYMENT ONLY. Automated touch testing is not physical iPad QA.
 Target path: ./oakrest-dev/
 Never deploy to: ./oakrest/ or ./game/
