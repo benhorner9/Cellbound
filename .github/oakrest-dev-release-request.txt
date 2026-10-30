@@ -1,11 +1,9 @@
-Oakrest Classic — development-only release request (ISSUE 208 APPROVED)
+Oakrest Classic — approved development-only release request
 Requested on: 2026-10-30
 Source repository: benhorner9/Projectoakrest
-Branch: dev
-Requested exact commit: 82d1455995b4cca94da2edc9a1bf347381e1e0ec
-Includes: issue #208, implementation PR #209, combat HUD, touch UI cleanup, collision and monster habitats, plus removal of obsolete logout styles.
-Automated QA: 14/14 PR-head workflows passed at 1487469540fdf4b29d9ba81341695ec185bcdc63; latest CSS cleanup requires release workflow checks.
-Director authorization: Independent code review and physical iPad Safari sign-off explicitly waived for issue #208 DEVELOPMENT DEPLOYMENT ONLY. Automated touch testing is not physical iPad QA.
-Target path: ./oakrest-dev/
-Never deploy to: ./oakrest/ or ./game/
-Release guard: inspect dev HEAD matches requested exact commit, verify every published development asset hash and hosted build identity, and prove public/production fingerprints unchanged. Do not modify Oakrest main or public content.
+Source branch: dev
+Requested exact commit: 2216db323d77fdb8053565d60d210e25f5c5a05b
+Includes: merged PR #211 (smaller hit markers and visible logout), merged PR #213 (issues #212/#214: weapon equipping, skill-only combat bar, item context menus, quantity-based timed crafting and per-cycle XP).
+Release authorization: Director explicitly requested merge/deploy of both implemented PRs to the Oakrest development game. Automated WebKit touch testing passed; physical iPad Safari sign-off is not claimed.
+Scope: DEVELOPMENT ONLY — deploy exclusively to ./oakrest-dev/ on playcellbound.com. Do not modify ./oakrest/ production or ./game/.
+Release gates: npm check, unit regressions, build, browser tests, exact hosted build-meta.json commit, asset SHA-256 verification, and production fingerprint unchanged. Never claim live until checks pass.
