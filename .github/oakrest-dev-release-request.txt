@@ -1,10 +1,11 @@
-Oakrest Classic — development-only release request
+Oakrest Classic — development-only release request (BLOCK 4 APPROVED)
 Requested on: 2026-10-30
 Source repository: benhorner9/Projectoakrest
 Branch: dev
-Requested commit: 035d7e42b42883f33ec01edfb4e9de810bac67cd
-Includes: Visual Overhaul Block 3 — issue #201 / PR #202, updated Classic inventory/equipment/ground-loot art, gathering and crafting materials, canonical item icons and local low-poly ground models; item IDs, ownership, crafting, gameplay and save format preserved.
-Director authorization: Explicit PR #202-specific waiver of independent review and physical iPad Safari sign-off for DEVELOPMENT DEPLOYMENT ONLY. All 8 required PR-head automated CI workflows passed. Physical iPad Safari remains untested.
+Requested commit: af9464ebd0cf7772f108c0a06e83d5a44550ca41
+Includes: Visual Overhaul Block 4 — issue #203 / PR #204, four unique Classic monster silhouettes, 6 combat pose states, charge/pounce/cleave warning boundaries, frost/ember/arcane projectile identities, bounded visual resources and reduced-motion support.
+Test evidence: All 7/7 PR-head GitHub Actions workflows passed at b1f8f24058823e2ba041f2814b50bd1d25a164ef; 566/566 unit tests, iPad-sized Chromium and existing Classic combat regressions passed.
+Director authorization: The owner explicitly waived independent review and physical iPad Safari sign-off for Oakrest Classic Visual Block 4, PR #204, DEVELOPMENT DEPLOYMENT ONLY, on 2026-10-30. This is a PR #204-specific waiver; physical iPad Safari remains untested, and production is not authorised.
 Target path: ./oakrest-dev/
 Never deploy to: ./oakrest/ or ./game/
-Release guard: pin exact merged dev SHA; verify every published development asset hash and hosted build identity; prove public/production fingerprints unchanged.
+Release guard: pin exact merged dev SHA; verify every published development asset hash and hosted build identity; prove public/production fingerprints unchanged. Do not modify Oakrest main.
