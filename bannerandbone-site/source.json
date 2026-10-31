@@ -1,7 +1,15 @@
 {
   "project": "banner-and-bone",
   "source": "benhorner9/banner-and-bone",
-  "sourceCommit": "fa85c9c7fbe1ed27e9739dd9f936834053e20758",
+  "sourceCommit": "6c9d3451c48b46e50c8e5986aa08d39deea63747",
   "target": "/bannerandbone/",
-  "environment": "development-preview"
+  "environment": "development-preview",
+  "block": 2,
+  "assets": [
+    "index.html",
+    "combat.html",
+    "src/combat-engine.mjs",
+    "src/combat-ui.mjs",
+    "src/combat.css"
+  ]
 }
