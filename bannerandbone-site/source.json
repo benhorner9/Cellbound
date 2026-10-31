@@ -1,7 +1,7 @@
 {
   "project": "banner-and-bone",
   "source": "benhorner9/banner-and-bone",
-  "sourceCommit": "c0207a05e661b0b7f661e040198e8cf3870007da",
+  "sourceCommit": "5c5605b2e9616a1b7a655a67a974930c7e932db9",
   "target": "/bannerandbone/",
   "environment": "development-preview",
   "block": 3,
@@ -10,9 +10,10 @@
     "index.html",
     "arena.html",
     "combat.html",
-    "src/arena.mjs",
-    "src/combat-engine.mjs",
-    "src/combat-ui.mjs",
+    "src/arena.js",
+    "src/combat-ui.js",
+    "src/combat-engine.js",
     "src/combat.css"
-  ]
+  ],
+  "fix": "live-browser-mjs-mime"
 }
