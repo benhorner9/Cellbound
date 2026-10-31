@@ -2,7 +2,7 @@
   "project": "5asidefootball",
   "source": "benhorner9/5AsideManager",
   "sourceBranch": "main",
-  "sourceCommit": "e9d1ea7b5360584e9f53440e086107189a39c06e",
+  "sourceCommit": "b0d7d4f431aa373008b3852b8e8751ee68280d0c",
   "target": "/5asidefootball.com/",
-  "note": "Static browser mirror of private 5AsideManager source. Future source changes require syncing this isolated bridge until a cross-repository deploy credential is configured."
+  "note": "Static mirror of private 5AsideManager source; deploys only to playcellbound.com/5asidefootball.com/ via the existing isolated Cellbound FTPS workflow. No Vercel deployment is required. Future source changes must be synced here until a cross-repository credential is configured."
 }

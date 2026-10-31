@@ -4,14 +4,17 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 
-function boot() {
-  const storage = new Map();
-  const app = {innerHTML:"", handle:null, addEventListener(event,cb){if(event==="click")this.handle=cb;}};
+function boot({autoCreate=true,saved=null}={}) {
+  const key="five-aside-manager-alpha-v1";
+  const storage = new Map(saved?[[key,JSON.stringify(saved)]]:[]);
+  const nameInput = {value:"Test Town FC"};
+  const previewName = {textContent:""};
+  const app = {innerHTML:"", handle:null, inputHandle:null, addEventListener(event,cb){if(event==="click")this.handle=cb;if(event==="input")this.inputHandle=cb;}};
   let clock;
   const seededMath = Object.create(Math);
   seededMath.random = () => 0.53;
   const sandbox = {
-    document:{getElementById(name){assert.equal(name,"app");return app;}},
+    document:{getElementById(name){if(name==="app")return app;if(name==="club-create-name")return nameInput;if(name==="kit-club-name")return previewName;return null;}},
     localStorage:{getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}},
     setInterval(fn){clock=fn;return 1;},
     clearInterval(){clock=null;},
@@ -23,7 +26,8 @@ function boot() {
     assert.ok(app.handle,"Click handler installed");
     app.handle({target:{closest(){return {getAttribute(key){return data[key]??null;}};}}});
   };
-  return {app,storage,click,tick(){assert.ok(clock,"Running match clock");clock();}};
+  if(autoCreate)click({"data-action":"create-club"});
+  return {app,storage,nameInput,click,input(value){nameInput.value=value;app.inputHandle({target:{id:"club-create-name",value}});},tick(){assert.ok(clock,"Running match clock");clock();}};
 }
 
 test("renders clubhouse and squad",()=>{
@@ -56,6 +60,8 @@ test("runs live touchline instructions and resets",()=>{
   assert.match(g.app.innerHTML,/FINISH MATCH/);
   g.click({"data-action":"finish"});
   g.click({"data-action":"reset"});
+  assert.match(g.app.innerHTML,/CREATE YOUR CLUB/);
+  g.click({"data-action":"create-club"});
   assert.match(g.app.innerHTML,/The Clubhouse/);
   assert.match(g.app.innerHTML,/ROUND 1/);
 });
@@ -178,4 +184,66 @@ test("a one-off guest may be scouted and signed but never automatically register
   assert.equal(snapshot.roster.length,10);
   assert.equal(snapshot.formerGuests.length,0);
   assert.ok(snapshot.roster.some(p=>p.name===guest.name));
+});
+
+test("new managers must create a club before accessing the clubhouse",()=>{
+  const g=boot({autoCreate:false});
+  assert.match(g.app.innerHTML,/CREATE YOUR CLUB/);
+  assert.match(g.app.innerHTML,/Live kit preview/i);
+  assert.doesNotMatch(g.app.innerHTML,/The Clubhouse/);
+  g.click({"data-action":"go-fixtures"});
+  assert.match(g.app.innerHTML,/CREATE YOUR CLUB/);
+  g.input("  ");
+  g.click({"data-action":"create-club"});
+  assert.match(g.app.innerHTML,/between 3 and 28 characters/);
+  assert.equal(g.storage.size,0);
+  g.input("Harbour Fives FC");
+  g.click({"data-action":"kit-pattern","data-value":"hoops"});
+  g.click({"data-action":"kit-primary","data-value":"#d63c4b"});
+  g.click({"data-action":"kit-secondary","data-value":"#142f4d"});
+  assert.match(g.app.innerHTML,/kit-hoops/);
+  assert.match(g.app.innerHTML,/Harbour Fives FC/);
+  g.click({"data-action":"create-club"});
+  const state=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(state.clubCreated,true);
+  assert.equal(state.club,"Harbour Fives FC");
+  assert.equal(state.kit.pattern,"hoops");
+  assert.equal(state.kit.primary,"#d63c4b");
+  assert.equal(state.kit.secondary,"#142f4d");
+  assert.match(g.app.innerHTML,/The Clubhouse/);
+});
+
+test("kit editing preserves progress and blocks identical colours",()=>{
+  const g=boot();
+  g.click({"data-action":"go-fixtures"});
+  const before=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  g.click({"data-action":"go-overview"});
+  g.click({"data-action":"edit-club"});
+  assert.match(g.app.innerHTML,/YOUR CLUB IDENTITY/);
+  g.click({"data-action":"kit-secondary","data-value":"#1d8967"});
+  g.click({"data-action":"create-club"});
+  assert.match(g.app.innerHTML,/Choose two different kit colours/);
+  g.click({"data-action":"kit-secondary","data-value":"#f4bf52"});
+  g.input("New Club  Athletic");
+  g.click({"data-action":"create-club"});
+  const after=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(after.club,"New Club Athletic");
+  assert.equal(after.kit.secondary,"#f4bf52");
+  assert.equal(after.money,before.money);
+  assert.equal(after.round,before.round);
+  assert.equal(after.roster.length,before.roster.length);
+  assert.match(g.app.innerHTML,/New Club Athletic/);
+});
+
+test("legacy saves skip onboarding and receive a default kit",()=>{
+  const g=boot();
+  const prior=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  delete prior.clubCreated;
+  delete prior.kit;
+  const migrated=boot({autoCreate:false,saved:prior});
+  assert.match(migrated.app.innerHTML,/The Clubhouse/);
+  migrated.click({"data-tab":"tactics"});
+  const saved=JSON.parse(migrated.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.clubCreated,true);
+  assert.equal(saved.kit.pattern,"stripes");
 });

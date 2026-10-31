@@ -65,3 +65,48 @@
 .club-input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
 .tactic-choice:focus-visible,.btn:focus-visible,.nav button:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
 @media(max-width:550px){.club-input{max-width:100%}}
+
+
+/* Club creator — first-run onboarding and editable home kit */
+.creation-screen{min-height:100dvh;padding:clamp(18px,3vw,42px);max-width:1340px;margin:auto}
+.creation-header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:clamp(25px,5vw,60px)}
+.creation-header .brand{padding:0}
+.creation-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(310px,.9fr);gap:clamp(18px,3vw,38px);align-items:stretch}
+.creation-form{padding:clamp(24px,4vw,45px);overflow:visible}
+.creation-form h1{font:800 clamp(42px,5.4vw,72px)/.96 'Barlow Condensed',sans-serif;letter-spacing:.3px;margin:12px 0 17px}
+.creation-form>p{max-width:510px;line-height:1.6;color:var(--muted);margin:0 0 24px}
+.creation-label{display:block;font-size:12px;font-weight:800;letter-spacing:.6px;color:#e9f1ec;margin:24px 0 10px}
+.creation-name{display:block;width:100%;max-width:100%;font-size:16px;padding:15px 17px}
+.design-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.design-choice{min-height:48px;background:#173340;color:#d0e2dc;border:1px solid var(--line);border-radius:9px;font-size:12px;font-weight:800}
+.design-choice.selected{border-color:var(--mint);background:#25483d;color:var(--mint);box-shadow:0 0 0 1px var(--mint)}
+.design-choice:focus-visible,.colour-choice:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+.colour-options{display:flex;flex-wrap:wrap;gap:9px}
+.colour-choice{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;border:2px solid transparent;background:#243845;padding:4px}
+.colour-choice span{display:block;width:100%;height:100%;border-radius:7px;border:1px solid #ffffff35}
+.colour-choice.chosen{border-color:var(--mint);background:#405a48;box-shadow:0 0 0 2px #0a161e}
+.creation-actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:30px}
+.creation-actions .btn{min-height:48px;padding:13px 22px}
+.creation-preview{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:570px;border:1px solid #315344;border-radius:16px;padding:32px 24px;background:radial-gradient(ellipse at 50% 35%,#2e654d 0%,#18362f 35%,#101f28 85%);overflow:hidden}
+.creation-preview .eyebrow{color:var(--mint)}
+.kit-display{display:flex;align-items:center;justify-content:center;min-height:280px;width:100%;margin:14px auto}
+.kit-shirt{display:flex;align-items:center;justify-content:center;position:relative;width:195px;height:230px;clip-path:polygon(23% 0,77% 0,100% 14%,94% 37%,79% 31%,79% 100%,21% 100%,21% 31%,6% 37%,0 14%);background:var(--kit-primary);filter:drop-shadow(0 5px 6px #0005)}
+.kit-shirt.kit-solid{background:var(--kit-primary)}
+.kit-shirt.kit-stripes{background:repeating-linear-gradient(90deg,var(--kit-primary) 0 17%,var(--kit-secondary) 17% 34%)}
+.kit-shirt.kit-hoops{background:repeating-linear-gradient(0deg,var(--kit-primary) 0 16%,var(--kit-secondary) 16% 32%)}
+.kit-shirt.kit-halves{background:linear-gradient(90deg,var(--kit-primary) 0 50%,var(--kit-secondary) 50% 100%)}
+.kit-shirt.kit-sash{background:linear-gradient(125deg,var(--kit-primary) 0 36%,var(--kit-secondary) 36% 56%,var(--kit-primary) 56% 100%)}
+.kit-shirt:before{content:'';position:absolute;top:0;left:40%;width:20%;height:14px;border-radius:0 0 30px 30px;background:#10232c90}
+.kit-number{position:relative;display:grid;place-items:center;background:#0a1627c9;color:white;border-radius:8px;font:800 46px 'Barlow Condensed',sans-serif;width:55px;height:60px;margin-top:28px}
+.preview-club-name{font:800 clamp(29px,3.2vw,43px)/1.05 'Barlow Condensed',sans-serif;text-transform:uppercase;overflow-wrap:anywhere}
+.preview-caption{color:var(--mint);font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;margin-top:12px}
+.preview-note{color:#a0bbb1;max-width:250px;font-size:11px;line-height:1.7;margin-top:36px}
+.kit-display.compact{width:auto;min-height:88px;justify-content:flex-start;margin:0 0 16px}
+.kit-display.compact .kit-shirt{width:67px;height:78px}
+.kit-display.compact .kit-shirt:before{height:5px}
+.kit-display.compact .kit-number{font-size:19px;width:24px;height:27px;border-radius:4px;margin-top:11px}
+.pitch .shirt.kit-shirt{width:34px;height:36px;display:grid;place-items:center;padding:6px 0 0;font-size:12px;border-radius:0;filter:none;color:white;text-shadow:0 1px 3px #000}
+.pitch .shirt.kit-shirt:before{height:3px}
+.pitch-player:first-child .shirt.kit-shirt{background:var(--orange);color:#18241d}
+@media(max-width:840px){.creation-layout{grid-template-columns:1fr}.creation-preview{min-height:385px}.creation-preview .kit-display{min-height:200px}.creation-preview .kit-shirt{width:155px;height:184px}.preview-note{margin-top:20px}}
+@media(max-width:520px){.creation-screen{padding:16px}.creation-header .chip{font-size:9px}.design-options{grid-template-columns:repeat(3,minmax(0,1fr))}.creation-form{padding:21px}.creation-preview{padding:24px 15px}.colour-choice{width:42px;height:42px}}
