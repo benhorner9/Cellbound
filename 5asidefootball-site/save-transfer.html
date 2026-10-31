@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09151e">
+  <title>Transfer a save · 5 Aside Manager</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#09151e;color:#f4f7f5}
+    *{box-sizing:border-box}body{max-width:850px;margin:0 auto;padding:clamp(20px,5vw,55px);line-height:1.6}
+    h1{font-size:clamp(27px,5vw,42px);line-height:1.1;margin:12px 0}
+    p{color:#b6c8cf}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:2px;color:#baf264}
+    .panel{padding:22px;border:1px solid #2d4350;border-radius:16px;background:#122632;margin:18px 0}
+    textarea{width:100%;min-height:200px;padding:14px;background:#071721;color:#fff;border-radius:10px;border:1px solid #4c6772;font:12px/1.5 ui-monospace,monospace;resize:vertical}
+    button,a.action{border:0;border-radius:10px;padding:12px 15px;background:#baf264;color:#102419;font:700 14px system-ui;cursor:pointer;text-decoration:none;display:inline-flex;justify-content:center}
+    button.secondary,a.action.secondary{background:#233e46;color:white;border:1px solid #48636b}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+    #message{min-height:1.5em;color:#baf264;font-weight:600}strong{color:#f4f7f5}
+    .small{font-size:13px}a{color:#baf264}
+    button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid #baf264;outline-offset:3px}
+  </style>
+</head>
+<body>
+  <div class="eyebrow">5 Aside Manager · Save transfer</div>
+  <h1>Move your club progress</h1>
+  <p>Saves stay on the device and website where you played. Transfer your season, players, tactics and finances from the old Vercel address to <strong>playcellbound.com</strong> using the same saved game text.</p>
+  <div class="panel">
+    <h2>1. On your old website</h2>
+    <p>Open this page on your old Vercel game address, then select <strong>Export save</strong>. Copy the displayed text.</p>
+    <div class="actions"><button id="export">Export save</button><button id="copy" class="secondary">Copy save text</button></div>
+  </div>
+  <div class="panel">
+    <h2>2. On your new website</h2>
+    <p>Open this same page on playcellbound.com, paste your copied text into the box, and select <strong>Import save</strong>. Any existing local save at this new address will be backed up first.</p>
+    <label for="save-data">Save data</label>
+    <textarea id="save-data" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Save data to copy or paste" placeholder="Your save will appear here when exported. Paste here to import."></textarea>
+    <div class="actions"><button id="import">Import save</button><a class="action secondary" href="./index.html">Open the game</a></div>
+    <p id="message" role="status" aria-live="polite"></p>
+  </div>
+  <p class="small">This transfer runs entirely in your browser. No account, server, or paid service is required. Do not delete your old save until you have checked that your team loads correctly on the new website.</p>
+  <script>
+    (function(){
+      'use strict';
+      const key='five-aside-manager-alpha-v1';
+      const text=document.getElementById('save-data');
+      const status=document.getElementById('message');
+      const message=m=>status.textContent=m;
+      const valid=v=>v&&typeof v==='object'&&!Array.isArray(v)&&Array.isArray(v.standings)&&v.standings.length>0&&v.results&&typeof v.results==='object'&&v.offers&&typeof v.offers==='object';
+      document.getElementById('export').addEventListener('click',function(){
+        const raw=localStorage.getItem(key);
+        if(!raw){message('No save found on this website and browser. Play a fixture first, or export from the original game website.');return;}
+        try{if(!valid(JSON.parse(raw)))throw Error('invalid');}
+        catch(e){message('Stored save is not in a recognised format. The original save has not been changed.');return;}
+        text.value=raw;text.focus();text.select();message('Save ready. Copy the text, then paste it into this page on the new website.');
+      });
+      document.getElementById('copy').addEventListener('click',async function(){
+        if(!text.value.trim()){message('Export your save first.');return;}
+        try{
+          if(!navigator.clipboard||!navigator.clipboard.writeText)throw Error('clipboard unavailable');
+          await navigator.clipboard.writeText(text.value);
+          message('Copied. Open the new website’s save-transfer page and paste it there.');
+        }catch(e){text.focus();text.select();message('Select the highlighted text and use Copy on your device.');}
+      });
+      document.getElementById('import').addEventListener('click',function(){
+        const raw=text.value.trim();
+        if(!raw){message('Paste your exported save into the box first.');return;}
+        if(raw.length>1000000){message('Save data is too large. Import cancelled.');return;}
+        let data;
+        try{data=JSON.parse(raw);}catch(e){message('This is not valid save data. Nothing was changed.');return;}
+        if(!valid(data)){message('This does not look like a 5 Aside Manager save. Nothing was changed.');return;}
+        try{
+          const previous=localStorage.getItem(key);
+          if(previous)localStorage.setItem(key+'-before-import',previous);
+          localStorage.setItem(key,JSON.stringify(data));
+          message('Save imported successfully! Open the game to check your squad, finances and season.');
+        }catch(e){message('The browser could not store this save. Check available storage and try again.');}
+      });
+    })();
+  </script>
+</body>
+</html>
