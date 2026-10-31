@@ -1,11 +1,23 @@
 import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents} from './engine.js';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded} from './progression.js';
+import {mountWorkshop} from './workshop.js';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
 const bg=document.createElement('canvas');bg.width=WORLD.width;bg.height=WORLD.height;
 const bgc=bg.getContext('2d');
 const TAU=Math.PI*2;
-let state=createEncounter(),selected='knight',paused=false,sound=false,last=0,uiLast=0;
+let storage=null;try{storage=window.localStorage;}catch{}
+const company=readProfile(storage);
+let fightSerial=0;
+function newBattle(){
+ const serial=++fightSerial;
+ const fight=createEncounter(((Date.now()>>>0)+serial)||1337,company);
+ fight.receiptId='fight-'+Date.now().toString(36)+'-'+serial+'-'+Math.random().toString(36).slice(2,9);
+ return fight;
+}
+let state=newBattle(),selected='knight',paused=false,sound=false,last=0,uiLast=0;
+let rewardCommitted=false,workshopWasPaused=false;
 let floaters=[],bursts=[],projectiles=[],markers=[],noticeUntil=0,noticeText='',startPoint=null;
 let audioCtx=null;
 const heroColors={knight:'#8cb6c0',ranger:'#94bd79',mage:'#c2a4e9',cleric:'#f4d28c'};
@@ -104,7 +116,7 @@ function useSlot(slot){
  if(hero?.cooldowns[slot]>0)announce('Ability recharging: '+Math.ceil(hero.cooldowns[slot])+'s',1.3);
  else announce('Move into range or choose a target first',1.3);
 }
-for(const btn of document.querySelectorAll('[data-slot]'))btn.addEventListener('click',()=>useSlot(Number(btn.dataset.slot)));
+for(const btn of document.querySelectorAll('#abilities [data-slot]'))btn.addEventListener('click',()=>useSlot(Number(btn.dataset.slot)));
 $('startBtn').addEventListener('click',()=>start());
 $('restartBtn').addEventListener('click',()=>restart());
 $('pauseBtn').addEventListener('click',()=>{if(state.phase!=='playing')return;paused=!paused;syncUI(true);announce(paused?'Encounter paused':'Back to battle!',1.2);});
@@ -121,10 +133,10 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('resize',resize,{passive:true});
 function start(){
- if(state.phase==='ready'){startEncounter(state);$('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);}
+ if(state.phase==='ready'){state=newBattle();rewardCommitted=false;startEncounter(state);$('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);}
 }
 function restart(){
- state=createEncounter((Date.now()>>>0)||1337);selected='knight';paused=false;
+ state=newBattle();rewardCommitted=false;selected='knight';paused=false;
  floaters=[];bursts=[];projectiles=[];markers=[];noticeUntil=0;startEncounter(state);
  $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
 }
@@ -244,7 +256,7 @@ function drawHuman(c,u){
  c.restore();
  if(u.hp>0){
   if(selected===u.id){strokeEllipse(c,u.x,u.y-4,37,17,'#ffe49b',3.5);strokeEllipse(c,u.x,u.y-4,31,14,'#ffffff88',1.5);}
-  drawHealth(u,u.x,u.y-102,60);label(c,u.name,u.x,u.y-110,12,'#fff7d7');
+  drawHealth(u,u.x,u.y-102,60);label(c,u.name+' · Lv'+(u.level||1),u.x,u.y-110,12,'#fff7d7');
  }else label(c,'DOWN',u.x,u.y-85,12,'#ecb0a2');
 }
 function drawBramble(c,u){
@@ -343,7 +355,12 @@ function syncUI(force=false){
   el.setAttribute('aria-pressed',String(selected===h.id));
  }
  $('abilityHero').textContent=hero.name+' · '+hero.role;
- for(const el of document.querySelectorAll('[data-slot]')){
+ const persistent=company.heroes[selected],need=xpNeeded(persistent.level);
+ $('progressHint').textContent='Level '+persistent.level+' · '+(need?persistent.xp+'/'+need+' XP':'Max level')+' · Talent builds apply next fight';
+ $('goldTotal').textContent=company.gold+' gold';
+ $('bagCount').textContent=String(company.items.length);
+ $('profileRecord').textContent=company.wins+' boss '+(company.wins===1?'victory':'victories');
+ for(const el of document.querySelectorAll('#abilities [data-slot]')){
   const index=Number(el.dataset.slot),ability=ABILITIES[selected][index],cd=hero.cooldowns[index];
   el.querySelector('.skill-icon').textContent=ability.icon;
   el.querySelector('.skill-text b').textContent=ability.name;
@@ -369,10 +386,24 @@ function showEnd(){
  $('pauseBtn').disabled=true;
  const win=state.phase==='victory';
  const title=win?'The Hollow Is Safe':'The Company Has Fallen';
- const desc=win?'Your four heroes have defeated the Thornwarden. Commanding, repositioning and using abilities made the difference.':'The ancient guardian overwhelmed your party. Try focusing its allies first, healing wounded heroes and escaping marked attacks.';
- $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · FIRST EXPEDITION':'DEFEAT · FIRST EXPEDITION')+'</span><h1>'+title+'</h1><p>'+desc+'</p><div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button>';
+ const desc=win?'Your heroes defeated the Thornwarden. Strengthen them with talents and equipment, then challenge the boss again.':'The ancient guardian overwhelmed your party. Try focusing its allies first, healing wounded heroes and escaping marked attacks.';
+ let rewardHTML='';
+ if(!rewardCommitted){
+  rewardCommitted=true;
+  if(win){
+   const reward=grantVictory(company,state.receiptId,state.seed);
+   if(reward){
+    const saved=writeProfile(storage,company);
+    const def=ITEM_DEFS[reward.item.defId];
+    const leveled=reward.levels.map(l=>company.heroes[l.id]&&l.id[0].toUpperCase()+l.id.slice(1)+' Lv'+l.to).join(' · ');
+    rewardHTML='<div class="victory-rewards"><h3>✦ Victory Rewards</h3><p>+ '+reward.gold+' gold &nbsp;·&nbsp; + '+reward.xp+' XP per hero</p><p class="rare-drop">'+def.icon+' '+def.name+' · '+def.rarity+'</p><p>'+(leveled?'Level up! '+leveled:'Boss defeated — keep farming for rarer items!')+'</p><small class="notice-local">'+(saved?'Progress saved in this browser.':'Storage unavailable — reward is held only until this page closes.')+'</small></div>';
+   }
+  }else{recordDefeat(company);writeProfile(storage,company);}
+ }
+ $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · THORNWARDEN DEFEATED':'DEFEAT · FIRST EXPEDITION')+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button></div>';
  $('overlay').classList.remove('hidden');
  $('againBtn').addEventListener('click',restart);
+ $('inspectBtn').addEventListener('click',()=>workshop.open(win?'pack':'heroes',selected));
  syncUI(true);
 }
 function frame(now){
@@ -386,6 +417,14 @@ function frame(now){
  if((state.phase==='victory'||state.phase==='defeat')&&$('overlay').classList.contains('hidden'))showEnd();
  requestAnimationFrame(frame);
 }
+const workshop=mountWorkshop({
+ profile:company,storage,
+ onOpen:()=>{workshopWasPaused=paused;paused=true;syncUI(true);},
+ onClose:()=>{paused=workshopWasPaused;syncUI(true);},
+ onChange:()=>syncUI(true)
+});
+$('companyBtn').addEventListener('click',()=>workshop.open('heroes',selected));
+$('bagBtn').addEventListener('click',()=>workshop.open('pack',selected));
 makeBackground();
 resize();
 syncUI(true);
