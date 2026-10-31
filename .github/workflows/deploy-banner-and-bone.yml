@@ -29,6 +29,10 @@ jobs:
           set -euo pipefail
           test -s bannerandbone-site/index.html
           test -s bannerandbone-site/source.json
+          test -s bannerandbone-site/combat.html
+          test -s bannerandbone-site/src/combat-engine.mjs
+          test -s bannerandbone-site/src/combat-ui.mjs
+          test -s bannerandbone-site/src/combat.css
           python3 - <<'PY'
           import html.parser
           import pathlib
@@ -58,6 +62,11 @@ jobs:
           print('All seven town facilities present; no root-relative assets.')
           PY
           node --check /tmp/banner-and-bone-inline.js
+          node --check bannerandbone-site/src/combat-engine.mjs
+          node --check bannerandbone-site/src/combat-ui.mjs
+          grep -F './src/combat-ui.mjs' bannerandbone-site/combat.html
+          grep -F './src/combat.css' bannerandbone-site/combat.html
+          if grep -E '(src|href)=["\x27]/' bannerandbone-site/combat.html; then echo 'Root-relative asset in combat page' >&2; exit 1; fi
           python3 -m json.tool bannerandbone-site/source.json > /dev/null
 
       - name: Record existing Oakrest release fingerprints before upload
@@ -75,6 +84,11 @@ jobs:
           set -euo pipefail
           mkdir dist
           cp bannerandbone-site/index.html dist/index.html
+          cp bannerandbone-site/combat.html dist/combat.html
+          mkdir -p dist/src
+          cp bannerandbone-site/src/combat-engine.mjs dist/src/combat-engine.mjs
+          cp bannerandbone-site/src/combat-ui.mjs dist/src/combat-ui.mjs
+          cp bannerandbone-site/src/combat.css dist/src/combat.css
           cp bannerandbone-site/source.json dist/source.json
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync} from 'node:fs';
@@ -129,7 +143,12 @@ jobs:
           test "$found" -eq 1
           curl -fsSL --retry 2 --max-time 30 "$base/?sha=$GITHUB_SHA" -o /tmp/banner-and-bone-index.html
           cmp -s dist/index.html /tmp/banner-and-bone-index.html
-          echo "Hosted Banner & Bone browser preview verified at $base/" >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p /tmp/banner-and-bone-hosted/src
+          for asset in combat.html src/combat-engine.mjs src/combat-ui.mjs src/combat.css; do
+            curl -fsSL --retry 2 --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/banner-and-bone-hosted/$asset"
+            cmp -s "dist/$asset" "/tmp/banner-and-bone-hosted/$asset"
+          done
+          echo "Hosted Banner & Bone Block 02 HTML, JavaScript, and CSS bytes verified at $base/" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ensure Oakrest and existing public game were not changed
         shell: bash
