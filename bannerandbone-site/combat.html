@@ -4,24 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#15151b">
-<title>Training Encounter — Banner &amp; Bone</title>
+<title>Arena Sparring — Banner &amp; Bone</title>
 <link rel="stylesheet" href="./src/combat.css">
 </head>
 <body>
 <div class="shell">
 <header>
   <div class="brand">BANNER &amp; BONE<small>TACTICAL COMBAT · BLOCK 02</small></div>
-  <a class="back" id="backTown" href="./index.html">← Return to Town</a>
+  <div class="inline"><a class="back" href="./arena.html" id="backArena">← Arena</a><a class="back" id="backTown" href="./index.html">Town</a></div>
 </header>
 <div class="title">
-  <div><div class="kicker">The Practice Grounds</div><h1>Mercenary Training Encounter</h1><p>Four heroes. Three lanes. Two ranks. Every action matters.</p></div>
-  <div class="round-chip"><span>Round <b id="round">1</b> / 12</span><span id="phase">Plan your actions</span></div>
+  <div><div class="kicker">THE BLOOD PITS · SAFE AI SPARRING</div><h1 id="battleTitle">Training Arena</h1><p>Four heroes. Three lanes. Two ranks. Every action matters. AI opponents—not real players.</p></div>
+  <div class="round-chip"><span>Round <b id="round">1</b> / 12</span><span id="phase">Untimed AI practice</span><span id="planningCount">0/4 ready</span></div>
 </div>
 <section id="battleArea" class="hidden">
   <div class="battlefield">
     <div class="sides">
       <section class="side ally"><div class="side-head"><strong>YOUR COMPANY</strong><small id="allyStanding">4 standing</small></div><div class="rank-name">REAR RANK</div><div id="allyRear" class="rank"></div><div class="rank-name">FRONT RANK</div><div id="allyFront" class="rank"></div></section>
-      <section class="side enemy"><div class="side-head"><strong>ASHEN RAIDERS</strong><small id="enemyStanding">4 standing</small></div><div class="rank-name">FRONT RANK</div><div id="enemyFront" class="rank"></div><div class="rank-name">REAR RANK</div><div id="enemyRear" class="rank"></div></section>
+      <section class="side enemy"><div class="side-head"><strong id="enemyName">ASHEN RAIDERS · AI</strong><small id="enemyStanding">4 standing</small></div><div class="rank-name">FRONT RANK</div><div id="enemyFront" class="rank"></div><div class="rank-name">REAR RANK</div><div id="enemyRear" class="rank"></div></section>
     </div>
     <div id="impact" class="impact" aria-live="polite">Choose a hero and plan their action for this round.</div>
   </div>
@@ -32,26 +32,30 @@
         <div class="selected"><strong id="selectedName">Select a mercenary</strong><span id="selectedStats"></span></div>
         <div class="abilities" id="abilities"></div>
         <p class="instructions" id="instructions" aria-live="polite">Select one of your standing heroes, choose an ability, then select a target.</p>
+        <p id="abilityInfo" class="ability-info">Choose any ability to see what it does and which targets are legal. Tap a hero to change their planned action.</p>
         <div id="result" class="result hidden" role="status"></div>
         <div class="inline">
           <button class="control secondary" id="fill">Auto-plan unassigned heroes</button>
           <button class="control" id="commit">Lock in round</button>
-          <button class="control secondary" id="restart">Restart training</button>
+          <button class="control secondary" id="restart">Rematch AI</button>
         </div>
         <div id="queue" class="queue" aria-label="Planned actions"></div>
+        <h3 class="mini-heading">Last Round — Tactical Recap</h3>
+        <div id="roundRecap" class="recap" aria-live="polite">The first round has not been played.</div>
       </div>
     </section>
     <section class="panel">
       <h2>Battle Journal</h2>
       <div class="panel-body">
-        <div class="notice">This is a <strong>safe AI-controlled practice battle</strong>. Training defeats, downed heroes and consumed stamina do not change your town roster, gold or saved party. Real expeditions and PvP are later blocks.</div>
+        <div class="notice">This is a <strong>safe AI-controlled practice battle</strong> (untimed). Wins, losses and draws are saved as a <strong>local practice record only</strong>. No heroes, XP, gold or equipment are changed. Live PvP is not available yet.</div>
+        <div class="result-pill" id="matchRecord">Your local sparring record: 0 W · 0 L · 0 D</div>
         <div class="log" id="log" aria-live="polite"></div>
       </div>
     </section>
   </div>
 </section>
 <section id="error" class="panel hidden" role="alert"><h2>Complete your party</h2><div class="panel-body"><p id="errorText"></p><a class="back" href="./index.html">Return to the Barracks</a></div></section>
-<footer>Prototype rules: three lanes × two ranks, simultaneous planning, initiative-based resolution, class abilities, statuses, guarding, healing, rescue and twelve-round tiebreak. No online opponent or permanent loss in Block 02.</footer>
+<footer>Block 03 Arena Reborn: three lanes × two ranks, simultaneous planning, seeded initiative resolution, tactical cover, AI styles, round recap and rematches. This is not live multiplayer; ranked and hardcore are future blocks.</footer>
 </div>
 <script type="module" src="./src/combat-ui.mjs"></script>
 </body>

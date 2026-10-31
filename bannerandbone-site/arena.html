@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15161e">
+<title>The Arena — Banner &amp; Bone</title>
+<link rel="stylesheet" href="./src/combat.css">
+<style>
+.arena-banner{border:1px solid #af8557;border-radius:10px;background:radial-gradient(ellipse at 52% -50%,#916a43 0,#3d3436 43%,#20252d 90%);padding:clamp(17px,3vw,35px);text-align:center;margin:16px 0 22px;box-shadow:inset 0 -16px 55px #100e14aa}
+.arena-banner .ornament{font-size:clamp(36px,7vw,68px);margin:0 0 5px;filter:drop-shadow(0 6px 8px #0008)}
+.arena-banner h1{margin:4px 0;font-size:clamp(29px,5vw,52px);letter-spacing:.05em}
+.arena-banner p{font:14px/1.65 system-ui,sans-serif;color:#d4c4ad;max-width:670px;margin:8px auto}
+.arena-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.85fr);gap:16px}
+.mode{border:1px solid #715c45;background:linear-gradient(140deg,#403431,#25282f);border-radius:8px;padding:16px;margin-bottom:13px}
+.mode h2{margin:0 0 7px;font-size:23px}.mode p{font:13px/1.6 system-ui,sans-serif;color:#cfc1b0;margin:7px 0 12px}
+.mode .eyebrow{font:700 11px system-ui,sans-serif;color:#d9b579;letter-spacing:.13em}
+.mode.locked{opacity:.88;background:linear-gradient(130deg,#2a292e,#1f2228);border-color:#554f4d}
+.training-opponents{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}
+.opponent{border:1px solid #715a43;border-radius:7px;padding:13px;background:#26252a;display:flex;flex-direction:column;gap:6px}
+.opponent h3{margin:0;font-size:17px}.opponent p{font:12px/1.5 system-ui,sans-serif;color:#cbbeb0;margin:0;flex:1}
+.opponent .symbol{font-size:28px}.opponent .control{display:block;text-align:center;text-decoration:none;margin-top:5px}
+.hero-chip{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #51463a;font:13px system-ui,sans-serif}.hero-chip strong{font-family:Georgia,serif;font-size:16px}.hero-chip small{color:#b6a897}.hero-icon{font-size:25px}
+.hint{font:13px/1.6 system-ui,sans-serif;color:#c5b5a0}.result-pill{display:inline-block;border:1px solid #94714e;border-radius:50px;padding:5px 9px;color:#e5c698;font:700 11px system-ui,sans-serif}
+.mode-buttons{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.mode-buttons .control{margin-top:4px}
+@media(max-width:980px){.arena-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.training-opponents{grid-template-columns:1fr}.opponent{flex-direction:row;flex-wrap:wrap;align-items:center}.opponent .symbol{font-size:22px}.opponent p{flex-basis:100%}.opponent .control{flex-basis:100%}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="brand">BANNER &amp; BONE<small>THE BLOOD PITS · COMPETITIVE REBIRTH</small></div>
+    <a class="back" href="./index.html">← Return to Town</a>
+  </header>
+  <section class="arena-banner">
+    <div class="ornament" aria-hidden="true">⚔️</div>
+    <div class="kicker">The arena awaits</div>
+    <h1>Enter the Blood Pits</h1>
+    <p>Forge your four-hero company into a formidable fighting force. Practice against distinct AI formations now. Face real rivals in live PvP when the secure multiplayer blocks are ready.</p>
+    <span class="result-pill">BLOCK 03 · AI SPARRING AVAILABLE</span>
+  </section>
+  <main class="arena-grid">
+    <div>
+      <section class="mode" aria-label="AI sparring">
+        <div class="eyebrow">PLAYABLE NOW · SAFE TRAINING</div>
+        <h2>Training Arena</h2>
+        <p>Fight a clearly identified AI company. No gold, XP, permanent injuries, equipment losses or hero deaths are recorded. Choose your opponent's strategy, test combinations and fight again.</p>
+        <div id="opponents" class="training-opponents">
+          <div class="opponent" data-profile="balanced">
+            <span class="symbol">⚔️</span><h3>Ashen Raiders</h3>
+            <p>Balanced fighters who mix control, ranged attacks and healing. A good starting challenge.</p>
+            <a class="control" href="./combat.html?opponent=balanced">Fight AI</a>
+          </div>
+          <div class="opponent" data-profile="assault">
+            <span class="symbol">🔥</span><h3>Crimson Blades</h3>
+            <p>Aggressive fighters that pressure weak targets and try to end fights quickly.</p>
+            <a class="control" href="./combat.html?opponent=assault">Fight AI</a>
+          </div>
+          <div class="opponent" data-profile="bulwark">
+            <span class="symbol">🛡️</span><h3>Iron Covenant</h3>
+            <p>Defensive fighters who shield one another, heal and survive long engagements.</p>
+            <a class="control" href="./combat.html?opponent=bulwark">Fight AI</a>
+          </div>
+        </div>
+        <p id="partyWarning" class="notice hidden" role="status">A full four-hero party is required. Visit the Barracks and assign four mercenaries before entering training.</p>
+      </section>
+      <section class="mode locked" aria-label="Future PvP game modes">
+        <div class="eyebrow">ONLINE MODES · NOT IMPLEMENTED</div>
+        <h2>Fight Real Players</h2>
+        <div class="mode-buttons">
+          <button class="control secondary" disabled title="Available in the online friends multiplayer block">Friendly Challenges — Block 05</button>
+          <button class="control secondary" disabled title="Available after authoritative multiplayer and rating systems">Ranked Arena — Block 06</button>
+          <button class="control danger" disabled title="Hardcore only after trusted server-side permanent-death verification">Blood Pits Hardcore — Block 07</button>
+        </div>
+        <p><strong>Friendly:</strong> no lasting losses. <strong>Ranked:</strong> safe progression and divisions. <strong>Blood Pits:</strong> opt-in high rewards and permanent deaths only when confirmed by the game server. None of these modes is currently live.</p>
+      </section>
+    </div>
+    <aside>
+      <section class="panel">
+        <h2>Your Battle Party</h2>
+        <div class="panel-body">
+          <div id="partyList"></div>
+          <p id="partyStatus" class="hint"></p>
+          <a class="back" href="./index.html?facility=barracks">Manage party in Barracks</a>
+        </div>
+      </section>
+      <section class="panel" style="margin-top:15px">
+        <h2>Your Local Practice Record</h2>
+        <div class="panel-body">
+          <div class="mode-buttons">
+            <span class="result-pill" id="wins">0 victories</span>
+            <span class="result-pill" id="losses">0 defeats</span>
+            <span class="result-pill" id="draws">0 draws</span>
+          </div>
+          <p class="hint">Practice record is stored only on this browser. It is not an online rating, is not verified and does not award currency.</p>
+        </div>
+      </section>
+      <section class="panel" style="margin-top:15px">
+        <h2>Next Development Blocks</h2>
+        <div class="panel-body">
+          <p class="hint"><strong>04:</strong> Hero progression and PvE contracts.</p>
+          <p class="hint"><strong>05:</strong> Secure multiplayer and friend challenges.</p>
+          <p class="hint"><strong>06:</strong> Real ranked PvP.</p>
+          <p class="hint"><strong>07:</strong> Verified permanent-death hardcore.</p>
+        </div>
+      </section>
+    </aside>
+  </main>
+  <footer>The Arena is currently a local AI practice feature. No genuine PvP matchmaking, ranked leaderboards, server-owned heroes or irreversible deaths have been enabled.</footer>
+</div>
+<script type="module" src="./src/arena.mjs"></script>
+</body>
+</html>

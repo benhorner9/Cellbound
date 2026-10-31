@@ -1,13 +1,16 @@
 {
   "project": "banner-and-bone",
   "source": "benhorner9/banner-and-bone",
-  "sourceCommit": "6c9d3451c48b46e50c8e5986aa08d39deea63747",
+  "sourceCommit": "c0207a05e661b0b7f661e040198e8cf3870007da",
   "target": "/bannerandbone/",
   "environment": "development-preview",
-  "block": 2,
+  "block": 3,
+  "edition": "blood-pits-arena-reborn",
   "assets": [
     "index.html",
+    "arena.html",
     "combat.html",
+    "src/arena.mjs",
     "src/combat-engine.mjs",
     "src/combat-ui.mjs",
     "src/combat.css"

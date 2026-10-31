@@ -42,3 +42,14 @@ header .brand{font-size:clamp(21px,3.2vw,35px);font-weight:bold;letter-spacing:.
 @media(max-width:900px){.lower{grid-template-columns:1fr}.battlefield{min-height:0}.sides{gap:8px;padding:12px}.side{padding:7px}.fighter,.empty{min-height:103px}.abilities{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:550px){.sides{grid-template-columns:1fr}.rank{gap:7px}.fighter,.empty{min-height:83px}.side{padding:8px}.side-head{font-size:14px}.abilities{grid-template-columns:repeat(2,1fr)}.queue{grid-template-columns:1fr}.round-chip{gap:6px}}
 @media(prefers-reduced-motion:reduce){.fighter,.empty{transition:none}}
+
+/* Block 03: quick, readable combat summaries and high-contrast interaction feedback. */
+.ability-info{margin:8px 0 13px;border-left:3px solid #d5af79;background:#33302f;padding:9px 12px;color:#e2d1b8;font:12px/1.5 system-ui,sans-serif;min-height:42px}
+.mini-heading{font-size:14px;color:#e5c693;letter-spacing:.04em;margin:18px 0 8px}
+.recap{background:#1e2228;border:1px solid #5b4b3d;border-radius:6px;padding:8px 11px;max-height:210px;overflow-y:auto;font:12px/1.45 system-ui,sans-serif;color:#e6d7c5}
+.recap-event{border-bottom:1px solid #4b4340;padding:7px 2px}.recap-event:last-child{border:0}
+.recap-hit,.recap-damage-over-time{color:#f0c6ae}.recap-heal,.recap-revive{color:#a9dabe}.recap-guard{color:#dec993}.recap-result{color:#eec785;font-weight:700}
+.result-pill{display:inline-flex;align-items:center;border:1px solid #8a6b49;background:#332d2a;border-radius:100px;padding:6px 10px;font:700 11px system-ui,sans-serif;color:#e4c58e}
+.round-flash{animation:combat-flash .65s ease-out}
+@keyframes combat-flash{0%{box-shadow:0 0 0 0 #f1d188;border-color:#f5ddad;transform:scale(1.035)}55%{box-shadow:0 0 12px 4px #eabf6977}100%{box-shadow:0 0 0 0 transparent}}
+@media(prefers-reduced-motion:reduce){.round-flash{animation:none;outline:2px solid #eacb8a}}

@@ -19,7 +19,7 @@ const UNIVERSAL = [
 const UNIQUE = Object.freeze({
   Vanguard: [
     { id: 'bash', name: 'Shield Bash', cost: 2, cooldown: 2, kind: 'damage', target: 'enemy', reach: 'melee', power: 17, stun: 1, description: 'Melee hit. Stuns a target that has not acted yet this round.' },
-    { id: 'hold', name: 'Hold the Line', cost: 2, cooldown: 2, kind: 'defend', target: 'self', shield: 26, description: 'Raise a heavy guard and gain 26 shield.' },
+    { id: 'hold', name: 'Hold the Line', cost: 2, cooldown: 2, kind: 'defend', target: 'self', shield: 26, description: 'Gain 26 shield. Protect the allied rear-rank hero in the same lane with 10 shield and Cover.' },
     { id: 'challenge', name: 'Challenge', cost: 1, cooldown: 2, kind: 'taunt', target: 'self', description: 'Draw enemy AI attacks for the next round, if you remain a legal target.' },
     { id: 'crush', name: 'Crushing Strike', cost: 3, cooldown: 2, kind: 'damage', target: 'enemy', reach: 'melee', power: 30, description: 'Heavy melee strike. Most effective against exposed targets.' }
   ],
@@ -75,16 +75,38 @@ function createHero(person, team, i) {
     cooldowns: {}, statuses: {}, downedRounds: 0, rescueUsed: false
   };
 }
-export function makeBattle(party, seed = 1937) {
+export const AI_OPPONENTS = Object.freeze({
+  balanced: Object.freeze({
+    name:'Ashen Raiders', style:'balanced',
+    fighters:[
+      {name:'Grimward',job:'Vanguard'}, {name:'Rook',job:'Cutthroat'},
+      {name:'Ash-Eye',job:'Ranger'}, {name:'The Pale Sister',job:'Warden'}
+    ]
+  }),
+  assault: Object.freeze({
+    name:'Crimson Blades',style:'aggressive',
+    fighters:[
+      {name:'Raze',job:'Vanguard'}, {name:'Fang',job:'Cutthroat'},
+      {name:'Cinder',job:'Arcanist'}, {name:'Red-Eye',job:'Ranger'}
+    ]
+  }),
+  bulwark: Object.freeze({
+    name:'Iron Covenant',style:'defensive',
+    fighters:[
+      {name:'Bastion',job:'Vanguard'}, {name:'Bulwark',job:'Vanguard'},
+      {name:'Sister Hale',job:'Warden'}, {name:'Watchman',job:'Ranger'}
+    ]
+  })
+});
+export function makeBattle(party, seed = 1937, opponent = 'balanced') {
   if (!Array.isArray(party) || party.length !== 4) throw new Error('Practice battles require four recruited heroes.');
-  const enemies = [
-    { name:'Grimward', job:'Vanguard' }, { name:'Rook', job:'Cutthroat' },
-    { name:'Ash-Eye', job:'Ranger' }, { name:'The Pale Sister', job:'Warden' }
-  ];
+  const profile=Object.prototype.hasOwnProperty.call(AI_OPPONENTS,opponent)?opponent:'balanced';
+  const enemies=AI_OPPONENTS[profile].fighters;
   return {
-    version: 2, round: 1, phase: 'planning', winner: null, seed: seed >>> 0,
+    version: 3, round: 1, phase: 'planning', winner: null, seed: seed >>> 0,
+    opponent:profile, opponentName:AI_OPPONENTS[profile].name,
     heroes: [...party.map((p,i)=>createHero(p,'player',i)), ...enemies.map((e,i)=>createHero(e,'enemy',i))],
-    log: ['Training encounter: no heroes, items or gold can be lost.'],
+    log: ['AI sparring with '+AI_OPPONENTS[profile].name+': no heroes, items, XP or gold can be lost.'],
     roundsResolved: 0
   };
 }
@@ -149,14 +171,20 @@ export function suggestedEnemyActions(battle) {
       return (taunter && choices.find(h=>h.id===taunter.id)) || choices[0] || null;
     };
     let pick;
-    if(actor.className==='Ranger' && affordable.some(a=>a.id==='volley') && player.length>=2)pick='volley';
+    const style=AI_OPPONENTS[battle.opponent]?.style||'balanced';
+    if(style==='defensive' && actor.className==='Vanguard' && affordable.some(a=>a.id==='hold') && actor.shield<10)pick='hold';
+    else if(style==='defensive' && actor.className==='Ranger' && affordable.some(a=>a.id==='mark') && !player.some(h=>h.statuses.mark>0))pick='mark';
+    else if(style==='aggressive' && actor.className==='Vanguard' && affordable.some(a=>a.id==='crush'))pick='crush';
+    else if(style==='aggressive' && actor.className==='Cutthroat' && affordable.some(a=>a.id==='backstab'))pick='backstab';
+    else if(style==='aggressive' && actor.className==='Arcanist' && affordable.some(a=>a.id==='chain') && player.length>=3)pick='chain';
+    else if(actor.className==='Ranger' && affordable.some(a=>a.id==='volley') && player.length>=2)pick='volley';
     else if(actor.className==='Vanguard' && affordable.some(a=>a.id==='bash'))pick='bash';
     else if(actor.className==='Cutthroat' && affordable.some(a=>a.id==='poison'))pick='poison';
     else if(actor.className==='Arcanist' && affordable.some(a=>a.id==='ember'))pick='ember';
     else pick='basic';
     let ability=affordable.find(a=>a.id===pick);
     let target=ability&&(['enemy'].includes(ability.target)?selectTarget(pick):null);
-    if(ability && ability.target==='allEnemies')return {actorId:actor.id,abilityId:ability.id};
+    if(ability && ['self','allEnemies','allAllies'].includes(ability.target))return {actorId:actor.id,abilityId:ability.id};
     if(target)return {actorId:actor.id,abilityId:ability.id,targetId:target.id};
     ability=affordable.find(a=>a.id==='basic');
     target=ability && selectTarget(ability.id);
@@ -173,6 +201,7 @@ function applyDamage(battle,events,actor,target,raw,ability) {
   if((ability.reach||CLASS_STATS[actor.className].reach)==='ranged' && protectedRear(battle,target))amount=Math.max(1,Math.round(amount*.86));
   amount=Math.max(1, amount-target.armor);
   if(target.statuses.guard>0)amount=Math.max(1,Math.round(amount*.6));
+  if(target.statuses.cover>0)amount=Math.max(1,Math.round(amount*.72));
   const shieldBlocked=Math.min(target.shield,amount);
   target.shield-=shieldBlocked;
   const dealt=Math.max(0,amount-shieldBlocked);
@@ -209,6 +238,11 @@ function resolveAction(battle,events,act,alreadyActed) {
   } else if(ability.kind==='defend'){
     actor.shield+=ability.shield||14;actor.statuses.guard=1;
     events.push({type:'guard',actorId:actor.id,text:actor.name+' takes a defensive stance (shield '+actor.shield+').'});
+    if(ability.id==='hold'){
+      const covered=battle.heroes.find(h=>h.id!==actor.id&&h.team===actor.team&&h.row==='rear'&&h.lane===actor.lane&&living(h));
+      if(covered){covered.shield+=10;covered.statuses.cover=2;
+        events.push({type:'guard',actorId:actor.id,targetId:covered.id,text:actor.name+' protects '+covered.name+' with 10 shield and Cover.'});}
+    }
   } else if(ability.kind==='taunt'){
     actor.statuses.taunt=2;actor.shield+=8;
     events.push({type:'guard',actorId:actor.id,text:actor.name+' challenges the enemy and raises their guard.'});
