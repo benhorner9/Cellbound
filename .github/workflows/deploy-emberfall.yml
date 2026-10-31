@@ -1,0 +1,120 @@
+name: Heroes of Emberfall - isolated browser preview
+on:
+  push:
+    branches: [main]
+    paths:
+      - emberfall-site/**
+      - .github/workflows/deploy-emberfall.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: heroes-of-emberfall-isolated-ftps
+  cancel-in-progress: false
+jobs:
+  publish:
+    name: Publish and verify only /emberfall/
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate isolated browser assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in index.html src/engine.js src/game.js src/style.css source.json; do test -s "emberfall-site/$asset"; done
+          node --input-type=module --check < emberfall-site/src/engine.js
+          node --input-type=module --check < emberfall-site/src/game.js
+          grep -F './src/game.js' emberfall-site/index.html
+          grep -F './src/style.css' emberfall-site/index.html
+          grep -F './engine.js' emberfall-site/src/game.js
+          python3 -m json.tool emberfall-site/source.json >/dev/null
+      - name: Record other games before publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/emberfall-guard
+          for part in oakrest oakrest-dev bannerandbone; do
+            curl -fsSL --retry 2 --max-time 30 "https://playcellbound.com/$part/build-meta.json" -o "/tmp/emberfall-guard/$part.before"
+          done
+      - name: Prepare exact isolated distribution and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/src
+          cp emberfall-site/index.html dist/
+          cp emberfall-site/src/engine.js emberfall-site/src/game.js emberfall-site/src/style.css dist/src/
+          cp emberfall-site/source.json dist/
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const s=JSON.parse(readFileSync('dist/source.json','utf8'));
+          if(s.source!=='benhorner9/heroes-of-emberfall'||s.target!=='/emberfall/'||!/^[a-f0-9]{40}$/.test(s.sourceCommit))throw Error('Incorrect source or deploy target');
+          writeFileSync('dist/build-meta.json',JSON.stringify({project:'heroes-of-emberfall',target:s.target,sourceCommit:s.sourceCommit,bridgeCommit:process.env.GITHUB_SHA,block:'01',deployedAt:new Date().toISOString()},null,2)+'\n');
+          NODE
+      - name: Require existing shared-host FTPS secrets
+        env:
+          FTP_HOST: ${{ secrets.FTP_SERVER }}
+          FTP_USER: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          test -n "$FTP_HOST" && test -n "$FTP_USER" && test -n "$FTP_PASS"
+      - name: Upload ONLY the Emberfall subdirectory
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./dist/
+          server-dir: ./emberfall/
+          state-name: .ftp-deploy-emberfall-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+      - name: Verify hosted commit and all source bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://playcellbound.com/emberfall"
+          found=0
+          for attempt in 1 2 3 4; do
+            if curl -fsSL --max-time 20 "$base/build-meta.json?sha=$GITHUB_SHA" -o /tmp/emberfall-meta.json; then
+              if node -e "const m=require('/tmp/emberfall-meta.json');if(m.bridgeCommit!==process.env.GITHUB_SHA||m.target!=='/emberfall/')process.exit(1)"; then found=1;break;fi
+            fi
+            sleep 7
+          done
+          test "$found" -eq 1
+          mkdir -p /tmp/emberfall-hosted/src
+          for asset in index.html src/engine.js src/game.js src/style.css source.json; do
+            curl -fsSL --retry 2 --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/emberfall-hosted/$asset"
+            cmp -s "dist/$asset" "/tmp/emberfall-hosted/$asset"
+          done
+      - name: Verify executable JavaScript MIME types
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in src/game.js src/engine.js; do
+            mime="$(curl -LfsS --max-time 20 -o /dev/null -w '%{content_type}' "https://playcellbound.com/emberfall/$asset?sha=$GITHUB_SHA")"
+            case "$mime" in
+              text/javascript*|application/javascript*|application/x-javascript*|text/ecmascript*|application/ecmascript*) echo "PASS $asset: $mime";;
+              *) echo "::error::Browser will reject $asset ($mime)" >&2; exit 1;;
+            esac
+          done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium for live combat smoke
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Play actual hosted Emberfall boss fight
+        run: node emberfall-site/qa/hosted-smoke.mjs
+      - name: Guard Oakrest and Banner and Bone
+        shell: bash
+        run: |
+          set -euo pipefail
+          for part in oakrest oakrest-dev bannerandbone; do
+            curl -fsSL --retry 2 --max-time 30 "https://playcellbound.com/$part/build-meta.json" -o "/tmp/emberfall-guard/$part.after"
+            cmp -s "/tmp/emberfall-guard/$part.before" "/tmp/emberfall-guard/$part.after"
+          done
+          echo "PASS: Hosted Emberfall playable, existing games unchanged" >> "$GITHUB_STEP_SUMMARY"

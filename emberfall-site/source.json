@@ -1,0 +1,14 @@
+{
+  "project": "heroes-of-emberfall",
+  "source": "benhorner9/heroes-of-emberfall",
+  "sourceCommit": "7e4898b55d4f96ecadfaa66e64dde9d3fb244a61",
+  "target": "/emberfall/",
+  "stage": "block01-combat-prototype",
+  "assets": [
+    "index.html",
+    "src/engine.js",
+    "src/game.js",
+    "src/style.css"
+  ],
+  "note": "Playable local PvE demo: no online PvP, trading, character persistence or permanent rewards."
+}
