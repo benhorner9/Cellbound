@@ -64,9 +64,9 @@ jobs:
           print('All seven town facilities present; no root-relative assets.')
           PY
           node --check /tmp/banner-and-bone-inline.js
-          node --check bannerandbone-site/src/combat-engine.js
-          node --check bannerandbone-site/src/combat-ui.js
-          node --check bannerandbone-site/src/arena.js
+          node --input-type=module --check < bannerandbone-site/src/combat-engine.js
+          node --input-type=module --check < bannerandbone-site/src/combat-ui.js
+          node --input-type=module --check < bannerandbone-site/src/arena.js
           grep -F './src/arena.js' bannerandbone-site/arena.html
           grep -F './src/combat.css' bannerandbone-site/arena.html
           grep -F './src/combat-ui.js' bannerandbone-site/combat.html
