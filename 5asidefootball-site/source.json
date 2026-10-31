@@ -1,0 +1,8 @@
+{
+  "project": "5asidefootball",
+  "source": "benhorner9/5AsideManager",
+  "sourceBranch": "main",
+  "sourceCommit": "adb1c7cf4cc42e5a0f534392ec5182ac55a32e0c",
+  "target": "/5asidefootball.com/",
+  "note": "Static browser mirror. Source repository is private; changes must be synchronized to the Cellbound deployment bridge. No live backend."
+}
