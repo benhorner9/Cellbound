@@ -1,9 +1,24 @@
 import {
-  ICONS, CLASS_STATS, makeBattle, getAbilities, getAbility,
+  ICONS, CLASS_STATS, AI_OPPONENTS, makeBattle, getAbilities, getAbility,
   heroesFor, possibleTargets, possibleSlots, isLegalAction, resolveRound
 } from './combat-engine.mjs';
 
 const STORE='banner-bone-foundation-v1';
+const PRACTICE_KEY='banner-bone-practice-v1';
+const requested=new URLSearchParams(window.location.search).get('opponent');
+const opponent=Object.hasOwn(AI_OPPONENTS,requested)?requested:'balanced';
+function readRecord(){
+  try {
+    const saved=JSON.parse(localStorage.getItem(PRACTICE_KEY)||'null');
+    if(saved&&['wins','losses','draws'].every(k=>Number.isSafeInteger(saved[k])&&saved[k]>=0))return saved;
+  }catch{}
+  return {wins:0,losses:0,draws:0};
+}
+function recordFinish(winner){
+  const record=readRecord();
+  record[winner==='player'?'wins':winner==='enemy'?'losses':'draws']++;
+  try{localStorage.setItem(PRACTICE_KEY,JSON.stringify(record));}catch{}
+}
 const $=id=>document.getElementById(id);
 const htmlSafe=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const defaults=[
@@ -12,7 +27,7 @@ const defaults=[
   {id:3,name:'Ilyra',job:'Arcanist'},
   {id:4,name:'Maren',job:'Warden'}
 ];
-let party=null, battle=null, focused=null, targeting=null, plans=new Map();
+let party=null, battle=null, focused=null, targeting=null, plans=new Map(), lastEvents=[];
 function loadParty() {
   let data;
   try {
@@ -35,9 +50,12 @@ function begin() {
     return;
   }
   $('error').classList.add('hidden');$('battleArea').classList.remove('hidden');
-  battle=makeBattle(party,(Date.now()>>>0)||1);
+  battle=makeBattle(party,(Date.now()>>>0)||1,opponent);
+  $('enemyName').textContent=battle.opponentName.toUpperCase()+' · AI';
+  $('battleTitle').textContent='Sparring vs '+battle.opponentName;
+  lastEvents=[];
   focused='p0';targeting=null;plans=new Map();
-  message('Select a hero, choose an ability and click a legal target. Everyone plans before the round resolves.');
+  message('Select a hero, choose an ability and a legal target. Opponent AI plans independently. Training has no time limit.');
   render();
 }
 function isDone() {return battle.phase==='finished';}
@@ -67,6 +85,7 @@ function selectAbility(abilityId){
   const ability=getAbility(actor,abilityId);
   if(!ability||actor.stamina<ability.cost||(actor.cooldowns[ability.id]||0)>0)return;
   targeting=abilityId;
+  $('abilityInfo').textContent=ability.description;
   if(['self','allEnemies','allAllies'].includes(ability.target)){
     queue({actorId:actor.id,abilityId});
     return;
@@ -137,10 +156,15 @@ function lockRound(){
   try {
     const result=resolveRound(battle,[...plans.values()]);
     battle=result.battle;plans.clear();targeting=null;
+    lastEvents=result.events;
+    if(battle.winner)recordFinish(battle.winner);
     focused=alivePlayers()[0]?.id||null;
     const highlight=result.events.filter(e=>e.type!=='round').slice(-2).map(e=>e.text).join(' ');
     message(highlight||'Round resolved.');
     render();
+    const struck=result.events.filter(e=>['hit','heal','revive','down','guard'].includes(e.type));
+    const highlighted=new Set(struck.slice(-5).map(e=>e.targetId||e.actorId).filter(Boolean));
+    for(const id of highlighted){const node=document.querySelector('[data-hero-id="'+id+'"]');if(node){node.classList.add('round-flash');setTimeout(()=>node.classList.remove('round-flash'),700);}}
   } catch(err){message('Combat could not resolve this round: '+String(err.message));}
 }
 function statusText(h){
@@ -218,19 +242,30 @@ function renderQueue(){
 }
 function render(){
   $('round').textContent=String(battle.round);
-  $('phase').textContent=isDone()?'Training finished':'Plan your actions';
+  $('phase').textContent=isDone()?'Training finished':'Untimed AI practice';
+  $('planningCount').textContent=plans.size+'/'+alivePlayers().length+' planned';
   $('allyStanding').textContent=alivePlayers().length+' standing';
   $('enemyStanding').textContent=heroesFor(battle,'enemy').filter(h=>h.hp>0).length+' standing';
   rank('player','rear','allyRear');rank('player','front','allyFront');
   rank('enemy','front','enemyFront');rank('enemy','rear','enemyRear');
   renderAbilities();renderQueue();
+  const description=activeHero()&&targeting?getAbility(activeHero(),targeting)?.description:null;
+  if(!description)$('abilityInfo').textContent='Choose an ability to read its effect. You can select a different hero to revise their action before locking the round.';
+  $('roundRecap').replaceChildren();
+  if(!lastEvents.length)$('roundRecap').textContent='The first round has not been played.';
+  else for(const event of lastEvents.filter(e=>e.type!=='round').slice(-8)){
+    const item=document.createElement('div');item.className='recap-event recap-'+event.type;item.textContent=event.text;
+    $('roundRecap').appendChild(item);
+  }
+  const rec=readRecord();
+  $('matchRecord').textContent='Local practice record: '+rec.wins+' W · '+rec.losses+' L · '+rec.draws+' D';
   $('fill').disabled=isDone();$('commit').disabled=isDone();
   $('log').replaceChildren();
   for(const entry of battle.log.slice(0,50)){
     const item=document.createElement('div');item.className='log-item';item.textContent=entry;$('log').appendChild(item);
   }
   $('result').classList.toggle('hidden',!isDone());
-  if(isDone())$('result').textContent=battle.winner==='player'?'VICTORY — Your mercenaries prevail. Return to the town safely or try again.':battle.winner==='enemy'?'DEFEAT — Your mercenaries fall in training, but all return home safely.':'DRAW — Both companies fought to a standstill. No lasting losses.';
+  if(isDone())$('result').textContent=battle.winner==='player'?'VICTORY — Your company defeated the '+battle.opponentName+'. All heroes return safely.':battle.winner==='enemy'?'DEFEAT — The '+battle.opponentName+' win this sparring match. Your heroes return safely.':'DRAW — Both companies fought to a standstill. No lasting losses.';
 }
 $('fill').addEventListener('click',fillUnassigned);
 $('commit').addEventListener('click',lockRound);
