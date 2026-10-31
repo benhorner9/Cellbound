@@ -55,7 +55,8 @@ jobs:
           mkdir dist-5aside
           cp 5asidefootball-site/index.html 5asidefootball-site/styles.css 5asidefootball-site/game.js 5asidefootball-site/source.json dist-5aside/
           node --input-type=module <<'NODE'
-          import {readFileSync,writeFileSync,createHash} from 'node:fs';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
           const source=JSON.parse(readFileSync('dist-5aside/source.json','utf8'));
           if(source.target!=='/5asidefootball.com/'||source.source!=='benhorner9/5AsideManager')throw Error('Incorrect isolated destination');
           const hashes={};
