@@ -31,9 +31,9 @@ jobs:
           test -s bannerandbone-site/source.json
           test -s bannerandbone-site/combat.html
           test -s bannerandbone-site/arena.html
-          test -s bannerandbone-site/src/arena.mjs
-          test -s bannerandbone-site/src/combat-engine.mjs
-          test -s bannerandbone-site/src/combat-ui.mjs
+          test -s bannerandbone-site/src/arena.js
+          test -s bannerandbone-site/src/combat-engine.js
+          test -s bannerandbone-site/src/combat-ui.js
           test -s bannerandbone-site/src/combat.css
           python3 - <<'PY'
           import html.parser
@@ -64,12 +64,12 @@ jobs:
           print('All seven town facilities present; no root-relative assets.')
           PY
           node --check /tmp/banner-and-bone-inline.js
-          node --check bannerandbone-site/src/combat-engine.mjs
-          node --check bannerandbone-site/src/combat-ui.mjs
-          node --check bannerandbone-site/src/arena.mjs
-          grep -F './src/arena.mjs' bannerandbone-site/arena.html
+          node --check bannerandbone-site/src/combat-engine.js
+          node --check bannerandbone-site/src/combat-ui.js
+          node --check bannerandbone-site/src/arena.js
+          grep -F './src/arena.js' bannerandbone-site/arena.html
           grep -F './src/combat.css' bannerandbone-site/arena.html
-          grep -F './src/combat-ui.mjs' bannerandbone-site/combat.html
+          grep -F './src/combat-ui.js' bannerandbone-site/combat.html
           grep -F './src/combat.css' bannerandbone-site/combat.html
           if grep -E '(src|href)=["\x27]/' bannerandbone-site/combat.html; then echo 'Root-relative asset in combat page' >&2; exit 1; fi
           python3 -m json.tool bannerandbone-site/source.json > /dev/null
@@ -92,9 +92,9 @@ jobs:
           cp bannerandbone-site/combat.html dist/combat.html
           cp bannerandbone-site/arena.html dist/arena.html
           mkdir -p dist/src
-          cp bannerandbone-site/src/combat-engine.mjs dist/src/combat-engine.mjs
-          cp bannerandbone-site/src/combat-ui.mjs dist/src/combat-ui.mjs
-          cp bannerandbone-site/src/arena.mjs dist/src/arena.mjs
+          cp bannerandbone-site/src/combat-engine.js dist/src/combat-engine.js
+          cp bannerandbone-site/src/combat-ui.js dist/src/combat-ui.js
+          cp bannerandbone-site/src/arena.js dist/src/arena.js
           cp bannerandbone-site/src/combat.css dist/src/combat.css
           cp bannerandbone-site/source.json dist/source.json
           node --input-type=module <<'NODE'
@@ -151,11 +151,40 @@ jobs:
           curl -fsSL --retry 2 --max-time 30 "$base/?sha=$GITHUB_SHA" -o /tmp/banner-and-bone-index.html
           cmp -s dist/index.html /tmp/banner-and-bone-index.html
           mkdir -p /tmp/banner-and-bone-hosted/src
-          for asset in combat.html arena.html src/combat-engine.mjs src/combat-ui.mjs src/arena.mjs src/combat.css; do
+          for asset in combat.html arena.html src/combat-engine.js src/combat-ui.js src/arena.js src/combat.css; do
             curl -fsSL --retry 2 --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/banner-and-bone-hosted/$asset"
             cmp -s "dist/$asset" "/tmp/banner-and-bone-hosted/$asset"
           done
-          echo "Hosted Banner & Bone Block 02 HTML, JavaScript, and CSS bytes verified at $base/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Hosted Banner & Bone Arena HTML, JavaScript, and CSS bytes verified at $base/" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Reject wrong JavaScript MIME types on the real site
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=https://playcellbound.com/bannerandbone
+          for module in src/arena.js src/combat-ui.js src/combat-engine.js; do
+            mime="$(curl --location --fail --silent --show-error --max-time 25 --output /dev/null --write-out '%{content_type}' "$base/$module?verify=$GITHUB_SHA")"
+            case "${mime%%;*}" in
+              application/javascript|text/javascript|application/x-javascript|text/ecmascript|application/ecmascript)
+                echo "PASS: $module is served as $mime"
+                ;;
+              *)
+                echo "::error::Browser would reject $module (Content-Type: $mime)" >&2
+                exit 1
+                ;;
+            esac
+          done
+
+      - name: Install Chromium for actual hosted Arena smoke test
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up browser verifier
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Play a full round and rematch on hosted Arena
+        run: node bannerandbone-site/qa/live-browser-smoke.mjs
 
       - name: Ensure Oakrest and existing public game were not changed
         shell: bash
