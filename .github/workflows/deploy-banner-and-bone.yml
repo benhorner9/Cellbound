@@ -1,0 +1,142 @@
+name: Banner and Bone - isolated browser preview deploy
+on:
+  push:
+    branches: [main]
+    paths:
+      - bannerandbone-site/**
+      - .github/workflows/deploy-banner-and-bone.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: banner-and-bone-isolated-ftps
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Validate and publish only /bannerandbone/
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out existing Cellbound deployment bridge
+        uses: actions/checkout@v4
+
+      - name: Validate HTML package and JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s bannerandbone-site/index.html
+          test -s bannerandbone-site/source.json
+          python3 - <<'PY'
+          import html.parser
+          import pathlib
+          class Extract(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.inside = False
+                  self.scripts = []
+              def handle_starttag(self, tag, attrs):
+                  if tag == 'script':
+                      self.inside = True
+              def handle_endtag(self, tag):
+                  if tag == 'script':
+                      self.inside = False
+              def handle_data(self, data):
+                  if self.inside:
+                      self.scripts.append(data)
+          doc=pathlib.Path('bannerandbone-site/index.html').read_text()
+          assert '<title>Banner &amp; Bone' in doc
+          assert 'href="/' not in doc and 'src="/' not in doc
+          for location in ('recruitment','barracks','forge','infirmary','expeditions','arena','fallen'):
+              assert 'data-place="'+location+'"' in doc, location
+          p=Extract()
+          p.feed(doc)
+          assert len(p.scripts)==1, 'expected exactly one self-contained script'
+          pathlib.Path('/tmp/banner-and-bone-inline.js').write_text(p.scripts[0])
+          print('All seven town facilities present; no root-relative assets.')
+          PY
+          node --check /tmp/banner-and-bone-inline.js
+          python3 -m json.tool bannerandbone-site/source.json > /dev/null
+
+      - name: Record existing Oakrest release fingerprints before upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/banner-and-bone-guard
+          for part in oakrest oakrest-dev; do
+            curl -fsSL --retry 2 --max-time 30 "https://playcellbound.com/$part/build-meta.json" -o "/tmp/banner-and-bone-guard/$part.before"
+          done
+
+      - name: Prepare exact isolated upload and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir dist
+          cp bannerandbone-site/index.html dist/index.html
+          cp bannerandbone-site/source.json dist/source.json
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const source=JSON.parse(readFileSync('dist/source.json','utf8'));
+          if(source.target!=='/bannerandbone/' || source.source!=='benhorner9/banner-and-bone') throw new Error('Invalid isolated deployment target');
+          writeFileSync('dist/build-meta.json', JSON.stringify({
+            project:'banner-and-bone',environment:'development-preview',
+            target:source.target,sourceCommit:source.sourceCommit,
+            bridgeCommit:process.env.GITHUB_SHA,deployedAt:new Date().toISOString()
+          },null,2)+'\n');
+          NODE
+
+      - name: Require existing shared-host FTPS secrets
+        shell: bash
+        env:
+          FTP_HOST: ${{ secrets.FTP_SERVER }}
+          FTP_USER: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$FTP_HOST" && test -n "$FTP_USER" && test -n "$FTP_PASS"
+
+      - name: Upload ONLY ./bannerandbone/ on the established host
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./dist/
+          server-dir: ./bannerandbone/
+          state-name: .ftp-deploy-banner-and-bone-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+
+      - name: Verify hosted build identity and exact HTML bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=https://playcellbound.com/bannerandbone
+          found=0
+          for attempt in 1 2 3 4; do
+            if curl -fsSL --retry 0 --max-time 20 "$base/build-meta.json?sha=$GITHUB_SHA" -o /tmp/banner-and-bone-meta.json; then
+              if node -e "const m=require('/tmp/banner-and-bone-meta.json');if(m.bridgeCommit!==process.env.GITHUB_SHA||m.target!=='/bannerandbone/')process.exit(1)"; then
+                found=1
+                break
+              fi
+            fi
+            sleep 8
+          done
+          test "$found" -eq 1
+          curl -fsSL --retry 2 --max-time 30 "$base/?sha=$GITHUB_SHA" -o /tmp/banner-and-bone-index.html
+          cmp -s dist/index.html /tmp/banner-and-bone-index.html
+          echo "Hosted Banner & Bone browser preview verified at $base/" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Ensure Oakrest and existing public game were not changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          for part in oakrest oakrest-dev; do
+            curl -fsSL --retry 2 --max-time 30 "https://playcellbound.com/$part/build-meta.json" -o "/tmp/banner-and-bone-guard/$part.after"
+            cmp -s "/tmp/banner-and-bone-guard/$part.before" "/tmp/banner-and-bone-guard/$part.after"
+          done
+          echo "Existing Oakrest routes unchanged. This workflow only publishes ./bannerandbone/." >> "$GITHUB_STEP_SUMMARY"
