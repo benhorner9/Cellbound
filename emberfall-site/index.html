@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#132323"><meta name="description" content="Heroes of Emberfall — an original hand-drawn inspired four-hero real-time fantasy combat prototype.">
+<title>Heroes of Emberfall · The Thornwarden</title>
+<link rel="stylesheet" href="./src/style.css">
+</head><body>
+<div class="app" id="app">
+ <header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><div class="brand-name">HEROES <span>OF</span> EMBERFALL</div><div class="brand-sub">THE FIRST EXPEDITION · COMBAT PROTOTYPE</div></div></div>
+  <div class="top-actions"><span class="chip" id="battleTime">00:00</span><button id="muteBtn" class="icon-btn" type="button" aria-label="Toggle sounds" title="Toggle sounds">♫</button><button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause game" title="Pause" disabled>Ⅱ</button></div>
+ </header>
+ <main class="game-layout">
+  <section class="battle-column" aria-label="Real time combat arena">
+    <div class="battle-top"><div class="chapter"><span class="eyebrow">CHAPTER I · THE VERDANT RUINS</span><strong>The Thornwarden's Hollow</strong></div><div class="boss-hud"><span class="boss-icon">☠</span><div class="boss-data"><div class="boss-title"><span id="bossLabel">THORNWARDEN</span><small id="bossHpText">720 / 720</small></div><div class="boss-track"><div class="boss-fill" id="bossFill"></div></div></div></div></div>
+    <div class="battle-frame" id="battleFrame">
+     <canvas id="arena" width="1200" height="640" aria-label="Combat arena: select an allied hero, then click or drag to an enemy or destination"></canvas>
+     <div class="battle-tag"><span class="live-dot"></span><span id="phaseLabel">READY</span></div>
+     <div id="announcement" class="announcement" aria-live="polite"></div>
+     <div class="overlay" id="overlay">
+      <div class="overlay-content" id="overlayContent">
+       <div class="overlay-emblem">✦</div>
+       <span class="eyebrow">YOUR FIRST EXPEDITION</span>
+       <h1>The Thornwarden Awakes</h1>
+       <p>Four heroes. One ancient guardian. Direct your party in real time, protect your healer and seize the moment to unleash powerful abilities.</p>
+       <div class="overlay-hints"><span>✦ Tap a hero to select</span><span>➤ Tap or drag to command</span><span>⚡ Trigger special abilities</span></div>
+       <button id="startBtn" class="primary-btn large" type="button">Enter the Hollow <span aria-hidden="true">→</span></button>
+      </div>
+     </div>
+    </div>
+    <div class="command-strip"><div><span class="spark">✦</span> <b id="commandTitle">Command your heroes</b><p id="commandInfo">Select a hero, then tap an enemy to focus attacks or tap the ground to reposition. Drag heroes to issue quick commands.</p></div><button id="restartBtn" type="button" class="quiet-btn">↻ Restart Encounter</button></div>
+  </section>
+  <aside class="sidebar">
+   <div class="side-heading"><div><span class="eyebrow">YOUR COMPANY</span><h2>The Emberguard</h2></div><span class="party-count">4 / 4</span></div>
+   <div class="party-list" id="partyList">
+    <button class="hero-card selected" type="button" data-hero="knight"><span class="portrait knight">🛡</span><span class="hero-meta"><span class="hero-line"><strong>Aldric</strong><em>GUARDIAN</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">150 / 150 HP</span></span><span class="selected-chevron">›</span></button>
+    <button class="hero-card" type="button" data-hero="ranger"><span class="portrait ranger">🏹</span><span class="hero-meta"><span class="hero-line"><strong>Briar</strong><em>RANGER</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">104 / 104 HP</span></span><span class="selected-chevron">›</span></button>
+    <button class="hero-card" type="button" data-hero="mage"><span class="portrait mage">✦</span><span class="hero-meta"><span class="hero-line"><strong>Lyra</strong><em>ARCANIST</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">88 / 88 HP</span></span><span class="selected-chevron">›</span></button>
+    <button class="hero-card" type="button" data-hero="cleric"><span class="portrait cleric">✚</span><span class="hero-meta"><span class="hero-line"><strong>Solen</strong><em>CLERIC</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">110 / 110 HP</span></span><span class="selected-chevron">›</span></button>
+   </div>
+   <div class="skills-header"><span class="eyebrow">SELECTED HERO</span><strong id="abilityHero">Aldric · Guardian</strong></div>
+   <div id="abilities" class="ability-list">
+    <button class="skill" type="button" data-slot="0"><span class="skill-icon">🛡</span><span class="skill-text"><b>Shield Wall</b><small>Protect nearby allies and draw attacks</small></span><span class="skill-key">1</span></button>
+    <button class="skill" type="button" data-slot="1"><span class="skill-icon">⚔</span><span class="skill-text"><b>Heroic Strike</b><small>Heavy damage and a brief stun</small></span><span class="skill-key">2</span></button>
+   </div>
+   <div class="side-note"><span>✦</span><p><b>Combat is fully real time.</b> Your heroes attack on their own. You decide who they target, where they move and when they use their abilities.</p></div>
+   <div class="prototype-note">BLOCK 01 · PLAYABLE PVE DEMO<br>Accounts, talent trees, loot, trading and PvP come after combat is proven fun.</div>
+  </aside>
+ </main>
+ <footer><span>Heroes of Emberfall · An original fantasy game in development</span><span>Built for iPad landscape, touch and desktop</span></footer>
+</div>
+<script type="module" src="./src/game.js"></script>
+</body></html>
