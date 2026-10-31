@@ -39,9 +39,9 @@ footer{color:#a79b8c;font:11px/1.6 system-ui,sans-serif;border-top:1px solid var
 </head>
 <body>
 <div class="app">
-<header><div class="logo">BANNER &amp; BONE<small>RAISE YOUR BANNER. BURY YOUR FALLEN.</small></div><div class="build">BLOCK 01<br>FOUNDATION PREVIEW<br><span id="saveStatus">Local save</span></div></header>
+<header><div class="logo">BANNER &amp; BONE<small>RAISE YOUR BANNER. BURY YOUR FALLEN.</small></div><div class="build">BLOCK 02<br>TACTICAL COMBAT PREVIEW<br><span id="saveStatus">Local save</span></div></header>
 <div class="stats"><span class="stat">Gold <b id="gold">400</b></span><span class="stat">Roster <b id="roster">4</b>/8</span><span class="stat">Party <b id="party">4</b>/4</span><span class="stat">Fallen <b>0</b></span></div>
-<div class="intro"><h1>The Company Endures</h1><p>Recruit mercenaries, build a battle party and prepare to face dangerous expeditions. The brave return with treasure. The fallen are remembered.</p></div>
+<div class="intro"><h1>The Company Endures</h1><p>Recruit mercenaries, build a four-hero party, and test tactical 4v4 combat at the Practice Grounds. Heroes return home safely after training.</p></div>
 <main class="layout">
 <section class="card"><h2>The Settlement</h2><div class="town"><div class="buildings">
 <button class="building active" data-place="recruitment"><span class="icon">🏚️</span><strong>Recruitment Hall</strong><small>Hire mercenaries</small></button>
@@ -55,7 +55,7 @@ footer{color:#a79b8c;font:11px/1.6 system-ui,sans-serif;border-top:1px solid var
 <div class="side"><section class="card"><h2 id="panelTitle">Recruitment Hall</h2><div class="body" id="panel"></div></section>
 <section class="card"><h2>Your Mercenary Company</h2><div class="body"><div id="heroes"></div><button class="action subtle" id="reset">Reset prototype save</button></div></section></div>
 </main>
-<footer>This is the working browser foundation, not a complete game. Recruitment, party selection and local saves work now. Tactical battles, PvE, equipment, account saving and multiplayer arrive in later blocks.</footer>
+<footer>Block 02 tactical combat prototype: recruitment, party selection, local saves, five hero classes and AI practice battles. Full expeditions, permanent death, equipment, accounts and PvP are not implemented yet.</footer>
 </div>
 <script>
 (function(){
@@ -76,7 +76,7 @@ function show(){
 find("gold").textContent=state.gold;find("roster").textContent=state.heroes.length;find("party").textContent=state.party.length;
 find("heroes").innerHTML=state.heroes.map(function(h){var i=classes.indexOf(h.job);return '<div class="hero"><div>'+(symbols[i]||"⚔️")+' <strong>'+safe(h.name)+'</strong><br><small>Level 1 '+safe(h.job)+'</small></div><div>'+(state.party.includes(h.id)?"<b>IN PARTY</b>":"")+'</div></div>';}).join("");
 document.querySelectorAll("[data-place]").forEach(function(b){b.classList.toggle("active",b.dataset.place===active);});
-var info={forge:["The Forge","Equipment and item crafting are planned for Block 06."],infirmary:["Infirmary","Injury treatment and recovery arrive with hero progression."],expeditions:["Expedition Board","PvE expeditions arrive after the combat prototype."],arena:["The Arena","Casual PvP has no permanent deaths. Hardcore PvP risks the actual heroes you have recruited. Multiplayer is not implemented yet."],fallen:["Hall of the Fallen","The memorial will remember heroes killed in PvE or hardcore PvP. No heroes can die in this foundation preview."]};
+var info={forge:["The Forge","Equipment and item crafting are planned for Block 06."],infirmary:["Infirmary","Injury treatment and recovery arrive with hero progression."],expeditions:["Expedition Board","Practice a real 4v4 tactical encounter now. Branching PvE expeditions arrive in Block 05."],arena:["The Arena","Casual PvP has no permanent deaths. Hardcore PvP risks the actual heroes you have recruited. Multiplayer is not implemented yet."],fallen:["Hall of the Fallen","The memorial will remember permanent losses in later blocks. Training deaths currently have no lasting consequences."]};
 var p=find("panel");p.innerHTML="";
 if(active==="recruitment"){
 find("panelTitle").textContent="Recruitment Hall";
@@ -87,8 +87,11 @@ p.insertAdjacentHTML("beforeend",'<p class="note">Recruitment and gold are saved
 find("panelTitle").textContent="Barracks";
 p.innerHTML='<h3>Choose four heroes</h3><p>Assign up to four heroes to your battle party.</p>';
 state.heroes.forEach(function(h){var chosen=state.party.includes(h.id);p.appendChild(btn((chosen?"✓ Remove ":"+ Add ")+h.name+" · "+h.job,function(){if(chosen){state.party=state.party.filter(function(x){return x!==h.id;});}else if(state.party.length<4){state.party.push(h.id);}save();show();},!chosen&&state.party.length>=4));});
-p.insertAdjacentHTML("beforeend",'<p class="note">Your party is saved locally. Combat begins in Block 02.</p>');
-}else{var v=info[active];find("panelTitle").textContent=v[0];p.innerHTML='<h3>'+safe(v[0])+'</h3><p>'+safe(v[1])+'</p><p class="note">Planned facility — not functional in this preview.</p>';}
+p.insertAdjacentHTML("beforeend",'<p class="note">Your party is saved locally. You can now take four heroes to the Practice Grounds.</p>');
+p.appendChild(btn('⚔️ Enter Practice Battle',function(){window.location.href='./combat.html';},state.party.length!==4));
+}else{var v=info[active];find("panelTitle").textContent=v[0];p.innerHTML='<h3>'+safe(v[0])+'</h3><p>'+safe(v[1])+'</p>';
+if(active==='expeditions'){p.appendChild(btn('⚔️ Enter Practice Battle',function(){window.location.href='./combat.html';},state.party.length!==4));p.insertAdjacentHTML('beforeend','<p class="note">A safe AI-controlled training encounter, not a reward-bearing expedition. Assemble exactly four heroes first.</p>');}
+else p.insertAdjacentHTML('beforeend','<p class="note">Planned facility — not functional in this preview.</p>');}
 }
 document.querySelectorAll("[data-place]").forEach(function(b){b.addEventListener("click",function(){active=b.dataset.place;show();});});
 find("reset").addEventListener("click",function(){if(confirm("Reset Banner & Bone local prototype data?")){state=fresh();save();show();}});
