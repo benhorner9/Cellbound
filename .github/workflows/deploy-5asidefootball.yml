@@ -1,0 +1,120 @@
+name: 5 Aside Football - isolated shared host deploy
+on:
+  push:
+    branches: [main]
+    paths:
+      - '5asidefootball-site/**'
+      - '.github/workflows/deploy-5asidefootball.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: five-aside-shared-host-ftps
+  cancel-in-progress: false
+jobs:
+  publish:
+    name: Deploy ONLY /5asidefootball.com/
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out Cellbound hosting bridge
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate source and regression tests
+        working-directory: 5asidefootball-site
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in index.html styles.css game.js source.json tests/smoke.test.cjs; do test -s "$file"; done
+          node --check game.js
+          node --test tests/smoke.test.cjs
+          python3 - <<'PY'
+          import json,pathlib,re
+          source=json.loads(pathlib.Path('source.json').read_text())
+          assert source['target']=='/5asidefootball.com/'
+          assert source['source']=='benhorner9/5AsideManager'
+          assert re.fullmatch('[a-f0-9]{40}',source['sourceCommit'])
+          html=pathlib.Path('index.html').read_text()
+          assert 'href="./styles.css"' in html
+          assert 'src="./game.js"' in html
+          assert not re.search(r'(?:src|href)=["\x27]/(?!/)',html)
+          PY
+      - name: Capture existing game fingerprints
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/five-aside-guard
+          for path in oakrest oakrest-dev; do
+            curl -fsSL --retry 2 --max-time 25 "https://playcellbound.com/$path/build-meta.json" -o "/tmp/five-aside-guard/$path.before"
+          done
+      - name: Prepare isolated package and build metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir dist-5aside
+          cp 5asidefootball-site/index.html 5asidefootball-site/styles.css 5asidefootball-site/game.js 5asidefootball-site/source.json dist-5aside/
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync,createHash} from 'node:fs';
+          const source=JSON.parse(readFileSync('dist-5aside/source.json','utf8'));
+          if(source.target!=='/5asidefootball.com/'||source.source!=='benhorner9/5AsideManager')throw Error('Incorrect isolated destination');
+          const hashes={};
+          for(const file of ['index.html','styles.css','game.js','source.json'])
+            hashes[file]=createHash('sha256').update(readFileSync('dist-5aside/'+file)).digest('hex');
+          writeFileSync('dist-5aside/build-meta.json',JSON.stringify({
+            project:'5asidefootball',target:source.target,sourceCommit:source.sourceCommit,
+            bridgeCommit:process.env.GITHUB_SHA,deployedAt:new Date().toISOString(),hashes
+          },null,2)+'\n');
+          NODE
+      - name: Require existing host credentials
+        shell: bash
+        env:
+          HOST: ${{ secrets.FTP_SERVER }}
+          USER: ${{ secrets.FTP_USERNAME }}
+          PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          test -n "$HOST" && test -n "$USER" && test -n "$PASS"
+      - name: Upload exclusively to five-aside folder
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./dist-5aside/
+          server-dir: ./5asidefootball.com/
+          state-name: .ftp-deploy-5asidefootball-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+      - name: Verify deployed route and exact source bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://playcellbound.com/5asidefootball.com'
+          found=0
+          for attempt in 1 2 3 4 5; do
+            if curl -fsSL --max-time 20 "$base/build-meta.json?commit=$GITHUB_SHA" -o /tmp/five-aside-meta.json; then
+              if node -e "const m=require('/tmp/five-aside-meta.json');if(m.bridgeCommit!==process.env.GITHUB_SHA||m.target!=='/5asidefootball.com/')process.exit(1)"; then
+                found=1;break
+              fi
+            fi
+            sleep 8
+          done
+          test "$found" -eq 1
+          for asset in index.html styles.css game.js source.json; do
+            curl -fsSL --retry 2 --max-time 25 "$base/$asset?commit=$GITHUB_SHA" -o "/tmp/five-aside-live-$asset"
+            cmp -s "dist-5aside/$asset" "/tmp/five-aside-live-$asset"
+          done
+          curl -fsSL --retry 2 --max-time 25 "$base/?commit=$GITHUB_SHA" -o /tmp/five-aside-live-root.html
+          cmp -s dist-5aside/index.html /tmp/five-aside-live-root.html
+          echo "Published $base/ with exact verified bytes for $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+      - name: Confirm other games are unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in oakrest oakrest-dev; do
+            curl -fsSL --retry 2 --max-time 25 "https://playcellbound.com/$path/build-meta.json" -o "/tmp/five-aside-guard/$path.after"
+            cmp -s "/tmp/five-aside-guard/$path.before" "/tmp/five-aside-guard/$path.after"
+          done
+          echo "Existing Oakrest routes unchanged; root and other game folders were not uploaded." >> "$GITHUB_STEP_SUMMARY"
