@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for file in index.html styles.css game.js source.json tests/smoke.test.cjs; do test -s "$file"; done
+          for file in index.html styles.css game.js source.json save-transfer.html tests/smoke.test.cjs; do test -s "$file"; done
           node --check game.js
           node --test tests/smoke.test.cjs
           python3 - <<'PY'
@@ -38,6 +38,9 @@ jobs:
           html=pathlib.Path('index.html').read_text()
           assert 'href="./styles.css"' in html
           assert 'src="./game.js"' in html
+          transfer=pathlib.Path('save-transfer.html').read_text()
+          assert 'five-aside-manager-alpha-v1' in transfer
+          assert 'Import save' in transfer
           assert not re.search(r'(?:src|href)=["\x27]/(?!/)',html)
           PY
       - name: Capture existing game fingerprints
@@ -53,14 +56,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir dist-5aside
-          cp 5asidefootball-site/index.html 5asidefootball-site/styles.css 5asidefootball-site/game.js 5asidefootball-site/source.json dist-5aside/
+          cp 5asidefootball-site/index.html 5asidefootball-site/styles.css 5asidefootball-site/game.js 5asidefootball-site/source.json 5asidefootball-site/save-transfer.html dist-5aside/
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync} from 'node:fs';
           import {createHash} from 'node:crypto';
           const source=JSON.parse(readFileSync('dist-5aside/source.json','utf8'));
           if(source.target!=='/5asidefootball.com/'||source.source!=='benhorner9/5AsideManager')throw Error('Incorrect isolated destination');
           const hashes={};
-          for(const file of ['index.html','styles.css','game.js','source.json'])
+          for(const file of ['index.html','styles.css','game.js','source.json','save-transfer.html'])
             hashes[file]=createHash('sha256').update(readFileSync('dist-5aside/'+file)).digest('hex');
           writeFileSync('dist-5aside/build-meta.json',JSON.stringify({
             project:'5asidefootball',target:source.target,sourceCommit:source.sourceCommit,
@@ -103,7 +106,7 @@ jobs:
             sleep 8
           done
           test "$found" -eq 1
-          for asset in index.html styles.css game.js source.json; do
+          for asset in index.html styles.css game.js source.json save-transfer.html; do
             curl -fsSL --retry 2 --max-time 25 "$base/$asset?commit=$GITHUB_SHA" -o "/tmp/five-aside-live-$asset"
             cmp -s "dist-5aside/$asset" "/tmp/five-aside-live-$asset"
           done
