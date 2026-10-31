@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171923">
+<title>Banner &amp; Bone — Company Headquarters</title>
+<style>
+:root{color-scheme:dark;--bg:#11151c;--panel:#28242a;--line:#655342;--gold:#dfb46f;--text:#f0e5d0;--muted:#c3b8a8}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#55453b 0,#25262d 35%,#11151c 80%);color:var(--text);font-family:Georgia,serif;min-height:100vh}
+button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #ffd38b;outline-offset:2px}
+.app{max-width:1220px;margin:auto;padding:16px clamp(12px,2vw,30px) 36px}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);gap:12px;padding:8px 0 18px}
+.logo{font-size:clamp(25px,4.5vw,42px);font-weight:bold;letter-spacing:.075em;text-shadow:0 3px 15px #000}.logo small{display:block;font:600 10px system-ui,sans-serif;letter-spacing:.27em;color:var(--gold)}
+.build{font:12px/1.5 system-ui,sans-serif;color:var(--muted);text-align:right}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin:17px 0}.stat{background:#302b2a;border:1px solid var(--line);border-radius:5px;padding:8px 12px;font:12px system-ui,sans-serif}.stat b{color:var(--gold)}
+.intro{text-align:center;margin:20px 0 25px}.intro h1{font-size:clamp(24px,4vw,40px);margin:0}.intro p{font:14px/1.6 system-ui,sans-serif;color:var(--muted);max-width:680px;margin:9px auto}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:16px}
+.card{background:linear-gradient(145deg,#3b3230,#1e232a);border:1px solid #79654d;border-radius:9px;box-shadow:0 12px 28px #0004;overflow:hidden}
+.card h2{font-size:18px;color:#ecc68a;margin:0;padding:13px 16px;background:#211e22b8;border-bottom:1px solid #615240}
+.town{padding:17px;min-height:460px;display:flex;flex-direction:column;justify-content:end;position:relative;background:radial-gradient(ellipse at 50% 15%,#6f655d 0,#41424a 37%,#242d32 75%,#252722 100%);overflow:hidden}
+.town:before{content:"";position:absolute;width:75px;height:75px;border-radius:100%;background:#c4bdac;top:42px;left:44%;box-shadow:0 0 55px #e0d2bb77;opacity:.55}
+.town:after{content:"";position:absolute;inset:28% 0 0;background:#151d2099;clip-path:polygon(0 48%,12% 24%,22% 51%,34% 14%,45% 49%,60% 12%,76% 51%,88% 25%,100% 48%,100% 100%,0 100%);pointer-events:none}
+.buildings{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.building{color:var(--text);min-height:108px;border:1px solid #a18862;border-radius:6px;background:linear-gradient(155deg,#5b493d,#2b3036);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:7px;box-shadow:0 7px 13px #0006;transition:transform .15s,border-color .15s}
+.building:hover,.building.active{border-color:#f6cb84;transform:translateY(-3px)}
+.building .icon{font-size:28px}.building strong{text-align:center;font-size:clamp(11px,1.3vw,15px)}.building small{font:10px system-ui,sans-serif;color:#d4c7b4;text-align:center}
+.building:last-child{grid-column:2}.hint{position:relative;z-index:1;text-align:center;margin:15px 0 0;font:11px system-ui,sans-serif;color:#e6d1a7;letter-spacing:.08em}
+.side{display:flex;flex-direction:column;gap:16px}.body{padding:15px 17px}.body h3{font-size:22px;margin:0 0 6px}.body p,.note{font:13px/1.6 system-ui,sans-serif;color:var(--muted)}
+.note{border-left:3px solid var(--gold);padding:8px 10px;background:#2e2d2c;margin-top:12px}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:9px;border-bottom:1px solid #514a42;padding:9px 0;font-size:14px}.hero:last-child{border:0}.hero small{font:11px system-ui,sans-serif;color:var(--muted)}.hero b{color:var(--gold)}
+.action{margin:5px 5px 5px 0;padding:9px 11px;background:#725237;border:1px solid #a88354;border-radius:4px;color:#fff0d5;font:600 12px system-ui,sans-serif}
+.action:disabled{opacity:.45;cursor:not-allowed}.action.subtle{background:#302d2d}
+footer{color:#a79b8c;font:11px/1.6 system-ui,sans-serif;border-top:1px solid var(--line);margin-top:22px;padding:14px 0}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.town{min-height:440px}}
+@media(max-width:500px){.town{padding:8px;min-height:390px}.buildings{gap:7px}.building{min-height:93px}.building .icon{font-size:23px}.build{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.building{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="logo">BANNER &amp; BONE<small>RAISE YOUR BANNER. BURY YOUR FALLEN.</small></div><div class="build">BLOCK 01<br>FOUNDATION PREVIEW<br><span id="saveStatus">Local save</span></div></header>
+<div class="stats"><span class="stat">Gold <b id="gold">400</b></span><span class="stat">Roster <b id="roster">4</b>/8</span><span class="stat">Party <b id="party">4</b>/4</span><span class="stat">Fallen <b>0</b></span></div>
+<div class="intro"><h1>The Company Endures</h1><p>Recruit mercenaries, build a battle party and prepare to face dangerous expeditions. The brave return with treasure. The fallen are remembered.</p></div>
+<main class="layout">
+<section class="card"><h2>The Settlement</h2><div class="town"><div class="buildings">
+<button class="building active" data-place="recruitment"><span class="icon">🏚️</span><strong>Recruitment Hall</strong><small>Hire mercenaries</small></button>
+<button class="building" data-place="barracks"><span class="icon">🛡️</span><strong>Barracks</strong><small>Choose your party</small></button>
+<button class="building" data-place="forge"><span class="icon">⚒️</span><strong>The Forge</strong><small>Equipment</small></button>
+<button class="building" data-place="infirmary"><span class="icon">✚</span><strong>Infirmary</strong><small>Recover</small></button>
+<button class="building" data-place="expeditions"><span class="icon">🗺️</span><strong>Expedition Board</strong><small>PvE missions</small></button>
+<button class="building" data-place="arena"><span class="icon">⚔️</span><strong>The Arena</strong><small>Casual &amp; hardcore</small></button>
+<button class="building" data-place="fallen"><span class="icon">🕯️</span><strong>Hall of the Fallen</strong><small>Memorial</small></button>
+</div><p class="hint">SELECT A BUILDING TO OPEN ITS FACILITY</p></div></section>
+<div class="side"><section class="card"><h2 id="panelTitle">Recruitment Hall</h2><div class="body" id="panel"></div></section>
+<section class="card"><h2>Your Mercenary Company</h2><div class="body"><div id="heroes"></div><button class="action subtle" id="reset">Reset prototype save</button></div></section></div>
+</main>
+<footer>This is the working browser foundation, not a complete game. Recruitment, party selection and local saves work now. Tactical battles, PvE, equipment, account saving and multiplayer arrive in later blocks.</footer>
+</div>
+<script>
+(function(){
+"use strict";
+var KEY="banner-bone-foundation-v1";
+var classes=["Vanguard","Cutthroat","Ranger","Arcanist","Warden"];
+var symbols=["🛡️","🗡️","🏹","✨","✚"];
+var starters=[{id:1,name:"Garrick",job:"Vanguard"},{id:2,name:"Sable",job:"Cutthroat"},{id:3,name:"Ilyra",job:"Arcanist"},{id:4,name:"Maren",job:"Warden"}];
+var names=["Rowan","Mira","Elric","Ash","Tarin","Vesper","Orrin","Lysa"];
+function fresh(){return {gold:400,heroes:starters.map(function(x){return Object.assign({},x);}),party:[1,2,3,4],next:5};}
+function get(){try{var data=JSON.parse(localStorage.getItem(KEY));if(data && Number.isInteger(data.gold) && Array.isArray(data.heroes) && Array.isArray(data.party) && Number.isInteger(data.next))return data;}catch(e){}return fresh();}
+var state=get(),active="recruitment";
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){document.getElementById("saveStatus").textContent="Save unavailable";}}
+function find(id){return document.getElementById(id);}
+function safe(x){return String(x).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function btn(text,handler,disabled){var b=document.createElement("button");b.className="action";b.textContent=text;b.disabled=!!disabled;b.addEventListener("click",handler);return b;}
+function show(){
+find("gold").textContent=state.gold;find("roster").textContent=state.heroes.length;find("party").textContent=state.party.length;
+find("heroes").innerHTML=state.heroes.map(function(h){var i=classes.indexOf(h.job);return '<div class="hero"><div>'+(symbols[i]||"⚔️")+' <strong>'+safe(h.name)+'</strong><br><small>Level 1 '+safe(h.job)+'</small></div><div>'+(state.party.includes(h.id)?"<b>IN PARTY</b>":"")+'</div></div>';}).join("");
+document.querySelectorAll("[data-place]").forEach(function(b){b.classList.toggle("active",b.dataset.place===active);});
+var info={forge:["The Forge","Equipment and item crafting are planned for Block 06."],infirmary:["Infirmary","Injury treatment and recovery arrive with hero progression."],expeditions:["Expedition Board","PvE expeditions arrive after the combat prototype."],arena:["The Arena","Casual PvP has no permanent deaths. Hardcore PvP risks the actual heroes you have recruited. Multiplayer is not implemented yet."],fallen:["Hall of the Fallen","The memorial will remember heroes killed in PvE or hardcore PvP. No heroes can die in this foundation preview."]};
+var p=find("panel");p.innerHTML="";
+if(active==="recruitment"){
+find("panelTitle").textContent="Recruitment Hall";
+p.innerHTML='<h3>New blood</h3><p>Each recruit costs 100 gold. Your first company can hold up to eight mercenaries.</p>';
+classes.forEach(function(job,i){p.appendChild(btn(symbols[i]+" "+job,function(){if(state.gold<100||state.heroes.length>=8)return;state.gold-=100;var n=state.next;state.heroes.push({id:n,name:names[(n-5)%names.length],job:job});state.next++;save();show();},state.gold<100||state.heroes.length>=8));});
+p.insertAdjacentHTML("beforeend",'<p class="note">Recruitment and gold are saved in this browser. New hero traits and facilities are coming later.</p>');
+}else if(active==="barracks"){
+find("panelTitle").textContent="Barracks";
+p.innerHTML='<h3>Choose four heroes</h3><p>Assign up to four heroes to your battle party.</p>';
+state.heroes.forEach(function(h){var chosen=state.party.includes(h.id);p.appendChild(btn((chosen?"✓ Remove ":"+ Add ")+h.name+" · "+h.job,function(){if(chosen){state.party=state.party.filter(function(x){return x!==h.id;});}else if(state.party.length<4){state.party.push(h.id);}save();show();},!chosen&&state.party.length>=4));});
+p.insertAdjacentHTML("beforeend",'<p class="note">Your party is saved locally. Combat begins in Block 02.</p>');
+}else{var v=info[active];find("panelTitle").textContent=v[0];p.innerHTML='<h3>'+safe(v[0])+'</h3><p>'+safe(v[1])+'</p><p class="note">Planned facility — not functional in this preview.</p>';}
+}
+document.querySelectorAll("[data-place]").forEach(function(b){b.addEventListener("click",function(){active=b.dataset.place;show();});});
+find("reset").addEventListener("click",function(){if(confirm("Reset Banner & Bone local prototype data?")){state=fresh();save();show();}});
+show();
+})();
+</script>
+</body>
+</html>
