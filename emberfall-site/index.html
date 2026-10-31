@@ -7,7 +7,7 @@
 </head><body>
 <div class="app" id="app">
  <header class="topbar">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><div class="brand-name">HEROES <span>OF</span> EMBERFALL</div><div class="brand-sub">THE FIRST EXPEDITION · COMBAT PROTOTYPE</div></div></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><div class="brand-name">HEROES <span>OF</span> EMBERFALL</div><div class="brand-sub">BLOCK 02 · THE HEROES GROW STRONGER</div></div></div>
   <div class="top-actions"><span class="chip" id="battleTime">00:00</span><button id="muteBtn" class="icon-btn" type="button" aria-label="Toggle sounds" title="Toggle sounds">♫</button><button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause game" title="Pause" disabled>Ⅱ</button></div>
  </header>
  <main class="game-layout">
@@ -22,7 +22,7 @@
        <div class="overlay-emblem">✦</div>
        <span class="eyebrow">YOUR FIRST EXPEDITION</span>
        <h1>The Thornwarden Awakes</h1>
-       <p>Four heroes. One ancient guardian. Direct your party in real time, protect your healer and seize the moment to unleash powerful abilities.</p>
+       <p>Four heroes. One ancient guardian. Command your party in real time, earn XP, discover boss equipment and improve your heroes between battles.</p>
        <div class="overlay-hints"><span>✦ Tap a hero to select</span><span>➤ Tap or drag to command</span><span>⚡ Trigger special abilities</span></div>
        <button id="startBtn" class="primary-btn large" type="button">Enter the Hollow <span aria-hidden="true">→</span></button>
       </div>
@@ -32,21 +32,23 @@
   </section>
   <aside class="sidebar">
    <div class="side-heading"><div><span class="eyebrow">YOUR COMPANY</span><h2>The Emberguard</h2></div><span class="party-count">4 / 4</span></div>
+   <div class="company-buttons"><button class="company-button" id="companyBtn" type="button">✦ Heroes &amp; Talents</button><button class="company-button" id="bagBtn" type="button">🎒 Bag <span id="bagCount">0</span></button></div><div class="company-wallet"><span id="goldTotal">90 gold</span><span id="profileRecord">0 boss victories</span></div>
    <div class="party-list" id="partyList">
     <button class="hero-card selected" type="button" data-hero="knight"><span class="portrait knight">🛡</span><span class="hero-meta"><span class="hero-line"><strong>Aldric</strong><em>GUARDIAN</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">150 / 150 HP</span></span><span class="selected-chevron">›</span></button>
     <button class="hero-card" type="button" data-hero="ranger"><span class="portrait ranger">🏹</span><span class="hero-meta"><span class="hero-line"><strong>Briar</strong><em>RANGER</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">104 / 104 HP</span></span><span class="selected-chevron">›</span></button>
     <button class="hero-card" type="button" data-hero="mage"><span class="portrait mage">✦</span><span class="hero-meta"><span class="hero-line"><strong>Lyra</strong><em>ARCANIST</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">88 / 88 HP</span></span><span class="selected-chevron">›</span></button>
     <button class="hero-card" type="button" data-hero="cleric"><span class="portrait cleric">✚</span><span class="hero-meta"><span class="hero-line"><strong>Solen</strong><em>CLERIC</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">110 / 110 HP</span></span><span class="selected-chevron">›</span></button>
    </div>
-   <div class="skills-header"><span class="eyebrow">SELECTED HERO</span><strong id="abilityHero">Aldric · Guardian</strong></div>
+   <div class="skills-header"><span class="eyebrow">SELECTED HERO</span><strong id="abilityHero">Aldric · Guardian</strong><small id="progressHint" class="progress-hint">Level 1 · Earn experience by defeating bosses</small></div>
    <div id="abilities" class="ability-list">
     <button class="skill" type="button" data-slot="0"><span class="skill-icon">🛡</span><span class="skill-text"><b>Shield Wall</b><small>Protect nearby allies and draw attacks</small></span><span class="skill-key">1</span></button>
     <button class="skill" type="button" data-slot="1"><span class="skill-icon">⚔</span><span class="skill-text"><b>Heroic Strike</b><small>Heavy damage and a brief stun</small></span><span class="skill-key">2</span></button>
    </div>
    <div class="side-note"><span>✦</span><p><b>Combat is fully real time.</b> Your heroes attack on their own. You decide who they target, where they move and when they use their abilities.</p></div>
-   <div class="prototype-note">BLOCK 01 · PLAYABLE PVE DEMO<br>Accounts, talent trees, loot, trading and PvP come after combat is proven fun.</div>
+   <div class="prototype-note">BLOCK 02 · PVE PROGRESSION &amp; BOSS LOOT<br>Saved locally in this browser · No online trading, accounts or PvP yet.</div>
   </aside>
  </main>
+ <section id="workshop" class="workshop-cover hidden" role="dialog" aria-modal="true" aria-labelledby="workshopHeading"><div class="workshop-dialog"><header class="workshop-head"><div><span class="eyebrow">EMBERGUARD CAMP</span><h2 id="workshopHeading">Heroes &amp; Talents</h2></div><button type="button" id="workshopClose" class="workshop-close" aria-label="Close workshop">✕ Close</button></header><div class="workshop-nav" id="workshopTabs"><button type="button" data-tab="heroes" class="selected">Heroes &amp; Talents</button><button type="button" data-tab="pack">Equipment Bag</button><button type="button" data-tab="shop">Quartermaster</button><button type="button" data-tab="loot">Boss Drops</button></div><div id="workshopBody" class="workshop-body"></div><div class="workshop-bottom">Local prototype: items and hero progression are saved in this browser only. <span class="save-warning">Storage unavailable — changes may not persist.</span></div></div></section>
  <footer><span>Heroes of Emberfall · An original fantasy game in development</span><span>Built for iPad landscape, touch and desktop</span></footer>
 </div>
 <script type="module" src="./src/game.js"></script>

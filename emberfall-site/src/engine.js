@@ -1,3 +1,4 @@
+import {bonuses as heroBonuses} from './progression.js';
 // Heroes of Emberfall — Block 01. Deterministic, renderer-independent PvE combat.
 // Browser-owned demo only; the eventual PvP server must never trust this simulation.
 export const WORLD={width:1200,height:640};
@@ -28,8 +29,8 @@ function hero(id,name,role,x,y,hp,range,damage,speed,interval){
 function enemy(id,name,role,x,y,hp,range,damage,speed,interval){
  return {...hero(id,name,role,x,y,hp,range,damage,speed,interval),faction:'enemy',attackClock:interval*0.7};
 }
-export function createEncounter(seed=1337){
- return {phase:'ready',time:0,seed:seed>>>0||1337,
+export function createEncounter(seed=1337,profile=null){
+ const encounter={phase:'ready',time:0,seed:seed>>>0||1337,
  heroes:[
   hero('knight','Aldric','Guardian',240,342,164,76,15,122,1.2),
   hero('ranger','Briar','Ranger',144,231,112,270,13,128,1.45),
@@ -43,6 +44,20 @@ export function createEncounter(seed=1337){
  ],
  selected:'knight',telegraph:null,bossNext:7,reinforcements:false,events:[],
  result:null,stats:{damage:0,healing:0,kills:0},introPlayed:false};
+ if(profile){
+  for(const h of encounter.heroes){
+   const b=heroBonuses(profile,h.id);
+   h.level=profile.heroes[h.id]?.level||1;
+   h.maxHp+=b.health;h.hp=h.maxHp;
+   h.damage+=b.attack;h.speed=(h.speed+b.speed)*(1+b.speedMultiplier);
+   h.armour=b.armour;h.damageMultiplier=1+b.damage;
+   h.healingMultiplier=1+b.healing;h.shieldMultiplier=1+b.shielding;
+   h.skillMultiplier=1+b.skillPower;h.fireMultiplier=1+b.fire;
+   h.arrowMultiplier=1+b.arrowPower;h.frostBonus=b.frostDuration;
+   h.cooldownMultiplier=Math.max(.67,1-b.cooldown);
+  }
+ }
+ return encounter;
 }
 function random(g){g.seed=(Math.imul(1664525,g.seed)+1013904223)>>>0;return g.seed/4294967296;}
 function emit(g,event){g.events.push(event);if(g.events.length>180)g.events.splice(0,g.events.length-180);}
@@ -72,9 +87,10 @@ function seek(u,pos,dt,standoff=0){
 }
 function damage(g,from,to,raw,kind='physical'){
  if(!alive(to))return 0;
- let amount=Math.max(1,Math.round(raw*(0.92+random(g)*.17)));
+ let amount=Math.max(1,Math.round(raw*(from?.damageMultiplier||1)*(0.92+random(g)*.17)));
  let absorbed=Math.min(to.shield,amount);to.shield-=absorbed;amount-=absorbed;
  if(to.guard>0)amount=Math.round(amount*.55);
+ amount=Math.max(0,amount-(to.armour||0));
  const actual=Math.min(to.hp,amount);to.hp=Math.max(0,to.hp-actual);to.hit=.24;
  if(from?.faction==='ally')g.stats.damage+=actual;
  if(actual||absorbed)emit(g,{type:'damage',x:to.x,y:to.y-42,value:actual,shielded:absorbed,kind,from:from?.id,to:to.id});
@@ -83,7 +99,7 @@ function damage(g,from,to,raw,kind='physical'){
 }
 function heal(g,from,to,amount){
  if(!alive(to))return 0;
- const gained=Math.min(to.maxHp-to.hp,Math.round(amount));
+ const gained=Math.min(to.maxHp-to.hp,Math.round(amount*(from?.healingMultiplier||1)));
  to.hp+=gained;
  if(gained){g.stats.healing+=gained;emit(g,{type:'heal',x:to.x,y:to.y-45,value:gained,from:from?.id,to:to.id});}
  return gained;
@@ -106,13 +122,13 @@ export function castAbility(g,id,slot){
  if(g.phase!=='playing'||!alive(h)||!defs||!Number.isInteger(slot)||slot<0||slot>1||h.cooldowns[slot]>0||h.stun>0)return false;
  const target=chooseTarget(g,h),used=defs[slot];let success=false;
  if(id==='knight'&&slot===0){
-  for(const ally of g.heroes.filter(alive)){if(dist(ally,h)<230){ally.shield+=ally.id===h.id?34:27;ally.guard=Math.max(ally.guard,1.6);emit(g,{type:'shield',x:ally.x,y:ally.y,id:ally.id});}}
+  for(const ally of g.heroes.filter(alive)){if(dist(ally,h)<230){ally.shield+=Math.round((ally.id===h.id?34:27)*(h.shieldMultiplier||1));ally.guard=Math.max(ally.guard,1.6);emit(g,{type:'shield',x:ally.x,y:ally.y,id:ally.id});}}
   h.taunt=4.4;success=true;
  }else if(id==='knight'&&slot===1&&target&&dist(h,target)<170){
-  damage(g,h,target,65,'strike');if(alive(target))target.stun=1.2;
+  damage(g,h,target,Math.round(65*(h.skillMultiplier||1)),'strike');if(alive(target))target.stun=1.2;
   emit(g,{type:'burst',x:target.x,y:target.y,color:'#f4cd7e',radius:64});success=true;
  }else if(id==='ranger'&&slot===0&&target){
-  for(const mob of g.enemies.filter(alive)){if(dist(mob,target)<165){shot(g,h,mob,'arrow',mob.id===target.id?42:29);}}
+  for(const mob of g.enemies.filter(alive)){if(dist(mob,target)<165){shot(g,h,mob,'arrow',Math.round((mob.id===target.id?42:29)*(h.arrowMultiplier||1)*(h.skillMultiplier||1)));}}
   emit(g,{type:'burst',x:target.x,y:target.y,color:'#e8b96c',radius:135});success=true;
  }else if(id==='ranger'&&slot===1){
   const enemyNear=closest(h,g.enemies);
@@ -122,21 +138,21 @@ export function castAbility(g,id,slot){
   h.moveTo=null;h.guard=3.5;emit(g,{type:'burst',x:h.x,y:h.y,color:'#97d9af',radius:75});success=true;
  }else if(id==='mage'&&slot===0&&target){
   for(const mob of g.enemies.filter(alive))if(dist(mob,target)<148){
-    damage(g,h,mob,mob.id===target.id?54:33,'fire');if(alive(mob))applyBurn(g,mob,4.8);
+    damage(g,h,mob,Math.round((mob.id===target.id?54:33)*(h.fireMultiplier||1)*(h.skillMultiplier||1)),'fire');if(alive(mob))applyBurn(g,mob,4.8);
   }
   emit(g,{type:'burst',x:target.x,y:target.y,color:'#ff9b53',radius:150});success=true;
  }else if(id==='mage'&&slot===1&&target){
   for(const mob of g.enemies.filter(alive))if(dist(mob,target)<185){
-    damage(g,h,mob,18,'frost');mob.slow=4.5;mob.stun=Math.max(mob.stun,.75);
+    damage(g,h,mob,Math.round(18*(h.skillMultiplier||1)),'frost');mob.slow=4.5+(h.frostBonus||0);mob.stun=Math.max(mob.stun,.75+(h.frostBonus||0));
   }
   emit(g,{type:'burst',x:target.x,y:target.y,color:'#9bdff2',radius:185});success=true;
  }else if(id==='cleric'&&slot===0){
   const victim=weakHero(g);if(victim){heal(g,h,victim,59);emit(g,{type:'burst',x:victim.x,y:victim.y,color:'#b9f5c0',radius:65});success=true;}
  }else if(id==='cleric'&&slot===1){
-  for(const ally of g.heroes.filter(alive)){heal(g,h,ally,18);ally.shield+=24;emit(g,{type:'shield',x:ally.x,y:ally.y,id:ally.id});}success=true;
+  for(const ally of g.heroes.filter(alive)){heal(g,h,ally,18);ally.shield+=Math.round(24*(h.shieldMultiplier||1));emit(g,{type:'shield',x:ally.x,y:ally.y,id:ally.id});}success=true;
  }
  if(!success)return false;
- h.cooldowns[slot]=used.cooldown;
+ h.cooldowns[slot]=used.cooldown*(h.cooldownMultiplier||1);
  emit(g,{type:'ability',id,slot,name:used.name,x:h.x,y:h.y});
  return true;
 }

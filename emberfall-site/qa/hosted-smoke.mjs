@@ -13,6 +13,20 @@ page.on('response',r=>{
 });
 try{
  await page.goto(base+'?sha='+process.env.GITHUB_SHA,{waitUntil:'networkidle',timeout:35000});
+ // Verify this is a playable, persistent progression release, not a cosmetic mock-up.
+ await page.locator('#companyBtn').click();
+ await page.locator('#workshopTabs [data-tab="shop"]').click();
+ await page.locator('[data-action="buy"][data-id="field-vest"]').click();
+ await page.locator('#workshopTabs [data-tab="pack"]').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('Fieldkeeper Vest'))throw Error('Cannot see purchased equipment');
+ await page.locator('[data-action="equip"][data-id="i1"]').click();
+ await page.locator('#workshopClose').click();
+ await page.reload({waitUntil:'networkidle'});
+ await page.locator('#companyBtn').click();
+ await page.locator('#workshopTabs [data-tab="pack"]').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('Equipped by Aldric'))throw Error('Equipped item did not persist');
+ await page.locator('#workshopClose').click();
+ if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('178 / 178'))throw Error('Equipment did not change real combat HP');
  await page.getByRole('button',{name:/Enter the Hollow/}).click();
  await page.waitForFunction(()=>document.getElementById('phaseLabel').textContent.includes('LIVE'),null,{timeout:10000});
  await page.locator('[data-hero="mage"]').click();
@@ -35,6 +49,6 @@ try{
  await page.locator('#battleTime').waitFor();
  if((await page.locator('#battleTime').innerText())!=='00:00')throw Error('Restart not reset');
  if(errors.length)throw Error(errors.join('\n'));
- console.log('PASS: hosted Emberfall real browser starts battle, selects Mage, targets and damages boss, heals with Cleric, pauses and restarts.');
+ console.log('PASS: hosted Emberfall persists purchased equipped armour, applies combat HP, starts battle, targets/damages boss, heals, pauses and restarts.');
 }catch(e){console.error('LIVE BROWSER FAILED:',e.stack||e);if(errors.length)console.error(errors.join('\n'));process.exitCode=1;}
 finally{await browser.close();}

@@ -53,3 +53,66 @@ footer{display:flex;justify-content:space-between;gap:10px;color:#9eb8a3;font:11
 @media(max-width:795px){.game-layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.side-heading,.party-list{grid-column:1}.skills-header,.ability-list{grid-column:2}.side-heading{grid-row:1}.party-list{grid-row:2/span 3}.skills-header{grid-row:1}.ability-list{grid-row:2}.side-note,.prototype-note{grid-column:1/-1}.party-list{grid-template-columns:1fr 1fr}.hero-card{min-height:67px}.command-strip{align-items:start}.command-strip p{max-width:600px}}
 @media(max-width:540px){.app{padding:7px 7px 14px}.topbar{height:65px}.brand-name{font-size:16px}.brand-mark{width:38px;height:38px;font-size:24px}.brand-sub{font-size:8px;letter-spacing:.08em}.chip{padding:8px;min-width:50px}.icon-btn{width:37px;height:39px}.battle-top{height:66px;padding:7px;gap:5px}.chapter strong{font-size:15px}.eyebrow{font-size:8px}.boss-icon{display:none}.boss-title span{font-size:9px}.boss-title small{font-size:9px}.boss-hud{width:46%}.battle-frame{border-width:2px}.overlay-content{padding:11px 9px 15px}.overlay-content h1{font-size:25px}.overlay-content p{font-size:11px}.overlay-emblem{font-size:25px}.overlay-hints{font-size:10px;margin:6px 0 9px}.primary-btn.large{font-size:15px;padding:10px}.command-strip{padding:10px;flex-wrap:wrap}.sidebar{grid-template-columns:1fr}.side-heading,.party-list,.skills-header,.ability-list{grid-column:1;grid-row:auto}.party-list{grid-template-columns:1fr 1fr}.hero-card{padding:5px;gap:4px;min-height:59px}.portrait{width:35px;height:38px;font-size:22px}.hero-line{display:block;margin-bottom:2px}.hero-line strong{font-size:14px}.hero-line em{display:block;font-size:8px}.selected-chevron{display:none}.skills-header{margin:12px 3px 8px}.ability-list{grid-template-columns:1fr 1fr}.skill{min-height:75px;padding:6px;gap:4px}.skill-icon{display:none}.skill-text b{font-size:13px}.skill-text small{font-size:10px}footer{flex-wrap:wrap;font-size:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Block 02 — hero development, unique equipment ownership and loot displays */
+.company-buttons{display:grid;grid-template-columns:1.3fr 1fr;gap:7px;margin:0 2px 7px}
+.company-button{min-height:42px;text-align:center;padding:6px;border:1px solid #bca679;border-radius:8px;background:linear-gradient(#456650,#29483f);font:bold 12px Georgia,serif;color:#f3dfb0;touch-action:manipulation}
+.company-button:active{transform:translateY(1px)}
+.company-wallet{display:flex;justify-content:space-between;gap:7px;margin:0 3px 12px;padding:7px 10px;border-radius:6px;background:#162c29;border:1px solid #6c7358;color:#e2c990;font:bold 11px system-ui,sans-serif}
+.company-wallet span:last-child{color:#bcd1bb;font-weight:normal}
+.progress-hint{display:block;font:11px system-ui,sans-serif;color:#b9c9a7}
+.workshop-cover{position:fixed;inset:0;z-index:100;background:#0b1b1ddd;display:flex;align-items:center;justify-content:center;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));backdrop-filter:blur(5px)}
+.workshop-cover.hidden{display:none}
+.workshop-dialog{display:flex;flex-direction:column;width:min(835px,100%);max-height:min(92dvh,900px);overflow:hidden;border:2px solid #bb9864;border-radius:17px;background:radial-gradient(ellipse at top,#345245,#1b302e 75%);box-shadow:0 20px 70px #000c}
+.workshop-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:17px 19px 13px;border-bottom:1px solid #617663}
+.workshop-head h2{font:700 clamp(21px,3vw,29px) Georgia,serif;color:#ffe2b1;margin:5px 0 0}
+.workshop-close{background:#233d37;border:1px solid #c6b17f;border-radius:9px;padding:9px 11px;font:bold 13px system-ui,sans-serif;color:#f5ddad;white-space:nowrap;min-height:43px}
+.workshop-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 14px;border-bottom:1px solid #506a59;background:#223c35}
+.workshop-nav button{padding:9px 5px;min-height:43px;border-radius:8px;border:1px solid #607969;background:#263d37;color:#c3d1bc;font:bold 12px system-ui,sans-serif;touch-action:manipulation}
+.workshop-nav button.selected{background:#526e4f;color:#fff0c0;border-color:#ddbb7e}
+.workshop-body{overflow:auto;padding:18px 20px 24px;min-height:150px;overscroll-behavior:contain}
+.workshop-bottom{font:11px/1.6 system-ui,sans-serif;color:#b6c9b3;padding:10px 18px;background:#152925;border-top:1px solid #58705b}
+.save-warning{display:none;color:#ffd5aa}.workshop-cover.dirty .save-warning{display:inline}
+.hero-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:14px}
+.hero-picker-btn{border:1px solid #678573;border-radius:8px;background:#243e35;padding:9px;min-height:55px;font:700 15px Georgia,serif}
+.hero-picker-btn small{display:block;margin-top:4px;font:11px system-ui,sans-serif;color:#c1d1bc}
+.hero-picker-btn.active{background:#44694c;border-color:#e4c18a;box-shadow:0 0 0 2px #d6b87530}
+.progress-hero{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.progress-hero h3{font:700 29px Georgia,serif;margin:5px 0 4px}.progress-hero h3 span{font:700 14px system-ui,sans-serif;color:#f3ce91}
+.progress-hero p,.workshop-intro p{font:12px/1.55 system-ui,sans-serif;color:#c4d6c0;margin:4px 0 12px}
+.progress-stat{font:700 13px system-ui,sans-serif;color:#ebd4a0;white-space:nowrap}
+.xp-track{height:13px;background:#132720;border:1px solid #778768;border-radius:9px;overflow:hidden}
+.xp-track i{display:block;background:linear-gradient(90deg,#8ab37d,#ebd18c);height:100%;transition:width .3s}
+.workshop-subheading{margin:24px 0 9px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.workshop-subheading h3{font:700 19px Georgia,serif;margin:0;color:#f2d7a8}.workshop-subheading span{font:11px system-ui,sans-serif;color:#bed1bb}
+.equipped-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.equipped-slot{border:1px solid #69816e;border-radius:10px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;background:#203b34;min-width:0}
+.slot-icon{font-size:25px}.equipped-slot>div{min-width:0;flex:1}.equipped-slot b{display:block;font:700 14px Georgia,serif;color:#f4e4ba}.equipped-slot small{font:11px/1.4 system-ui,sans-serif;color:#beceba;display:block;margin-top:4px}
+.mini-link{border:0;background:none;color:#f7d598;font:700 12px system-ui,sans-serif;padding:11px 0;text-decoration:underline;text-underline-offset:4px}
+.talent-tier{border:1px solid #637c61;border-radius:10px;padding:10px;margin-top:10px;background:#203830}.talent-tier-title{font:bold 11px system-ui,sans-serif;color:#f0d7a8;letter-spacing:.08em;margin:0 0 9px}
+.talent-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.talent-choice{display:flex;flex-direction:column;gap:5px;text-align:left;min-height:125px;border:1px solid #7a916c;border-radius:10px;padding:11px;background:linear-gradient(140deg,#2c5043,#263d35)}
+.talent-choice.chosen{border-color:#f1cf91;background:#3b634b;box-shadow:inset 0 0 0 1px #f1ce8c5e}.talent-choice:disabled{opacity:.72}
+.talent-icon{font-size:23px}.talent-choice b{font:700 16px Georgia,serif}.talent-choice small{font:11px/1.45 system-ui,sans-serif;color:#c3d2c4;flex:1}.talent-choose{font:700 11px system-ui,sans-serif;color:#f3d8a7}
+.workshop-disclaimer{font:11px/1.55 system-ui,sans-serif;color:#b9cbb8;margin:18px 0 0}
+.hero-select{display:block;width:100%;min-height:42px;border:1px solid #c0ac82;border-radius:8px;background:#17332f;color:#f4e3bd;font:bold 14px system-ui,sans-serif;padding:8px 10px;margin:9px 0 13px}
+.workshop-body>label{font:700 12px system-ui,sans-serif;color:#f0d8ab}
+.workshop-intro h3{font:700 22px Georgia,serif;margin:0 0 4px;color:#f3dba8}
+.pack-stats{display:flex;align-items:center;justify-content:space-between;margin:12px 0;padding:10px 12px;border-radius:8px;background:#162e29;border:1px solid #5c785e;font:700 12px system-ui,sans-serif;color:#e1d4aa}
+.pack-empty{border:1px dashed #88a088;border-radius:9px;padding:24px;text-align:center;font:13px/1.5 system-ui,sans-serif;color:#c9d7bb}
+.loot-card{display:flex;align-items:start;gap:12px;border:1px solid #647963;border-radius:10px;padding:12px;margin-bottom:8px;background:#264036}
+.loot-card.rarity-uncommon{border-color:#77b88d}.loot-card.rarity-rare{border-color:#8bb8ed}.loot-card.rarity-legendary{border-color:#e7bd74;background:#3c4032}
+.loot-icon{font-size:29px;display:grid;place-items:center;flex:0 0 45px;width:45px;height:47px;border:1px solid #64786c;border-radius:9px;background:#20352f}
+.loot-content{flex:1;min-width:0}.loot-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.loot-top strong{font:700 17px Georgia,serif}.rarity{font:700 11px system-ui,sans-serif;color:#f3d18c;white-space:nowrap}
+.rarity-rare .rarity{color:#a5cafa}.rarity-legendary .rarity{color:#ffd27d}
+.item-type,.item-effects,.item-owner{display:block;font:11px/1.5 system-ui,sans-serif;color:#c8d8c4;margin-top:3px}.item-effects{color:#f3daa6}.item-owner{color:#adc3b2}
+.loot-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.tiny-btn{border:1px solid #d1b77e;border-radius:6px;background:#395e47;color:#ffe3b3;min-height:34px;padding:6px 10px;font:bold 11px system-ui,sans-serif}.tiny-btn:disabled{opacity:.45}.tiny-btn.ghost{background:#283b35;border-color:#69806f}.tiny-btn.danger{color:#f2bcb1}
+.drop-row{display:flex;align-items:center;gap:11px;padding:10px 2px;border-bottom:1px solid #566e5d}.drop-row>div{flex:1;min-width:0}.drop-row strong{display:block;font:700 15px Georgia,serif}.drop-row small{display:block;margin-top:4px;color:#bbd0bd;font:11px/1.4 system-ui,sans-serif}.drop-row>b{font:700 17px Georgia,serif;color:#f4d89a}
+.victory-rewards{margin:16px auto 12px;max-width:550px;padding:13px;border:1px solid #e5c387;border-radius:11px;background:#294337}
+.victory-rewards h3{margin:0 0 8px;font:700 20px Georgia,serif;color:#ffe8bc}
+.victory-rewards p{margin:5px 0;color:#e8e1be!important}
+.victory-rewards .rare-drop{color:#ffdf99;font-weight:bold}.victory-rewards .notice-local{color:#c4d0b7;font:11px system-ui,sans-serif}
+.victory-actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+@media(max-width:795px){.company-buttons,.company-wallet{grid-column:1/-1}}
+@media(max-width:570px){.workshop-cover{padding:6px}.workshop-dialog{max-height:98dvh}.workshop-head{padding:11px}.workshop-head h2{font-size:19px}.workshop-nav{padding:7px;gap:4px}.workshop-nav button{font-size:10px;padding:7px 2px}.workshop-body{padding:12px}.hero-picker{grid-template-columns:1fr 1fr}.equipped-list{grid-template-columns:1fr}.talent-options{grid-template-columns:1fr}.loot-icon{flex-basis:35px;width:35px;height:39px;font-size:24px}.loot-top strong{font-size:15px}.workshop-bottom{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.xp-track i{transition:none}}
