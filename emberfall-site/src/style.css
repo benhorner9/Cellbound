@@ -715,94 +715,117 @@ body{background:radial-gradient(ellipse at 60% -20%,#385c4d 0,transparent 52%),l
 @media(prefers-reduced-motion:reduce){.victory-xp-track i{animation:none}}
 
 
-/* Fix Pack 04 iPad HUD follow-up: tactical skills stay in the visible arena.
-   The original two ability IDs and their event bindings are unchanged. */
-.combat-action-dock{
- position:absolute;z-index:4;left:12px;right:12px;bottom:10px;
- display:grid;grid-template-columns:minmax(130px,190px) minmax(0,1fr);
- gap:12px;align-items:stretch;padding:9px 10px;border:1px solid #dfc38c;
- border-radius:12px;background:linear-gradient(120deg,#142c2af2,#1a3631ed 52%,#132823f2);
- box-shadow:0 6px 24px #071a19c0,inset 0 1px #ffffff25;
- backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+
+/* Combat UI v4.8.2 — Mockup 4: an unobstructed arena, four immediately
+   accessible hero selectors below, and a real two-ability side control panel.
+   All graphics, abilities, cooldowns, equipment and combat remain unchanged. */
+.combat-party-rail{
+ display:block;margin-top:9px;padding:7px 9px 9px;
+ border:1px solid #a3976c;border-radius:11px;
+ background:linear-gradient(130deg,#1c3832,#223d34 65%,#172c29);
+ box-shadow:inset 0 1px #ffffff1e,0 5px 14px #07151266;
 }
-.combat-action-dock .skills-header{
- margin:0;padding:5px 6px;min-width:0;display:flex;flex-direction:column;
- justify-content:center;gap:4px;border-right:1px solid #9f977155;
+.combat-rail-heading{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:1px 4px 6px;color:#c1d1b7;font:10px system-ui,sans-serif}
+.combat-rail-heading .eyebrow{font-size:9px;white-space:nowrap}
+.combat-party-rail .party-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.combat-party-rail .hero-card{min-width:0;min-height:75px;padding:7px;gap:7px;align-items:center;touch-action:manipulation}
+.combat-party-rail .hero-card.selected{border-color:#efce8e;background:linear-gradient(105deg,#435d47,#2c473c)}
+.combat-party-rail .portrait{width:45px;height:49px;flex-basis:45px;font-size:25px}
+.combat-party-rail .hero-line{display:flex;flex-direction:column;align-items:flex-start;gap:1px;margin:0 0 5px}
+.combat-party-rail .hero-line strong{font-size:15px;line-height:1.1}
+.combat-party-rail .hero-line em{font-size:8px;letter-spacing:.03em}
+.combat-party-rail .hero-meta{min-width:0}
+.combat-party-rail .hero-stats{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combat-party-rail .selected-chevron{display:none}
+.combat-party-rail .hero-card.dead{opacity:.65}
+.combat-party-rail .hero-card:focus-visible{outline:3px solid #edcf8d;outline-offset:1px}
+.sidebar .combat-action-dock{
+ position:static;left:auto;right:auto;bottom:auto;z-index:auto;
+ display:block;padding:10px 9px;margin:0 0 12px;min-width:0;
+ border:1px solid #d1b97b;border-radius:11px;
+ background:linear-gradient(145deg,#18352e,#27473b 60%,#1b332e);
+ box-shadow:inset 0 1px #ffffff24,0 4px 14px #07151066;
+ backdrop-filter:none;-webkit-backdrop-filter:none;
 }
-.combat-action-dock .skills-header .eyebrow{font-size:9px;letter-spacing:.1em}
-.combat-action-dock .skills-header strong{font:700 clamp(15px,1.5vw,19px)/1.2 Georgia,serif;color:#f5d8a4}
-.combat-action-dock .progress-hint{
- font:10px/1.35 system-ui,sans-serif;color:#c0d3b9;
- display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+.sidebar .combat-action-dock .skills-header{
+ display:flex;flex-direction:column;gap:4px;margin:0 0 10px;padding:2px 3px 9px;
+ border-bottom:1px solid #a7a07555;
 }
-.combat-action-dock .ability-list{min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:stretch}
-.combat-action-dock .skill{
- min-height:67px;min-width:0;padding:7px 9px;gap:8px;border:1px solid #b8a975;
- border-radius:9px;background:linear-gradient(135deg,#315b47,#233f39);touch-action:manipulation;
+.sidebar .combat-action-dock .skills-header .eyebrow{font-size:9px;letter-spacing:.1em}
+.sidebar .combat-action-dock .skills-header strong{font:700 20px/1.15 Georgia,serif;color:#f6dea9}
+.sidebar .combat-action-dock .progress-hint{font:10px/1.45 system-ui,sans-serif;color:#c6d7c4}
+.sidebar .combat-action-dock .ability-list{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.sidebar .combat-action-dock .skill{
+ display:flex;min-height:71px;min-width:0;padding:9px 8px;gap:8px;
+ border:1px solid #c8b67a;border-radius:9px;
+ background:linear-gradient(110deg,#365e49,#233e36);
+ touch-action:manipulation;
 }
-.combat-action-dock .skill:active:not(:disabled){background:#496a4d}
-.combat-action-dock .skill-icon{width:43px;height:45px;flex:0 0 43px;font-size:26px}
-.combat-action-dock .skill-text b{font-size:15px;line-height:1.2}
-.combat-action-dock .skill-text small{
- font-size:10px;line-height:1.25;margin-top:3px;display:-webkit-box;
- -webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+.sidebar .combat-action-dock .skill-icon{flex:0 0 41px;width:41px;height:43px;font-size:24px}
+.sidebar .combat-action-dock .skill-text b{font-size:15px}
+.sidebar .combat-action-dock .skill-text small{font-size:10px;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.sidebar .combat-action-dock .skill-key{min-width:29px;padding:3px 4px;text-align:center}
+.sidebar .combat-action-dock .skill.cooling{border-color:#6d806e}
+.sidebar .combat-action-dock .skill:active:not(:disabled){background:#436b50}
+.sidebar .company-buttons{margin-top:6px}
+.command-strip>div{min-width:0;flex:1}
+.command-strip .quiet-btn{flex:0 0 auto}
+@media(min-width:796px) and (max-width:1250px){
+ .combat-party-rail{padding:7px}
+ .combat-party-rail .party-list{gap:5px}
+ .combat-party-rail .hero-card{padding:5px;gap:5px;min-height:68px}
+ .combat-party-rail .portrait{width:36px;height:42px;flex-basis:36px;font-size:21px}
+ .combat-party-rail .hero-line strong{font-size:13px}
+ .combat-party-rail .hero-line em{font-size:7.5px}
+ .combat-party-rail .hero-stats{font-size:8px}
+ .sidebar .combat-action-dock .skills-header strong{font-size:18px}
+ .sidebar .combat-action-dock .skill{min-height:66px}
 }
-.combat-action-dock .skill-key{min-width:32px;text-align:center;font-size:11px;white-space:nowrap}
-.combat-action-dock .skill-cooldown{font-size:24px}
-@media (min-width:796px) and (max-width:1100px){
- .combat-action-dock{left:8px;right:8px;bottom:8px;grid-template-columns:130px minmax(0,1fr);gap:7px;padding:7px}
- .combat-action-dock .skills-header{padding:3px}
- .combat-action-dock .skills-header strong{font-size:15px}
- .combat-action-dock .ability-list{gap:6px}
- .combat-action-dock .skill{padding:6px;gap:5px;min-height:65px}
- .combat-action-dock .skill-icon{width:34px;height:38px;flex-basis:34px;font-size:21px}
- .combat-action-dock .skill-text b{font-size:13px}
- .combat-action-dock .skill-key{min-width:28px;padding:3px}
-}
-@media (min-width:796px) and (orientation:landscape) and (max-height:900px){
+@media(min-width:796px) and (orientation:landscape) and (max-height:900px){
  .app{padding-top:8px}
- .topbar{height:57px;margin-bottom:8px}
+ .topbar{height:54px;margin-bottom:8px}
+ .battle-top{height:69px;padding:9px 13px}
  .sidebar{padding:9px}
- .side-heading{margin:0 3px 8px}
+ .side-heading{margin:0 2px 8px}
  .side-heading h2{font-size:21px}
- .company-buttons{gap:5px;margin-bottom:5px}
- .company-buttons .company-button{min-height:40px;padding:5px 6px;font-size:11px}
- .company-wallet{padding:5px 8px;margin-bottom:7px}
- .party-list{gap:5px}
- .hero-card{min-height:58px;padding:5px 7px;gap:7px}
- .portrait{width:42px;height:43px;font-size:24px}
- .hero-line{margin-bottom:3px}
- .hero-line strong{font-size:15px}
+ .company-buttons{gap:5px;margin-bottom:6px}
+ .company-buttons .company-button{min-height:39px;padding:5px;font-size:11px}
+ .company-wallet{margin-bottom:3px;padding:6px 8px}
+ .sidebar .combat-action-dock{padding:8px;margin-bottom:7px}
+ .sidebar .combat-action-dock .skills-header{padding-bottom:7px;margin-bottom:7px}
+ .sidebar .combat-action-dock .skill{min-height:63px;padding:6px}
  .side-note,.prototype-note{display:none}
- .command-strip{margin-top:8px;min-height:62px;padding:8px 12px}
- .command-strip p{margin-top:3px}
+ .combat-party-rail{margin-top:7px}
+ .command-strip{margin-top:7px;min-height:57px;padding:7px 10px;gap:8px}
+ .command-strip b{font-size:14px}
+ .command-strip p{font-size:10px;margin-top:2px}
+ .command-strip .quiet-btn{padding:7px 9px;min-height:42px;font-size:10px}
 }
-@media (max-width:795px){
- /* On narrow screens the abilities follow the canvas rather than obscure
-    most of a small arena; the controls remain ahead of the command strip. */
- .battle-frame{aspect-ratio:auto;overflow:visible}
- canvas#arena{height:auto;aspect-ratio:1200/640}
- .combat-action-dock{
-  position:relative;left:auto;right:auto;bottom:auto;
-  margin:7px 0 0;grid-template-columns:minmax(0,1fr);gap:6px;
-  padding:7px;border-radius:10px;
- }
- .combat-action-dock .skills-header{
-  grid-column:auto;grid-row:auto;padding:2px 5px;border:0;display:flex;
-  flex-direction:row;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:5px;
- }
- .combat-action-dock .skills-header strong{font-size:16px}
- .combat-action-dock .progress-hint{display:none}
- .combat-action-dock .ability-list{grid-column:auto;grid-row:auto;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
- .combat-action-dock .skill{min-height:58px;gap:5px;padding:5px}
- .combat-action-dock .skill-icon{width:34px;height:36px;flex-basis:34px;font-size:19px;display:grid}
- .combat-action-dock .skill-text b{font-size:13px}
- .combat-action-dock .skill-text small{font-size:10px;-webkit-line-clamp:1}
- .combat-action-dock .skill-key{min-width:25px;padding:2px 4px}
+@media(max-width:795px){
+ .game-layout{grid-template-columns:minmax(0,1fr)}
+ .sidebar{display:block;margin-top:3px}
+ .battle-frame{aspect-ratio:1200/640;overflow:hidden}
+ canvas#arena{width:100%;height:100%;aspect-ratio:auto}
+ .combat-party-rail .hero-card{min-height:66px}
+ .sidebar .combat-action-dock .ability-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sidebar .combat-action-dock .skill{min-height:68px}
+ .sidebar .combat-action-dock .skill-icon{width:38px;flex-basis:38px;font-size:22px}
+ .sidebar .combat-action-dock .skills-header{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px}
+ .sidebar .combat-action-dock .progress-hint{width:100%}
+ .command-strip{flex-wrap:wrap}
 }
-@media (max-width:420px){
- .combat-action-dock .skill-icon{display:none}
- .combat-action-dock .skill-text b{font-size:12px}
- .combat-action-dock .skills-header .eyebrow{font-size:8px}
+@media(max-width:540px){
+ .combat-party-rail .party-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .combat-party-rail .hero-card{min-height:62px}
+ .combat-party-rail .portrait{width:37px;height:40px;flex-basis:37px;font-size:22px}
+ .sidebar .combat-action-dock .skill-icon{display:grid}
+ .sidebar .combat-action-dock .skill-text b{font-size:13px}
+ .sidebar .combat-action-dock .skill-text small{font-size:10px;-webkit-line-clamp:2}
+ .command-strip>div{flex-basis:100%}
 }
-@media (prefers-reduced-motion:reduce){.combat-action-dock{backdrop-filter:none;-webkit-backdrop-filter:none}}
+@media(max-width:380px){
+ .sidebar .combat-action-dock .ability-list{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ .sidebar .combat-action-dock,.combat-party-rail .hero-card{transition:none}
+}

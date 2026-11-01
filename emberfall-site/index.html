@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#132323"><meta name="description" content="Heroes of Emberfall — an original hand-drawn inspired four-hero real-time fantasy combat prototype.">
 <title>Heroes of Emberfall · The Thornwarden</title>
-<link rel="stylesheet" href="./src/style.css?v=4.8.1">
+<link rel="stylesheet" href="./src/style.css?v=4.8.2">
 </head><body>
 <div class="app" id="app">
  <header class="topbar">
@@ -15,13 +15,6 @@
     <div class="battle-top"><div class="chapter"><span class="eyebrow" id="chapterName">CHAPTER I · THE VERDANT RUINS</span><strong id="locationName">The Thornwarden's Hollow</strong></div><div class="boss-hud"><span class="boss-icon">☠</span><div class="boss-data"><div class="boss-title"><span id="bossLabel">THORNWARDEN</span><small id="bossHpText">720 / 720</small></div><div class="boss-track"><div class="boss-fill" id="bossFill"></div></div></div></div></div>
     <div class="battle-frame" id="battleFrame">
      <canvas id="arena" width="1200" height="640" aria-label="Combat arena: select an allied hero, then click or drag to an enemy or destination"></canvas>
-     <section class="combat-action-dock" id="combatActionDock" aria-label="Always-visible selected hero abilities">
-  <div class="skills-header"><span class="eyebrow">SELECTED HERO · SKILLS</span><strong id="abilityHero">Aldric · Guardian</strong><small id="progressHint" class="progress-hint">Level 1 · Earn experience by defeating bosses</small></div>
-  <div id="abilities" class="ability-list">
-  <button class="skill" type="button" data-slot="0"><span class="skill-icon">🛡</span><span class="skill-text"><b>Shield Wall</b><small>Protect nearby allies and draw attacks</small></span><span class="skill-key">1</span></button>
-  <button class="skill" type="button" data-slot="1"><span class="skill-icon">⚔</span><span class="skill-text"><b>Heroic Strike</b><small>Heavy damage and a brief stun</small></span><span class="skill-key">2</span></button>
-  </div>
-     </section>
      <div class="battle-tag"><span class="live-dot"></span><span id="phaseLabel">READY</span></div>
      <div id="combatTempo" class="combat-tempo hidden" aria-hidden="true"><span class="combat-tempo-icon">◈</span> REPOSITIONING <strong>70% SPEED</strong></div>
      <div id="announcement" class="announcement" aria-live="polite"></div>
@@ -36,17 +29,27 @@
       </div>
      </div>
     </div>
-    <div class="command-strip"><div><span class="spark">✦</span> <b id="commandTitle">Command your heroes</b><p id="commandInfo">Select a hero, then tap an enemy to focus attacks or tap the ground to reposition. Drag heroes to issue quick commands.</p></div><button id="restartBtn" type="button" class="quiet-btn">↻ Restart Encounter</button><button id="bossSelectBtn" type="button" class="quiet-btn">⚔ Choose Boss</button></div>
-  </section>
-  <aside class="sidebar">
-   <div class="side-heading"><div><span class="eyebrow">YOUR COMPANY</span><h2>The Emberguard</h2></div><span class="party-count" id="activePartyCount">4 / 4</span></div>
-   <div class="company-buttons"><button class="company-button" id="partyBtn" type="button">♜ Party · 4 / 4</button><button class="company-button" id="talentsBtn" type="button">✧ Talent Trees</button><button class="company-button" id="companyBtn" type="button">♜ Heroes &amp; Gear</button><button class="company-button" id="bagBtn" type="button">🎒 Bag <span id="bagCount">0</span></button><button class="company-button" id="craftBtn" type="button">⚒️ Crafting Guild</button></div><div class="company-wallet"><span id="goldTotal">90 gold</span><span id="profileRecord">0 boss victories</span></div>
+    <section class="combat-party-rail" aria-label="Combat party: select one of four heroes">
+     <div class="combat-rail-heading"><span class="eyebrow">YOUR PARTY</span><span>Tap hero to select · Q / W / E / R</span></div>
    <div class="party-list" id="partyList">
     <button class="hero-card selected" type="button" data-hero="knight"><span class="portrait knight">🛡</span><span class="hero-meta"><span class="hero-line"><strong>Aldric</strong><em>GUARDIAN</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">150 / 150 HP</span></span><span class="selected-chevron">›</span></button>
     <button class="hero-card" type="button" data-hero="ranger"><span class="portrait ranger">🏹</span><span class="hero-meta"><span class="hero-line"><strong>Briar</strong><em>RANGER</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">104 / 104 HP</span></span><span class="selected-chevron">›</span></button>
     <button class="hero-card" type="button" data-hero="mage"><span class="portrait mage">✦</span><span class="hero-meta"><span class="hero-line"><strong>Lyra</strong><em>ARCANIST</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">88 / 88 HP</span></span><span class="selected-chevron">›</span></button>
     <button class="hero-card" type="button" data-hero="cleric"><span class="portrait cleric">✚</span><span class="hero-meta"><span class="hero-line"><strong>Solen</strong><em>CLERIC</em></span><span class="hero-meter hp"><i></i></span><span class="hero-stats">110 / 110 HP</span></span><span class="selected-chevron">›</span></button>
    </div>
+    </section>
+    <div class="command-strip"><div><span class="spark">✦</span> <b id="commandTitle">Command your heroes</b><p id="commandInfo">Select a hero, then tap an enemy to focus attacks or tap the ground to reposition. Drag heroes to issue quick commands.</p></div><button id="restartBtn" type="button" class="quiet-btn">↻ Restart Encounter</button><button id="bossSelectBtn" type="button" class="quiet-btn">⚔ Choose Boss</button></div>
+  </section>
+  <aside class="sidebar">
+   <div class="side-heading"><div><span class="eyebrow">YOUR COMPANY</span><h2>The Emberguard</h2></div><span class="party-count" id="activePartyCount">4 / 4</span></div>
+     <section class="combat-action-dock" id="combatActionDock" aria-label="Selected hero combat abilities">
+  <div class="skills-header"><span class="eyebrow">SELECTED HERO · SKILLS</span><strong id="abilityHero">Aldric · Guardian</strong><small id="progressHint" class="progress-hint">Level 1 · Earn experience by defeating bosses</small></div>
+  <div id="abilities" class="ability-list">
+  <button class="skill" type="button" data-slot="0"><span class="skill-icon">🛡</span><span class="skill-text"><b>Shield Wall</b><small>Protect nearby allies and draw attacks</small></span><span class="skill-key">1</span></button>
+  <button class="skill" type="button" data-slot="1"><span class="skill-icon">⚔</span><span class="skill-text"><b>Heroic Strike</b><small>Heavy damage and a brief stun</small></span><span class="skill-key">2</span></button>
+  </div>
+     </section>
+   <div class="company-buttons"><button class="company-button" id="partyBtn" type="button">♜ Party · 4 / 4</button><button class="company-button" id="talentsBtn" type="button">✧ Talent Trees</button><button class="company-button" id="companyBtn" type="button">♜ Heroes &amp; Gear</button><button class="company-button" id="bagBtn" type="button">🎒 Bag <span id="bagCount">0</span></button><button class="company-button" id="craftBtn" type="button">⚒️ Crafting Guild</button></div><div class="company-wallet"><span id="goldTotal">90 gold</span><span id="profileRecord">0 boss victories</span></div>
    <div class="side-note"><span>✦</span><p id="bossHint"><b>Combat is fully real time.</b> Your heroes attack on their own. You decide who they target, where they move and when they use their abilities.</p></div>
    <div class="prototype-note">BLOCK 04 · SETS &amp; SAVED BUILDS<br>Saved locally in this browser · No online trading, accounts or PvP yet.</div>
   </aside>
@@ -61,7 +64,7 @@
 (function(){
  var shown=false;
  function showRecovery(){
-  if(shown||document.documentElement.dataset.emberfallReady==='4.8.1')return;
+  if(shown||document.documentElement.dataset.emberfallReady==='4.8.2')return;
   shown=true;
   var overlay=document.getElementById('overlay');
   var content=document.getElementById('overlayContent');
@@ -71,7 +74,7 @@
   content.innerHTML='<div class="overlay-emblem">⚔</div><h1>Emberfall did not finish loading</h1><p>Safari may have kept an older game file. Your locally saved heroes and items have not been deleted.</p><button type="button" id="reloadGame" class="primary-btn large">Reload the Game</button><p class="encounter-controls">If the problem continues, close this tab and reopen Emberfall using its website address.</p>';
   document.getElementById('reloadGame').addEventListener('click',function(){
    var path=window.location.pathname;
-   window.location.replace(path+'?refresh=4.8.1-'+Date.now());
+   window.location.replace(path+'?refresh=4.8.2-'+Date.now());
   });
  }
  window.addEventListener('error',function(event){
@@ -79,12 +82,12 @@
   if(/module|import|export|syntaxerror/i.test(message)||String(event.filename||'').includes('/emberfall/src/'))showRecovery();
  });
  window.addEventListener('unhandledrejection',function(event){
-  if(document.documentElement.dataset.emberfallReady!=='4.8.1')showRecovery();
+  if(document.documentElement.dataset.emberfallReady!=='4.8.2')showRecovery();
  });
  window.addEventListener('load',function(){
   setTimeout(showRecovery,4500);
  });
 })();
 </script>
-<script type="module" src="./src/game.js?v=4.8.1"></script>
+<script type="module" src="./src/game.js?v=4.8.2"></script>
 </body></html>
