@@ -73,6 +73,9 @@ try{
  });
  await page.reload({waitUntil:'networkidle',timeout:45000});
  await tap(page,'#bagFromPickerBtn');
+ // Both a Mage-only staff and unrestricted vest are in the bag; select the staff explicitly.
+ // The default selection is the most recently acquired item, which is the unrestricted vest.
+ await tap(page,'#inventoryGrid [data-id="i1"]');
  if(await page.locator('#equipHero').count())throw Error('Safari equipment recipient dropdown remains');
  if(!(await page.locator('.inventory-party-selector').isVisible()))throw Error('Safari cannot see hero portrait selector');
  if((await page.locator('.inventory-recipient:not(:disabled)').count())!==1)throw Error('Mage-only item allows wrong heroes');
