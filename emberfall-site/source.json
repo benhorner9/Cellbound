@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "e8f45e5fd2014fa0f5d6935b6f62142aafadb828",
+  "sourceCommit": "dd7ca19e1a4ec8b5c0b4780f9a927853c465b0ec",
   "target": "/emberfall/",
-  "stage": "block04-equipment-sets-loadouts-local-backups",
+  "stage": "fixpack-01-ui-foundation-inventory",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Richer offline-local PvE gear sets, inspect/compare, 3 builds per hero and validated JSON backups. No secure server items, PvP or trading yet. Safari module tree v4.0.0."
+  "note": "Fix Pack 01: unified responsive game UI and four-column scrollable inventory with persistent item details and actions. Original Blocks 1–4 preserved; Block 5 not started. Browser-local ownership and saves unchanged. Safari module tree v4.1.0."
 }

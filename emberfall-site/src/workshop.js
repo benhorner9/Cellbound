@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,SLOTS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet
-} from './progression.js?v=4.0.0';
+} from './progression.js?v=4.1.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.0.0';
+} from './builds.js?v=4.1.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -15,7 +15,7 @@ const rarityClass=name=>String(name).toLowerCase();
 export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),tabs=document.getElementById('workshopTabs');
- let current='heroes',heroId='knight',pendingSell=null,dropBoss='thornwarden',detailsId=null,notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false;
+ let current='heroes',heroId='knight',pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false;
  const builds=readBuilds(storage);
  const tabNames={heroes:'Heroes & Talents',pack:'Equipment Bag',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
  function itemName(itemId){
@@ -72,10 +72,10 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   html+='<p class="workshop-disclaimer">Talent choices are permanent in this prototype. Equipment and talents are saved only in this browser—not in an online account.</p>';
   return html;
  }
- function renderInspection(itemId,defId){
+ function renderInspection(itemId,defId,persistent=false){
   const info=itemDetails(defId);if(!info)return '';
   const comparison=itemId&&profile.items.some(x=>x.id===itemId)?compareItem(profile,heroId,itemId):null;
-  let html='<section class="item-inspector" id="itemInspector"><div class="inspection-head"><span class="inspection-icon">'+esc(info.icon)+'</span><div><span class="eyebrow">EXAMINE EQUIPMENT</span><h3>'+esc(info.name)+'</h3><small>'+esc(info.rarity+' · '+slotTitle[info.slot])+(info.setName?' · '+esc(info.setName):'')+'</small></div><button class="tiny-btn ghost" type="button" data-action="close-inspect">Close</button></div><p class="inspection-flavour">'+esc(info.flavour)+'</p>';
+  let html='<section class="item-inspector" id="itemInspector"><div class="inspection-head"><span class="inspection-icon">'+esc(info.icon)+'</span><div><span class="eyebrow">EXAMINE EQUIPMENT</span><h3>'+esc(info.name)+'</h3><small>'+esc(info.rarity+' · '+slotTitle[info.slot])+(info.setName?' · '+esc(info.setName):'')+'</small></div>'+(persistent?'':'<button class="tiny-btn ghost" type="button" data-action="close-inspect">Close</button>')+'</div><p class="inspection-flavour">'+esc(info.flavour)+'</p>';
   html+='<p class="inspection-line"><b>Base bonuses:</b> '+esc(info.bonus)+'</p>';
   html+='<p class="inspection-line"><b>Where to find:</b> '+esc(info.sources.length?info.sources.map(x=>x.name+' ('+x.rate+'% per victory)').join(' · '):info.shop?'Quartermaster · '+info.shop+' gold':'Found in the world')+'</p>';
   if(comparison){
@@ -91,24 +91,51 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   }
   return html+'</section>';
  }
- function renderPack(){
-  let html='<div class="workshop-intro"><h3>Equipment Bag</h3><p>Select a hero, then equip compatible items. An item can only be held by one hero at a time. To move it, equip it on another hero.</p></div>';
-  html+='<label for="equipHero">Equip items for</label><select id="equipHero" class="hero-select">'+HERO_IDS.map(id=>'<option value="'+id+'" '+(id===heroId?'selected':'')+'>'+esc(HERO_NAMES[id])+' · '+pretty[id]+'</option>').join('')+'</select>';
-  html+='<div class="pack-stats"><span>'+profile.items.length+' / 400 items</span><span>'+profile.gold+' gold</span></div>';
-  if(detailsId?.startsWith('i')){
-   const obj=profile.items.find(it=>it.id===detailsId);
-   if(obj)html+=renderInspection(detailsId,obj.defId);
+  function renderPack(){
+  const all=profile.items.slice().reverse();
+  const visible=all.filter(item=>{
+   if(bagFilter==='all')return true;
+   if(bagFilter==='unequipped')return !itemOwner(profile,item.id);
+   return ITEM_DEFS[item.defId].slot===bagFilter;
+  });
+  const selected=visible.find(item=>item.id===selectedBagId)||visible[0]||null;
+  selectedBagId=selected?.id||null;
+  const owner=selected?itemOwner(profile,selected.id):null;
+  const def=selected?ITEM_DEFS[selected.defId]:null;
+  const allowed=def&&(!def.classes||def.classes.includes(heroId));
+  let html='<div class="workshop-intro inventory-intro"><h3>Equipment Bag</h3><p>Choose an item on the left. Details, comparisons and actions stay open on the right. Gear is always a unique item, even when equipped.</p></div>';
+  html+='<div class="inventory-layout"><section class="inventory-collection" aria-label="Inventory slots">'
+   +'<div class="inventory-section-head"><div><span class="eyebrow">STORAGE</span><h3>Your Bag</h3></div><span class="inventory-capacity">'+profile.items.length+' / 400</span></div>'
+   +'<div class="inventory-filters"><label for="bagFilter">Show items</label><select id="bagFilter" aria-label="Filter inventory items">'
+   +[['all','All gear'],['weapon','Weapons'],['armour','Armour'],['charm','Charms'],['unequipped','Unequipped']].map(([value,name])=>'<option value="'+value+'" '+(bagFilter===value?'selected':'')+'>'+name+'</option>').join('')
+   +'</select><span class="inventory-gold">'+profile.gold+' gold</span></div>'
+   +'<div class="inventory-slot-scroll" id="inventoryScroll" tabindex="0" role="region" aria-label="Scrollable inventory">'
+   +'<div class="inventory-slot-grid" id="inventoryGrid">';
+  for(const item of visible){
+   const itemDef=ITEM_DEFS[item.defId],equippedBy=itemOwner(profile,item.id),active=item.id===selectedBagId;
+   html+='<button type="button" class="inventory-slot rarity-'+rarityClass(itemDef.rarity)+(active?' is-selected':'')+'" data-action="inspect" data-id="'+esc(item.id)+'" title="'+esc(itemDef.name)+'" aria-label="'+esc(itemDef.name+', '+itemDef.rarity+(equippedBy?', equipped by '+HERO_NAMES[equippedBy]:', in bag'))+'" aria-pressed="'+active+'">'
+    +'<span class="inventory-slot-icon" aria-hidden="true">'+esc(itemDef.icon)+'</span>'
+    +(equippedBy?'<span class="inventory-equipped-marker" aria-hidden="true">E</span>':'')
+    +'</button>';
   }
-  if(!profile.items.length)html+='<div class="pack-empty">Your bag is empty. Defeat a boss for a guaranteed item, or visit the Quartermaster for starter gear.</div>';
-  for(const item of profile.items.slice().reverse()){
-   const def=ITEM_DEFS[item.defId],owner=itemOwner(profile,item.id);
-   const allowed=!def.classes||def.classes.includes(heroId);
-   const action=owner===heroId?'<button type="button" class="tiny-btn" data-action="unequip" data-slot="'+def.slot+'">Unequip</button>':
-    '<button type="button" class="tiny-btn" data-action="equip" data-id="'+item.id+'" '+(!allowed?'disabled':'')+'>'+(allowed?'Equip on '+esc(HERO_NAMES[heroId]):'Class restricted')+'</button>';
-   const second=owner?'':'<button type="button" class="tiny-btn ghost danger" data-action="sell" data-id="'+item.id+'">'+(pendingSell===item.id?'Confirm sale?':'Sell')+'</button>';
-   html+=itemCard(item,action+'<button type="button" class="tiny-btn ghost" data-action="inspect" data-id="'+item.id+'">Compare / Examine</button>'+second);
-  }
-  return html;
+  for(let empty=0;empty<Math.max(0,24-visible.length);empty++)html+='<span class="inventory-slot inventory-slot-empty" aria-hidden="true"></span>';
+  html+='</div></div>';
+  if(!profile.items.length)html+='<p class="inventory-empty-note">Your bag is empty. Earn gear from a boss or visit the Quartermaster.</p>';
+  else if(!visible.length)html+='<p class="inventory-empty-note">No items match this filter.</p>';
+  html+='</section><aside class="inventory-detail-panel" aria-label="Selected item details and actions">'
+   +'<div class="inventory-detail-top"><div><span class="eyebrow">ITEM DETAILS</span><h3>Inspect &amp; equip</h3></div></div>'
+   +'<label class="inventory-hero-label" for="equipHero">Managing equipment for</label>'
+   +'<select id="equipHero" class="hero-select">'+HERO_IDS.map(id=>'<option value="'+id+'" '+(id===heroId?'selected':'')+'>'+esc(HERO_NAMES[id])+' · '+pretty[id]+'</option>').join('')+'</select>';
+  if(selected&&def){
+   html+=renderInspection(selected.id,selected.defId,true);
+   html+='<div class="inventory-item-owner">'+(owner?'Equipped by '+esc(HERO_NAMES[owner]):'In your bag · Not equipped')+' · Sell value '+def.value+' gold</div>';
+   html+='<div class="inventory-actions"><h4>Item actions</h4>';
+   if(owner===heroId)html+='<button type="button" class="tiny-btn inventory-action-primary" data-action="unequip" data-slot="'+def.slot+'">Unequip from '+esc(HERO_NAMES[heroId])+'</button>';
+   else html+='<button type="button" class="tiny-btn inventory-action-primary" data-action="equip" data-id="'+esc(selected.id)+'" '+(allowed?'':'disabled')+'>'+(allowed?(owner?'Transfer to ':'Equip on ')+esc(HERO_NAMES[heroId]):'Not usable by this hero')+'</button>';
+   html+='<button type="button" class="tiny-btn ghost danger" data-action="sell" data-id="'+esc(selected.id)+'" '+(owner?'disabled':'')+'>'+(owner?'Unequip before selling':pendingSell===selected.id?'Confirm sale for '+def.value+' gold':'Sell for '+def.value+' gold')+'</button>';
+   html+='</div><p class="inventory-detail-note">Equipped gear stays in your collection and is never duplicated. Gear changes apply to your next encounter.</p>';
+  }else html+='<div class="inventory-no-selection"><span aria-hidden="true">✦</span><h4>No item selected</h4><p>Choose a bag slot or adjust your filter to inspect an item and see its actions.</p></div>';
+  return html+'</aside></div>';
  }
  function renderShop(){
   let html='<div class="workshop-intro"><h3>Quartermaster</h3><p>Buy inexpensive starter equipment using gold earned from bosses. Everything here is a fixed, local NPC offer—not another player’s listing.</p></div><div class="pack-stats"><span>Gold available</span><b>'+profile.gold+'</b></div>';
@@ -160,14 +187,20 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   for(const tab of tabs.querySelectorAll('button[data-tab]')){tab.classList.toggle('selected',tab.dataset.tab===current);tab.setAttribute('aria-pressed',String(tab.dataset.tab===current));}
   document.getElementById('goldTotal').textContent=profile.gold+' gold';
   document.getElementById('bagCount').textContent=String(profile.items.length);
+  body.classList.toggle('inventory-mode',current==='pack');
   body.innerHTML=(notice?'<div class="workshop-notice '+(noticeBad?'is-error':'')+'" role="status">'+esc(notice)+'</div>':'')
     +(current==='heroes'?renderHeroes():current==='pack'?renderPack():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
+ }
+ function rerenderBag(){
+  const offset=body.querySelector('#inventoryScroll')?.scrollTop||0;
+  render();
+  const next=body.querySelector('#inventoryScroll');if(next)next.scrollTop=offset;
  }
  function save(){
   pendingSell=null;
   const success=writeProfile(storage,profile);
   root.classList.toggle('dirty',!success);
-  onChange(profile);render();
+  onChange(profile);rerenderBag();
  }
  function open(tab='heroes',selected='knight'){
   if(!root.classList.contains('hidden'))return;
@@ -189,15 +222,20 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(e.target.id==='backupImport'){importText=e.target.value;validatedImport=null;importConfirm=false;notice='';}
  });
  body.addEventListener('change',e=>{
-  if(e.target.id==='equipHero'&&HERO_IDS.includes(e.target.value)){heroId=e.target.value;render();}
+  if(e.target.id==='equipHero'&&HERO_IDS.includes(e.target.value)){heroId=e.target.value;pendingSell=null;rerenderBag();}
+  if(e.target.id==='bagFilter'&&['all','weapon','armour','charm','unequipped'].includes(e.target.value)){bagFilter=e.target.value;pendingSell=null;selectedBagId=null;rerenderBag();}
   if(e.target.id==='dropBoss'&&Object.hasOwn(BOSSES,e.target.value)){dropBoss=e.target.value;render();}
  });
  body.addEventListener('click',e=>{
   const btn=e.target.closest('button[data-action]');if(!btn||btn.disabled)return;
   const action=btn.dataset.action,id=btn.dataset.id,slot=btn.dataset.slot;
   if(action==='inspect'){
-   detailsId=id;notice='';render();
-   body.querySelector('#itemInspector')?.scrollIntoView({block:'nearest',behavior:'instant'});
+   if(current==='pack'){
+    selectedBagId=id;pendingSell=null;notice='';rerenderBag();
+   }else{
+    detailsId=id;notice='';render();
+    body.querySelector('#itemInspector')?.scrollIntoView({block:'nearest',behavior:'instant'});
+   }
    return;
   }
   if(action==='close-inspect'){detailsId=null;render();return;}
@@ -262,8 +300,8 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(action==='unequip'){if(unequip(profile,heroId,slot))save();return;}
   if(action==='buy'){if(buy(profile,id))save();return;}
   if(action==='sell'){
-   if(pendingSell!==id){pendingSell=id;render();return;}
-   if(sell(profile,id))save();
+   if(pendingSell!==id){pendingSell=id;rerenderBag();return;}
+   if(sell(profile,id)){if(selectedBagId===id)selectedBagId=null;save();}
   }
  });
  return {open,close,render,selectHero(id){if(HERO_IDS.includes(id))heroId=id;},isOpen:()=>!root.classList.contains('hidden')};
