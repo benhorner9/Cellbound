@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents} from './engine.js';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel} from './progression.js';
-import {mountWorkshop} from './workshop.js';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents} from './engine.js?v=3.2.1';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel} from './progression.js?v=3.2.1';
+import {mountWorkshop} from './workshop.js?v=3.2.1';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -554,4 +554,7 @@ makeBackground();
 resize();
 renderEncounterChoices();
 syncUI(true);
+// Boot marker: the HTML recovery guard only treats gameplay as ready after
+// controls, workshop, rendering and the initial boss picker have initialised.
+document.documentElement.dataset.emberfallReady='3.2.1';
 requestAnimationFrame(frame);
