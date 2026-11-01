@@ -25,7 +25,11 @@ try{
  page.on('response',r=>{if(r.status()>=400)failures.push('HTTP '+r.status()+' '+r.url());});
  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.goto(site+'?safari-cache-recovery=4.0.0',{waitUntil:'networkidle',timeout:45000});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.0.0'){
+ // WebKit can report networkidle while document.readyState is still "interactive".
+ // Wait for the game's own post-listener startup marker instead of racing ES-module execution.
+ let started=false;
+ try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.0.0',null,{timeout:20000});started=true;}catch{}
+ if(!started){
   const snapshot=await page.evaluate(()=>({
    title:document.title,url:location.href,readyState:document.readyState,
    marker:document.documentElement.dataset.emberfallReady||null,
@@ -56,7 +60,8 @@ try{
  if(!(await page.locator('#backupExport').inputValue()).includes('emberfall-local-backup'))throw Error('Live Safari backup UI not responsive');
  await tap(page,'#workshopClose');
  await page.reload({waitUntil:'networkidle',timeout:45000});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.0.0')throw Error('Live Safari warm-cache reload failed');
+ await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.0.0',null,{timeout:20000})
+   .catch(()=>{throw Error('Live Safari warm-cache reload failed to initialise in 20s');});
  if((await page.locator('#selectedBossName').innerText())!=='Tempest Seraph')throw Error('Selected boss lost after warm-cache reload');
  await tap(page,'#startBtn');
  if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Saved boss fails after reload');
