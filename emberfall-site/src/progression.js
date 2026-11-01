@@ -26,8 +26,135 @@ export const SLOTS=Object.freeze(['helm','charm','armour','legs','gloves','boots
 const LEGACY_SLOTS=new Set(['weapon','armour','charm']);
 export const SLOT_NAMES=Object.freeze({helm:'Helm',charm:'Amulet',armour:'Body',legs:'Legs',gloves:'Gloves',boots:'Boots',ring:'Ring',weapon:'Weapon',offhand:'Off Hand'});
 export const SLOT_ICONS=Object.freeze({helm:'🪖',charm:'📿',armour:'🛡️',legs:'🩳',gloves:'🧤',boots:'👢',ring:'💍',weapon:'⚔️',offhand:'🛡️'});
+
+export const SKILL_CAP=20;
+export const SKILL_IDS=Object.freeze(['smithing','alchemy']);
+export const MATERIAL_GROUPS=Object.freeze({
+ thornwarden:{tier:'verdant',ore:'verdant-ore',essence:'verdant-essence',seal:'verdant-seal'},
+ cindermaw:{tier:'ember',ore:'ember-ore',essence:'ember-essence',seal:'ember-seal'},
+ tempest:{tier:'tempest',ore:'tempest-ore',essence:'tempest-essence',seal:'tempest-seal'}
+});
+export const MATERIAL_DEFS=Object.freeze({
+ 'verdant-ore':{name:'Ironroot Ore',icon:'🪨'},'verdant-essence':{name:'Verdant Essence',icon:'🌿'},'verdant-seal':{name:'Thornwarden Mark',icon:'🍃'},
+ 'ember-ore':{name:'Cinder Ore',icon:'🪨'},'ember-essence':{name:'Ember Essence',icon:'🔥'},'ember-seal':{name:'Cindermaw Mark',icon:'☄️'},
+ 'tempest-ore':{name:'Skyiron Ore',icon:'🪨'},'tempest-essence':{name:'Storm Essence',icon:'⚡'},'tempest-seal':{name:'Tempest Mark',icon:'🌀'}
+});
+const CRAFT_THEMES=Object.freeze({
+ verdant:{title:'Ironroot',boss:'thornwarden',purple:'verdant-aegis',purpleName:'Ironroot Aegis',purpleIcon:'🛡️',purpleSlot:'offhand',purpleBonus:{health:28,armour:4,shielding:.12}},
+ ember:{title:'Cinderforged',boss:'cindermaw',purple:'ember-catalyst',purpleName:'Cinderheart Catalyst',purpleIcon:'💠',purpleSlot:'charm',purpleBonus:{attack:7,fire:.18,health:14}},
+ tempest:{title:'Skywoven',boss:'tempest',purple:'tempest-focus',purpleName:'Skywoven Focus',purpleIcon:'🔮',purpleSlot:'weapon',purpleBonus:{attack:14,cooldown:.11}}
+});
+const SET_SLOT_BONUSES=Object.freeze({helm:{health:12,armour:1},legs:{health:18},gloves:{attack:3},boots:{speed:9}});
+const SET_SLOT_LEVELS=Object.freeze({helm:1,legs:3,gloves:5,boots:7});
+const SET_SLOT_NAMES=Object.freeze({helm:'Helm',legs:'Legguards',gloves:'Grips',boots:'Boots'});
+const SET_SLOT_KEYS=Object.freeze(Object.keys(SET_SLOT_LEVELS));
+const FORGED_SET_ITEMS=Object.fromEntries(Object.entries(CRAFT_THEMES).flatMap(([theme,info])=>
+ SET_SLOT_KEYS.map(slot=>[theme+'-'+slot,{name:info.title+' '+SET_SLOT_NAMES[slot],icon:SLOT_ICONS[slot],slot,rarity:'Uncommon',bonus:SET_SLOT_BONUSES[slot],value:66+SET_SLOT_LEVELS[slot]*10}])
+));
+const FORGED_PURPLE_ITEMS=Object.fromEntries(Object.values(CRAFT_THEMES).map(info=>[info.purple,{
+ name:info.purpleName,icon:info.purpleIcon,slot:info.purpleSlot,rarity:'Epic',bonus:info.purpleBonus,value:350
+}]));
+export const ALCHEMY_EFFECTS=Object.freeze({
+ 'verdant-draught':{name:'Ironroot Vitality Draught',icon:'🧪',bonus:{health:20}},
+ 'ember-elixir':{name:'Ember Assault Elixir',icon:'🧪',bonus:{attack:5}},
+ 'tempest-phial':{name:'Tempest Haste Phial',icon:'🧪',bonus:{speed:12}},
+ 'verdant-grand':{name:'Grand Vitality Tonic',icon:'💚',bonus:{health:38}},
+ 'ember-grand':{name:'Grand Flame Tonic',icon:'❤️‍🔥',bonus:{attack:8,fire:.1}},
+ 'tempest-grand':{name:'Grand Storm Tonic',icon:'💙',bonus:{speed:20,cooldown:.06}}
+});
+export const CRAFT_RECIPES=Object.freeze([
+ ...Object.entries(CRAFT_THEMES).flatMap(([key,info])=>{
+  const mat=MATERIAL_GROUPS[info.boss];
+  return SET_SLOT_KEYS.map(slot=>({id:'forge-'+key+'-'+slot,skill:'smithing',level:SET_SLOT_LEVELS[slot],
+   name:FORGED_SET_ITEMS[key+'-'+slot].name,icon:SLOT_ICONS[slot],product:key+'-'+slot,rarity:'Uncommon',
+   xp:80+SET_SLOT_LEVELS[slot]*12,materials:{[mat.ore]:2+Math.floor(SET_SLOT_LEVELS[slot]/2),[mat.seal]:2+Math.floor(SET_SLOT_LEVELS[slot]/2)}}));
+ }),
+ ...Object.entries(CRAFT_THEMES).map(([key,info],index)=>{
+  const mat=MATERIAL_GROUPS[info.boss];
+  return {id:'forge-'+info.purple,skill:'smithing',level:10+index*2,name:info.purpleName,icon:info.purpleIcon,
+   product:info.purple,rarity:'Epic',xp:260+index*40,materials:{[mat.ore]:8,[mat.essence]:6,[mat.seal]:5}};
+ }),
+ ...Object.entries(CRAFT_THEMES).flatMap(([key,info],index)=>{
+  const mat=MATERIAL_GROUPS[info.boss],products=[['verdant-draught','verdant-grand'],['ember-elixir','ember-grand'],['tempest-phial','tempest-grand']][index];
+  return products.map((product,tier)=>({id:'brew-'+product,skill:'alchemy',level:tier===0?1+index*3:10+index*2,
+   name:ALCHEMY_EFFECTS[product].name,icon:ALCHEMY_EFFECTS[product].icon,product,rarity:'Consumable',
+   xp:tier===0?85+index*32:270+index*44,
+   materials:{[mat.essence]:tier===0?2:5,[mat.ore]:tier===0?1:3,[mat.seal]:tier===0?0:2},
+   mix:[mat.essence,mat.ore]}));
+ })
+]);
+export const FUTURE_CRAFTS=Object.freeze([
+ {skill:'smithing',level:25,name:'Mythic Warden Armour',icon:'🛡️'},
+ {skill:'smithing',level:30,name:'Runeforged Relic Weapon',icon:'⚔️'},
+ {skill:'alchemy',level:25,name:'Spiritbound Restoration',icon:'🧪'},
+ {skill:'alchemy',level:30,name:'Celestial Battle Elixir',icon:'✨'}
+]);
+export function skillXpNeeded(level){return level>=SKILL_CAP?0:40+20*level;}
+function blankCrafting(){
+ return {skills:Object.fromEntries(SKILL_IDS.map(id=>[id,{level:1,xp:0}])),
+  materials:Object.fromEntries(Object.keys(MATERIAL_DEFS).map(id=>[id,0])),
+  potions:Object.fromEntries(Object.keys(ALCHEMY_EFFECTS).map(id=>[id,0])),preparedElixir:null};
+}
+export function craftingStatus(profile,recipeId){
+ const recipe=CRAFT_RECIPES.find(r=>r.id===recipeId);
+ if(!recipe)return {ok:false,reason:'Recipe is not available.'};
+ const skill=profile?.skills?.[recipe.skill];
+ if(!skill||skill.level<recipe.level)return {ok:false,reason:'Requires '+recipe.skill+' level '+recipe.level+'.'};
+ for(const [id,count] of Object.entries(recipe.materials))if((profile.materials?.[id]||0)<count)
+  return {ok:false,reason:'Not enough '+MATERIAL_DEFS[id].name+'.'};
+ if(recipe.skill==='smithing'&&profile.items.length>=400)return {ok:false,reason:'Equipment bag is full.'};
+ if(recipe.skill==='alchemy'&&(profile.potions[recipe.product]||0)>=99999)return {ok:false,reason:'Potion storage is full.'};
+ return {ok:true,recipe};
+}
+export function craftRecipe(profile,recipeId,attempt){
+ if(!validateProfile(profile))return {ok:false,reason:'Invalid company save.'};
+ normalizeProfileSlots(profile);
+ const status=craftingStatus(profile,recipeId);
+ if(!status.ok)return status;
+ const recipe=status.recipe;
+ // Smithing is a real timing check; failed attempts consume nothing and give no XP.
+ if(recipe.skill==='smithing'&&(!Number.isFinite(attempt?.strike)||attempt.strike<30||attempt.strike>70))
+  return {ok:false,reason:'The strike missed the hot metal. Try the timing again.'};
+ // Alchemy is a two-step mixing challenge: essence first, ore second.
+ if(recipe.skill==='alchemy'&&(!Array.isArray(attempt?.mix)||attempt.mix.length!==2||
+   attempt.mix.some((id,i)=>id!==recipe.mix[i])))
+  return {ok:false,reason:'Incorrect mixing order. Combine essence first, then ore.'};
+ for(const [id,n] of Object.entries(recipe.materials))profile.materials[id]-=n;
+ const item=recipe.skill==='smithing'?addItem(profile,recipe.product):null;
+ if(recipe.skill==='alchemy')profile.potions[recipe.product]++;
+ const sk=profile.skills[recipe.skill],before=sk.level;
+ sk.xp+=recipe.xp;
+ while(sk.level<SKILL_CAP&&sk.xp>=skillXpNeeded(sk.level)){sk.xp-=skillXpNeeded(sk.level);sk.level++;}
+ if(sk.level===SKILL_CAP)sk.xp=0;
+ return {ok:true,recipeId,item,product:recipe.product,xp:recipe.xp,levelFrom:before,levelTo:sk.level};
+}
+export function prepareElixir(profile,id){
+ if(!validateProfile(profile)||!Object.hasOwn(ALCHEMY_EFFECTS,id))return false;
+ normalizeProfileSlots(profile);
+ if((profile.potions[id]||0)<1)return false;
+ if(profile.preparedElixir)profile.potions[profile.preparedElixir]++;
+ profile.potions[id]--;profile.preparedElixir=id;return true;
+}
+export function consumePreparedElixir(profile){
+ if(!validateProfile(profile))return null;
+ const chosen=profile.preparedElixir||null;
+ if(chosen)profile.preparedElixir=null;
+ return chosen;
+}
+
 export function normalizeProfileSlots(profile){
  if(profile&&profile.partyOrder===undefined)profile.partyOrder=[...DEFAULT_PARTY];
+ if(profile&&(!profile.skills||!profile.materials||!profile.potions)){
+  const blank=blankCrafting();
+  for(const field of ['skills','materials','potions'])if(profile[field]===undefined)profile[field]=blank[field];
+ }
+ if(profile){
+  const blank=blankCrafting();
+  for(const id of SKILL_IDS)if(profile.skills&&profile.skills[id]===undefined)profile.skills[id]=blank.skills[id];
+  for(const id of Object.keys(MATERIAL_DEFS))if(profile.materials&&profile.materials[id]===undefined)profile.materials[id]=0;
+  for(const id of Object.keys(ALCHEMY_EFFECTS))if(profile.potions&&profile.potions[id]===undefined)profile.potions[id]=0;
+ }
+ if(profile&&profile.preparedElixir===undefined)profile.preparedElixir=null;
  for(const id of HERO_IDS)for(const slot of SLOTS){
   const gear=profile?.heroes?.[id]?.gear;
   if(gear&&gear[slot]===undefined)gear[slot]=null;
@@ -55,32 +182,34 @@ export const ITEM_DEFS=Object.freeze({
  'brambleguard':{name:'Brambleguard Plate',icon:'🛡️',slot:'armour',rarity:'Rare',classes:['knight'],bonus:{health:34,armour:3},value:165},
  'wildweave':{name:'Wildweave Mantle',icon:'🧥',slot:'armour',rarity:'Uncommon',bonus:{health:20,speed:8},value:96},
  'thornsap-pendant':{name:'Thornsap Pendant',icon:'🌿',slot:'charm',rarity:'Uncommon',bonus:{healing:.12,health:8},value:110},
- 'warden-heart':{name:'Heart of the Thornwarden',icon:'💎',slot:'charm',rarity:'Legendary',bonus:{health:36,attack:9,skillPower:.12},value:720},
+ 'warden-heart':{name:'Heart of the Thornwarden',icon:'💎',slot:'charm',rarity:'Rare',bonus:{health:36,attack:9,skillPower:.12},value:720},
  'ember-sabre':{name:'Cinderforged Sabre',icon:'🔥',slot:'weapon',rarity:'Uncommon',classes:['knight'],bonus:{attack:11},value:118},
  'ash-bow':{name:'Ashstring Bow',icon:'🏹',slot:'weapon',rarity:'Uncommon',classes:['ranger'],bonus:{attack:10,speed:6},value:120},
  'fireweave':{name:'Fireweave Robes',icon:'🧥',slot:'armour',rarity:'Uncommon',bonus:{health:24,armour:1},value:116},
  'forgeguard':{name:'Forgeguard Harness',icon:'🛡️',slot:'armour',rarity:'Rare',bonus:{health:42,armour:4},value:240},
  'molten-focus':{name:'Molten Focus',icon:'🔮',slot:'weapon',rarity:'Rare',classes:['mage'],bonus:{attack:9,fire:.22},value:255},
  'phoenix-ash':{name:'Phoenix Ash Charm',icon:'✨',slot:'charm',rarity:'Rare',bonus:{health:15,healing:.19},value:270},
- 'cinderheart':{name:'The Cinderheart',icon:'❤️‍🔥',slot:'charm',rarity:'Legendary',bonus:{attack:14,health:22,fire:.25},value:890},
+ 'cinderheart':{name:'The Cinderheart',icon:'❤️‍🔥',slot:'charm',rarity:'Rare',bonus:{attack:14,health:22,fire:.25},value:890},
  'windpiercer':{name:'Windpiercer',icon:'🏹',slot:'weapon',rarity:'Uncommon',classes:['ranger'],bonus:{attack:12,speed:8},value:145},
  'stormscale':{name:'Stormscale Coat',icon:'🥋',slot:'armour',rarity:'Uncommon',bonus:{health:27,speed:13},value:140},
  'zephyr-charm':{name:'Zephyr Talisman',icon:'🪶',slot:'charm',rarity:'Uncommon',bonus:{speedMultiplier:.16,health:12},value:144},
  'thunder-edge':{name:'Thunderclap Blade',icon:'⚡',slot:'weapon',rarity:'Rare',classes:['knight'],bonus:{attack:15,armour:2},value:285},
  'cloudstaff':{name:'Cloudweaver Staff',icon:'🌩️',slot:'weapon',rarity:'Rare',classes:['mage'],bonus:{attack:13,cooldown:.12},value:290},
  'skywarden-censer':{name:'Skywarden Censer',icon:'✚',slot:'weapon',rarity:'Rare',classes:['cleric'],bonus:{healing:.28,health:16},value:285},
- 'tempest-eye':{name:'Eye of the Tempest',icon:'💠',slot:'charm',rarity:'Legendary',bonus:{attack:12,health:30,cooldown:.18},value:1100}
+ 'tempest-eye':{name:'Eye of the Tempest',icon:'💠',slot:'charm',rarity:'Rare',bonus:{attack:12,health:30,cooldown:.18},value:1100},
+ ...FORGED_SET_ITEMS,
+ ...FORGED_PURPLE_ITEMS
 });
 
 // Block 04 — complete original boss collections reward thoughtful gear combinations.
 // Set assignments are based on existing item definitions: no extra items or save migration.
 export const SET_DEFS=Object.freeze({
  verdant:{name:'Verdant Covenant',icon:'🌿',source:'Thornwarden',description:'Restorative woodland relics.',
-  pieces2:{health:16,healing:.06},pieces3:{shielding:.14}},
+  pieces2:{health:16,healing:.06},pieces4:{shielding:.14}},
  ember:{name:'Emberforged',icon:'🔥',source:'Cindermaw',description:'Ash-forged equipment that rewards aggression.',
-  pieces2:{attack:4,fire:.08},pieces3:{damage:.08}},
+  pieces2:{attack:4,fire:.08},pieces4:{damage:.08}},
  tempest:{name:'Tempestbound',icon:'⚡',source:'Tempest Seraph',description:'Storm relics for fast-moving ability users.',
-  pieces2:{speedMultiplier:.08,cooldown:.05},pieces3:{skillPower:.12}}
+  pieces2:{speedMultiplier:.08,cooldown:.05},pieces4:{skillPower:.12}}
 });
 export const ITEM_SETS=Object.freeze({
  'ironroot-edge':'verdant','thornsight-bow':'verdant','wildweave':'verdant',
@@ -88,7 +217,9 @@ export const ITEM_SETS=Object.freeze({
  'ember-sabre':'ember','ash-bow':'ember','fireweave':'ember','forgeguard':'ember',
  'molten-focus':'ember','phoenix-ash':'ember','cinderheart':'ember',
  'windpiercer':'tempest','stormscale':'tempest','zephyr-charm':'tempest',
- 'thunder-edge':'tempest','cloudstaff':'tempest','skywarden-censer':'tempest','tempest-eye':'tempest'
+ 'thunder-edge':'tempest','cloudstaff':'tempest','skywarden-censer':'tempest','tempest-eye':'tempest',
+ ...Object.fromEntries(Object.keys(FORGED_SET_ITEMS).map(id=>[id,id.split('-')[0]])),
+ ...Object.fromEntries(Object.entries(CRAFT_THEMES).map(([key,val])=>[val.purple,key]))
 });
 export function itemSet(defId){return ITEM_SETS[defId]||null;}
 export function setProgress(p,heroId){
@@ -101,9 +232,9 @@ export function setProgress(p,heroId){
  return Object.entries(counts).map(([id,count])=>{
   const data=SET_DEFS[id],bonus={};
   if(count>=2)for(const [k,v] of Object.entries(data.pieces2))bonus[k]=(bonus[k]||0)+v;
-  if(count>=3)for(const [k,v] of Object.entries(data.pieces3))bonus[k]=(bonus[k]||0)+v;
+  if(count>=4)for(const [k,v] of Object.entries(data.pieces4))bonus[k]=(bonus[k]||0)+v;
   return {id,name:data.name,icon:data.icon,count,bonus,source:data.source,
-   next:count<2?2:count<3?3:null};
+   next:count<2?2:count<4?4:null};
  });
 }
 
@@ -169,13 +300,25 @@ export function xpNeeded(level){return level>=MAX_LEVEL?0:80+40*level;}
 export function freshProfile(){
  return {version:1,gold:90,wins:0,defeats:0,nextItemId:1,
   heroes:Object.fromEntries(HERO_IDS.map(id=>[id,{level:1,xp:0,talents:[],gear:Object.fromEntries(SLOTS.map(slot=>[slot,null]))}])),
-  items:[],claims:[],partyOrder:[...DEFAULT_PARTY]};
+  items:[],claims:[],partyOrder:[...DEFAULT_PARTY],...blankCrafting()};
 }
 function validNum(x){return Number.isSafeInteger(x)&&x>=0;}
 export function validateProfile(p){
  if(!p||p.version!==1||!validNum(p.gold)||p.gold>1e9||!validNum(p.wins)||!validNum(p.defeats)||!validNum(p.nextItemId)||p.nextItemId<1)return false;
  if(!p.heroes||typeof p.heroes!=='object'||!Array.isArray(p.items)||p.items.length>400||!Array.isArray(p.claims)||p.claims.length>120)return false;
  if(p.partyOrder!==undefined&&(!Array.isArray(p.partyOrder)||p.partyOrder.length!==PARTY_SIZE||new Set(p.partyOrder).size!==PARTY_SIZE||!HERO_IDS.every(id=>p.partyOrder.includes(id))))return false;
+ if(p.skills!==undefined){
+  if(!p.skills||typeof p.skills!=='object'||SKILL_IDS.some(id=>{
+   const v=p.skills[id];return !v||!Number.isSafeInteger(v.level)||v.level<1||v.level>SKILL_CAP||
+    !Number.isSafeInteger(v.xp)||v.xp<0||(v.level<SKILL_CAP&&v.xp>=skillXpNeeded(v.level))||
+    (v.level===SKILL_CAP&&v.xp!==0);
+  }))return false;
+ }
+ for(const [field,defs] of [['materials',MATERIAL_DEFS],['potions',ALCHEMY_EFFECTS]]){
+  if(p[field]!==undefined&&(!p[field]||typeof p[field]!=='object'||
+   Object.entries(p[field]).some(([id,n])=>!Object.hasOwn(defs,id)||!Number.isSafeInteger(n)||n<0||n>99999)))return false;
+ }
+ if(p.preparedElixir!==undefined&&p.preparedElixir!==null&&!Object.hasOwn(ALCHEMY_EFFECTS,p.preparedElixir))return false;
  const ids=new Set(), equipped=new Set();
  for(const it of p.items){
   if(typeof it?.id!=='string'||!/^\bi\d+\b$/.test(it.id)||ids.has(it.id)||!Object.hasOwn(ITEM_DEFS,it.defId))return false;
@@ -283,15 +426,23 @@ export function grantVictory(p,receiptId,seed,bossId='thornwarden'){
  if(p.items.length>=400)return null;
  // Calculate before mutating. A victory is awarded once per unique local battle receipt.
  const boss=BOSSES[bossId],defId=rollBossDrop(seed,bossId);
- const reward={bossId,gold:boss.gold,xp:boss.xp,item:null,levels:[],receiptId};
+ normalizeProfileSlots(p);
+ const reward={bossId,gold:boss.gold,xp:boss.xp,item:null,levels:[],heroXp:[],materials:[],receiptId};
  for(const id of HERO_IDS){
-  const h=p.heroes[id],before=h.level;h.xp+=boss.xp;
+  const h=p.heroes[id],before=h.level,previousXP=h.xp;h.xp+=boss.xp;
   while(h.level<MAX_LEVEL&&h.xp>=xpNeeded(h.level)){h.xp-=xpNeeded(h.level);h.level++;}
   if(h.level===MAX_LEVEL)h.xp=0;
   if(h.level>before)reward.levels.push({id,from:before,to:h.level});
+  reward.heroXp.push({id,fromLevel:before,fromXp:previousXP,toLevel:h.level,toXp:h.xp,xp:boss.xp});
  }
  p.gold+=boss.gold;p.wins++;
  reward.item=addItem(p,defId);
+ // Guaranteed PvE reagents and a fixed boss mark enable chosen-piece exchange.
+ const mat=MATERIAL_GROUPS[bossId];
+ for(const [id,amount] of [[mat.ore,3],[mat.essence,2],[mat.seal,1]]){
+  const added=Math.min(amount,99999-p.materials[id]);
+  p.materials[id]+=added;if(added>0)reward.materials.push({id,quantity:added});
+ }
  p.claims.push(receiptId);if(p.claims.length>100)p.claims=p.claims.slice(-100);
  return reward;
 }

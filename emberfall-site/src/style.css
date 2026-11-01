@@ -636,3 +636,80 @@ body{background:radial-gradient(ellipse at 60% -20%,#385c4d 0,transparent 52%),l
 @keyframes combat-tempo-pulse{50%{opacity:.42;transform:scale(.82)}}
 @media(max-width:540px){.combat-tempo{top:7px;right:7px;padding:5px 7px;gap:4px;font-size:8px;min-height:25px}.combat-tempo strong{font-size:8px}.combat-tempo-icon{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.combat-tempo-icon{animation:none}}
+
+/* Fix Pack 04 — low-scroll Smithing/Alchemy interface and tactile mini-games. */
+.craft-intro{margin-bottom:14px}
+.craft-skill-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.craft-skill-tab{display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:13px 16px;text-align:left;min-height:88px;border:2px solid #657969;border-radius:12px;background:linear-gradient(135deg,#2e463e,#1b302f);color:#ebdcc0;touch-action:manipulation}
+.craft-skill-tab.active{border-color:#e6c27f;box-shadow:inset 0 0 0 2px #8c755238,0 0 13px #eccf7f2d}
+.craft-skill-tab b{font:700 20px Georgia,serif}.craft-skill-tab small{font:12px system-ui,sans-serif;color:#c3d3bf}
+.craft-xp-track{height:8px;border-radius:8px;background:#0f2024;overflow:hidden}
+.craft-xp-track i{height:100%;display:block;background:linear-gradient(90deg,#a88141,#f5d48c);border-radius:8px}
+.craft-studio{display:grid;grid-template-columns:minmax(0,.98fr) minmax(0,1.02fr);gap:13px;align-items:start}
+.craft-recipe-list,.craft-workbench,.craft-stock{min-width:0;padding:15px;border:1px solid #8f7852;border-radius:13px;background:linear-gradient(145deg,#273c36,#192b2d);box-shadow:inset 0 1px #d8b58023}
+.craft-recipe-list{display:flex;flex-direction:column;gap:8px}
+.craft-recipe-list .party-section-title{margin-bottom:4px}
+.craft-recipe{display:flex;align-items:center;gap:11px;min-width:0;width:100%;padding:11px;border:1px solid #627f6b;background:#2c4940;border-radius:10px;text-align:left;color:#f4e6cc;min-height:74px}
+.craft-recipe.active{border:2px solid #eccb87;background:#3e5541}
+.craft-recipe.locked{filter:saturate(.5);opacity:.78}
+.craft-product-icon{display:grid;place-items:center;min-width:46px;width:46px;height:51px;font:26px system-ui,sans-serif;background:#203631;border:1px solid #9a885e;border-radius:8px}
+.craft-recipe-name{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.craft-recipe-name b{font:700 15px Georgia,serif;color:#f7dcad}
+.craft-recipe-name small{font:11px/1.45 system-ui,sans-serif;color:#cee0ce;overflow-wrap:anywhere}
+.craft-recipe-state{font-size:18px;color:#e7c488}
+.craft-future{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding:13px;border:1px dashed #9b855e;border-radius:9px;background:#152827}
+.craft-future strong{font:700 14px Georgia,serif;color:#f8d99f}
+.craft-future div,.craft-future small{font:12px/1.5 system-ui,sans-serif;color:#bacebc}
+.craft-workbench{position:sticky;top:0;min-height:278px}
+.craft-empty{padding:32px 8px;text-align:center}
+.craft-empty span{font:48px Georgia,serif;color:#e6c680}.craft-empty h3{font:700 22px Georgia,serif;color:#fee0a4;margin:8px 0}
+.craft-empty p,.craft-instruction{font:13px/1.6 system-ui,sans-serif;color:#d3dfcc}
+.craft-product-preview{display:flex;align-items:center;gap:13px;border-bottom:1px solid #718573;padding-bottom:12px;margin-bottom:12px}
+.craft-product-preview>span{display:grid;place-items:center;width:66px;height:72px;flex:0 0 66px;font-size:38px;border:2px solid #c2a06b;background:#3f4e3d;border-radius:10px}
+.craft-product-preview h3{font:700 22px Georgia,serif;color:#ffe0b5;margin:4px 0}
+.craft-product-preview small{color:#e8c48b;font:700 11px system-ui,sans-serif;letter-spacing:.05em}
+.craft-product-preview p{font:12px system-ui,sans-serif;color:#cce0d0;margin:0}
+.craft-ingredients{display:flex;flex-direction:column;gap:7px;margin:10px 0 16px}
+.craft-ingredients>strong{font:700 12px system-ui,sans-serif;letter-spacing:.08em;color:#f6dba7;text-transform:uppercase}
+.craft-ingredients div{display:flex;justify-content:space-between;gap:12px;font:12px/1.5 system-ui,sans-serif;padding:7px 9px;border-radius:7px;background:#213834}
+.craft-ingredients .missing{color:#f3aaa3}.craft-ingredients .owned{color:#cfe7c8}
+.craft-warning{color:#ffc9a0;font:13px/1.6 system-ui,sans-serif;border:1px solid #ab704e;background:#482e2a;padding:11px;border-radius:7px}
+.craft-meter{position:relative;height:42px;max-width:420px;margin:15px 0 12px;border:2px solid #b49c66;border-radius:8px;background:repeating-linear-gradient(90deg,#213634 0 7px,#2d413e 7px 14px);overflow:hidden}
+.craft-perfect-zone{position:absolute;left:30%;width:40%;inset-block:0;background:#f0c85b54;border-inline:2px solid #f6d48c}
+.craft-needle{position:absolute;z-index:2;left:100%;top:0;height:100%;width:5px;background:#fffbe4;box-shadow:0 0 9px 3px #fdf2ae;transform:translateX(-50%)}
+.craft-needle.moving{animation:smith-strike 2s linear infinite}
+@keyframes smith-strike{0%{left:100%}50%{left:0%}100%{left:100%}}
+.craft-primary{width:100%;min-height:52px;font:700 16px Georgia,serif;touch-action:manipulation}
+.craft-mix-stages{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0}
+.craft-mix-stages span{border:1px dashed #9c8661;padding:13px 6px;border-radius:8px;text-align:center;font:700 13px system-ui,sans-serif;color:#d7bb8b;background:#1c3131}
+.craft-mix-stages span.done{background:#355a42;border:1px solid #a9d1a4;color:#e6f7dc}
+.craft-mix-buttons{display:flex;flex-wrap:wrap;gap:9px}
+.craft-mix-buttons button{flex:1 1 110px;min-height:54px;white-space:normal}
+.craft-stock{margin-top:16px}
+.craft-stock-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.craft-stock-item{padding:11px 8px;border:1px solid #5e7a6b;border-radius:8px;background:#1f3834;color:#dbe5d2;font:12px/1.45 system-ui,sans-serif}
+.craft-stock-item b{color:#f9db9c}
+.craft-potion-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.craft-potion{display:flex;flex-direction:column;gap:8px;padding:13px;border-radius:9px;border:1px solid #738a6d;background:#203831}
+.craft-potion strong{color:#f7dba7;font:700 16px Georgia,serif}.craft-potion small{color:#cfdfc9;font:12px/1.5 system-ui,sans-serif}
+.craft-potion button{min-height:44px}
+.craft-prepared{color:#e6d3a7;font:12px/1.55 system-ui,sans-serif}
+.craft-boss-reagents{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0;padding:10px 13px;border:1px solid #8c835c;border-radius:9px;background:#20382f}
+.craft-boss-reagents strong{flex-basis:100%;color:#f0d6a6;font:700 13px Georgia,serif}
+.craft-boss-reagents span{font:12px system-ui,sans-serif;color:#daead2}
+.victory-xp-party{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}
+.victory-xp-hero{padding:9px;border:1px solid #6d8169;border-radius:8px;background:#17312c;text-align:left}
+.victory-xp-hero b{color:#f5dda9;font:700 12px Georgia,serif}.victory-xp-hero small{display:block;font:11px/1.5 system-ui,sans-serif;color:#c4d8c3}
+.victory-xp-track{display:block;height:8px;background:#0a1d20;border-radius:9px;margin:6px 0;overflow:hidden}
+.victory-xp-track i{display:block;height:100%;background:linear-gradient(90deg,#8bad7b,#e5d17c)}
+.victory-loot-grid{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.victory-loot-chip{border:1px solid #8b8b80;border-radius:8px;padding:8px 11px;display:flex;align-items:center;gap:6px;background:#1d322d;color:#f5e4c0;font:12px system-ui,sans-serif}
+.victory-loot-chip.rarity-uncommon{border-color:#6ccc94}.victory-loot-chip.rarity-rare{border-color:#75b5f3}.victory-loot-chip.rarity-epic{border-color:#ba8eed}.victory-loot-chip.rarity-legendary{border-color:#fa9a57}
+@media(max-width:780px){.craft-studio{grid-template-columns:1fr}.craft-workbench{position:static}.craft-stock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.craft-skill-tab{padding:9px}.craft-skill-tab b{font-size:15px}.craft-potion-grid,.victory-xp-party{grid-template-columns:1fr}.craft-stock-grid{grid-template-columns:1fr 1fr}.craft-recipe{padding:9px}.craft-product-preview h3{font-size:17px}}
+@media(prefers-reduced-motion:reduce){.craft-needle.moving{animation-duration:4s}}
+
+.victory-xp-track i{width:var(--end);animation:victory-xp-fill .9s ease-out both}
+@keyframes victory-xp-fill{from{width:var(--start)}to{width:var(--end)}}
+.overlay.result-mode .overlay-content{max-height:calc(100% - 16px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@media(prefers-reduced-motion:reduce){.victory-xp-track i{animation:none}}

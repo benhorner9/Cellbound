@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "2a136525f7bc37cdb6a199fe3ffa995467977654",
+  "sourceCommit": "6a7aac850e17f7b080a55d93ecc04f4551025504",
   "target": "/emberfall/",
-  "stage": "fixpack-03-combat-death-visuals-pve-tempo",
+  "stage": "fixpack-04-smithing-alchemy-four-piece-sets",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Fix Pack 03: enemy deaths play 0.78s collapse and fade before disappearing visually; downed heroes remain at death locations greyed and 42% opaque, inactive. PvE manual reposition slows the complete simulation to 70% while moving/dragging, and immediately restores real time when movement stops, boss changes or on restart. Explicit PvP mode always real-time; PvP itself is not currently playable. Death visual clock is separated from combat and boss rewards to preserve XP, loot and exactly-once claims. Original Blocks 1-4, Fix Packs 1-2, saves and nine-slot gear preserved; Block 5 untouched. Safari assets version v4.7.0. Exact merged source commit 2a136525f7bc37cdb6a199fe3ffa995467977654."
+  "note": "Fix Pack 04: Smithing and Alchemy 1-20 with future cap unlock previews, timing forge and ingredient mixing minigames, immediate per-item skill XP, craftable Uncommon green boss sets and Epic purple artisan equipment from guaranteed PvE ore/essence/marks, two/four-piece set bonuses, optional prepared elixir affecting next boss battle once, Blue rare boss gear with Orange reserved for future PvP. Boss victories grant guaranteed crafting reagents alongside original XP/gold/one gear item; dismissal-safe four-hero victory XP bars display actual loot and resources. Existing gear IDs, saves, builds, party/talents, Blocks 1-4 and Fix Packs 1-3 preserved. Safari v4.8.0. Exact source commit 6a7aac850e17f7b080a55d93ecc04f4551025504, merged after all source CI passed, and matched against all seven hosted assets."
 }

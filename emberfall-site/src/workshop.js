@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
- xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet
-} from './progression.js?v=4.7.0';
+ xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir
+} from './progression.js?v=4.8.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.7.0';
+} from './builds.js?v=4.8.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -15,9 +15,9 @@ const rarityClass=name=>String(name).toLowerCase();
 export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),tabs=document.getElementById('workshopTabs');
- let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false;
+ let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[];
  const builds=readBuilds(storage);
- const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',pack:'Equipment Bag',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
+ const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
  }
@@ -108,12 +108,12 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   }
   html+='</div></div><p class="equipped-help">Tap a framed equipment slot to inspect it; unequipping returns the same item to your bag. Your nine equipment slots are usable; empty slots can be filled from the bag.</p>'
    +'<button type="button" class="mini-link" data-action="tab" data-tab="pack">Open your equipment bag →</button>';
-  html+='<div class="workshop-subheading"><h3>Collection Bonuses</h3><span>2- and 3-piece sets</span></div>';
+  html+='<div class="workshop-subheading"><h3>Collection Bonuses</h3><span>2- and 4-piece sets</span></div>';
   html+='<div class="set-overview">'+setProgress(profile,heroId).map(group=>{
    const data=SET_DEFS[group.id];
    const next=group.next;
-   const status=group.count>=3?'✦ Full set active':group.count>=2?'✓ 2-piece active · 1 more for 3-piece':'Collect '+Math.max(0,2-group.count)+' more to activate';
-   return '<article class="set-summary '+(group.count>=2?'active':'')+'"><div><b>'+esc(data.icon+' '+data.name)+'</b><small>'+group.count+'/3 equipped · '+status+'</small></div><div class="set-bonuses"><small class="'+(group.count>=2?'active':'')+'">2 pieces: '+esc(itemBonusText({bonus:data.pieces2}))+'</small><small class="'+(group.count>=3?'active':'')+'">3 pieces: '+esc(itemBonusText({bonus:data.pieces3}))+'</small></div></article>';
+   const status=group.count>=4?'✦ Full set active':group.count>=2?'✓ 2-piece active · '+(4-group.count)+' more for 4-piece':'Collect '+Math.max(0,2-group.count)+' more to activate';
+   return '<article class="set-summary '+(group.count>=2?'active':'')+'"><div><b>'+esc(data.icon+' '+data.name)+'</b><small>'+group.count+'/4 equipped · '+status+'</small></div><div class="set-bonuses"><small class="'+(group.count>=2?'active':'')+'">2 pieces: '+esc(itemBonusText({bonus:data.pieces2}))+'</small><small class="'+(group.count>=4?'active':'')+'">4 pieces: '+esc(itemBonusText({bonus:data.pieces4}))+'</small></div></article>';
   }).join('')+'</div>';
   html+='<div class="workshop-subheading"><h3>Saved Equipment Builds</h3><span>3 per hero</span></div>';
   html+='<p class="build-explainer">Save your current items as a build. Builds remember real items, not extra copies. Applying a build does not steal equipment from another hero.</p>';
@@ -200,7 +200,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const comparison=itemId&&profile.items.some(x=>x.id===itemId)?compareItem(profile,compareHeroId,itemId):null;
   let html='<section class="item-inspector" id="itemInspector"><div class="inspection-head"><span class="inspection-icon">'+esc(info.icon)+'</span><div><span class="eyebrow">EXAMINE EQUIPMENT</span><h3>'+esc(info.name)+'</h3><small>'+esc(info.rarity+' · '+slotTitle[info.slot])+(info.setName?' · '+esc(info.setName):'')+'</small></div>'+(persistent?'':'<button class="tiny-btn ghost" type="button" data-action="close-inspect">Close</button>')+'</div><p class="inspection-flavour">'+esc(info.flavour)+'</p>';
   html+='<p class="inspection-line"><b>Base bonuses:</b> '+esc(info.bonus)+'</p>';
-  html+='<p class="inspection-line"><b>Where to find:</b> '+esc(info.sources.length?info.sources.map(x=>x.name+' ('+x.rate+'% per victory)').join(' · '):info.shop?'Quartermaster · '+info.shop+' gold':'Found in the world')+'</p>';
+  html+='<p class="inspection-line"><b>Where to find:</b> '+esc(info.sources.length?info.sources.map(x=>x.name+' ('+x.rate+'% per victory)').join(' · '):info.shop?'Quartermaster · '+info.shop+' gold':CRAFT_RECIPES.some(r=>r.product===defId&&r.skill==='smithing')?'Smithing · boss reagents':'Boss rewards / relics')+'</p>';
   if(comparison){
    if(!comparison.eligible)html+='<div class="compare-warning">'+esc(comparison.reason)+'</div>';
    else{
@@ -277,16 +277,63 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  function renderDrops(){
   const boss=BOSSES[dropBoss],table=bossDropTable(dropBoss);
   const weight=table.reduce((a,x)=>a+x.weight,0);
-  let html='<div class="workshop-intro"><h3>Boss Drop Tables</h3><p>Every victory awards XP, gold and exactly one item from that boss. Drop rates are per victory.</p></div>';
+  let html='<div class="workshop-intro"><h3>Boss Drop Tables</h3><p>Every victory awards XP, gold, one equipment roll and guaranteed crafting materials. Purple gear is crafted; orange gear is reserved for future PvP. Drop rates are per victory.</p></div>';
   html+='<label for="dropBoss">Choose a boss</label><select id="dropBoss" class="hero-select">'+Object.values(BOSSES).map(b=>'<option value="'+b.id+'" '+(b.id===dropBoss?'selected':'')+'>'+esc(b.name)+' · Recommended Lv '+b.unlock+'</option>').join('')+'</select>';
   html+='<div class="pack-stats"><span>'+esc(boss.place)+'</span><b>+'+boss.xp+' XP · '+boss.gold+' gold</b></div>';
   html+='<p class="workshop-disclaimer">'+esc(boss.mechanics)+'</p>';
+  const prefix=dropBoss==='thornwarden'?'verdant':dropBoss==='cindermaw'?'ember':'tempest';
+  const mats=Object.entries(MATERIAL_DEFS).filter(([id])=>id.startsWith(prefix));
+  html+='<div class="craft-boss-reagents"><strong>Guaranteed every victory</strong>'+mats.map(([id,mat])=>'<span>'+mat.icon+' '+esc(mat.name)+' +'+(id.endsWith('-ore')?3:id.endsWith('-essence')?2:1)+'</span>').join('')+'</div>';
   for(const entry of table){
    const def=ITEM_DEFS[entry.id],prob=entry.weight/weight*100;
    html+='<article class="drop-row"><span class="loot-icon">'+esc(def.icon)+'</span><div><strong>'+esc(def.name)+'</strong><small>'+esc(def.rarity)+' · '+esc(slotTitle[def.slot])+' · '+esc(itemBonusText(def))+'</small><button class="tiny-btn ghost" type="button" data-action="inspect" data-id="drop-'+entry.id+'">Examine</button></div><b>'+prob.toFixed(prob<10?1:0)+'%</b></article>';
   }
   if(detailsId?.startsWith('drop-'))html+=renderInspection(null,detailsId.slice(5));
   html+='<p class="workshop-disclaimer">Rates are transparent and independent per win. All equipment is local to this browser; online ownership and trading remain future features.</p>';
+  return html;
+ }
+
+ function renderCrafting(){
+  const skill=profile.skills[craftSkill],needed=skillXpNeeded(skill.level);
+  let html='<div class="workshop-intro craft-intro"><span class="eyebrow">FIX PACK 04 · GUILD WORKSHOP</span><h3>Smithing &amp; Alchemy</h3><p>Bosses award ores, essences and marks. Forge selected equipment or brew battle elixirs; each successful craft earns immediate skill XP. Level cap: 20, with future unlocks visible beyond.</p></div>';
+  html+='<div class="craft-skill-tabs">'+SKILL_IDS.map(id=>{
+   const sk=profile.skills[id],need=skillXpNeeded(sk.level),pct=need?Math.min(100,Math.round(sk.xp/need*100)):100;
+   return '<button type="button" data-action="craft-skill" data-skill="'+id+'" class="craft-skill-tab '+(craftSkill===id?'active':'')+'" aria-pressed="'+(craftSkill===id)+'"><b>'+(id==='smithing'?'⚒️ Smithing':'⚗️ Alchemy')+'</b><small>Level '+sk.level+'/'+SKILL_CAP+' · '+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small><span class="craft-xp-track"><i style="width:'+pct+'%"></i></span></button>';
+  }).join('')+'</div>';
+  const recipes=CRAFT_RECIPES.filter(r=>r.skill===craftSkill);
+  html+='<div class="craft-studio"><section class="craft-recipe-list" aria-label="Crafting recipes"><div class="party-section-title"><b>'+(craftSkill==='smithing'?'The Forge':'The Alchemy Table')+'</b><small>Level '+skill.level+'/'+SKILL_CAP+'</small></div>';
+  for(const recipe of recipes){
+   const status=craftingStatus(profile,recipe.id);
+   html+='<button type="button" class="craft-recipe '+(craftRecipeId===recipe.id?'active':'')+(skill.level<recipe.level?' locked':'')+'" data-action="craft-select" data-id="'+recipe.id+'" aria-pressed="'+(craftRecipeId===recipe.id)+'"><span class="craft-product-icon">'+esc(recipe.icon)+'</span><span class="craft-recipe-name"><b>'+esc(recipe.name)+'</b><small>Lv '+recipe.level+' · +'+recipe.xp+' XP · '+esc(recipe.rarity)+'</small><small>'+esc(Object.entries(recipe.materials).filter(([,n])=>n>0).map(([id,n])=>MATERIAL_DEFS[id].name+' ×'+n).join(' · '))+'</small></span><span class="craft-recipe-state">'+(skill.level<recipe.level?'🔒':status.ok?'✓':'◇')+'</span></button>';
+  }
+  html+='<div class="craft-future"><strong>Beyond level '+SKILL_CAP+' · future unlocks</strong>'+FUTURE_CRAFTS.filter(r=>r.skill===craftSkill).map(r=>'<div>🔒 Lv '+r.level+' · '+r.icon+' '+esc(r.name)+'</div>').join('')+'<small>Preview only — unobtainable until a future level-cap increase.</small></div></section>';
+  const recipe=CRAFT_RECIPES.find(r=>r.id===craftRecipeId&&r.skill===craftSkill);
+  html+='<section class="craft-workbench" aria-label="Interactive crafting workbench">';
+  if(!recipe){
+   html+='<div class="craft-empty"><span>✦</span><h3>Select a recipe</h3><p>Choose an item to see its materials, level requirement and interactive crafting challenge.</p></div>';
+  }else{
+   const status=craftingStatus(profile,recipe.id);
+   html+='<div class="craft-product-preview"><span>'+esc(recipe.icon)+'</span><div><small>'+esc(recipe.rarity)+' · LEVEL '+recipe.level+'</small><h3>'+esc(recipe.name)+'</h3><p>+ '+recipe.xp+' '+esc(craftSkill)+' XP per successful item</p></div></div>';
+   html+='<div class="craft-ingredients"><strong>Ingredients in your stock</strong>'+Object.entries(recipe.materials).filter(([,count])=>count>0).map(([id,count])=>'<div class="'+(profile.materials[id]>=count?'owned':'missing')+'"><span>'+MATERIAL_DEFS[id].icon+' '+esc(MATERIAL_DEFS[id].name)+'</span><b>'+profile.materials[id]+' / '+count+'</b></div>').join('')+'</div>';
+   if(skill.level<recipe.level)html+='<p class="craft-warning">Reach '+esc(craftSkill)+' level '+recipe.level+' to unlock this recipe.</p>';
+   else if(!status.ok)html+='<p class="craft-warning">'+esc(status.reason)+'</p>';
+   else if(craftSkill==='smithing'){
+    html+='<p class="craft-instruction">Heat the metal, then strike as the moving needle enters the <strong>gold zone</strong>. Failed strikes consume no materials or XP.</p>';
+    html+='<div class="craft-meter" aria-label="Timed forging minigame"><span class="craft-perfect-zone"></span><span class="craft-needle '+(craftStage==='heated'?'moving':'')+'"></span></div>';
+    html+='<button type="button" class="tiny-btn craft-primary" data-action="'+(craftStage==='heated'?'craft-strike':'craft-heat')+'">'+(craftStage==='heated'?'⚒️ Strike Now':'🔥 Heat the Metal')+'</button>';
+   }else{
+    const options=[recipe.mix[0],recipe.mix[1],...Object.keys(MATERIAL_DEFS).filter(id=>id!==recipe.mix[0]&&id!==recipe.mix[1]).slice(0,1)];
+    html+='<p class="craft-instruction">Combine the correct reagents in order: <strong>essence first, then ore.</strong> Incorrect mixing does not consume anything.</p>';
+    html+='<div class="craft-mix-stages"><span class="'+(craftMix.length>=1?'done':'')+'">1 · Essence '+(craftMix[0]?'✓':'○')+'</span><span class="'+(craftMix.length>=2?'done':'')+'">2 · Ore '+(craftMix[1]?'✓':'○')+'</span></div>';
+    html+='<div class="craft-mix-buttons">'+options.map(id=>'<button type="button" class="tiny-btn ghost" data-action="craft-add" data-id="'+id+'">'+MATERIAL_DEFS[id].icon+' '+esc(MATERIAL_DEFS[id].name)+'</button>').join('')+'</div>';
+   }
+  }
+  html+='</section></div>';
+  html+='<div class="craft-stock"><div class="party-section-title"><b>Materials &amp; Marks</b><small>Guaranteed every boss victory</small></div><div class="craft-stock-grid">'+Object.entries(MATERIAL_DEFS).map(([id,mat])=>'<span class="craft-stock-item">'+mat.icon+' '+esc(mat.name)+' <b>×'+profile.materials[id]+'</b></span>').join('')+'</div></div>';
+  if(craftSkill==='alchemy'){
+   html+='<div class="craft-stock"><div class="party-section-title"><b>Battle elixirs</b><small>One prepared for the next boss fight</small></div><div class="craft-potion-grid">'+Object.entries(ALCHEMY_EFFECTS).map(([id,info])=>'<div class="craft-potion"><strong>'+info.icon+' '+esc(info.name)+'</strong><small>'+esc(itemBonusText({bonus:info.bonus}))+' · In stock: '+profile.potions[id]+'</small><button type="button" class="tiny-btn" data-action="prepare-elixir" data-id="'+id+'" '+(profile.potions[id]<1?'disabled':'')+'>'+(profile.preparedElixir===id?'Prepared · Replace':'Prepare for Next Battle')+'</button></div>').join('')+'</div><p class="craft-prepared">Prepared: '+(profile.preparedElixir?esc(ALCHEMY_EFFECTS[profile.preparedElixir].name):'None')+'. Preparing a different potion returns the previous one to stock.</p></div>';
+  }
+  html+='<p class="workshop-disclaimer">Green equipment is obtainable from PvE and chosen-piece material exchanges. Blue items are rare boss drops, purple items require Smithing plus PvE materials, and orange gear will be PvP-only when PvP is implemented. Your crafted items, materials and potions are saved locally.</p>';
   return html;
  }
  function renderBackup(){
@@ -316,7 +363,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   document.getElementById('bagCount').textContent=String(profile.items.filter(item=>!itemOwner(profile,item.id)).length);
   body.classList.toggle('inventory-mode',current==='pack');
   body.innerHTML=(notice?'<div class="workshop-notice '+(noticeBad?'is-error':'')+'" role="status">'+esc(notice)+'</div>':'')
-    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='pack'?renderPack():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
+    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
  }
  function rerenderBag(){
   const offset=body.querySelector('#inventoryScroll')?.scrollTop||0;
@@ -400,6 +447,45 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
     confirmRespec=false;confirmSpendId=null;selectedTalentId=null;notice=HERO_NAMES[heroId]+' talents reset for '+TALENT_RESPEC_COST+' gold.';noticeBad=false;save();
    }
    return;
+  }
+  if(action==='craft-skill'&&current==='craft'&&SKILL_IDS.includes(btn.dataset.skill)){
+   craftSkill=btn.dataset.skill;craftRecipeId=null;craftStage='idle';craftMix=[];notice='';render();return;
+  }
+  if(action==='craft-select'&&current==='craft'){
+   if(CRAFT_RECIPES.some(r=>r.id===id&&r.skill===craftSkill)){
+    craftRecipeId=id;craftStage='idle';craftMix=[];notice='';render();
+   }return;
+  }
+  if(action==='craft-heat'&&current==='craft'&&craftSkill==='smithing'){
+   if(!craftingStatus(profile,craftRecipeId).ok)return;
+   craftStartedAt=performance.now();craftStage='heated';render();return;
+  }
+  if(action==='craft-strike'&&current==='craft'&&craftSkill==='smithing'&&craftStage==='heated'){
+   const elapsed=Math.max(0,performance.now()-craftStartedAt);
+   const position=Math.abs((elapsed%2000)/1000-1)*100;
+   const result=craftRecipe(profile,craftRecipeId,{strike:position});
+   craftStage='idle';craftMix=[];
+   notice=result.ok?'Forged '+ITEM_DEFS[result.product].name+' · +'+result.xp+' Smithing XP'+(result.levelTo>result.levelFrom?' · LEVEL UP '+result.levelTo+'!':''):result.reason;
+   noticeBad=!result.ok;if(result.ok)save();else render();return;
+  }
+  if(action==='craft-add'&&current==='craft'&&craftSkill==='alchemy'){
+   const recipe=CRAFT_RECIPES.find(r=>r.id===craftRecipeId&&r.skill==='alchemy');
+   if(!recipe||!craftingStatus(profile,recipe.id).ok)return;
+   craftMix.push(id);
+   if(craftMix.at(-1)!==recipe.mix[craftMix.length-1]){
+    craftMix=[];notice='The mixture reacted poorly. Combine the correct essence first, then the ore.';noticeBad=true;render();return;
+   }
+   if(craftMix.length===2){
+    const result=craftRecipe(profile,recipe.id,{mix:[...craftMix]});
+    craftMix=[];notice=result.ok?'Brewed '+ALCHEMY_EFFECTS[result.product].name+' · +'+result.xp+' Alchemy XP'+(result.levelTo>result.levelFrom?' · LEVEL UP '+result.levelTo+'!':''):result.reason;
+    noticeBad=!result.ok;if(result.ok)save();else render();
+   }else render();
+   return;
+  }
+  if(action==='prepare-elixir'&&current==='craft'&&Object.hasOwn(ALCHEMY_EFFECTS,id)){
+   if(prepareElixir(profile,id)){
+    notice=ALCHEMY_EFFECTS[id].name+' prepared for the next boss battle. It is consumed once when you start the fight.';noticeBad=false;save();
+   }return;
   }
   if(action==='close-inspect'){detailsId=null;render();return;}
   if(action==='inspect-gear-slot'&&current==='heroes'&&SLOTS.includes(slot)){
