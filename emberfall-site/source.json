@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "cd7858cec9c29eb80abaf67706432f859b6710d4",
+  "sourceCommit": "6239426b1fc179982ef6b84ae9c5f8ed526a5a6c",
   "target": "/emberfall/",
-  "stage": "fixpack-02-party-talents",
+  "stage": "fixpack-03-combat-death-visuals-pve-tempo",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Fix Pack 02: dedicated Party formation, persistent four-hero position swapping (actual next-fight spawn positions, sidebar order and Q/W/E/R mapping), connected Talent Trees for all classes with effect inspection, confirmed talent spending and two-step 60-gold respec. Existing nine-slot gear, local saves, builds, backups and original Blocks 1–4 preserved; original Block 5 untouched. Four founding heroes remain active; no unreleased reserve recruitment. Safari module tree v4.6.0. Exact source commit cd7858cec9c29eb80abaf67706432f859b6710d4."
+  "note": "Fix Pack 03: enemy deaths play 0.78s collapse and fade before disappearing visually; downed heroes remain at death locations greyed and 42% opaque, inactive. PvE manual reposition slows the complete simulation to 70% while moving/dragging, and immediately restores real time when movement stops, boss changes or on restart. Explicit PvP mode always real-time; PvP itself is not currently playable. Death visual clock is separated from combat and boss rewards to preserve XP, loot and exactly-once claims. Original Blocks 1-4, Fix Packs 1-2, saves and nine-slot gear preserved; Block 5 untouched. Safari assets version v4.7.0."
 }

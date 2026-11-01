@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents} from './engine.js?v=4.6.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel} from './progression.js?v=4.6.0';
-import {mountWorkshop} from './workshop.js?v=4.6.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.7.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel} from './progression.js?v=4.7.0';
+import {mountWorkshop} from './workshop.js?v=4.7.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -102,17 +102,18 @@ canvas.addEventListener('pointerdown',e=>{
  if(state.phase!=='playing'||paused)return;
  const p=screenPoint(e);const hit=actorAt(p);
  startPoint={p,hit:hit?.faction==='ally'?hit:null,pointerId:e.pointerId};
+ state.manualPositioning=!!startPoint.hit;
  canvas.setPointerCapture?.(e.pointerId);
 });
 canvas.addEventListener('pointerup',e=>{
  if(!startPoint)return;
- const start=startPoint;startPoint=null;
+ const start=startPoint;startPoint=null;state.manualPositioning=false;
  if(start.pointerId!==e.pointerId)return;
  const p=screenPoint(e),drag=Math.hypot(p.x-start.p.x,p.y-start.p.y)>22;
  if(drag&&start.hit)issueFromPoint(p,start.hit);
  else issueFromPoint(p,null);
 });
-canvas.addEventListener('pointercancel',()=>{startPoint=null;});
+canvas.addEventListener('pointercancel',()=>{startPoint=null;state.manualPositioning=false;});
 for(const card of document.querySelectorAll('[data-hero]'))card.addEventListener('click',()=>selectHero(card.dataset.hero));
 function useSlot(slot){
  if(paused||state.phase!=='playing')return;
@@ -258,7 +259,13 @@ function drawHuman(c,u){
  c.save();c.translate(u.x,u.y);
  const bob=Math.sin(state.time*4+u.x*.013)*(u.hp>0?1.8:0);
  const color=heroColors[u.id];const isDown=u.hp<=0;
- if(isDown){c.globalAlpha=.46;c.translate(0,7);}
+ if(isDown){
+  const visual=heroDownVisual(u);
+  c.globalAlpha*=visual.alpha;
+  c.filter='grayscale(0.95)';
+  c.translate(0,7+visual.collapse*6);
+  c.rotate(-.12*visual.collapse);
+}
  ellipse(c,0,-3,26,11,'#1b3d316e');
  c.translate(0,bob-10);c.scale(u.face,1);
  // soft cape that animates slightly with movement
@@ -320,7 +327,6 @@ function drawHuman(c,u){
 }
 function drawBramble(c,u){
  c.save();c.translate(u.x,u.y);ellipse(c,0,1,27,10,'#1b3d3070');
- if(u.hp===0)c.globalAlpha=.28;
  const wobble=Math.sin(state.time*5+u.x*.01)*2;
  if(u.role!=='Bramble'){c.translate(0,Math.sin(state.time*5+u.x)*3);c.shadowColor=u.role==='Imp'?'#f79244':'#91ceff';c.shadowBlur=24;}
  poly(c,[-17,-8,-24,-38,-6,-47,16,-40,21,-7],'#6b7e3c','#324b34',3);
@@ -336,7 +342,6 @@ function drawVariantBoss(c,u){
  c.save();c.translate(u.x,u.y);
  const wobble=Math.sin(state.time*3)*3;
  ellipse(c,0,-2,90,24,'#192d36aa');
- if(u.hp<=0)c.globalAlpha=.33;
  c.translate(0,wobble);
  // Two truly different, original 2D silhouettes: a horned furnace and a winged lightning construct.
  const base=fire?'#4b4140':'#4b6182',mid=fire?'#bd5e37':'#7894ca',light=fire?'#ffbc62':'#d2e9ff';
@@ -371,7 +376,6 @@ function drawVariantBoss(c,u){
 function drawBoss(c,u){
  if(state.bossId!=='thornwarden'){drawVariantBoss(c,u);return;}
  c.save();c.translate(u.x,u.y);ellipse(c,0,-3,85,27,'#18382a99');
- if(u.hp===0)c.globalAlpha=.34;
  const w=Math.sin(state.time*2.6)*3;c.translate(0,w);
  // root legs and huge bramble-carapace silhouette
  poly(c,[-39,-14,-60,3,-55,15,-10,-6,8,-6,52,15,60,2,37,-14],
@@ -460,7 +464,23 @@ function render(){
  resize();renderGround();
  renderMarkers();renderTelegraph();
  const sorted=[...state.heroes,...state.enemies].sort((a,b)=>a.y-b.y);
- for(const unit of sorted)unit.id==='boss'?drawBoss(ctx,unit):unit.faction==='enemy'?drawBramble(ctx,unit):drawHuman(ctx,unit);
+ for(const unit of sorted){
+  if(unit.faction==='enemy'&&unit.hp<=0){
+   const visual=enemyDeathVisual(unit);
+   if(!visual.visible)continue;
+   // Die in place: stagger, tip, collapse and dissolve. The canonical enemy
+   // object remains for combat completion and one-time loot accounting.
+   ctx.save();ctx.translate(unit.x,unit.y);
+   ctx.rotate(visual.collapse*.25*(unit.face||1));
+   ctx.scale(1-visual.collapse*.25,1-visual.collapse*.72);
+   ctx.translate(-unit.x,-unit.y);
+   ctx.globalAlpha*=visual.alpha;
+   if(unit.id==='boss')drawBoss(ctx,unit);else drawBramble(ctx,unit);
+   ctx.restore();
+  }else if(unit.id==='boss')drawBoss(ctx,unit);
+  else if(unit.faction==='enemy')drawBramble(ctx,unit);
+  else drawHuman(ctx,unit);
+ }
  renderFx();
  if(paused){ctx.fillStyle='#112e2a97';ctx.fillRect(0,0,WORLD.width,WORLD.height);label(ctx,'PAUSED',600,320,58,'#fff0c6');}
 }
@@ -506,7 +526,11 @@ function syncUI(force=false){
  $('bossHpText').textContent=Math.ceil(boss.hp)+' / '+boss.maxHp;
  $('bossFill').style.width=(100*boss.hp/boss.maxHp)+'%';
  $('battleTime').textContent=String(Math.floor(state.time/60)).padStart(2,'0')+':'+String(Math.floor(state.time%60)).padStart(2,'0');
+ const tempo=combatSpeed(state);
+ const slowing=!paused&&state.phase==='playing'&&tempo<1;
  $('phaseLabel').textContent=paused?'PAUSED':state.phase==='playing'?'LIVE · PVE':state.phase.toUpperCase();
+ $('combatTempo').classList.toggle('hidden',!slowing);
+ $('combatTempo').setAttribute('aria-hidden',String(!slowing));
  $('pauseBtn').textContent=paused?'▶':'Ⅱ';$('pauseBtn').setAttribute('aria-label',paused?'Resume game':'Pause game');
  $('commandTitle').textContent=hero.hp>0?hero.name+' is awaiting orders':hero.name+' has fallen';
  const focus=hero.focus&&getUnit(state,hero.focus);
@@ -539,15 +563,22 @@ function showEnd(){
  $('overlay').classList.remove('choose-mode','hidden');
  syncUI(true);
 }
+function endVisualsComplete(){
+ // Let the player see the defeat animation before the result panel obscures it.
+ if(state.phase==='victory')return state.enemies.every(e=>e.hp>0||(e.deathAge??0)>=ENEMY_DEATH_DURATION);
+ if(state.phase==='defeat')return state.heroes.every(h=>h.hp>0||(h.downAge??0)>=HERO_DOWN_DURATION);
+ return false;
+}
 function frame(now){
  if(!last)last=now;const dt=Math.min((now-last)/1000,.05);last=now;
  if(!paused&&state.phase==='playing')updateEncounter(state,dt);
+ if(!paused)advanceDeathVisuals(state,dt);
  for(const event of drainEvents(state))onEvent(event);
  tickFx(dt);
  if(now>noticeUntil)$('announcement').classList.remove('show');
  render();
  if(now-uiLast>125){syncUI();uiLast=now;}
- if((state.phase==='victory'||state.phase==='defeat')&&$('overlay').classList.contains('hidden'))showEnd();
+ if(endVisualsComplete()&&$('overlay').classList.contains('hidden'))showEnd();
  requestAnimationFrame(frame);
 }
 const workshop=mountWorkshop({
@@ -567,5 +598,5 @@ renderEncounterChoices();
 syncUI(true);
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.6.0';
+document.documentElement.dataset.emberfallReady='4.7.0';
 requestAnimationFrame(frame);

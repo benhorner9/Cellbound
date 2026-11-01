@@ -119,13 +119,13 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.6.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.7.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.6.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.7.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
@@ -162,7 +162,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.6.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.7.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -185,7 +185,7 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.6.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.7.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -210,6 +210,13 @@ try{
  await page.reload({waitUntil:'networkidle'});
  await page.locator('#startBtn').click();
  if((await page.locator('#partyList .hero-card').first().getAttribute('data-hero'))!=='ranger')throw Error('Live swapped Party did not apply to next battle');
+ const canvas=await page.locator('#arena').boundingBox();
+ if(!canvas)throw Error('Live combat canvas missing');
+ await page.touchscreen.tap(canvas.x+canvas.width*.39,canvas.y+canvas.height*.79);
+ await page.waitForFunction(()=>!document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
+ if(!(await page.locator('#combatTempo').innerText()).includes('70% SPEED'))throw Error('Live PvE movement slowdown missing from HUD');
+ await page.locator('#restartBtn').click();
+ await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  if(errors.length)throw Error(errors.join('\n'));
  console.log('PASS: hosted Emberfall all bosses, actual set-aware comparison, saved unique-item builds, validated JSON backup/restore, persisted equipment and 2-piece combat HP.');
 }catch(e){console.error('LIVE BROWSER FAILED:',e.stack||e);if(errors.length)console.error(errors.join('\n'));process.exitCode=1;}
