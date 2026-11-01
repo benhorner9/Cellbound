@@ -17,7 +17,21 @@ export const ITEM_DEFS=Object.freeze({
  'brambleguard':{name:'Brambleguard Plate',icon:'🛡️',slot:'armour',rarity:'Rare',classes:['knight'],bonus:{health:34,armour:3},value:165},
  'wildweave':{name:'Wildweave Mantle',icon:'🧥',slot:'armour',rarity:'Uncommon',bonus:{health:20,speed:8},value:96},
  'thornsap-pendant':{name:'Thornsap Pendant',icon:'🌿',slot:'charm',rarity:'Uncommon',bonus:{healing:.12,health:8},value:110},
- 'warden-heart':{name:'Heart of the Thornwarden',icon:'💎',slot:'charm',rarity:'Legendary',bonus:{health:36,attack:9,skillPower:.12},value:720}
+ 'warden-heart':{name:'Heart of the Thornwarden',icon:'💎',slot:'charm',rarity:'Legendary',bonus:{health:36,attack:9,skillPower:.12},value:720},
+ 'ember-sabre':{name:'Cinderforged Sabre',icon:'🔥',slot:'weapon',rarity:'Uncommon',classes:['knight'],bonus:{attack:11},value:118},
+ 'ash-bow':{name:'Ashstring Bow',icon:'🏹',slot:'weapon',rarity:'Uncommon',classes:['ranger'],bonus:{attack:10,speed:6},value:120},
+ 'fireweave':{name:'Fireweave Robes',icon:'🧥',slot:'armour',rarity:'Uncommon',bonus:{health:24,armour:1},value:116},
+ 'forgeguard':{name:'Forgeguard Harness',icon:'🛡️',slot:'armour',rarity:'Rare',bonus:{health:42,armour:4},value:240},
+ 'molten-focus':{name:'Molten Focus',icon:'🔮',slot:'weapon',rarity:'Rare',classes:['mage'],bonus:{attack:9,fire:.22},value:255},
+ 'phoenix-ash':{name:'Phoenix Ash Charm',icon:'✨',slot:'charm',rarity:'Rare',bonus:{health:15,healing:.19},value:270},
+ 'cinderheart':{name:'The Cinderheart',icon:'❤️‍🔥',slot:'charm',rarity:'Legendary',bonus:{attack:14,health:22,fire:.25},value:890},
+ 'windpiercer':{name:'Windpiercer',icon:'🏹',slot:'weapon',rarity:'Uncommon',classes:['ranger'],bonus:{attack:12,speed:8},value:145},
+ 'stormscale':{name:'Stormscale Coat',icon:'🥋',slot:'armour',rarity:'Uncommon',bonus:{health:27,speed:13},value:140},
+ 'zephyr-charm':{name:'Zephyr Talisman',icon:'🪶',slot:'charm',rarity:'Uncommon',bonus:{speedMultiplier:.16,health:12},value:144},
+ 'thunder-edge':{name:'Thunderclap Blade',icon:'⚡',slot:'weapon',rarity:'Rare',classes:['knight'],bonus:{attack:15,armour:2},value:285},
+ 'cloudstaff':{name:'Cloudweaver Staff',icon:'🌩️',slot:'weapon',rarity:'Rare',classes:['mage'],bonus:{attack:13,cooldown:.12},value:290},
+ 'skywarden-censer':{name:'Skywarden Censer',icon:'✚',slot:'weapon',rarity:'Rare',classes:['cleric'],bonus:{healing:.28,health:16},value:285},
+ 'tempest-eye':{name:'Eye of the Tempest',icon:'💠',slot:'charm',rarity:'Legendary',bonus:{attack:12,health:30,cooldown:.18},value:1100}
 });
 export const TALENTS=Object.freeze({
  knight:[
@@ -51,6 +65,21 @@ export const DROP_TABLE=Object.freeze([
  {id:'emberglass-staff',weight:8},{id:'hallowed-censer',weight:8},
  {id:'brambleguard',weight:8},{id:'warden-heart',weight:2}
 ]);
+export const BOSSES=Object.freeze({
+ thornwarden:{id:'thornwarden',name:'Thornwarden',place:"Thornwarden's Hollow",chapter:'I · THE VERDANT RUINS',unlock:1,
+  icon:'🌿',description:'Survive marked root slams and bramblekin reinforcements.',mechanics:'Root Slam: leave the red circle. Bramblekin join the fight below 42% health.',color:'#c39c76',xp:145,gold:80,health:720,damage:18,interval:2.15,speed:62,attackDelay:7,attackCycle:8.5,
+  drops:[{id:'ironroot-edge',weight:19},{id:'thornsight-bow',weight:19},{id:'wildweave',weight:18},{id:'thornsap-pendant',weight:18},{id:'emberglass-staff',weight:8},{id:'hallowed-censer',weight:8},{id:'brambleguard',weight:8},{id:'warden-heart',weight:2}]},
+ cindermaw:{id:'cindermaw',name:'Cindermaw',place:'The Ashen Foundry',chapter:'II · ASHEN FOUNDRY',unlock:2,
+  icon:'🔥',description:'Dodge a cone of furnace fire and endure the molten enrage.',mechanics:'Furnace Breath: move out of the orange cone. Below 45% health the furnace erupts and flame imps arrive.',color:'#f0a267',xp:195,gold:115,health:865,damage:21,interval:2.05,speed:68,attackDelay:6,attackCycle:7.4,
+  drops:[{id:'ember-sabre',weight:23},{id:'ash-bow',weight:20},{id:'fireweave',weight:20},{id:'forgeguard',weight:13},{id:'molten-focus',weight:12},{id:'phoenix-ash',weight:10},{id:'cinderheart',weight:2}]},
+ tempest:{id:'tempest',name:'Tempest Seraph',place:'Skybreak Spire',chapter:'III · SKYBREAK SPIRE',unlock:4,
+  icon:'⚡',description:'Outmaneuver lightning lanes and dispel storms with precise movement.',mechanics:'Lightning Lanes: leave the glowing beam before it strikes. Below 50% health storm wisps arrive.',color:'#b9d8fb',xp:260,gold:170,health:1010,damage:24,interval:1.88,speed:77,attackDelay:5.8,attackCycle:7,
+  drops:[{id:'windpiercer',weight:21},{id:'stormscale',weight:21},{id:'zephyr-charm',weight:19},{id:'thunder-edge',weight:13},{id:'cloudstaff',weight:13},{id:'skywarden-censer',weight:11},{id:'tempest-eye',weight:2}]}
+});
+export function bossInfo(id='thornwarden'){return BOSSES[id]||BOSSES.thornwarden;}
+export function canChallenge(profile,id){const boss=BOSSES[id];return !!(boss&&profile&&HERO_IDS.every(h=>profile.heroes?.[h]?.level>=boss.unlock));}
+export function bossDropTable(id='thornwarden'){return bossInfo(id).drops;}
+export function bossRewardInfo(id='thornwarden'){const b=bossInfo(id);return {xp:b.xp,gold:b.gold};}
 export const QUARTERMASTER=Object.freeze(['recruit-sword','briar-bow','apprentice-focus','field-vest','brass-charm']);
 export const XP_REWARD=145;
 export const GOLD_REWARD=80;
@@ -151,24 +180,26 @@ export function itemBonusText(def){
  return Object.entries(def.bonus||{}).map(([k,v])=>(v>=0?'+':'')+(percentages.has(k)?Math.round(v*100)+'%':v)+(' ')+(LABELS[k]||k)).join(' · ');
 }
 function rng(seed){let s=seed>>>0;return ()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967296;};}
-export function rollBossDrop(seed){
- const random=rng(seed+97531),weight=DROP_TABLE.reduce((s,x)=>s+x.weight,0),roll=random()*weight;
- let sum=0;for(const d of DROP_TABLE){sum+=d.weight;if(roll<sum)return d.id;}
- return DROP_TABLE.at(-1).id;
+export function rollBossDrop(seed,bossId='thornwarden'){
+ const table=bossDropTable(bossId),random=rng(seed+97531+(bossId==='cindermaw'?3331:bossId==='tempest'?7447:0));
+ const weight=table.reduce((s,x)=>s+x.weight,0),roll=random()*weight;
+ let sum=0;for(const d of table){sum+=d.weight;if(roll<sum)return d.id;}
+ return table.at(-1).id;
 }
-export function grantVictory(p,receiptId,seed){
+export function grantVictory(p,receiptId,seed,bossId='thornwarden'){
+ if(!Object.hasOwn(BOSSES,bossId)||!canChallenge(p,bossId))return null;
  if(typeof receiptId!=='string'||!receiptId||receiptId.length>120||p.claims.includes(receiptId)||!validateProfile(p))return null;
  if(p.items.length>=400)return null;
  // Calculate before mutating. A victory is awarded once per unique local battle receipt.
- const defId=rollBossDrop(seed);
- const reward={gold:GOLD_REWARD,xp:XP_REWARD,item:null,levels:[],receiptId};
+ const boss=BOSSES[bossId],defId=rollBossDrop(seed,bossId);
+ const reward={bossId,gold:boss.gold,xp:boss.xp,item:null,levels:[],receiptId};
  for(const id of HERO_IDS){
-  const h=p.heroes[id],before=h.level;h.xp+=XP_REWARD;
+  const h=p.heroes[id],before=h.level;h.xp+=boss.xp;
   while(h.level<MAX_LEVEL&&h.xp>=xpNeeded(h.level)){h.xp-=xpNeeded(h.level);h.level++;}
   if(h.level===MAX_LEVEL)h.xp=0;
   if(h.level>before)reward.levels.push({id,from:before,to:h.level});
  }
- p.gold+=GOLD_REWARD;p.wins++;
+ p.gold+=boss.gold;p.wins++;
  reward.item=addItem(p,defId);
  p.claims.push(receiptId);if(p.claims.length>100)p.claims=p.claims.slice(-100);
  return reward;
