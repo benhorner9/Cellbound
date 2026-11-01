@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "0788d77c371aafe3d1644514036d2b0dcf121b99",
+  "sourceCommit": "8364d6f1d97fa3beb5bb4c679898c1f01d14c737",
   "target": "/emberfall/",
-  "stage": "fixpack-01-inventory-equip-refinement",
+  "stage": "fixpack-01-visible-character-equipment",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Follow-up to Fix Pack 01: class-restricted gear auto-selects its only eligible hero; multi-class/shared gear uses eligible hero buttons instead of dropdown; equipped gear stays out of bag until unequipped. Existing owned item IDs, builds, saves, combat and prior Blocks remain untouched. Safari module graph v4.2.0."
+  "note": "Fix Pack 01 follow-up: always-visible four-hero equipment selector, class restrictions, button-based recipient changes, and hero equipment shown on a body silhouette (charm neck, armour torso, weapon hand). Existing 3 slots, saves, sets, loadouts and boss mechanics preserved; Safari module graph v4.3.0."
 }

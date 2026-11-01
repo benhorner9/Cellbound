@@ -1,7 +1,7 @@
 import {
  HERO_IDS,HERO_NAMES,SLOTS,ITEM_DEFS,BOSSES,validateProfile,bonuses,itemOwner,
  itemSet,SET_DEFS,itemBonusText,PROFILE_KEY
-} from './progression.js?v=4.2.0';
+} from './progression.js?v=4.3.0';
 
 // Offline-local build and backup helpers. Presets reference instances, never clone them.
 // Do not use this data as authoritative items in future online play.
