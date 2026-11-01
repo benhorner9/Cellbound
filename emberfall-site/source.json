@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "065163f943601fb49c919271c168f2834d707cb4",
+  "sourceCommit": "e0a950d210617c635a6f6f29edfe5b2a88804c3e",
   "target": "/emberfall/",
-  "stage": "combat-ui-v4.8.3-two-skills-fullwidth",
+  "stage": "camp-hub-v4.9.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "User-approved final UI: full width uninterrupted Canvas 2D arena, exactly two real abilities immediately below, four selectable hero cards immediately below skills. Remove extra selected-hero header/panel and command strip; keep Party/Talents/Gear/Bag/Crafting, restart and boss navigation accessible via compact Company top menu and existing boss header button. Preserve gameplay/saves/progression. Source PR #30 passed syntax/unit/Chromium/WebKit and merged as 065163f943601fb49c919271c168f2834d707cb4; six staged source assets are SHA-identical. Safari cache graph v4.8.3."
+  "note": "Dedicated Emberguard Stronghold home base is the entry screen; eight functional camp destinations and live company statistics; separate boss expedition board, intentional fight launch, battle-only Canvas HUD, return to camp after fights. Existing company saves, hero and item ownership, combat, talents and crafting preserved. Source PR #31 passed 79 unit tests plus desktop, Chromium touch and WebKit smoke, merged source commit e0a950d210617c635a6f6f29edfe5b2a88804c3e. Hosted asset hashes mirror canonical code. Browser cache pins v4.9.0."
 }

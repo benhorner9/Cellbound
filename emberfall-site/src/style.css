@@ -939,3 +939,90 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
  .combat-action-dock .ability-list{grid-template-columns:repeat(2,minmax(0,1fr))}
  .combat-action-dock .skill-key{display:none}
 }
+
+/* Emberguard Stronghold v4.9.0: real home base, separate from the combat arena. */
+#app[data-view="camp"] .game-layout{display:none}
+#app[data-view="battle"] .camp-screen{display:none}
+#app[data-view="camp"] .top-actions{display:none}
+#app[data-view="camp"] .topbar{margin-bottom:8px}
+.camp-screen{display:block;min-height:calc(100dvh - 150px)}
+.camp-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 11px;padding:8px 14px;border:1px solid #536d60;border-radius:11px;background:#18332e}
+.camp-nav-links{display:flex;gap:8px}
+.camp-nav-button{border:1px solid #75927a;border-radius:8px;background:#29483b;color:#dfd7ae;padding:9px 17px;min-height:42px;font:700 13px system-ui,sans-serif;touch-action:manipulation}
+.camp-nav-button.active,.camp-nav-button[aria-pressed="true"]{background:#58704b;border-color:#e3c483;color:#fff1cd}
+.camp-nav-note{color:#b8cdb6;font:11px system-ui,sans-serif}
+.camp-content{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(325px,.9fr);align-items:start;gap:14px}
+.camp-building-area{min-width:0}
+.camp-intro{position:relative;overflow:hidden;padding:18px 22px 15px;border:1px solid #789171;border-radius:13px;background:radial-gradient(ellipse at 100% 0%,#4c7659 0%,transparent 53%),linear-gradient(128deg,#29473a,#162e2b 80%);box-shadow:inset 0 1px #d5e8bf25}
+.camp-intro:after{content:'✦';position:absolute;right:18px;top:-41px;font:190px Georgia,serif;color:#e9d29c12;pointer-events:none}
+.camp-intro h1{position:relative;z-index:1;margin:6px 0 6px;font:700 clamp(26px,3vw,37px)/1.1 Georgia,serif;color:#f6dfb6}
+.camp-intro p{position:relative;z-index:1;margin:0 0 13px;color:#cfe1cb;font:12px/1.5 system-ui,sans-serif;max-width:620px}
+.camp-status-line{display:flex;gap:16px;flex-wrap:wrap;color:#dfdcb4;font:11px system-ui,sans-serif}
+.camp-status-line b{color:#ffe1a0}
+.camp-grounds{position:relative;margin-top:12px;border:1px solid #6c876f;border-radius:13px;padding:13px;background:radial-gradient(ellipse at center,#3e6650 0%,#2c4a3b 62%,#1e3930 100%)}
+.camp-grounds:before{content:'';position:absolute;inset:28px 12px 5px;border-radius:47%;border:3px dashed #c4b88523;pointer-events:none}
+.camp-ground-heading{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.camp-ground-heading>span:last-child{font:10px system-ui,sans-serif;color:#c2d0ba}
+.camp-buildings{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.camp-building{min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;gap:5px;min-height:115px;padding:10px 6px;border:1px solid #879879;border-radius:11px;background:linear-gradient(145deg,#42624d,#1d392f);box-shadow:0 4px 0 #112b25,inset 0 1px #c6d5b326;touch-action:manipulation}
+.camp-building:hover,.camp-building:focus-visible{background:#527452;border-color:#f0d28d}
+.camp-building:active{transform:translateY(2px);box-shadow:0 2px 0 #112b25}
+.camp-building-icon{display:grid;place-items:center;width:41px;height:39px;border-radius:10px;background:#213e32;border:1px solid #a4a477;color:#f2d594;font:26px Georgia,serif}
+.camp-building strong{font:700 14px/1.15 Georgia,serif;color:#fff0d0}
+.camp-building small{font:10px/1.3 system-ui,sans-serif;color:#c7d9c5}
+.camp-roster-panel{display:flex;align-items:center;gap:14px;justify-content:space-between;margin-top:11px;border:1px solid #637a63;border-radius:11px;padding:10px 13px;background:#1b3530}
+.camp-roster-panel h2{margin:3px 0 0;font:700 16px Georgia,serif;color:#efddb8;white-space:nowrap}
+.camp-roster{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;flex:1;max-width:630px}
+.camp-roster-member{display:flex;gap:6px;align-items:center;min-width:0;background:#27483b;padding:5px;border:1px solid #647e69;border-radius:8px}
+.camp-roster-icon{display:grid;place-items:center;flex:0 0 28px;width:28px;height:32px;font:18px Georgia,serif;border:1px solid #afab7b;border-radius:6px}
+.camp-roster-member strong{display:block;font:700 12px Georgia,serif}
+.camp-roster-member small{display:block;color:#c9d6b9;font:9px system-ui,sans-serif}
+.camp-expedition-panel{min-width:0;border:1px solid #a39c78;border-radius:13px;padding:17px;background:linear-gradient(150deg,#2b483c,#142d2b 85%);box-shadow:inset 0 1px #fff2c21b}
+.camp-board-heading h2{margin:5px 0 6px;font:700 27px Georgia,serif;color:#ffe3ad}
+.camp-board-heading p{font:12px/1.45 system-ui,sans-serif;color:#c5d9c6;margin:0 0 13px}
+.camp-expedition-panel .encounter-choices{display:grid;grid-template-columns:1fr;gap:7px;margin:8px 0;max-width:none}
+.camp-expedition-panel .encounter-choice{display:flex;align-items:center;min-height:65px;padding:7px 10px;gap:10px;border:1px solid #728b70;border-radius:9px;background:#24463a;text-align:left}
+.camp-expedition-panel .encounter-choice.current{background:#3b5d45;border-color:#edc984;box-shadow:inset 0 0 0 1px #e2bc7359}
+.camp-expedition-panel .encounter-main{min-width:0;flex:1}
+.camp-expedition-panel .encounter-main b{font-size:16px}
+.camp-expedition-panel .encounter-main small{font-size:10px}
+.camp-expedition-panel .encounter-icon{flex:0 0 38px;font-size:25px}
+.camp-expedition-panel .encounter-check{font:20px Georgia,serif;color:#f0d18a}
+.camp-expedition-panel .encounter-warning{color:#d9e2cd!important;background:#203e35;padding:10px;border:1px solid #657b66;border-radius:9px}
+.camp-expedition-panel .unlock-message{color:#f6d4a8;font:11px/1.4 system-ui,sans-serif}
+.camp-fight-btn{width:100%;margin:4px 0 7px;touch-action:manipulation}
+.camp-expedition-panel .encounter-controls{color:#c2d2be;font:11px system-ui,sans-serif;text-align:center;margin:6px 0 9px}
+.camp-expedition-panel .picker-actions{display:flex;gap:7px}
+.camp-expedition-panel .picker-actions .quiet-btn{flex:1;min-width:0;padding:8px 5px;white-space:normal;min-height:42px}
+.camp-screen[data-camp-tab="expeditions"] .camp-content{grid-template-columns:minmax(0,1fr)}
+.camp-screen[data-camp-tab="expeditions"] .camp-building-area{display:none}
+.camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel{max-width:980px;width:100%;margin:0 auto}
+.camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-choices{grid-template-columns:repeat(3,minmax(0,1fr))}
+.camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-choice{min-height:137px;display:flex;flex-direction:column;text-align:center;justify-content:center}
+.camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-main{text-align:center}
+@media(max-width:1150px){
+ .camp-content{grid-template-columns:minmax(0,1.25fr) minmax(315px,.85fr);gap:10px}
+ .camp-buildings{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .camp-building{min-height:96px}
+ .camp-roster-panel{flex-direction:column;align-items:stretch}
+ .camp-roster{max-width:none}
+}
+@media(max-width:795px){
+ .camp-content{grid-template-columns:1fr}
+ .camp-expedition-panel{order:2}
+ .camp-buildings{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .camp-roster-panel{flex-direction:column;align-items:stretch}
+}
+@media(max-width:540px){
+ .camp-nav{padding:7px}
+ .camp-nav-note{display:none}
+ .camp-nav-links{width:100%}
+ .camp-nav-button{flex:1}
+ .camp-intro{padding:14px}
+ .camp-intro h1{font-size:26px}
+ .camp-buildings{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .camp-building{min-height:93px}
+ .camp-roster{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-choices{grid-template-columns:1fr}
+ .camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-choice{min-height:65px;flex-direction:row;text-align:left;justify-content:flex-start}
+}
