@@ -120,11 +120,17 @@ for(const btn of document.querySelectorAll('#abilities [data-slot]'))btn.addEven
 // The overlay is rebuilt between expeditions, so delegate all its buttons.
 $('overlayContent').addEventListener('click',e=>{
  const choice=e.target.closest('[data-boss]');
- if(choice&&!choice.disabled){if(canChallenge(company,choice.dataset.boss)){bossSelection=choice.dataset.boss;state=newBattle();renderEncounterChoices();}return;}
+ if(choice){
+  const id=choice.dataset.boss;
+  if(Object.hasOwn(BOSSES,id)){bossSelection=id;state=newBattle();renderEncounterChoices();}
+  return;
+ }
  if(e.target.closest('#startBtn'))start();
  if(e.target.closest('#againBtn'))restart();
  if(e.target.closest('#inspectBtn'))workshop.open(state.phase==='victory'?'pack':'heroes',selected);
  if(e.target.closest('#chooseBossBtn'))returnToCamp();
+ if(e.target.closest('#manageFromPickerBtn'))workshop.open('heroes',selected);
+ if(e.target.closest('#bagFromPickerBtn'))workshop.open('pack',selected);
 });
 $('restartBtn').addEventListener('click',()=>restart());
 $('pauseBtn').addEventListener('click',()=>{if(state.phase!=='playing')return;paused=!paused;syncUI(true);announce(paused?'Encounter paused':'Back to battle!',1.2);});
@@ -141,25 +147,35 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('resize',resize,{passive:true});
 function renderEncounterChoices(){
- const boss=bossInfo(bossSelection);
+ const boss=bossInfo(bossSelection),unlocked=canChallenge(company,bossSelection);
  const options=Object.values(BOSSES).map(b=>{
   const locked=!canChallenge(company,b.id),active=b.id===bossSelection;
-  return '<button type="button" class="encounter-choice '+(active?'current ':'')+(locked?'locked':'')+'" data-boss="'+b.id+'" '+(locked?'disabled':'')+'><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(locked?'🔒 Requires level '+b.unlock+' on all four heroes':'Level '+b.unlock+' · '+b.description)+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
+  return '<button type="button" class="encounter-choice '+(active?'current ':'')+(locked?'locked':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(locked?'🔒 Preview · all four heroes need level '+b.unlock:'Level '+b.unlock+' · '+b.description)+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
  }).join('');
- $('overlayContent').innerHTML='<div class="overlay-emblem">✦</div><span class="eyebrow">BLOCK 03 · THREE BOSSES TO MASTER</span><h1>Choose Your Expedition</h1><p>Command four heroes, collect exclusive equipment and unlock tougher bosses as you level up.</p><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p><div class="overlay-hints"><span>✦ Select heroes</span><span>➤ Drag to dodge</span><span>⚡ Time abilities</span></div><button id="startBtn" class="primary-btn large" type="button" '+(!canChallenge(company,bossSelection)?'disabled':'')+'>Fight '+boss.name+' →</button>';
+ $('overlay').classList.add('choose-mode');
+ $('overlay').classList.remove('result-mode');
+ $('overlay').setAttribute('role','dialog');
+ $('overlay').setAttribute('aria-label','Choose your boss expedition');
+ $('overlayContent').innerHTML='<div class="overlay-emblem">✦</div><span class="eyebrow">BLOCK 03 · THREE BOSSES TO MASTER</span><h1>Choose Your Expedition</h1><p>Tap any boss to preview its challenge. Unlock tougher fights as all four heroes level up.</p><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(unlocked?'':'<p class="unlock-message" role="status">🔒 '+boss.name+' is locked. All four heroes must reach level '+boss.unlock+'. Fight an unlocked boss to earn XP.</p>')+'<button id="startBtn" class="primary-btn large" type="button" '+(!unlocked?'disabled':'')+'>Fight '+boss.name+' →</button><p class="encounter-controls">Locked bosses can be previewed. Choose an unlocked boss to start fighting.</p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">✦ Heroes &amp; Talents</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
 }
 function returnToCamp(){
  paused=false;rewardCommitted=false;selected='knight';state=newBattle();
  floaters=[];bursts=[];projectiles=[];markers=[];
  $('overlay').classList.remove('hidden');$('pauseBtn').disabled=true;
  renderEncounterChoices();syncUI(true);
+ $('overlayContent').focus();
 }
 function start(){
- if(state.phase==='ready'&&canChallenge(company,bossSelection)){state=newBattle();rewardCommitted=false;startEncounter(state);$('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);}
+ if(state.phase==='ready'&&canChallenge(company,bossSelection)){
+  state=newBattle();rewardCommitted=false;startEncounter(state);
+  $('overlay').classList.remove('choose-mode','result-mode');
+  $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
+ }
 }
 function restart(){
  state=newBattle();rewardCommitted=false;selected='knight';paused=false;
  floaters=[];bursts=[];projectiles=[];markers=[];noticeUntil=0;startEncounter(state);
+ $('overlay').classList.remove('choose-mode','result-mode');
  $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
 }
 function announce(text,seconds=2.1){
@@ -491,7 +507,10 @@ function showEnd(){
   }else{recordDefeat(company);writeProfile(storage,company);}
  }
  $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button></div>';
- $('overlay').classList.remove('hidden');
+ $('overlay').classList.add('result-mode');
+ $('overlay').setAttribute('role','dialog');
+ $('overlay').setAttribute('aria-label','Boss fight result');
+ $('overlay').classList.remove('choose-mode','hidden');
  syncUI(true);
 }
 function frame(now){
@@ -513,7 +532,7 @@ const workshop=mountWorkshop({
 });
 $('companyBtn').addEventListener('click',()=>workshop.open('heroes',selected));
 $('bagBtn').addEventListener('click',()=>workshop.open('pack',selected));
-$('bossSelectBtn').addEventListener('click',returnToCamp);
+for(const id of ['bossSelectBtn','bossSelectTopBtn'])$(id).addEventListener('click',returnToCamp);
 makeBackground();
 resize();
 renderEncounterChoices();
