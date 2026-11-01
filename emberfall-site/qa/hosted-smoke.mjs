@@ -14,7 +14,7 @@ page.on('response',r=>{
 try{
  await page.goto(base+'?sha='+process.env.GITHUB_SHA,{waitUntil:'networkidle',timeout:35000});
  // Verify this is a playable, persistent progression release, not a cosmetic mock-up.
- await page.locator('#companyBtn').click();
+ await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="shop"]').click();
  await page.locator('[data-action="buy"][data-id="field-vest"]').click();
  await page.locator('#workshopTabs [data-tab="pack"]').click();
@@ -22,11 +22,13 @@ try{
  await page.locator('[data-action="equip"][data-id="i1"]').click();
  await page.locator('#workshopClose').click();
  await page.reload({waitUntil:'networkidle'});
- await page.locator('#companyBtn').click();
+ await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="pack"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Equipped by Aldric'))throw Error('Equipped item did not persist');
  await page.locator('#workshopClose').click();
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('178 / 178'))throw Error('Equipment did not change real combat HP');
+ const box=await page.locator('#overlayContent').boundingBox();
+ if(!box||box.y<-2||box.y+box.height>823)throw Error('Live boss picker clipped on iPad view');
  await page.locator('#startBtn').click();
  await page.waitForFunction(()=>document.getElementById('phaseLabel').textContent.includes('LIVE'),null,{timeout:10000});
  await page.locator('[data-hero="mage"]').click();
@@ -50,8 +52,11 @@ try{
  if((await page.locator('#battleTime').innerText())!=='00:00')throw Error('Restart not reset');
  // After the familiar first boss works, confirm both new bosses are playable,
  // their loot tables are real and retreating does not generate a reward.
- await page.locator('#bossSelectBtn').click();
- if(!(await page.locator('[data-boss="cindermaw"]').isDisabled()))throw Error('New boss should be locked at level 1');
+ await page.locator('#bossSelectTopBtn').click();
+ await page.locator('[data-boss="cindermaw"]').click();
+ if(!(await page.locator('.unlock-message').innerText()).includes('level 2'))throw Error('Locked boss preview missing');
+ if(!(await page.locator('#startBtn').isDisabled()))throw Error('Level gate was bypassed');
+ await page.locator('[data-boss="thornwarden"]').click();
  await page.evaluate(async()=>{
   const {readProfile,writeProfile}=await import('./src/progression.js');
   const p=readProfile(localStorage);
@@ -62,7 +67,7 @@ try{
  for(const entry of [{id:'cindermaw',name:'CINDERMAW',unique:'The Cinderheart',warning:'FURNACE BREATH'},
                      {id:'tempest',name:'TEMPEST SERAPH',unique:'Eye of the Tempest',warning:'LIGHTNING LANE'}]){
   await page.locator('[data-boss="'+entry.id+'"]').click();
-  await page.locator('#companyBtn').click();
+  await page.locator('#manageFromPickerBtn').click();
   await page.locator('#workshopTabs [data-tab="loot"]').click();
   await page.locator('#dropBoss').selectOption(entry.id);
   if(!(await page.locator('#workshopBody').innerText()).includes(entry.unique))throw Error('Missing unique loot: '+entry.unique);

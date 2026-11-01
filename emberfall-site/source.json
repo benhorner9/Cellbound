@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "46c209e63ba37cee1a299553feaf2d3730c37d15",
+  "sourceCommit": "f9dd8036856fe4cb9a0e1cd778f89a06e92d9f65",
   "target": "/emberfall/",
-  "stage": "block03-three-bosses-and-exclusive-loot",
+  "stage": "block03-boss-picker-ipad-hotfix",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -12,5 +12,5 @@
     "src/workshop.js",
     "src/style.css"
   ],
-  "note": "Playable three-boss local PvE with level unlocks, unique loot and distinct hazard mechanics; no online PvP or trading."
+  "note": "Block 03 hotfix: both Choose Boss buttons respond, locked boss cards preview with level requirements, and the chooser is fully visible on iPad; local PvE only."
 }
