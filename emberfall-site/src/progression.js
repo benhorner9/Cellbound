@@ -77,7 +77,15 @@ export const BOSSES=Object.freeze({
   drops:[{id:'windpiercer',weight:21},{id:'stormscale',weight:21},{id:'zephyr-charm',weight:19},{id:'thunder-edge',weight:13},{id:'cloudstaff',weight:13},{id:'skywarden-censer',weight:11},{id:'tempest-eye',weight:2}]}
 });
 export function bossInfo(id='thornwarden'){return BOSSES[id]||BOSSES.thornwarden;}
-export function canChallenge(profile,id){const boss=BOSSES[id];return !!(boss&&profile&&HERO_IDS.every(h=>profile.heroes?.[h]?.level>=boss.unlock));}
+// Boss levels are guidance for the playable prototype, not hard locks.
+// Players can test any available encounter with their own party and earn its true rewards.
+export function atRecommendedLevel(profile,id){
+ const boss=BOSSES[id];
+ return !!(boss&&profile?.heroes&&HERO_IDS.every(h=>profile.heroes?.[h]?.level>=boss.unlock));
+}
+export function canChallenge(profile,id){
+ return !!(Object.hasOwn(BOSSES,id)&&profile?.heroes&&HERO_IDS.every(h=>Number.isInteger(profile.heroes?.[h]?.level)));
+}
 export function bossDropTable(id='thornwarden'){return bossInfo(id).drops;}
 export function bossRewardInfo(id='thornwarden'){const b=bossInfo(id);return {xp:b.xp,gold:b.gold};}
 export const QUARTERMASTER=Object.freeze(['recruit-sword','briar-bow','apprentice-focus','field-vest','brass-charm']);

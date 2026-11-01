@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "f9dd8036856fe4cb9a0e1cd778f89a06e92d9f65",
+  "sourceCommit": "11ba4257e594cd2b5bd683d17f97fce4920c6173",
   "target": "/emberfall/",
-  "stage": "block03-boss-picker-ipad-hotfix",
+  "stage": "block03-boss-choice-actually-starts-selected-encounter",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -12,5 +12,5 @@
     "src/workshop.js",
     "src/style.css"
   ],
-  "note": "Block 03 hotfix: both Choose Boss buttons respond, locked boss cards preview with level requirements, and the chooser is fully visible on iPad; local PvE only."
+  "note": "Any of the three bosses is immediately fightable at any level; recommended levels shown, actual encounter binding/loot correct, boss choice persists locally. No online ownership or trading."
 }

@@ -1,5 +1,5 @@
 import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents} from './engine.js';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge} from './progression.js';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel} from './progression.js';
 import {mountWorkshop} from './workshop.js';
 
 const $=id=>document.getElementById(id);
@@ -9,10 +9,15 @@ const bgc=bg.getContext('2d');
 const TAU=Math.PI*2;
 let storage=null;try{storage=window.localStorage;}catch{}
 const company=readProfile(storage);
+const SELECTED_BOSS_KEY='emberfall-selected-boss-v1';
 let fightSerial=0,bossSelection='thornwarden';
-function newBattle(){
+try{
+ const stored=storage?.getItem(SELECTED_BOSS_KEY);
+ if(stored&&Object.hasOwn(BOSSES,stored))bossSelection=stored;
+}catch{}
+function newBattle(id=bossSelection){
  const serial=++fightSerial;
- const fight=createEncounter(((Date.now()>>>0)+serial)||1337,company,bossSelection);
+ const fight=createEncounter(((Date.now()>>>0)+serial)||1337,company,id);
  fight.receiptId='fight-'+Date.now().toString(36)+'-'+serial+'-'+Math.random().toString(36).slice(2,9);
  return fight;
 }
@@ -122,7 +127,7 @@ $('overlayContent').addEventListener('click',e=>{
  const choice=e.target.closest('[data-boss]');
  if(choice){
   const id=choice.dataset.boss;
-  if(Object.hasOwn(BOSSES,id)){bossSelection=id;state=newBattle();renderEncounterChoices();}
+  if(canChallenge(company,id))selectBoss(id);
   return;
  }
  if(e.target.closest('#startBtn'))start();
@@ -146,17 +151,28 @@ window.addEventListener('keydown',e=>{
  if('qwer'.includes(e.key.toLowerCase())&&e.key.length===1){const i='qwer'.indexOf(e.key.toLowerCase());selectHero(state.heroes[i].id);}
 });
 window.addEventListener('resize',resize,{passive:true});
+function selectBoss(id){
+ if(!canChallenge(company,id))return false;
+ bossSelection=id;
+ try{storage?.setItem(SELECTED_BOSS_KEY,id);}catch{}
+ state=newBattle(id);
+ // Update the actual combat HUD, not only the menu card, so the chosen encounter
+ // and the fight started from it always agree.
+ renderEncounterChoices();
+ syncUI(true);
+ return true;
+}
 function renderEncounterChoices(){
- const boss=bossInfo(bossSelection),unlocked=canChallenge(company,bossSelection);
+ const boss=bossInfo(bossSelection),recommended=atRecommendedLevel(company,bossSelection);
  const options=Object.values(BOSSES).map(b=>{
-  const locked=!canChallenge(company,b.id),active=b.id===bossSelection;
-  return '<button type="button" class="encounter-choice '+(active?'current ':'')+(locked?'locked':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(locked?'🔒 Preview · all four heroes need level '+b.unlock:'Level '+b.unlock+' · '+b.description)+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
+  const active=b.id===bossSelection,ready=atRecommendedLevel(company,b.id);
+  return '<button type="button" class="encounter-choice '+(active?'current ':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(ready?'✓ Party ready · recommended Lv '+b.unlock:'⚠ Recommended party level '+b.unlock+' · You can still fight')+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
  }).join('');
  $('overlay').classList.add('choose-mode');
  $('overlay').classList.remove('result-mode');
  $('overlay').setAttribute('role','dialog');
  $('overlay').setAttribute('aria-label','Choose your boss expedition');
- $('overlayContent').innerHTML='<div class="overlay-emblem">✦</div><span class="eyebrow">BLOCK 03 · THREE BOSSES TO MASTER</span><h1>Choose Your Expedition</h1><p>Tap any boss to preview its challenge. Unlock tougher fights as all four heroes level up.</p><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(unlocked?'':'<p class="unlock-message" role="status">🔒 '+boss.name+' is locked. All four heroes must reach level '+boss.unlock+'. Fight an unlocked boss to earn XP.</p>')+'<button id="startBtn" class="primary-btn large" type="button" '+(!unlocked?'disabled':'')+'>Fight '+boss.name+' →</button><p class="encounter-controls">Locked bosses can be previewed. Choose an unlocked boss to start fighting.</p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">✦ Heroes &amp; Talents</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
+ $('overlayContent').innerHTML='<div class="overlay-emblem">✦</div><span class="eyebrow">BLOCK 03 · THREE BOSSES TO MASTER</span><h1>Choose Your Expedition</h1><p>Tap any boss to change your next battle. Every boss is playable now, even below its recommended level.</p><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. Your heroes can attempt it now, but the battle may be challenging.</p>')+'<button id="startBtn" class="primary-btn large" type="button">Fight '+boss.name+' →</button><p class="encounter-controls">Selected battle: <b id="selectedBossName">'+boss.name+'</b>. Tap Fight to enter that exact boss encounter. Boss selection is remembered on this device.</p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">✦ Heroes &amp; Talents</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
 }
 function returnToCamp(){
  paused=false;rewardCommitted=false;selected='knight';state=newBattle();
@@ -167,13 +183,14 @@ function returnToCamp(){
 }
 function start(){
  if(state.phase==='ready'&&canChallenge(company,bossSelection)){
-  state=newBattle();rewardCommitted=false;startEncounter(state);
+  // Recreate for newly equipped items, but explicitly pin to the selected boss.
+  state=newBattle(bossSelection);rewardCommitted=false;startEncounter(state);
   $('overlay').classList.remove('choose-mode','result-mode');
   $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
  }
 }
 function restart(){
- state=newBattle();rewardCommitted=false;selected='knight';paused=false;
+ state=newBattle(bossSelection);rewardCommitted=false;selected='knight';paused=false;
  floaters=[];bursts=[];projectiles=[];markers=[];noticeUntil=0;startEncounter(state);
  $('overlay').classList.remove('choose-mode','result-mode');
  $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
