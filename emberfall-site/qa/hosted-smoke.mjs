@@ -119,17 +119,17 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.7.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.8.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.7.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.8.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
- if(!(await page.locator('#workshopBody').innerText()).includes('2/3 equipped'))throw Error('Live 2-piece set not active');
+ if(!(await page.locator('#workshopBody').innerText()).includes('2/4 equipped'))throw Error('Live 2-piece set not active');
  await page.locator('[data-build-name="0"]').fill('Hosted Tank');
  await page.locator('[data-action="save-build"][data-index="0"]').click();
  await page.locator('#workshopTabs [data-tab="pack"]').click();
@@ -142,7 +142,7 @@ try{
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('1/3 equipped'))throw Error('Live set did not deactivate after gear switch');
  await page.locator('[data-action="apply-build"][data-index="0"]').click();
- if(!(await page.locator('#workshopBody').innerText()).includes('2/3 equipped'))throw Error('Live saved build did not restore gear');
+ if(!(await page.locator('#workshopBody').innerText()).includes('2/4 equipped'))throw Error('Live saved build did not restore gear');
  await page.locator('#workshopTabs [data-tab="backup"]').click();
  const data=await page.locator('#backupExport').inputValue();
  if(JSON.parse(data).builds.heroes.knight[0].name!=='Hosted Tank')throw Error('Live backup omitted presets');
@@ -162,7 +162,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.7.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -185,7 +185,7 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.7.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -217,6 +217,34 @@ try{
  if(!(await page.locator('#combatTempo').innerText()).includes('70% SPEED'))throw Error('Live PvE movement slowdown missing from HUD');
  await page.locator('#restartBtn').click();
  await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
+ // Isolated live source must also support real craft XP, generated gear and potion effects.
+ await page.evaluate(async()=>{
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.8.0');
+  const p=readProfile(localStorage);
+  for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=30;
+  if(!writeProfile(localStorage,p))throw Error('Live crafting fixture could not be saved');
+ });
+ await page.reload({waitUntil:'networkidle'});
+ await page.locator('#manageFromPickerBtn').click();
+ await page.locator('#workshopTabs [data-tab="craft"]').click();
+ if(!(await page.locator('.craft-studio').isVisible())||(await page.locator('.craft-skill-tab').count())!==2)throw Error('Live Smithing and Alchemy guild missing');
+ await page.locator('[data-action="craft-select"][data-id="forge-verdant-helm"]').click();
+ await page.locator('[data-action="craft-heat"]').click();
+ await page.waitForTimeout(550);
+ await page.locator('[data-action="craft-strike"]').evaluate(el=>el.click());
+ const gear=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
+ if(!gear.items.some(item=>item.defId==='verdant-helm')||gear.skills.smithing.level<2)throw Error('Live Smithing item or XP not awarded');
+ await page.locator('[data-action="craft-skill"][data-skill="alchemy"]').click();
+ await page.locator('[data-action="craft-select"][data-id="brew-verdant-draught"]').click();
+ await page.locator('[data-action="craft-add"][data-id="verdant-essence"]').click();
+ await page.locator('[data-action="craft-add"][data-id="verdant-ore"]').click();
+ await page.locator('[data-action="prepare-elixir"][data-id="verdant-draught"]').click();
+ const ready=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
+ if(ready.preparedElixir!=='verdant-draught'||ready.skills.alchemy.level<2)throw Error('Live potion mixing and preparation failed');
+ await page.locator('#workshopClose').click();
+ await page.locator('#startBtn').click();
+ const afterUse=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
+ if(afterUse.preparedElixir!==null)throw Error('Live potion was not consumed at fight start');
  if(errors.length)throw Error(errors.join('\n'));
  console.log('PASS: hosted Emberfall all bosses, actual set-aware comparison, saved unique-item builds, validated JSON backup/restore, persisted equipment and 2-piece combat HP.');
 }catch(e){console.error('LIVE BROWSER FAILED:',e.stack||e);if(errors.length)console.error(errors.join('\n'));process.exitCode=1;}

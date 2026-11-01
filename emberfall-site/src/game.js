@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.7.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel} from './progression.js?v=4.7.0';
-import {mountWorkshop} from './workshop.js?v=4.7.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.8.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES} from './progression.js?v=4.8.0';
+import {mountWorkshop} from './workshop.js?v=4.8.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -22,7 +22,7 @@ function newBattle(id=bossSelection){
  return fight;
 }
 let state=newBattle(),selected=(company.partyOrder?.[0]||'knight'),paused=false,sound=false,last=0,uiLast=0;
-let rewardCommitted=false,workshopWasPaused=false;
+let rewardCommitted=false,resultDismissed=false,workshopWasPaused=false;
 let floaters=[],bursts=[],projectiles=[],markers=[],noticeUntil=0,noticeText='',startPoint=null;
 let audioCtx=null;
 const heroColors={knight:'#8cb6c0',ranger:'#94bd79',mage:'#c2a4e9',cleric:'#f4d28c'};
@@ -137,6 +137,7 @@ $('overlayContent').addEventListener('click',e=>{
  if(e.target.closest('#chooseBossBtn'))returnToCamp();
  if(e.target.closest('#manageFromPickerBtn'))workshop.open('party',selected);
  if(e.target.closest('#bagFromPickerBtn'))workshop.open('pack',selected);
+ if(e.target.closest('#dismissRewardsBtn')){resultDismissed=true;$('overlay').classList.add('hidden');$('overlay').classList.remove('result-mode');}
 });
 $('restartBtn').addEventListener('click',()=>restart());
 $('pauseBtn').addEventListener('click',()=>{if(state.phase!=='playing')return;paused=!paused;syncUI(true);announce(paused?'Encounter paused':'Back to battle!',1.2);});
@@ -176,7 +177,7 @@ function renderEncounterChoices(){
  $('overlayContent').innerHTML='<div class="overlay-emblem">✦</div><span class="eyebrow">BLOCK 03 · THREE BOSSES TO MASTER</span><h1>Choose Your Expedition</h1><p>Tap any boss to change your next battle. Every boss is playable now, even below its recommended level.</p><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. Your heroes can attempt it now, but the battle may be challenging.</p>')+'<button id="startBtn" class="primary-btn large" type="button">Fight '+boss.name+' →</button><p class="encounter-controls">Selected battle: <b id="selectedBossName">'+boss.name+'</b>. Tap Fight to enter that exact boss encounter. Boss selection is remembered on this device.</p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">✦ Heroes &amp; Talents</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
 }
 function returnToCamp(){
- paused=false;rewardCommitted=false;selected=company.partyOrder?.[0]||'knight';state=newBattle();
+ paused=false;rewardCommitted=false;resultDismissed=false;selected=company.partyOrder?.[0]||'knight';state=newBattle();
  floaters=[];bursts=[];projectiles=[];markers=[];
  $('overlay').classList.remove('hidden');$('pauseBtn').disabled=true;
  renderEncounterChoices();syncUI(true);
@@ -185,13 +186,20 @@ function returnToCamp(){
 function start(){
  if(state.phase==='ready'&&canChallenge(company,bossSelection)){
   // Recreate for newly equipped items, but explicitly pin to the selected boss.
-  state=newBattle(bossSelection);rewardCommitted=false;selected=state.heroes[0].id;startEncounter(state);
+  state=newBattle(bossSelection);rewardCommitted=false;resultDismissed=false;selected=state.heroes[0].id;
+  // The benefit was already included when createEncounter read preparedElixir.
+  // Consume the prepared bottle exactly once at the start of this attempt.
+  const used=consumePreparedElixir(company);
+  if(used){state.elixirUsed=used;writeProfile(storage,company);}
+  startEncounter(state);
   $('overlay').classList.remove('choose-mode','result-mode');
   $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
  }
 }
 function restart(){
- state=newBattle(bossSelection);rewardCommitted=false;selected=state.heroes[0].id;paused=false;
+ state=newBattle(bossSelection);rewardCommitted=false;resultDismissed=false;selected=state.heroes[0].id;paused=false;
+ const used=consumePreparedElixir(company);
+ if(used){state.elixirUsed=used;writeProfile(storage,company);}
  floaters=[];bursts=[];projectiles=[];markers=[];noticeUntil=0;startEncounter(state);
  $('overlay').classList.remove('choose-mode','result-mode');
  $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
@@ -549,14 +557,19 @@ function showEnd(){
   if(win){
    const reward=grantVictory(company,state.receiptId,state.seed,state.bossId);
    if(reward){
-    const saved=writeProfile(storage,company);
-    const def=ITEM_DEFS[reward.item.defId];
-    const leveled=reward.levels.map(l=>company.heroes[l.id]&&l.id[0].toUpperCase()+l.id.slice(1)+' Lv'+l.to).join(' · ');
-    rewardHTML='<div class="victory-rewards"><h3>✦ Victory Rewards</h3><p>+ '+reward.gold+' gold &nbsp;·&nbsp; + '+reward.xp+' XP per hero</p><p class="rare-drop">'+def.icon+' '+def.name+' · '+def.rarity+'</p><p>'+(leveled?'Level up! '+leveled:'Boss defeated — keep farming for rarer items!')+'</p><small class="notice-local">'+(saved?'Progress saved in this browser.':'Storage unavailable — reward is held only until this page closes.')+'</small></div>';
+    const saved=writeProfile(storage,company),def=ITEM_DEFS[reward.item.defId];
+    const escText=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+    const xpRows=reward.heroXp.map(h=>{
+     const fromNeed=xpNeeded(h.fromLevel),toNeed=xpNeeded(h.toLevel);
+     const start=fromNeed?Math.floor(100*h.fromXp/fromNeed):100,end=toNeed?Math.floor(100*h.toXp/toNeed):100;
+     return '<div class="victory-xp-hero"><b>'+escText(HERO_NAMES[h.id])+' · Lv '+h.toLevel+'</b><small>+'+h.xp+' XP '+(h.toLevel>h.fromLevel?'· LEVEL UP!':'')+'</small><span class="victory-xp-track" style="--start:'+start+'%;--end:'+end+'%"><i></i></span><small>'+(toNeed?h.toXp+' / '+toNeed+' XP':'MAX LEVEL')+'</small></div>';
+    }).join('');
+    const drops=reward.materials.map(m=>'<div class="victory-loot-chip">'+MATERIAL_DEFS[m.id].icon+' '+escText(MATERIAL_DEFS[m.id].name)+' ×'+m.quantity+'</div>').join('');
+    rewardHTML='<div class="victory-rewards" aria-label="Actual granted victory rewards"><h3>✦ Victory Rewards</h3><p>Each hero gained '+reward.xp+' XP. These are your actual awarded items and reagents.</p><div class="victory-xp-party">'+xpRows+'</div><div class="victory-loot-grid"><div class="victory-loot-chip rarity-'+def.rarity.toLowerCase()+'">'+def.icon+' '+escText(def.name)+' · '+def.rarity+'</div><div class="victory-loot-chip">🪙 '+reward.gold+' gold</div>'+drops+'</div><small class="notice-local">'+(saved?'All rewards saved in this browser.':'Storage unavailable — rewards are held only until this page closes.')+'</small></div>';
    }
   }else{recordDefeat(company);writeProfile(storage,company);}
  }
- $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button></div>';
+ $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button><button class="quiet-btn" type="button" id="dismissRewardsBtn">Close Results</button></div>';
  $('overlay').classList.add('result-mode');
  $('overlay').setAttribute('role','dialog');
  $('overlay').setAttribute('aria-label','Boss fight result');
@@ -578,7 +591,7 @@ function frame(now){
  if(now>noticeUntil)$('announcement').classList.remove('show');
  render();
  if(now-uiLast>125){syncUI();uiLast=now;}
- if(endVisualsComplete()&&$('overlay').classList.contains('hidden'))showEnd();
+ if(!resultDismissed&&endVisualsComplete()&&$('overlay').classList.contains('hidden'))showEnd();
  requestAnimationFrame(frame);
 }
 const workshop=mountWorkshop({
@@ -591,6 +604,7 @@ $('companyBtn').addEventListener('click',()=>workshop.open('heroes',selected));
 $('partyBtn').addEventListener('click',()=>workshop.open('party',selected));
 $('talentsBtn').addEventListener('click',()=>workshop.open('talents',selected));
 $('bagBtn').addEventListener('click',()=>workshop.open('pack',selected));
+$('craftBtn').addEventListener('click',()=>workshop.open('craft',selected));
 for(const id of ['bossSelectBtn','bossSelectTopBtn'])$(id).addEventListener('click',returnToCamp);
 makeBackground();
 resize();
@@ -598,5 +612,5 @@ renderEncounterChoices();
 syncUI(true);
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.7.0';
+document.documentElement.dataset.emberfallReady='4.8.0';
 requestAnimationFrame(frame);

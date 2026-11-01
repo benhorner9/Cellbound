@@ -1,4 +1,4 @@
-import {bonuses as heroBonuses,bossInfo,partyOrder} from './progression.js?v=4.7.0';
+import {bonuses as heroBonuses,bossInfo,partyOrder,ALCHEMY_EFFECTS} from './progression.js?v=4.8.0';
 // Heroes of Emberfall — Block 01. Deterministic, renderer-independent PvE combat.
 // Browser-owned demo only; the eventual PvP server must never trust this simulation.
 export const WORLD={width:1200,height:640};
@@ -87,6 +87,7 @@ export function createEncounter(seed=1337,profile=null,bossId='thornwarden'){
  if(profile){
   // Formation order takes effect on the next encounter, never mid-fight.
   const order=partyOrder(profile);
+  const potion=profile.preparedElixir&&ALCHEMY_EFFECTS[profile.preparedElixir];
   const formation=[{x:240,y:342},{x:144,y:231},{x:152,y:457},{x:104,y:341}];
   encounter.heroes=order.map((id,index)=>{
    const h=encounter.heroes.find(unit=>unit.id===id);
@@ -96,6 +97,11 @@ export function createEncounter(seed=1337,profile=null,bossId='thornwarden'){
   encounter.selected=order[0];
   for(const h of encounter.heroes){
    const b=heroBonuses(profile,h.id);
+   // Prepared elixirs are consumable at the START of a fight in game.js.
+   // Their bonuses only affect this encounter, not saved gear or talent stats.
+   if(potion)for(const [key,amount] of Object.entries(potion.bonus)){
+    if(Object.hasOwn(b,key))b[key]+=amount;
+   }
    h.level=profile.heroes[h.id]?.level||1;
    h.maxHp+=b.health;h.hp=h.maxHp;
    h.damage+=b.attack;h.speed=(h.speed+b.speed)*(1+b.speedMultiplier);

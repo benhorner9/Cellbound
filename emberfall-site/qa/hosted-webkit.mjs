@@ -14,7 +14,7 @@ const tap=async(page,selector)=>{
 try{
  await context.route(/\/src\/progression\.js(?:\?.*)?$/,async route=>{
   const url=new URL(route.request().url());
-  if(url.searchParams.get('v')!=='4.7.0'){
+  if(url.searchParams.get('v')!=='4.8.0'){
    staleDependencyRequests++;
    // Simulate what the returning iPad used to have cached: no new named exports.
    await route.fulfill({status:200,contentType:'application/javascript',body:'export const oldProgression = true;'});
@@ -25,11 +25,11 @@ try{
  page.on('requestfailed',r=>failures.push('Request failed: '+r.url()+' '+r.failure()?.errorText));
  page.on('response',r=>{if(r.status()>=400)failures.push('HTTP '+r.status()+' '+r.url());});
  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.goto(site+'?safari-cache-recovery=4.7.0',{waitUntil:'networkidle',timeout:45000});
+ await page.goto(site+'?safari-cache-recovery=4.8.0',{waitUntil:'networkidle',timeout:45000});
  // WebKit can report networkidle while document.readyState is still "interactive".
  // Wait for the game's own post-listener startup marker instead of racing ES-module execution.
  let started=false;
- try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.7.0',null,{timeout:20000});started=true;}catch{}
+ try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.8.0',null,{timeout:20000});started=true;}catch{}
  if(!started){
   const snapshot=await page.evaluate(()=>({
    title:document.title,url:location.href,readyState:document.readyState,
@@ -77,13 +77,13 @@ try{
  if(!(await page.locator('#backupExport').inputValue()).includes('emberfall-local-backup'))throw Error('Live Safari backup UI not responsive');
  await tap(page,'#workshopClose');
  await page.reload({waitUntil:'networkidle',timeout:45000});
- await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.7.0',null,{timeout:20000})
+ await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.8.0',null,{timeout:20000})
    .catch(()=>{throw Error('Live Safari warm-cache reload failed to initialise in 20s');});
  if((await page.locator('#selectedBossName').innerText())!=='Tempest Seraph')throw Error('Selected boss lost after warm-cache reload');
  await tap(page,'#startBtn');
  if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Saved boss fails after reload');
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.7.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.0');
   const p=readProfile(localStorage);addItem(p,'emberglass-staff');addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('WebKit gear setup failed');
  });
@@ -119,6 +119,25 @@ try{
  await tap(page,'[data-action="equip"][data-id="i2"]');
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
  if(saved.heroes.ranger.gear.armour!=='i2')throw Error('Safari selected Ranger was not equipped');
+ await tap(page,'#workshopClose');
+ await page.evaluate(async()=>{
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.8.0');
+  const p=readProfile(localStorage);
+  for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=12;
+  if(!writeProfile(localStorage,p))throw Error('Safari reagent fixture could not be saved');
+ });
+ await page.reload({waitUntil:'networkidle',timeout:45000});
+ await tap(page,'#manageFromPickerBtn');
+ await tap(page,'#workshopTabs [data-tab="craft"]');
+ if(!(await page.locator('.craft-workbench').isVisible()))throw Error('Live Safari crafting workshop missing');
+ await tap(page,'[data-action="craft-skill"][data-skill="alchemy"]');
+ await tap(page,'[data-action="craft-select"][data-id="brew-verdant-draught"]');
+ await tap(page,'[data-action="craft-add"][data-id="verdant-essence"]');
+ await tap(page,'[data-action="craft-add"][data-id="verdant-ore"]');
+ if(!(await page.locator('.craft-potion').first().innerText()).includes('In stock: 1'))throw Error('Live Safari ingredient minigame did not grant potion');
+ await tap(page,'[data-action="prepare-elixir"][data-id="verdant-draught"]');
+ const prepared=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
+ if(prepared.preparedElixir!=='verdant-draught')throw Error('Live Safari could not prepare a potion');
  await tap(page,'#workshopClose');
  if(errors.length)throw Error('Live Safari console errors:\n'+errors.join('\n'));
  console.log('PASS: hosted WebKit Safari-engine cold/warm-cache startup, no stale imports, actual two boss fights, iPad taps and workshop.');
