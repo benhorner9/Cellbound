@@ -69,7 +69,7 @@ try{
  if((await page.locator('#campScreen').getAttribute('data-camp-tab'))!=='expeditions')throw Error('Expedition navigation failed');
  await page.locator('#campNavHome').click();
  const box=await page.locator('#campExpeditionPanel').boundingBox();
- if(!box||box.y<0||box.x<0)throw Error('Live expedition board not visible');
+ if(!box||box.width<300||!(await page.locator('#campExpeditionPanel').isVisible()))throw Error('Live expedition board not visible');
  await page.locator('#startBtn').click();
  await page.waitForFunction(()=>document.getElementById('phaseLabel').textContent.includes('LIVE'),null,{timeout:10000});
  const dock=await page.locator('#combatActionDock').boundingBox();
