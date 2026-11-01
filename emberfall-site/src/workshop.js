@@ -78,7 +78,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const boss=BOSSES[dropBoss],table=bossDropTable(dropBoss);
   const weight=table.reduce((a,x)=>a+x.weight,0);
   let html='<div class="workshop-intro"><h3>Boss Drop Tables</h3><p>Every victory awards XP, gold and exactly one item from that boss. Drop rates are per victory.</p></div>';
-  html+='<label for="dropBoss">Choose a boss</label><select id="dropBoss" class="hero-select">'+Object.values(BOSSES).map(b=>'<option value="'+b.id+'" '+(b.id===dropBoss?'selected':'')+'>'+esc(b.name)+(canChallenge(profile,b.id)?'':' · Unlock level '+b.unlock)+'</option>').join('')+'</select>';
+  html+='<label for="dropBoss">Choose a boss</label><select id="dropBoss" class="hero-select">'+Object.values(BOSSES).map(b=>'<option value="'+b.id+'" '+(b.id===dropBoss?'selected':'')+'>'+esc(b.name)+' · Recommended Lv '+b.unlock+'</option>').join('')+'</select>';
   html+='<div class="pack-stats"><span>'+esc(boss.place)+'</span><b>+'+boss.xp+' XP · '+boss.gold+' gold</b></div>';
   html+='<p class="workshop-disclaimer">'+esc(boss.mechanics)+'</p>';
   for(const entry of table){
