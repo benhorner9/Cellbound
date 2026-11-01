@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir
-} from './progression.js?v=4.8.1';
+} from './progression.js?v=4.8.2';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.8.1';
+} from './builds.js?v=4.8.2';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
