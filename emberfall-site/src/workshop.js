@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,SLOTS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet
-} from './progression.js?v=4.3.0';
+} from './progression.js?v=4.4.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.3.0';
+} from './builds.js?v=4.4.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -15,7 +15,7 @@ const rarityClass=name=>String(name).toLowerCase();
 export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),tabs=document.getElementById('workshopTabs');
- let current='heroes',heroId='knight',pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false;
+ let current='heroes',heroId='knight',pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false;
  const builds=readBuilds(storage);
  const tabNames={heroes:'Heroes & Talents',pack:'Equipment Bag',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
  function itemName(itemId){
@@ -31,26 +31,83 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    +'<small class="item-owner">'+(item.id.startsWith('shop-')?'Quartermaster stock · Price '+def.shop+' gold':owner?'Equipped by '+esc(HERO_NAMES[owner])+' · Sell for '+def.value+' gold':'In your bag · Sell for '+def.value+' gold')+'</small>'
    +(actions?'<div class="loot-actions">'+actions+'</div>':'')+'</div></article>';
  }
+ // Original lightweight vector hero illustration: visual only, never affects item ownership.
+ function equipmentCharacterArt(id){
+  const palette={
+   knight:{cloth:'#305b77',light:'#a4c4d1',dark:'#1d374b',glow:'#86cbe7',metal:'#b2c2c3'},
+   ranger:{cloth:'#476f48',light:'#9bb589',dark:'#243a30',glow:'#a7d991',metal:'#adbbb0'},
+   mage:{cloth:'#584b91',light:'#bc9cdd',dark:'#27244e',glow:'#c4a6ff',metal:'#bac5d7'},
+   cleric:{cloth:'#8b713e',light:'#f0d6a2',dark:'#424238',glow:'#e2d68d',metal:'#c2ced0'}
+  }[id]||{cloth:'#456675',light:'#c2ccdc',dark:'#252f42',glow:'#d9c693',metal:'#aabfc5'};
+  const gradient='emberfall-gear-'+id,accent=palette.glow;
+  const crest={knight:'◆',ranger:'❧',mage:'✧',cleric:'✚'}[id]||'✦';
+  return '<svg class="equipment-character-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 365" aria-hidden="true">'
+   +'<defs><linearGradient id="'+gradient+'-metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="'+palette.light+'"/><stop offset=".43" stop-color="'+palette.metal+'"/><stop offset="1" stop-color="'+palette.dark+'"/></linearGradient>'
+   +'<linearGradient id="'+gradient+'-cloth" x1="0" y1="0" x2=".4" y2="1"><stop stop-color="'+palette.cloth+'"/><stop offset="1" stop-color="'+palette.dark+'"/></linearGradient>'
+   +'<radialGradient id="'+gradient+'-aura"><stop stop-color="'+accent+'" stop-opacity=".35"/><stop offset="1" stop-color="'+accent+'" stop-opacity="0"/></radialGradient></defs>'
+   +'<ellipse cx="130" cy="183" rx="116" ry="172" fill="url(#'+gradient+'-aura)"/>'
+   +'<path d="M91 108Q61 129 48 234L39 323Q94 347 132 339Q173 351 219 320L208 231Q201 129 171 107Z" fill="url(#'+gradient+'-cloth)" stroke="'+palette.light+'" stroke-opacity=".48" stroke-width="2"/>'
+   +'<path d="M102 208L92 316L118 327L132 226L145 329L174 318L158 208Z" fill="'+palette.dark+'" stroke="'+palette.metal+'" stroke-width="3"/>'
+   +'<path d="M89 306L115 309L118 338Q114 352 81 349L82 335Z M147 309L177 307L181 336Q188 350 151 349L143 337Z" fill="#273039" stroke="'+palette.metal+'" stroke-width="3"/>'
+   +'<path d="M89 111L70 136L59 212L72 223L94 172L109 127Z M168 111L190 140L205 213L189 226L163 166L150 127Z" fill="url(#'+gradient+'-metal)" stroke="#273136" stroke-width="3"/>'
+   +'<path d="M72 212L86 220L75 245L59 235Z M189 217L203 208L214 233L195 245Z" fill="'+palette.dark+'" stroke="'+palette.metal+'" stroke-width="3"/>'
+   +'<path d="M94 109Q123 96 164 109L182 180L158 218L100 218L77 181Z" fill="url(#'+gradient+'-metal)" stroke="#182c35" stroke-width="4"/>'
+   +'<path d="M108 128L152 127L160 173L131 198L99 176Z" fill="url(#'+gradient+'-cloth)" stroke="'+palette.light+'" stroke-width="3"/>'
+   +'<path d="M88 182L174 182L164 203L93 203Z" fill="#27383b" stroke="'+palette.metal+'" stroke-width="3"/>'
+   +'<path d="M106 208L157 208L162 227L100 227Z" fill="'+palette.dark+'" stroke="'+palette.light+'" stroke-width="2"/>'
+   +'<path d="M91 109L61 135L67 154L104 134Z M167 108L199 135L190 158L156 133Z" fill="url(#'+gradient+'-metal)" stroke="'+accent+'" stroke-opacity=".65" stroke-width="2"/>'
+   +'<path d="M116 91L116 114Q130 126 145 114L145 90Z" fill="#b58c76" stroke="#493e3c" stroke-width="2"/>'
+   +'<ellipse cx="130" cy="66" rx="30" ry="37" fill="#d6ad8b" stroke="#67554e" stroke-width="2"/>'
+   +'<path d="M98 60Q97 18 128 22Q164 19 161 61L153 42L140 38L132 25L114 44L103 48Z" fill="'+palette.dark+'" stroke="'+palette.metal+'" stroke-width="3"/>'
+   +'<path d="M109 67L118 65 M142 65L151 67" stroke="#343139" stroke-width="4" stroke-linecap="round"/>'
+   +'<path d="M123 86Q131 90 138 86" stroke="#845c52" stroke-width="2" fill="none"/>'
+   +'<path d="M128 145L143 161L131 183L117 161Z" fill="'+accent+'" stroke="#e9daae" stroke-width="2"/>'
+   +'<path d="M130 128V145" stroke="'+accent+'" stroke-width="2" stroke-opacity=".75"/>'
+   +'<text x="130" y="171" font-size="19" font-weight="bold" text-anchor="middle" fill="#ffffff">'+crest+'</text>'
+   +'<circle cx="130" cy="334" r="2" fill="'+accent+'" opacity=".8"/>'
+   +'</svg>';
+ }
  function renderHeroes(){
   const hero=profile.heroes[heroId],level=hero.level,need=xpNeeded(level);
   let html='<div class="hero-picker">'+HERO_IDS.map(id=>'<button type="button" class="hero-picker-btn '+(id===heroId?'active':'')+'" data-action="hero" data-id="'+id+'">'+esc(HERO_NAMES[id])+'<small>Lv '+profile.heroes[id].level+'</small></button>').join('')+'</div>';
   html+='<div class="progress-hero"><div><span class="eyebrow">YOUR '+esc(pretty[heroId]).toUpperCase()+'</span><h3>'+esc(HERO_NAMES[heroId])+' <span>Level '+level+'</span></h3><p>Earn XP by defeating bosses. Talent choices improve your abilities in real combat.</p></div><div class="progress-stat">'+(need?hero.xp+' / '+need+' XP':'MAX LEVEL')+'</div></div>';
   html+='<div class="xp-track"><i style="width:'+(need?Math.min(100,Math.floor(hero.xp/need*100)):100)+'%"></i></div>';
   html+='<div class="workshop-subheading"><h3>Hero Equipment</h3><span>3 worn slots · '+esc(HERO_NAMES[heroId])+'</span></div>';
-  html+='<div class="equipment-paperdoll" aria-label="'+esc(HERO_NAMES[heroId])+' equipment on a character silhouette">'
-   +'<div class="equipment-figure" aria-hidden="true"><div class="equipment-head"></div><div class="equipment-neck"></div><div class="equipment-body"></div><div class="equipment-arm left"></div><div class="equipment-arm right"></div><div class="equipment-leg left"></div><div class="equipment-leg right"></div></div>';
-  // Slot locations correspond to the hero's body, not the underlying save order.
+  const inspectedSlot=SLOTS.includes(equipmentSlot)?equipmentSlot:(SLOTS.find(slot=>hero.gear[slot])||'weapon');
+  const inspectedId=hero.gear[inspectedSlot],inspectedInstance=inspectedId?profile.items.find(item=>item.id===inspectedId):null;
+  const inspectedDef=inspectedInstance?ITEM_DEFS[inspectedInstance.defId]:null,inspectedInfo=inspectedInstance?itemDetails(inspectedInstance.defId):null;
+  html+='<div class="equipment-paperdoll equipment-armory" data-armory-hero="'+heroId+'" aria-label="'+esc(HERO_NAMES[heroId])+' equipment on a character silhouette">'
+   +'<div class="armory-titlebar"><span>EMBERGUARD · CHARACTER ARMORY</span><strong>'+esc(HERO_NAMES[heroId])+'</strong><small>Level '+level+' '+esc(pretty[heroId])+'</small></div>'
+   +'<div class="armory-stage"><div class="armory-rune" aria-hidden="true">✦</div>'
+   +'<div class="equipment-figure">'+equipmentCharacterArt(heroId)+'</div>'
+   +'<div class="armory-hero-label"><strong>'+esc(HERO_NAMES[heroId])+'</strong><small>'+esc(pretty[heroId])+' · Level '+level+'</small></div>';
+  // Only the three existing equipment slots: no fictional/new item types.
   for(const slot of ['charm','armour','weapon']){
-   const id=hero.gear[slot],def=id?itemName(id):null;
+   const itemId=hero.gear[slot],def=itemId?itemName(itemId):null;
    const symbol=slot==='weapon'?'⚔️':slot==='armour'?'🛡️':'✦';
-   html+='<section class="paperdoll-slot paperdoll-slot-'+slot+(def?' is-equipped':' is-empty')+'" data-slot="'+slot+'" aria-label="'+esc(slotTitle[slot])+' slot: '+esc(def?.name||'empty')+'">'
+   const selected=slot===inspectedSlot;
+   html+='<section class="paperdoll-slot paperdoll-slot-'+slot+' '+(def?'is-equipped rarity-'+rarityClass(def.rarity):'is-empty')+(selected?' is-inspected':'')+'" data-slot="'+slot+'" aria-label="'+esc(slotTitle[slot])+' slot: '+esc(def?.name||'empty')+'">'
+    +'<button type="button" class="armory-slot-select" data-action="inspect-gear-slot" data-slot="'+slot+'" aria-pressed="'+selected+'" aria-label="Inspect '+esc(slotTitle[slot])+(def?' · '+esc(def.name):' · empty')+'">'
     +'<span class="paperdoll-slot-symbol" aria-hidden="true">'+(def?esc(def.icon):symbol)+'</span>'
-    +'<div class="paperdoll-slot-details"><strong>'+esc(slotTitle[slot])+'</strong><small>'+esc(def?.name||'Empty · select gear from bag')+'</small>'
-    +(def?'<small class="paperdoll-slot-stats">'+esc(itemBonusText(def))+'</small>':'')+'</div>'
-    +(id?'<button type="button" class="tiny-btn paperdoll-unequip" data-action="unequip" data-slot="'+slot+'" aria-label="Unequip '+esc(def.name)+' from '+esc(HERO_NAMES[heroId])+'">Unequip</button>':'')
+    +'<span class="paperdoll-slot-details"><strong>'+esc(slotTitle[slot])+'</strong><small>'+esc(def?.name||'Empty slot')+'</small></span></button>'
+    +(itemId?'<button type="button" class="tiny-btn paperdoll-unequip" data-action="unequip" data-slot="'+slot+'" aria-label="Unequip '+esc(def.name)+' from '+esc(HERO_NAMES[heroId])+'">Unequip</button>':'')
     +'</section>';
   }
-  html+='</div><p class="equipped-help">Charm at the neck, armour on the body and weapon by the hand. Unequip a piece to return that exact item to the bag.</p><button type="button" class="mini-link" data-action="tab" data-tab="pack">Open your equipment bag →</button>';
+  html+='</div><div class="armory-inspection" aria-label="Selected equipment details" aria-live="polite">';
+  if(inspectedDef&&inspectedInfo){
+   html+='<div class="armory-inspection-icon rarity-'+rarityClass(inspectedDef.rarity)+'">'+esc(inspectedDef.icon)+'</div>'
+    +'<div class="armory-inspection-copy"><span class="armory-item-rarity rarity-text-'+rarityClass(inspectedDef.rarity)+'">'+esc(inspectedDef.rarity)+' · '+esc(slotTitle[inspectedSlot])+'</span>'
+    +'<strong>'+esc(inspectedInfo.name)+'</strong>'
+    +'<p>'+esc(inspectedInfo.flavour)+'</p><small>'+esc(inspectedInfo.bonus)+(inspectedInfo.setName?' · '+esc(inspectedInfo.setName)+' Set':'')+'</small></div>'
+    +'<div class="armory-inspection-actions"><button type="button" class="tiny-btn armory-remove" data-action="unequip" data-slot="'+inspectedSlot+'">Unequip</button></div>';
+  }else{
+   html+='<div class="armory-inspection-icon is-empty" aria-hidden="true">◇</div>'
+    +'<div class="armory-inspection-copy"><span class="armory-item-rarity">EMPTY EQUIPMENT SLOT</span><strong>'+esc(slotTitle[inspectedSlot])+'</strong>'
+    +'<p>No item equipped in this slot. Choose an eligible piece from your bag.</p></div>'
+    +'<div class="armory-inspection-actions"><button type="button" class="tiny-btn" data-action="tab" data-tab="pack">Open Bag</button></div>';
+  }
+  html+='</div></div><p class="equipped-help">Tap a framed equipment slot to inspect it; unequipping returns the same item to your bag. Only your existing 3 slots are used.</p>'
+   +'<button type="button" class="mini-link" data-action="tab" data-tab="pack">Open your equipment bag →</button>';
   html+='<div class="workshop-subheading"><h3>Collection Bonuses</h3><span>2- and 3-piece sets</span></div>';
   html+='<div class="set-overview">'+setProgress(profile,heroId).map(group=>{
    const data=SET_DEFS[group.id];
@@ -218,7 +275,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  function open(tab='heroes',selected='knight'){
   if(!root.classList.contains('hidden'))return;
   if(tabNames[tab])current=tab;
-  if(HERO_IDS.includes(selected))heroId=selected;
+  if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;}
   pendingSell=null;
   root.classList.remove('hidden');render();onOpen();
   root.querySelector('#workshopClose').focus();
@@ -251,6 +308,12 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    return;
   }
   if(action==='close-inspect'){detailsId=null;render();return;}
+  if(action==='inspect-gear-slot'&&current==='heroes'&&SLOTS.includes(slot)){
+   const offset=body.scrollTop;
+   equipmentSlot=slot;render();body.scrollTop=offset;
+   body.querySelector('.armory-slot-select[data-slot="'+slot+'"]')?.focus({preventScroll:true});
+   return;
+  }
   if(action==='target-hero'&&current==='pack'){
    const inst=profile.items.find(item=>item.id===selectedBagId);
    const def=inst&&ITEM_DEFS[inst.defId];
@@ -311,7 +374,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    if(status.ok){validatedImport=null;importText='';importConfirm=false;onChange(profile);}
    render();return;
   }
-  if(action==='hero'&&HERO_IDS.includes(id)){heroId=id;render();return;}
+  if(action==='hero'&&HERO_IDS.includes(id)){heroId=id;equipmentSlot=null;render();return;}
   if(action==='tab'&&tabNames[btn.dataset.tab]){current=btn.dataset.tab;notice='';detailsId=null;render();return;}
   if(action==='talent'){if(chooseTalent(profile,heroId,id))save();return;}
   if(action==='equip'){
