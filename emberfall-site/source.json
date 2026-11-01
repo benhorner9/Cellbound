@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "29d552bbf3b0bb9df7c18574103f29c1f4f22546",
+  "sourceCommit": "c8acb97a061c5faf89c5af17ff4ce8d27250067c",
   "target": "/emberfall/",
-  "stage": "fixpack-01-final-character-armory",
+  "stage": "fixpack-01-nine-worn-slots",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Fix Pack 01 final reference-inspired character armory: original stylized class-specific centered character art, ornate three-slot rarity-bordered equipment frames, tap-to-inspect item description/bonuses/sets and unequip back to the unique inventory. Existing hero selection, builds, saves, combat and original Blocks 1–4 preserved; Fix Pack 2 and Block 5 untouched. All Safari modules pinned v4.4.0."
+  "note": "Fix Pack 01: nine real equipment slots Helm, Amulet, Body, Legs, Gloves, Boots, Ring, Weapon and Off Hand. Legacy armour/charm keys retain old saves, gear, builds and backups. Six extra Common shop items allow testing the new slots. Nine on-body framed slots, tap-to-inspect, equip/unequip, class restrictions and no item duplication. Original Blocks 1–4 and Fix Pack 2/Block 5 untouched. Safari module tree v4.5.0."
 }
