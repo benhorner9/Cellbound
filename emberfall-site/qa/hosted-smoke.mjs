@@ -15,6 +15,11 @@ try{
  await page.goto(base+'?sha='+process.env.GITHUB_SHA,{waitUntil:'networkidle',timeout:35000});
  // Verify this is a playable, persistent progression release, not a cosmetic mock-up.
  await page.locator('#manageFromPickerBtn').click();
+ if(!(await page.locator('.party-formation').isVisible())||(await page.locator('.party-position').count())!==4)throw Error('Live dedicated 4-slot Party screen missing');
+ await page.locator('#workshopTabs [data-tab="talents"]').click();
+ if((await page.locator('.talent-node').count())!==4)throw Error('Live connected talent-tree choices missing');
+ await page.locator('[data-action="talent-node"][data-id="ironwall"]').click();
+ if(!(await page.locator('.talent-inspector-status').innerText()).includes('Locked until level 2'))throw Error('Live locked talent does not inspect correctly');
  await page.locator('#workshopTabs [data-tab="shop"]').click();
  await page.locator('[data-action="buy"][data-id="field-vest"]').click();
  await page.locator('#workshopTabs [data-tab="pack"]').click();
@@ -114,14 +119,15 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.5.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.6.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.5.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.6.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
+ await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
  if(!(await page.locator('#workshopBody').innerText()).includes('2/3 equipped'))throw Error('Live 2-piece set not active');
  await page.locator('[data-build-name="0"]').fill('Hosted Tank');
@@ -149,13 +155,14 @@ try{
  await page.locator('#workshopClose').click();
  await page.reload({waitUntil:'networkidle'});
  await page.locator('#manageFromPickerBtn').click();
+ await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Hosted Tank'))throw Error('Live saved build disappeared after reload');
  await page.locator('#workshopClose').click();
  await page.locator('#startBtn').click();
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.5.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.6.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -178,7 +185,7 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.5.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.6.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -194,6 +201,15 @@ try{
  if(await page.locator('#inventoryGrid [data-id="i6"]').count())throw Error('Ranger vest still visible in bag');
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
  if(saved.heroes.ranger.gear.armour!=='i6'||saved.heroes.knight.gear.armour==='i6')throw Error('Briar did not receive the selected vest');
+ await page.locator('#workshopTabs [data-tab="party"]').click();
+ await page.locator('[data-action="party-position"][data-index="0"]').click();
+ await page.locator('[data-action="party-pick"][data-id="ranger"]').click();
+ const positioned=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
+ if(positioned.partyOrder[0]!=='ranger')throw Error('Live Party swap failed to persist');
+ await page.locator('#workshopClose').click();
+ await page.reload({waitUntil:'networkidle'});
+ await page.locator('#startBtn').click();
+ if((await page.locator('#partyList .hero-card').first().getAttribute('data-hero'))!=='ranger')throw Error('Live swapped Party did not apply to next battle');
  if(errors.length)throw Error(errors.join('\n'));
  console.log('PASS: hosted Emberfall all bosses, actual set-aware comparison, saved unique-item builds, validated JSON backup/restore, persisted equipment and 2-piece combat HP.');
 }catch(e){console.error('LIVE BROWSER FAILED:',e.stack||e);if(errors.length)console.error(errors.join('\n'));process.exitCode=1;}

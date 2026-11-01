@@ -3,6 +3,23 @@ export const PROFILE_KEY='emberfall-company-v1';
 export const MAX_LEVEL=6;
 export const HERO_IDS=Object.freeze(['knight','ranger','mage','cleric']);
 export const HERO_NAMES=Object.freeze({knight:'Aldric',ranger:'Briar',mage:'Lyra',cleric:'Solen'});
+export const PARTY_SIZE=4;
+export const TALENT_RESPEC_COST=60;
+export const PARTY_ROLES=Object.freeze({knight:'Guardian · Frontline',ranger:'Ranger · Damage',mage:'Arcanist · Magic',cleric:'Cleric · Support'});
+export const DEFAULT_PARTY=Object.freeze([...HERO_IDS]);
+export function partyOrder(profile){
+ const order=profile?.partyOrder;
+ return Array.isArray(order)&&order.length===PARTY_SIZE&&new Set(order).size===PARTY_SIZE&&HERO_IDS.every(id=>order.includes(id))?[...order]:[...DEFAULT_PARTY];
+}
+export function swapPartyMembers(profile,from,to){
+ if(!validateProfile(profile)||!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=PARTY_SIZE||to>=PARTY_SIZE||from===to)return false;
+ const order=partyOrder(profile);[order[from],order[to]]=[order[to],order[from]];
+ profile.partyOrder=order;return true;
+}
+export function respecTalents(profile,heroId){
+ if(!validateProfile(profile)||!HERO_IDS.includes(heroId)||!profile.heroes[heroId].talents.length||profile.gold<TALENT_RESPEC_COST)return false;
+ profile.gold-=TALENT_RESPEC_COST;profile.heroes[heroId].talents=[];return true;
+}
 // Keep legacy "armour" (Body) and "charm" (Amulet) keys so existing items,
 // builds and browser saves retain their exact owned instance references.
 export const SLOTS=Object.freeze(['helm','charm','armour','legs','gloves','boots','ring','weapon','offhand']);
@@ -10,6 +27,7 @@ const LEGACY_SLOTS=new Set(['weapon','armour','charm']);
 export const SLOT_NAMES=Object.freeze({helm:'Helm',charm:'Amulet',armour:'Body',legs:'Legs',gloves:'Gloves',boots:'Boots',ring:'Ring',weapon:'Weapon',offhand:'Off Hand'});
 export const SLOT_ICONS=Object.freeze({helm:'🪖',charm:'📿',armour:'🛡️',legs:'🩳',gloves:'🧤',boots:'👢',ring:'💍',weapon:'⚔️',offhand:'🛡️'});
 export function normalizeProfileSlots(profile){
+ if(profile&&profile.partyOrder===undefined)profile.partyOrder=[...DEFAULT_PARTY];
  for(const id of HERO_IDS)for(const slot of SLOTS){
   const gear=profile?.heroes?.[id]?.gear;
   if(gear&&gear[slot]===undefined)gear[slot]=null;
@@ -151,12 +169,13 @@ export function xpNeeded(level){return level>=MAX_LEVEL?0:80+40*level;}
 export function freshProfile(){
  return {version:1,gold:90,wins:0,defeats:0,nextItemId:1,
   heroes:Object.fromEntries(HERO_IDS.map(id=>[id,{level:1,xp:0,talents:[],gear:Object.fromEntries(SLOTS.map(slot=>[slot,null]))}])),
-  items:[],claims:[]};
+  items:[],claims:[],partyOrder:[...DEFAULT_PARTY]};
 }
 function validNum(x){return Number.isSafeInteger(x)&&x>=0;}
 export function validateProfile(p){
  if(!p||p.version!==1||!validNum(p.gold)||p.gold>1e9||!validNum(p.wins)||!validNum(p.defeats)||!validNum(p.nextItemId)||p.nextItemId<1)return false;
  if(!p.heroes||typeof p.heroes!=='object'||!Array.isArray(p.items)||p.items.length>400||!Array.isArray(p.claims)||p.claims.length>120)return false;
+ if(p.partyOrder!==undefined&&(!Array.isArray(p.partyOrder)||p.partyOrder.length!==PARTY_SIZE||new Set(p.partyOrder).size!==PARTY_SIZE||!HERO_IDS.every(id=>p.partyOrder.includes(id))))return false;
  const ids=new Set(), equipped=new Set();
  for(const it of p.items){
   if(typeof it?.id!=='string'||!/^\bi\d+\b$/.test(it.id)||ids.has(it.id)||!Object.hasOwn(ITEM_DEFS,it.defId))return false;

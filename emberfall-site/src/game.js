@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents} from './engine.js?v=4.5.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel} from './progression.js?v=4.5.0';
-import {mountWorkshop} from './workshop.js?v=4.5.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents} from './engine.js?v=4.6.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel} from './progression.js?v=4.6.0';
+import {mountWorkshop} from './workshop.js?v=4.6.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -21,7 +21,7 @@ function newBattle(id=bossSelection){
  fight.receiptId='fight-'+Date.now().toString(36)+'-'+serial+'-'+Math.random().toString(36).slice(2,9);
  return fight;
 }
-let state=newBattle(),selected='knight',paused=false,sound=false,last=0,uiLast=0;
+let state=newBattle(),selected=(company.partyOrder?.[0]||'knight'),paused=false,sound=false,last=0,uiLast=0;
 let rewardCommitted=false,workshopWasPaused=false;
 let floaters=[],bursts=[],projectiles=[],markers=[],noticeUntil=0,noticeText='',startPoint=null;
 let audioCtx=null;
@@ -134,7 +134,7 @@ $('overlayContent').addEventListener('click',e=>{
  if(e.target.closest('#againBtn'))restart();
  if(e.target.closest('#inspectBtn'))workshop.open(state.phase==='victory'?'pack':'heroes',selected);
  if(e.target.closest('#chooseBossBtn'))returnToCamp();
- if(e.target.closest('#manageFromPickerBtn'))workshop.open('heroes',selected);
+ if(e.target.closest('#manageFromPickerBtn'))workshop.open('party',selected);
  if(e.target.closest('#bagFromPickerBtn'))workshop.open('pack',selected);
 });
 $('restartBtn').addEventListener('click',()=>restart());
@@ -175,7 +175,7 @@ function renderEncounterChoices(){
  $('overlayContent').innerHTML='<div class="overlay-emblem">✦</div><span class="eyebrow">BLOCK 03 · THREE BOSSES TO MASTER</span><h1>Choose Your Expedition</h1><p>Tap any boss to change your next battle. Every boss is playable now, even below its recommended level.</p><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. Your heroes can attempt it now, but the battle may be challenging.</p>')+'<button id="startBtn" class="primary-btn large" type="button">Fight '+boss.name+' →</button><p class="encounter-controls">Selected battle: <b id="selectedBossName">'+boss.name+'</b>. Tap Fight to enter that exact boss encounter. Boss selection is remembered on this device.</p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">✦ Heroes &amp; Talents</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
 }
 function returnToCamp(){
- paused=false;rewardCommitted=false;selected='knight';state=newBattle();
+ paused=false;rewardCommitted=false;selected=company.partyOrder?.[0]||'knight';state=newBattle();
  floaters=[];bursts=[];projectiles=[];markers=[];
  $('overlay').classList.remove('hidden');$('pauseBtn').disabled=true;
  renderEncounterChoices();syncUI(true);
@@ -184,13 +184,13 @@ function returnToCamp(){
 function start(){
  if(state.phase==='ready'&&canChallenge(company,bossSelection)){
   // Recreate for newly equipped items, but explicitly pin to the selected boss.
-  state=newBattle(bossSelection);rewardCommitted=false;startEncounter(state);
+  state=newBattle(bossSelection);rewardCommitted=false;selected=state.heroes[0].id;startEncounter(state);
   $('overlay').classList.remove('choose-mode','result-mode');
   $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
  }
 }
 function restart(){
- state=newBattle(bossSelection);rewardCommitted=false;selected='knight';paused=false;
+ state=newBattle(bossSelection);rewardCommitted=false;selected=state.heroes[0].id;paused=false;
  floaters=[];bursts=[];projectiles=[];markers=[];noticeUntil=0;startEncounter(state);
  $('overlay').classList.remove('choose-mode','result-mode');
  $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
@@ -470,6 +470,15 @@ function syncUI(force=false){
  $('locationName').textContent=bossConfig.place;
  $('bossLabel').textContent=bossConfig.name.toUpperCase();
  $('bossHint').textContent=bossConfig.mechanics;
+ const partyContainer=$('partyList');
+ // Formation order is mirrored by the combat sidebar and Q/W/E/R shortcuts.
+ const orderedIds=state.heroes.map(h=>h.id).join(',');
+ if([...partyContainer.children].map(el=>el.dataset.hero).join(',')!==orderedIds){
+  for(const unit of state.heroes){
+   const card=partyContainer.querySelector('.hero-card[data-hero="'+unit.id+'"]');
+   if(card)partyContainer.appendChild(card);
+  }
+ }
  for(const el of document.querySelectorAll('.hero-card')){
   const h=getHero(state,el.dataset.hero);
   el.classList.toggle('selected',selected===h.id);el.classList.toggle('dead',h.hp<=0);
@@ -548,6 +557,8 @@ const workshop=mountWorkshop({
  onChange:()=>syncUI(true)
 });
 $('companyBtn').addEventListener('click',()=>workshop.open('heroes',selected));
+$('partyBtn').addEventListener('click',()=>workshop.open('party',selected));
+$('talentsBtn').addEventListener('click',()=>workshop.open('talents',selected));
 $('bagBtn').addEventListener('click',()=>workshop.open('pack',selected));
 for(const id of ['bossSelectBtn','bossSelectTopBtn'])$(id).addEventListener('click',returnToCamp);
 makeBackground();
@@ -556,5 +567,5 @@ renderEncounterChoices();
 syncUI(true);
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.5.0';
+document.documentElement.dataset.emberfallReady='4.6.0';
 requestAnimationFrame(frame);
