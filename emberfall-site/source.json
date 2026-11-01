@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "6a7aac850e17f7b080a55d93ecc04f4551025504",
+  "sourceCommit": "5c71cff9de8ca8143bd6eee2279f33391894bc3a",
   "target": "/emberfall/",
-  "stage": "fixpack-04-smithing-alchemy-four-piece-sets",
+  "stage": "fixpack-04-ipad-always-visible-combat-action-dock",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Fix Pack 04: Smithing and Alchemy 1-20 with future cap unlock previews, timing forge and ingredient mixing minigames, immediate per-item skill XP, craftable Uncommon green boss sets and Epic purple artisan equipment from guaranteed PvE ore/essence/marks, two/four-piece set bonuses, optional prepared elixir affecting next boss battle once, Blue rare boss gear with Orange reserved for future PvP. Boss victories grant guaranteed crafting reagents alongside original XP/gold/one gear item; dismissal-safe four-hero victory XP bars display actual loot and resources. Existing gear IDs, saves, builds, party/talents, Blocks 1-4 and Fix Packs 1-3 preserved. Safari v4.8.0. Exact source commit 6a7aac850e17f7b080a55d93ecc04f4551025504, merged after all source CI passed, and matched against all seven hosted assets."
+  "note": "iPad landscape gameplay usability hotfix: original two real skill buttons and hero skills header now dock visibly inside lower combat arena instead of below tall sidebar. Sidebar keeps all four party selectors in view with compact short-landscape spacing. Both abilities remain touch- and keyboard-accessible with live cooldown/selected-hero changes. Small-screen layout places dock immediately after canvas. No combat, XP, loot, set, talent, inventory, party or save changes; original Block 5 untouched. All ES modules, CSS and boot pins synchronised v4.8.1 for iPad Safari. Source commit provisional pending source PR #28 merge and QA."
 }
