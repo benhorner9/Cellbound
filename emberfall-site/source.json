@@ -1,7 +1,7 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "6239426b1fc179982ef6b84ae9c5f8ed526a5a6c",
+  "sourceCommit": "2a136525f7bc37cdb6a199fe3ffa995467977654",
   "target": "/emberfall/",
   "stage": "fixpack-03-combat-death-visuals-pve-tempo",
   "assets": [
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Fix Pack 03: enemy deaths play 0.78s collapse and fade before disappearing visually; downed heroes remain at death locations greyed and 42% opaque, inactive. PvE manual reposition slows the complete simulation to 70% while moving/dragging, and immediately restores real time when movement stops, boss changes or on restart. Explicit PvP mode always real-time; PvP itself is not currently playable. Death visual clock is separated from combat and boss rewards to preserve XP, loot and exactly-once claims. Original Blocks 1-4, Fix Packs 1-2, saves and nine-slot gear preserved; Block 5 untouched. Safari assets version v4.7.0."
+  "note": "Fix Pack 03: enemy deaths play 0.78s collapse and fade before disappearing visually; downed heroes remain at death locations greyed and 42% opaque, inactive. PvE manual reposition slows the complete simulation to 70% while moving/dragging, and immediately restores real time when movement stops, boss changes or on restart. Explicit PvP mode always real-time; PvP itself is not currently playable. Death visual clock is separated from combat and boss rewards to preserve XP, loot and exactly-once claims. Original Blocks 1-4, Fix Packs 1-2, saves and nine-slot gear preserved; Block 5 untouched. Safari assets version v4.7.0. Exact merged source commit 2a136525f7bc37cdb6a199fe3ffa995467977654."
 }
