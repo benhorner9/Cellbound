@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "dd7ca19e1a4ec8b5c0b4780f9a927853c465b0ec",
+  "sourceCommit": "0788d77c371aafe3d1644514036d2b0dcf121b99",
   "target": "/emberfall/",
-  "stage": "fixpack-01-ui-foundation-inventory",
+  "stage": "fixpack-01-inventory-equip-refinement",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Fix Pack 01: unified responsive game UI and four-column scrollable inventory with persistent item details and actions. Original Blocks 1–4 preserved; Block 5 not started. Browser-local ownership and saves unchanged. Safari module tree v4.1.0."
+  "note": "Follow-up to Fix Pack 01: class-restricted gear auto-selects its only eligible hero; multi-class/shared gear uses eligible hero buttons instead of dropdown; equipped gear stays out of bag until unequipped. Existing owned item IDs, builds, saves, combat and prior Blocks remain untouched. Safari module graph v4.2.0."
 }

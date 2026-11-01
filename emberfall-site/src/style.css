@@ -320,3 +320,17 @@ body{background:radial-gradient(ellipse at 60% -20%,#385c4d 0,transparent 52%),l
  .inventory-gold{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.icon-btn,.company-button,.quiet-btn,.workshop-close,.workshop-nav button,.tiny-btn,.hero-picker-btn{transition:none}}
+
+/* Fix Pack 01 follow-up: target-specific equip chips and genuinely unequipped bag grid. */
+.equipped-help{font:12px/1.5 system-ui,sans-serif;color:#c4d5c6;margin:8px 0 1px}
+.inventory-detail-top .tiny-btn{min-height:43px;text-align:center;white-space:normal}
+.inventory-target{display:flex;flex-direction:column;gap:7px;margin:10px 0 12px}
+.inventory-target>span{font:700 12px system-ui,sans-serif;color:#d8d7b9}
+.inventory-hero-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.inventory-hero-button{min-height:48px;display:flex;justify-content:center;flex-direction:column;align-items:flex-start;gap:3px;padding:7px 10px;background:#213b33;border:1px solid #718d76;border-radius:9px;text-align:left}
+.inventory-hero-button.active{background:#3b654f;border-color:#f5d18b;box-shadow:inset 0 0 0 1px #f5d18b55}
+.inventory-hero-button strong{font:700 14px Georgia,serif;color:#f7dfaf}
+.inventory-hero-button small{font:11px system-ui,sans-serif;color:#c3dac5}
+.inventory-auto-target{padding:10px 12px;margin:8px 0 12px;border-radius:8px;border:1px solid #75997d;background:#284838;color:#e7dfb9;font:700 12px/1.5 system-ui,sans-serif}
+.inventory-actions .inventory-action-primary{grid-column:1;min-height:48px}
+@media(max-width:380px){.inventory-detail-top{flex-wrap:wrap}.inventory-hero-options{gap:5px}.inventory-hero-button{padding:6px}}

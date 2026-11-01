@@ -22,12 +22,18 @@ try{
  const bagCols=await page.locator('#inventoryGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(/\s+/).length);
  if(bagCols!==4)throw Error('Hosted bag does not have four columns');
  if(!(await page.locator('#workshopBody').innerText()).includes('Fieldkeeper Vest'))throw Error('Cannot see purchased equipment');
+ if(await page.locator('#equipHero').count())throw Error('Recipient dropdown still appears');
+ if((await page.locator('.inventory-hero-button').count())!==4)throw Error('Unrestricted vest should offer four hero buttons');
  await page.locator('[data-action="equip"][data-id="i1"]').click();
+ if(await page.locator('#inventoryGrid [data-id="i1"]').count())throw Error('Equipped vest remains in bag');
+ if((await page.locator('#bagCount').innerText())!=='0')throw Error('Bag count includes equipped vest');
  await page.locator('#workshopClose').click();
  await page.reload({waitUntil:'networkidle'});
  await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="pack"]').click();
- if(!(await page.locator('#workshopBody').innerText()).includes('Equipped by Aldric'))throw Error('Equipped item did not persist');
+ if(await page.locator('#inventoryGrid [data-id="i1"]').count())throw Error('Equipped item returned to bag after reload');
+ await page.locator('#workshopTabs [data-tab="heroes"]').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('Fieldkeeper Vest'))throw Error('Equipped vest not in hero slot after reload');
  await page.locator('#workshopClose').click();
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('178 / 178'))throw Error('Equipment did not change real combat HP');
  const box=await page.locator('#overlayContent').boundingBox();
@@ -88,22 +94,25 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.1.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.2.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.1.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.2.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
  if(!(await page.locator('#workshopBody').innerText()).includes('2/3 equipped'))throw Error('Live 2-piece set not active');
  await page.locator('[data-build-name="0"]').fill('Hosted Tank');
  await page.locator('[data-action="save-build"][data-index="0"]').click();
  await page.locator('#workshopTabs [data-tab="pack"]').click();
+ if(await page.locator('#inventoryGrid [data-id="i2"]').count()||await page.locator('#inventoryGrid [data-id="i3"]').count())throw Error('Equipped collection gear still present in bag');
  await page.locator('[data-action="inspect"][data-id="i4"]').click();
  if(!(await page.locator('#itemInspector').innerText()).includes('−8 HP'))throw Error('Live gear compare omitted lost set bonus');
  await page.locator('[data-action="equip"][data-id="i4"]').click();
+ if(await page.locator('#inventoryGrid [data-id="i4"]').count())throw Error('Equipped Forgeguard still in bag');
+ if(!(await page.locator('#inventoryGrid [data-id="i3"]').isVisible()))throw Error('Displaced armour not returned to bag');
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('1/3 equipped'))throw Error('Live set did not deactivate after gear switch');
  await page.locator('[data-action="apply-build"][data-index="0"]').click();
@@ -124,6 +133,28 @@ try{
  await page.locator('#workshopClose').click();
  await page.locator('#startBtn').click();
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
+ // Hosted mage-only equipment must not offer an incompatible character.
+ await page.evaluate(async()=>{
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.2.0');
+  const p=readProfile(localStorage);
+  addItem(p,'emberglass-staff');
+  if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
+ });
+ await page.reload({waitUntil:'networkidle'});
+ await page.locator('#bagFromPickerBtn').click();
+ const mageItem=page.locator('#inventoryGrid [data-id="i5"]');
+ if(!(await mageItem.isVisible()))throw Error('Class-restricted gear missing from bag');
+ await mageItem.click();
+ if(await page.locator('.inventory-hero-button').count())throw Error('Mage-only equipment offered choice of heroes');
+ if((await page.locator('[data-action="equip"][data-id="i5"]').getAttribute('data-hero'))!=='mage')throw Error('Mage-only equipment targeted wrong character');
+ await page.locator('[data-action="equip"][data-id="i5"]').click();
+ if(await page.locator('#inventoryGrid [data-id="i5"]').count())throw Error('Hosted equipped Mage gear still in bag');
+ await page.locator('#workshopTabs [data-tab="heroes"]').click();
+ await page.locator('[data-action="hero"][data-id="mage"]').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('Emberglass Staff'))throw Error('Hosted Mage gear absent from character equipment');
+ await page.locator('[data-action="unequip"][data-slot="weapon"]').click();
+ await page.locator('#workshopTabs [data-tab="pack"]').click();
+ if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  if(errors.length)throw Error(errors.join('\n'));
  console.log('PASS: hosted Emberfall all bosses, actual set-aware comparison, saved unique-item builds, validated JSON backup/restore, persisted equipment and 2-piece combat HP.');
 }catch(e){console.error('LIVE BROWSER FAILED:',e.stack||e);if(errors.length)console.error(errors.join('\n'));process.exitCode=1;}
