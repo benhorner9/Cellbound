@@ -1,11 +1,11 @@
 import {
- HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
+ HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet
-} from './progression.js?v=4.5.0';
+} from './progression.js?v=4.6.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.5.0';
+} from './builds.js?v=4.6.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -15,9 +15,9 @@ const rarityClass=name=>String(name).toLowerCase();
 export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),tabs=document.getElementById('workshopTabs');
- let current='heroes',heroId='knight',pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false;
+ let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false;
  const builds=readBuilds(storage);
- const tabNames={heroes:'Heroes & Talents',pack:'Equipment Bag',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
+ const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',pack:'Equipment Bag',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
  }
@@ -124,18 +124,75 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    return '<article class="build-preset"><div><b>'+esc(name)+'</b><small>'+esc(preview)+'</small></div><label class="build-label">Build name<input class="build-name-input" data-build-name="'+index+'" maxlength="30" value="'+esc(preset?.name||'Build '+(index+1))+'" aria-label="Name equipment build '+(index+1)+'"></label><p class="'+(preset&&!status.ok?'unavailable':'')+'">'+esc(status.reason)+'</p><div class="build-buttons"><button type="button" class="tiny-btn" data-action="save-build" data-index="'+index+'">'+(preset?'Update Saved Build':'Save Current Gear')+'</button><button type="button" class="tiny-btn ghost" data-action="apply-build" data-index="'+index+'" '+(status.ok?'':'disabled')+'>Equip Build</button></div></article>';
   }).join('')+'</div>';
 
-  html+='<div class="workshop-subheading"><h3>Talents</h3><span>'+(talentPoints(hero)>0?'✦ '+talentPoints(hero)+' choice available':'Choices at levels 2 and 4')+'</span></div>';
-  for(const tier of [2,4]){
-   const choices=TALENTS[heroId].filter(t=>t.tier===tier);
-   const picked=choices.find(t=>hero.talents.includes(t.id));
-   html+='<div class="talent-tier"><div class="talent-tier-title">LEVEL '+tier+' · '+(picked?'SELECTED: '+esc(picked.name):level<tier?'LOCKED':'CHOOSE ONE')+'</div><div class="talent-options">';
-   for(const choice of choices){
-    const selected=hero.talents.includes(choice.id),locked=!!picked||level<tier;
-    html+='<button type="button" class="talent-choice '+(selected?'chosen':'')+'" data-action="talent" data-id="'+choice.id+'" '+(locked?'disabled':'')+'><span class="talent-icon">'+esc(choice.icon)+'</span><b>'+esc(choice.name)+'</b><small>'+esc(choice.description)+'</small><span class="talent-choose">'+(selected?'✓ Learned':level<tier?'Unlocks at '+tier:picked?'Other path':'Choose talent')+'</span></button>';
-   }
-   html+='</div></div>';
+  html+='<div class="workshop-subheading"><h3>Talent Builds</h3><span>Dedicated skill trees</span></div>'
+   +'<p class="build-explainer">'+esc(HERO_NAMES[heroId])+' has '+talentPoints(hero)+' unspent talent '+(talentPoints(hero)===1?'point':'points')+'. Choose paths and inspect effects in the Talent Trees screen.</p>'
+   +'<button type="button" class="tiny-btn" data-action="tab" data-tab="talents">Open Talent Trees →</button>'
+   +'<p class="workshop-disclaimer">Equipment and talents are saved in this browser. You can respec a hero using gold in the Talent Trees screen.</p>';
+  return html;
+ }
+
+ const partyPortraits={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
+ function heroEquipPower(id){
+  const h=profile.heroes[id];let power=0;
+  for(const slot of SLOTS){
+   const item=profile.items.find(it=>it.id===h.gear[slot]);
+   const def=item&&ITEM_DEFS[item.defId];if(def)power+=Object.values(def.bonus||{}).reduce((a,v)=>a+Math.round(Math.abs(v)*10),0);
   }
-  html+='<p class="workshop-disclaimer">Talent choices are permanent in this prototype. Equipment and talents are saved only in this browser—not in an online account.</p>';
+  return power;
+ }
+ function renderParty(){
+  const order=partyOrder(profile),active=order[partyPosition]||order[0];
+  heroId=active;
+  let html='<div class="party-intro"><div><span class="eyebrow">FIX PACK 02 · PARTY MANAGEMENT</span><h3>Form Your Company</h3><p>Tap a formation position, then tap a hero in your roster to swap them into that position. Your selected order sets starting positions and the Q/W/E/R quick-select order in your next boss fight.</p></div><div class="party-ready"><b>4 / 4</b><small>Active heroes</small></div></div>';
+  html+='<div class="party-manager"><section class="party-formation" aria-label="Four active party positions"><div class="party-section-title"><b>Active formation</b><small>Changes apply next encounter</small></div><div class="party-formation-grid">';
+  for(let i=0;i<PARTY_SIZE;i++){
+   const id=order[i],hero=profile.heroes[id],level=hero.level,need=xpNeeded(level),progress=need?Math.floor(hero.xp/need*100):100,gear=SLOTS.filter(slot=>!!hero.gear[slot]).length;
+   html+='<button type="button" class="party-position '+(i===partyPosition?'active':'')+'" data-action="party-position" data-index="'+i+'" aria-pressed="'+(i===partyPosition)+'" aria-label="Position '+(i+1)+': '+HERO_NAMES[id]+'">'
+    +'<span class="party-position-number">'+(i+1)+'</span><span class="party-portrait">'+partyPortraits[id]+'</span><span class="party-position-copy"><strong>'+esc(HERO_NAMES[id])+'</strong><small>'+esc(PARTY_ROLES[id])+'</small><small>Level '+level+' · '+gear+'/9 gear · '+heroEquipPower(id)+' gear power</small><span class="party-xp-track"><i style="width:'+progress+'%"></i></span></span></button>';
+  }
+  html+='</div><p class="party-formation-hint">Position '+(partyPosition+1)+' selected · Choose a hero from the roster to swap positions.</p></section>';
+  html+='<section class="party-roster" aria-label="Owned hero roster"><div class="party-section-title"><b>Your roster</b><small>'+HERO_IDS.length+' recruited · 0 reserves</small></div><div class="party-roster-list">';
+  for(const id of HERO_IDS){
+   const hero=profile.heroes[id],position=order.indexOf(id)+1;
+   html+='<button type="button" class="party-roster-hero '+(id===active?'active':'')+'" data-action="party-pick" data-id="'+id+'" aria-label="Swap '+HERO_NAMES[id]+' into position '+(partyPosition+1)+'"><span class="party-portrait">'+partyPortraits[id]+'</span><span><b>'+esc(HERO_NAMES[id])+'</b><small>'+esc(PARTY_ROLES[id])+' · Lv '+hero.level+'</small><small>Currently in slot '+position+'</small></span><span class="party-swap-icon">⇄</span></button>';
+  }
+  html+='</div><div class="party-roster-actions"><button type="button" class="tiny-btn" data-action="party-gear">View '+esc(HERO_NAMES[active])+' Equipment</button><button type="button" class="tiny-btn ghost" data-action="party-talents">Talent Tree</button></div></section></div>';
+  html+='<p class="party-future-note">Your current roster has four founding heroes, so all four remain active. Recruitment and reserve heroes are not available yet. This screen manages real positions and selection order without inventing recruits or changing hero classes.</p>';
+  return html;
+ }
+ function renderTalents(){
+  const hero=profile.heroes[heroId],points=talentPoints(hero);
+  const talent=selectedTalentId?TALENTS[heroId].find(t=>t.id===selectedTalentId):null;
+  let html='<div class="talent-screen-head"><div><span class="eyebrow">FIX PACK 02 · HERO PROGRESSION</span><h3>Talent Paths</h3><p>Choose one talent per level tier. Examine each node and its combat effect before confirming. Routes can be mixed between levels 2 and 4.</p></div><div class="talent-points"><b>'+points+'</b><span>Point'+(points===1?'':'s')+' available</span></div></div>';
+  html+='<div class="hero-picker talent-hero-picker">'+HERO_IDS.map(id=>'<button type="button" class="hero-picker-btn '+(id===heroId?'active':'')+'" data-action="hero" data-id="'+id+'">'+esc(HERO_NAMES[id])+'<small>Lv '+profile.heroes[id].level+' · '+esc(pretty[id])+'</small></button>').join('')+'</div>';
+  html+='<div class="talent-screen-layout"><section class="talent-tree" aria-label="Branching talent tree for '+esc(HERO_NAMES[heroId])+'">'
+   +'<div class="talent-tree-root"><span class="talent-root-symbol">'+partyPortraits[heroId]+'</span><strong>'+esc(HERO_NAMES[heroId])+'</strong><small>Level '+hero.level+' · '+esc(pretty[heroId])+'</small></div>';
+  for(const tier of [2,4]){
+   const options=TALENTS[heroId].filter(t=>t.tier===tier);
+   const chosen=options.find(t=>hero.talents.includes(t.id));
+   html+='<div class="talent-branches" aria-hidden="true"><span></span><span></span></div>'
+    +'<div class="talent-tier-gate"><b>LEVEL '+tier+'</b><span>'+(chosen?'Path chosen':hero.level>=tier?'One choice available':'Unlocks at level '+tier)+'</span></div>'
+    +'<div class="talent-node-row">';
+   for(const node of options){
+    const learned=hero.talents.includes(node.id),levelLocked=hero.level<tier,otherChosen=!!chosen&&!learned;
+    const status=learned?'learned':levelLocked?'locked':otherChosen?'excluded':'available';
+    html+='<button type="button" class="talent-node '+status+(selectedTalentId===node.id?' inspecting':'')+'" data-action="talent-node" data-id="'+node.id+'" aria-pressed="'+(selectedTalentId===node.id)+'" aria-label="'+esc(node.name+', '+status+(levelLocked?', level '+tier+' required':''))+'">'
+     +'<span class="talent-node-icon">'+esc(node.icon)+'</span><strong>'+esc(node.name)+'</strong><small>'+esc(node.description)+'</small>'
+     +'<span class="talent-node-state">'+(learned?'✓ Learned':levelLocked?'🔒 Level '+tier:otherChosen?'Alternative path':'✦ Available')+'</span></button>';
+   }
+   html+='</div>';
+  }
+  html+='</section><aside class="talent-inspector" aria-label="Talent details and spending">';
+  if(talent){
+   const learned=hero.talents.includes(talent.id),tierChosen=hero.talents.some(id=>TALENTS[heroId].find(t=>t.id===id)?.tier===talent.tier);
+   const available=!learned&&!tierChosen&&hero.level>=talent.tier;
+   html+='<div class="talent-inspector-icon">'+esc(talent.icon)+'</div><span class="eyebrow">LEVEL '+talent.tier+' TALENT</span><h4>'+esc(talent.name)+'</h4><p>'+esc(talent.description)+'</p>';
+   html+='<div class="talent-effect-list"><strong>Actual combat effects</strong>'+esc(itemBonusText({bonus:talent.bonus}))+'</div>';
+   html+='<p class="talent-inspector-status">'+(learned?'✓ Learned and active':hero.level<talent.tier?'Locked until level '+talent.tier:tierChosen?'Alternative talent already chosen at this level':'Ready to learn · consumes tier choice')+'</p>';
+   if(available)html+='<button type="button" class="tiny-btn talent-spend" data-action="learn-talent" data-id="'+talent.id+'">'+(confirmSpendId===talent.id?'Confirm Spend — '+esc(talent.name):'Review Spend · '+esc(talent.name))+'</button>';
+  }else html+='<div class="talent-inspector-empty"><span>✦</span><h4>Select a talent</h4><p>Tap any node to see its details, whether it is available and its exact in-combat effect.</p></div>';
+  html+='<div class="talent-reset"><h4>Change your build</h4><p>Respec clears this hero’s selected talents and refunds tier choices for '+TALENT_RESPEC_COST+' gold. Equipment is unaffected.</p><button class="tiny-btn ghost" type="button" data-action="respec-talents" '+(!hero.talents.length||profile.gold<TALENT_RESPEC_COST?'disabled':'')+'>'+(confirmRespec?'Confirm Respec · '+TALENT_RESPEC_COST+' gold':'Respec Talents · '+TALENT_RESPEC_COST+' gold')+'</button><small>'+profile.gold+' gold available</small></div>';
+  html+='</aside></div><p class="workshop-disclaimer">Talent choices apply to the next boss encounter. A confirmation is required to spend points or respec. Existing learned talents and local saves are preserved.</p>';
   return html;
  }
  function renderInspection(itemId,defId,persistent=false,compareHeroId=heroId){
@@ -259,7 +316,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   document.getElementById('bagCount').textContent=String(profile.items.filter(item=>!itemOwner(profile,item.id)).length);
   body.classList.toggle('inventory-mode',current==='pack');
   body.innerHTML=(notice?'<div class="workshop-notice '+(noticeBad?'is-error':'')+'" role="status">'+esc(notice)+'</div>':'')
-    +(current==='heroes'?renderHeroes():current==='pack'?renderPack():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
+    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='pack'?renderPack():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
  }
  function rerenderBag(){
   const offset=body.querySelector('#inventoryScroll')?.scrollTop||0;
@@ -275,7 +332,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  function open(tab='heroes',selected='knight'){
   if(!root.classList.contains('hidden'))return;
   if(tabNames[tab])current=tab;
-  if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;}
+  if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;selectedTalentId=null;partyPosition=Math.max(0,partyOrder(profile).indexOf(selected));}
   pendingSell=null;
   root.classList.remove('hidden');render();onOpen();
   root.querySelector('#workshopClose').focus();
@@ -284,7 +341,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(root.classList.contains('hidden'))return;
   root.classList.add('hidden');pendingSell=null;onClose();
  }
- tabs.addEventListener('click',e=>{const tab=e.target.closest('button[data-tab]')?.dataset.tab;if(tabNames[tab]){current=tab;pendingSell=null;notice='';detailsId=null;importConfirm=false;render();}});
+ tabs.addEventListener('click',e=>{const tab=e.target.closest('button[data-tab]')?.dataset.tab;if(tabNames[tab]){current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;render();}});
  root.querySelector('#workshopClose').addEventListener('click',close);
  root.addEventListener('click',e=>{if(e.target===root)close();});
  root.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
@@ -304,6 +361,43 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    }else{
     detailsId=id;notice='';render();
     body.querySelector('#itemInspector')?.scrollIntoView({block:'nearest',behavior:'instant'});
+   }
+   return;
+  }
+  if(action==='party-position'&&current==='party'){
+   const position=Number(btn.dataset.index);
+   if(Number.isInteger(position)&&position>=0&&position<PARTY_SIZE){partyPosition=position;heroId=partyOrder(profile)[position];render();}
+   return;
+  }
+  if(action==='party-pick'&&current==='party'&&HERO_IDS.includes(id)){
+   const src=partyOrder(profile).indexOf(id);
+   if(src!==partyPosition&&swapPartyMembers(profile,partyPosition,src)){
+    heroId=id;notice='Formation saved. New positions will apply to your next expedition.';noticeBad=false;save();
+   }else {heroId=id;render();}
+   return;
+  }
+  if(action==='party-gear'||action==='party-talents'){
+   heroId=partyOrder(profile)[partyPosition];selectedTalentId=null;confirmSpendId=null;confirmRespec=false;
+   current=action==='party-gear'?'heroes':'talents';render();return;
+  }
+  if(action==='talent-node'&&current==='talents'){
+   if(TALENTS[heroId].some(t=>t.id===id)){selectedTalentId=id;confirmSpendId=null;confirmRespec=false;render();}
+   return;
+  }
+  if(action==='learn-talent'&&current==='talents'){
+   const choice=TALENTS[heroId].find(t=>t.id===id);
+   if(!choice||selectedTalentId!==id)return;
+   if(confirmSpendId!==id){confirmSpendId=id;confirmRespec=false;render();return;}
+   if(chooseTalent(profile,heroId,id)){
+    notice=HERO_NAMES[heroId]+' learned '+choice.name+'. It will apply to the next encounter.';noticeBad=false;
+    confirmSpendId=null;save();
+   }
+   return;
+  }
+  if(action==='respec-talents'&&current==='talents'){
+   if(!confirmRespec){confirmRespec=true;confirmSpendId=null;render();return;}
+   if(respecTalents(profile,heroId)){
+    confirmRespec=false;confirmSpendId=null;selectedTalentId=null;notice=HERO_NAMES[heroId]+' talents reset for '+TALENT_RESPEC_COST+' gold.';noticeBad=false;save();
    }
    return;
   }
@@ -374,8 +468,8 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    if(status.ok){validatedImport=null;importText='';importConfirm=false;onChange(profile);}
    render();return;
   }
-  if(action==='hero'&&HERO_IDS.includes(id)){heroId=id;equipmentSlot=null;render();return;}
-  if(action==='tab'&&tabNames[btn.dataset.tab]){current=btn.dataset.tab;notice='';detailsId=null;render();return;}
+  if(action==='hero'&&HERO_IDS.includes(id)){heroId=id;equipmentSlot=null;selectedTalentId=null;confirmSpendId=null;confirmRespec=false;render();return;}
+  if(action==='tab'&&tabNames[btn.dataset.tab]){current=btn.dataset.tab;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;render();return;}
   if(action==='talent'){if(chooseTalent(profile,heroId,id))save();return;}
   if(action==='equip'){
    if(current==='pack'){

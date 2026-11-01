@@ -1,4 +1,4 @@
-import {bonuses as heroBonuses,bossInfo} from './progression.js?v=4.5.0';
+import {bonuses as heroBonuses,bossInfo,partyOrder} from './progression.js?v=4.6.0';
 // Heroes of Emberfall — Block 01. Deterministic, renderer-independent PvE combat.
 // Browser-owned demo only; the eventual PvP server must never trust this simulation.
 export const WORLD={width:1200,height:640};
@@ -54,6 +54,15 @@ export function createEncounter(seed=1337,profile=null,bossId='thornwarden'){
   ];
  }
  if(profile){
+  // Formation order takes effect on the next encounter, never mid-fight.
+  const order=partyOrder(profile);
+  const formation=[{x:240,y:342},{x:144,y:231},{x:152,y:457},{x:104,y:341}];
+  encounter.heroes=order.map((id,index)=>{
+   const h=encounter.heroes.find(unit=>unit.id===id);
+   h.x=formation[index].x;h.y=formation[index].y;
+   return h;
+  });
+  encounter.selected=order[0];
   for(const h of encounter.heroes){
    const b=heroBonuses(profile,h.id);
    h.level=profile.heroes[h.id]?.level||1;

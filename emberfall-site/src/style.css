@@ -522,3 +522,107 @@ body{background:radial-gradient(ellipse at 60% -20%,#385c4d 0,transparent 52%),l
  .equipment-armory .paperdoll-slot-charm,.equipment-armory .paperdoll-slot-armour,.equipment-armory .paperdoll-slot-gloves,.equipment-armory .paperdoll-slot-legs{left:1%}
  .equipment-armory .paperdoll-slot-ring,.equipment-armory .paperdoll-slot-weapon,.equipment-armory .paperdoll-slot-offhand,.equipment-armory .paperdoll-slot-boots{right:1%}
 }
+
+
+/* Fix Pack 02 — tactical party formation and connected talent-tree UX.
+   Original equipment, combat art and all Block 1–4 styling stay intact. */
+.company-buttons{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.company-buttons .company-button{min-height:47px;padding:8px 9px;font:700 12px/1.3 system-ui,sans-serif;white-space:normal;text-align:center}
+.party-intro,.talent-screen-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;padding:14px 16px;border:1px solid #927b55;border-radius:12px;background:linear-gradient(125deg,#31483d,#1d3030);box-shadow:inset 0 1px #ffdda828}
+.party-intro h3,.talent-screen-head h3{margin:4px 0 5px;font:700 27px Georgia,serif;color:#f7dbaa}
+.party-intro p,.talent-screen-head p{max-width:640px;margin:0;color:#c5d5c7;font:12px/1.55 system-ui,sans-serif}
+.party-ready,.talent-points{min-width:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 10px;border:1px solid #baa16a;border-radius:11px;background:#20342e;box-shadow:inset 0 0 18px #d4a85d16}
+.party-ready b,.talent-points b{color:#fce0a8;font:700 28px Georgia,serif}
+.party-ready small,.talent-points span{font:700 10px system-ui,sans-serif;color:#d3d8bd;text-align:center}
+.party-manager{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:14px;align-items:start}
+.party-formation,.party-roster{min-width:0;border:1px solid #6a8570;border-radius:13px;padding:13px;background:linear-gradient(#233b35,#1b2c2d)}
+.party-section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:11px;border-bottom:1px solid #506a5e}
+.party-section-title b{font:700 20px Georgia,serif;color:#f4d6a1}
+.party-section-title small{font:11px system-ui,sans-serif;color:#b9d2bb}
+.party-formation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.party-position{position:relative;display:flex;align-items:center;gap:9px;text-align:left;min-width:0;min-height:117px;padding:12px 9px;border:2px solid #648275;border-radius:11px;background:linear-gradient(130deg,#345448,#1e3131);box-shadow:0 5px 12px #0004;touch-action:manipulation}
+.party-position.active{border-color:#eed093;background:linear-gradient(130deg,#4d6c53,#2b4539);box-shadow:0 0 0 2px #e5c07d36,0 7px 14px #0004}
+.party-position-number{position:absolute;right:8px;top:7px;color:#d1c39d;font:700 11px system-ui,sans-serif}
+.party-portrait{display:grid;place-items:center;flex:0 0 47px;width:47px;height:51px;font:27px system-ui,sans-serif;border:2px solid #ba9e68;border-radius:9px;color:#f5e4bf;background:radial-gradient(circle at 20% 15%,#5f7865,#22332f);box-shadow:inset 0 1px #ffffff38,0 3px 6px #0005}
+.party-position-copy{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0;padding-right:4px}
+.party-position-copy strong,.party-roster-hero b{font:700 17px Georgia,serif;color:#f8dfb4}
+.party-position-copy small,.party-roster-hero small{font:11px/1.35 system-ui,sans-serif;color:#d1dbc9;overflow-wrap:anywhere}
+.party-xp-track{display:block;height:5px;width:100%;border-radius:5px;background:#0d2724;overflow:hidden;margin-top:4px}
+.party-xp-track i{display:block;height:100%;background:linear-gradient(90deg,#c5a15b,#f7d59c);border-radius:5px}
+.party-formation-hint{font:12px/1.5 system-ui,sans-serif;color:#e9d0a7;margin:9px 0 2px}
+.party-roster-list{display:flex;flex-direction:column;gap:8px;padding-top:12px}
+.party-roster-hero{width:100%;min-height:70px;display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid #718974;border-radius:9px;background:#273d35;text-align:left}
+.party-roster-hero.active{border-color:#e3c184;background:#3b5a47}
+.party-roster-hero>span:nth-child(2){display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}
+.party-roster-hero small{display:block}
+.party-swap-icon{color:#dfc58d;font:700 23px Georgia,serif}
+.party-roster-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.party-roster-actions .tiny-btn{min-height:46px;white-space:normal;line-height:1.4}
+.party-future-note{font:12px/1.55 system-ui,sans-serif;color:#c1d1be;margin:13px 2px;padding:11px 14px;border-left:3px solid #967d50;background:#192b2a}
+.talent-screen-head{margin-bottom:10px}
+.talent-hero-picker{margin-bottom:12px}
+.talent-screen-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.72fr);gap:14px;align-items:start}
+.talent-tree{position:relative;border:2px solid #8d784f;border-radius:14px;padding:17px 15px 18px;min-width:0;background:radial-gradient(circle at 50% 22%,#55634935,#182a29 42%,#15202a 100%);box-shadow:inset 0 0 0 3px #0f2426,inset 0 0 22px #8b714e18;overflow:hidden}
+.talent-tree::before{position:absolute;inset:0;content:"";pointer-events:none;background:repeating-linear-gradient(110deg,#d9bd7708 0 1px,transparent 1px 15px)}
+.talent-tree-root{position:relative;z-index:2;width:210px;max-width:90%;margin:0 auto;display:flex;align-items:center;flex-direction:column;gap:4px;text-align:center;padding:13px;border:2px solid #dbba80;border-radius:12px;background:linear-gradient(#4d5747,#263c36);box-shadow:0 4px 16px #0007}
+.talent-root-symbol{font-size:29px}
+.talent-tree-root strong{font:700 20px Georgia,serif;color:#ffe6b7}
+.talent-tree-root small{font:11px system-ui,sans-serif;color:#d4decb}
+.talent-branches{height:31px;position:relative;margin:0 auto;width:68%;border-bottom:2px solid #ab956e}
+.talent-branches::before{content:"";position:absolute;left:50%;top:0;height:100%;border-left:2px solid #ab956e}
+.talent-branches span{position:absolute;bottom:-13px;height:13px;border-left:2px solid #ab956e}
+.talent-branches span:first-child{left:0}
+.talent-branches span:last-child{right:0}
+.talent-tier-gate{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 10px;font:700 11px system-ui,sans-serif;color:#e5cf9f;letter-spacing:.07em}
+.talent-tier-gate b{color:#edd099}
+.talent-tier-gate span{color:#aecbb9;font-weight:500;letter-spacing:0}
+.talent-node-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.talent-node{display:flex;position:relative;z-index:1;align-items:center;flex-direction:column;min-width:0;min-height:162px;gap:6px;padding:13px 9px;border:2px solid #5a736c;border-radius:11px;background:linear-gradient(160deg,#2a403e,#1a2b2d);text-align:center;cursor:pointer;touch-action:manipulation}
+.talent-node:hover{border-color:#e4c58d}
+.talent-node.inspecting{box-shadow:0 0 0 2px #efcd88,0 0 20px #dcaf6133}
+.talent-node.available{border-color:#7dbd92;background:linear-gradient(150deg,#30594b,#203b32)}
+.talent-node.learned{border-color:#ebc888;background:linear-gradient(145deg,#5a5e40,#32453a)}
+.talent-node.locked,.talent-node.excluded{opacity:.72;filter:saturate(.7)}
+.talent-node-icon{display:grid;place-items:center;width:44px;height:44px;border:2px solid #a58a60;border-radius:50%;background:#152a2a;font-size:24px}
+.talent-node strong{font:700 16px Georgia,serif;color:#ffe0b3}
+.talent-node small{font:11px/1.4 system-ui,sans-serif;color:#cbd6c8;flex:1}
+.talent-node-state{color:#e7c88d;font:700 11px system-ui,sans-serif}
+.talent-inspector{position:sticky;top:0;display:flex;flex-direction:column;gap:10px;border:1px solid #97815c;border-radius:14px;padding:16px;background:linear-gradient(140deg,#30473d,#1a2e30);box-shadow:0 8px 18px #0005}
+.talent-inspector-icon{display:grid;place-items:center;align-self:start;width:66px;height:66px;border:2px solid #e7c58b;border-radius:12px;background:radial-gradient(#687b5c,#243734);font-size:34px}
+.talent-inspector h4{color:#ffe2b7;font:700 22px Georgia,serif;margin:0}
+.talent-inspector p{font:12px/1.55 system-ui,sans-serif;color:#d0dccb;margin:0}
+.talent-effect-list{padding:11px;border:1px solid #6c896e;border-radius:9px;color:#f0dbb1;font:700 12px/1.55 system-ui,sans-serif;background:#18312e}
+.talent-effect-list strong{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a9cbb5;margin-bottom:4px}
+.talent-inspector-status{color:#e8c88d!important}
+.talent-spend{min-height:48px;width:100%;white-space:normal}
+.talent-reset{display:flex;flex-direction:column;gap:8px;margin-top:6px;padding-top:15px;border-top:1px solid #657d71}
+.talent-reset h4{font-size:17px}
+.talent-reset .tiny-btn{min-height:46px}
+.talent-reset small{color:#b9cabb;font:11px system-ui,sans-serif}
+.talent-inspector-empty{display:flex;align-items:center;flex-direction:column;text-align:center;padding:16px 4px}
+.talent-inspector-empty>span{font-size:43px;color:#edca8d}
+.talent-inspector-empty h4{margin:5px 0}
+@media(max-width:780px){
+ .party-manager,.talent-screen-layout{grid-template-columns:1fr}
+ .talent-inspector{position:static}
+ .party-formation-grid{gap:7px}
+ .party-position{min-height:100px}
+}
+@media(max-width:540px){
+ .party-intro,.talent-screen-head{align-items:flex-start;padding:10px}
+ .party-intro h3,.talent-screen-head h3{font-size:21px}
+ .party-ready,.talent-points{min-width:72px}
+ .party-ready b,.talent-points b{font-size:22px}
+ .party-position{gap:6px;padding:7px;min-height:120px}
+ .party-portrait{width:33px;height:38px;flex-basis:33px;font-size:20px}
+ .party-position-copy strong{font-size:13px}
+ .party-position-copy small{font-size:10px}
+ .party-roster-hero{min-height:58px}
+ .party-roster-actions{grid-template-columns:1fr 1fr}
+ .talent-tree{padding:12px 9px}
+ .talent-node-row{gap:8px}
+ .talent-node{padding:9px 6px;min-height:165px}
+ .talent-node strong{font-size:13px}
+ .talent-node small{font-size:10px}
+ .talent-tree-root{width:175px}
+}
