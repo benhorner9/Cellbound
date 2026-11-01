@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "b3ad89b5a70e13aea72bd397a29d0c5b6fd52c4b",
+  "sourceCommit": "46c209e63ba37cee1a299553feaf2d3730c37d15",
   "target": "/emberfall/",
-  "stage": "block02-hero-progression-and-loot",
+  "stage": "block03-three-bosses-and-exclusive-loot",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -12,5 +12,5 @@
     "src/workshop.js",
     "src/style.css"
   ],
-  "note": "Playable local PvE progression: character XP, talents, unique equipment and repeatable boss loot; no online accounts, trading or PvP."
+  "note": "Playable three-boss local PvE with level unlocks, unique loot and distinct hazard mechanics; no online PvP or trading."
 }

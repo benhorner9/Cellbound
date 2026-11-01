@@ -1,5 +1,5 @@
 import {
- HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,SLOTS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,
+ HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,SLOTS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile
 } from './progression.js';
 
@@ -11,7 +11,7 @@ const rarityClass=name=>String(name).toLowerCase();
 export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),tabs=document.getElementById('workshopTabs');
- let current='heroes',heroId='knight',pendingSell=null;
+ let current='heroes',heroId='knight',pendingSell=null,dropBoss='thornwarden';
  const tabNames={heroes:'Heroes & Talents',pack:'Equipment Bag',shop:'Quartermaster',loot:'Boss Drops'};
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
@@ -54,7 +54,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   let html='<div class="workshop-intro"><h3>Equipment Bag</h3><p>Select a hero, then equip compatible items. An item can only be held by one hero at a time. To move it, equip it on another hero.</p></div>';
   html+='<label for="equipHero">Equip items for</label><select id="equipHero" class="hero-select">'+HERO_IDS.map(id=>'<option value="'+id+'" '+(id===heroId?'selected':'')+'>'+esc(HERO_NAMES[id])+' · '+pretty[id]+'</option>').join('')+'</select>';
   html+='<div class="pack-stats"><span>'+profile.items.length+' / 400 items</span><span>'+profile.gold+' gold</span></div>';
-  if(!profile.items.length)html+='<div class="pack-empty">Your bag is empty. Defeat the Thornwarden for a guaranteed item, or visit the Quartermaster for starter gear.</div>';
+  if(!profile.items.length)html+='<div class="pack-empty">Your bag is empty. Defeat a boss for a guaranteed item, or visit the Quartermaster for starter gear.</div>';
   for(const item of profile.items.slice().reverse()){
    const def=ITEM_DEFS[item.defId],owner=itemOwner(profile,item.id);
    const allowed=!def.classes||def.classes.includes(heroId);
@@ -75,13 +75,17 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   return html;
  }
  function renderDrops(){
-  const weight=DROP_TABLE.reduce((a,x)=>a+x.weight,0);
-  let html='<div class="workshop-intro"><h3>Thornwarden Drop Table</h3><p>Each victory awards <b>+'+145+' XP per hero</b>, <b>+'+80+' gold</b> and <b>one equipment drop</b>. The boss can be farmed repeatedly. Drop rates below are per victory.</p></div>';
-  for(const entry of DROP_TABLE){
-   const def=ITEM_DEFS[entry.id],prob=(entry.weight/weight*100);
+  const boss=BOSSES[dropBoss],table=bossDropTable(dropBoss);
+  const weight=table.reduce((a,x)=>a+x.weight,0);
+  let html='<div class="workshop-intro"><h3>Boss Drop Tables</h3><p>Every victory awards XP, gold and exactly one item from that boss. Drop rates are per victory.</p></div>';
+  html+='<label for="dropBoss">Choose a boss</label><select id="dropBoss" class="hero-select">'+Object.values(BOSSES).map(b=>'<option value="'+b.id+'" '+(b.id===dropBoss?'selected':'')+'>'+esc(b.name)+(canChallenge(profile,b.id)?'':' · Unlock level '+b.unlock)+'</option>').join('')+'</select>';
+  html+='<div class="pack-stats"><span>'+esc(boss.place)+'</span><b>+'+boss.xp+' XP · '+boss.gold+' gold</b></div>';
+  html+='<p class="workshop-disclaimer">'+esc(boss.mechanics)+'</p>';
+  for(const entry of table){
+   const def=ITEM_DEFS[entry.id],prob=entry.weight/weight*100;
    html+='<article class="drop-row"><span class="loot-icon">'+esc(def.icon)+'</span><div><strong>'+esc(def.name)+'</strong><small>'+esc(def.rarity)+' · '+esc(slotTitle[def.slot])+' · '+esc(itemBonusText(def))+'</small></div><b>'+prob.toFixed(prob<10?1:0)+'%</b></article>';
   }
-  html+='<p class="workshop-disclaimer">All loot is a local prototype. Trading, public rarity records and server-secure item ownership are not implemented yet.</p>';
+  html+='<p class="workshop-disclaimer">Rates are transparent and independent per win. All equipment is local to this browser; online ownership and trading remain future features.</p>';
   return html;
  }
  function render(){
@@ -115,6 +119,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  root.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
  body.addEventListener('change',e=>{
   if(e.target.id==='equipHero'&&HERO_IDS.includes(e.target.value)){heroId=e.target.value;render();}
+  if(e.target.id==='dropBoss'&&Object.hasOwn(BOSSES,e.target.value)){dropBoss=e.target.value;render();}
  });
  body.addEventListener('click',e=>{
   const btn=e.target.closest('button[data-action]');if(!btn||btn.disabled)return;

@@ -1,5 +1,5 @@
 import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents} from './engine.js';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded} from './progression.js';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,xpNeeded,BOSSES,bossInfo,canChallenge} from './progression.js';
 import {mountWorkshop} from './workshop.js';
 
 const $=id=>document.getElementById(id);
@@ -9,10 +9,10 @@ const bgc=bg.getContext('2d');
 const TAU=Math.PI*2;
 let storage=null;try{storage=window.localStorage;}catch{}
 const company=readProfile(storage);
-let fightSerial=0;
+let fightSerial=0,bossSelection='thornwarden';
 function newBattle(){
  const serial=++fightSerial;
- const fight=createEncounter(((Date.now()>>>0)+serial)||1337,company);
+ const fight=createEncounter(((Date.now()>>>0)+serial)||1337,company,bossSelection);
  fight.receiptId='fight-'+Date.now().toString(36)+'-'+serial+'-'+Math.random().toString(36).slice(2,9);
  return fight;
 }
@@ -117,7 +117,15 @@ function useSlot(slot){
  else announce('Move into range or choose a target first',1.3);
 }
 for(const btn of document.querySelectorAll('#abilities [data-slot]'))btn.addEventListener('click',()=>useSlot(Number(btn.dataset.slot)));
-$('startBtn').addEventListener('click',()=>start());
+// The overlay is rebuilt between expeditions, so delegate all its buttons.
+$('overlayContent').addEventListener('click',e=>{
+ const choice=e.target.closest('[data-boss]');
+ if(choice&&!choice.disabled){if(canChallenge(company,choice.dataset.boss)){bossSelection=choice.dataset.boss;state=newBattle();renderEncounterChoices();}return;}
+ if(e.target.closest('#startBtn'))start();
+ if(e.target.closest('#againBtn'))restart();
+ if(e.target.closest('#inspectBtn'))workshop.open(state.phase==='victory'?'pack':'heroes',selected);
+ if(e.target.closest('#chooseBossBtn'))returnToCamp();
+});
 $('restartBtn').addEventListener('click',()=>restart());
 $('pauseBtn').addEventListener('click',()=>{if(state.phase!=='playing')return;paused=!paused;syncUI(true);announce(paused?'Encounter paused':'Back to battle!',1.2);});
 $('muteBtn').addEventListener('click',()=>{
@@ -132,8 +140,22 @@ window.addEventListener('keydown',e=>{
  if('qwer'.includes(e.key.toLowerCase())&&e.key.length===1){const i='qwer'.indexOf(e.key.toLowerCase());selectHero(state.heroes[i].id);}
 });
 window.addEventListener('resize',resize,{passive:true});
+function renderEncounterChoices(){
+ const boss=bossInfo(bossSelection);
+ const options=Object.values(BOSSES).map(b=>{
+  const locked=!canChallenge(company,b.id),active=b.id===bossSelection;
+  return '<button type="button" class="encounter-choice '+(active?'current ':'')+(locked?'locked':'')+'" data-boss="'+b.id+'" '+(locked?'disabled':'')+'><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(locked?'🔒 Requires level '+b.unlock+' on all four heroes':'Level '+b.unlock+' · '+b.description)+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
+ }).join('');
+ $('overlayContent').innerHTML='<div class="overlay-emblem">✦</div><span class="eyebrow">BLOCK 03 · THREE BOSSES TO MASTER</span><h1>Choose Your Expedition</h1><p>Command four heroes, collect exclusive equipment and unlock tougher bosses as you level up.</p><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p><div class="overlay-hints"><span>✦ Select heroes</span><span>➤ Drag to dodge</span><span>⚡ Time abilities</span></div><button id="startBtn" class="primary-btn large" type="button" '+(!canChallenge(company,bossSelection)?'disabled':'')+'>Fight '+boss.name+' →</button>';
+}
+function returnToCamp(){
+ paused=false;rewardCommitted=false;selected='knight';state=newBattle();
+ floaters=[];bursts=[];projectiles=[];markers=[];
+ $('overlay').classList.remove('hidden');$('pauseBtn').disabled=true;
+ renderEncounterChoices();syncUI(true);
+}
 function start(){
- if(state.phase==='ready'){state=newBattle();rewardCommitted=false;startEncounter(state);$('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);}
+ if(state.phase==='ready'&&canChallenge(company,bossSelection)){state=newBattle();rewardCommitted=false;startEncounter(state);$('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);}
 }
 function restart(){
  state=newBattle();rewardCommitted=false;selected='knight';paused=false;
@@ -178,6 +200,10 @@ function label(c,text,x,y,size=11,color='#f7e8c9'){
 }
 function renderGround(){
  ctx.drawImage(bg,0,0);
+ if(state.bossId!=='thornwarden'){
+  ctx.fillStyle=state.bossId==='cindermaw'?'#a44f2155':'#263c8362';
+  ctx.fillRect(0,0,WORLD.width,WORLD.height);
+ }
  // Animated fireflies and light mist keep the flat illustrated arena alive.
  for(let i=0;i<18;i++){
   const a=i*42.5,x=((i*173+state.time*8)%1220)-10,y=30+(i*79%570);
@@ -263,14 +289,54 @@ function drawBramble(c,u){
  c.save();c.translate(u.x,u.y);ellipse(c,0,1,27,10,'#1b3d3070');
  if(u.hp===0)c.globalAlpha=.28;
  const wobble=Math.sin(state.time*5+u.x*.01)*2;
+ if(u.role!=='Bramble'){c.translate(0,Math.sin(state.time*5+u.x)*3);c.shadowColor=u.role==='Imp'?'#f79244':'#91ceff';c.shadowBlur=24;}
  poly(c,[-17,-8,-24,-38,-6,-47,16,-40,21,-7],'#6b7e3c','#324b34',3);
  poly(c,[-23,-33,-27,-60,-6,-45,3,-69,10,-42,23,-60,18,-29],'#9cb56d','#394c36',3);
  ellipse(c,0,-30+wobble,17,23,'#8da46b');ellipse(c,-6,-34,4,5,'#cbe0a0');ellipse(c,9,-34,4,5,'#cbe0a0');
  line(c,[-12,-9,-21,0],'#4d573a',5);line(c,[13,-8,22,0],'#4d573a',5);
+ if(u.role!=='Bramble')ellipse(c,0,-29,12,12,u.role==='Imp'?'#ef8d42':'#9bd8ff');
  c.restore();
- if(u.hp>0){drawHealth(u,u.x,u.y-77,52);label(c,'BRAMBLEKIN',u.x,u.y-83,10,'#f5dfbe');}
+ if(u.hp>0){drawHealth(u,u.x,u.y-77,52);label(c,u.name.toUpperCase(),u.x,u.y-83,10,'#f5dfbe');}
+}
+function drawVariantBoss(c,u){
+ const fire=state.bossId==='cindermaw';
+ c.save();c.translate(u.x,u.y);
+ const wobble=Math.sin(state.time*3)*3;
+ ellipse(c,0,-2,90,24,'#192d36aa');
+ if(u.hp<=0)c.globalAlpha=.33;
+ c.translate(0,wobble);
+ // Two truly different, original 2D silhouettes: a horned furnace and a winged lightning construct.
+ const base=fire?'#4b4140':'#4b6182',mid=fire?'#bd5e37':'#7894ca',light=fire?'#ffbc62':'#d2e9ff';
+ if(fire){
+  poly(c,[-47,-25,-71,-6,-66,17,-38,8,-23,-26,29,-26,53,8,76,16,71,-6,42,-25],base,'#241f22',6);
+  poly(c,[-50,-31,-64,-110,-34,-132,-9,-114,29,-128,60,-102,48,-30,26,-13,-29,-13],mid,'#302b2e',6);
+  poly(c,[-43,-114,-67,-170,-44,-156,-21,-133],light,'#422d29',4);
+  poly(c,[38,-117,68,-170,57,-143,25,-131],light,'#422d29',4);
+  poly(c,[-30,-100,1,-120,32,-94,25,-54,0,-38,-26,-55],base,'#2c262b',3);
+  ellipse(c,0,-75,19,27,'#e67439');ellipse(c,0,-75,10+Math.sin(state.time*7)*2,18,'#ffd27c');
+  ellipse(c,-19,-114,9,6,'#ffe49b');ellipse(c,19,-114,9,6,'#ffe49b');
+  line(c,[-57,-85,-79,-47,-89,-11],'#584541',16);line(c,[56,-86,78,-51,92,-12],'#584541',16);
+  ellipse(c,92,-12,21,15,'#d97543');ellipse(c,-89,-11,21,15,'#d97543');
+ }else{
+  for(const sign of [-1,1]){
+   poly(c,[sign*22,-88,sign*58,-149,sign*102,-175,sign*82,-110,sign*121,-106,sign*49,-50],mid,'#283a67',4);
+   poly(c,[sign*58,-149,sign*102,-175,sign*82,-110,sign*49,-50],light,null);
+  }
+  poly(c,[-38,-21,-50,-82,-19,-124,17,-133,50,-84,41,-20,0,-5],base,'#263a68',5);
+  poly(c,[-26,-95,0,-113,25,-96,22,-51,0,-28,-24,-51],mid,'#263a68',3);
+  ellipse(c,0,-70,18,24,'#6fbbfc');ellipse(c,0,-70,9,15,light);
+  poly(c,[-31,-119,-22,-161,0,-145,19,-159,30,-115],light,'#37578c',4);
+  ellipse(c,-15,-114,7,5,'#e4f7ff');ellipse(c,16,-114,7,5,'#e4f7ff');
+  line(c,[-40,-85,-59,-55,-51,-23],mid,11);line(c,[40,-85,59,-55,51,-23],mid,11);
+  strokeEllipse(c,0,-65,49,65,'#d0f1ff55',3);
+ }
+ if(u.attackFlash>0)ellipse(c,0,-85,77,94,fire?'#ffd59750':'#def4ff56');
+ if(u.hit>0){c.globalAlpha=.40*u.hit/.24;ellipse(c,0,-85,73,92,'#fff6db');}
+ c.restore();
+ if(u.hp>0){drawHealth(u,u.x,u.y-186,124);label(c,u.name.toUpperCase(),u.x,u.y-195,13,fire?'#ffe3a9':'#e0f1ff');}
 }
 function drawBoss(c,u){
+ if(state.bossId!=='thornwarden'){drawVariantBoss(c,u);return;}
  c.save();c.translate(u.x,u.y);ellipse(c,0,-3,85,27,'#18382a99');
  if(u.hp===0)c.globalAlpha=.34;
  const w=Math.sin(state.time*2.6)*3;c.translate(0,w);
@@ -306,11 +372,31 @@ function drawBoss(c,u){
 function renderTelegraph(){
  const t=state.telegraph;if(!t)return;
  const p=1-t.remaining/t.max;
- ctx.beginPath();ctx.arc(t.x,t.y,t.radius,0,TAU);
- ctx.fillStyle='rgba(192,55,46,'+(.16+Math.sin(state.time*14)*.07)+')';ctx.fill();
- ctx.lineWidth=5;ctx.strokeStyle='#f4b78e';ctx.setLineDash([13,10]);ctx.stroke();ctx.setLineDash([]);
- ctx.beginPath();ctx.arc(t.x,t.y,t.radius-9,-Math.PI/2,-Math.PI/2+p*TAU);ctx.strokeStyle='#ffe9a8';ctx.lineWidth=9;ctx.stroke();
- label(ctx,'! MOVE !',t.x,t.y,19,'#fff6df');
+ ctx.save();
+ if(t.kind==='cone'){
+  ctx.beginPath();ctx.moveTo(t.originX,t.originY);
+  ctx.arc(t.originX,t.originY,t.range,t.angle-t.halfAngle,t.angle+t.halfAngle);
+  ctx.closePath();ctx.fillStyle='rgba(244,93,47,'+(.15+Math.sin(state.time*12)*.08)+')';ctx.fill();
+  ctx.strokeStyle='#ffd38b';ctx.lineWidth=5;ctx.setLineDash([16,10]);ctx.stroke();ctx.setLineDash([]);
+  label(ctx,'FURNACE BREATH · DODGE',t.x,t.y-55,16,'#ffe0a8');
+ }else if(t.kind==='lane'){
+  const ux=Math.cos(t.angle),uy=Math.sin(t.angle),px=-uy*t.width*.5,py=ux*t.width*.5;
+  ctx.beginPath();ctx.moveTo(t.originX+px,t.originY+py);ctx.lineTo(t.originX+ux*t.range+px,t.originY+uy*t.range+py);
+  ctx.lineTo(t.originX+ux*t.range-px,t.originY+uy*t.range-py);ctx.lineTo(t.originX-px,t.originY-py);ctx.closePath();
+  ctx.fillStyle='rgba(112,174,255,'+(.18+Math.sin(state.time*15)*.08)+')';ctx.fill();
+  ctx.lineWidth=4;ctx.strokeStyle='#d1edff';ctx.setLineDash([15,10]);ctx.stroke();ctx.setLineDash([]);
+  label(ctx,'LIGHTNING LANE · MOVE',t.x,t.y-55,16,'#e1f4ff');
+ }else{
+  ctx.beginPath();ctx.arc(t.x,t.y,t.radius,0,TAU);
+  ctx.fillStyle='rgba(192,55,46,'+(.16+Math.sin(state.time*14)*.07)+')';ctx.fill();
+  ctx.lineWidth=5;ctx.strokeStyle='#f4b78e';ctx.setLineDash([13,10]);ctx.stroke();ctx.setLineDash([]);
+  label(ctx,'THORN SLAM · MOVE',t.x,t.y,17,'#fff6df');
+ }
+ // A progress bar communicates how long remains before the strike resolves.
+ ctx.fillStyle='#152a2ad9';ctx.fillRect(t.x-64,t.y+43,128,12);
+ ctx.fillStyle=t.kind==='lane'?'#b8e4ff':t.kind==='cone'?'#ffc07b':'#fbe3a8';
+ ctx.fillRect(t.x-61,t.y+46,122*(1-p),6);
+ ctx.restore();
 }
 function renderMarkers(){
  for(const m of markers){const p=m.age/m.ttl;const radius=9+Math.sin(p*Math.PI)*24;
@@ -346,7 +432,11 @@ function render(){
  if(paused){ctx.fillStyle='#112e2a97';ctx.fillRect(0,0,WORLD.width,WORLD.height);label(ctx,'PAUSED',600,320,58,'#fff0c6');}
 }
 function syncUI(force=false){
- const hero=getHero(state,selected);
+ const hero=getHero(state,selected),bossConfig=bossInfo(state.bossId);
+ $('chapterName').textContent=bossConfig.chapter;
+ $('locationName').textContent=bossConfig.place;
+ $('bossLabel').textContent=bossConfig.name.toUpperCase();
+ $('bossHint').textContent=bossConfig.mechanics;
  for(const el of document.querySelectorAll('.hero-card')){
   const h=getHero(state,el.dataset.hero);
   el.classList.toggle('selected',selected===h.id);el.classList.toggle('dead',h.hp<=0);
@@ -384,14 +474,14 @@ function syncUI(force=false){
 function showEnd(){
  if(state.phase!=='victory'&&state.phase!=='defeat')return;
  $('pauseBtn').disabled=true;
- const win=state.phase==='victory';
- const title=win?'The Hollow Is Safe':'The Company Has Fallen';
- const desc=win?'Your heroes defeated the Thornwarden. Strengthen them with talents and equipment, then challenge the boss again.':'The ancient guardian overwhelmed your party. Try focusing its allies first, healing wounded heroes and escaping marked attacks.';
+ const win=state.phase==='victory',defeated=bossInfo(state.bossId);
+ const title=win?defeated.name+' Defeated':'The Company Has Fallen';
+ const desc=win?'Your heroes defeated '+defeated.name+'. Strengthen them with talents and gear, then hunt for more exclusive loot.':'Your company fell to '+defeated.name+'. Protect your healer and move out of the marked boss attacks.';
  let rewardHTML='';
  if(!rewardCommitted){
   rewardCommitted=true;
   if(win){
-   const reward=grantVictory(company,state.receiptId,state.seed);
+   const reward=grantVictory(company,state.receiptId,state.seed,state.bossId);
    if(reward){
     const saved=writeProfile(storage,company);
     const def=ITEM_DEFS[reward.item.defId];
@@ -400,10 +490,8 @@ function showEnd(){
    }
   }else{recordDefeat(company);writeProfile(storage,company);}
  }
- $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · THORNWARDEN DEFEATED':'DEFEAT · FIRST EXPEDITION')+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button></div>';
+ $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button></div>';
  $('overlay').classList.remove('hidden');
- $('againBtn').addEventListener('click',restart);
- $('inspectBtn').addEventListener('click',()=>workshop.open(win?'pack':'heroes',selected));
  syncUI(true);
 }
 function frame(now){
@@ -425,7 +513,9 @@ const workshop=mountWorkshop({
 });
 $('companyBtn').addEventListener('click',()=>workshop.open('heroes',selected));
 $('bagBtn').addEventListener('click',()=>workshop.open('pack',selected));
+$('bossSelectBtn').addEventListener('click',returnToCamp);
 makeBackground();
 resize();
+renderEncounterChoices();
 syncUI(true);
 requestAnimationFrame(frame);

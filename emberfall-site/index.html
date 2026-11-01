@@ -7,12 +7,12 @@
 </head><body>
 <div class="app" id="app">
  <header class="topbar">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><div class="brand-name">HEROES <span>OF</span> EMBERFALL</div><div class="brand-sub">BLOCK 02 · THE HEROES GROW STRONGER</div></div></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><div class="brand-name">HEROES <span>OF</span> EMBERFALL</div><div class="brand-sub">BLOCK 03 · THREE BOSSES TO MASTER</div></div></div>
   <div class="top-actions"><span class="chip" id="battleTime">00:00</span><button id="muteBtn" class="icon-btn" type="button" aria-label="Toggle sounds" title="Toggle sounds">♫</button><button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause game" title="Pause" disabled>Ⅱ</button></div>
  </header>
  <main class="game-layout">
   <section class="battle-column" aria-label="Real time combat arena">
-    <div class="battle-top"><div class="chapter"><span class="eyebrow">CHAPTER I · THE VERDANT RUINS</span><strong>The Thornwarden's Hollow</strong></div><div class="boss-hud"><span class="boss-icon">☠</span><div class="boss-data"><div class="boss-title"><span id="bossLabel">THORNWARDEN</span><small id="bossHpText">720 / 720</small></div><div class="boss-track"><div class="boss-fill" id="bossFill"></div></div></div></div></div>
+    <div class="battle-top"><div class="chapter"><span class="eyebrow" id="chapterName">CHAPTER I · THE VERDANT RUINS</span><strong id="locationName">The Thornwarden's Hollow</strong></div><div class="boss-hud"><span class="boss-icon">☠</span><div class="boss-data"><div class="boss-title"><span id="bossLabel">THORNWARDEN</span><small id="bossHpText">720 / 720</small></div><div class="boss-track"><div class="boss-fill" id="bossFill"></div></div></div></div></div>
     <div class="battle-frame" id="battleFrame">
      <canvas id="arena" width="1200" height="640" aria-label="Combat arena: select an allied hero, then click or drag to an enemy or destination"></canvas>
      <div class="battle-tag"><span class="live-dot"></span><span id="phaseLabel">READY</span></div>
@@ -28,7 +28,7 @@
       </div>
      </div>
     </div>
-    <div class="command-strip"><div><span class="spark">✦</span> <b id="commandTitle">Command your heroes</b><p id="commandInfo">Select a hero, then tap an enemy to focus attacks or tap the ground to reposition. Drag heroes to issue quick commands.</p></div><button id="restartBtn" type="button" class="quiet-btn">↻ Restart Encounter</button></div>
+    <div class="command-strip"><div><span class="spark">✦</span> <b id="commandTitle">Command your heroes</b><p id="commandInfo">Select a hero, then tap an enemy to focus attacks or tap the ground to reposition. Drag heroes to issue quick commands.</p></div><button id="restartBtn" type="button" class="quiet-btn">↻ Restart Encounter</button><button id="bossSelectBtn" type="button" class="quiet-btn">⚔ Choose Boss</button></div>
   </section>
   <aside class="sidebar">
    <div class="side-heading"><div><span class="eyebrow">YOUR COMPANY</span><h2>The Emberguard</h2></div><span class="party-count">4 / 4</span></div>
@@ -44,8 +44,8 @@
     <button class="skill" type="button" data-slot="0"><span class="skill-icon">🛡</span><span class="skill-text"><b>Shield Wall</b><small>Protect nearby allies and draw attacks</small></span><span class="skill-key">1</span></button>
     <button class="skill" type="button" data-slot="1"><span class="skill-icon">⚔</span><span class="skill-text"><b>Heroic Strike</b><small>Heavy damage and a brief stun</small></span><span class="skill-key">2</span></button>
    </div>
-   <div class="side-note"><span>✦</span><p><b>Combat is fully real time.</b> Your heroes attack on their own. You decide who they target, where they move and when they use their abilities.</p></div>
-   <div class="prototype-note">BLOCK 02 · PVE PROGRESSION &amp; BOSS LOOT<br>Saved locally in this browser · No online trading, accounts or PvP yet.</div>
+   <div class="side-note"><span>✦</span><p id="bossHint"><b>Combat is fully real time.</b> Your heroes attack on their own. You decide who they target, where they move and when they use their abilities.</p></div>
+   <div class="prototype-note">BLOCK 03 · THREE DISTINCT PVE BOSSES<br>Saved locally in this browser · No online trading, accounts or PvP yet.</div>
   </aside>
  </main>
  <section id="workshop" class="workshop-cover hidden" role="dialog" aria-modal="true" aria-labelledby="workshopHeading"><div class="workshop-dialog"><header class="workshop-head"><div><span class="eyebrow">EMBERGUARD CAMP</span><h2 id="workshopHeading">Heroes &amp; Talents</h2></div><button type="button" id="workshopClose" class="workshop-close" aria-label="Close workshop">✕ Close</button></header><div class="workshop-nav" id="workshopTabs"><button type="button" data-tab="heroes" class="selected">Heroes &amp; Talents</button><button type="button" data-tab="pack">Equipment Bag</button><button type="button" data-tab="shop">Quartermaster</button><button type="button" data-tab="loot">Boss Drops</button></div><div id="workshopBody" class="workshop-body"></div><div class="workshop-bottom">Local prototype: items and hero progression are saved in this browser only. <span class="save-warning">Storage unavailable — changes may not persist.</span></div></div></section>
