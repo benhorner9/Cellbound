@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "e0a950d210617c635a6f6f29edfe5b2a88804c3e",
+  "sourceCommit": "07b628ba13d656824b0b1eee7de30617905b56ed",
   "target": "/emberfall/",
-  "stage": "camp-hub-v4.9.0",
+  "stage": "ui-ux-all-screens-v4.9.1",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Dedicated Emberguard Stronghold home base is the entry screen; eight functional camp destinations and live company statistics; separate boss expedition board, intentional fight launch, battle-only Canvas HUD, return to camp after fights. Existing company saves, hero and item ownership, combat, talents and crafting preserved. Source PR #31 passed 79 unit tests plus desktop, Chromium touch and WebKit smoke, merged source commit e0a950d210617c635a6f6f29edfe5b2a88804c3e. Hosted asset hashes mirror canonical code. Browser cache pins v4.9.0."
+  "note": "Full cross-screen UI/UX polish: all eight camp management areas become dedicated pages (no combat underneath), unified compact navigation and back controls, semantic accessible tabs and keyboard focus, iPad native scrolling and reachable inventory actions, honest camp roster/save statistics and player-facing labels, and result-screen Return to Camp with scrollable rewards. Keep full-width two-ability combat HUD, all progression/saves/item ownership/crafting and Block 5 untouched. Canonical source PR #33 passed unit, Chromium iPad-touch and WebKit browser smoke and merged as 07b628ba13d656824b0b1eee7de30617905b56ed. Staged six source asset blobs verified identical to canonical source. Cache graph v4.9.1."
 }

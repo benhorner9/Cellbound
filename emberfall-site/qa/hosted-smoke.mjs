@@ -14,7 +14,16 @@ page.on('response',r=>{
 try{
  await page.goto(base+'?sha='+process.env.GITHUB_SHA,{waitUntil:'networkidle',timeout:35000});
  // Verify this is a playable, persistent progression release, not a cosmetic mock-up.
+ if((await page.locator('#app').getAttribute('data-view'))!=='camp'||await page.locator('#battleFrame').isVisible())throw Error('Hosted UX must start on camp only');
+ await page.locator('.camp-building[data-camp="backup"]').click();
+ if((await page.locator('#app').getAttribute('data-view'))!=='workshop')throw Error('Live Save Archive is not a dedicated page');
+ if((await page.locator('#workshopHeading').innerText())!=='Save Backup')throw Error('Save Archive opened wrong section');
+ if(!(await page.locator('#workshopClose').innerText()).includes('Back to Camp'))throw Error('Hosted management page lacks back navigation');
+ if((await page.locator('#workshopTabs [role="tab"]').count())!==8)throw Error('Management sections not consistently reachable');
+ await page.locator('#workshopClose').click();
+ if((await page.locator('#app').getAttribute('data-view'))!=='camp')throw Error('Live return to camp failed');
  await page.locator('#manageFromPickerBtn').click();
+ if((await page.locator('#app').getAttribute('data-view'))!=='workshop')throw Error('Live Party screen is still a floating overlay');
  if(!(await page.locator('.party-formation').isVisible())||(await page.locator('.party-position').count())!==4)throw Error('Live dedicated 4-slot Party screen missing');
  await page.locator('#workshopTabs [data-tab="talents"]').click();
  if((await page.locator('.talent-node').count())!==4)throw Error('Live connected talent-tree choices missing');
@@ -138,13 +147,13 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.9.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.9.1');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.9.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.9.1')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
@@ -181,7 +190,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.9.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.9.1');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -204,7 +213,7 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.9.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.9.1');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -238,7 +247,7 @@ try{
  await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  // Isolated live source must also support real craft XP, generated gear and potion effects.
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.9.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.9.1');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=30;
   if(!writeProfile(localStorage,p))throw Error('Live crafting fixture could not be saved');

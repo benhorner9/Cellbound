@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.9.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES} from './progression.js?v=4.9.0';
-import {mountWorkshop} from './workshop.js?v=4.9.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.9.1';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES} from './progression.js?v=4.9.1';
+import {mountWorkshop} from './workshop.js?v=4.9.1';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -23,7 +23,7 @@ function newBattle(id=bossSelection){
 }
 let state=newBattle(),selected=(company.partyOrder?.[0]||'knight'),paused=false,sound=false,last=0,uiLast=0;
 let currentView='camp',campTab='home';
-let rewardCommitted=false,resultDismissed=false,workshopWasPaused=false;
+let rewardCommitted=false,resultDismissed=false,workshopWasPaused=false,workshopOpenedFromCamp=false;
 let floaters=[],bursts=[],projectiles=[],markers=[],noticeUntil=0,noticeText='',startPoint=null;
 let audioCtx=null;
 const heroColors={knight:'#8cb6c0',ranger:'#94bd79',mage:'#c2a4e9',cleric:'#f4d28c'};
@@ -148,7 +148,7 @@ $('overlayContent').addEventListener('click',e=>{
  if(e.target.closest('#chooseBossBtn'))returnToCamp('expeditions');
  if(e.target.closest('#manageFromPickerBtn'))workshop.open('party',selected);
  if(e.target.closest('#bagFromPickerBtn'))workshop.open('pack',selected);
- if(e.target.closest('#dismissRewardsBtn')){resultDismissed=true;$('overlay').classList.add('hidden');$('overlay').classList.remove('result-mode');}
+ if(e.target.closest('#dismissRewardsBtn'))returnToCamp('home');
 });
 $('restartBtn').addEventListener('click',()=>restart());
 $('pauseBtn').addEventListener('click',()=>{if(state.phase!=='playing')return;paused=!paused;syncUI(true);announce(paused?'Encounter paused':'Back to battle!',1.2);});
@@ -158,7 +158,8 @@ $('muteBtn').addEventListener('click',()=>{
  if(sound)playSound(600,.12);
 });
 window.addEventListener('keydown',e=>{
- if(e.target?.tagName==='INPUT'||e.target?.tagName==='TEXTAREA')return;
+ if(['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName)||e.target?.isContentEditable)return;
+  if(currentView!=='battle'||workshop.isOpen()||!$('overlay').classList.contains('hidden'))return;
  if(e.key==='1'||e.key==='2'){useSlot(Number(e.key)-1);e.preventDefault();}
  if(e.code==='Space'){if(state.phase==='playing'){$('pauseBtn').click();e.preventDefault();}}
  if('qwer'.includes(e.key.toLowerCase())&&e.key.length===1){const i='qwer'.indexOf(e.key.toLowerCase());selectHero(state.heroes[i].id);}
@@ -188,9 +189,9 @@ function renderCampSummary(){
  $('campItems').textContent=String(company.items.length);
  const icons={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
  const roles={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
- $('campRoster').innerHTML=state.heroes.map(unit=>{
-  const hero=company.heroes[unit.id];
-  return '<div class="camp-roster-member"><span class="camp-roster-icon portrait '+unit.id+'">'+icons[unit.id]+'</span><div><strong>'+HERO_NAMES[unit.id]+'</strong><small>'+roles[unit.id]+' · Lv '+hero.level+'</small></div></div>';
+ $('campRoster').innerHTML=company.partyOrder.map(id=>{
+  const hero=company.heroes[id];
+  return '<div class="camp-roster-member"><span class="camp-roster-icon portrait '+id+'">'+icons[id]+'</span><div><strong>'+HERO_NAMES[id]+'</strong><small>'+roles[id]+' · Lv '+hero.level+'</small></div></div>';
  }).join('');
 }
 function showCamp(tab='home'){
@@ -619,7 +620,7 @@ function showEnd(){
    }
   }else{recordDefeat(company);writeProfile(storage,company);}
  }
- $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button><button class="quiet-btn" type="button" id="dismissRewardsBtn">Close Results</button></div>';
+ $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button><button class="quiet-btn" type="button" id="dismissRewardsBtn">Return to Camp</button></div>';
  $('overlay').classList.add('result-mode');
  $('overlay').setAttribute('role','dialog');
  $('overlay').setAttribute('aria-label','Boss fight result');
@@ -646,8 +647,22 @@ function frame(now){
 }
 const workshop=mountWorkshop({
  profile:company,storage,
- onOpen:()=>{workshopWasPaused=paused;paused=true;syncUI(true);},
- onClose:()=>{paused=workshopWasPaused;renderCampSummary();renderEncounterChoices();syncUI(true);},
+ onOpen:()=>{
+  workshopWasPaused=paused;workshopOpenedFromCamp=currentView==='camp';paused=true;
+  const root=$('workshop'),back=$('workshopClose');
+  root.classList.toggle('camp-page',workshopOpenedFromCamp);
+  root.setAttribute('role',workshopOpenedFromCamp?'main':'dialog');
+  if(workshopOpenedFromCamp){root.removeAttribute('aria-modal');$('app').dataset.view='workshop';back.textContent='← Back to Camp';}
+  else{root.setAttribute('aria-modal','true');back.textContent='✕ Back to Battle';}
+  syncUI(true);
+ },
+ onClose:()=>{
+  paused=workshopWasPaused;
+  if(workshopOpenedFromCamp){$('app').dataset.view='camp';$('workshop').classList.remove('camp-page');}
+  $('workshop').setAttribute('role','dialog');$('workshop').setAttribute('aria-modal','true');
+  $('workshopClose').textContent='✕ Close';workshopOpenedFromCamp=false;
+  renderCampSummary();renderEncounterChoices();syncUI(true);
+ },
  onChange:()=>{renderCampSummary();renderEncounterChoices();syncUI(true);}
 });
 $('companyBtn').addEventListener('click',()=>workshop.open('heroes',selected));
@@ -661,5 +676,5 @@ resize();
 showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.9.0';
+document.documentElement.dataset.emberfallReady='4.9.1';
 requestAnimationFrame(frame);

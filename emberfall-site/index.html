@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#132323"><meta name="description" content="Heroes of Emberfall — an original hand-drawn inspired four-hero real-time fantasy combat prototype.">
+<meta name="theme-color" content="#132323"><meta name="description" content="Heroes of Emberfall — an original hand-drawn inspired four-hero fantasy RPG with an Emberguard camp and boss expeditions.">
 <title>Heroes of Emberfall · The Thornwarden</title>
-<link rel="stylesheet" href="./src/style.css?v=4.9.0">
+<link rel="stylesheet" href="./src/style.css?v=4.9.1">
 </head><body>
 <div class="app" id="app" data-view="camp">
  <header class="topbar">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><div class="brand-name">HEROES <span>OF</span> EMBERFALL</div><div class="brand-sub">BLOCK 04 · BUILD YOUR HEROES</div></div></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><div class="brand-name">HEROES <span>OF</span> EMBERFALL</div><div class="brand-sub">THE EMBERGUARD · BUILD YOUR LEGEND</div></div></div>
   <div class="top-actions">
     <div class="company-menu-wrap">
      <button id="companyMenuBtn" class="company-menu-btn" type="button" aria-controls="companyMenu" aria-expanded="false" aria-haspopup="true">☰ Company</button>
@@ -18,7 +18,7 @@
       <span id="bossHint" class="visually-hidden">Your heroes attack automatically. Give commands by tapping or dragging.</span>
      </div>
     </div>
-    <button id="bossSelectTopBtn" class="icon-btn boss-top-btn" type="button" aria-label="Choose Boss" title="Choose boss encounter">⚔</button>
+    <button id="bossSelectTopBtn" class="icon-btn boss-top-btn" type="button" aria-label="Return to Camp Expeditions" title="Return to Camp Expeditions">⚔</button>
     <span class="chip" id="battleTime">00:00</span>
     <button id="muteBtn" class="icon-btn" type="button" aria-label="Toggle sounds" title="Toggle sounds">♫</button>
     <button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause game" title="Pause" disabled>Ⅱ</button>
@@ -36,7 +36,7 @@
      <span class="eyebrow">YOUR HOME BETWEEN BATTLES</span>
      <h1>Emberguard Stronghold</h1>
      <p>Prepare your four heroes, choose their equipment and talents, craft supplies and set out when your party is ready.</p>
-     <div class="camp-status-line"><span>🪙 <b id="campGold">90</b> gold</span><span>✦ <b id="campWins">0</b> boss victories</span><span>🎒 <b id="campItems">0</b> stored items</span></div>
+     <div class="camp-status-line"><span>🪙 <b id="campGold">90</b> gold</span><span>✦ <b id="campWins">0</b> boss victories</span><span>🎒 <b id="campItems">0</b> owned items</span></div>
     </div>
     <div class="camp-grounds">
      <div class="camp-ground-heading"><span class="eyebrow">EXPLORE YOUR CAMP</span><span>Tap any building to enter</span></div>
@@ -87,7 +87,7 @@
     <div class="visually-hidden" aria-live="off"><b id="commandTitle">Command your heroes</b><span id="commandInfo">Tap to command.</span></div>
   </section>
  </main>
- <section id="workshop" class="workshop-cover hidden" role="dialog" aria-modal="true" aria-labelledby="workshopHeading"><div class="workshop-dialog"><header class="workshop-head"><div><span class="eyebrow">EMBERGUARD CAMP</span><h2 id="workshopHeading">Party</h2></div><button type="button" id="workshopClose" class="workshop-close" aria-label="Close workshop">✕ Close</button></header><div class="workshop-nav" id="workshopTabs" aria-label="Company management tabs"><button type="button" data-tab="party" class="selected">Party</button><button type="button" data-tab="heroes">Heroes &amp; Gear</button><button type="button" data-tab="talents">Talent Trees</button><button type="button" data-tab="pack">Equipment Bag</button><button type="button" data-tab="craft">Smithing &amp; Alchemy</button><button type="button" data-tab="shop">Quartermaster</button><button type="button" data-tab="loot">Boss Drops</button><button type="button" data-tab="backup">Save Backup</button></div><div id="workshopBody" class="workshop-body"></div><div class="workshop-bottom">Local prototype: items and hero progression are saved in this browser only. <span class="save-warning">Storage unavailable — changes may not persist.</span></div></div></section>
+ <section id="workshop" class="workshop-cover hidden" role="dialog" aria-modal="true" aria-labelledby="workshopHeading"><div class="workshop-dialog"><header class="workshop-head"><div class="workshop-heading-group"><span class="eyebrow" id="workshopContext">EMBERGUARD CAMP · COMPANY</span><h2 id="workshopHeading" aria-live="polite">Party</h2></div><button type="button" id="workshopClose" class="workshop-close" aria-label="Return to previous screen">✕ Close</button></header><div class="workshop-nav" id="workshopTabs" role="tablist" aria-label="Company management sections"><button type="button" data-tab="party" class="selected">Party</button><button type="button" data-tab="heroes">Heroes &amp; Gear</button><button type="button" data-tab="talents">Talent Trees</button><button type="button" data-tab="pack">Equipment Bag</button><button type="button" data-tab="craft">Smithing &amp; Alchemy</button><button type="button" data-tab="shop">Quartermaster</button><button type="button" data-tab="loot">Boss Drops</button><button type="button" data-tab="backup">Save Backup</button></div><div id="workshopBody" class="workshop-body" role="tabpanel" tabindex="0"></div><div class="workshop-bottom">Progress is stored in this browser. Visit Save Backup to export your progress. <span class="save-warning">Storage unavailable — changes may not persist.</span></div></div></section>
  <footer><span>Heroes of Emberfall · An original fantasy game in development</span><span>Built for iPad landscape, touch and desktop</span></footer>
 </div>
 <script>
@@ -97,7 +97,7 @@
 (function(){
  var shown=false;
  function showRecovery(){
-  if(shown||document.documentElement.dataset.emberfallReady==='4.9.0')return;
+  if(shown||document.documentElement.dataset.emberfallReady==='4.9.1')return;
   shown=true;
   var overlay=document.getElementById('overlay');
   var content=document.getElementById('overlayContent');
@@ -107,7 +107,7 @@
   content.innerHTML='<div class="overlay-emblem">⚔</div><h1>Emberfall did not finish loading</h1><p>Safari may have kept an older game file. Your locally saved heroes and items have not been deleted.</p><button type="button" id="reloadGame" class="primary-btn large">Reload the Game</button><p class="encounter-controls">If the problem continues, close this tab and reopen Emberfall using its website address.</p>';
   document.getElementById('reloadGame').addEventListener('click',function(){
    var path=window.location.pathname;
-   window.location.replace(path+'?refresh=4.9.0-'+Date.now());
+   window.location.replace(path+'?refresh=4.9.1-'+Date.now());
   });
  }
  window.addEventListener('error',function(event){
@@ -115,12 +115,12 @@
   if(/module|import|export|syntaxerror/i.test(message)||String(event.filename||'').includes('/emberfall/src/'))showRecovery();
  });
  window.addEventListener('unhandledrejection',function(event){
-  if(document.documentElement.dataset.emberfallReady!=='4.9.0')showRecovery();
+  if(document.documentElement.dataset.emberfallReady!=='4.9.1')showRecovery();
  });
  window.addEventListener('load',function(){
   setTimeout(showRecovery,4500);
  });
 })();
 </script>
-<script type="module" src="./src/game.js?v=4.9.0"></script>
+<script type="module" src="./src/game.js?v=4.9.1"></script>
 </body></html>
