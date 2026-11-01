@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "c8acb97a061c5faf89c5af17ff4ce8d27250067c",
+  "sourceCommit": "b1d68f34166e404a0a6b763692802e9c0e4d0ebc",
   "target": "/emberfall/",
-  "stage": "fixpack-01-nine-worn-slots",
+  "stage": "fixpack-02-party-talents",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Fix Pack 01: nine real equipment slots Helm, Amulet, Body, Legs, Gloves, Boots, Ring, Weapon and Off Hand. Legacy armour/charm keys retain old saves, gear, builds and backups. Six extra Common shop items allow testing the new slots. Nine on-body framed slots, tap-to-inspect, equip/unequip, class restrictions and no item duplication. Original Blocks 1–4 and Fix Pack 2/Block 5 untouched. Safari module tree v4.5.0."
+  "note": "Fix Pack 02: dedicated four-hero Party manager with persistent formation position swapping (reordered next-encounter spawn, sidebar and QWER keys), plus per-class connected Talent Trees with inspectable real bonuses, explicit confirm-to-learn and 60-gold two-stage respec. Four founding heroes remain the complete playable roster; no reserve recruitment implemented. Optional partyOrder preserves old saves, nine-slot gear, builds, backup and original Blocks 1–4. Fix Pack 1 intact; Block 5 untouched. Safari modules v4.6.0."
 }
