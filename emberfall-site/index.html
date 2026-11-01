@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#132323"><meta name="description" content="Heroes of Emberfall — an original hand-drawn inspired four-hero real-time fantasy combat prototype.">
 <title>Heroes of Emberfall · The Thornwarden</title>
-<link rel="stylesheet" href="./src/style.css?v=4.1.0">
+<link rel="stylesheet" href="./src/style.css?v=4.2.0">
 </head><body>
 <div class="app" id="app">
  <header class="topbar">
@@ -58,7 +58,7 @@
 (function(){
  var shown=false;
  function showRecovery(){
-  if(shown||document.documentElement.dataset.emberfallReady==='4.1.0')return;
+  if(shown||document.documentElement.dataset.emberfallReady==='4.2.0')return;
   shown=true;
   var overlay=document.getElementById('overlay');
   var content=document.getElementById('overlayContent');
@@ -68,7 +68,7 @@
   content.innerHTML='<div class="overlay-emblem">⚔</div><h1>Emberfall did not finish loading</h1><p>Safari may have kept an older game file. Your locally saved heroes and items have not been deleted.</p><button type="button" id="reloadGame" class="primary-btn large">Reload the Game</button><p class="encounter-controls">If the problem continues, close this tab and reopen Emberfall using its website address.</p>';
   document.getElementById('reloadGame').addEventListener('click',function(){
    var path=window.location.pathname;
-   window.location.replace(path+'?refresh=4.1.0-'+Date.now());
+   window.location.replace(path+'?refresh=4.2.0-'+Date.now());
   });
  }
  window.addEventListener('error',function(event){
@@ -76,12 +76,12 @@
   if(/module|import|export|syntaxerror/i.test(message)||String(event.filename||'').includes('/emberfall/src/'))showRecovery();
  });
  window.addEventListener('unhandledrejection',function(event){
-  if(document.documentElement.dataset.emberfallReady!=='4.1.0')showRecovery();
+  if(document.documentElement.dataset.emberfallReady!=='4.2.0')showRecovery();
  });
  window.addEventListener('load',function(){
   setTimeout(showRecovery,4500);
  });
 })();
 </script>
-<script type="module" src="./src/game.js?v=4.1.0"></script>
+<script type="module" src="./src/game.js?v=4.2.0"></script>
 </body></html>

@@ -1,4 +1,4 @@
-import {bonuses as heroBonuses,bossInfo} from './progression.js?v=4.1.0';
+import {bonuses as heroBonuses,bossInfo} from './progression.js?v=4.2.0';
 // Heroes of Emberfall — Block 01. Deterministic, renderer-independent PvE combat.
 // Browser-owned demo only; the eventual PvP server must never trust this simulation.
 export const WORLD={width:1200,height:640};
