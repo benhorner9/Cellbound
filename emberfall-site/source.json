@@ -3,7 +3,7 @@
   "source": "benhorner9/heroes-of-emberfall",
   "sourceCommit": "07b628ba13d656824b0b1eee7de30617905b56ed",
   "target": "/emberfall/",
-  "stage": "full-ui-ux-v4.9.1-all-screens",
+  "stage": "ui-ux-all-screens-v4.9.1",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "All-screen UI/UX quality release. Camp destinations Party, Heroes/Gear, Talents, Bag, Craft, Quartermaster, Boss Drops and Save Backup now have coherent native camp pages with visible back navigation, responsive layout, semantic tabs/focus, scroll-safe equipment actions, concise player-facing copy. Combat retains fullscreen canvas with two real skills and four selectable heroes, and in-battle Company remains a pause/modal. Result dialog has accessible scrolling and a Return to Camp action, without double-granting rewards. All save formats, economy, combat, equipment and progress unchanged. Canonical PR #33 merged as 07b628ba13d656824b0b1eee7de30617905b56ed after both complete Chromium/WebKit source browser CI runs passed. All six hosted asset blobs verified identical to canonical source. Safari cache keys v4.9.1."
+  "note": "Full cross-screen UI/UX polish: all eight camp management areas become dedicated pages (no combat underneath), unified compact navigation and back controls, semantic accessible tabs and keyboard focus, iPad native scrolling and reachable inventory actions, honest camp roster/save statistics and player-facing labels, and result-screen Return to Camp with scrollable rewards. Keep full-width two-ability combat HUD, all progression/saves/item ownership/crafting and Block 5 untouched. Canonical source PR #33 passed unit, Chromium iPad-touch and WebKit browser smoke and merged as 07b628ba13d656824b0b1eee7de30617905b56ed. Staged six source asset blobs verified identical to canonical source. Cache graph v4.9.1."
 }
