@@ -67,7 +67,7 @@ footer{display:flex;justify-content:space-between;gap:10px;color:#9eb8a3;font:11
 .workshop-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:17px 19px 13px;border-bottom:1px solid #617663}
 .workshop-head h2{font:700 clamp(21px,3vw,29px) Georgia,serif;color:#ffe2b1;margin:5px 0 0}
 .workshop-close{background:#233d37;border:1px solid #c6b17f;border-radius:9px;padding:9px 11px;font:bold 13px system-ui,sans-serif;color:#f5ddad;white-space:nowrap;min-height:43px}
-.workshop-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 14px;border-bottom:1px solid #506a59;background:#223c35}
+.workshop-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px 14px;border-bottom:1px solid #506a59;background:#223c35}
 .workshop-nav button{padding:9px 5px;min-height:43px;border-radius:8px;border:1px solid #607969;background:#263d37;color:#c3d1bc;font:bold 12px system-ui,sans-serif;touch-action:manipulation}
 .workshop-nav button.selected{background:#526e4f;color:#fff0c0;border-color:#ddbb7e}
 .workshop-body{overflow:auto;padding:18px 20px 24px;min-height:150px;overscroll-behavior:contain}
@@ -173,3 +173,54 @@ footer{display:flex;justify-content:space-between;gap:10px;color:#9eb8a3;font:11
  .overlay.choose-mode .encounter-choices{max-height:32dvh}
  .overlay.choose-mode .picker-actions button{flex:1}
 }
+
+/* Block 04 — readable collections, compare/examine, safe build presets and backups */
+.item-set-tag{display:block;margin-top:4px;font:700 11px system-ui,sans-serif;color:#aee0b5}
+.set-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.set-summary{padding:12px;border-radius:9px;border:1px solid #6f7f6c;background:#1d342d;min-width:0}
+.set-summary.active{background:linear-gradient(160deg,#385a45,#264037);border-color:#d4b77d}
+.set-summary b{font:700 14px Georgia,serif;color:#f7dfad;display:block}
+.set-summary>div>small{display:block;font:11px/1.5 system-ui,sans-serif;margin-top:6px;color:#c3d4bf}
+.set-bonuses{display:flex;flex-direction:column;gap:6px;margin-top:10px;border-top:1px solid #667c6c;padding-top:8px}
+.set-bonuses small{font:11px/1.5 system-ui,sans-serif;color:#869e8f}
+.set-bonuses small.active{font-weight:700;color:#f2dea4}
+.build-explainer{font:12px/1.5 system-ui,sans-serif;color:#d2dfc8;margin:3px 0 12px}
+.build-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.build-preset{background:#1f3831;border:1px solid #6d816d;border-radius:10px;padding:12px;min-width:0}
+.build-preset>div:first-child b{font:700 16px Georgia,serif;color:#ffe0af;display:block}
+.build-preset>div:first-child small{font-size:20px;letter-spacing:4px;display:block;margin-top:5px;min-height:30px}
+.build-preset p{font:11px/1.5 system-ui,sans-serif;color:#bed7bc;margin:8px 0}
+.build-preset p.unavailable{color:#f8bb98}
+.build-label{font:11px system-ui,sans-serif;color:#d7e5cd;display:block}
+.build-name-input{display:block;margin-top:4px;width:100%;box-sizing:border-box;padding:8px 7px;min-height:39px;background:#152b25;border:1px solid #7c946f;color:#fff2cf;border-radius:7px;font:13px system-ui,sans-serif}
+.build-buttons{display:flex;flex-direction:column;align-items:stretch;gap:7px}
+.build-buttons button{white-space:normal;text-align:center;min-height:42px}
+.item-inspector{background:linear-gradient(150deg,#385a4b,#1e3835);border:1px solid #dfc185;border-radius:11px;padding:14px;margin:14px 0;box-shadow:0 5px 20px #0003}
+.inspection-head{display:flex;align-items:center;gap:12px}.inspection-head>div{flex:1;min-width:0}
+.inspection-head h3{margin:3px 0;font:700 21px Georgia,serif;color:#f8dfad}
+.inspection-head small{font:12px system-ui,sans-serif;color:#bed5bb}
+.inspection-icon{font-size:35px;flex:0 0 41px}
+.inspection-flavour{font:italic 13px/1.55 Georgia,serif;color:#e3e4d0;margin:10px 0}
+.inspection-line{font:12px/1.55 system-ui,sans-serif;color:#d9e9cd;margin:7px 0}
+.inspection-compare{border-top:1px solid #84967a;margin-top:12px;padding-top:10px}
+.inspection-compare strong{font:700 14px Georgia,serif;color:#ffe1ac;display:block}
+.inspection-compare>small{font:11px/1.55 system-ui,sans-serif;color:#c7d5bb;display:block;margin-top:5px}
+.compare-changes{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.stat-delta{padding:6px 9px;border:1px solid #8b967c;border-radius:7px;font:bold 12px system-ui,sans-serif;background:#243d34;color:#e5dac5}
+.stat-delta.up{color:#b6f0bd;border-color:#6ca477}.stat-delta.down{color:#ffc1a4;border-color:#b17d6b}
+.compare-warning{color:#ffcbab!important;font:12px/1.5 system-ui,sans-serif}
+.drop-row .tiny-btn{margin-top:7px;min-height:34px}
+.workshop-notice{padding:11px 13px;margin-bottom:12px;border:1px solid #8cb392;border-radius:9px;background:#264b3c;color:#d6f1ce;font:700 12px/1.5 system-ui,sans-serif}
+.workshop-notice.is-error{border-color:#ce9874;background:#553b30;color:#ffe1c3}
+.backup-section{border:1px solid #6c876d;border-radius:11px;background:#1d3730;margin:15px 0;padding:13px}
+.backup-section .workshop-subheading{margin:0 0 8px}
+.backup-label{font:700 12px system-ui,sans-serif;color:#dfdebc;display:block;margin:9px 0}
+.backup-text{box-sizing:border-box;display:block;width:100%;resize:vertical;min-height:75px;max-height:260px;background:#122924;color:#e2eecf;border:1px solid #779577;border-radius:9px;padding:10px;font:12px/1.4 ui-monospace,SFMono-Regular,monospace;overflow:auto}
+.backup-text:focus,.build-name-input:focus{outline:2px solid #f2d195;outline-offset:2px}
+.backup-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:7px 0}
+.backup-actions button{min-height:43px}.backup-actions .danger{background:#754438;color:#ffe0ba;border-color:#eab88c}
+.backup-preview{display:flex;flex-direction:column;gap:5px;flex:1 1 170px;padding:10px;border:1px solid #8bb89d;border-radius:8px;font:11px system-ui,sans-serif;background:#264738;color:#e0e9ce}
+.backup-preview b{font:700 14px Georgia,serif;color:#e5dfa6}
+.backup-preview small{font:11px/1.4 system-ui,sans-serif;color:#e0e9ce}
+@media(max-width:795px){.set-overview,.build-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.workshop-nav button{font-size:11px}.inspection-head h3{font-size:18px}}
+@media(max-width:570px){.set-overview,.build-grid{grid-template-columns:1fr}.set-summary{padding:9px}.build-buttons{flex-direction:row}.workshop-nav{grid-template-columns:repeat(3,1fr)}.workshop-nav button{min-height:42px;font-size:11px}.backup-section{padding:10px}}
