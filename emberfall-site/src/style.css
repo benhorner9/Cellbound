@@ -1026,3 +1026,87 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
  .camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-choices{grid-template-columns:1fr}
  .camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-choice{min-height:65px;flex-direction:row;text-align:left;justify-content:flex-start}
 }
+
+
+/* Cross-screen UX v4.9.1 — camp destinations are actual pages, not battle overlays. */
+#app[data-view="workshop"] .game-layout,#app[data-view="workshop"] .camp-screen,#app[data-view="workshop"] .top-actions{display:none}
+#app[data-view="workshop"] .topbar{margin-bottom:10px}
+.workshop-cover.camp-page{
+ position:relative;inset:auto;z-index:1;display:block;min-height:calc(100dvh - 118px);
+ padding:0 0 max(16px,env(safe-area-inset-bottom));
+ background:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+.workshop-cover.camp-page .workshop-dialog{
+ width:100%;max-width:none;max-height:none;min-height:calc(100dvh - 125px);
+ overflow:visible;border:1px solid #97865d;border-radius:12px;
+ background:linear-gradient(145deg,#253e35,#19322d 90%);box-shadow:inset 0 1px #f3e5ba25;
+}
+.workshop-cover.camp-page .workshop-head{
+ position:sticky;top:0;z-index:11;min-height:75px;
+ background:#223d34;border-radius:11px 11px 0 0;
+}
+.workshop-cover.camp-page .workshop-nav{
+ position:sticky;top:75px;z-index:10;
+ background:#213c34;box-shadow:0 4px 12px #09161280;
+}
+.workshop-cover.camp-page .workshop-body{overflow:visible;min-height:350px;padding:20px 25px 35px}
+.workshop-cover.camp-page .workshop-bottom{border-radius:0 0 11px 11px}
+.workshop-heading-group{min-width:0}
+.workshop-head .eyebrow{color:#cdd9b8}
+.workshop-head h2{line-height:1.15}
+.workshop-nav{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.workshop-nav button{min-width:0;min-height:45px;font-size:12px;line-height:1.2;padding:10px 7px;text-align:center}
+.workshop-nav button[aria-selected="true"]{background:#57724f;border-color:#f1d28b;color:#fff5d3;box-shadow:inset 0 -3px #e1bd7a}
+.workshop-nav button:focus-visible,.camp-nav-button:focus-visible,.camp-building:focus-visible,.encounter-choice:focus-visible{outline:3px solid #f5d68d;outline-offset:2px}
+.workshop-close{min-width:144px;min-height:47px;touch-action:manipulation}
+.workshop-cover.camp-page .workshop-close{background:#45664a;border-color:#f0d08d;color:#fff2cc}
+.workshop-body .workshop-intro p{max-width:900px}
+.workshop-cover.camp-page .workshop-notice{position:relative}
+.workshop-body button,.workshop-nav button{touch-action:manipulation}
+.workshop-body .tiny-btn:not(:disabled){min-height:38px}
+.workshop-body .hero-picker-btn,.workshop-body .inventory-recipient,.workshop-body .party-roster-hero{min-height:48px}
+.workshop-body button:disabled{cursor:not-allowed}
+.camp-building:focus-visible{box-shadow:0 0 0 3px #233e35,0 0 0 6px #efcd84}
+.camp-status-line{font-size:12px}
+.camp-nav-button{min-width:135px}
+.camp-fight-btn{min-height:48px}
+.overlay.result-mode{
+ position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;
+ overflow-y:auto;overscroll-behavior:contain;
+ padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
+ background:#081a1adf;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+}
+.overlay.result-mode.hidden{display:none}
+.overlay.result-mode .overlay-content{
+ width:min(870px,100%);max-width:100%;max-height:calc(100dvh - 26px);
+ overflow-y:auto;overscroll-behavior:contain;
+ border-radius:15px;scrollbar-gutter:stable;
+}
+.overlay.result-mode .victory-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.overlay.result-mode .victory-actions button{min-height:44px;touch-action:manipulation}
+@media(max-width:850px){
+ .workshop-cover.camp-page .workshop-body{padding:12px 13px 25px}
+ .workshop-cover.camp-page .workshop-head{padding:11px 12px}
+ .workshop-cover.camp-page .workshop-nav{top:64px;padding:7px}
+ .workshop-cover.camp-page .workshop-nav button{font-size:11px;padding:7px 4px}
+ .workshop-cover.camp-page .workshop-head h2{font-size:23px}
+ .workshop-close{min-width:122px}
+}
+@media(max-width:570px){
+ .workshop-cover.camp-page{padding:0 0 14px}
+ .workshop-cover.camp-page .workshop-dialog{min-height:calc(100dvh - 105px)}
+ .workshop-cover.camp-page .workshop-nav{
+  display:flex;overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start;
+  scrollbar-width:thin;scroll-snap-type:x proximity;overscroll-behavior-inline:contain;
+ }
+ .workshop-cover.camp-page .workshop-nav button{flex:0 0 auto;min-width:108px;scroll-snap-align:start;min-height:45px}
+ .workshop-cover.camp-page .workshop-head{top:0}
+ .workshop-cover.camp-page .workshop-nav{top:63px}
+ .workshop-cover.camp-page .workshop-head h2{font-size:20px}
+ .workshop-cover.camp-page .workshop-head .eyebrow{font-size:9px}
+ .workshop-cover.camp-page .workshop-close{min-width:108px;font-size:11px;padding:9px 6px}
+ .overlay.result-mode .overlay-content{max-height:calc(100dvh - 20px);padding:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .workshop-cover.camp-page .workshop-nav,.overlay.result-mode .overlay-content{scroll-behavior:auto}
+}

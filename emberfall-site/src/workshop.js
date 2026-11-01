@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir
-} from './progression.js?v=4.9.0';
+} from './progression.js?v=4.9.1';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.9.0';
+} from './builds.js?v=4.9.1';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -14,10 +14,12 @@ const slotTitle=SLOT_NAMES;
 const rarityClass=name=>String(name).toLowerCase();
 export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
- title=document.getElementById('workshopHeading'),tabs=document.getElementById('workshopTabs');
+ title=document.getElementById('workshopHeading'),context=document.getElementById('workshopContext'),tabs=document.getElementById('workshopTabs');
+ let returnFocus=null;
  let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[];
  const builds=readBuilds(storage);
  const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
+ const tabId=tab=>'workshopTab-'+tab;
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
  }
@@ -143,7 +145,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  function renderParty(){
   const order=partyOrder(profile),active=order[partyPosition]||order[0];
   heroId=active;
-  let html='<div class="party-intro"><div><span class="eyebrow">FIX PACK 02 · PARTY MANAGEMENT</span><h3>Form Your Company</h3><p>Tap a formation position, then tap a hero in your roster to swap them into that position. Your selected order sets starting positions and the Q/W/E/R quick-select order in your next boss fight.</p></div><div class="party-ready"><b>4 / 4</b><small>Active heroes</small></div></div>';
+  let html='<div class="party-intro"><div><span class="eyebrow">WAR ROOM · PARTY FORMATION</span><h3>Form Your Company</h3><p>Tap a formation position, then tap a hero in your roster to swap them into that position. Your selected order sets starting positions and the Q/W/E/R quick-select order in your next boss fight.</p></div><div class="party-ready"><b>4 / 4</b><small>Active heroes</small></div></div>';
   html+='<div class="party-manager"><section class="party-formation" aria-label="Four active party positions"><div class="party-section-title"><b>Active formation</b><small>Changes apply next encounter</small></div><div class="party-formation-grid">';
   for(let i=0;i<PARTY_SIZE;i++){
    const id=order[i],hero=profile.heroes[id],level=hero.level,need=xpNeeded(level),progress=need?Math.floor(hero.xp/need*100):100,gear=SLOTS.filter(slot=>!!hero.gear[slot]).length;
@@ -295,7 +297,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
 
  function renderCrafting(){
   const skill=profile.skills[craftSkill],needed=skillXpNeeded(skill.level);
-  let html='<div class="workshop-intro craft-intro"><span class="eyebrow">FIX PACK 04 · GUILD WORKSHOP</span><h3>Smithing &amp; Alchemy</h3><p>Bosses award ores, essences and marks. Forge selected equipment or brew battle elixirs; each successful craft earns immediate skill XP. Level cap: 20, with future unlocks visible beyond.</p></div>';
+  let html='<div class="workshop-intro craft-intro"><span class="eyebrow">FORGE · SMITHING & ALCHEMY</span><h3>Smithing &amp; Alchemy</h3><p>Bosses award ores, essences and marks. Forge selected equipment or brew battle elixirs; each successful craft earns immediate skill XP. Level cap: 20, with future unlocks visible beyond.</p></div>';
   html+='<div class="craft-skill-tabs">'+SKILL_IDS.map(id=>{
    const sk=profile.skills[id],need=skillXpNeeded(sk.level),pct=need?Math.min(100,Math.round(sk.xp/need*100)):100;
    return '<button type="button" data-action="craft-skill" data-skill="'+id+'" class="craft-skill-tab '+(craftSkill===id?'active':'')+'" aria-pressed="'+(craftSkill===id)+'"><b>'+(id==='smithing'?'⚒️ Smithing':'⚗️ Alchemy')+'</b><small>Level '+sk.level+'/'+SKILL_CAP+' · '+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small><span class="craft-xp-track"><i style="width:'+pct+'%"></i></span></button>';
@@ -357,8 +359,17 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   return html;
  }
  function render(){
-  title.textContent='The Emberguard · '+tabNames[current];
-  for(const tab of tabs.querySelectorAll('button[data-tab]')){tab.classList.toggle('selected',tab.dataset.tab===current);tab.setAttribute('aria-pressed',String(tab.dataset.tab===current));}
+  title.textContent=tabNames[current];
+  context.textContent='EMBERGUARD CAMP · '+tabNames[current].toUpperCase();
+  for(const tab of tabs.querySelectorAll('button[data-tab]')){
+   const active=tab.dataset.tab===current;
+   tab.id=tabId(tab.dataset.tab);
+   tab.setAttribute('role','tab');tab.setAttribute('aria-controls','workshopBody');
+   tab.classList.toggle('selected',active);
+   tab.setAttribute('aria-selected',String(active));tab.setAttribute('aria-pressed',String(active));
+   tab.tabIndex=active?0:-1;
+  }
+  body.setAttribute('aria-labelledby',tabId(current));
   document.getElementById('goldTotal').textContent=profile.gold+' gold';
   document.getElementById('bagCount').textContent=String(profile.items.filter(item=>!itemOwner(profile,item.id)).length);
   body.classList.toggle('inventory-mode',current==='pack');
@@ -378,19 +389,36 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  }
  function open(tab='heroes',selected='knight'){
   if(!root.classList.contains('hidden'))return;
+  returnFocus=document.activeElement;
   if(tabNames[tab])current=tab;
   if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;selectedTalentId=null;partyPosition=Math.max(0,partyOrder(profile).indexOf(selected));}
   pendingSell=null;
   root.classList.remove('hidden');render();onOpen();
-  root.querySelector('#workshopClose').focus();
+  root.querySelector('#workshopClose').focus({preventScroll:true});
  }
  function close(){
   if(root.classList.contains('hidden'))return;
   root.classList.add('hidden');pendingSell=null;onClose();
+  const target=returnFocus?.isConnected&&returnFocus.getClientRects().length?returnFocus:document.getElementById('campNavHome');
+  target?.focus({preventScroll:true});returnFocus=null;
  }
- tabs.addEventListener('click',e=>{const tab=e.target.closest('button[data-tab]')?.dataset.tab;if(tabNames[tab]){current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;render();}});
+ tabs.addEventListener('click',e=>{
+  const tab=e.target.closest('button[data-tab]')?.dataset.tab;
+  if(tabNames[tab]){
+   current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;render();
+   if(root.classList.contains('camp-page'))window.scrollTo({top:0,behavior:'instant'});else body.scrollTop=0;
+  }
+ });
+ tabs.addEventListener('keydown',e=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  const buttons=[...tabs.querySelectorAll('button[data-tab]')],index=buttons.findIndex(b=>b===document.activeElement);
+  if(index<0)return;
+  e.preventDefault();
+  const next=e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(e.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;
+  buttons[next].click();buttons[next].focus({preventScroll:true});
+ });
  root.querySelector('#workshopClose').addEventListener('click',close);
- root.addEventListener('click',e=>{if(e.target===root)close();});
+ root.addEventListener('click',e=>{if(e.target===root&&!root.classList.contains('camp-page'))close();});
  root.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
  body.addEventListener('input',e=>{
   if(e.target.id==='backupImport'){importText=e.target.value;validatedImport=null;importConfirm=false;notice='';}
@@ -561,7 +589,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    if(current==='pack'){
     const inst=profile.items.find(item=>item.id===id),def=inst&&ITEM_DEFS[inst.defId],target=btn.dataset.hero;
     if(!inst||itemOwner(profile,id)||!HERO_IDS.includes(target)||(def.classes&&!def.classes.includes(target)))return;
-    if(equip(profile,target,id)){selectedBagId=null;heroId=target;notice=def.name+' equipped to '+HERO_NAMES[target]+'. Unequip it from Heroes & Talents.';noticeBad=false;save();}
+    if(equip(profile,target,id)){selectedBagId=null;heroId=target;notice=def.name+' equipped to '+HERO_NAMES[target]+'. Unequip it from Hall of Heroes.';noticeBad=false;save();}
    }else if(equip(profile,heroId,id))save();
    return;
   }

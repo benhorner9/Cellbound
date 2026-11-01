@@ -14,7 +14,7 @@ const tap=async(page,selector)=>{
 try{
  await context.route(/\/src\/progression\.js(?:\?.*)?$/,async route=>{
   const url=new URL(route.request().url());
-  if(url.searchParams.get('v')!=='4.9.0'){
+  if(url.searchParams.get('v')!=='4.9.1'){
    staleDependencyRequests++;
    // Simulate what the returning iPad used to have cached: no new named exports.
    await route.fulfill({status:200,contentType:'application/javascript',body:'export const oldProgression = true;'});
@@ -25,11 +25,11 @@ try{
  page.on('requestfailed',r=>failures.push('Request failed: '+r.url()+' '+r.failure()?.errorText));
  page.on('response',r=>{if(r.status()>=400)failures.push('HTTP '+r.status()+' '+r.url());});
  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.goto(site+'?safari-cache-recovery=4.9.0',{waitUntil:'networkidle',timeout:45000});
+ await page.goto(site+'?safari-cache-recovery=4.9.1',{waitUntil:'networkidle',timeout:45000});
  // WebKit can report networkidle while document.readyState is still "interactive".
  // Wait for the game's own post-listener startup marker instead of racing ES-module execution.
  let started=false;
- try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.9.0',null,{timeout:20000});started=true;}catch{}
+ try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.9.1',null,{timeout:20000});started=true;}catch{}
  if(!started){
   const snapshot=await page.evaluate(()=>({
    title:document.title,url:location.href,readyState:document.readyState,
@@ -46,6 +46,12 @@ try{
  if((await page.locator('.camp-building').count())!==8)throw Error('Live Safari camp destinations absent');
  await tap(page,'[data-camp="party"]');
  if(!(await page.locator('.party-formation').isVisible()))throw Error('Live Safari War Room cannot open');
+ if((await page.locator('#app').getAttribute('data-view'))!=='workshop')throw Error('Live Safari War Room is not a real page');
+ if(await page.locator('#battleFrame').isVisible()||await page.locator('#campScreen').isVisible())throw Error('Live Safari menus layered over previous screen');
+ for(const [tab,heading] of [['heroes','Heroes & Gear'],['talents','Talent Trees'],['pack','Equipment Bag'],['craft','Crafting'],['shop','Quartermaster'],['loot','Boss Drops'],['backup','Save Backup']]){
+  await tap(page,'#workshopTabs [data-tab="'+tab+'"]');
+  if((await page.locator('#workshopHeading').innerText())!==heading)throw Error('Live Safari section failed: '+tab);
+ }
  await tap(page,'#workshopClose');
  await tap(page,'#campNavExpeditions');
  if((await page.locator('#campScreen').getAttribute('data-camp-tab'))!=='expeditions')throw Error('Live Safari Expeditions navigation failed');
@@ -100,13 +106,13 @@ try{
  if(!(await page.locator('#backupExport').inputValue()).includes('emberfall-local-backup'))throw Error('Live Safari backup UI not responsive');
  await tap(page,'#workshopClose');
  await page.reload({waitUntil:'networkidle',timeout:45000});
- await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.9.0',null,{timeout:20000})
+ await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.9.1',null,{timeout:20000})
    .catch(()=>{throw Error('Live Safari warm-cache reload failed to initialise in 20s');});
  if((await page.locator('#selectedBossName').innerText())!=='Tempest Seraph')throw Error('Selected boss lost after warm-cache reload');
  await tap(page,'#startBtn');
  if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Saved boss fails after reload');
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.9.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.9.1');
   const p=readProfile(localStorage);addItem(p,'emberglass-staff');addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('WebKit gear setup failed');
  });
@@ -144,7 +150,7 @@ try{
  if(saved.heroes.ranger.gear.armour!=='i2')throw Error('Safari selected Ranger was not equipped');
  await tap(page,'#workshopClose');
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.9.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.9.1');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=12;
   if(!writeProfile(localStorage,p))throw Error('Safari reagent fixture could not be saved');
