@@ -68,7 +68,9 @@ try{
  const dock=await page.locator('#combatActionDock').boundingBox();
  const stage=await page.locator('#battleFrame').boundingBox();
  const hero4=await page.locator('#partyList [data-hero="cleric"]').boundingBox();
- if(!dock||!stage||dock.x<stage.x+stage.width-4)throw Error('Live ability panel is not positioned beside the unobstructed arena');
+ const partyRail=await page.locator('.combat-party-rail').boundingBox();
+  if(!dock||!stage||!partyRail||dock.y<stage.y+stage.height-3||dock.y+dock.height>partyRail.y+3)throw Error('Live skills must sit between full-width arena and four-hero party rail');
+  if(stage.width<950)throw Error('Live iPad arena did not expand to full width');
  if(!hero4||hero4.y+hero4.height>820)throw Error('Live fourth hero selector still needs page scrolling');
  if((await page.locator('#abilities .skill').count())!==2)throw Error('Live tactical action dock missing real ability buttons');
  for(const button of await page.locator('#abilities .skill').all()){
@@ -91,7 +93,7 @@ try{
  await page.locator('#pauseBtn').click();
  if(!(await page.locator('#phaseLabel').innerText()).includes('PAUSED'))throw Error('Pause failed');
  await page.locator('#pauseBtn').click();
- await page.locator('#restartBtn').click();
+ await page.locator('#companyMenuBtn').click();await page.locator('#restartBtn').click();
  await page.locator('#battleTime').waitFor();
  if((await page.locator('#battleTime').innerText())!=='00:00')throw Error('Restart not reset');
  // Actual regression: new level-one players must be able to switch the fight,
@@ -116,7 +118,7 @@ try{
   const hp=Number((await page.locator('#bossHpText').innerText()).split('/')[1].trim());
   if(hp!==entry.hp)throw Error('Wrong battle stats for '+entry.name+': '+hp);
   await page.waitForFunction(pattern=>document.getElementById('announcement').textContent.includes(pattern),entry.warning,{timeout:15000});
-  await page.locator('#bossSelectBtn').click();
+  await page.locator('#companyMenuBtn').click();await page.locator('#bossSelectBtn').click();
   if(!(await page.locator('#encounterList').isVisible()))throw Error('Cannot retreat to boss chooser');
   if((await page.locator('#profileRecord').innerText())!=='0 boss victories')throw Error('Boss switching granted unearned loot');
  }
@@ -129,13 +131,13 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.8.2');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.8.3');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.8.2')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.8.3')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
@@ -172,7 +174,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.2');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.3');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -195,7 +197,7 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.2');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.3');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -225,11 +227,11 @@ try{
  await page.touchscreen.tap(canvas.x+canvas.width*.39,canvas.y+canvas.height*.60);
  await page.waitForFunction(()=>!document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  if(!(await page.locator('#combatTempo').innerText()).includes('70% SPEED'))throw Error('Live PvE movement slowdown missing from HUD');
- await page.locator('#restartBtn').click();
+ await page.locator('#companyMenuBtn').click();await page.locator('#restartBtn').click();
  await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  // Isolated live source must also support real craft XP, generated gear and potion effects.
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.8.2');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.8.3');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=30;
   if(!writeProfile(localStorage,p))throw Error('Live crafting fixture could not be saved');

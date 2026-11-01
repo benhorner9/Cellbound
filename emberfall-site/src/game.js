@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.8.2';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES} from './progression.js?v=4.8.2';
-import {mountWorkshop} from './workshop.js?v=4.8.2';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.8.3';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES} from './progression.js?v=4.8.3';
+import {mountWorkshop} from './workshop.js?v=4.8.3';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -123,6 +123,16 @@ function useSlot(slot){
  else announce('Move into range or choose a target first',1.3);
 }
 for(const btn of document.querySelectorAll('#abilities [data-slot]'))btn.addEventListener('click',()=>useSlot(Number(btn.dataset.slot)));
+const companyMenu=$('companyMenu'),companyMenuBtn=$('companyMenuBtn');
+function setCompanyMenu(open){
+ companyMenu.classList.toggle('hidden',!open);
+ companyMenuBtn.setAttribute('aria-expanded',String(open));
+}
+companyMenuBtn.addEventListener('click',()=>setCompanyMenu(companyMenu.classList.contains('hidden')));
+companyMenu.addEventListener('click',event=>{if(event.target.closest('button'))setCompanyMenu(false);});
+document.addEventListener('click',event=>{if(!event.target.closest('.company-menu-wrap'))setCompanyMenu(false);});
+document.addEventListener('keydown',event=>{if(event.key==='Escape')setCompanyMenu(false);});
+
 // The overlay is rebuilt between expeditions, so delegate all its buttons.
 $('overlayContent').addEventListener('click',e=>{
  const choice=e.target.closest('[data-boss]');
@@ -612,5 +622,5 @@ renderEncounterChoices();
 syncUI(true);
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.8.2';
+document.documentElement.dataset.emberfallReady='4.8.3';
 requestAnimationFrame(frame);
