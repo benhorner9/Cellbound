@@ -50,36 +50,39 @@ try{
  await page.locator('#restartBtn').click();
  await page.locator('#battleTime').waitFor();
  if((await page.locator('#battleTime').innerText())!=='00:00')throw Error('Restart not reset');
- // After the familiar first boss works, confirm both new bosses are playable,
- // their loot tables are real and retreating does not generate a reward.
+ // Actual regression: new level-one players must be able to switch the fight,
+ // not merely preview bosses that are locked behind later levels.
  await page.locator('#bossSelectTopBtn').click();
- await page.locator('[data-boss="cindermaw"]').click();
- if(!(await page.locator('.unlock-message').innerText()).includes('level 2'))throw Error('Locked boss preview missing');
- if(!(await page.locator('#startBtn').isDisabled()))throw Error('Level gate was bypassed');
- await page.locator('[data-boss="thornwarden"]').click();
- await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js');
-  const p=readProfile(localStorage);
-  for(const hero of Object.values(p.heroes))hero.level=4;
-  if(!writeProfile(localStorage,p))throw Error('Could not save levelled test company');
- });
- await page.reload({waitUntil:'networkidle'});
- for(const entry of [{id:'cindermaw',name:'CINDERMAW',unique:'The Cinderheart',warning:'FURNACE BREATH'},
-                     {id:'tempest',name:'TEMPEST SERAPH',unique:'Eye of the Tempest',warning:'LIGHTNING LANE'}]){
+ if((await page.locator('#selectedBossName').innerText())!=='Thornwarden')throw Error('Wrong initial boss');
+ for(const entry of [
+  {id:'cindermaw',name:'Cindermaw',hp:865,unique:'The Cinderheart',warning:'FURNACE BREATH'},
+  {id:'tempest',name:'Tempest Seraph',hp:1010,unique:'Eye of the Tempest',warning:'LIGHTNING LANE'}
+ ]){
   await page.locator('[data-boss="'+entry.id+'"]').click();
+  if((await page.locator('#selectedBossName').innerText())!==entry.name)throw Error('Boss picker failed to select '+entry.name);
+  if(await page.locator('#startBtn').isDisabled())throw Error('Boss '+entry.name+' wrongly locked at level one');
+  if(!(await page.locator('#startBtn').innerText()).includes(entry.name))throw Error('Fight button does not match selected boss');
   await page.locator('#manageFromPickerBtn').click();
   await page.locator('#workshopTabs [data-tab="loot"]').click();
   await page.locator('#dropBoss').selectOption(entry.id);
-  if(!(await page.locator('#workshopBody').innerText()).includes(entry.unique))throw Error('Missing unique loot: '+entry.unique);
+  if(!(await page.locator('#workshopBody').innerText()).includes(entry.unique))throw Error('Exclusive item missing');
   await page.locator('#workshopClose').click();
   await page.locator('#startBtn').click();
-  if(!(await page.locator('#bossLabel').innerText()).includes(entry.name))throw Error('Wrong live boss: '+entry.id);
+  if((await page.locator('#bossLabel').innerText())!==entry.name.toUpperCase())throw Error('Wrong actual boss after selection');
+  const hp=Number((await page.locator('#bossHpText').innerText()).split('/')[1].trim());
+  if(hp!==entry.hp)throw Error('Wrong battle stats for '+entry.name+': '+hp);
   await page.waitForFunction(pattern=>document.getElementById('announcement').textContent.includes(pattern),entry.warning,{timeout:15000});
   await page.locator('#bossSelectBtn').click();
-  if(!(await page.locator('#encounterList').isVisible()))throw Error('Cannot retreat to camp');
+  if(!(await page.locator('#encounterList').isVisible()))throw Error('Cannot retreat to boss chooser');
+  if((await page.locator('#profileRecord').innerText())!=='0 boss victories')throw Error('Boss switching granted unearned loot');
  }
- if(!((await page.locator('#profileRecord').innerText()).includes('0 boss victories')))throw Error('Abandoning bosses awarded free wins');
+ await page.reload({waitUntil:'networkidle'});
+ if((await page.locator('#selectedBossName').innerText())!=='Tempest Seraph')throw Error('Selected boss did not persist after reload');
+ await page.locator('#startBtn').click();
+ if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Reloaded boss selection switched back to Thornwarden');
+ await page.locator('#bossSelectTopBtn').click();
+ if(!(await page.locator('#encounterList').isVisible()))throw Error('Top choose boss failed after reload');
  if(errors.length)throw Error(errors.join('\n'));
- console.log('PASS: live Emberfall retains gear, fights Thornwarden, unlocks two new bosses, exposes exclusive loot, renders distinct boss telegraphs and retreats without reward.');
+ console.log('PASS: live Emberfall retains saved gear and starts actual Cindermaw and Tempest battles for level-one party, with correct mechanics/HP/loot, persisted selection, and no retreat payout.');
 }catch(e){console.error('LIVE BROWSER FAILED:',e.stack||e);if(errors.length)console.error(errors.join('\n'));process.exitCode=1;}
 finally{await browser.close();}
