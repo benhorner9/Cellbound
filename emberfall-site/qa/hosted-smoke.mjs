@@ -140,7 +140,7 @@ try{
  if(await page.locator('#inventoryGrid [data-id="i4"]').count())throw Error('Equipped Forgeguard still in bag');
  if(!(await page.locator('#inventoryGrid [data-id="i3"]').isVisible()))throw Error('Displaced armour not returned to bag');
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
- if(!(await page.locator('#workshopBody').innerText()).includes('1/3 equipped'))throw Error('Live set did not deactivate after gear switch');
+ if(!(await page.locator('#workshopBody').innerText()).includes('1/4 equipped'))throw Error('Live set did not deactivate after gear switch');
  await page.locator('[data-action="apply-build"][data-index="0"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('2/4 equipped'))throw Error('Live saved build did not restore gear');
  await page.locator('#workshopTabs [data-tab="backup"]').click();
