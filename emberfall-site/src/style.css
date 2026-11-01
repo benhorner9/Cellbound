@@ -129,3 +129,47 @@ footer{display:flex;justify-content:space-between;gap:10px;color:#9eb8a3;font:11
 .command-strip{flex-wrap:wrap}.command-strip>div{flex:1 1 250px}.command-strip #bossSelectBtn{color:#f4d6a6;background:#2b4b42}
 @media(max-width:795px){.encounter-choices{gap:7px}.encounter-choice{padding:8px 4px;min-height:128px}.encounter-main b{font-size:15px}.encounter-main small{font-size:10px}.encounter-icon{font-size:25px}}
 @media(max-width:520px){.encounter-choices{grid-template-columns:1fr;gap:5px;max-height:34vh;overflow-y:auto}.encounter-choice{flex-direction:row;min-height:58px;padding:7px 9px;justify-content:space-between;text-align:left}.encounter-icon{font-size:23px}.encounter-main{flex:1}.encounter-main .encounter-unlock{font-size:10px}.encounter-check{font-size:15px}.overlay-content{max-height:95%;overflow-y:auto}.command-strip .quiet-btn{flex:1}.encounter-warning{font-size:11px!important}}
+
+/* Hotfix: make boss selection accessible on real iPad/phone viewports.
+   The expedition dialog must never be clipped by the aspect-ratio battlefield. */
+.overlay.choose-mode,.overlay.result-mode{
+ position:fixed;inset:0;z-index:80;
+ overflow-y:auto;overscroll-behavior:contain;
+ display:flex;align-items:center;justify-content:center;
+ padding:max(12px,env(safe-area-inset-top)) 14px max(12px,env(safe-area-inset-bottom));
+ background:#0b1e1eea;backdrop-filter:blur(7px);
+}
+.overlay.choose-mode .overlay-content,.overlay.result-mode .overlay-content{
+ box-sizing:border-box;width:min(760px,100%);
+ max-width:min(94dvh,860px);
+ overflow-y:auto;overscroll-behavior:contain;
+ flex-shrink:0;margin:auto;
+ padding:16px 21px 20px;
+}
+.overlay.choose-mode .overlay-content h1{font-size:clamp(24px,3.4vw,39px);margin:8px 0 7px}
+.overlay.choose-mode .overlay-content>p{margin-bottom:9px}
+.overlay.choose-mode .encounter-choices{margin:10px auto}
+.overlay.choose-mode .encounter-choice{min-height:120px}
+.overlay.choose-mode .encounter-icon{font-size:27px}
+.overlay.choose-mode .overlay-emblem{font-size:24px}
+.overlay.choose-mode .encounter-controls{margin:10px 0 0;font:11px/1.5 system-ui,sans-serif;color:#c6d7c4}
+.overlay.choose-mode .unlock-message{
+ border:1px solid #d6a167;border-radius:9px;background:#593d2b;
+ color:#ffdfa8;font:700 12px/1.5 system-ui,sans-serif;
+ padding:10px 12px;margin:9px auto;max-width:580px;
+}
+.overlay.choose-mode .picker-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+.overlay.choose-mode .picker-actions button{min-height:42px}
+.boss-top-btn{color:#ffe2b1;flex-shrink:0}
+@media(max-width:795px){
+ .overlay.choose-mode .overlay-content,.overlay.result-mode .overlay-content{max-height:calc(100dvh - 24px);padding:14px}
+ .overlay.choose-mode .encounter-choices{max-height:36dvh;overflow-y:auto}
+}
+@media(max-width:540px){
+ .top-actions{gap:5px}
+ .boss-top-btn{width:35px}
+ .overlay.choose-mode .overlay-content{padding:10px}
+ .overlay.choose-mode .overlay-content h1{font-size:25px}
+ .overlay.choose-mode .encounter-choices{max-height:32dvh}
+ .overlay.choose-mode .picker-actions button{flex:1}
+}
