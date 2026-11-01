@@ -110,9 +110,11 @@ jobs:
       - name: Install Chromium for live combat smoke
         run: |
           npm install --no-save --package-lock=false playwright@1.56.1
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
       - name: Play actual hosted Emberfall boss fight
         run: node emberfall-site/qa/hosted-smoke.mjs
+      - name: Verify live iPad Safari-engine boot and tap controls, including warm-cache reload
+        run: node emberfall-site/qa/hosted-webkit.mjs
       - name: Guard Oakrest and Banner and Bone
         shell: bash
         run: |
