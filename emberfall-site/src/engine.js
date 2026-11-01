@@ -1,4 +1,4 @@
-import {bonuses as heroBonuses} from './progression.js';
+import {bonuses as heroBonuses,bossInfo} from './progression.js';
 // Heroes of Emberfall — Block 01. Deterministic, renderer-independent PvE combat.
 // Browser-owned demo only; the eventual PvP server must never trust this simulation.
 export const WORLD={width:1200,height:640};
@@ -29,7 +29,8 @@ function hero(id,name,role,x,y,hp,range,damage,speed,interval){
 function enemy(id,name,role,x,y,hp,range,damage,speed,interval){
  return {...hero(id,name,role,x,y,hp,range,damage,speed,interval),faction:'enemy',attackClock:interval*0.7};
 }
-export function createEncounter(seed=1337,profile=null){
+export function createEncounter(seed=1337,profile=null,bossId='thornwarden'){
+ const bossConfig=bossInfo(bossId);
  const encounter={phase:'ready',time:0,seed:seed>>>0||1337,
  heroes:[
   hero('knight','Aldric','Guardian',240,342,164,76,15,122,1.2),
@@ -42,8 +43,16 @@ export function createEncounter(seed=1337,profile=null){
   enemy('bramble-1','Bramblekin','Bramble',773,198,143,67,9,108,1.78),
   enemy('bramble-2','Bramblekin','Bramble',781,446,143,67,9,106,1.82)
  ],
- selected:'knight',telegraph:null,bossNext:7,reinforcements:false,events:[],
+ selected:'knight',bossId:bossConfig.id,telegraph:null,bossNext:bossConfig.attackDelay,reinforcements:false,events:[],
  result:null,stats:{damage:0,healing:0,kills:0},introPlayed:false};
+ if(bossConfig.id!=='thornwarden'){
+  const isFire=bossConfig.id==='cindermaw';
+  encounter.enemies=[
+   enemy('boss',bossConfig.name,isFire?'Cindermaw':'Seraph',947,322,bossConfig.health,isFire?98:105,bossConfig.damage,bossConfig.speed,bossConfig.interval),
+   enemy('minion-1',isFire?'Flame Imp':'Storm Wisp',isFire?'Imp':'Wisp',774,201,isFire?144:164,90,isFire?12:14,isFire?114:125,1.85),
+   enemy('minion-2',isFire?'Flame Imp':'Storm Wisp',isFire?'Imp':'Wisp',780,451,isFire?144:164,90,isFire?12:14,isFire?114:125,1.85)
+  ];
+ }
  if(profile){
   for(const h of encounter.heroes){
    const b=heroBonuses(profile,h.id);
@@ -64,7 +73,7 @@ function emit(g,event){g.events.push(event);if(g.events.length>180)g.events.spli
 export function drainEvents(g){return g.events.splice(0);}
 export function getHero(g,id){return g.heroes.find(h=>h.id===id)||null;}
 export function getUnit(g,id){return [...g.heroes,...g.enemies].find(h=>h.id===id)||null;}
-export function startEncounter(g){if(g.phase==='ready'){g.phase='playing';emit(g,{type:'notice',text:'The Thornwarden has awakened!'});}return g;}
+export function startEncounter(g){if(g.phase==='ready'){g.phase='playing';emit(g,{type:'notice',text:bossInfo(g.bossId).name+' has awakened!'});}return g;}
 export function commandMove(g,id,x,y){
  const h=getHero(g,id);if(g.phase!=='playing'||!alive(h)||!Number.isFinite(x)||!Number.isFinite(y))return false;
  h.moveTo={x:clamp(x,46,WORLD.width-46),y:clamp(y,70,WORLD.height-49)};h.focus=null;
@@ -169,26 +178,74 @@ function hitAuto(g,unit,target){
   damage(g,unit,target,unit.damage,unit.id==='boss'?'claw':'thorn');unit.attackFlash=.23;
  }
 }
-function resolveBoss(g,dt){
- const boss=g.enemies.find(e=>e.id==='boss');
- if(!alive(boss))return;
- if(!g.reinforcements&&boss.hp<boss.maxHp*.42){
-  g.reinforcements=true;
+// Telegraph hit geometry is shared between tests, combat resolution and 2D rendering.
+export function insideTelegraph(t,unit){
+ if(!t||!unit)return false;
+ if(t.kind==='cone'||t.kind==='lane'){
+  const dx=unit.x-t.originX,dy=unit.y-t.originY,d=Math.hypot(dx,dy);
+  const along=dx*Math.cos(t.angle)+dy*Math.sin(t.angle);
+  if(along<0||along>t.range)return false;
+  if(t.kind==='cone'){
+   const angleDiff=Math.atan2(Math.sin(Math.atan2(dy,dx)-t.angle),Math.cos(Math.atan2(dy,dx)-t.angle));
+   return d<=t.range&&Math.abs(angleDiff)<=t.halfAngle;
+  }
+  const perpendicular=Math.abs(dx*(-Math.sin(t.angle))+dy*Math.cos(t.angle));
+  return perpendicular<=t.width*.5;
+ }
+ return dist(unit,t)<t.radius;
+}
+function spawnReinforcements(g){
+ const id=g.bossId;
+ if(id==='thornwarden'){
   g.enemies.push(enemy('bramble-3','Bramblekin','Bramble',1000,195,96,67,8,116,1.75));
   g.enemies.push(enemy('bramble-4','Bramblekin','Bramble',1030,455,96,67,8,116,1.8));
   emit(g,{type:'notice',text:'The Thornwarden calls its bramblekin!'});
+ }else{
+  const isFire=id==='cindermaw',kind=isFire?'Imp':'Wisp',name=isFire?'Flame Imp':'Storm Wisp';
+  g.enemies.push(enemy('minion-3',name,kind,1030,195,isFire?104:116,85,isFire?11:13,122,1.7));
+  g.enemies.push(enemy('minion-4',name,kind,1024,445,isFire?104:116,85,isFire?11:13,122,1.7));
+  emit(g,{type:'notice',text:isFire?'CINDERMAW ENRAGED — Flame Imps erupt!':'STORM SURGE — Lightning wisps converge!'});
+ }
+}
+function resolveBoss(g,dt){
+ const boss=g.enemies.find(e=>e.id==='boss');
+ if(!alive(boss))return;
+ const cfg=bossInfo(g.bossId);
+ const threshold=g.bossId==='thornwarden'?.42:g.bossId==='cindermaw'?.45:.50;
+ if(!g.reinforcements&&boss.hp<boss.maxHp*threshold){
+  g.reinforcements=true;spawnReinforcements(g);
+  if(g.bossId==='cindermaw'){boss.damage+=5;boss.speed+=10;}
+  if(g.bossId==='tempest'){boss.attackInterval=Math.max(.9,boss.attackInterval*.8);}
  }
  if(g.telegraph){
+  // Stunning the boss interrupts its wind-up without silently triggering the attack.
+  if(boss.stun>0)return;
   g.telegraph.remaining-=dt;
   if(g.telegraph.remaining<=0){
    const t=g.telegraph;
-   emit(g,{type:'burst',x:t.x,y:t.y,color:'#d57b55',radius:t.radius});
-   for(const h of g.heroes.filter(alive))if(dist(h,t)<t.radius)damage(g,boss,h,39,'root slam');
+   emit(g,{type:'burst',x:t.x,y:t.y,color:g.bossId==='tempest'?'#96c5fb':g.bossId==='cindermaw'?'#f59e65':'#d57b55',radius:t.radius||105});
+   for(const h of g.heroes.filter(alive))if(insideTelegraph(t,h)){
+    damage(g,boss,h,g.bossId==='thornwarden'?39:g.bossId==='cindermaw'?43:36,t.kind==='cone'?'furnace breath':t.kind==='lane'?'lightning strike':'root slam');
+    if(t.kind==='lane'&&alive(h))h.stun=Math.max(h.stun,.7);
+    if(t.kind==='cone'&&alive(h))h.slow=Math.max(h.slow,2.1);
+   }
    g.telegraph=null;
   }
  }else if(g.time>=g.bossNext&&boss.stun<=0){
   const target=closest(boss,g.heroes);
-  if(target){g.telegraph={x:target.x,y:target.y,radius:120,remaining:1.45,max:1.45};g.bossNext=g.time+8.5;emit(g,{type:'notice',text:'THORN SLAM — move out of the danger circle!'});}
+  if(target){
+   if(g.bossId==='cindermaw'){
+    g.telegraph={kind:'cone',originX:boss.x,originY:boss.y,angle:Math.atan2(target.y-boss.y,target.x-boss.x),range:670,halfAngle:.37,x:target.x,y:target.y,radius:150,remaining:1.75,max:1.75};
+    emit(g,{type:'notice',text:'FURNACE BREATH — move sideways out of the flame cone!'});
+   }else if(g.bossId==='tempest'){
+    g.telegraph={kind:'lane',originX:boss.x,originY:boss.y,angle:Math.atan2(target.y-boss.y,target.x-boss.x),range:930,width:128,x:target.x,y:target.y,radius:100,remaining:1.55,max:1.55};
+    emit(g,{type:'notice',text:'LIGHTNING LANE — leave the bright beam before impact!'});
+   }else{
+    g.telegraph={kind:'circle',x:target.x,y:target.y,radius:120,remaining:1.45,max:1.45};
+    emit(g,{type:'notice',text:'THORN SLAM — move out of the danger circle!'});
+   }
+   g.bossNext=g.time+cfg.attackCycle;
+  }
  }
 }
 function separate(g){
@@ -232,7 +289,7 @@ export function updateEncounter(g,delta){
  resolveBoss(g,dt);
  separate(g);
  const aliveEnemies=g.enemies.some(alive),aliveHeroes=g.heroes.some(alive);
- if(!aliveEnemies){g.phase='victory';g.result='The Hollow Is Safe';emit(g,{type:'notice',text:'VICTORY — The Thornwarden is defeated!'});}
+ if(!aliveEnemies){g.phase='victory';g.result=g.bossId==='thornwarden'?'The Hollow Is Safe':bossInfo(g.bossId).name+' Defeated';emit(g,{type:'notice',text:'VICTORY — '+bossInfo(g.bossId).name+' is defeated!'});}
  else if(!aliveHeroes){g.phase='defeat';g.result='The Company Has Fallen';emit(g,{type:'notice',text:'DEFEAT — Your heroes were overwhelmed.'});}
  return g;
 }
