@@ -1,7 +1,7 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "5c71cff9de8ca8143bd6eee2279f33391894bc3a",
+  "sourceCommit": "ca501f2a59736d405ac1756b455600127c685680",
   "target": "/emberfall/",
   "stage": "fixpack-04-ipad-always-visible-combat-action-dock",
   "assets": [
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "iPad landscape gameplay usability hotfix: original two real skill buttons and hero skills header now dock visibly inside lower combat arena instead of below tall sidebar. Sidebar keeps all four party selectors in view with compact short-landscape spacing. Both abilities remain touch- and keyboard-accessible with live cooldown/selected-hero changes. Small-screen layout places dock immediately after canvas. No combat, XP, loot, set, talent, inventory, party or save changes; original Block 5 untouched. All ES modules, CSS and boot pins synchronised v4.8.1 for iPad Safari. Source commit provisional pending source PR #28 merge and QA."
+  "note": "iPad landscape gameplay usability hotfix: original two real skill buttons and hero skills header now dock visibly inside lower combat arena instead of below tall sidebar. Sidebar keeps all four party selectors in view with compact short-landscape spacing. Both abilities remain touch- and keyboard-accessible with live cooldown/selected-hero changes. Small-screen layout places dock immediately after canvas. No combat, XP, loot, set, talent, inventory, party or save changes; original Block 5 untouched. All ES modules, CSS and boot pins synchronised v4.8.1 for iPad Safari. Exact source SHA ca501f2a59736d405ac1756b455600127c685680, source PR #28 fully tested and merged, seven hosted asset blobs verified identical."
 }
