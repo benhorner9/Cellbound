@@ -3,13 +3,33 @@ export const PROFILE_KEY='emberfall-company-v1';
 export const MAX_LEVEL=6;
 export const HERO_IDS=Object.freeze(['knight','ranger','mage','cleric']);
 export const HERO_NAMES=Object.freeze({knight:'Aldric',ranger:'Briar',mage:'Lyra',cleric:'Solen'});
-export const SLOTS=Object.freeze(['weapon','armour','charm']);
+// Keep legacy "armour" (Body) and "charm" (Amulet) keys so existing items,
+// builds and browser saves retain their exact owned instance references.
+export const SLOTS=Object.freeze(['helm','charm','armour','legs','gloves','boots','ring','weapon','offhand']);
+const LEGACY_SLOTS=new Set(['weapon','armour','charm']);
+export const SLOT_NAMES=Object.freeze({helm:'Helm',charm:'Amulet',armour:'Body',legs:'Legs',gloves:'Gloves',boots:'Boots',ring:'Ring',weapon:'Weapon',offhand:'Off Hand'});
+export const SLOT_ICONS=Object.freeze({helm:'🪖',charm:'📿',armour:'🛡️',legs:'🩳',gloves:'🧤',boots:'👢',ring:'💍',weapon:'⚔️',offhand:'🛡️'});
+export function normalizeProfileSlots(profile){
+ for(const id of HERO_IDS)for(const slot of SLOTS){
+  const gear=profile?.heroes?.[id]?.gear;
+  if(gear&&gear[slot]===undefined)gear[slot]=null;
+ }
+ return profile;
+}
 export const ITEM_DEFS=Object.freeze({
  'recruit-sword':{name:'Mercenary Blade',icon:'⚔️',slot:'weapon',rarity:'Common',classes:['knight'],bonus:{attack:3},value:40,shop:65},
  'briar-bow':{name:'Briarwood Bow',icon:'🏹',slot:'weapon',rarity:'Common',classes:['ranger'],bonus:{attack:4},value:36,shop:58},
  'apprentice-focus':{name:'Apprentice Focus',icon:'🔮',slot:'weapon',rarity:'Common',classes:['mage','cleric'],bonus:{attack:3,healing:.05},value:38,shop:60},
  'field-vest':{name:'Fieldkeeper Vest',icon:'🥋',slot:'armour',rarity:'Common',bonus:{health:14},value:30,shop:52},
  'brass-charm':{name:'Sunlit Medallion',icon:'📿',slot:'charm',rarity:'Common',bonus:{health:9},value:27,shop:48},
+ // Common starter pieces for the six newly functional worn slots. All are shop gear;
+ // existing boss drop distributions and rarity/set progression remain unchanged.
+ 'village-helm':{name:'Village Helm',icon:'🪖',slot:'helm',rarity:'Common',bonus:{health:6,armour:1},value:18,shop:34},
+ 'traveller-leggings':{name:'Traveller Leggings',icon:'🩳',slot:'legs',rarity:'Common',bonus:{health:8},value:18,shop:36},
+ 'leather-gloves':{name:'Leather Gloves',icon:'🧤',slot:'gloves',rarity:'Common',bonus:{attack:1},value:14,shop:28},
+ 'roadworn-boots':{name:'Roadworn Boots',icon:'👢',slot:'boots',rarity:'Common',bonus:{speed:4},value:15,shop:30},
+ 'bronze-band':{name:'Bronze Band',icon:'💍',slot:'ring',rarity:'Common',bonus:{health:4},value:12,shop:24},
+ 'worn-buckler':{name:'Worn Buckler',icon:'🛡️',slot:'offhand',rarity:'Common',bonus:{armour:2},value:20,shop:38},
  'ironroot-edge':{name:'Ironroot Edge',icon:'🗡️',slot:'weapon',rarity:'Uncommon',classes:['knight'],bonus:{attack:7,health:10},value:92},
  'thornsight-bow':{name:'Thornsight Longbow',icon:'🏹',slot:'weapon',rarity:'Uncommon',classes:['ranger'],bonus:{attack:8},value:88},
  'emberglass-staff':{name:'Emberglass Staff',icon:'🔥',slot:'weapon',rarity:'Rare',classes:['mage'],bonus:{attack:7,fire:.16},value:164},
@@ -124,13 +144,13 @@ export function canChallenge(profile,id){
 }
 export function bossDropTable(id='thornwarden'){return bossInfo(id).drops;}
 export function bossRewardInfo(id='thornwarden'){const b=bossInfo(id);return {xp:b.xp,gold:b.gold};}
-export const QUARTERMASTER=Object.freeze(['recruit-sword','briar-bow','apprentice-focus','field-vest','brass-charm']);
+export const QUARTERMASTER=Object.freeze(['recruit-sword','briar-bow','apprentice-focus','field-vest','brass-charm','village-helm','traveller-leggings','leather-gloves','roadworn-boots','bronze-band','worn-buckler']);
 export const XP_REWARD=145;
 export const GOLD_REWARD=80;
 export function xpNeeded(level){return level>=MAX_LEVEL?0:80+40*level;}
 export function freshProfile(){
  return {version:1,gold:90,wins:0,defeats:0,nextItemId:1,
-  heroes:Object.fromEntries(HERO_IDS.map(id=>[id,{level:1,xp:0,talents:[],gear:{weapon:null,armour:null,charm:null}}])),
+  heroes:Object.fromEntries(HERO_IDS.map(id=>[id,{level:1,xp:0,talents:[],gear:Object.fromEntries(SLOTS.map(slot=>[slot,null]))}])),
   items:[],claims:[]};
 }
 function validNum(x){return Number.isSafeInteger(x)&&x>=0;}
@@ -152,7 +172,11 @@ export function validateProfile(p){
   }
   if(!h.gear||typeof h.gear!=='object')return false;
   for(const slot of SLOTS){
-   const itemId=h.gear[slot];if(itemId===null)continue;
+   const itemId=h.gear[slot];
+   // Legacy saves have exactly three slots; do not invalidate those characters
+   // just because one of the six newly introduced slot keys is absent.
+   if(itemId===undefined&&!LEGACY_SLOTS.has(slot))continue;
+   if(itemId===null)continue;
    const item=p.items.find(it=>it.id===itemId);const def=item&&ITEM_DEFS[item.defId];
    if(!def||def.slot!==slot||equipped.has(itemId)||(def.classes&&!def.classes.includes(key)))return false;
    equipped.add(itemId);
@@ -165,12 +189,13 @@ export function validateProfile(p){
 export function readProfile(storage){
  try{
   const raw=storage?.getItem(PROFILE_KEY);
-  if(raw){const parsed=JSON.parse(raw);if(validateProfile(parsed))return parsed;}
+  if(raw){const parsed=JSON.parse(raw);if(validateProfile(parsed))return normalizeProfileSlots(parsed);}
  }catch{}
  return freshProfile();
 }
 export function writeProfile(storage,profile){
  if(!validateProfile(profile))return false;
+ normalizeProfileSlots(profile);
  try{storage?.setItem(PROFILE_KEY,JSON.stringify(profile));return true;}catch{return false;}
 }
 export function talentPoints(hero){return [2,4].filter(level=>hero.level>=level&&!hero.talents.some(id=>Object.values(TALENTS).flat().find(t=>t.id===id)?.tier===level)).length;}

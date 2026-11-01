@@ -472,3 +472,53 @@ body{background:radial-gradient(ellipse at 60% -20%,#385c4d 0,transparent 52%),l
 @media(prefers-reduced-motion:reduce){.equipment-armory *{transition:none!important;animation:none!important}}
 
 @media(max-width:480px){.equipment-armory .paperdoll-slot-weapon{top:205px}}
+
+
+/* Fix Pack 01 — nine functional gear slots in the existing reference-style armory.
+   Head at top, accessory/torso/arms/legs flanking the hero; no overlap at iPad landscape. */
+.armory-stage{height:552px}
+.equipment-armory .equipment-figure{top:122px;width:283px;height:387px}
+.equipment-armory .armory-rune{top:55%}
+.equipment-armory .paperdoll-slot{width:156px;max-width:none;min-width:0;gap:2px;padding:4px}
+.equipment-armory .armory-slot-select{min-height:45px;gap:5px;padding:1px}
+.equipment-armory .paperdoll-slot-symbol{width:40px;height:44px;flex-basis:40px;font-size:23px}
+.equipment-armory .paperdoll-slot-details strong{font-size:12px}
+.equipment-armory .paperdoll-slot-details small{font-size:10px;line-height:1.2}
+.equipment-armory .paperdoll-slot .paperdoll-unequip{min-height:44px;padding:6px}
+.equipment-armory .paperdoll-slot-helm{top:8px;left:50%;transform:translateX(-50%)}
+.equipment-armory .paperdoll-slot-charm{top:92px;left:5%}
+.equipment-armory .paperdoll-slot-armour{top:201px;left:5%;transform:none}
+.equipment-armory .paperdoll-slot-gloves{top:310px;left:5%}
+.equipment-armory .paperdoll-slot-legs{top:419px;left:5%}
+.equipment-armory .paperdoll-slot-ring{top:92px;right:5%;left:auto}
+.equipment-armory .paperdoll-slot-weapon{top:201px;right:5%;left:auto}
+.equipment-armory .paperdoll-slot-offhand{top:310px;right:5%;left:auto}
+.equipment-armory .paperdoll-slot-boots{top:419px;right:5%;left:auto}
+.equipment-armory .armory-hero-label{bottom:4px}
+@media(max-width:760px){
+ .armory-stage{height:520px}
+ .equipment-armory .equipment-figure{top:125px;width:216px;height:348px}
+ .equipment-armory .paperdoll-slot{width:123px;max-width:none;padding:3px}
+ .equipment-armory .paperdoll-slot-symbol{width:32px;height:38px;flex-basis:32px;font-size:19px;display:grid}
+ .equipment-armory .paperdoll-slot-details strong{font-size:11px}
+ .equipment-armory .paperdoll-slot-details small{font-size:9px}
+ .equipment-armory .armory-slot-select{min-height:44px}
+ .equipment-armory .paperdoll-slot-charm,.equipment-armory .paperdoll-slot-armour,.equipment-armory .paperdoll-slot-gloves,.equipment-armory .paperdoll-slot-legs{left:2%}
+ .equipment-armory .paperdoll-slot-ring,.equipment-armory .paperdoll-slot-weapon,.equipment-armory .paperdoll-slot-offhand,.equipment-armory .paperdoll-slot-boots{right:2%}
+ .equipment-armory .paperdoll-slot-charm,.equipment-armory .paperdoll-slot-ring{top:85px}
+ .equipment-armory .paperdoll-slot-armour,.equipment-armory .paperdoll-slot-weapon{top:189px}
+ .equipment-armory .paperdoll-slot-gloves,.equipment-armory .paperdoll-slot-offhand{top:293px}
+ .equipment-armory .paperdoll-slot-legs,.equipment-armory .paperdoll-slot-boots{top:397px}
+}
+@media(max-width:480px){
+ .armory-stage{height:515px}
+ .equipment-armory .equipment-figure{top:128px;width:166px;height:327px}
+ .equipment-armory .paperdoll-slot{width:94px;max-width:none;padding:3px;gap:1px}
+ .equipment-armory .paperdoll-slot-helm{width:114px}
+ .equipment-armory .paperdoll-slot-symbol{display:grid;width:28px;height:35px;flex-basis:28px;font-size:17px}
+ .equipment-armory .paperdoll-slot-details strong{font-size:10px}
+ .equipment-armory .paperdoll-slot-details small{font-size:9px}
+ .equipment-armory .paperdoll-slot .paperdoll-unequip{min-height:44px}
+ .equipment-armory .paperdoll-slot-charm,.equipment-armory .paperdoll-slot-armour,.equipment-armory .paperdoll-slot-gloves,.equipment-armory .paperdoll-slot-legs{left:1%}
+ .equipment-armory .paperdoll-slot-ring,.equipment-armory .paperdoll-slot-weapon,.equipment-armory .paperdoll-slot-offhand,.equipment-armory .paperdoll-slot-boots{right:1%}
+}

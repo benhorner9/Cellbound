@@ -1,16 +1,16 @@
 import {
- HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,SLOTS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
+ HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet
-} from './progression.js?v=4.4.0';
+} from './progression.js?v=4.5.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.4.0';
+} from './builds.js?v=4.5.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const pretty={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
-const slotTitle={weapon:'Weapon',armour:'Armour',charm:'Charm'};
+const slotTitle=SLOT_NAMES;
 const rarityClass=name=>String(name).toLowerCase();
 export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
@@ -72,7 +72,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   let html='<div class="hero-picker">'+HERO_IDS.map(id=>'<button type="button" class="hero-picker-btn '+(id===heroId?'active':'')+'" data-action="hero" data-id="'+id+'">'+esc(HERO_NAMES[id])+'<small>Lv '+profile.heroes[id].level+'</small></button>').join('')+'</div>';
   html+='<div class="progress-hero"><div><span class="eyebrow">YOUR '+esc(pretty[heroId]).toUpperCase()+'</span><h3>'+esc(HERO_NAMES[heroId])+' <span>Level '+level+'</span></h3><p>Earn XP by defeating bosses. Talent choices improve your abilities in real combat.</p></div><div class="progress-stat">'+(need?hero.xp+' / '+need+' XP':'MAX LEVEL')+'</div></div>';
   html+='<div class="xp-track"><i style="width:'+(need?Math.min(100,Math.floor(hero.xp/need*100)):100)+'%"></i></div>';
-  html+='<div class="workshop-subheading"><h3>Hero Equipment</h3><span>3 worn slots · '+esc(HERO_NAMES[heroId])+'</span></div>';
+  html+='<div class="workshop-subheading"><h3>Hero Equipment</h3><span>9 worn slots · '+esc(HERO_NAMES[heroId])+'</span></div>';
   const inspectedSlot=SLOTS.includes(equipmentSlot)?equipmentSlot:(SLOTS.find(slot=>hero.gear[slot])||'weapon');
   const inspectedId=hero.gear[inspectedSlot],inspectedInstance=inspectedId?profile.items.find(item=>item.id===inspectedId):null;
   const inspectedDef=inspectedInstance?ITEM_DEFS[inspectedInstance.defId]:null,inspectedInfo=inspectedInstance?itemDetails(inspectedInstance.defId):null;
@@ -81,10 +81,10 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    +'<div class="armory-stage"><div class="armory-rune" aria-hidden="true">✦</div>'
    +'<div class="equipment-figure">'+equipmentCharacterArt(heroId)+'</div>'
    +'<div class="armory-hero-label"><strong>'+esc(HERO_NAMES[heroId])+'</strong><small>'+esc(pretty[heroId])+' · Level '+level+'</small></div>';
-  // Only the three existing equipment slots: no fictional/new item types.
-  for(const slot of ['charm','armour','weapon']){
+  // Nine real equipment slots; legacy Charm and Armour keep their original save keys.
+  for(const slot of SLOTS){
    const itemId=hero.gear[slot],def=itemId?itemName(itemId):null;
-   const symbol=slot==='weapon'?'⚔️':slot==='armour'?'🛡️':'✦';
+   const symbol=SLOT_ICONS[slot];
    const selected=slot===inspectedSlot;
    html+='<section class="paperdoll-slot paperdoll-slot-'+slot+' '+(def?'is-equipped rarity-'+rarityClass(def.rarity):'is-empty')+(selected?' is-inspected':'')+'" data-slot="'+slot+'" aria-label="'+esc(slotTitle[slot])+' slot: '+esc(def?.name||'empty')+'">'
     +'<button type="button" class="armory-slot-select" data-action="inspect-gear-slot" data-slot="'+slot+'" aria-pressed="'+selected+'" aria-label="Inspect '+esc(slotTitle[slot])+(def?' · '+esc(def.name):' · empty')+'">'
@@ -106,7 +106,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
     +'<p>No item equipped in this slot. Choose an eligible piece from your bag.</p></div>'
     +'<div class="armory-inspection-actions"><button type="button" class="tiny-btn" data-action="tab" data-tab="pack">Open Bag</button></div>';
   }
-  html+='</div></div><p class="equipped-help">Tap a framed equipment slot to inspect it; unequipping returns the same item to your bag. Only your existing 3 slots are used.</p>'
+  html+='</div></div><p class="equipped-help">Tap a framed equipment slot to inspect it; unequipping returns the same item to your bag. Your nine equipment slots are usable; empty slots can be filled from the bag.</p>'
    +'<button type="button" class="mini-link" data-action="tab" data-tab="pack">Open your equipment bag →</button>';
   html+='<div class="workshop-subheading"><h3>Collection Bonuses</h3><span>2- and 3-piece sets</span></div>';
   html+='<div class="set-overview">'+setProgress(profile,heroId).map(group=>{
@@ -120,7 +120,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   html+='<div class="build-grid">'+builds.heroes[heroId].map((preset,index)=>{
    const status=buildStatus(profile,builds,heroId,index);
    const name=preset?preset.name:'Empty Build '+(index+1);
-   const preview=preset?SLOTS.map(slot=>{const inst=profile.items.find(it=>it.id===preset.gear[slot]);return inst?ITEM_DEFS[inst.defId].icon:(preset.gear[slot]?'×':'—');}).join('  '):'—  —  —';
+   const preview=preset?SLOTS.map(slot=>{const inst=profile.items.find(it=>it.id===preset.gear[slot]);return inst?ITEM_DEFS[inst.defId].icon:(preset.gear[slot]?'×':'·');}).join(' '):'· · · · · · · · ·';
    return '<article class="build-preset"><div><b>'+esc(name)+'</b><small>'+esc(preview)+'</small></div><label class="build-label">Build name<input class="build-name-input" data-build-name="'+index+'" maxlength="30" value="'+esc(preset?.name||'Build '+(index+1))+'" aria-label="Name equipment build '+(index+1)+'"></label><p class="'+(preset&&!status.ok?'unavailable':'')+'">'+esc(status.reason)+'</p><div class="build-buttons"><button type="button" class="tiny-btn" data-action="save-build" data-index="'+index+'">'+(preset?'Update Saved Build':'Save Current Gear')+'</button><button type="button" class="tiny-btn ghost" data-action="apply-build" data-index="'+index+'" '+(status.ok?'':'disabled')+'>Equip Build</button></div></article>';
   }).join('')+'</div>';
 
@@ -181,7 +181,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   html+='<div class="inventory-layout"><section class="inventory-collection" aria-label="Inventory slots">'
    +'<div class="inventory-section-head"><div><span class="eyebrow">STORAGE</span><h3>Your Bag</h3></div><span class="inventory-capacity" title="'+profile.items.length+' of 400 owned items">'+all.length+' in bag · '+(profile.items.length-all.length)+' equipped</span></div>'
    +'<div class="inventory-filters"><label for="bagFilter">Show items</label><select id="bagFilter" aria-label="Filter inventory items">'
-   +[['all','All gear'],['weapon','Weapons'],['armour','Armour'],['charm','Charms']].map(([value,name])=>'<option value="'+value+'" '+(bagFilter===value?'selected':'')+'>'+name+'</option>').join('')
+   +[['all','All gear'],...SLOTS.map(slot=>[slot,slotTitle[slot]])].map(([value,name])=>'<option value="'+value+'" '+(bagFilter===value?'selected':'')+'>'+name+'</option>').join('')
    +'</select><span class="inventory-gold">'+profile.gold+' gold</span></div>'
    +'<div class="inventory-slot-scroll" id="inventoryScroll" tabindex="0" role="region" aria-label="Scrollable inventory"><div class="inventory-slot-grid" id="inventoryGrid">';
   for(const item of visible){
@@ -292,7 +292,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(e.target.id==='backupImport'){importText=e.target.value;validatedImport=null;importConfirm=false;notice='';}
  });
  body.addEventListener('change',e=>{
-  if(e.target.id==='bagFilter'&&['all','weapon','armour','charm'].includes(e.target.value)){bagFilter=e.target.value;pendingSell=null;selectedBagId=null;rerenderBag();}
+  if(e.target.id==='bagFilter'&&['all',...SLOTS].includes(e.target.value)){bagFilter=e.target.value;pendingSell=null;selectedBagId=null;rerenderBag();}
   if(e.target.id==='dropBoss'&&Object.hasOwn(BOSSES,e.target.value)){dropBoss=e.target.value;render();}
  });
  body.addEventListener('click',e=>{
