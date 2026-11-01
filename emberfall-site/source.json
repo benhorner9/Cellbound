@@ -1,16 +1,17 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "dffa524fa9c3fd1739813f3d784560a38f156509",
+  "sourceCommit": "95e5e4b99fa58f4574bf7de30434756b55a516a4",
   "target": "/emberfall/",
-  "stage": "block03-safari-frozen-screen-emergency-recovery",
+  "stage": "block04-equipment-sets-loadouts-local-backups",
   "assets": [
     "index.html",
     "src/engine.js",
     "src/game.js",
     "src/progression.js",
     "src/workshop.js",
+    "src/builds.js",
     "src/style.css"
   ],
-  "note": "Emergency fix: versioned entire module graph and load-failure Reload the Game recovery button; no progress reset. Live iPad-sized WebKit cold/warm cache QA required."
+  "note": "Richer offline-local PvE gear sets, inspect/compare, 3 builds per hero and validated JSON backups. No secure server items, PvP or trading yet. Safari module tree v4.0.0."
 }
