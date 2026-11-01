@@ -14,7 +14,7 @@ const tap=async(page,selector)=>{
 try{
  await context.route(/\/src\/progression\.js(?:\?.*)?$/,async route=>{
   const url=new URL(route.request().url());
-  if(url.searchParams.get('v')!=='4.8.0'){
+  if(url.searchParams.get('v')!=='4.8.1'){
    staleDependencyRequests++;
    // Simulate what the returning iPad used to have cached: no new named exports.
    await route.fulfill({status:200,contentType:'application/javascript',body:'export const oldProgression = true;'});
@@ -25,11 +25,11 @@ try{
  page.on('requestfailed',r=>failures.push('Request failed: '+r.url()+' '+r.failure()?.errorText));
  page.on('response',r=>{if(r.status()>=400)failures.push('HTTP '+r.status()+' '+r.url());});
  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.goto(site+'?safari-cache-recovery=4.8.0',{waitUntil:'networkidle',timeout:45000});
+ await page.goto(site+'?safari-cache-recovery=4.8.1',{waitUntil:'networkidle',timeout:45000});
  // WebKit can report networkidle while document.readyState is still "interactive".
  // Wait for the game's own post-listener startup marker instead of racing ES-module execution.
  let started=false;
- try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.8.0',null,{timeout:20000});started=true;}catch{}
+ try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.8.1',null,{timeout:20000});started=true;}catch{}
  if(!started){
   const snapshot=await page.evaluate(()=>({
    title:document.title,url:location.href,readyState:document.readyState,
@@ -47,9 +47,21 @@ try{
  if((await page.locator('#selectedBossName').innerText())!=='Cindermaw')throw Error('Cindermaw selection not responsive');
  await tap(page,'#startBtn');
  if((await page.locator('#bossLabel').innerText())!=='CINDERMAW')throw Error('Selected Cindermaw did not start');
+ const dock=await page.locator('#combatActionDock').boundingBox();
+ const stage=await page.locator('#battleFrame').boundingBox();
+ if(!dock||!stage||dock.y<stage.y||dock.y+dock.height>stage.y+stage.height+2)throw Error('Live Safari skills are outside the combat arena');
+ if((await page.locator('#abilities .skill').count())!==2)throw Error('Live Safari abilities missing');
+ for(const button of await page.locator('#abilities .skill').all()){
+  const b=await button.boundingBox();
+  if(!b||b.y<0||b.y+b.height>820||b.height<44)throw Error('Safari requires scrolling to use abilities');
+ }
+ const fourth=await page.locator('#partyList [data-hero="cleric"]').boundingBox();
+ if(!fourth||fourth.y+fourth.height>820)throw Error('Live Safari fourth hero still needs scrolling');
+ await tap(page,'#partyList [data-hero="mage"]');
+ if(!(await page.locator('#abilityHero').innerText()).includes('Lyra'))throw Error('Live Safari touch hero selection did not change the skill dock');
  const arena=await page.locator('#arena').boundingBox();
  if(!arena)throw Error('Live Safari combat arena missing');
- await page.touchscreen.tap(arena.x+arena.width*.38,arena.y+arena.height*.78);
+ await page.touchscreen.tap(arena.x+arena.width*.38,arena.y+arena.height*.60);
  await page.waitForFunction(()=>!document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  if(!(await page.locator('#combatTempo').innerText()).includes('70% SPEED'))throw Error('Live Safari PvE reposition slowdown missing');
  await tap(page,'#bossSelectTopBtn');
@@ -77,13 +89,13 @@ try{
  if(!(await page.locator('#backupExport').inputValue()).includes('emberfall-local-backup'))throw Error('Live Safari backup UI not responsive');
  await tap(page,'#workshopClose');
  await page.reload({waitUntil:'networkidle',timeout:45000});
- await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.8.0',null,{timeout:20000})
+ await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.8.1',null,{timeout:20000})
    .catch(()=>{throw Error('Live Safari warm-cache reload failed to initialise in 20s');});
  if((await page.locator('#selectedBossName').innerText())!=='Tempest Seraph')throw Error('Selected boss lost after warm-cache reload');
  await tap(page,'#startBtn');
  if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Saved boss fails after reload');
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.8.1');
   const p=readProfile(localStorage);addItem(p,'emberglass-staff');addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('WebKit gear setup failed');
  });
@@ -121,7 +133,7 @@ try{
  if(saved.heroes.ranger.gear.armour!=='i2')throw Error('Safari selected Ranger was not equipped');
  await tap(page,'#workshopClose');
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.8.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.8.1');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=12;
   if(!writeProfile(localStorage,p))throw Error('Safari reagent fixture could not be saved');
