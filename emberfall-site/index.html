@@ -3,9 +3,9 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#132323"><meta name="description" content="Heroes of Emberfall — an original hand-drawn inspired four-hero real-time fantasy combat prototype.">
 <title>Heroes of Emberfall · The Thornwarden</title>
-<link rel="stylesheet" href="./src/style.css?v=4.8.3">
+<link rel="stylesheet" href="./src/style.css?v=4.9.0">
 </head><body>
-<div class="app" id="app">
+<div class="app" id="app" data-view="camp">
  <header class="topbar">
   <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><div class="brand-name">HEROES <span>OF</span> EMBERFALL</div><div class="brand-sub">BLOCK 04 · BUILD YOUR HEROES</div></div></div>
   <div class="top-actions">
@@ -24,6 +24,38 @@
     <button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause game" title="Pause" disabled>Ⅱ</button>
   </div>
  </header>
+
+ <main id="campScreen" class="camp-screen" data-camp-tab="home" aria-label="Emberguard Camp home base">
+  <nav class="camp-nav" aria-label="Camp navigation">
+   <div class="camp-nav-links"><button id="campNavHome" data-camp="home" class="camp-nav-button active" type="button" aria-pressed="true">⌂ Camp</button><button id="campNavExpeditions" data-camp="expeditions" class="camp-nav-button" type="button" aria-pressed="false">⚔ Expeditions</button></div>
+   <div class="camp-nav-note">Build your company before you enter battle</div>
+  </nav>
+  <div class="camp-content">
+   <section class="camp-building-area" aria-label="The Emberguard stronghold">
+    <div class="camp-intro">
+     <span class="eyebrow">YOUR HOME BETWEEN BATTLES</span>
+     <h1>Emberguard Stronghold</h1>
+     <p>Prepare your four heroes, choose their equipment and talents, craft supplies and set out when your party is ready.</p>
+     <div class="camp-status-line"><span>🪙 <b id="campGold">90</b> gold</span><span>✦ <b id="campWins">0</b> boss victories</span><span>🎒 <b id="campItems">0</b> stored items</span></div>
+    </div>
+    <div class="camp-grounds">
+     <div class="camp-ground-heading"><span class="eyebrow">EXPLORE YOUR CAMP</span><span>Tap any building to enter</span></div>
+     <div class="camp-buildings">
+      <button type="button" data-camp="party" class="camp-building"><span class="camp-building-icon">♜</span><strong>War Room</strong><small>Party formation</small></button>
+      <button type="button" data-camp="heroes" class="camp-building"><span class="camp-building-icon">⚔</span><strong>Hall of Heroes</strong><small>Equipment &amp; builds</small></button>
+      <button type="button" data-camp="talents" class="camp-building"><span class="camp-building-icon">✧</span><strong>Talent Sanctum</strong><small>Build your talents</small></button>
+      <button type="button" data-camp="craft" class="camp-building"><span class="camp-building-icon">⚒</span><strong>Forge &amp; Alchemy</strong><small>Craft and prepare</small></button>
+      <button type="button" data-camp="pack" class="camp-building"><span class="camp-building-icon">🎒</span><strong>Storehouse</strong><small>Bag &amp; materials</small></button>
+      <button type="button" data-camp="shop" class="camp-building"><span class="camp-building-icon">🪙</span><strong>Quartermaster</strong><small>Buy and sell gear</small></button>
+      <button type="button" data-camp="loot" class="camp-building"><span class="camp-building-icon">☠</span><strong>Boss Ledger</strong><small>Inspect rare drops</small></button>
+      <button type="button" data-camp="backup" class="camp-building"><span class="camp-building-icon">📜</span><strong>Save Archive</strong><small>Back up progress</small></button>
+     </div>
+    </div>
+    <div class="camp-roster-panel"><div><span class="eyebrow">THE EMBERGUARD</span><h2>Your active party</h2></div><div class="camp-roster" id="campRoster" aria-label="Current party"></div></div>
+   </section>
+   <aside id="campExpeditionPanel" class="camp-expedition-panel" aria-label="Expedition board"><div id="campExpeditionBody"></div></aside>
+  </div>
+ </main>
  <main class="game-layout">
   <section class="battle-column" aria-label="Real time combat arena">
     <div class="battle-top"><div class="chapter"><span class="eyebrow" id="chapterName">CHAPTER I · THE VERDANT RUINS</span><strong id="locationName">The Thornwarden's Hollow</strong></div><div class="boss-hud"><span class="boss-icon">☠</span><div class="boss-data"><div class="boss-title"><span id="bossLabel">THORNWARDEN</span><small id="bossHpText">720 / 720</small></div><div class="boss-track"><div class="boss-fill" id="bossFill"></div></div></div></div></div>
@@ -32,15 +64,8 @@
      <div class="battle-tag"><span class="live-dot"></span><span id="phaseLabel">READY</span></div>
      <div id="combatTempo" class="combat-tempo hidden" aria-hidden="true"><span class="combat-tempo-icon">◈</span> REPOSITIONING <strong>70% SPEED</strong></div>
      <div id="announcement" class="announcement" aria-live="polite"></div>
-     <div class="overlay" id="overlay">
-      <div class="overlay-content" id="overlayContent" tabindex="-1">
-       <div class="overlay-emblem">✦</div>
-       <span class="eyebrow">YOUR FIRST EXPEDITION</span>
-       <h1>The Thornwarden Awakes</h1>
-       <p>Four heroes. One ancient guardian. Command your party in real time, earn XP, discover boss equipment and improve your heroes between battles.</p>
-       <div class="overlay-hints"><span>✦ Tap a hero to select</span><span>➤ Tap or drag to command</span><span>⚡ Trigger special abilities</span></div>
-       <button id="startBtn" class="primary-btn large" type="button">Enter the Hollow <span aria-hidden="true">→</span></button>
-      </div>
+     <div class="overlay hidden" id="overlay">
+      <div class="overlay-content" id="overlayContent" tabindex="-1"></div>
      </div>
     </div>
     <section class="combat-action-dock" id="combatActionDock" aria-label="Selected hero combat abilities">
@@ -72,7 +97,7 @@
 (function(){
  var shown=false;
  function showRecovery(){
-  if(shown||document.documentElement.dataset.emberfallReady==='4.8.3')return;
+  if(shown||document.documentElement.dataset.emberfallReady==='4.9.0')return;
   shown=true;
   var overlay=document.getElementById('overlay');
   var content=document.getElementById('overlayContent');
@@ -82,7 +107,7 @@
   content.innerHTML='<div class="overlay-emblem">⚔</div><h1>Emberfall did not finish loading</h1><p>Safari may have kept an older game file. Your locally saved heroes and items have not been deleted.</p><button type="button" id="reloadGame" class="primary-btn large">Reload the Game</button><p class="encounter-controls">If the problem continues, close this tab and reopen Emberfall using its website address.</p>';
   document.getElementById('reloadGame').addEventListener('click',function(){
    var path=window.location.pathname;
-   window.location.replace(path+'?refresh=4.8.3-'+Date.now());
+   window.location.replace(path+'?refresh=4.9.0-'+Date.now());
   });
  }
  window.addEventListener('error',function(event){
@@ -90,12 +115,12 @@
   if(/module|import|export|syntaxerror/i.test(message)||String(event.filename||'').includes('/emberfall/src/'))showRecovery();
  });
  window.addEventListener('unhandledrejection',function(event){
-  if(document.documentElement.dataset.emberfallReady!=='4.8.3')showRecovery();
+  if(document.documentElement.dataset.emberfallReady!=='4.9.0')showRecovery();
  });
  window.addEventListener('load',function(){
   setTimeout(showRecovery,4500);
  });
 })();
 </script>
-<script type="module" src="./src/game.js?v=4.8.3"></script>
+<script type="module" src="./src/game.js?v=4.9.0"></script>
 </body></html>

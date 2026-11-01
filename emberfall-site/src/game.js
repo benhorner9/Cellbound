@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.8.3';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES} from './progression.js?v=4.8.3';
-import {mountWorkshop} from './workshop.js?v=4.8.3';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.9.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES} from './progression.js?v=4.9.0';
+import {mountWorkshop} from './workshop.js?v=4.9.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -22,6 +22,7 @@ function newBattle(id=bossSelection){
  return fight;
 }
 let state=newBattle(),selected=(company.partyOrder?.[0]||'knight'),paused=false,sound=false,last=0,uiLast=0;
+let currentView='camp',campTab='home';
 let rewardCommitted=false,resultDismissed=false,workshopWasPaused=false;
 let floaters=[],bursts=[],projectiles=[],markers=[],noticeUntil=0,noticeText='',startPoint=null;
 let audioCtx=null;
@@ -143,8 +144,8 @@ $('overlayContent').addEventListener('click',e=>{
  }
  if(e.target.closest('#startBtn'))start();
  if(e.target.closest('#againBtn'))restart();
- if(e.target.closest('#inspectBtn'))workshop.open(state.phase==='victory'?'pack':'heroes',selected);
- if(e.target.closest('#chooseBossBtn'))returnToCamp();
+ if(e.target.closest('#inspectBtn')){const tab=state.phase==='victory'?'pack':'heroes';returnToCamp('home');workshop.open(tab,selected);}
+ if(e.target.closest('#chooseBossBtn'))returnToCamp('expeditions');
  if(e.target.closest('#manageFromPickerBtn'))workshop.open('party',selected);
  if(e.target.closest('#bagFromPickerBtn'))workshop.open('pack',selected);
  if(e.target.closest('#dismissRewardsBtn')){resultDismissed=true;$('overlay').classList.add('hidden');$('overlay').classList.remove('result-mode');}
@@ -163,35 +164,72 @@ window.addEventListener('keydown',e=>{
  if('qwer'.includes(e.key.toLowerCase())&&e.key.length===1){const i='qwer'.indexOf(e.key.toLowerCase());selectHero(state.heroes[i].id);}
 });
 window.addEventListener('resize',resize,{passive:true});
+
 function selectBoss(id){
  if(!canChallenge(company,id))return false;
  bossSelection=id;
  try{storage?.setItem(SELECTED_BOSS_KEY,id);}catch{}
  state=newBattle(id);
- // Update the actual combat HUD, not only the menu card, so the chosen encounter
- // and the fight started from it always agree.
- renderEncounterChoices();
- syncUI(true);
+ renderEncounterChoices();renderCampSummary();syncUI(true);
  return true;
 }
+const campScreen=$('campScreen');
+function setCampTab(tab='home'){
+ campTab=tab==='expeditions'?'expeditions':'home';
+ campScreen.dataset.campTab=campTab;
+ $('campNavHome').setAttribute('aria-pressed',String(campTab==='home'));
+ $('campNavExpeditions').setAttribute('aria-pressed',String(campTab==='expeditions'));
+ $('campNavHome').classList.toggle('active',campTab==='home');
+ $('campNavExpeditions').classList.toggle('active',campTab==='expeditions');
+}
+function renderCampSummary(){
+ $('campGold').textContent=String(company.gold);
+ $('campWins').textContent=String(company.wins);
+ $('campItems').textContent=String(company.items.length);
+ const icons={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
+ const roles={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
+ $('campRoster').innerHTML=state.heroes.map(unit=>{
+  const hero=company.heroes[unit.id];
+  return '<div class="camp-roster-member"><span class="camp-roster-icon portrait '+unit.id+'">'+icons[unit.id]+'</span><div><strong>'+HERO_NAMES[unit.id]+'</strong><small>'+roles[unit.id]+' · Lv '+hero.level+'</small></div></div>';
+ }).join('');
+}
+function showCamp(tab='home'){
+ currentView='camp';$('app').dataset.view='camp';
+ paused=false;setCompanyMenu(false);
+ $('overlay').classList.add('hidden');$('overlay').classList.remove('choose-mode','result-mode');
+ $('overlay').removeAttribute('role');$('overlay').removeAttribute('aria-label');
+ $('pauseBtn').disabled=true;
+ setCampTab(tab);renderCampSummary();renderEncounterChoices();
+ syncUI(true);
+}
+campScreen.addEventListener('click',event=>{
+ const campAction=event.target.closest('[data-camp]');
+ if(campAction){
+  const tab=campAction.dataset.camp;
+  if(tab==='home'||tab==='expeditions'){setCampTab(tab);return;}
+  if(['party','heroes','talents','pack','craft','shop','loot','backup'].includes(tab)){
+   workshop.open(tab,selected);return;
+  }
+ }
+ const choice=event.target.closest('[data-boss]');
+ if(choice){if(canChallenge(company,choice.dataset.boss))selectBoss(choice.dataset.boss);return;}
+ if(event.target.closest('#startBtn'))start();
+ if(event.target.closest('#manageFromPickerBtn'))workshop.open('party',selected);
+ if(event.target.closest('#bagFromPickerBtn'))workshop.open('pack',selected);
+});
 function renderEncounterChoices(){
  const boss=bossInfo(bossSelection),recommended=atRecommendedLevel(company,bossSelection);
  const options=Object.values(BOSSES).map(b=>{
   const active=b.id===bossSelection,ready=atRecommendedLevel(company,b.id);
   return '<button type="button" class="encounter-choice '+(active?'current ':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(ready?'✓ Party ready · recommended Lv '+b.unlock:'⚠ Recommended party level '+b.unlock+' · You can still fight')+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
  }).join('');
- $('overlay').classList.add('choose-mode');
- $('overlay').classList.remove('result-mode');
- $('overlay').setAttribute('role','dialog');
- $('overlay').setAttribute('aria-label','Choose your boss expedition');
- $('overlayContent').innerHTML='<div class="overlay-emblem">✦</div><span class="eyebrow">BLOCK 03 · THREE BOSSES TO MASTER</span><h1>Choose Your Expedition</h1><p>Tap any boss to change your next battle. Every boss is playable now, even below its recommended level.</p><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. Your heroes can attempt it now, but the battle may be challenging.</p>')+'<button id="startBtn" class="primary-btn large" type="button">Fight '+boss.name+' →</button><p class="encounter-controls">Selected battle: <b id="selectedBossName">'+boss.name+'</b>. Tap Fight to enter that exact boss encounter. Boss selection is remembered on this device.</p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">✦ Heroes &amp; Talents</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
+ $('campExpeditionBody').innerHTML='<div class="camp-board-heading"><span class="eyebrow">THE EXPEDITION BOARD</span><h2>Choose Your Hunt</h2><p>Choose a boss, then leave the safety of the camp when your party is ready.</p></div><div class="encounter-choices" id="encounterList">'+options+'</div><p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. You can still attempt this fight.</p>')+'<button id="startBtn" class="primary-btn large camp-fight-btn" type="button">Fight '+boss.name+' →</button><p class="encounter-controls">Selected boss: <b id="selectedBossName">'+boss.name+'</b></p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">♜ Manage Party</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
 }
-function returnToCamp(){
- paused=false;rewardCommitted=false;resultDismissed=false;selected=company.partyOrder?.[0]||'knight';state=newBattle();
- floaters=[];bursts=[];projectiles=[];markers=[];
- $('overlay').classList.remove('hidden');$('pauseBtn').disabled=true;
- renderEncounterChoices();syncUI(true);
- $('overlayContent').focus();
+function returnToCamp(tab='expeditions'){
+ paused=false;rewardCommitted=false;resultDismissed=false;
+ selected=company.partyOrder?.[0]||'knight';state=newBattle();
+ floaters=[];bursts=[];projectiles=[];markers=[];noticeUntil=0;
+ showCamp(tab);
 }
 function start(){
  if(state.phase==='ready'&&canChallenge(company,bossSelection)){
@@ -202,6 +240,7 @@ function start(){
   const used=consumePreparedElixir(company);
   if(used){state.elixirUsed=used;writeProfile(storage,company);}
   startEncounter(state);
+  currentView='battle';$('app').dataset.view='battle';resize();
   $('overlay').classList.remove('choose-mode','result-mode');
   $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
  }
@@ -211,6 +250,7 @@ function restart(){
  const used=consumePreparedElixir(company);
  if(used){state.elixirUsed=used;writeProfile(storage,company);}
  floaters=[];bursts=[];projectiles=[];markers=[];noticeUntil=0;startEncounter(state);
+ currentView='battle';$('app').dataset.view='battle';resize();
  $('overlay').classList.remove('choose-mode','result-mode');
  $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
 }
@@ -594,21 +634,21 @@ function endVisualsComplete(){
 }
 function frame(now){
  if(!last)last=now;const dt=Math.min((now-last)/1000,.05);last=now;
- if(!paused&&state.phase==='playing')updateEncounter(state,dt);
- if(!paused)advanceDeathVisuals(state,dt);
+ if(currentView==='battle'&&!paused&&state.phase==='playing')updateEncounter(state,dt);
+ if(currentView==='battle'&&!paused)advanceDeathVisuals(state,dt);
  for(const event of drainEvents(state))onEvent(event);
  tickFx(dt);
  if(now>noticeUntil)$('announcement').classList.remove('show');
- render();
- if(now-uiLast>125){syncUI();uiLast=now;}
- if(!resultDismissed&&endVisualsComplete()&&$('overlay').classList.contains('hidden'))showEnd();
+ if(currentView==='battle')render();
+ if(currentView==='battle'&&now-uiLast>125){syncUI();uiLast=now;}
+ if(currentView==='battle'&&!resultDismissed&&endVisualsComplete()&&$('overlay').classList.contains('hidden'))showEnd();
  requestAnimationFrame(frame);
 }
 const workshop=mountWorkshop({
  profile:company,storage,
  onOpen:()=>{workshopWasPaused=paused;paused=true;syncUI(true);},
- onClose:()=>{paused=workshopWasPaused;syncUI(true);},
- onChange:()=>syncUI(true)
+ onClose:()=>{paused=workshopWasPaused;renderCampSummary();renderEncounterChoices();syncUI(true);},
+ onChange:()=>{renderCampSummary();renderEncounterChoices();syncUI(true);}
 });
 $('companyBtn').addEventListener('click',()=>workshop.open('heroes',selected));
 $('partyBtn').addEventListener('click',()=>workshop.open('party',selected));
@@ -618,9 +658,8 @@ $('craftBtn').addEventListener('click',()=>workshop.open('craft',selected));
 for(const id of ['bossSelectBtn','bossSelectTopBtn'])$(id).addEventListener('click',returnToCamp);
 makeBackground();
 resize();
-renderEncounterChoices();
-syncUI(true);
+showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.8.3';
+document.documentElement.dataset.emberfallReady='4.9.0';
 requestAnimationFrame(frame);
