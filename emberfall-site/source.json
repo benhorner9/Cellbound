@@ -3,7 +3,7 @@
   "source": "benhorner9/heroes-of-emberfall",
   "sourceCommit": "e0a950d210617c635a6f6f29edfe5b2a88804c3e",
   "target": "/emberfall/",
-  "stage": "emberguard-stronghold-camp-hub-v4.9.0",
+  "stage": "camp-hub-v4.9.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "User-requested dedicated Emberguard Stronghold home camp, navigation between eight functional facilities and a non-overlay camp expedition board. Battle Canvas appears only after chosen Fight, then a return path leads to camp; preserves user-approved 2-skill/fullwidth 4-hero HUD, existing workshop, crafting, loot and local saves. Source PR #31 verified through 79 unit checks plus Chromium/iPad WebKit smoke and merged at e0a950d210617c635a6f6f29edfe5b2a88804c3e. Six changed hosted source asset blobs verified SHA-identical to merged source. Module/HTML/CSS cache pins v4.9.0. Original Block 5 untouched."
+  "note": "Dedicated Emberguard Stronghold home base is the entry screen; eight functional camp destinations and live company statistics; separate boss expedition board, intentional fight launch, battle-only Canvas HUD, return to camp after fights. Existing company saves, hero and item ownership, combat, talents and crafting preserved. Source PR #31 passed 79 unit tests plus desktop, Chromium touch and WebKit smoke, merged source commit e0a950d210617c635a6f6f29edfe5b2a88804c3e. Hosted asset hashes mirror canonical code. Browser cache pins v4.9.0."
 }
