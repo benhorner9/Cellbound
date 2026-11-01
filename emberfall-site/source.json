@@ -1,7 +1,7 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "95e5e4b99fa58f4574bf7de30434756b55a516a4",
+  "sourceCommit": "e8f45e5fd2014fa0f5d6935b6f62142aafadb828",
   "target": "/emberfall/",
   "stage": "block04-equipment-sets-loadouts-local-backups",
   "assets": [
