@@ -159,13 +159,13 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    html+='<button type="button" class="party-roster-hero '+(id===active?'active':'')+'" data-action="party-pick" data-id="'+id+'" aria-label="Swap '+HERO_NAMES[id]+' into position '+(partyPosition+1)+'"><span class="party-portrait">'+partyPortraits[id]+'</span><span><b>'+esc(HERO_NAMES[id])+'</b><small>'+esc(PARTY_ROLES[id])+' · Lv '+hero.level+'</small><small>Currently in slot '+position+'</small></span><span class="party-swap-icon">⇄</span></button>';
   }
   html+='</div><div class="party-roster-actions"><button type="button" class="tiny-btn" data-action="party-gear">View '+esc(HERO_NAMES[active])+' Equipment</button><button type="button" class="tiny-btn ghost" data-action="party-talents">Talent Tree</button></div></section></div>';
-  html+='<p class="party-future-note">Your current roster has four founding heroes, so all four remain active. Recruitment and reserve heroes are not available yet. This screen manages real positions and selection order without inventing recruits or changing hero classes.</p>';
+  html+='<p class="party-future-note">Your four founding heroes are all active. Rearrange their starting positions here; recruitment and reserve heroes are not available yet.</p>';
   return html;
  }
  function renderTalents(){
   const hero=profile.heroes[heroId],points=talentPoints(hero);
   const talent=selectedTalentId?TALENTS[heroId].find(t=>t.id===selectedTalentId):null;
-  let html='<div class="talent-screen-head"><div><span class="eyebrow">FIX PACK 02 · HERO PROGRESSION</span><h3>Talent Paths</h3><p>Choose one talent per level tier. Examine each node and its combat effect before confirming. Routes can be mixed between levels 2 and 4.</p></div><div class="talent-points"><b>'+points+'</b><span>Point'+(points===1?'':'s')+' available</span></div></div>';
+  let html='<div class="talent-screen-head"><div><span class="eyebrow">TALENT SANCTUM · HERO PROGRESSION</span><h3>Talent Paths</h3><p>Choose one talent per level tier. Examine each node and its combat effect before confirming. Routes can be mixed between levels 2 and 4.</p></div><div class="talent-points"><b>'+points+'</b><span>Point'+(points===1?'':'s')+' available</span></div></div>';
   html+='<div class="hero-picker talent-hero-picker">'+HERO_IDS.map(id=>'<button type="button" class="hero-picker-btn '+(id===heroId?'active':'')+'" data-action="hero" data-id="'+id+'">'+esc(HERO_NAMES[id])+'<small>Lv '+profile.heroes[id].level+' · '+esc(pretty[id])+'</small></button>').join('')+'</div>';
   html+='<div class="talent-screen-layout"><section class="talent-tree" aria-label="Branching talent tree for '+esc(HERO_NAMES[heroId])+'">'
    +'<div class="talent-tree-root"><span class="talent-root-symbol">'+partyPortraits[heroId]+'</span><strong>'+esc(HERO_NAMES[heroId])+'</strong><small>Level '+hero.level+' · '+esc(pretty[heroId])+'</small></div>';
@@ -355,7 +355,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    html+='<div class="backup-preview"><b>Backup checked ✓</b><span>'+d.items+' items · '+d.gold+' gold · '+d.wins+' wins</span><small>Heroes: '+Object.entries(d.levels).map(([id,lv])=>esc(HERO_NAMES[id])+' Lv'+lv).join(' · ')+'</small></div>';
    html+='<button type="button" class="tiny-btn danger" data-action="restore-backup">'+(importConfirm?'Confirm Restore — Replace My Current Save':'2. Restore Checked Backup')+'</button>';
   }
-  html+='</div><p class="workshop-disclaimer">Restoring replaces your local company and saved builds after a second confirmation. Existing game saves are validated first; outdated plain company-v1 JSON can also be imported. No cloud sync is available.</p></div>';
+  html+='</div><p class="workshop-disclaimer">Restoring a backup replaces the company and saved builds on this device after confirmation. Keep a copy of your backup if you change browsers or devices; cloud syncing is not yet available.</p></div>';
   return html;
  }
  function render(){

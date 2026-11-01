@@ -1122,3 +1122,25 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
 .workshop-cover.camp-page .inventory-recipient{min-height:44px}
 .workshop-cover.camp-page .workshop-body{scroll-margin-top:135px}
 .workshop-cover.camp-page [data-action]{scroll-margin-top:140px;scroll-margin-bottom:18px}
+
+/* Native camp pages use natural vertical scrolling. No nested detail-panel trap. */
+.workshop-cover.camp-page .workshop-body.inventory-mode{display:block;overflow:visible}
+.workshop-cover.camp-page .inventory-layout{overflow:visible;min-height:0;flex:0 0 auto;align-items:start}
+.workshop-cover.camp-page .inventory-collection{overflow:visible}
+.workshop-cover.camp-page .inventory-slot-scroll{max-height:35dvh}
+.workshop-cover.camp-page .inventory-detail-panel{overflow:visible}
+.workshop-cover.camp-page .inventory-detail-scroll{overflow:visible;min-height:auto;flex:0 0 auto}
+.workshop-cover.camp-page .inventory-actions{position:sticky;bottom:10px;z-index:4;box-shadow:0 6px 20px #071510b3}
+.workshop-cover.camp-page .workshop-nav{display:grid;overflow-x:visible;flex-wrap:initial;grid-template-columns:repeat(4,minmax(0,1fr))}
+.workshop-cover.camp-page .workshop-nav button{flex:initial;white-space:normal}
+@media(min-width:1050px){
+ .workshop-cover.camp-page .workshop-nav{grid-template-columns:repeat(8,minmax(0,1fr))}
+}
+@media(max-width:570px){
+ .workshop-cover.camp-page .workshop-nav{display:flex;overflow-x:auto;flex-wrap:nowrap}
+ .workshop-cover.camp-page .workshop-nav button{flex:0 0 auto;white-space:normal}
+ .workshop-cover.camp-page .inventory-actions{position:static}
+}
+@media(max-width:760px){
+ .workshop-cover.camp-page .inventory-layout{display:flex;flex-direction:column}
+}
