@@ -1110,3 +1110,15 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
 @media(prefers-reduced-motion:reduce){
  .workshop-cover.camp-page .workshop-nav,.overlay.result-mode .overlay-content{scroll-behavior:auto}
 }
+
+/* A single compact management tab row fits 13-inch iPad landscape.
+   Preserve native page scrolling and thumb-sized inventory actions. */
+@media(min-width:1050px){
+ .workshop-cover.camp-page .workshop-head{min-height:67px}
+ .workshop-cover.camp-page .workshop-nav{top:67px;grid-template-columns:repeat(8,minmax(0,1fr))}
+ .workshop-cover.camp-page .workshop-nav button{font-size:11px;min-height:45px}
+}
+.workshop-cover.camp-page .inventory-action-primary,
+.workshop-cover.camp-page .inventory-recipient{min-height:44px}
+.workshop-cover.camp-page .workshop-body{scroll-margin-top:135px}
+.workshop-cover.camp-page [data-action]{scroll-margin-top:140px;scroll-margin-bottom:18px}
