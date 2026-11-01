@@ -394,3 +394,81 @@ body{background:radial-gradient(ellipse at 60% -20%,#385c4d 0,transparent 52%),l
 .paperdoll-slot.is-equipped .paperdoll-unequip{width:100%}
 @media(min-width:850px){.equipment-paperdoll{min-height:365px}.equipment-figure{top:12px}.paperdoll-slot-charm{top:62px}.paperdoll-slot-armour{top:152px}.paperdoll-slot-weapon{top:195px}}
 @media(max-width:600px){.equipment-paperdoll{min-height:340px;padding:6px}.paperdoll-slot{padding:6px;gap:5px}.paperdoll-slot-charm{left:2%;width:40%}.paperdoll-slot-armour{width:46%;top:145px}.paperdoll-slot-weapon{right:2%;width:40%;top:216px}.paperdoll-slot-symbol{display:none}.paperdoll-slot-details strong{font-size:12px}.paperdoll-slot-details small{font-size:10px}.paperdoll-slot .paperdoll-unequip{min-height:40px}.equipment-figure{transform:translateX(-50%) scale(.92);transform-origin:top center}}
+
+/* Fix Pack 01 — reference-inspired character armory, three owned slots only. */
+.equipment-armory{position:relative;min-height:0;margin:8px 0 10px;padding:0;overflow:hidden;border:2px solid #987954;border-radius:13px;background:linear-gradient(135deg,#241b20 0%,#121c21 55%,#261c1d 100%);box-shadow:inset 0 0 0 3px #372a23,inset 0 0 0 5px #bc975344,0 14px 25px #0008}
+.equipment-armory::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(92deg,transparent 0 6px,#e1bb6d03 7px 9px),radial-gradient(ellipse at 50% 37%,#84705224,transparent 60%);z-index:0}
+.armory-titlebar{position:relative;z-index:2;display:flex;align-items:center;gap:14px;justify-content:space-between;min-height:45px;padding:8px 17px;background:linear-gradient(90deg,#231b1d,#41312a 50%,#21191d);border-bottom:2px solid #96744c;box-shadow:0 3px 8px #0006}
+.armory-titlebar span{font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.16em;color:#cfb887}
+.armory-titlebar strong{font:700 20px Georgia,serif;color:#fce3b2;text-shadow:0 2px 3px #000}
+.armory-titlebar small{font:12px system-ui,sans-serif;color:#d6c8a9}
+.armory-stage{position:relative;height:342px;background:radial-gradient(ellipse at 50% 35%,#53606b55,transparent 45%),repeating-linear-gradient(0deg,#ffffff03 0 2px,transparent 2px 6px),linear-gradient(#171c26,#11191d 76%,#312923)}
+.armory-stage::after{content:"";position:absolute;bottom:9px;left:26%;right:26%;height:21px;border-radius:50%;background:#0009;filter:blur(12px);pointer-events:none}
+.armory-rune{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:300px;height:300px;border:1px solid #beac6a21;border-radius:50%;display:grid;place-items:center;font-size:145px;color:#dcb8770b;pointer-events:none;z-index:0;box-shadow:0 0 0 23px #b8a56a0a,0 0 0 46px #bc995a05}
+.equipment-armory .equipment-figure{position:absolute;top:5px;left:50%;width:250px;height:322px;transform:translateX(-50%);opacity:1;z-index:1;filter:drop-shadow(0 12px 12px #000b)}
+.equipment-character-svg{display:block;width:100%;height:100%;overflow:visible}
+.armory-hero-label{position:absolute;z-index:2;left:50%;bottom:7px;transform:translateX(-50%);text-align:center;white-space:nowrap;display:flex;flex-direction:column;gap:2px;text-shadow:0 2px 5px #000,0 0 10px #000}
+.armory-hero-label strong{font:700 19px Georgia,serif;color:#ffe3b4}
+.armory-hero-label small{font:700 10px system-ui,sans-serif;letter-spacing:.1em;color:#dfcba6;text-transform:uppercase}
+.equipment-armory .paperdoll-slot{position:absolute;z-index:3;display:flex;flex-direction:column;align-items:stretch;gap:3px;min-height:0;min-width:0;max-width:none;width:159px;padding:5px;border:2px solid #aa8b57;border-radius:10px;background:linear-gradient(125deg,#5d5244,#221e22 15%,#172025 80%,#4a3a30);box-shadow:inset 0 1px #f5df9b60,inset 0 0 0 3px #0e1215,0 6px 15px #000b;transform:none}
+.equipment-armory .paperdoll-slot::after{content:"✧";position:absolute;top:-9px;left:-5px;font:15px Georgia,serif;color:#e0bc73;text-shadow:0 2px 2px #000;pointer-events:none}
+.equipment-armory .paperdoll-slot.is-inspected{box-shadow:inset 0 1px #f5df9b60,inset 0 0 0 3px #0e1215,0 0 0 2px #e4c075,0 0 17px #e4c07577}
+.equipment-armory .paperdoll-slot.rarity-common{border-color:#b6b4aa}
+.equipment-armory .paperdoll-slot.rarity-uncommon{border-color:#68be85}
+.equipment-armory .paperdoll-slot.rarity-rare{border-color:#6eacf7}
+.equipment-armory .paperdoll-slot.rarity-epic{border-color:#b183dc}
+.equipment-armory .paperdoll-slot.rarity-legendary{border-color:#ef9a48}
+.equipment-armory .paperdoll-slot.is-empty{border-style:solid;opacity:.76}
+.equipment-armory .paperdoll-slot-charm{top:45px;left:5.5%}
+.equipment-armory .paperdoll-slot-armour{top:180px;left:5.5%}
+.equipment-armory .paperdoll-slot-weapon{top:218px;right:5.5%}
+.equipment-armory .armory-slot-select{display:flex;align-items:center;gap:9px;width:100%;min-height:55px;background:transparent;border:0;padding:3px;color:#f5e5c8;text-align:left;cursor:pointer}
+.equipment-armory .armory-slot-select:hover,.equipment-armory .armory-slot-select:focus-visible{outline:2px solid #efcd81;outline-offset:1px;border-radius:5px;background:#a68f6322}
+.equipment-armory .paperdoll-slot-symbol{display:grid;place-items:center;flex:0 0 52px;width:52px;height:52px;border:2px solid #837251;border-radius:7px;background:radial-gradient(circle at 30% 25%,#68726a,#253039 67%,#10171c);box-shadow:inset 0 0 0 2px #0d1215,inset 0 3px 8px #ffffff19;font-size:29px;filter:drop-shadow(0 2px 2px #000)}
+.equipment-armory .paperdoll-slot-details{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.equipment-armory .paperdoll-slot-details strong{font:700 13px Georgia,serif;color:#f9e0b0}
+.equipment-armory .paperdoll-slot-details small{font:11px/1.25 system-ui,sans-serif;color:#ced1ce;word-break:break-word}
+.equipment-armory .paperdoll-slot .paperdoll-unequip{flex:0 0 auto;width:100%;min-height:42px;padding:5px 9px;font:700 11px system-ui,sans-serif;border-radius:5px;border:1px solid #a58e63;color:#f5ddb4;background:#4d3c2d;touch-action:manipulation}
+.equipment-armory .paperdoll-slot .paperdoll-unequip:hover{background:#705137}
+.armory-inspection{position:relative;z-index:2;display:flex;align-items:center;gap:14px;min-height:116px;padding:13px 18px;background:linear-gradient(120deg,#252422,#171e22 58%,#272320);border-top:2px solid #a18150;box-shadow:inset 0 4px 8px #0006}
+.armory-inspection-icon{display:grid;place-items:center;flex:0 0 64px;width:64px;height:64px;border:2px solid #a9905e;border-radius:9px;background:linear-gradient(145deg,#4b574f,#131d25);font-size:38px}
+.armory-inspection-icon.rarity-common{border-color:#b7b5af}.armory-inspection-icon.rarity-uncommon{border-color:#67c486}.armory-inspection-icon.rarity-rare{border-color:#74b6f3}.armory-inspection-icon.rarity-epic{border-color:#b587e3}.armory-inspection-icon.rarity-legendary{border-color:#eda257}
+.armory-inspection-icon.is-empty{color:#8c9388}
+.armory-inspection-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.armory-inspection-copy strong{font:700 21px/1.25 Georgia,serif;color:#ffdfac}
+.armory-inspection-copy p{font:italic 12px/1.5 Georgia,serif;color:#d3d5cd;margin:0}
+.armory-inspection-copy small{font:700 11px/1.5 system-ui,sans-serif;color:#c7d6c8}
+.armory-item-rarity{font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#aebbb5}
+.rarity-text-common{color:#d6d6d0}.rarity-text-uncommon{color:#81d5a0}.rarity-text-rare{color:#94c6fa}.rarity-text-epic{color:#d0a2f6}.rarity-text-legendary{color:#f6b772}
+.armory-inspection-actions{flex:0 0 auto}
+.armory-inspection-actions .tiny-btn{min-height:46px;min-width:110px;border-radius:8px}
+@media(max-width:760px){
+ .equipment-armory .paperdoll-slot{width:119px}
+ .equipment-armory .paperdoll-slot-charm,.equipment-armory .paperdoll-slot-armour{left:2%}
+ .equipment-armory .paperdoll-slot-weapon{right:2%}
+ .equipment-armory .paperdoll-slot-symbol{width:38px;height:43px;flex-basis:38px;font-size:21px}
+ .equipment-armory .armory-slot-select{gap:4px;padding:0}
+ .equipment-armory .paperdoll-slot-details strong{font-size:11px}
+ .equipment-armory .paperdoll-slot-details small{font-size:10px}
+ .armory-inspection{gap:8px;padding:11px}
+ .armory-inspection-icon{flex-basis:48px;width:48px;height:52px;font-size:27px}
+ .armory-inspection-copy strong{font-size:17px}
+}
+@media(max-width:480px){
+ .armory-titlebar{gap:5px;flex-wrap:wrap;padding:8px 10px}
+ .armory-titlebar strong{font-size:16px}
+ .armory-titlebar span{font-size:9px}
+ .armory-stage{height:330px}
+ .equipment-armory .equipment-figure{width:200px;height:300px;top:14px}
+ .equipment-armory .paperdoll-slot{width:93px;padding:3px}
+ .equipment-armory .paperdoll-slot-symbol{width:32px;height:36px;flex-basis:32px;font-size:19px}
+ .equipment-armory .paperdoll-slot-details small{font-size:9px}
+ .equipment-armory .paperdoll-slot-charm,.equipment-armory .paperdoll-slot-armour{left:1%}
+ .equipment-armory .paperdoll-slot-weapon{right:1%}
+ .armory-inspection{flex-wrap:wrap;gap:8px}
+ .armory-inspection-actions{width:100%}
+ .armory-inspection-actions .tiny-btn{width:100%}
+}
+@media(prefers-reduced-motion:reduce){.equipment-armory *{transition:none!important;animation:none!important}}
+
+@media(max-width:480px){.equipment-armory .paperdoll-slot-weapon{top:205px}}

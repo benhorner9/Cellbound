@@ -40,6 +40,14 @@ try{
  const charm=await page.locator('.paperdoll-slot-charm').boundingBox(),armour=await page.locator('.paperdoll-slot-armour').boundingBox(),weapon=await page.locator('.paperdoll-slot-weapon').boundingBox();
  if(!charm||!armour||!weapon||!(charm.y<armour.y&&armour.y<weapon.y&&weapon.x>armour.x))throw Error('Hosted body slots are not arranged neck/torso/hand');
  if(!(await page.locator('.paperdoll-slot-armour .paperdoll-unequip').isVisible()))throw Error('Hosted equipped armour cannot be unequipped from body slot');
+ if(!(await page.locator('.equipment-character-svg').isVisible()))throw Error('Reference-style centre hero illustration missing');
+ if(!(await page.locator('.armory-titlebar').innerText()).includes('Aldric'))throw Error('Reference-style hero header not showing selected hero');
+ if(!(await page.locator('.armory-inspection-copy').innerText()).includes('Fieldkeeper Vest'))throw Error('Initial equipped item details missing');
+ await page.locator('[data-action="inspect-gear-slot"][data-slot="charm"]').click();
+ if(!(await page.locator('.armory-inspection-copy').innerText()).includes('No item equipped'))throw Error('Empty charm inspection failed');
+ await page.locator('[data-action="inspect-gear-slot"][data-slot="armour"]').click();
+ if((await page.locator('[data-action="inspect-gear-slot"][data-slot="armour"]').getAttribute('aria-pressed'))!=='true')throw Error('Selected armour slot frame not highlighted');
+ if(!(await page.locator('.armory-inspection-copy').innerText()).includes('Fieldkeeper Vest'))throw Error('Item inspection did not update on tap');
  await page.locator('#workshopClose').click();
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('178 / 178'))throw Error('Equipment did not change real combat HP');
  const box=await page.locator('#overlayContent').boundingBox();
@@ -100,13 +108,13 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.3.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.4.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.3.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.4.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
  if(!(await page.locator('#workshopBody').innerText()).includes('2/3 equipped'))throw Error('Live 2-piece set not active');
@@ -141,7 +149,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.3.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.4.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -159,12 +167,12 @@ try{
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  await page.locator('[data-action="hero"][data-id="mage"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Emberglass Staff'))throw Error('Hosted Mage gear absent from character equipment');
- await page.locator('[data-action="unequip"][data-slot="weapon"]').click();
+ await page.locator('.paperdoll-slot-weapon .paperdoll-unequip').click();
  await page.locator('#workshopTabs [data-tab="pack"]').click();
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.3.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.4.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });

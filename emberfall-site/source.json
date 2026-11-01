@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "8364d6f1d97fa3beb5bb4c679898c1f01d14c737",
+  "sourceCommit": "29d552bbf3b0bb9df7c18574103f29c1f4f22546",
   "target": "/emberfall/",
-  "stage": "fixpack-01-visible-character-equipment",
+  "stage": "fixpack-01-final-character-armory",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Fix Pack 01 follow-up: always-visible four-hero equipment selector, class restrictions, button-based recipient changes, and hero equipment shown on a body silhouette (charm neck, armour torso, weapon hand). Existing 3 slots, saves, sets, loadouts and boss mechanics preserved; Safari module graph v4.3.0."
+  "note": "Fix Pack 01 final reference-inspired character armory: original stylized class-specific centered character art, ornate three-slot rarity-bordered equipment frames, tap-to-inspect item description/bonuses/sets and unequip back to the unique inventory. Existing hero selection, builds, saves, combat and original Blocks 1–4 preserved; Fix Pack 2 and Block 5 untouched. All Safari modules pinned v4.4.0."
 }
