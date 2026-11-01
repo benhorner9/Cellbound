@@ -1,6 +1,7 @@
 import {webkit} from 'playwright';
 const site='https://playcellbound.com/emberfall/';
 const errors=[];
+const failures=[];
 const browser=await webkit.launch({headless:true});
 const context=await browser.newContext({viewport:{width:1180,height:820},isMobile:true,hasTouch:true,deviceScaleFactor:2});
 let staleDependencyRequests=0;
@@ -20,9 +21,21 @@ try{
  });
  const page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.stack||e.message));
+ page.on('requestfailed',r=>failures.push('Request failed: '+r.url()+' '+r.failure()?.errorText));
+ page.on('response',r=>{if(r.status()>=400)failures.push('HTTP '+r.status()+' '+r.url());});
  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.goto(site+'?safari-cache-recovery=3.2.1',{waitUntil:'networkidle',timeout:45000});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='3.2.1')throw Error('Live Safari engine never initialized the game');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='3.2.1'){
+  const snapshot=await page.evaluate(()=>({
+   title:document.title,url:location.href,readyState:document.readyState,
+   marker:document.documentElement.dataset.emberfallReady||null,
+   body:(document.body?.innerText||'').slice(0,900),
+   scripts:[...document.scripts].map(s=>({type:s.type,src:s.src})),
+   overlays:[...document.querySelectorAll('#overlay,#overlayContent,#startBtn,#reloadGame')].map(e=>({id:e.id,tag:e.tagName,classes:e.className,text:(e.innerText||'').slice(0,180)}))
+  }));
+  console.error('WEBKIT BOOT DIAGNOSTIC: '+JSON.stringify({snapshot,errors,failures,staleDependencyRequests}));
+  throw Error('Live Safari engine never initialized the game');
+ }
  if(!(await page.locator('#startBtn').isVisible()))throw Error('Live boss Fight button is unresponsive or missing');
  if(staleDependencyRequests!==0)throw Error('Live module loader requested '+staleDependencyRequests+' stale/unversioned progression files');
  await tap(page,'[data-boss="cindermaw"]');
