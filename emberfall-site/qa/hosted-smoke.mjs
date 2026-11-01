@@ -18,6 +18,9 @@ try{
  await page.locator('#workshopTabs [data-tab="shop"]').click();
  await page.locator('[data-action="buy"][data-id="field-vest"]').click();
  await page.locator('#workshopTabs [data-tab="pack"]').click();
+ if(!(await page.locator('#inventoryScroll').isVisible())||!(await page.locator('#itemInspector').isVisible()))throw Error('Hosted split-panel bag missing');
+ const bagCols=await page.locator('#inventoryGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(/\s+/).length);
+ if(bagCols!==4)throw Error('Hosted bag does not have four columns');
  if(!(await page.locator('#workshopBody').innerText()).includes('Fieldkeeper Vest'))throw Error('Cannot see purchased equipment');
  await page.locator('[data-action="equip"][data-id="i1"]').click();
  await page.locator('#workshopClose').click();
@@ -85,13 +88,13 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.0.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.1.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.0.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.1.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
  if(!(await page.locator('#workshopBody').innerText()).includes('2/3 equipped'))throw Error('Live 2-piece set not active');
