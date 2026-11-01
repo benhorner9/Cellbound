@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "d0d73896f88922c7ec10b1a900f74a3c8e1462d6",
+  "sourceCommit": "065163f943601fb49c919271c168f2834d707cb4",
   "target": "/emberfall/",
-  "stage": "combat-ui-v4.8.2-full-control-bottom",
+  "stage": "combat-ui-v4.8.3-two-skills-fullwidth",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -13,5 +13,5 @@
     "src/builds.js",
     "src/style.css"
   ],
-  "note": "Mockup 4 Full Control Bottom, real existing Canvas 2D: four health-aware hero selectors below unobstructed arena; selected hero and existing two usable abilities with cooldowns in dedicated right command panel; responsive touch-first iPad landscape. Combat, XP, talents, crafting, nine equipment slots, saves and Block 5 remain unchanged. Source PR #29 passed syntax, unit, Chromium and WebKit browser checks then merged to canonical commit d0d73896f88922c7ec10b1a900f74a3c8e1462d6; staged hosted asset blobs verified identical."
+  "note": "User-approved final UI: full width uninterrupted Canvas 2D arena, exactly two real abilities immediately below, four selectable hero cards immediately below skills. Remove extra selected-hero header/panel and command strip; keep Party/Talents/Gear/Bag/Crafting, restart and boss navigation accessible via compact Company top menu and existing boss header button. Preserve gameplay/saves/progression. Source PR #30 passed syntax/unit/Chromium/WebKit and merged as 065163f943601fb49c919271c168f2834d707cb4; six staged source assets are SHA-identical. Safari cache graph v4.8.3."
 }

@@ -829,3 +829,113 @@ body{background:radial-gradient(ellipse at 60% -20%,#385c4d 0,transparent 52%),l
 @media(prefers-reduced-motion:reduce){
  .sidebar .combat-action-dock,.combat-party-rail .hero-card{transition:none}
 }
+
+
+/* v4.8.3 Approved combat layout: full-width arena -> two skills -> four heroes.
+   Retain all underlying game actions through a compact Company header menu. */
+.game-layout{display:block;grid-template-columns:minmax(0,1fr);gap:0}
+.battle-column{width:100%;min-width:0}
+.battle-frame{
+ width:100%;height:clamp(255px,calc(100dvh - 365px),600px);
+ aspect-ratio:auto;overflow:hidden;
+}
+canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action:none}
+.combat-action-dock{
+ position:relative;display:block;inset:auto;margin:8px 0 0;
+ padding:8px 10px;border:1px solid #b8a774;border-radius:11px;
+ background:linear-gradient(110deg,#1c3931,#234138 55%,#18312d);
+ box-shadow:inset 0 1px #ffffff25,0 5px 14px #07151366;
+}
+.visually-hidden,.combat-action-dock .skills-header{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;white-space:nowrap!important;
+ border:0!important;
+}
+.combat-action-dock .ability-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.combat-action-dock .skill{
+ position:relative;display:flex;align-items:center;min-width:0;min-height:70px;
+ border:1px solid #bdac78;border-radius:9px;padding:8px 15px;
+ background:linear-gradient(105deg,#315c46,#203b35);gap:14px;
+ touch-action:manipulation;
+}
+.combat-action-dock .skill:hover:not(:disabled){background:#3b624b}
+.combat-action-dock .skill-icon{
+ display:grid;place-items:center;flex:0 0 54px;
+ width:54px;height:54px;font-size:31px;border-radius:9px;
+}
+.combat-action-dock .skill-text b{font:700 19px Georgia,serif}
+.combat-action-dock .skill-text small{font:12px/1.4 system-ui,sans-serif;color:#c5d7c5;margin-top:3px}
+.combat-action-dock .skill-key{margin-left:auto;flex:0 0 auto;font-size:13px;min-width:37px;text-align:center}
+.combat-party-rail{margin-top:8px;padding:7px 10px 9px}
+.combat-party-rail .party-list{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.combat-party-rail .hero-card{min-height:71px;padding:6px 10px}
+.combat-party-rail .portrait{flex-basis:44px;width:44px;height:46px;font-size:25px}
+.combat-party-rail .hero-line strong{font-size:16px}
+.combat-rail-heading{padding-bottom:5px}
+.topbar{position:relative;z-index:25}
+.company-menu-wrap{position:relative}
+.company-menu-btn{
+ min-height:43px;padding:8px 12px;white-space:nowrap;touch-action:manipulation;
+ border:1px solid #9aab82;border-radius:9px;background:linear-gradient(#426354,#24443a);
+ color:#f4deb2;font:700 13px system-ui,sans-serif;
+}
+.company-menu-btn[aria-expanded="true"]{border-color:#f0cf85;background:#3c5b47}
+.company-menu{
+ position:absolute;z-index:30;top:calc(100% + 10px);right:0;
+ width:min(338px,calc(100vw - 24px));max-height:calc(100dvh - 90px);
+ overflow-y:auto;overscroll-behavior:contain;padding:12px;
+ border:2px solid #c7b37d;border-radius:12px;
+ background:linear-gradient(145deg,#284b3e,#142d2b);
+ box-shadow:0 16px 35px #05100ddd;
+}
+.company-menu.hidden{display:none}
+.company-menu-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;color:#f1d9a5}
+.company-menu-title strong{font:700 20px Georgia,serif}
+.company-menu-title span{font:700 12px system-ui,sans-serif;color:#d7d7b3}
+.company-menu .company-buttons{grid-template-columns:1fr 1fr}
+.company-menu .company-button{min-height:44px}
+.company-menu .company-wallet{margin:8px 0}
+.company-utility-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.company-utility-buttons .quiet-btn{white-space:normal;padding:8px 4px}
+@media(min-width:796px) and (orientation:landscape) and (max-height:900px){
+ .app{padding-top:7px}
+ .topbar{height:52px;margin-bottom:7px}
+ .battle-top{height:65px;padding:8px 13px}
+ .battle-frame{height:clamp(250px,calc(100dvh - 353px),560px)}
+ .combat-action-dock{margin-top:6px;padding:7px 8px}
+ .combat-action-dock .skill{min-height:62px;padding:5px 10px;gap:9px}
+ .combat-action-dock .skill-icon{flex-basis:43px;width:43px;height:43px;font-size:24px}
+ .combat-action-dock .skill-text b{font-size:16px}
+ .combat-action-dock .skill-text small{font-size:10px;line-height:1.25}
+ .combat-party-rail{margin-top:6px;padding:5px 8px 7px}
+ .combat-party-rail .hero-card{min-height:61px;padding:5px 8px}
+ .combat-party-rail .portrait{flex-basis:37px;width:37px;height:39px;font-size:22px}
+ .combat-party-rail .hero-line strong{font-size:14px}
+ .combat-rail-heading{padding-bottom:4px}
+ footer{padding-top:10px}
+}
+@media(max-width:795px){
+ .battle-frame{height:auto;aspect-ratio:1200/640}
+ .combat-action-dock .ability-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .combat-action-dock .skill{min-height:60px;padding:6px;gap:6px}
+ .combat-action-dock .skill-icon{flex-basis:36px;width:36px;height:38px;font-size:22px}
+ .combat-action-dock .skill-text b{font-size:14px}
+ .combat-action-dock .skill-text small{font-size:10px;line-height:1.25}
+ .combat-action-dock .skill-key{font-size:10px;min-width:27px;padding:3px}
+ .combat-party-rail .hero-card{min-height:65px}
+}
+@media(max-width:540px){
+ .brand-name{font-size:15px}
+ .company-menu-btn{padding:7px 8px;min-height:38px;font-size:11px}
+ .top-actions{gap:4px}
+ .combat-party-rail .party-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .combat-action-dock .skill-text small{display:none}
+ .combat-action-dock .skill-text b{font-size:12px}
+ .combat-action-dock .skill-icon{flex-basis:31px;width:31px;height:35px;font-size:18px}
+ .combat-action-dock .skill{min-height:48px}
+}
+@media(max-width:380px){
+ .combat-action-dock .ability-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .combat-action-dock .skill-key{display:none}
+}
