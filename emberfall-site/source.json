@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "11ba4257e594cd2b5bd683d17f97fce4920c6173",
+  "sourceCommit": "dffa524fa9c3fd1739813f3d784560a38f156509",
   "target": "/emberfall/",
-  "stage": "block03-boss-choice-actually-starts-selected-encounter",
+  "stage": "block03-safari-frozen-screen-emergency-recovery",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -12,5 +12,5 @@
     "src/workshop.js",
     "src/style.css"
   ],
-  "note": "Any of the three bosses is immediately fightable at any level; recommended levels shown, actual encounter binding/loot correct, boss choice persists locally. No online ownership or trading."
+  "note": "Emergency fix: versioned entire module graph and load-failure Reload the Game recovery button; no progress reset. Live iPad-sized WebKit cold/warm cache QA required."
 }
