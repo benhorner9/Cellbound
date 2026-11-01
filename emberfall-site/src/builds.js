@@ -1,7 +1,7 @@
 import {
- HERO_IDS,HERO_NAMES,SLOTS,ITEM_DEFS,BOSSES,validateProfile,bonuses,itemOwner,
+ HERO_IDS,HERO_NAMES,SLOTS,ITEM_DEFS,BOSSES,validateProfile,normalizeProfileSlots,bonuses,itemOwner,
  itemSet,SET_DEFS,itemBonusText,PROFILE_KEY
-} from './progression.js?v=4.4.0';
+} from './progression.js?v=4.5.0';
 
 // Offline-local build and backup helpers. Presets reference instances, never clone them.
 // Do not use this data as authoritative items in future online play.
@@ -12,6 +12,7 @@ export const STAT_KEYS=['health','attack','armour','speed','damage','healing','s
 const PERCENT=new Set(['damage','healing','shielding','skillPower','fire','arrowPower','speedMultiplier','cooldown']);
 const safeItemId=id=>id===null||(typeof id==='string'&&/^i[1-9][0-9]*$/.test(id)&&id.length<=18);
 const validHero=id=>HERO_IDS.includes(id);
+const OLD_SLOTS=new Set(['weapon','armour','charm']);
 const validIndex=n=>Number.isInteger(n)&&n>=0&&n<BUILD_COUNT;
 export function newBuilds(){
  return {version:1,heroes:Object.fromEntries(HERO_IDS.map(id=>[id,Array(BUILD_COUNT).fill(null)]))};
@@ -25,7 +26,12 @@ export function validateBuilds(data){
    if(record===null)continue;
    if(typeof record!=='object'||Array.isArray(record)||typeof record.name!=='string'||record.name.length<1||record.name.length>30||!record.gear||typeof record.gear!=='object')return false;
    const ids=[];
-   for(const slot of SLOTS){const itemId=record.gear[slot];if(!safeItemId(itemId))return false;if(itemId!==null)ids.push(itemId);}
+   for(const slot of SLOTS){
+    const itemId=record.gear[slot];
+    if(itemId===undefined&&!OLD_SLOTS.has(slot))continue;
+    if(!safeItemId(itemId))return false;
+    if(itemId!==null)ids.push(itemId);
+   }
    if(new Set(ids).size!==ids.length)return false;
   }
  }
@@ -42,7 +48,7 @@ export function writeBuilds(storage,builds){
 export function saveBuild(profile,builds,heroId,slot,name){
  if(!validateProfile(profile)||!validateBuilds(builds)||!validHero(heroId)||!validIndex(slot))return false;
  const presetName=(typeof name==='string'&&name.trim()?name.trim().slice(0,30):'Build '+(slot+1));
- builds.heroes[heroId][slot]={name:presetName,gear:Object.fromEntries(SLOTS.map(key=>[key,profile.heroes[heroId].gear[key]]))};
+ builds.heroes[heroId][slot]={name:presetName,gear:Object.fromEntries(SLOTS.map(key=>[key,profile.heroes[heroId].gear[key]??null]))};
  return true;
 }
 export function buildStatus(profile,builds,heroId,slot){
@@ -66,7 +72,11 @@ export function applyBuild(profile,builds,heroId,index){
  const status=buildStatus(profile,builds,heroId,index);
  if(!status.ok)return status;
  // Atomic swap: do not unequip or transfer ANY item until every slot was validated.
- profile.heroes[heroId].gear={...builds.heroes[heroId][index].gear};
+ // Old three-slot presets leave newly added slots as they are instead of
+ // silently unequipping extra gear. New presets explicitly save all nine.
+ const record=builds.heroes[heroId][index].gear;
+ profile.heroes[heroId].gear=Object.fromEntries(SLOTS.map(key=>[key,
+  record[key]===undefined?(profile.heroes[heroId].gear[key]??null):record[key]]));
  return {ok:true,reason:'Build equipped. Bonuses apply to the next encounter.'};
 }
 export function compareItem(profile,heroId,itemId){
@@ -129,6 +139,7 @@ export function inspectBackup(raw){
  const legacy=decoded?.version===1&&decoded?.heroes&&decoded?.items;
  const profile=legacy?decoded:decoded?.format===BACKUP_FORMAT&&decoded?.version===1?decoded.company:null;
  if(!validateProfile(profile))throw Error('This backup does not contain a valid Emberfall company. Nothing was changed.');
+ normalizeProfileSlots(profile);
  const builds=legacy?newBuilds():decoded.builds??newBuilds();
  if(!validateBuilds(builds))throw Error('This backup contains invalid build presets. Nothing was changed.');
  return {profile,builds,legacy:!!legacy,summary:{gold:profile.gold,wins:profile.wins,items:profile.items.length,
@@ -137,6 +148,7 @@ export function inspectBackup(raw){
 // Roll back storage if any write fails; update the live objects only after both succeed.
 export function restoreBackup(storage,currentCompany,currentBuilds,verified){
  if(!verified||!validateProfile(verified.profile)||!validateBuilds(verified.builds))return {ok:false,reason:'Invalid backup.'};
+ normalizeProfileSlots(verified.profile);
  if(!storage)return {ok:false,reason:'Browser storage is not available.'};
  let oldProfile,oldBuilds;
  try{oldProfile=storage.getItem(PROFILE_KEY);oldBuilds=storage.getItem(BUILDS_KEY);}catch{return {ok:false,reason:'Browser storage cannot be read.'};}
