@@ -85,9 +85,11 @@ export function compareItem(profile,heroId,itemId){
  return {eligible:true,item,current,currentDef:profile.items.find(i=>i.id===current)?.defId||null,differences,before,after,owner:itemOwner(profile,itemId),set:itemSet(item.defId)};
 }
 export function deltaLabel(key,value){
- const amount=PERCENT.has(key)?Math.round(value*100)+'%':Number(value.toFixed(2));
- const text=itemBonusText({bonus:{[key]:Math.abs(value)}}).replace(/^\+/, '');
- return (value>0?'+':'−')+text.replace(/^[\d.]+%?/,String(Math.abs(amount)));
+ if(!Number.isFinite(value))return '—';
+ // itemBonusText already formats fractional bonuses as percentages correctly.
+ // Prefix a clear positive/negative sign without attempting numeric conversion
+ // of strings like "6%", which previously produced NaN in the comparison UI.
+ return (value>=0?'+':'−')+itemBonusText({bonus:{[key]:Math.abs(value)}}).replace(/^\+/, '');
 }
 export function itemDetails(defId){
  const def=ITEM_DEFS[defId];if(!def)return null;
