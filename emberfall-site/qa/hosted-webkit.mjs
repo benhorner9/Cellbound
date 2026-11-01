@@ -6,6 +6,7 @@ const browser=await webkit.launch({headless:true});
 const context=await browser.newContext({viewport:{width:1180,height:820},isMobile:true,hasTouch:true,deviceScaleFactor:2});
 let staleDependencyRequests=0;
 const tap=async(page,selector)=>{
+ await page.locator(selector).scrollIntoViewIfNeeded();
  const box=await page.locator(selector).boundingBox();
  if(!box||box.width<1||box.height<1)throw Error('Tap target hidden: '+selector);
  await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);
@@ -13,7 +14,7 @@ const tap=async(page,selector)=>{
 try{
  await context.route(/\/src\/progression\.js(?:\?.*)?$/,async route=>{
   const url=new URL(route.request().url());
-  if(url.searchParams.get('v')!=='4.2.0'){
+  if(url.searchParams.get('v')!=='4.3.0'){
    staleDependencyRequests++;
    // Simulate what the returning iPad used to have cached: no new named exports.
    await route.fulfill({status:200,contentType:'application/javascript',body:'export const oldProgression = true;'});
@@ -24,11 +25,11 @@ try{
  page.on('requestfailed',r=>failures.push('Request failed: '+r.url()+' '+r.failure()?.errorText));
  page.on('response',r=>{if(r.status()>=400)failures.push('HTTP '+r.status()+' '+r.url());});
  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.goto(site+'?safari-cache-recovery=4.2.0',{waitUntil:'networkidle',timeout:45000});
+ await page.goto(site+'?safari-cache-recovery=4.3.0',{waitUntil:'networkidle',timeout:45000});
  // WebKit can report networkidle while document.readyState is still "interactive".
  // Wait for the game's own post-listener startup marker instead of racing ES-module execution.
  let started=false;
- try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.2.0',null,{timeout:20000});started=true;}catch{}
+ try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.3.0',null,{timeout:20000});started=true;}catch{}
  if(!started){
   const snapshot=await page.evaluate(()=>({
    title:document.title,url:location.href,readyState:document.readyState,
@@ -60,28 +61,40 @@ try{
  if(!(await page.locator('#backupExport').inputValue()).includes('emberfall-local-backup'))throw Error('Live Safari backup UI not responsive');
  await tap(page,'#workshopClose');
  await page.reload({waitUntil:'networkidle',timeout:45000});
- await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.2.0',null,{timeout:20000})
+ await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.3.0',null,{timeout:20000})
    .catch(()=>{throw Error('Live Safari warm-cache reload failed to initialise in 20s');});
  if((await page.locator('#selectedBossName').innerText())!=='Tempest Seraph')throw Error('Selected boss lost after warm-cache reload');
  await tap(page,'#startBtn');
  if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Saved boss fails after reload');
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.2.0');
-  const p=readProfile(localStorage);addItem(p,'emberglass-staff');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.3.0');
+  const p=readProfile(localStorage);addItem(p,'emberglass-staff');addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('WebKit gear setup failed');
  });
  await page.reload({waitUntil:'networkidle',timeout:45000});
  await tap(page,'#bagFromPickerBtn');
  if(await page.locator('#equipHero').count())throw Error('Safari equipment recipient dropdown remains');
+ if(!(await page.locator('.inventory-party-selector').isVisible()))throw Error('Safari cannot see hero portrait selector');
+ if((await page.locator('.inventory-recipient:not(:disabled)').count())!==1)throw Error('Mage-only item allows wrong heroes');
  if((await page.locator('[data-action="equip"][data-id="i1"]').getAttribute('data-hero'))!=='mage')throw Error('Safari mage equipment targeted incompatible hero');
  await tap(page,'[data-action="equip"][data-id="i1"]');
  if(await page.locator('#inventoryGrid [data-id="i1"]').count())throw Error('Safari still shows equipped gear in bag');
  await tap(page,'#workshopTabs [data-tab="heroes"]');
  await tap(page,'[data-action="hero"][data-id="mage"]');
  if(!(await page.locator('#workshopBody').innerText()).includes('Emberglass Staff'))throw Error('Safari mage equipment not visible');
+ if(!(await page.locator('.equipment-paperdoll').isVisible()))throw Error('Safari on-body equipment screen missing');
+ if((await page.locator('.equipment-paperdoll .paperdoll-slot').count())!==3)throw Error('Safari equipment body missing worn item slots');
+ if(!(await page.locator('.paperdoll-slot-weapon .paperdoll-unequip').isVisible()))throw Error('Safari cannot unequip weapon from its body position');
  await tap(page,'[data-action="unequip"][data-slot="weapon"]');
  await tap(page,'#workshopTabs [data-tab="pack"]');
  if(!(await page.locator('#inventoryGrid [data-id="i1"]').isVisible()))throw Error('Safari unequipped item not returned to bag');
+ await tap(page,'[data-action="inspect"][data-id="i2"]');
+ if((await page.locator('.inventory-recipient:not(:disabled)').count())!==4)throw Error('Safari shared gear does not allow all heroes');
+ await tap(page,'[data-action="target-hero"][data-id="ranger"]');
+ if((await page.locator('[data-action="equip"][data-id="i2"]').getAttribute('data-hero'))!=='ranger')throw Error('Safari could not change equipment recipient');
+ await tap(page,'[data-action="equip"][data-id="i2"]');
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
+ if(saved.heroes.ranger.gear.armour!=='i2')throw Error('Safari selected Ranger was not equipped');
  await tap(page,'#workshopClose');
  if(errors.length)throw Error('Live Safari console errors:\n'+errors.join('\n'));
  console.log('PASS: hosted WebKit Safari-engine cold/warm-cache startup, no stale imports, actual two boss fights, iPad taps and workshop.');

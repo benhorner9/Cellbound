@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,SLOTS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet
-} from './progression.js?v=4.2.0';
+} from './progression.js?v=4.3.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.2.0';
+} from './builds.js?v=4.3.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -36,12 +36,21 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   let html='<div class="hero-picker">'+HERO_IDS.map(id=>'<button type="button" class="hero-picker-btn '+(id===heroId?'active':'')+'" data-action="hero" data-id="'+id+'">'+esc(HERO_NAMES[id])+'<small>Lv '+profile.heroes[id].level+'</small></button>').join('')+'</div>';
   html+='<div class="progress-hero"><div><span class="eyebrow">YOUR '+esc(pretty[heroId]).toUpperCase()+'</span><h3>'+esc(HERO_NAMES[heroId])+' <span>Level '+level+'</span></h3><p>Earn XP by defeating bosses. Talent choices improve your abilities in real combat.</p></div><div class="progress-stat">'+(need?hero.xp+' / '+need+' XP':'MAX LEVEL')+'</div></div>';
   html+='<div class="xp-track"><i style="width:'+(need?Math.min(100,Math.floor(hero.xp/need*100)):100)+'%"></i></div>';
-  html+='<div class="workshop-subheading"><h3>Hero Equipment</h3><span>3 available slots</span></div><div class="equipped-list">';
-  for(const slot of SLOTS){
+  html+='<div class="workshop-subheading"><h3>Hero Equipment</h3><span>3 worn slots · '+esc(HERO_NAMES[heroId])+'</span></div>';
+  html+='<div class="equipment-paperdoll" aria-label="'+esc(HERO_NAMES[heroId])+' equipment on a character silhouette">'
+   +'<div class="equipment-figure" aria-hidden="true"><div class="equipment-head"></div><div class="equipment-neck"></div><div class="equipment-body"></div><div class="equipment-arm left"></div><div class="equipment-arm right"></div><div class="equipment-leg left"></div><div class="equipment-leg right"></div></div>';
+  // Slot locations correspond to the hero's body, not the underlying save order.
+  for(const slot of ['charm','armour','weapon']){
    const id=hero.gear[slot],def=id?itemName(id):null;
-   html+='<div class="equipped-slot"><span class="slot-icon">'+(def?esc(def.icon):slot==='weapon'?'⚔️':slot==='armour'?'🛡':'✦')+'</span><div><b>'+esc(slotTitle[slot])+'</b><small>'+(def?esc(def.name)+' · '+esc(itemBonusText(def)):'Empty slot')+'</small></div>'+(id?'<button type="button" class="tiny-btn" data-action="unequip" data-slot="'+slot+'">Unequip</button>':'')+'</div>';
+   const symbol=slot==='weapon'?'⚔️':slot==='armour'?'🛡️':'✦';
+   html+='<section class="paperdoll-slot paperdoll-slot-'+slot+(def?' is-equipped':' is-empty')+'" data-slot="'+slot+'" aria-label="'+esc(slotTitle[slot])+' slot: '+esc(def?.name||'empty')+'">'
+    +'<span class="paperdoll-slot-symbol" aria-hidden="true">'+(def?esc(def.icon):symbol)+'</span>'
+    +'<div class="paperdoll-slot-details"><strong>'+esc(slotTitle[slot])+'</strong><small>'+esc(def?.name||'Empty · select gear from bag')+'</small>'
+    +(def?'<small class="paperdoll-slot-stats">'+esc(itemBonusText(def))+'</small>':'')+'</div>'
+    +(id?'<button type="button" class="tiny-btn paperdoll-unequip" data-action="unequip" data-slot="'+slot+'" aria-label="Unequip '+esc(def.name)+' from '+esc(HERO_NAMES[heroId])+'">Unequip</button>':'')
+    +'</section>';
   }
-  html+='</div><p class="equipped-help">Equipped gear stays here, outside the bag. Unequip a piece to return it to the inventory.</p><button type="button" class="mini-link" data-action="tab" data-tab="pack">Open your equipment bag →</button>';
+  html+='</div><p class="equipped-help">Charm at the neck, armour on the body and weapon by the hand. Unequip a piece to return that exact item to the bag.</p><button type="button" class="mini-link" data-action="tab" data-tab="pack">Open your equipment bag →</button>';
   html+='<div class="workshop-subheading"><h3>Collection Bonuses</h3><span>2- and 3-piece sets</span></div>';
   html+='<div class="set-overview">'+setProgress(profile,heroId).map(group=>{
    const data=SET_DEFS[group.id];
@@ -102,7 +111,16 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const eligible=def?(def.classes?HERO_IDS.filter(id=>def.classes.includes(id)):HERO_IDS):[];
   const target=eligible.includes(equipTarget)?equipTarget:eligible.includes(heroId)?heroId:eligible[0];
   equipTarget=target||null;
-  let html='<div class="workshop-intro inventory-intro"><h3>Equipment Bag</h3><p>Tap an item to inspect it and equip it. Equipped gear leaves your bag and returns when unequipped.</p></div>';
+  let html='<div class="workshop-intro inventory-intro"><h3>Equipment Bag</h3><p>Select an item and then choose which hero will wear it. Equipped gear leaves your bag and returns when unequipped.</p></div>';
+  // Prominent and always visible: the recipient must never be buried inside item details.
+  html+='<section class="inventory-party-selector" aria-label="Choose hero to equip"><div class="inventory-party-caption"><div><span class="eyebrow">STEP 1 · CHOOSE HERO</span><h3>Who will wear this?</h3></div><span>'+(def&&eligible.length===1?'Class-locked gear · one eligible hero':'Tap a portrait to change the recipient')+'</span></div><div class="inventory-party-grid">';
+  const portraits={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
+  for(const id of HERO_IDS){
+   const canWear=!def||eligible.includes(id),chosen=id===target;
+   html+='<button type="button" class="inventory-recipient '+(chosen?'active':'')+(canWear?'':' incompatible')+'" data-action="target-hero" data-id="'+id+'" aria-pressed="'+chosen+'" aria-label="'+esc(HERO_NAMES[id]+' · '+pretty[id]+(canWear?'':', incompatible item'))+'" '+(canWear?'':'disabled')+'>'
+    +'<span class="inventory-recipient-icon" aria-hidden="true">'+portraits[id]+'</span><span class="inventory-recipient-info"><b>'+esc(HERO_NAMES[id])+'</b><small>'+esc(canWear?(chosen?'✓ Selected · '+pretty[id]:pretty[id]):'Class restricted')+'</small></span></button>';
+  }
+  html+='</div></section>';
   html+='<div class="inventory-layout"><section class="inventory-collection" aria-label="Inventory slots">'
    +'<div class="inventory-section-head"><div><span class="eyebrow">STORAGE</span><h3>Your Bag</h3></div><span class="inventory-capacity" title="'+profile.items.length+' of 400 owned items">'+all.length+' in bag · '+(profile.items.length-all.length)+' equipped</span></div>'
    +'<div class="inventory-filters"><label for="bagFilter">Show items</label><select id="bagFilter" aria-label="Filter inventory items">'
@@ -121,18 +139,14 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   html+='</section><aside class="inventory-detail-panel" aria-label="Selected item details and actions">'
    +'<div class="inventory-detail-top"><div><span class="eyebrow">ITEM DETAILS</span><h3>Inspect &amp; equip</h3></div><button type="button" class="tiny-btn ghost" data-action="tab" data-tab="heroes">Equipped gear →</button></div>';
   if(selected&&def){
-   if(eligible.length===1)html+='<p class="inventory-auto-target">Class gear · For '+esc(HERO_NAMES[target])+' ('+esc(pretty[target])+')</p>';
-   else{
-    html+='<div class="inventory-target"><span>Equip for · choose a hero</span><div class="inventory-hero-options">';
-    for(const id of eligible)html+='<button type="button" class="inventory-hero-button '+(id===target?'active':'')+'" data-action="target-hero" data-id="'+id+'" aria-pressed="'+(id===target)+'"><strong>'+esc(HERO_NAMES[id])+'</strong><small>'+esc(pretty[id])+'</small></button>';
-    html+='</div></div>';
-   }
+   html+='<div class="inventory-detail-scroll" tabindex="0" role="region" aria-label="Scroll item description and comparisons">';
+   html+='<p class="inventory-auto-target">'+(eligible.length===1?'Only '+esc(HERO_NAMES[target])+' ('+esc(pretty[target])+') can wear this item.':'Selected hero: '+esc(HERO_NAMES[target])+' ('+esc(pretty[target])+'). Change using the portraits above.')+'</p>';
    html+=renderInspection(selected.id,selected.defId,true,target);
    html+='<div class="inventory-item-owner">In your bag · Sell value '+def.value+' gold</div>';
+   html+='<p class="inventory-detail-note">Items are owned only once. Equipping an item replaces any gear in that hero’s slot; the replaced piece returns to your bag.</p></div>';
    html+='<div class="inventory-actions"><h4>Item actions</h4>'
     +'<button type="button" class="tiny-btn inventory-action-primary" data-action="equip" data-id="'+esc(selected.id)+'" data-hero="'+target+'">Equip to '+esc(HERO_NAMES[target])+'</button>'
-    +'<button type="button" class="tiny-btn ghost danger" data-action="sell" data-id="'+esc(selected.id)+'">'+(pendingSell===selected.id?'Confirm sale for '+def.value+' gold':'Sell for '+def.value+' gold')+'</button></div>'
-    +'<p class="inventory-detail-note">Items are owned only once. Equipping an item replaces any gear in that hero’s slot; the replaced piece returns to your bag.</p>';
+    +'<button type="button" class="tiny-btn ghost danger" data-action="sell" data-id="'+esc(selected.id)+'">'+(pendingSell===selected.id?'Confirm sale for '+def.value+' gold':'Sell for '+def.value+' gold')+'</button></div>';
   }else html+='<div class="inventory-no-selection"><span aria-hidden="true">✦</span><h4>No item selected</h4><p>Choose a bag slot or adjust your filter. To remove equipped gear, open Heroes &amp; Talents.</p></div>';
   return html+'</aside></div>';
  }
@@ -240,7 +254,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(action==='target-hero'&&current==='pack'){
    const inst=profile.items.find(item=>item.id===selectedBagId);
    const def=inst&&ITEM_DEFS[inst.defId];
-   if(def&&HERO_IDS.includes(id)&&(!def.classes||def.classes.includes(id))){equipTarget=id;pendingSell=null;rerenderBag();}
+   if((!def||!def.classes||def.classes.includes(id))&&HERO_IDS.includes(id)){equipTarget=id;heroId=id;pendingSell=null;rerenderBag();}
    return;
   }
   if(action==='save-build'){
