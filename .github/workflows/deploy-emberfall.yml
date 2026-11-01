@@ -22,16 +22,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/style.css source.json; do test -s "emberfall-site/$asset"; done
+          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css source.json; do test -s "emberfall-site/$asset"; done
           node --input-type=module --check < emberfall-site/src/engine.js
           node --input-type=module --check < emberfall-site/src/game.js
           node --input-type=module --check < emberfall-site/src/progression.js
           node --input-type=module --check < emberfall-site/src/workshop.js
+          node --input-type=module --check < emberfall-site/src/builds.js
           grep -F './src/game.js' emberfall-site/index.html
           grep -F './src/style.css' emberfall-site/index.html
           grep -F './engine.js' emberfall-site/src/game.js
           grep -F './progression.js' emberfall-site/src/game.js
           grep -F './workshop.js' emberfall-site/src/game.js
+          grep -F './builds.js' emberfall-site/src/workshop.js
           python3 -m json.tool emberfall-site/source.json >/dev/null
       - name: Record other games before publishing
         shell: bash
@@ -47,13 +49,13 @@ jobs:
           set -euo pipefail
           mkdir -p dist/src
           cp emberfall-site/index.html dist/
-          cp emberfall-site/src/engine.js emberfall-site/src/game.js emberfall-site/src/progression.js emberfall-site/src/workshop.js emberfall-site/src/style.css dist/src/
+          cp emberfall-site/src/engine.js emberfall-site/src/game.js emberfall-site/src/progression.js emberfall-site/src/workshop.js emberfall-site/src/builds.js emberfall-site/src/style.css dist/src/
           cp emberfall-site/source.json dist/
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync} from 'node:fs';
           const s=JSON.parse(readFileSync('dist/source.json','utf8'));
           if(s.source!=='benhorner9/heroes-of-emberfall'||s.target!=='/emberfall/'||!/^[a-f0-9]{40}$/.test(s.sourceCommit))throw Error('Incorrect source or deploy target');
-          writeFileSync('dist/build-meta.json',JSON.stringify({project:'heroes-of-emberfall',target:s.target,sourceCommit:s.sourceCommit,bridgeCommit:process.env.GITHUB_SHA,block:'03',deployedAt:new Date().toISOString()},null,2)+'\n');
+          writeFileSync('dist/build-meta.json',JSON.stringify({project:'heroes-of-emberfall',target:s.target,sourceCommit:s.sourceCommit,bridgeCommit:process.env.GITHUB_SHA,block:'04',deployedAt:new Date().toISOString()},null,2)+'\n');
           NODE
       - name: Require existing shared-host FTPS secrets
         env:
@@ -89,7 +91,7 @@ jobs:
           done
           test "$found" -eq 1
           mkdir -p /tmp/emberfall-hosted/src
-          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/style.css source.json; do
+          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css source.json; do
             curl -fsSL --retry 2 --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/emberfall-hosted/$asset"
             cmp -s "dist/$asset" "/tmp/emberfall-hosted/$asset"
           done
@@ -97,7 +99,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for asset in src/game.js src/engine.js src/progression.js src/workshop.js; do
+          for asset in src/game.js src/engine.js src/progression.js src/workshop.js src/builds.js; do
             mime="$(curl -LfsS --max-time 20 -o /dev/null -w '%{content_type}' "https://playcellbound.com/emberfall/$asset?sha=$GITHUB_SHA")"
             case "$mime" in
               text/javascript*|application/javascript*|application/x-javascript*|text/ecmascript*|application/ecmascript*) echo "PASS $asset: $mime";;

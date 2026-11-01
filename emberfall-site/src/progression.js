@@ -33,6 +33,42 @@ export const ITEM_DEFS=Object.freeze({
  'skywarden-censer':{name:'Skywarden Censer',icon:'✚',slot:'weapon',rarity:'Rare',classes:['cleric'],bonus:{healing:.28,health:16},value:285},
  'tempest-eye':{name:'Eye of the Tempest',icon:'💠',slot:'charm',rarity:'Legendary',bonus:{attack:12,health:30,cooldown:.18},value:1100}
 });
+
+// Block 04 — complete original boss collections reward thoughtful gear combinations.
+// Set assignments are based on existing item definitions: no extra items or save migration.
+export const SET_DEFS=Object.freeze({
+ verdant:{name:'Verdant Covenant',icon:'🌿',source:'Thornwarden',description:'Restorative woodland relics.',
+  pieces2:{health:16,healing:.06},pieces3:{shielding:.14}},
+ ember:{name:'Emberforged',icon:'🔥',source:'Cindermaw',description:'Ash-forged equipment that rewards aggression.',
+  pieces2:{attack:4,fire:.08},pieces3:{damage:.08}},
+ tempest:{name:'Tempestbound',icon:'⚡',source:'Tempest Seraph',description:'Storm relics for fast-moving ability users.',
+  pieces2:{speedMultiplier:.08,cooldown:.05},pieces3:{skillPower:.12}}
+});
+export const ITEM_SETS=Object.freeze({
+ 'ironroot-edge':'verdant','thornsight-bow':'verdant','wildweave':'verdant',
+ 'brambleguard':'verdant','thornsap-pendant':'verdant','warden-heart':'verdant',
+ 'ember-sabre':'ember','ash-bow':'ember','fireweave':'ember','forgeguard':'ember',
+ 'molten-focus':'ember','phoenix-ash':'ember','cinderheart':'ember',
+ 'windpiercer':'tempest','stormscale':'tempest','zephyr-charm':'tempest',
+ 'thunder-edge':'tempest','cloudstaff':'tempest','skywarden-censer':'tempest','tempest-eye':'tempest'
+});
+export function itemSet(defId){return ITEM_SETS[defId]||null;}
+export function setProgress(p,heroId){
+ const hero=p?.heroes?.[heroId];if(!hero)return [];
+ const counts={verdant:0,ember:0,tempest:0};
+ for(const slot of SLOTS){
+  const inst=p.items.find(i=>i.id===hero.gear?.[slot]);
+  const key=inst&&ITEM_SETS[inst.defId];if(key)counts[key]++;
+ }
+ return Object.entries(counts).map(([id,count])=>{
+  const data=SET_DEFS[id],bonus={};
+  if(count>=2)for(const [k,v] of Object.entries(data.pieces2))bonus[k]=(bonus[k]||0)+v;
+  if(count>=3)for(const [k,v] of Object.entries(data.pieces3))bonus[k]=(bonus[k]||0)+v;
+  return {id,name:data.name,icon:data.icon,count,bonus,source:data.source,
+   next:count<2?2:count<3?3:null};
+ });
+}
+
 export const TALENTS=Object.freeze({
  knight:[
   {id:'ironwall',tier:2,name:'Ironwall',icon:'🛡️',description:'Shield Wall protects allies 25% more.',bonus:{shielding:.25}},
@@ -179,6 +215,9 @@ export function bonuses(p,heroId){
  for(const id of h.talents){
   const b=TALENTS[heroId].find(t=>t.id===id)?.bonus;
   if(b)for(const [k,v] of Object.entries(b))if(k in out)out[k]+=v;
+ }
+ for(const group of setProgress(p,heroId)){
+  for(const [k,v] of Object.entries(group.bonus))if(k in out)out[k]+=v;
  }
  return out;
 }

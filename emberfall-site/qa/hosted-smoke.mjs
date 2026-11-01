@@ -82,7 +82,46 @@ try{
  if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Reloaded boss selection switched back to Thornwarden');
  await page.locator('#bossSelectTopBtn').click();
  if(!(await page.locator('#encounterList').isVisible()))throw Error('Top choose boss failed after reload');
+ // Live Block 04: simulate a legitimate local inventory from published boss item
+ // definitions and verify the actual website's compare -> save -> swap -> restore loop.
+ await page.evaluate(async()=>{
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.0.0');
+  const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
+  addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
+  if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
+ });
+ await page.reload({waitUntil:'networkidle'});
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.0.0')throw Error('Live Block04 module tree did not initialize');
+ await page.locator('#manageFromPickerBtn').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
+ if(!(await page.locator('#workshopBody').innerText()).includes('2/3 equipped'))throw Error('Live 2-piece set not active');
+ await page.locator('[data-build-name="0"]').fill('Hosted Tank');
+ await page.locator('[data-action="save-build"][data-index="0"]').click();
+ await page.locator('#workshopTabs [data-tab="pack"]').click();
+ await page.locator('[data-action="inspect"][data-id="i4"]').click();
+ if(!(await page.locator('#itemInspector').innerText()).includes('−8 HP'))throw Error('Live gear compare omitted lost set bonus');
+ await page.locator('[data-action="equip"][data-id="i4"]').click();
+ await page.locator('#workshopTabs [data-tab="heroes"]').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('1/3 equipped'))throw Error('Live set did not deactivate after gear switch');
+ await page.locator('[data-action="apply-build"][data-index="0"]').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('2/3 equipped'))throw Error('Live saved build did not restore gear');
+ await page.locator('#workshopTabs [data-tab="backup"]').click();
+ const data=await page.locator('#backupExport').inputValue();
+ if(JSON.parse(data).builds.heroes.knight[0].name!=='Hosted Tank')throw Error('Live backup omitted presets');
+ await page.locator('#backupImport').fill(data);
+ await page.locator('[data-action="check-backup"]').click();
+ if(!(await page.locator('.backup-preview').isVisible()))throw Error('Live backup validation did not finish');
+ await page.locator('[data-action="restore-backup"]').click();
+ await page.locator('[data-action="restore-backup"]').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('Backup restored'))throw Error('Live double confirmed import failed');
+ await page.locator('#workshopClose').click();
+ await page.reload({waitUntil:'networkidle'});
+ await page.locator('#manageFromPickerBtn').click();
+ if(!(await page.locator('#workshopBody').innerText()).includes('Hosted Tank'))throw Error('Live saved build disappeared after reload');
+ await page.locator('#workshopClose').click();
+ await page.locator('#startBtn').click();
+ if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  if(errors.length)throw Error(errors.join('\n'));
- console.log('PASS: live Emberfall retains saved gear and starts actual Cindermaw and Tempest battles for level-one party, with correct mechanics/HP/loot, persisted selection, and no retreat payout.');
+ console.log('PASS: hosted Emberfall all bosses, actual set-aware comparison, saved unique-item builds, validated JSON backup/restore, persisted equipment and 2-piece combat HP.');
 }catch(e){console.error('LIVE BROWSER FAILED:',e.stack||e);if(errors.length)console.error(errors.join('\n'));process.exitCode=1;}
 finally{await browser.close();}
