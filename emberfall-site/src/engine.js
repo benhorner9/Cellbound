@@ -1,7 +1,38 @@
-import {bonuses as heroBonuses,bossInfo,partyOrder} from './progression.js?v=4.6.0';
+import {bonuses as heroBonuses,bossInfo,partyOrder} from './progression.js?v=4.7.0';
 // Heroes of Emberfall — Block 01. Deterministic, renderer-independent PvE combat.
 // Browser-owned demo only; the eventual PvP server must never trust this simulation.
 export const WORLD={width:1200,height:640};
+// Fix Pack 03 visual timing is separate from gameplay state and boss rewards.
+export const ENEMY_DEATH_DURATION=.78;
+export const HERO_DOWN_DURATION=.36;
+export const PVE_POSITION_SPEED=.70;
+export function combatSpeed(g){
+ if(!g||g.phase!=='playing'||g.mode==='pvp')return 1;
+ return g.manualPositioning||g.heroes?.some(h=>h.hp>0&&h.moveTo)?PVE_POSITION_SPEED:1;
+}
+// Advance visuals in real wall time, even after a win/loss freezes combat.
+// Dead enemies remain in the simulation as tombstones for result integrity,
+// but fade away in the renderer. Downed heroes remain permanently visible.
+export function advanceDeathVisuals(g,dt){
+ const delta=Math.max(0,Math.min(.1,Number.isFinite(dt)?dt:0));
+ for(const e of g.enemies||[]){
+  if(e.hp<=0)e.deathAge=Math.min(ENEMY_DEATH_DURATION,e.deathAge===null||e.deathAge===undefined?delta:e.deathAge+delta);
+ }
+ for(const h of g.heroes||[]){
+  if(h.hp<=0)h.downAge=Math.min(HERO_DOWN_DURATION,h.downAge===null||h.downAge===undefined?delta:h.downAge+delta);
+ }
+ return g;
+}
+export function enemyDeathVisual(unit){
+ if(unit.hp>0)return {visible:true,alpha:1,collapse:0};
+ const t=Math.min(1,Math.max(0,(unit.deathAge||0)/ENEMY_DEATH_DURATION));
+ return {visible:t<1,alpha:(1-t)**1.35,collapse:t};
+}
+export function heroDownVisual(unit){
+ if(unit.hp>0)return {alpha:1,collapse:0,down:false};
+ const t=Math.min(1,Math.max(0,(unit.downAge||0)/HERO_DOWN_DURATION));
+ return {alpha:1-t*.58,collapse:t,down:true};
+}
 export const ABILITIES={
  knight:[
   {name:'Shield Wall',icon:'🛡',cooldown:14,description:'Shield nearby allies for 7 seconds and draw enemy attention.'},
@@ -24,14 +55,14 @@ const clamp=(v,low,high)=>Math.min(high,Math.max(low,v));
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const alive=a=>a&&a.hp>0;
 function hero(id,name,role,x,y,hp,range,damage,speed,interval){
- return {id,name,role,faction:'ally',x,y,hp,maxHp:hp,shield:0,range,damage,speed,attackInterval:interval,attackClock:interval*0.45,moveTo:null,focus:null,cooldowns:[0,0],stun:0,slow:0,guard:0,taunt:0,burn:0,burnClock:0,hit:0,attackFlash:0,face:1,kills:0};
+ return {id,name,role,faction:'ally',x,y,hp,maxHp:hp,shield:0,range,damage,speed,attackInterval:interval,attackClock:interval*0.45,moveTo:null,focus:null,cooldowns:[0,0],stun:0,slow:0,guard:0,taunt:0,burn:0,burnClock:0,hit:0,attackFlash:0,face:1,kills:0,deathAge:null,downAge:null};
 }
 function enemy(id,name,role,x,y,hp,range,damage,speed,interval){
  return {...hero(id,name,role,x,y,hp,range,damage,speed,interval),faction:'enemy',attackClock:interval*0.7};
 }
 export function createEncounter(seed=1337,profile=null,bossId='thornwarden'){
  const bossConfig=bossInfo(bossId);
- const encounter={phase:'ready',time:0,seed:seed>>>0||1337,
+ const encounter={phase:'ready',mode:'pve',manualPositioning:false,time:0,seed:seed>>>0||1337,
  heroes:[
   hero('knight','Aldric','Guardian',240,342,164,76,15,122,1.2),
   hero('ranger','Briar','Ranger',144,231,112,270,13,128,1.45),
@@ -112,7 +143,12 @@ function damage(g,from,to,raw,kind='physical'){
  const actual=Math.min(to.hp,amount);to.hp=Math.max(0,to.hp-actual);to.hit=.24;
  if(from?.faction==='ally')g.stats.damage+=actual;
  if(actual||absorbed)emit(g,{type:'damage',x:to.x,y:to.y-42,value:actual,shielded:absorbed,kind,from:from?.id,to:to.id});
- if(to.hp===0){emit(g,{type:'death',x:to.x,y:to.y,id:to.id,name:to.name});if(from?.faction==='ally'){from.kills++;g.stats.kills++;}}
+ if(to.hp===0){
+  if(to.faction==='enemy')to.deathAge=0;else to.downAge=0;
+  to.moveTo=null;to.focus=null;to.attackClock=to.attackInterval;
+  emit(g,{type:'death',x:to.x,y:to.y,id:to.id,name:to.name,faction:to.faction});
+  if(from?.faction==='ally'){from.kills++;g.stats.kills++;}
+ }
  return actual;
 }
 function heal(g,from,to,amount){
@@ -267,7 +303,10 @@ function separate(g){
 }
 export function updateEncounter(g,delta){
  if(g.phase!=='playing')return g;
- const dt=clamp(delta,0,.05);
+ // Scale the whole PvE simulation (movement, attacks, cooldowns, DoTs and
+ // telegraphs) uniformly while the player actively repositions a hero.
+ // PvP never slows; wall-clock rendering and death animations remain unscaled.
+ const dt=clamp(delta,0,.05)*combatSpeed(g);
  g.time+=dt;
  for(const unit of [...g.heroes,...g.enemies]){
   for(let i=0;i<unit.cooldowns.length;i++)unit.cooldowns[i]=Math.max(0,unit.cooldowns[i]-dt);
