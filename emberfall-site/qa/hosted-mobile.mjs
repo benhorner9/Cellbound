@@ -23,7 +23,7 @@ try {
   page.on('pageerror', err => errors.push(err.message));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto(base, { waitUntil: 'networkidle', timeout: 45000 });
-  assert(await page.locator('html').getAttribute('data-emberfall-ready') === '4.17.0',
+  assert(await page.locator('html').getAttribute('data-emberfall-ready') === '4.18.0',
     'Hosted phone Safari could not initialise Emberfall');
   assert(await page.locator('link[href*="mobile-testing.css"]').count() === 1,
     'Hosted HTML does not load the phone layout');
@@ -42,6 +42,9 @@ try {
   assert(await page.locator('#workshopJump').isVisible(), 'Hosted phone needs Refuge location selector');
   await page.locator('#workshopJump').selectOption('talents');
   assert((await page.locator('#workshopHeading').innerText()) === 'Talent Trees', 'Hosted phone quick travel did not work');
+  assert(await page.locator('.hall-hero-card').count() === 4,'Hosted phone champion gallery missing');
+  assert((await page.locator('.hall-section-link').count()) === 2,'Hosted phone Hall internal navigation missing');
+  assert((await page.locator('.workshop-shell').evaluate(el=>getComputedStyle(el).flexDirection)) === 'column','Hosted phone Hall still sidebar');
   await tap(page, '#workshopTabs [data-tab="talents"]');
   assert(await page.locator('.talent-tree').isVisible(), 'Mobile talents inaccessible');
   await tap(page, '#workshopTabs [data-tab="pack"]');
@@ -105,7 +108,7 @@ try {
     !matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 540px) and (max-width: 950px)').matches
   );
   assert(tabletLayoutPreserved &&
-         await ipadPage.locator('html').getAttribute('data-emberfall-ready') === '4.17.0',
+         await ipadPage.locator('html').getAttribute('data-emberfall-ready') === '4.18.0',
     'Hosted iPad layout or boot regressed');
   assert(errors.length === 0, 'Hosted mobile WebKit errors: ' + errors.join(' | '));
   console.log('PASS hosted Emberfall iPhone portrait, landscape and iPad isolation.');
