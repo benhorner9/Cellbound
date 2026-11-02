@@ -1172,3 +1172,31 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
 @media(min-width:1050px){.workshop-cover.camp-page .workshop-nav{grid-template-columns:repeat(10,minmax(0,1fr))}.workshop-cover.camp-page .workshop-nav button{font-size:10px}}
 @media(max-width:900px){.account-skill-grid,.slayer-contract-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:570px){.account-skill-grid,.slayer-contract-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.account-skill-tile{padding:9px;gap:5px;min-height:80px}.account-skill-icon{width:34px;min-width:34px;height:36px;font-size:21px}.account-skill-info b{font-size:14px}.account-skill-guide,.slayer-active,.slayer-contract{padding:12px}.slayer-stats{gap:5px}.slayer-stats>span{padding:8px}.slayer-stats b{font-size:14px}.slayer-stats small{font-size:10px}.slayer-contract h3{font-size:17px}}
+
+
+/* Skills Update 2 — Slayer contracts, rewards and the real Salvaging Station. */
+.slayer-streak-note{padding:12px 15px;border-radius:10px;border:1px solid #8d8665;background:linear-gradient(110deg,#3b432d,#21342d);color:#f6e3af;font:600 13px/1.5 system-ui,sans-serif}
+.slayer-shop{border:1px solid #6b7d6c;border-radius:15px;padding:16px;margin:18px 0;background:linear-gradient(#1e3630,#182d2c)}
+.slayer-shop>.workshop-subheading{margin:0 0 8px}.slayer-shop>p{color:#c4d0be;font-size:13px;line-height:1.5}
+.slayer-shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:13px}
+.slayer-shop-item{border:1px solid #657969;background:#22392f;border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.slayer-shop-icon{border:1px solid #8b8e6d;border-radius:10px;background:#182d2a;width:40px;height:40px;display:grid;place-items:center;font-size:24px;flex-shrink:0}
+.slayer-shop-item>div{flex:1;min-width:130px;display:grid;gap:4px}.slayer-shop-item h4{font:700 17px Georgia,serif;color:#f2d49b;margin:0}
+.slayer-shop-item small{display:block;color:#c2d0c1;font-size:12px}.slayer-shop-item button{min-height:44px;flex-shrink:0}
+.salvage-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.salvage-summary>span{border:1px solid #6a806c;border-radius:10px;background:#1e3831;padding:12px;display:grid;gap:7px}
+.salvage-summary b{font:700 19px Georgia,serif;color:#f1d39a}.salvage-summary small{color:#bbcbbe}
+.salvage-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(290px,1fr);gap:15px;align-items:start;margin:18px 0}
+.salvage-collection,.salvage-details{background:linear-gradient(150deg,#263e35,#172b2a);border:1px solid #677e6c;border-radius:13px;padding:16px;min-width:0}
+.salvage-collection h3,.salvage-details h3{font:700 22px Georgia,serif;margin:3px 0 14px;color:#f3dcb0}
+.salvage-item-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;max-height:360px;overflow-y:auto;overscroll-behavior:contain}
+.salvage-item{display:grid;justify-items:center;align-content:start;gap:5px;min-width:0;min-height:88px;padding:9px 4px;text-align:center;background:linear-gradient(#2f483b,#1c322c);border:1px solid #7c8473;border-radius:11px}
+.salvage-item>span{font-size:29px}.salvage-item small{font:600 11px/1.25 system-ui,sans-serif;word-break:break-word}
+.salvage-item.selected{border:2px solid #f4d191;background:linear-gradient(#3a5542,#294033);box-shadow:0 0 0 2px #ebc77f30}
+.salvage-details p{font-size:13px;line-height:1.55;color:#cbd4c7}.salvage-details>button{min-height:48px;width:100%;margin:13px 0 4px}
+.salvage-returns{border:1px solid #597363;border-radius:10px;background:#152f2d;padding:12px}.salvage-returns h4{margin:0 0 9px;color:#f5dca7}
+.salvage-returns>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #55705c66;font-size:13px}
+.salvage-returns b{color:#e9d094;flex-shrink:0}.salvage-details .craft-warning{margin:12px 0}
+@media(min-width:1050px){.workshop-cover.camp-page .workshop-nav{grid-template-columns:repeat(11,minmax(0,1fr))}.workshop-cover.camp-page .workshop-nav button{font-size:10px;padding-left:3px;padding-right:3px}}
+@media(max-width:880px){.salvage-layout{grid-template-columns:minmax(0,1fr)}.slayer-shop-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:570px){.salvage-collection,.salvage-details,.slayer-shop{padding:11px}.salvage-item-grid{gap:6px}.salvage-item{min-height:77px;padding:7px 3px}.salvage-item>span{font-size:24px}.salvage-item small{font-size:10px}.salvage-summary{gap:6px}.salvage-summary>span{padding:9px}.salvage-summary b{font-size:15px}.slayer-shop-item{padding:9px}.slayer-shop-item>div{min-width:110px}.slayer-shop-item h4{font-size:15px}}
