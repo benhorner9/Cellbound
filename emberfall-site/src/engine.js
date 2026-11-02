@@ -1,4 +1,4 @@
-import {bonuses as heroBonuses,bossInfo,partyOrder,ALCHEMY_EFFECTS} from './progression.js?v=4.13.0';
+import {bonuses as heroBonuses,bossInfo,partyOrder,ALCHEMY_EFFECTS,BOUNTY_TASKS} from './progression.js?v=4.14.0';
 // Heroes of Emberfall — Block 01. Deterministic, renderer-independent PvE combat.
 // Browser-owned demo only; the eventual PvP server must never trust this simulation.
 export const WORLD={width:1200,height:640};
@@ -60,8 +60,11 @@ function hero(id,name,role,x,y,hp,range,damage,speed,interval){
 function enemy(id,name,role,x,y,hp,range,damage,speed,interval){
  return {...hero(id,name,role,x,y,hp,range,damage,speed,interval),faction:'enemy',attackClock:interval*0.7};
 }
-export function createEncounter(seed=1337,profile=null,bossId='thornwarden'){
+export function createEncounter(seed=1337,profile=null,bossId='thornwarden',bountyTaskId=null){
  const bossConfig=bossInfo(bossId);
+ // Never apply Bounty Hunting modifiers to ordinary farming or Delving.
+ const bountyTask=BOUNTY_TASKS[bountyTaskId]?.bossId===bossConfig.id?BOUNTY_TASKS[bountyTaskId]:null;
+ const modifier=bountyTask?.modifier||null;
  const encounter={phase:'ready',mode:'pve',manualPositioning:false,time:0,seed:seed>>>0||1337,
  heroes:[
   hero('knight','Aldric','Guardian',240,342,164,76,15,122,1.2),
@@ -74,7 +77,7 @@ export function createEncounter(seed=1337,profile=null,bossId='thornwarden'){
   enemy('bramble-1','Bramblekin','Bramble',773,198,143,67,9,108,1.78),
   enemy('bramble-2','Bramblekin','Bramble',781,446,143,67,9,106,1.82)
  ],
- selected:'knight',bossId:bossConfig.id,telegraph:null,bossNext:bossConfig.attackDelay,reinforcements:false,events:[],
+ selected:'knight',bossId:bossConfig.id,bountyModifier:modifier,bountyTaskId:bountyTask?.name||null,bountySecondLane:false,telegraph:null,bossNext:bossConfig.attackDelay,reinforcements:false,events:[],
  result:null,stats:{damage:0,healing:0,kills:0},introPlayed:false};
  if(bossConfig.id!=='thornwarden'){
   const isFire=bossConfig.id==='cindermaw';
@@ -83,6 +86,11 @@ export function createEncounter(seed=1337,profile=null,bossId='thornwarden'){
    enemy('minion-1',isFire?'Flame Imp':'Storm Wisp',isFire?'Imp':'Wisp',774,201,isFire?144:164,90,isFire?12:14,isFire?114:125,1.85),
    enemy('minion-2',isFire?'Flame Imp':'Storm Wisp',isFire?'Imp':'Wisp',780,451,isFire?144:164,90,isFire?12:14,isFire?114:125,1.85)
   ];
+ }
+ if(modifier){
+  const boss=encounter.enemies.find(unit=>unit.id==='boss');
+  const extra=modifier==='bramble-siege'?.15:modifier==='furnace-pressure'?.10:modifier==='skybreak-pursuit'?.08:0;
+  if(extra){boss.maxHp=Math.round(boss.maxHp*(1+extra));boss.hp=boss.maxHp;}
  }
  if(profile){
   // Formation order takes effect on the next encounter, never mid-fight.
@@ -262,7 +270,7 @@ function resolveBoss(g,dt){
  const boss=g.enemies.find(e=>e.id==='boss');
  if(!alive(boss))return;
  const cfg=bossInfo(g.bossId);
- const threshold=g.bossId==='thornwarden'?.42:g.bossId==='cindermaw'?.45:.50;
+ const threshold=g.bountyModifier==='bramble-siege'?.60:g.bossId==='thornwarden'?.42:g.bossId==='cindermaw'?.45:.50;
  if(!g.reinforcements&&boss.hp<boss.maxHp*threshold){
   g.reinforcements=true;spawnReinforcements(g);
   if(g.bossId==='cindermaw'){boss.damage+=5;boss.speed+=10;}
@@ -280,7 +288,15 @@ function resolveBoss(g,dt){
     if(t.kind==='lane'&&alive(h))h.stun=Math.max(h.stun,.7);
     if(t.kind==='cone'&&alive(h))h.slow=Math.max(h.slow,2.1);
    }
-   g.telegraph=null;
+   // Second Skybreak lane is announced separately, after the first strike.
+   // It never lands simultaneously and has a full, readable warning.
+   if(g.bountySecondLane&&t.kind==='lane'){
+    g.bountySecondLane=false;
+    const angle=t.angle+.48;
+    g.telegraph={kind:'lane',originX:boss.x,originY:boss.y,angle,range:930,width:128,
+     x:boss.x+Math.cos(angle)*560,y:boss.y+Math.sin(angle)*560,radius:100,remaining:1.55,max:1.55};
+    emit(g,{type:'notice',text:'SECOND LIGHTNING LANE — move clear before it strikes!'});
+   }else g.telegraph=null;
   }
  }else if(g.time>=g.bossNext&&boss.stun<=0){
   const target=closest(boss,g.heroes);
@@ -290,12 +306,13 @@ function resolveBoss(g,dt){
     emit(g,{type:'notice',text:'FURNACE BREATH — move sideways out of the flame cone!'});
    }else if(g.bossId==='tempest'){
     g.telegraph={kind:'lane',originX:boss.x,originY:boss.y,angle:Math.atan2(target.y-boss.y,target.x-boss.x),range:930,width:128,x:target.x,y:target.y,radius:100,remaining:1.55,max:1.55};
+    g.bountySecondLane=g.bountyModifier==='skybreak-pursuit';
     emit(g,{type:'notice',text:'LIGHTNING LANE — leave the bright beam before impact!'});
    }else{
     g.telegraph={kind:'circle',x:target.x,y:target.y,radius:120,remaining:1.45,max:1.45};
     emit(g,{type:'notice',text:'THORN SLAM — move out of the danger circle!'});
    }
-   g.bossNext=g.time+cfg.attackCycle;
+   g.bossNext=g.time+cfg.attackCycle*(g.bountyModifier==='furnace-pressure'?.85:1);
   }
  }
 }
