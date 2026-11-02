@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "0053f185a767cc3975254545bb8e2c82493f5b23",
+  "sourceCommit": "81ad5fae93ebeb89568c8a5081616eadc01113aa",
   "target": "/emberfall/",
-  "stage": "bounty-hunting-single-target-v4.14.0",
+  "stage": "refuge-ux-block-1-v4.15.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -12,7 +12,9 @@
     "src/workshop.js",
     "src/builds.js",
     "src/style.css",
-    "src/mobile-testing.css"
+    "src/mobile-testing.css",
+    "src/refuge.css",
+    "assets/refuge-scene.svg"
   ],
-  "note": "Canonical heroes-of-emberfall PR #45 merged at 0053f185a767cc3975254545bb8e2c82493f5b23: Bounty Hunting skill, Bounty Board, six one-encounter Standard and Dangerous boss contracts, increased HP/earlier reinforcements/faster Furnace Breath/sequential telegraphed lightning lanes, Bounty Marks, Bounty Exchange and Bounty Chain. Previous multi-kill contracts can be finished for their original XP/rewards. Old browser company-v1 profile/skills.slayer/slayer keys, existing XP, marks, streaks, equipment, Delving, and purchases preserved. New per-bounty identity/token prevents granting skill XP from ordinary farming or Delving. Source syntax/unit tests and Chromium/iPad WebKit/mobile smokes passed. Release exactly 8 canonical assets to /emberfall/ only; no other games or Vercel changes."
+  "note": "Illustrated Emberfall Refuge navigable courtyard and buildings, live Bounty Hunting contract status, keyboard/touch-ready desktop iPad phone UX. Existing party, combat, bounties, skills, equipment and browser-local saves preserved. Canonical source PR #47 merged and CI passed; release restricted to /emberfall/ only."
 }

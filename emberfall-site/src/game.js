@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.14.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.14.0';
-import {mountWorkshop} from './workshop.js?v=4.14.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.15.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.15.0';
+import {mountWorkshop} from './workshop.js?v=4.15.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -190,6 +190,10 @@ function renderCampSummary(){
  $('campGold').textContent=String(company.gold);
  $('campWins').textContent=String(company.wins);
  $('campItems').textContent=String(company.items.length);
+ // The Refuge reads existing company state; no save fields or contracts are changed.
+ const contract=company.slayer?.active;
+ $('refugeBountyStatus').textContent=contract?(BOSSES[contract.bossId]?.name||'Unknown target')+' · '+contract.kills+'/'+contract.target+' victories'+(contract.kills>=contract.target?' · Ready to claim':''):'No active bounty';
+ $('refugeSelectedHunt').textContent=bossInfo(bossSelection).name;
  const icons={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
  const roles={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
  $('campRoster').innerHTML=company.partyOrder.map(id=>{
@@ -706,5 +710,5 @@ resize();
 showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.14.0';
+document.documentElement.dataset.emberfallReady='4.15.0';
 requestAnimationFrame(frame);
