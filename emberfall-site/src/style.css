@@ -1200,3 +1200,39 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
 @media(min-width:1050px){.workshop-cover.camp-page .workshop-nav{grid-template-columns:repeat(11,minmax(0,1fr))}.workshop-cover.camp-page .workshop-nav button{font-size:10px;padding-left:3px;padding-right:3px}}
 @media(max-width:880px){.salvage-layout{grid-template-columns:minmax(0,1fr)}.slayer-shop-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:570px){.salvage-collection,.salvage-details,.slayer-shop{padding:11px}.salvage-item-grid{gap:6px}.salvage-item{min-height:77px;padding:7px 3px}.salvage-item>span{font-size:24px}.salvage-item small{font-size:10px}.salvage-summary{gap:6px}.salvage-summary>span{padding:9px}.salvage-summary b{font-size:15px}.slayer-shop-item{padding:9px}.slayer-shop-item>div{min-width:110px}.slayer-shop-item h4{font-size:15px}}
+
+
+/* Skills Update 3: in-world Enchanting Forge and persistent Delving Gate. */
+.enchant-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,1.05fr);gap:15px;align-items:start;margin:18px 0}
+.enchant-station,.delve-active{background:linear-gradient(150deg,#294038,#182c2c);border:1px solid #78846f;border-radius:14px;padding:18px;min-width:0}
+.enchant-station h3,.delve-active h3{font:700 23px Georgia,serif;color:#f1d59a;margin:9px 0}
+.enchant-station p,.delve-active p{color:#c7d4c8;font-size:13px;line-height:1.55}
+.enchant-station>.tiny-btn,.delve-active>.tiny-btn{min-height:47px;width:100%;margin-top:12px}
+.enchant-owned{border:1px solid #d4b579;background:#384831;border-radius:10px;padding:11px;color:#f6dfa3!important}
+.enchant-recipe-list{display:grid;gap:9px;margin:15px 0}
+.enchant-recipe{display:grid;gap:5px;text-align:left;border:1px solid #607969;border-radius:10px;background:linear-gradient(110deg,#27483d,#20382f);padding:12px;min-height:65px}
+.enchant-recipe b{font:700 16px Georgia,serif}.enchant-recipe small{color:#c7d5c8;font-size:12px}
+.enchant-recipe.selected{border-color:#efd08b;box-shadow:0 0 0 2px #edcc8933;background:linear-gradient(110deg,#405741,#294337)}
+.enchant-insufficient{color:#f3a99f!important}.item-enchantment{display:block;color:#ebd5a5;font-size:12px;margin-top:5px}
+.gear-enchant-mark{font-size:10px;color:#f7de92;position:absolute;right:2px;top:2px}
+.inventory-slot-icon{position:relative}
+.delve-route-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.delve-route{background:radial-gradient(ellipse at top,#3d493d,#1d3030 85%)}.delve-route p{font-size:13px;line-height:1.5;flex:1}
+.delve-boss-line{font-size:12px;color:#ead5a1;line-height:1.5;padding:9px 0;min-height:48px}
+.delve-stages{display:grid;gap:8px;margin:16px 0}
+.delve-stage{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px;border:1px solid #657866;background:#162f2a;border-radius:10px}
+.delve-stage b{color:#f0ddbb;font:700 14px Georgia,serif}.delve-stage small{color:#b8c9bb;font-size:12px;text-align:right}
+.delve-stage.cleared{border-color:#91b08e;background:#2c4733}.delve-stage.up-next{border-color:#e8c787;background:#3b452c}
+.delve-active .salvage-returns{margin-top:17px}.delve-abandon{border-color:#a98373!important}
+.delve-boarding{margin:12px 0;background:#29423a;border-color:#cca86f}
+@media(min-width:1050px){
+ .workshop-cover.camp-page .workshop-nav{grid-template-columns:repeat(13,minmax(0,1fr))}
+ .workshop-cover.camp-page .workshop-nav button{font-size:9px;min-width:0;padding:6px 2px;line-height:1.3}
+}
+@media(max-width:980px){.enchant-layout{grid-template-columns:minmax(0,1fr)}.delve-route-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:570px){
+ .enchant-station,.delve-active{padding:12px}.enchant-station h3,.delve-active h3{font-size:21px}
+ .enchant-recipe{min-height:60px;padding:10px}.delve-route-grid{grid-template-columns:minmax(0,1fr)}
+ .delve-stage{align-items:flex-start;flex-direction:column;gap:6px}.delve-stage small{text-align:left}
+ .enchant-layout{gap:10px}
+}
