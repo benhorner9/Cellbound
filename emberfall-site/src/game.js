@@ -1,7 +1,7 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.17.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.17.0';
-import {mountWorkshop} from './workshop.js?v=4.17.0';
-import {initPolish,polishEnter,polishFeedback} from './polish.js?v=4.17.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.18.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.18.0';
+import {mountWorkshop} from './workshop.js?v=4.18.0';
+import {initPolish,polishEnter,polishFeedback} from './polish.js?v=4.18.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -731,5 +731,5 @@ resize();
 showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.17.0';
+document.documentElement.dataset.emberfallReady='4.18.0';
 requestAnimationFrame(frame);
