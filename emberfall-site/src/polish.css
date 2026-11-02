@@ -1,0 +1,60 @@
+/* UX Block 3 — warmth, wayfinding and tactile feedback. Entirely visual. */
+.refuge-map{isolation:isolate}
+.refuge-ambience{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.refuge-lantern{position:absolute;width:140px;height:145px;border-radius:50%;background:radial-gradient(circle,#ffdb8c44 0%,#e29b4d24 25%,transparent 72%);mix-blend-mode:screen;opacity:.55;animation:emberLantern 3.4s ease-in-out infinite alternate}
+.refuge-lantern.one{left:15%;top:54%;animation-delay:-.5s}
+.refuge-lantern.two{left:59%;top:39%;animation-delay:-2.7s;transform:scale(.85)}
+.refuge-lantern.three{left:76%;top:55%;animation-delay:-1.3s;transform:scale(.75)}
+.refuge-ember{position:absolute;bottom:12%;width:3px;height:3px;border-radius:50%;background:#ffd795;box-shadow:0 0 7px 2px #de9855aa;opacity:0;animation:emberRise 6s linear infinite}
+.refuge-ember.a{left:44%;animation-delay:-.1s}
+.refuge-ember.b{left:48%;animation-delay:-3.2s;animation-duration:5.5s}
+.refuge-ember.c{left:51%;animation-delay:-1.5s;animation-duration:7s}
+.refuge-ember.d{left:55%;animation-delay:-4.6s;animation-duration:6.7s}
+.refuge-ember.e{left:61%;animation-delay:-2.4s;animation-duration:5.7s}
+@keyframes emberLantern{0%{opacity:.25}40%{opacity:.48}72%{opacity:.34}100%{opacity:.6}}
+@keyframes emberRise{0%{opacity:0;transform:translateY(0) translateX(0) scale(.55)}15%{opacity:.8}66%{opacity:.5}100%{opacity:0;transform:translateY(-120px) translateX(26px) scale(.3)}}
+/* Every navigation act completes immediately. This is a lightweight arrival accent, not a loading screen. */
+.polish-enter{animation:polishArrival .27s cubic-bezier(.2,.75,.25,1) both}
+@keyframes polishArrival{from{opacity:.86;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+#workshopBody.polish-enter{animation:polishArrival .23s cubic-bezier(.2,.75,.25,1) both}
+#campScreen.polish-enter{animation:polishArrival .25s ease-out both}
+#battleFrame.polish-enter{animation:polishArrival .22s ease-out both}
+.workshop-stage .workshop-sigil{animation:sigilGlow 5s ease-in-out infinite}
+@keyframes sigilGlow{0%,100%{box-shadow:0 8px 25px #040e0cbb,inset 0 0 0 7px #e8cd9f12}50%{box-shadow:0 8px 25px #040e0cbb,0 0 25px var(--location-glow,#c99b703d),inset 0 0 0 7px #e8cd9f1c}}
+.refuge-site .camp-building-icon,.camp-nav-button,.refuge-expedition,.workshop-nav button,.workshop-close,.workshop-stage .tiny-btn:not(:disabled),.camp-fight-btn{transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease,transform .16s ease}
+.refuge-site:hover .camp-building-icon,.refuge-site:focus-visible .camp-building-icon{filter:brightness(1.23);transform:scale(1.07)}
+.refuge-expedition:active,.camp-fight-btn:active,.workshop-stage .tiny-btn:not(:disabled):active,.workshop-nav button:active{transform:translateY(2px)}
+.workshop-nav button[aria-selected=true] .tab-pointer{opacity:1;color:#f0d092}
+.workshop-stage .hero-picker-btn,.workshop-stage .inventory-slot,.workshop-stage .party-position,.workshop-stage .talent-node,.workshop-stage .account-skill-tile{transition:border-color .17s ease,background-color .17s ease,box-shadow .17s ease,filter .17s ease}
+.workshop-stage .hero-picker-btn:not(:disabled):hover,.workshop-stage .inventory-slot:not(:disabled):hover,.workshop-stage .party-position:not(:disabled):hover,.workshop-stage .talent-node:not(:disabled):hover,.workshop-stage .account-skill-tile:not(:disabled):hover{filter:brightness(1.13);border-color:#e3c48b}
+.workshop-stage .craft-xp-track i,.workshop-stage .party-xp-track i,.workshop-stage .hero-meter i,.combat-party-rail .hero-meter i{transition:width .22s ease-out}
+.workshop-stage .workshop-notice{animation:noticeArrival .27s ease both}
+@keyframes noticeArrival{from{opacity:.65;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+#polishFeedback{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(17px,env(safe-area-inset-bottom));z-index:105;max-width:min(340px,calc(100vw - 28px));padding:11px 16px;border:1px solid #d3b67b;border-radius:7px;background:linear-gradient(125deg,#344b3c,#172f2b);box-shadow:0 8px 25px #03110cb8;color:#fff1ce;font:700 13px/1.3 Georgia,serif;letter-spacing:.012em;opacity:0;visibility:hidden;transform:translateY(9px);transition:opacity .2s ease,transform .2s ease,visibility .2s;pointer-events:none;contain:layout style}
+#polishFeedback:before{content:"✦";display:inline-block;margin-right:9px;color:#e8c786}
+#polishFeedback[data-kind=success]{border-color:#9dc18c;background:linear-gradient(125deg,#355943,#18362e)}
+#polishFeedback[data-kind=error]{border-color:#df9a7d;background:linear-gradient(125deg,#5d3d31,#302522)}
+#polishFeedback.is-visible{opacity:1;visibility:visible;transform:translateY(0)}
+/* Touch-first: comfortably sized actionable controls and no horizontal-scroll trap. */
+.workshop-stage .tiny-btn,.workshop-stage .slayer-contract button,.workshop-stage .slayer-actions button,.workshop-stage .backup-actions button,.workshop-stage .craft-potion button{min-height:44px}
+.workshop-stage .workshop-body{min-width:0;overflow-wrap:break-word}
+.workshop-stage .workshop-body img,.workshop-stage .workshop-body svg{max-width:100%}
+.workshop-rail,.workshop-stage{min-width:0}
+.workshop-stage :is(button,select,input,textarea):focus-visible,.camp-screen :is(button,select):focus-visible{outline:3px solid #f6d698;outline-offset:2px}
+@media(max-width:780px){
+ .workshop-cover.camp-page .workshop-topline{position:relative;top:auto}
+ .workshop-mobile-jump select{min-height:48px}
+ .workshop-nav button{touch-action:manipulation}
+ #polishFeedback{left:50%;right:auto;bottom:max(12px,env(safe-area-inset-bottom));width:max-content;max-width:calc(100vw - 24px);text-align:center;transform:translate(-50%,9px)}
+ #polishFeedback.is-visible{transform:translate(-50%,0)}
+}
+@media(max-width:670px){
+ .refuge-ambience{bottom:auto;height:clamp(168px,44vw,230px)}
+ .refuge-lantern{width:84px;height:88px}
+ .refuge-ember{bottom:9%}
+}
+@media(prefers-reduced-motion:reduce){
+ .refuge-lantern,.refuge-ember,.workshop-stage .workshop-sigil,.polish-enter,.workshop-stage .workshop-notice{animation:none!important}
+ #polishFeedback,.refuge-site .camp-building-icon,.camp-nav-button,.refuge-expedition,.workshop-nav button,.workshop-close,.workshop-stage .tiny-btn,.camp-fight-btn,.workshop-stage .hero-picker-btn,.workshop-stage .inventory-slot,.workshop-stage .party-position,.workshop-stage .talent-node,.workshop-stage .account-skill-tile,.workshop-stage .craft-xp-track i,.workshop-stage .party-xp-track i,.workshop-stage .hero-meter i{transition:none!important}
+}
+html[data-ambience-paused=true] .refuge-lantern,html[data-ambience-paused=true] .refuge-ember,html[data-ambience-paused=true] .workshop-sigil{animation-play-state:paused}

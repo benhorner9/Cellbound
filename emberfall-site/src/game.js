@@ -1,6 +1,7 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.16.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.16.0';
-import {mountWorkshop} from './workshop.js?v=4.16.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.17.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.17.0';
+import {mountWorkshop} from './workshop.js?v=4.17.0';
+import {initPolish,polishEnter,polishFeedback} from './polish.js?v=4.17.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -170,21 +171,28 @@ window.addEventListener('resize',resize,{passive:true});
 
 function selectBoss(id){
  if(!canChallenge(company,id))return false;
- if(id!==bossSelection){pendingDelveToken=null;pendingBountyToken=null;}
+ const changed=id!==bossSelection;
+ if(changed){pendingDelveToken=null;pendingBountyToken=null;}
  bossSelection=id;
  try{storage?.setItem(SELECTED_BOSS_KEY,id);}catch{}
  state=newBattle(id);
  renderEncounterChoices();renderCampSummary();syncUI(true);
+ if(changed)polishFeedback('Target chosen · '+bossInfo(id).name);
  return true;
 }
 const campScreen=$('campScreen');
 function setCampTab(tab='home'){
+ const previous=campTab;
  campTab=tab==='expeditions'?'expeditions':'home';
  campScreen.dataset.campTab=campTab;
  $('campNavHome').setAttribute('aria-pressed',String(campTab==='home'));
  $('campNavExpeditions').setAttribute('aria-pressed',String(campTab==='expeditions'));
  $('campNavHome').classList.toggle('active',campTab==='home');
  $('campNavExpeditions').classList.toggle('active',campTab==='expeditions');
+ if(previous!==campTab){
+  polishEnter(campScreen);
+  polishFeedback(campTab==='expeditions'?'The War Table':'The Refuge Courtyard');
+ }
 }
 function renderCampSummary(){
  $('campGold').textContent=String(company.gold);
@@ -202,6 +210,7 @@ function renderCampSummary(){
  }).join('');
 }
 function showCamp(tab='home'){
+ const returnedFromBattle=currentView==='battle';
  currentView='camp';$('app').dataset.view='camp';
  paused=false;setCompanyMenu(false);
  $('overlay').classList.add('hidden');$('overlay').classList.remove('choose-mode','result-mode');
@@ -209,6 +218,10 @@ function showCamp(tab='home'){
  $('pauseBtn').disabled=true;
  setCampTab(tab);renderCampSummary();renderEncounterChoices();
  syncUI(true);
+ if(returnedFromBattle){
+  polishEnter(campScreen);
+  polishFeedback(tab==='expeditions'?'Returned to the War Table':'Welcome back to the Refuge');
+ }
 }
 campScreen.addEventListener('click',event=>{
  const campAction=event.target.closest('[data-camp]');
@@ -260,6 +273,8 @@ function start(){
   if(used){state.elixirUsed=used;writeProfile(storage,company);}
   startEncounter(state);
   currentView='battle';$('app').dataset.view='battle';resize();
+  polishEnter($('battleFrame'));
+  polishFeedback('Battle begins · '+bossInfo(bossSelection).name);
   $('overlay').classList.remove('choose-mode','result-mode');
   $('overlay').classList.add('hidden');$('pauseBtn').disabled=false;syncUI(true);
  }
@@ -676,11 +691,16 @@ const workshop=mountWorkshop({
   root.setAttribute('role',workshopOpenedFromCamp?'main':'dialog');
   if(workshopOpenedFromCamp){root.removeAttribute('aria-modal');$('app').dataset.view='workshop';back.textContent='← Back to Camp';}
   else{root.setAttribute('aria-modal','true');back.textContent='✕ Back to Battle';}
+  polishEnter(root.querySelector('.workshop-head'));
   syncUI(true);
  },
  onClose:()=>{
   paused=workshopWasPaused;
-  if(workshopOpenedFromCamp){$('app').dataset.view='camp';$('workshop').classList.remove('camp-page');}
+  if(workshopOpenedFromCamp){
+   $('app').dataset.view='camp';$('workshop').classList.remove('camp-page');
+   polishEnter(campScreen);
+   polishFeedback('Returned to the Refuge');
+  }
   $('workshop').setAttribute('role','dialog');$('workshop').setAttribute('aria-modal','true');
   $('workshopClose').textContent='✕ Close';workshopOpenedFromCamp=false;
   renderCampSummary();renderEncounterChoices();syncUI(true);
@@ -705,10 +725,11 @@ $('salvageBtn').addEventListener('click',()=>workshop.open('salvage',selected));
 $('enchantBtn').addEventListener('click',()=>workshop.open('enchant',selected));
 $('delvingBtn').addEventListener('click',()=>workshop.open('delving',selected));
 for(const id of ['bossSelectBtn','bossSelectTopBtn'])$(id).addEventListener('click',returnToCamp);
+initPolish();
 makeBackground();
 resize();
 showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.16.0';
+document.documentElement.dataset.emberfallReady='4.17.0';
 requestAnimationFrame(frame);

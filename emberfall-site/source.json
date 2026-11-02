@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "0a41afc2109130e5fc79766ca63e9992ab07af6e",
+  "sourceCommit": "f7d4db568a9c3e1b4971528bd806f48ba5466f67",
   "target": "/emberfall/",
-  "stage": "immersive-ui-ux-block-2-v4.16.0",
+  "stage": "immersive-ui-ux-block-3-v4.17.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -15,8 +15,10 @@
     "src/mobile-testing.css",
     "src/refuge.css",
     "src/locations.css",
+    "src/polish.js",
+    "src/polish.css",
     "assets/refuge-scene.svg",
     "assets/interior-chamber.svg"
   ],
-  "note": "UI/UX Block 2: location-based management for 13 Refuge destinations in four wings; original stone-chamber artwork; heroes, talents, equipment, inventory, account skills, Bounty Hunting, forging, enchanting, delving, records and market screens re-themed. War Table expedition identity, live gold/gear/Bounty Marks, phone quick travel. No save schema, combat or rewards changes. Canonical PR #49 merged at 0a41afc2109130e5fc79766ca63e9992ab07af6e after full unit and cross-browser QA; deploy exclusively to /emberfall/."
+  "note": "UI/UX Block 3 released from canonical PR #51 merged at f7d4db568a9c3e1b4971528bd806f48ba5466f67. Ambient lantern halos/embers, non-blocking location and battle arrivals, readable accessible travel and saved-progress feedback, focus-safe workshop controls, consistent touch and hover states, reduced-motion support, and hidden-tab animation pause. All Node, Chromium, iPad WebKit and phone WebKit source checks passed. No changes to hero ownership, combat, rewards, Bounty Hunting, account skill levels, save schema or other hosted projects."
 }

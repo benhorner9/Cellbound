@@ -1,11 +1,12 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
-} from './progression.js?v=4.16.0';
+} from './progression.js?v=4.17.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.16.0';
+} from './builds.js?v=4.17.0';
+import {polishEnter,polishFeedback} from './polish.js?v=4.17.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -16,6 +17,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),context=document.getElementById('workshopContext'),tabs=document.getElementById('workshopTabs');
  let returnFocus=null;
+ let lastPresentedLocation=null;
  let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false,confirmReroll=false,confirmPurchaseId=null,selectedSalvageId=null,confirmSalvageId=null,selectedEnchantItemId=null,selectedEnchantId='ironroot-ward',confirmEnchantId=null,confirmDelveAbandon=false;
  const builds=readBuilds(storage);
  const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Bounty Board',salvage:'Salvaging Station',enchant:'Enchanting Forge',delving:'Delving Gate',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
@@ -523,6 +525,10 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   return html+'<p class="workshop-disclaimer">Delving XP is only awarded for wins launched from an active Delving stage, never for ordinary boss farming or duplicate victory receipts. Runs and stage completion survive a reload. This is local PvE progression, not an online dungeon or co-op system.</p>';
  }
  function render(){
+  // DOM refreshes keep focus on the same game action wherever possible.
+  const active=body.contains(document.activeElement)&&document.activeElement!==body?document.activeElement:null;
+  const focusKey=active?{id:active.id,action:active.dataset.action,item:active.dataset.id,slot:active.dataset.slot,index:active.dataset.index,tab:active.dataset.tab}:null;
+  const locationChanged=lastPresentedLocation!==current;
   const location=locationDetails[current];
   root.dataset.location=current;
   title.textContent=tabNames[current];
@@ -551,6 +557,23 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    body.classList.toggle('salvage-mode',current==='salvage');
   body.innerHTML=(notice?'<div class="workshop-notice '+(noticeBad?'is-error':'')+'" role="status">'+esc(notice)+'</div>':'')
     +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='skills'?renderSkills():current==='slayer'?renderBounty():current==='salvage'?renderSalvage():current==='enchant'?renderEnchant():current==='delving'?renderDelving():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
+  if(focusKey){
+   let next=focusKey.id?document.getElementById(focusKey.id):null;
+   if(!next&&focusKey.action){
+    next=[...body.querySelectorAll('button[data-action]')].find(button=>
+     button.dataset.action===focusKey.action &&
+     button.dataset.id===focusKey.item &&
+     button.dataset.slot===focusKey.slot &&
+     button.dataset.index===focusKey.index &&
+     button.dataset.tab===focusKey.tab);
+   }
+   (next&&!next.disabled&&body.contains(next)?next:body).focus({preventScroll:true});
+  }
+  if(locationChanged){
+   lastPresentedLocation=current;
+   polishEnter(body);
+   if(!root.classList.contains('hidden'))polishFeedback(tabNames[current]);
+  }
  }
  function rerenderBag(){
   const offset=body.querySelector('#inventoryScroll')?.scrollTop||0;
@@ -562,6 +585,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const success=writeProfile(storage,profile);
   root.classList.toggle('dirty',!success);
   onChange(profile);rerenderBag();
+  polishFeedback(success?'Progress saved to this device':'Storage unavailable · changes may not persist',success?'success':'error');
  }
  function commitAccountChange(action,describe){
   const previous=structuredClone(profile);
@@ -571,7 +595,9 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    Object.assign(profile,previous);notice='Storage refused the change; your items, points and progress were restored.';noticeBad=true;root.classList.add('dirty');render();return null;
   }
   notice=describe(result);noticeBad=false;root.classList.remove('dirty');
-  onChange(profile);render();return result;
+  onChange(profile);render();
+  polishFeedback('Company progress updated','success');
+  return result;
  }
  function open(tab='heroes',selected='knight'){
   if(!root.classList.contains('hidden'))return;
@@ -581,6 +607,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    confirmSalvageId=null;confirmPurchaseId=null;confirmReroll=false;
   if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;selectedTalentId=null;partyPosition=Math.max(0,partyOrder(profile).indexOf(selected));}
   pendingSell=null;
+  lastPresentedLocation=null;
   root.classList.remove('hidden');render();onOpen();
   root.querySelector('#workshopClose').focus({preventScroll:true});
  }
@@ -838,10 +865,17 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    const status=restoreBackup(storage,profile,builds,validatedImport);
    notice=status.reason;noticeBad=!status.ok;
    if(status.ok){validatedImport=null;importText='';importConfirm=false;onChange(profile);}
-   render();return;
+   render();
+   polishFeedback(status.ok?'Backup restored successfully':status.reason,status.ok?'success':'error');
+   return;
   }
   if(action==='hero'&&HERO_IDS.includes(id)){heroId=id;equipmentSlot=null;selectedTalentId=null;confirmSpendId=null;confirmRespec=false;render();return;}
-  if(action==='tab'&&tabNames[btn.dataset.tab]){confirmEnchantId=null;confirmDelveAbandon=false;current=btn.dataset.tab;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;render();return;}
+  if(action==='tab'&&tabNames[btn.dataset.tab]){
+   confirmEnchantId=null;confirmDelveAbandon=false;current=btn.dataset.tab;
+   notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;render();
+   tabs.querySelector('button[data-tab="'+current+'"]')?.focus({preventScroll:true});
+   return;
+  }
   if(action==='talent'){if(chooseTalent(profile,heroId,id))save();return;}
   if(action==='equip'){
    if(current==='pack'){
