@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "07b628ba13d656824b0b1eee7de30617905b56ed",
+  "sourceCommit": "1892c45cf930f6fa13ecd988d219e9b5216abfb0",
   "target": "/emberfall/",
-  "stage": "ui-ux-all-screens-v4.9.1",
+  "stage": "mobile-phone-testing-v4.9.1",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -11,7 +11,8 @@
     "src/progression.js",
     "src/workshop.js",
     "src/builds.js",
-    "src/style.css"
+    "src/style.css",
+    "src/mobile-testing.css"
   ],
-  "note": "Full cross-screen UI/UX polish: all eight camp management areas become dedicated pages (no combat underneath), unified compact navigation and back controls, semantic accessible tabs and keyboard focus, iPad native scrolling and reachable inventory actions, honest camp roster/save statistics and player-facing labels, and result-screen Return to Camp with scrollable rewards. Keep full-width two-ability combat HUD, all progression/saves/item ownership/crafting and Block 5 untouched. Canonical source PR #33 passed unit, Chromium iPad-touch and WebKit browser smoke and merged as 07b628ba13d656824b0b1eee7de30617905b56ed. Staged six source asset blobs verified identical to canonical source. Cache graph v4.9.1."
+  "note": "Mobile testing pass, canonical Emberfall PR #34: phone-only portrait and short-landscape responsive CSS, accessible camp/workshop navigation, proportional combat arena, two skills and four hero buttons, with new WebKit phone and iPad isolation regression tests. Game engine, ESM graph v4.9.1, saves, equipment, talents and desktop/iPad styling unchanged. Canonical source merged as 1892c45cf930f6fa13ecd988d219e9b5216abfb0 after passing source QA. Host only /emberfall/."
 }
