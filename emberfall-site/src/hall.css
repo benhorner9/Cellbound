@@ -1,0 +1,119 @@
+/* Emberfall Screen Overhaul 01: hero-first room, no generic workshop sidebar. */
+.workshop-cover[data-location="heroes"] .workshop-shell,
+.workshop-cover[data-location="talents"] .workshop-shell{display:flex;flex-direction:column}
+.workshop-cover[data-location="heroes"] .workshop-rail,
+.workshop-cover[data-location="talents"] .workshop-rail{position:relative!important;display:flex!important;flex-direction:column;max-height:none;overflow:visible!important;border-right:0;border-bottom:1px solid #8e7854;background:#1a2b26}
+.workshop-cover[data-location="heroes"] .workshop-rail-header,.workshop-cover[data-location="talents"] .workshop-rail-header,
+.workshop-cover[data-location="heroes"] .workshop-rail-footer,.workshop-cover[data-location="talents"] .workshop-rail-footer{display:none}
+.workshop-cover[data-location="heroes"] .workshop-nav,.workshop-cover[data-location="talents"] .workshop-nav,
+.workshop-cover.camp-page[data-location="heroes"] .workshop-nav,.workshop-cover.camp-page[data-location="talents"] .workshop-nav{position:relative;top:auto;display:flex;flex-direction:row;flex-wrap:nowrap;gap:6px;overflow-x:auto;overflow-y:hidden;min-height:49px;padding:5px 9px;background:#172b27;box-shadow:none;scrollbar-width:thin}
+.workshop-cover[data-location="heroes"] .workshop-nav-group,.workshop-cover[data-location="talents"] .workshop-nav-group{display:contents}
+.workshop-cover[data-location="heroes"] .workshop-nav-group-label,.workshop-cover[data-location="talents"] .workshop-nav-group-label{display:none}
+.workshop-cover[data-location="heroes"] .workshop-nav button,.workshop-cover[data-location="talents"] .workshop-nav button,
+.workshop-cover.camp-page[data-location="heroes"] .workshop-nav button,.workshop-cover.camp-page[data-location="talents"] .workshop-nav button{flex:0 0 auto;width:auto;min-width:110px;min-height:39px;padding:6px 9px;font-size:11px;white-space:nowrap}
+.workshop-cover[data-location="heroes"] .workshop-nav button[aria-selected="true"],.workshop-cover[data-location="talents"] .workshop-nav button[aria-selected="true"]{border-bottom:2px solid #dfbf82}
+
+.workshop-cover[data-location="heroes"] .workshop-stage,
+.workshop-cover[data-location="talents"] .workshop-stage{width:100%;min-width:0}
+.workshop-cover[data-location="heroes"] .workshop-head,
+.workshop-cover[data-location="talents"] .workshop-head{min-height:118px;padding:22px 25px;background:linear-gradient(100deg,#122521f5,#192f29ea 58%,#24372ba8),url("../assets/hall-chamber.svg") center/cover no-repeat}
+.workshop-cover[data-location="heroes"] .workshop-body,
+.workshop-cover[data-location="talents"] .workshop-body{padding:0 0 30px!important;background:linear-gradient(170deg,#263e35,#172e28 55%,#122422)}
+.hall-of-heroes{min-width:0;max-width:1500px;margin:0 auto;color:#eadfc8}
+.hall-greatroom{position:relative;isolation:isolate;min-height:212px;padding:22px clamp(14px,3vw,40px);background:linear-gradient(0deg,#101f1de8,#122321c7 60%,#20322ab8),url("../assets/hall-chamber.svg") center 40%/cover no-repeat;border-bottom:2px solid #b18f61}
+.hall-greatroom:before,.hall-greatroom:after{content:"";position:absolute;top:15%;width:130px;height:165px;background:radial-gradient(ellipse,#ffcc8157,transparent 72%);pointer-events:none;animation:hallGlow 4s ease-in-out infinite alternate}
+.hall-greatroom:before{left:2%}.hall-greatroom:after{right:2%;animation-delay:-2s}
+.hall-greatroom>*{position:relative;z-index:1}
+.hall-greatroom-title{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:18px}
+.hall-greatroom-title .eyebrow{color:#e6c68f;font-size:10px;letter-spacing:.16em}
+.hall-greatroom-title h3{font:700 clamp(25px,3.25vw,39px)/1.07 Georgia,serif;color:#ffe6b8;margin:5px 0;text-shadow:0 3px 8px #000c}
+.hall-greatroom-title p{margin:5px 0 0;font:13px/1.55 system-ui,sans-serif;color:#d2d8c7}
+.hall-heraldry{display:grid;place-items:center;flex:0 0 65px;width:65px;height:65px;border:2px solid #d8ba81;border-radius:50%;background:#28392fd9;color:#ffdc9b;font-size:32px;box-shadow:0 0 24px #a26b3547}
+.hall-hero-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.hall-hero-card{position:relative;display:flex;align-items:center;gap:10px;min-width:0;min-height:82px;padding:10px;border:1px solid #8e7956;border-bottom:3px solid #978055;border-radius:8px;background:linear-gradient(135deg,#34483cfa,#182925fa);box-shadow:0 8px 15px #0008;color:#fff0d2;text-align:left;touch-action:manipulation;cursor:pointer}
+.hall-hero-card .hall-portrait{display:grid;place-items:center;flex:0 0 54px;width:54px;height:56px;border:2px solid #c1aa80;border-radius:9px;background:radial-gradient(circle at 40% 20%,#667a61,#253a34 62%,#121d1c);font-size:29px}
+.hall-hero-caption{display:flex;flex-direction:column;gap:4px;min-width:0}
+.hall-hero-caption strong{font:700 17px Georgia,serif;overflow:hidden;text-overflow:ellipsis}
+.hall-hero-caption small{font:11px/1.2 system-ui,sans-serif;color:#d0d5c2}
+.hall-hero-card[aria-pressed=true]{border-color:#f7cf8f;background:linear-gradient(130deg,#626746,#304e3f);box-shadow:0 0 0 2px #edc77c55,0 8px 16px #0008}
+.hall-hero-card[aria-pressed=true]:after{content:"◆";position:absolute;right:7px;top:6px;color:#ffe0a7;font-size:12px}
+.hall-hero-card:hover{background:#4b5c4a}
+.hall-section-links{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:12px clamp(14px,3vw,40px);border-bottom:1px solid #a38b61;background:linear-gradient(#35483a,#1c322b)}
+.hall-section-link,.hall-quick-action{min-height:45px;border:1px solid #9e8a63;border-radius:6px;background:#243b31;padding:8px 16px;color:#f0dbb4;font:700 12px system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
+.hall-section-link.active{background:#70573b;color:#fff5dc;border-color:#edc887;box-shadow:inset 0 -3px #e5c688}
+.hall-section-link:hover,.hall-quick-action:hover{background:#586d4b}
+.hall-section-spacer{flex:1}
+.hall-hero-card:focus-visible,.hall-section-link:focus-visible,.hall-quick-action:focus-visible{outline:3px solid #f9d38f;outline-offset:3px}
+.hall-hero-content{padding:clamp(13px,2.5vw,30px);min-width:0}
+.hall-identity-row{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:8px}
+.hall-identity-row h3{font-size:31px;color:#f6dba6}
+.hall-identity-row .eyebrow{color:#dbbc88}
+.hall-champion-layout{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(230px,.75fr);align-items:start;gap:18px;margin:13px 0 19px}
+.hall-champion-layout .equipment-armory{margin:0;min-width:0;box-shadow:0 15px 32px #05130db8}
+.hall-champion-layout .armory-stage{background:radial-gradient(ellipse at 50% 40%,#957d5145,transparent 45%),linear-gradient(#101e20b7,#111b1ced),url("../assets/hall-chamber.svg") center/cover no-repeat}
+.hall-dossier{min-width:0;border:1px solid #ac926b;border-radius:9px;background:linear-gradient(145deg,#3b4b3f,#1b302b 58%,#142822);overflow:hidden;box-shadow:inset 0 1px #fff0c424,0 12px 22px #081710b3}
+.hall-dossier-header{padding:17px;background:radial-gradient(ellipse at 70% 0%,#bb915838,transparent),#293c33;border-bottom:1px solid #a48a62}
+.hall-dossier-header span{color:#dec38e;font:700 10px system-ui,sans-serif;letter-spacing:.14em}
+.hall-dossier-header h4{margin:7px 0 3px;color:#ffe8bd;font:700 22px Georgia,serif}
+.hall-dossier-header p{margin:0;color:#d2d5c4;font:12px system-ui,sans-serif}
+.hall-dossier-section{padding:14px 16px;border-bottom:1px solid #81735b6b}
+.hall-dossier-section h5{margin:0 0 10px;color:#eed2a0;font:700 15px Georgia,serif}
+.hall-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.hall-stat{padding:8px 9px;border:1px solid #788b774f;border-radius:5px;background:#132922bd}
+.hall-stat small{display:block;margin-bottom:4px;color:#c2d0c0;font:10px system-ui,sans-serif}
+.hall-stat b{display:block;color:#f8d49e;font:700 19px Georgia,serif}
+.hall-stat-note{font:11px/1.5 system-ui,sans-serif;color:#b4c4b7}
+.hall-slot-list{display:grid;gap:7px}
+.hall-slot-list span{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;font:11px/1.4 system-ui,sans-serif}
+.hall-slot-list b{color:#e7cea4;flex:0 0 65px}
+.hall-slot-list small{color:#ccd6c8;text-align:right;min-width:0;overflow-wrap:anywhere}
+.hall-dossier-actions{display:grid;gap:8px;padding:12px 15px}
+.hall-dossier-actions button{min-height:45px}
+.hall-of-heroes .set-overview,.hall-of-heroes .build-grid{margin:13px 0 27px}
+.hall-of-heroes .talent-screen-head{margin:4px 0 18px}
+.hall-of-heroes .equipment-figure{filter:drop-shadow(0 15px 14px #000c)}
+@keyframes hallGlow{from{opacity:.55;transform:scale(.9)}to{opacity:1;transform:scale(1.1)}}
+@media(max-width:1080px){
+ .hall-champion-layout{grid-template-columns:minmax(0,1fr)}
+ .hall-dossier{display:grid;grid-template-columns:1fr 1fr}
+ .hall-dossier-header{grid-column:1/-1}
+ .hall-dossier-actions{grid-column:1/-1;display:flex}
+ .hall-dossier-actions button{flex:1}
+}
+@media(max-width:700px){
+ .hall-greatroom{min-height:0;padding:17px 12px}
+ .hall-greatroom-title h3{font-size:26px}
+ .hall-heraldry{flex-basis:44px;width:44px;height:44px;font-size:24px}
+ .hall-hero-picker{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .hall-hero-card{min-height:66px;padding:7px;gap:7px}
+ .hall-hero-card .hall-portrait{flex:0 0 43px;width:43px;height:45px;font-size:23px}
+ .hall-hero-caption strong{font-size:15px}
+ .hall-hero-caption small{font-size:10px}
+ .hall-section-links{gap:6px;padding:10px}
+ .hall-section-link{flex:1;min-width:120px;padding:8px}
+ .hall-section-spacer{display:none}
+ .hall-quick-action{flex:1;min-width:118px}
+ .hall-hero-content{padding:12px 9px}
+ .hall-dossier{display:block}
+ .hall-identity-row h3{font-size:25px}
+}
+@media(max-width:480px){
+ .hall-hero-card .hall-portrait{flex:0 0 36px;width:36px;height:39px;font-size:20px}
+ .hall-hero-caption strong{font-size:14px}
+ .hall-hero-caption small{font-size:9px}
+ .hall-hero-card{gap:5px}
+ .hall-section-link{min-width:0}
+ .hall-greatroom-title p{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.hall-greatroom:before,.hall-greatroom:after{animation:none!important}}
+html[data-ambience-paused=true] .hall-greatroom:before,html[data-ambience-paused=true] .hall-greatroom:after{animation-play-state:paused}
+
+/* The same Hall opens as an in-battle management modal. Keep the room bounded,
+   make the main pane the one scroll container, and never let its illustrated
+   gallery overlap talent nodes after browser-driven scrollIntoView. */
+.workshop-cover:not(.camp-page)[data-location="heroes"] .workshop-shell,
+.workshop-cover:not(.camp-page)[data-location="talents"] .workshop-shell{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.workshop-cover:not(.camp-page)[data-location="heroes"] .workshop-stage,
+.workshop-cover:not(.camp-page)[data-location="talents"] .workshop-stage{display:flex;flex:1 1 0;min-height:0;overflow:hidden}
+.workshop-cover:not(.camp-page)[data-location="heroes"] .workshop-body,
+.workshop-cover:not(.camp-page)[data-location="talents"] .workshop-body{flex:1 1 0;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
