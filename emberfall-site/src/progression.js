@@ -28,7 +28,22 @@ export const SLOT_NAMES=Object.freeze({helm:'Helm',charm:'Amulet',armour:'Body',
 export const SLOT_ICONS=Object.freeze({helm:'🪖',charm:'📿',armour:'🛡️',legs:'🩳',gloves:'🧤',boots:'👢',ring:'💍',weapon:'⚔️',offhand:'🛡️'});
 
 export const SKILL_CAP=20;
+// Recipe skills remain distinct: unfinished skills must not appear in the Forge.
 export const SKILL_IDS=Object.freeze(['smithing','alchemy']);
+export const ACCOUNT_SKILL_IDS=Object.freeze([...SKILL_IDS,'slayer','enchanting','salvaging','delving']);
+export const ACCOUNT_SKILLS=Object.freeze({
+ smithing:{name:'Blacksmithing',icon:'⚒️',description:'Forge lasting weapons and armour from boss materials.',available:true,unlocks:[[1,'Basic armour patterns'],[5,'Improved set pieces'],[10,'Epic equipment recipes'],[25,'Mythic forging · future']]},
+ alchemy:{name:'Alchemy',icon:'⚗️',description:'Brew elixirs that strengthen your party in battle.',available:true,unlocks:[[1,'Basic battle elixirs'],[4,'Additional elemental recipes'],[10,'Grand elixirs'],[25,'Spiritbound tonics · future']]},
+ slayer:{name:'Slayer',icon:'☠️',description:'Take hunting contracts, defeat assigned bosses and earn Slayer Points.',available:true,unlocks:[[1,'Thornwarden contracts'],[5,'Cindermaw contracts'],[10,'Tempest Seraph contracts'],[20,'Master hunts · future']]},
+ enchanting:{name:'Enchanting',icon:'✨',description:'Future profession: imbue equipment with magical properties.',available:false,unlocks:[[1,'Arcane inscriptions · future'],[10,'Elemental enhancements · future']]},
+ salvaging:{name:'Salvaging',icon:'🧰',description:'Future profession: reclaim resources from unwanted gear.',available:false,unlocks:[[1,'Basic dismantling · future'],[10,'Rare-component recovery · future']]},
+ delving:{name:'Delving',icon:'🗝️',description:'Future adventure skill: challenge deeper multi-stage expeditions.',available:false,unlocks:[[1,'First descent · future'],[10,'Elite dungeon routes · future']]}
+});
+export const SLAYER_CONTRACTS=Object.freeze({
+ thornwarden:{bossId:'thornwarden',level:1,target:3,xp:65,points:3},
+ cindermaw:{bossId:'cindermaw',level:5,target:2,xp:95,points:5},
+ tempest:{bossId:'tempest',level:10,target:2,xp:135,points:8}
+});
 export const MATERIAL_GROUPS=Object.freeze({
  thornwarden:{tier:'verdant',ore:'verdant-ore',essence:'verdant-essence',seal:'verdant-seal'},
  cindermaw:{tier:'ember',ore:'ember-ore',essence:'ember-essence',seal:'ember-seal'},
@@ -91,9 +106,10 @@ export const FUTURE_CRAFTS=Object.freeze([
 ]);
 export function skillXpNeeded(level){return level>=SKILL_CAP?0:40+20*level;}
 function blankCrafting(){
- return {skills:Object.fromEntries(SKILL_IDS.map(id=>[id,{level:1,xp:0}])),
+ return {skills:Object.fromEntries(ACCOUNT_SKILL_IDS.map(id=>[id,{level:1,xp:0}])),
   materials:Object.fromEntries(Object.keys(MATERIAL_DEFS).map(id=>[id,0])),
-  potions:Object.fromEntries(Object.keys(ALCHEMY_EFFECTS).map(id=>[id,0])),preparedElixir:null};
+  potions:Object.fromEntries(Object.keys(ALCHEMY_EFFECTS).map(id=>[id,0])),preparedElixir:null,
+  slayer:{active:null,points:0,completed:0,streak:0}};
 }
 export function craftingStatus(profile,recipeId){
  const recipe=CRAFT_RECIPES.find(r=>r.id===recipeId);
@@ -150,11 +166,12 @@ export function normalizeProfileSlots(profile){
  }
  if(profile){
   const blank=blankCrafting();
-  for(const id of SKILL_IDS)if(profile.skills&&profile.skills[id]===undefined)profile.skills[id]=blank.skills[id];
+  for(const id of ACCOUNT_SKILL_IDS)if(profile.skills&&profile.skills[id]===undefined)profile.skills[id]={...blank.skills[id]};
   for(const id of Object.keys(MATERIAL_DEFS))if(profile.materials&&profile.materials[id]===undefined)profile.materials[id]=0;
   for(const id of Object.keys(ALCHEMY_EFFECTS))if(profile.potions&&profile.potions[id]===undefined)profile.potions[id]=0;
  }
  if(profile&&profile.preparedElixir===undefined)profile.preparedElixir=null;
+ if(profile&&profile.slayer===undefined)profile.slayer={active:null,points:0,completed:0,streak:0};
  for(const id of HERO_IDS)for(const slot of SLOTS){
   const gear=profile?.heroes?.[id]?.gear;
   if(gear&&gear[slot]===undefined)gear[slot]=null;
@@ -308,10 +325,10 @@ export function validateProfile(p){
  if(!p.heroes||typeof p.heroes!=='object'||!Array.isArray(p.items)||p.items.length>400||!Array.isArray(p.claims)||p.claims.length>120)return false;
  if(p.partyOrder!==undefined&&(!Array.isArray(p.partyOrder)||p.partyOrder.length!==PARTY_SIZE||new Set(p.partyOrder).size!==PARTY_SIZE||!HERO_IDS.every(id=>p.partyOrder.includes(id))))return false;
  if(p.skills!==undefined){
-  if(!p.skills||typeof p.skills!=='object'||SKILL_IDS.some(id=>{
-   const v=p.skills[id];return !v||!Number.isSafeInteger(v.level)||v.level<1||v.level>SKILL_CAP||
-    !Number.isSafeInteger(v.xp)||v.xp<0||(v.level<SKILL_CAP&&v.xp>=skillXpNeeded(v.level))||
-    (v.level===SKILL_CAP&&v.xp!==0);
+  if(!p.skills||typeof p.skills!=='object'||Object.keys(p.skills).some(id=>!ACCOUNT_SKILL_IDS.includes(id))||ACCOUNT_SKILL_IDS.some(id=>{
+   const v=p.skills[id];return v!==undefined&&(!Number.isSafeInteger(v?.level)||v.level<1||v.level>SKILL_CAP||
+    !Number.isSafeInteger(v?.xp)||v.xp<0||(v.level<SKILL_CAP&&v.xp>=skillXpNeeded(v.level))||
+    (v.level===SKILL_CAP&&v.xp!==0));
   }))return false;
  }
  for(const [field,defs] of [['materials',MATERIAL_DEFS],['potions',ALCHEMY_EFFECTS]]){
@@ -319,6 +336,14 @@ export function validateProfile(p){
    Object.entries(p[field]).some(([id,n])=>!Object.hasOwn(defs,id)||!Number.isSafeInteger(n)||n<0||n>99999)))return false;
  }
  if(p.preparedElixir!==undefined&&p.preparedElixir!==null&&!Object.hasOwn(ALCHEMY_EFFECTS,p.preparedElixir))return false;
+ if(p.slayer!==undefined){
+  const s=p.slayer,active=s?.active;
+  if(!s||!validNum(s.points)||s.points>1000000||!validNum(s.completed)||s.completed>1000000||!validNum(s.streak)||s.streak>s.completed)return false;
+  if(active!==null){
+   const contract=active&&SLAYER_CONTRACTS[active.bossId];
+   if(!contract||!validNum(active.kills)||active.target!==contract.target||active.kills>active.target)return false;
+  }
+ }
  const ids=new Set(), equipped=new Set();
  for(const it of p.items){
   if(typeof it?.id!=='string'||!/^\bi\d+\b$/.test(it.id)||ids.has(it.id)||!Object.hasOwn(ITEM_DEFS,it.defId))return false;
@@ -420,6 +445,40 @@ export function rollBossDrop(seed,bossId='thornwarden'){
  let sum=0;for(const d of table){sum+=d.weight;if(roll<sum)return d.id;}
  return table.at(-1).id;
 }
+export function takeSlayerContract(p,bossId){
+ if(!validateProfile(p)||!Object.hasOwn(SLAYER_CONTRACTS,bossId))return false;
+ normalizeProfileSlots(p);
+ const contract=SLAYER_CONTRACTS[bossId];
+ if(p.slayer.active||p.skills.slayer.level<contract.level)return false;
+ p.slayer.active={bossId,target:contract.target,kills:0};
+ return true;
+}
+export function abandonSlayerContract(p){
+ if(!validateProfile(p))return false;
+ normalizeProfileSlots(p);
+ if(!p.slayer.active)return false;
+ p.slayer.active=null;p.slayer.streak=0;return true;
+}
+export function claimSlayerContract(p){
+ if(!validateProfile(p))return null;
+ normalizeProfileSlots(p);
+ const active=p.slayer.active;
+ if(!active||active.kills!==active.target)return null;
+ const reward=SLAYER_CONTRACTS[active.bossId];
+ p.slayer.points+=reward.points;p.slayer.completed++;p.slayer.streak++;
+ p.slayer.active=null;
+ return {bossId:reward.bossId,points:reward.points,completed:p.slayer.completed,streak:p.slayer.streak};
+}
+function recordSlayerVictory(p,bossId){
+ const active=p.slayer.active;
+ if(!active||active.bossId!==bossId||active.kills>=active.target)return null;
+ const contract=SLAYER_CONTRACTS[bossId],skill=p.skills.slayer,before=skill.level;
+ active.kills++;
+ skill.xp+=contract.xp;
+ while(skill.level<SKILL_CAP&&skill.xp>=skillXpNeeded(skill.level)){skill.xp-=skillXpNeeded(skill.level);skill.level++;}
+ if(skill.level===SKILL_CAP)skill.xp=0;
+ return {bossId,xp:contract.xp,levelFrom:before,levelTo:skill.level,kills:active.kills,target:active.target,complete:active.kills===active.target};
+}
 export function grantVictory(p,receiptId,seed,bossId='thornwarden'){
  if(!Object.hasOwn(BOSSES,bossId)||!canChallenge(p,bossId))return null;
  if(typeof receiptId!=='string'||!receiptId||receiptId.length>120||p.claims.includes(receiptId)||!validateProfile(p))return null;
@@ -443,6 +502,7 @@ export function grantVictory(p,receiptId,seed,bossId='thornwarden'){
   const added=Math.min(amount,99999-p.materials[id]);
   p.materials[id]+=added;if(added>0)reward.materials.push({id,quantity:added});
  }
+ reward.slayer=recordSlayerVictory(p,bossId);
  p.claims.push(receiptId);if(p.claims.length>100)p.claims=p.claims.slice(-100);
  return reward;
 }

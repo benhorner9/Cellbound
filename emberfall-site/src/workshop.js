@@ -1,24 +1,24 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
- xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir
-} from './progression.js?v=4.9.1';
+ xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,takeSlayerContract,claimSlayerContract,abandonSlayerContract
+} from './progression.js?v=4.10.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.9.1';
+} from './builds.js?v=4.10.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const pretty={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
 const slotTitle=SLOT_NAMES;
 const rarityClass=name=>String(name).toLowerCase();
-export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{}}){
+export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{},onExpedition=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),context=document.getElementById('workshopContext'),tabs=document.getElementById('workshopTabs');
  let returnFocus=null;
- let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[];
+ let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false;
  const builds=readBuilds(storage);
- const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
+ const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Slayer Lodge',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
  const tabId=tab=>'workshopTab-'+tab;
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
@@ -358,6 +358,46 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   html+='</div><p class="workshop-disclaimer">Restoring a backup replaces the company and saved builds on this device after confirmation. Keep a copy of your backup if you change browsers or devices; cloud syncing is not yet available.</p></div>';
   return html;
  }
+ function renderSkills(){
+  const active=ACCOUNT_SKILLS[selectedAccountSkill],level=profile.skills[selectedAccountSkill].level;
+  let html='<div class="workshop-intro"><span class="eyebrow">THE EMBERGUARD · ACCOUNT PROGRESSION</span><h3>Adventurer Skills</h3><p>Six skills shared by your entire company. Hero levels, talents and equipment stay individual. Only Blacksmithing, Alchemy and Slayer currently earn XP; the other professions are previews.</p></div>';
+  html+='<div class="account-skill-grid" role="group" aria-label="Account-wide skill selection">';
+  for(const id of ACCOUNT_SKILL_IDS){
+   const info=ACCOUNT_SKILLS[id],sk=profile.skills[id],needed=skillXpNeeded(sk.level),pct=needed?Math.round(sk.xp/needed*100):100;
+   html+='<button type="button" data-action="skill-select" data-id="'+id+'" aria-pressed="'+(selectedAccountSkill===id)+'" class="account-skill-tile '+(selectedAccountSkill===id?'selected':'')+(info.available?'':' is-preview')+'"><span class="account-skill-icon">'+info.icon+'</span><span class="account-skill-info"><b>'+esc(info.name)+'</b><small>'+(info.available?'Level '+sk.level+' / '+SKILL_CAP:'Planned · not trainable yet')+'</small><span class="craft-xp-track"><i style="width:'+pct+'%"></i></span></span></button>';
+  }
+  html+='</div><section class="account-skill-guide" aria-label="Selected skill guide"><div class="account-skill-guide-head"><span class="account-skill-icon">'+active.icon+'</span><div><span class="eyebrow">SKILL GUIDE</span><h3>'+esc(active.name)+' · Level '+level+'</h3><p>'+esc(active.description)+'</p></div></div>';
+  const need=skillXpNeeded(level);
+  html+='<p class="account-skill-xp">'+(active.available?(need?profile.skills[selectedAccountSkill].xp+' / '+need+' XP until next level':'MAX LEVEL'):'This skill cannot earn XP yet.')+'</p>';
+  html+='<div class="account-skill-unlocks"><h4>Unlocks &amp; milestones</h4>'+active.unlocks.map(([required,label])=>{
+   const isFuture=required>SKILL_CAP||!active.available;
+   return '<div class="account-skill-unlock '+(!isFuture&&level>=required?'is-unlocked':'')+'"><b>Lv '+required+'</b><span>'+esc(label)+'</span><small>'+(!isFuture&&level>=required?'✓ Unlocked':isFuture?'Future':'Locked')+'</small></div>';
+  }).join('')+'</div>';
+  if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'☠ Visit Slayer Lodge':'⚒ Open Crafting Guild')+'</button>';
+  else html+='<p class="workshop-disclaimer">Preview only — this profession will be implemented in a future development block.</p>';
+  return html+'</section>';
+ }
+ function renderSlayer(){
+  const sk=profile.skills.slayer,progress=profile.slayer,active=progress.active,need=skillXpNeeded(sk.level);
+  let html='<div class="workshop-intro"><span class="eyebrow">EMBERGUARD · HUNTERS GUILD</span><h3>☠ Slayer Lodge</h3><p>Accept a monster-hunting contract. Every assigned boss victory grants Slayer XP immediately; return here to claim Slayer Points after completing the required kills. Your party can change without affecting the contract.</p></div>';
+  html+='<div class="slayer-stats"><span><b>Level '+sk.level+' / '+SKILL_CAP+'</b><small>Slayer '+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small></span><span><b>'+progress.points+' Points</b><small>Unspent</small></span><span><b>'+progress.completed+' Hunts</b><small>Completed · streak '+progress.streak+'</small></span></div>';
+  html+='<div class="craft-xp-track slayer-level-track"><i style="width:'+(need?Math.floor(sk.xp/need*100):100)+'%"></i></div>';
+  if(active){
+   const boss=BOSSES[active.bossId],contract=SLAYER_CONTRACTS[active.bossId],done=active.kills===active.target;
+   html+='<section class="slayer-active" aria-label="Active Slayer contract"><span class="eyebrow">'+(done?'CONTRACT COMPLETE':'CURRENT CONTRACT')+'</span><h3>'+boss.icon+' Hunt the '+esc(boss.name)+'</h3><p>'+esc(boss.place)+' · '+active.kills+' / '+active.target+' victories</p><div class="craft-xp-track"><i style="width:'+Math.floor(active.kills/active.target*100)+'%"></i></div><div class="slayer-reward-line"><span>+'+contract.xp+' Slayer XP per assigned victory</span><span>+'+contract.points+' Points on claim</span></div>';
+   if(done)html+='<button type="button" class="tiny-btn craft-primary" data-action="slayer-claim">Claim '+contract.points+' Slayer Points →</button><p class="workshop-disclaimer">Claiming completes this contract and lets you select another.</p>';
+   else html+='<div class="slayer-actions"><button type="button" class="tiny-btn craft-primary" data-action="slayer-travel" data-id="'+active.bossId+'">Hunt '+esc(boss.name)+' →</button><button type="button" class="tiny-btn ghost" data-action="slayer-abandon">'+(confirmAbandon?'Confirm abandon · resets streak':'Abandon contract')+'</button></div>';
+   html+='</section>';
+  }else{
+   html+='<div class="workshop-subheading"><h3>Available contracts</h3><span>One active assignment at a time</span></div><div class="slayer-contract-grid">';
+   for(const [id,contract] of Object.entries(SLAYER_CONTRACTS)){
+    const b=BOSSES[id],locked=sk.level<contract.level;
+    html+='<article class="slayer-contract '+(locked?'locked':'')+'"><span class="eyebrow">'+(locked?'REQUIRES SLAYER '+contract.level:'AVAILABLE · SLAYER '+contract.level)+'</span><h3>'+b.icon+' '+esc(b.name)+'</h3><p>'+esc(b.place)+'</p><small>'+contract.target+' victories · +'+contract.xp+' XP per kill · '+contract.points+' Points on claim</small><button type="button" class="tiny-btn" data-action="slayer-accept" data-id="'+id+'" '+(locked?'disabled':'')+'>'+(locked?'🔒 Locked':'Accept Contract')+'</button></article>';
+   }
+   html+='</div>';
+  }
+  return html+'<p class="workshop-disclaimer">Current boss hunts use your existing expeditions. No points or extra items are granted on defeat, for duplicate victory receipts or for unclaimed tasks. Slayer progression is saved locally with the company.</p>';
+ }
  function render(){
   title.textContent=tabNames[current];
   context.textContent='EMBERGUARD CAMP · '+tabNames[current].toUpperCase();
@@ -374,7 +414,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   document.getElementById('bagCount').textContent=String(profile.items.filter(item=>!itemOwner(profile,item.id)).length);
   body.classList.toggle('inventory-mode',current==='pack');
   body.innerHTML=(notice?'<div class="workshop-notice '+(noticeBad?'is-error':'')+'" role="status">'+esc(notice)+'</div>':'')
-    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
+    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='skills'?renderSkills():current==='slayer'?renderSlayer():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
  }
  function rerenderBag(){
   const offset=body.querySelector('#inventoryScroll')?.scrollTop||0;
@@ -430,6 +470,27 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  body.addEventListener('click',e=>{
   const btn=e.target.closest('button[data-action]');if(!btn||btn.disabled)return;
   const action=btn.dataset.action,id=btn.dataset.id,slot=btn.dataset.slot;
+   if(action==='skill-select'&&ACCOUNT_SKILL_IDS.includes(id)){selectedAccountSkill=id;render();return;}
+   if(action==='skill-visit'&&ACCOUNT_SKILLS[id]?.available){
+    current=id==='slayer'?'slayer':'craft';
+    if(SKILL_IDS.includes(id)){craftSkill=id;craftRecipeId=null;}
+    notice='';render();return;
+   }
+   if(action==='slayer-accept'&&current==='slayer'){
+    if(takeSlayerContract(profile,id)){confirmAbandon=false;notice='Contract accepted. Defeat '+BOSSES[id].name+' to gain Slayer XP.';noticeBad=false;save();}
+    return;
+   }
+   if(action==='slayer-claim'&&current==='slayer'){
+    const result=claimSlayerContract(profile);
+    if(result){notice='Contract complete! +'+result.points+' Slayer Points · Hunt streak '+result.streak+'.';noticeBad=false;save();}
+    return;
+   }
+   if(action==='slayer-abandon'&&current==='slayer'){
+    if(!confirmAbandon){confirmAbandon=true;render();return;}
+    if(abandonSlayerContract(profile)){confirmAbandon=false;notice='Contract abandoned; hunt streak reset. Slayer XP already earned is kept.';noticeBad=false;save();}
+    return;
+   }
+   if(action==='slayer-travel'&&current==='slayer'&&profile.slayer.active?.bossId===id){close();onExpedition(id);return;}
   if(action==='inspect'){
    if(current==='pack'){
     selectedBagId=id;pendingSell=null;notice='';rerenderBag();

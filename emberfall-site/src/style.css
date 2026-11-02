@@ -1144,3 +1144,31 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
 @media(max-width:760px){
  .workshop-cover.camp-page .inventory-layout{display:flex;flex-direction:column}
 }
+
+
+/* Account-wide skills and Slayer Lodge: camp-native, touch-friendly surfaces. */
+.account-skill-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 20px}
+.account-skill-tile{display:flex;align-items:center;gap:11px;text-align:left;min-height:88px;padding:14px;border:1px solid #688370;border-radius:13px;background:linear-gradient(140deg,#29483c,#1a302e);box-shadow:inset 0 1px #e6d69e19}
+.account-skill-tile.selected{border-color:#f2d18c;background:linear-gradient(140deg,#3c5540,#253c34);box-shadow:0 0 0 2px #e9c47832}
+.account-skill-tile.is-preview{opacity:.76}.account-skill-icon{font-size:27px;display:grid;place-items:center;min-width:42px;width:42px;height:42px;border:1px solid #7b866b;border-radius:10px;background:#122b29}
+.account-skill-info{flex:1;display:grid;gap:5px;min-width:0}.account-skill-info b{font:700 17px Georgia,serif}.account-skill-info small,.account-skill-guide p,.slayer-contract small{color:#c5d1c2;font:12px/1.5 system-ui,sans-serif}
+.account-skill-info .craft-xp-track{width:100%;margin:0}
+.account-skill-guide,.slayer-active,.slayer-contract{border:1px solid #708772;border-radius:14px;background:radial-gradient(ellipse at top left,#345042,#192d2d 80%);padding:18px}
+.account-skill-guide-head{display:flex;gap:13px;align-items:start}.account-skill-guide-head h3,.slayer-active h3,.slayer-contract h3{font:700 24px Georgia,serif;margin:4px 0 8px;color:#f2ddb0}
+.account-skill-guide-head p{margin:0}.account-skill-xp{font-weight:700;color:#e7cd96;margin:17px 0}
+.account-skill-unlocks{display:grid;gap:8px;margin:16px 0}.account-skill-unlocks h4{margin:0 0 5px}
+.account-skill-unlock{display:flex;align-items:center;gap:14px;padding:10px;border-radius:8px;background:#11292380;border:1px solid #536b61}
+.account-skill-unlock b{color:#e9c58a;min-width:52px}.account-skill-unlock span{flex:1}.account-skill-unlock small{color:#b5c4ba}.account-skill-unlock.is-unlocked{border-color:#8bac83}
+.slayer-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 10px}
+.slayer-stats>span{display:grid;gap:7px;border:1px solid #607966;background:#1b3330;border-radius:12px;padding:14px}
+.slayer-stats b{font:700 20px Georgia,serif;color:#f4daa8}.slayer-stats small{color:#baccbd}.slayer-level-track{margin:0 0 20px}
+.slayer-active{margin:17px 0;padding:22px}.slayer-active p{color:#cbd4c5}.slayer-reward-line{display:flex;flex-wrap:wrap;gap:10px 20px;margin:14px 0;color:#e5c68f;font-weight:700;font-size:13px}
+.slayer-actions{display:flex;gap:10px;flex-wrap:wrap}.slayer-actions button,.slayer-active>button,.slayer-contract button{min-height:44px}
+.slayer-contract-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.slayer-contract{display:flex;flex-direction:column;gap:7px}.slayer-contract h3{font-size:21px}.slayer-contract p{margin:0;color:#e2d3b9}
+.slayer-contract small{display:block;flex:1}.slayer-contract button{align-self:start;margin-top:10px}
+.slayer-contract.locked{opacity:.66}.camp-slayer-banner{margin:12px 0;border:1px solid #8c8a63;background:#344632;border-radius:9px;padding:12px;color:#f3dfb0}
+.camp-slayer-banner button{border:1px solid #dbc17e;background:#23372d;padding:8px 10px;border-radius:7px;margin-left:9px;min-height:38px}
+@media(min-width:1050px){.workshop-cover.camp-page .workshop-nav{grid-template-columns:repeat(10,minmax(0,1fr))}.workshop-cover.camp-page .workshop-nav button{font-size:10px}}
+@media(max-width:900px){.account-skill-grid,.slayer-contract-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:570px){.account-skill-grid,.slayer-contract-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.account-skill-tile{padding:9px;gap:5px;min-height:80px}.account-skill-icon{width:34px;min-width:34px;height:36px;font-size:21px}.account-skill-info b{font-size:14px}.account-skill-guide,.slayer-active,.slayer-contract{padding:12px}.slayer-stats{gap:5px}.slayer-stats>span{padding:8px}.slayer-stats b{font-size:14px}.slayer-stats small{font-size:10px}.slayer-contract h3{font-size:17px}}
