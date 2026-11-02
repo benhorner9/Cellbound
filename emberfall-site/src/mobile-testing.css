@@ -1,0 +1,123 @@
+/* Emberfall phone testing layout. Intentionally isolated from desktop and iPad.
+   No gameplay, hitbox or storage changes: Canvas keeps its 1200:640 aspect ratio. */
+@media (max-width: 600px) and (pointer: coarse) {
+  html, body { max-width: 100%; overflow-x: clip; }
+  .app { width: 100%; max-width: 100%; padding: max(7px, env(safe-area-inset-top)) 8px max(14px, env(safe-area-inset-bottom)); }
+  .topbar { min-height: 52px; height: auto; gap: 6px; margin-bottom: 7px; }
+  .brand { min-width: 0; gap: 7px; }
+  .brand-mark { width: 32px; height: 34px; flex: 0 0 32px; font-size: 20px; border-radius: 8px; }
+  .brand-name { white-space: normal; font-size: clamp(13px, 3.65vw, 17px); letter-spacing: 0; line-height: 1.08; }
+  .brand-sub { display: none; }
+  .top-actions { flex: 0 0 auto; gap: 4px; }
+  .top-actions .chip { display: none; }
+  .top-actions .icon-btn { min-width: 42px; min-height: 44px; width: 42px; height: 44px; font-size: 19px; }
+  .company-menu-btn { min-height: 44px; padding: 8px 9px; font-size: 12px; }
+  .company-menu { position: fixed; top: calc(max(8px, env(safe-area-inset-top)) + 51px); left: 8px; right: 8px; width: auto; max-height: calc(100dvh - 75px - env(safe-area-inset-bottom)); }
+  .company-menu .company-button, .company-menu .quiet-btn { min-height: 46px; }
+
+  /* Camp and character development must work comfortably with one thumb. */
+  .camp-screen { min-height: calc(100dvh - 105px); }
+  .camp-nav { margin-bottom: 8px; padding: 5px; }
+  .camp-nav-links { gap: 6px; }
+  .camp-nav-button { min-width: 0; min-height: 44px; padding: 9px 7px; font-size: 12px; }
+  .camp-content { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .camp-intro { padding: 12px 13px; }
+  .camp-intro h1 { font-size: 24px; }
+  .camp-intro p { font-size: 12px; margin-bottom: 9px; }
+  .camp-status-line { gap: 6px 12px; line-height: 1.5; }
+  .camp-grounds { padding: 9px; margin-top: 9px; }
+  .camp-ground-heading { margin-bottom: 8px; }
+  .camp-buildings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .camp-building { min-height: 88px; padding: 8px 5px; }
+  .camp-building strong { font-size: 13px; }
+  .camp-building-icon { width: 36px; height: 35px; font-size: 23px; }
+  .camp-roster-panel { gap: 8px; padding: 9px; }
+  .camp-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .camp-expedition-panel { padding: 12px; }
+  .camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-choices { grid-template-columns: minmax(0, 1fr); }
+  .camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel .encounter-choice { min-height: 67px; }
+  .camp-fight-btn, .camp-expedition-panel .quiet-btn { min-height: 48px; }
+
+  /* Keep arena coordinates proportional so taps and telegraphs stay accurate. */
+  .game-layout { display: block; min-width: 0; }
+  .battle-top { height: 61px; min-height: 61px; gap: 7px; padding: 7px 9px; }
+  .chapter { min-width: 0; flex: 1; }
+  .chapter .eyebrow { display: none; }
+  .chapter strong { font-size: clamp(13px, 3.6vw, 16px); line-height: 1.2; overflow-wrap: anywhere; }
+  .boss-hud { min-width: 0; flex: 0 0 53%; width: 53%; gap: 5px; }
+  .boss-icon { display: none; }
+  .boss-title { gap: 3px; margin-bottom: 5px; flex-wrap: wrap; }
+  .boss-title span { font-size: 10px; letter-spacing: .025em; }
+  .boss-title small { font-size: 9px; }
+  .battle-frame { width: 100%; height: auto !important; aspect-ratio: 1200 / 640; }
+  canvas#arena { width: 100%; height: 100%; touch-action: none; }
+  .battle-tag { top: 6px; left: 6px; padding: 4px 6px; font-size: 8px; }
+  .announcement { top: 33px; font-size: 11px; max-width: 95%; padding: 6px 9px; }
+  .combat-tempo { font-size: 10px; }
+
+  /* Two abilities immediately under battle, then all four heroes in one row. */
+  .combat-action-dock { margin-top: 6px; padding: 7px; }
+  .combat-action-dock .skills-header {
+    position: static !important; width: auto !important; height: auto !important;
+    overflow: visible !important; clip: auto !important; white-space: normal !important;
+    margin: 0 0 6px !important; padding: 0 2px !important; border: 0 !important;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .combat-action-dock .skills-header strong { font: 700 13px Georgia, serif; }
+  .combat-action-dock .skills-header .eyebrow, .combat-action-dock .progress-hint { display: none; }
+  .combat-action-dock .ability-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .combat-action-dock .skill { min-width: 0; min-height: 56px; padding: 7px 5px; gap: 6px; }
+  .combat-action-dock .skill-icon { display: grid; flex: 0 0 34px; width: 34px; height: 36px; font-size: 19px; }
+  .combat-action-dock .skill-text b { font-size: 12px; line-height: 1.2; overflow-wrap: anywhere; }
+  .combat-action-dock .skill-text small, .combat-action-dock .skill-key { display: none; }
+  .combat-party-rail { margin-top: 6px; padding: 6px; }
+  .combat-rail-heading { padding-bottom: 6px; }
+  .combat-rail-heading .eyebrow { font-size: 10px; }
+  .combat-rail-heading > span:last-child { display: none; }
+  .combat-party-rail .party-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+  .combat-party-rail .hero-card { min-width: 0; min-height: 86px; padding: 5px 2px; gap: 3px; flex-direction: column; justify-content: center; text-align: center; }
+  .combat-party-rail .portrait { width: 32px; height: 31px; flex: 0 0 31px; font-size: 19px; }
+  .combat-party-rail .hero-meta { min-width: 0; width: 100%; }
+  .combat-party-rail .hero-line { display: block; margin: 0 0 5px; }
+  .combat-party-rail .hero-line strong { display: block; font-size: clamp(10px, 2.8vw, 12px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .combat-party-rail .hero-line em, .combat-party-rail .hero-stats, .combat-party-rail .selected-chevron { display: none; }
+  .combat-party-rail .hero-meter { height: 7px; margin: 0 4px; }
+  .overlay.result-mode { padding: max(7px, env(safe-area-inset-top)) 7px max(7px, env(safe-area-inset-bottom)); }
+  .overlay.result-mode .overlay-content { max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .overlay.result-mode .victory-actions button { min-height: 48px; }
+
+  /* Management remains standalone; prevent sideways clipping and nested scrolling. */
+  .workshop-cover.camp-page { min-width: 0; }
+  .workshop-cover.camp-page .workshop-dialog { min-width: 0; }
+  .workshop-cover.camp-page .workshop-head { min-height: 61px; padding: 8px 9px; gap: 5px; }
+  .workshop-cover.camp-page .workshop-head h2 { font-size: 19px; overflow-wrap: anywhere; }
+  .workshop-cover.camp-page .workshop-close { min-width: 95px; min-height: 44px; padding: 7px 6px; }
+  .workshop-cover.camp-page .workshop-nav { top: 61px; display: flex; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; padding: 6px; gap: 6px; }
+  .workshop-cover.camp-page .workshop-nav button { flex: 0 0 auto; min-width: 106px; min-height: 46px; }
+  .workshop-cover.camp-page .workshop-body { min-width: 0; padding: 12px 9px 25px; }
+  .workshop-cover.camp-page .workshop-body > * { max-width: 100%; }
+  .workshop-cover.camp-page .inventory-layout { display: flex; flex-direction: column; gap: 10px; }
+  .workshop-cover.camp-page .inventory-collection, .workshop-cover.camp-page .inventory-detail-panel { width: 100%; min-width: 0; }
+  .workshop-cover.camp-page .inventory-slot-scroll { max-height: 43dvh; }
+  .workshop-cover.camp-page .inventory-actions { position: static; }
+  .workshop-cover.camp-page .inventory-actions button, .workshop-cover.camp-page .inventory-recipient { min-height: 44px; }
+  footer { padding-top: 10px; }
+}
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 540px) and (max-width: 950px) {
+  /* Short landscape phones (e.g. 844x390); never targets full-size iPad. */
+  .app { padding: max(5px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-left)) max(9px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right)); }
+  .topbar { height: 45px; min-height: 45px; margin-bottom: 5px; }
+  .brand-sub, .camp-nav-note { display: none; }
+  .battle-top { height: 52px; min-height: 52px; }
+  .battle-frame { height: auto !important; aspect-ratio: 1200 / 640; }
+  .combat-action-dock { margin-top: 5px; padding: 6px; }
+  .combat-action-dock .ability-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .combat-action-dock .skill { min-height: 51px; }
+  .combat-party-rail .party-list { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .combat-party-rail .hero-card { min-height: 52px; padding: 4px; }
+  .camp-content { grid-template-columns: minmax(0, 1fr); }
+  .camp-buildings { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .workshop-cover.camp-page .workshop-nav { display: flex; overflow-x: auto; flex-wrap: nowrap; }
+  .workshop-cover.camp-page .workshop-nav button { flex: 0 0 auto; min-width: 108px; min-height: 44px; }
+  .workshop-cover.camp-page .inventory-layout { display: flex; flex-direction: column; }
+}
