@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css source.json; do test -s "emberfall-site/$asset"; done
+          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css src/mobile-testing.css source.json; do test -s "emberfall-site/$asset"; done
           node --input-type=module --check < emberfall-site/src/engine.js
           node --input-type=module --check < emberfall-site/src/game.js
           node --input-type=module --check < emberfall-site/src/progression.js
@@ -30,6 +30,7 @@ jobs:
           node --input-type=module --check < emberfall-site/src/builds.js
           grep -F './src/game.js' emberfall-site/index.html
           grep -F './src/style.css' emberfall-site/index.html
+          grep -F './src/mobile-testing.css' emberfall-site/index.html
           grep -F './engine.js' emberfall-site/src/game.js
           grep -F './progression.js' emberfall-site/src/game.js
           grep -F './workshop.js' emberfall-site/src/game.js
@@ -49,7 +50,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist/src
           cp emberfall-site/index.html dist/
-          cp emberfall-site/src/engine.js emberfall-site/src/game.js emberfall-site/src/progression.js emberfall-site/src/workshop.js emberfall-site/src/builds.js emberfall-site/src/style.css dist/src/
+          cp emberfall-site/src/engine.js emberfall-site/src/game.js emberfall-site/src/progression.js emberfall-site/src/workshop.js emberfall-site/src/builds.js emberfall-site/src/style.css emberfall-site/src/mobile-testing.css dist/src/
           cp emberfall-site/source.json dist/
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync} from 'node:fs';
@@ -91,7 +92,7 @@ jobs:
           done
           test "$found" -eq 1
           mkdir -p /tmp/emberfall-hosted/src
-          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css source.json; do
+          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css src/mobile-testing.css source.json; do
             curl -fsSL --retry 2 --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/emberfall-hosted/$asset"
             cmp -s "dist/$asset" "/tmp/emberfall-hosted/$asset"
           done
@@ -117,6 +118,8 @@ jobs:
         run: node emberfall-site/qa/hosted-smoke.mjs
       - name: Verify live iPad Safari-engine boot and tap controls, including warm-cache reload
         run: node emberfall-site/qa/hosted-webkit.mjs
+      - name: Verify live iPhone Safari-engine navigation and combat
+        run: node emberfall-site/qa/hosted-mobile.mjs
       - name: Guard Oakrest and Banner and Bone
         shell: bash
         run: |
