@@ -1,12 +1,12 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
- xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
-} from './progression.js?v=4.17.0';
+ xpNeeded,talentPoints,bonuses,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
+} from './progression.js?v=4.18.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.17.0';
-import {polishEnter,polishFeedback} from './polish.js?v=4.17.0';
+} from './builds.js?v=4.18.0';
+import {polishEnter,polishFeedback} from './polish.js?v=4.18.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -65,6 +65,19 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    cleric:{cloth:'#8b713e',light:'#f0d6a2',dark:'#424238',glow:'#e2d68d',metal:'#c2ced0'}
   }[id]||{cloth:'#456675',light:'#c2ccdc',dark:'#252f42',glow:'#d9c693',metal:'#aabfc5'};
   const gradient='emberfall-gear-'+id,accent=palette.glow;
+  const worn=profile.heroes[id]?.gear||{};
+  // Every highlighted armour and weapon shape is gated by real saved equipment.
+  const gearLayers=[
+   worn.helm?'<path d="M98 67Q97 21 129 18Q163 20 163 67L154 79L147 54L113 54L108 79Z" fill="'+palette.metal+'" stroke="'+accent+'" stroke-width="4"/><path d="M110 54H150L147 65H113Z" fill="'+palette.dark+'"/>':'',
+   worn.armour?'<path d="M91 118L104 111L156 111L169 118L171 178L132 207L89 178Z" fill="none" stroke="'+accent+'" stroke-width="5"/><path d="M103 139L129 145L158 139" fill="none" stroke="'+palette.light+'" stroke-width="5"/>':'',
+   worn.weapon?(id==='ranger'?'<path d="M208 98Q246 164 207 251" fill="none" stroke="'+palette.light+'" stroke-width="8"/><path d="M208 98L207 251M192 174L230 182" stroke="'+accent+'" stroke-width="2"/>':id==='mage'||id==='cleric'?'<path d="M212 83L213 299" stroke="'+palette.metal+'" stroke-width="9"/><circle cx="212" cy="75" r="17" fill="'+accent+'" stroke="#ffefbf" stroke-width="4"/>':'<path d="M216 89L227 145L221 249L211 249L205 145Z" fill="'+palette.light+'" stroke="'+accent+'" stroke-width="3"/><path d="M192 243H237M215 247V301" stroke="'+palette.metal+'" stroke-width="9"/>'):'',
+   worn.offhand?'<path d="M31 149L81 158L74 225L54 249L29 223Z" fill="'+palette.dark+'" stroke="'+accent+'" stroke-width="5"/><path d="M54 162V228" stroke="'+palette.light+'" stroke-width="3"/>':'',
+   worn.legs?'<path d="M105 228L111 301L122 307M151 228L152 301L170 307" fill="none" stroke="'+accent+'" stroke-width="6"/>':'',
+   worn.gloves?'<path d="M60 210L75 224L73 247L57 236Z M188 223L202 209L216 234L199 247Z" fill="'+palette.metal+'" stroke="'+accent+'" stroke-width="3"/>':'',
+   worn.boots?'<path d="M86 309L114 312L114 343L80 341Z M148 313L175 309L180 342L148 343Z" fill="'+palette.dark+'" stroke="'+accent+'" stroke-width="3"/>':'',
+   worn.charm?'<circle cx="130" cy="143" r="13" fill="'+accent+'" stroke="#ffe9ae" stroke-width="3"/>':'',
+   worn.ring?'<circle cx="60" cy="238" r="7" fill="none" stroke="#ffdd8a" stroke-width="4"/>':''
+  ].join('');
   const crest={knight:'◆',ranger:'❧',mage:'✧',cleric:'✚'}[id]||'✦';
   return '<svg class="equipment-character-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 365" aria-hidden="true">'
    +'<defs><linearGradient id="'+gradient+'-metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="'+palette.light+'"/><stop offset=".43" stop-color="'+palette.metal+'"/><stop offset="1" stop-color="'+palette.dark+'"/></linearGradient>'
@@ -90,18 +103,49 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    +'<path d="M130 128V145" stroke="'+accent+'" stroke-width="2" stroke-opacity=".75"/>'
    +'<text x="130" y="171" font-size="19" font-weight="bold" text-anchor="middle" fill="#ffffff">'+crest+'</text>'
    +'<circle cx="130" cy="334" r="2" fill="'+accent+'" opacity=".8"/>'
-   +'</svg>';
+   +'<g class="hall-visible-gear" data-equipped-slots="'+SLOTS.filter(slot=>worn[slot]).join(' ')+'">'+gearLayers+'</g></svg>';
  }
- function renderHeroes(){
+ function renderHallHeader(view){
+ const icons={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
+ const gallery=HERO_IDS.map(id=>{
+  const hero=profile.heroes[id],position=partyOrder(profile).indexOf(id)+1;
+  return '<button type="button" class="hall-hero-card" data-action="hero" data-id="'+id+'" aria-pressed="'+(id===heroId)+'" aria-label="Select '+esc(HERO_NAMES[id])+'">'
+    +'<span class="hall-portrait" aria-hidden="true">'+icons[id]+'</span>'
+    +'<span class="hall-hero-caption"><strong>'+esc(HERO_NAMES[id])+'</strong><small>'+esc(pretty[id])+' · Lv '+hero.level+'</small><small>Party position '+position+'</small></span></button>';
+ }).join('');
+ const nav=(id,name,tab)=>'<button type="button" class="hall-section-link '+(view===id?'active':'')+'" data-action="tab" data-tab="'+tab+'" aria-current="'+(view===id?'page':'false')+'">'+name+'</button>';
+ return '<section class="hall-of-heroes" data-hall-view="'+view+'" aria-label="Hall of Heroes"><header class="hall-greatroom">'
+   +'<div class="hall-greatroom-title"><div><span class="eyebrow">EMBERGUARD · CHAMPIONS GALLERY</span><h3>Hall of Heroes</h3><p>Four champions. One company. Choose who stands before the armoury.</p></div><span class="hall-heraldry" aria-hidden="true">⚔</span></div>'
+   +'<div class="hall-hero-picker" role="group" aria-label="Choose a champion">'+gallery+'</div></header>'
+   +'<nav class="hall-section-links" aria-label="Hall of Heroes sections">'+nav('equipment','⚔ Equipment & Builds','heroes')+nav('talents','✧ Talent Paths','talents')
+   +'<span class="hall-section-spacer"></span><button class="hall-quick-action" type="button" data-action="tab" data-tab="pack">🎒 Storehouse</button>'
+   +'<button class="hall-quick-action" type="button" data-action="tab" data-tab="party">♜ War Room</button></nav>'
+   +'<div class="hall-hero-content">';
+}
+function renderHallDossier(){
+ const h=profile.heroes[heroId],b=bonuses(profile,heroId),equipped=SLOTS.filter(slot=>h.gear[slot]).length;
+ const stats=[['Health',b.health],['Attack',b.attack],['Armour',b.armour],['Ability power',b.skillPower],['Healing',b.healing],['Shielding',b.shielding],['Damage bonus',b.damage],['Movement',b.speed]];
+ return '<aside class="hall-dossier" aria-label="Champion dossier">'
+  +'<div class="hall-dossier-header"><span>EMBERGUARD · FIELD RECORD</span><h4>'+esc(HERO_NAMES[heroId])+' · '+esc(pretty[heroId])+'</h4><p>Level '+h.level+' · '+talentPoints(h)+' unspent talent points</p></div>'
+  +'<div class="hall-dossier-section"><h5>Effective bonuses</h5><div class="hall-stats">'
+  +stats.map(([title,val])=>'<div class="hall-stat"><small>'+title+'</small><b>'+(val>0?'+':'')+Number(val.toFixed(2))+'</b></div>').join('')
+  +'</div><p class="hall-stat-note">Includes level, real gear, enchantments, sets and talents.</p></div>'
+  +'<div class="hall-dossier-section"><h5>Equipment · '+equipped+' / 9</h5><div class="hall-slot-list">'
+  +SLOTS.map(slot=>{const item=profile.items.find(it=>it.id===h.gear[slot]),def=item&&ITEM_DEFS[item.defId];
+    return '<span><b>'+esc(slotTitle[slot])+'</b><small>'+esc(def?.name||'Empty')+'</small></span>';}).join('')
+  +'</div></div><div class="hall-dossier-actions"><button class="tiny-btn" type="button" data-action="tab" data-tab="pack">Browse equipment</button>'
+  +'<button class="tiny-btn ghost" type="button" data-action="tab" data-tab="talents">Develop talents →</button></div></aside>';
+}
+function renderHeroes(){
   const hero=profile.heroes[heroId],level=hero.level,need=xpNeeded(level);
-  let html='<div class="hero-picker">'+HERO_IDS.map(id=>'<button type="button" class="hero-picker-btn '+(id===heroId?'active':'')+'" data-action="hero" data-id="'+id+'">'+esc(HERO_NAMES[id])+'<small>Lv '+profile.heroes[id].level+'</small></button>').join('')+'</div>';
-  html+='<div class="progress-hero"><div><span class="eyebrow">YOUR '+esc(pretty[heroId]).toUpperCase()+'</span><h3>'+esc(HERO_NAMES[heroId])+' <span>Level '+level+'</span></h3><p>Earn XP by defeating bosses. Talent choices improve your abilities in real combat.</p></div><div class="progress-stat">'+(need?hero.xp+' / '+need+' XP':'MAX LEVEL')+'</div></div>';
+  let html=renderHallHeader('equipment');
+  html+='<div class="progress-hero hall-identity-row"><div><span class="eyebrow">YOUR '+esc(pretty[heroId]).toUpperCase()+'</span><h3>'+esc(HERO_NAMES[heroId])+' <span>Level '+level+'</span></h3><p>Earn XP by defeating bosses. Talent choices improve your abilities in real combat.</p></div><div class="progress-stat">'+(need?hero.xp+' / '+need+' XP':'MAX LEVEL')+'</div></div>';
   html+='<div class="xp-track"><i style="width:'+(need?Math.min(100,Math.floor(hero.xp/need*100)):100)+'%"></i></div>';
   html+='<div class="workshop-subheading"><h3>Hero Equipment</h3><span>9 worn slots · '+esc(HERO_NAMES[heroId])+'</span></div>';
   const inspectedSlot=SLOTS.includes(equipmentSlot)?equipmentSlot:(SLOTS.find(slot=>hero.gear[slot])||'weapon');
   const inspectedId=hero.gear[inspectedSlot],inspectedInstance=inspectedId?profile.items.find(item=>item.id===inspectedId):null;
   const inspectedDef=inspectedInstance?ITEM_DEFS[inspectedInstance.defId]:null,inspectedInfo=inspectedInstance?itemDetails(inspectedInstance.defId):null;
-  html+='<div class="equipment-paperdoll equipment-armory" data-armory-hero="'+heroId+'" aria-label="'+esc(HERO_NAMES[heroId])+' equipment on a character silhouette">'
+  html+='<div class="hall-champion-layout"><div class="equipment-paperdoll equipment-armory" data-armory-hero="'+heroId+'" aria-label="'+esc(HERO_NAMES[heroId])+' equipment on a character silhouette">'
    +'<div class="armory-titlebar"><span>EMBERGUARD · CHARACTER ARMORY</span><strong>'+esc(HERO_NAMES[heroId])+'</strong><small>Level '+level+' '+esc(pretty[heroId])+'</small></div>'
    +'<div class="armory-stage"><div class="armory-rune" aria-hidden="true">✦</div>'
    +'<div class="equipment-figure">'+equipmentCharacterArt(heroId)+'</div>'
@@ -132,7 +176,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
     +'<p>No item equipped in this slot. Choose an eligible piece from your bag.</p></div>'
     +'<div class="armory-inspection-actions"><button type="button" class="tiny-btn" data-action="tab" data-tab="pack">Open Bag</button></div>';
   }
-  html+='</div></div><p class="equipped-help">Tap a framed equipment slot to inspect it; unequipping returns the same item to your bag. Your nine equipment slots are usable; empty slots can be filled from the bag.</p>'
+  html+='</div></div>'+renderHallDossier()+'</div><p class="equipped-help">Tap a framed equipment slot to inspect it; unequipping returns the same item to your bag. Your nine equipment slots are usable; empty slots can be filled from the bag.</p>'
    +'<button type="button" class="mini-link" data-action="tab" data-tab="pack">Open your equipment bag →</button>';
   html+='<div class="workshop-subheading"><h3>Collection Bonuses</h3><span>2- and 4-piece sets</span></div>';
   html+='<div class="set-overview">'+setProgress(profile,heroId).map(group=>{
@@ -154,7 +198,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    +'<p class="build-explainer">'+esc(HERO_NAMES[heroId])+' has '+talentPoints(hero)+' unspent talent '+(talentPoints(hero)===1?'point':'points')+'. Choose paths and inspect effects in the Talent Trees screen.</p>'
    +'<button type="button" class="tiny-btn" data-action="tab" data-tab="talents">Open Talent Trees →</button>'
    +'<p class="workshop-disclaimer">Equipment and talents are saved in this browser. You can respec a hero using gold in the Talent Trees screen.</p>';
-  return html;
+  return html+'</div></section>';
  }
 
  const partyPortraits={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
@@ -189,8 +233,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  function renderTalents(){
   const hero=profile.heroes[heroId],points=talentPoints(hero);
   const talent=selectedTalentId?TALENTS[heroId].find(t=>t.id===selectedTalentId):null;
-  let html='<div class="talent-screen-head"><div><span class="eyebrow">TALENT SANCTUM · HERO PROGRESSION</span><h3>Talent Paths</h3><p>Choose one talent per level tier. Examine each node and its combat effect before confirming. Routes can be mixed between levels 2 and 4.</p></div><div class="talent-points"><b>'+points+'</b><span>Point'+(points===1?'':'s')+' available</span></div></div>';
-  html+='<div class="hero-picker talent-hero-picker">'+HERO_IDS.map(id=>'<button type="button" class="hero-picker-btn '+(id===heroId?'active':'')+'" data-action="hero" data-id="'+id+'">'+esc(HERO_NAMES[id])+'<small>Lv '+profile.heroes[id].level+' · '+esc(pretty[id])+'</small></button>').join('')+'</div>';
+  let html=renderHallHeader('talents')+'<div class="talent-screen-head"><div><span class="eyebrow">TALENT SANCTUM · HERO PROGRESSION</span><h3>Talent Paths</h3><p>Choose one talent per level tier. Examine each node and its combat effect before confirming. Routes can be mixed between levels 2 and 4.</p></div><div class="talent-points"><b>'+points+'</b><span>Point'+(points===1?'':'s')+' available</span></div></div>';
   html+='<div class="talent-screen-layout"><section class="talent-tree" aria-label="Branching talent tree for '+esc(HERO_NAMES[heroId])+'">'
    +'<div class="talent-tree-root"><span class="talent-root-symbol">'+partyPortraits[heroId]+'</span><strong>'+esc(HERO_NAMES[heroId])+'</strong><small>Level '+hero.level+' · '+esc(pretty[heroId])+'</small></div>';
   for(const tier of [2,4]){
@@ -219,7 +262,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   }else html+='<div class="talent-inspector-empty"><span>✦</span><h4>Select a talent</h4><p>Tap any node to see its details, whether it is available and its exact in-combat effect.</p></div>';
   html+='<div class="talent-reset"><h4>Change your build</h4><p>Respec clears this hero’s selected talents and refunds tier choices for '+TALENT_RESPEC_COST+' gold. Equipment is unaffected.</p><button class="tiny-btn ghost" type="button" data-action="respec-talents" '+(!hero.talents.length||profile.gold<TALENT_RESPEC_COST?'disabled':'')+'>'+(confirmRespec?'Confirm Respec · '+TALENT_RESPEC_COST+' gold':'Respec Talents · '+TALENT_RESPEC_COST+' gold')+'</button><small>'+profile.gold+' gold available</small></div>';
   html+='</aside></div><p class="workshop-disclaimer">Talent choices apply to the next boss encounter. A confirmation is required to spend points or respec. Existing learned talents and local saves are preserved.</p>';
-  return html;
+  return html+'</div></section>';
  }
  function renderInspection(itemId,defId,persistent=false,compareHeroId=heroId){
   const info=itemDetails(defId);if(!info)return '';
@@ -599,6 +642,12 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   polishFeedback('Company progress updated','success');
   return result;
  }
+ function revealTalentTree(){
+  const tree=body.querySelector('.talent-screen-layout');
+  if(!tree||!root.classList.contains('camp-page'))return;
+  const y=window.scrollY+tree.getBoundingClientRect().top-155;
+  window.scrollTo({top:Math.max(0,y),behavior:'instant'});
+ }
  function open(tab='heroes',selected='knight'){
   if(!root.classList.contains('hidden'))return;
   returnFocus=document.activeElement;
@@ -609,6 +658,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   pendingSell=null;
   lastPresentedLocation=null;
   root.classList.remove('hidden');render();onOpen();
+  if(current==='talents')revealTalentTree();
   root.querySelector('#workshopClose').focus({preventScroll:true});
  }
  function close(){
@@ -622,7 +672,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(tabNames[tab]){
    confirmEnchantId=null;confirmDelveAbandon=false;
    current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;render();
-   if(root.classList.contains('camp-page'))window.scrollTo({top:0,behavior:'instant'});else body.scrollTop=0;
+   if(root.classList.contains('camp-page')){if(current==='talents')revealTalentTree();else window.scrollTo({top:0,behavior:'instant'});}else body.scrollTop=0;
   }
  });
  // The native phone selector travels through the exact same tab navigation
@@ -873,6 +923,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(action==='tab'&&tabNames[btn.dataset.tab]){
    confirmEnchantId=null;confirmDelveAbandon=false;current=btn.dataset.tab;
    notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;render();
+   if(current==='talents')revealTalentTree();
    tabs.querySelector('button[data-tab="'+current+'"]')?.focus({preventScroll:true});
    return;
   }

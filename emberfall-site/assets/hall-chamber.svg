@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 460" role="img" aria-labelledby="title desc" preserveAspectRatio="xMidYMid slice">
+<title id="title">Hall of Heroes, Emberfall Refuge</title>
+<desc id="desc">Candlelit stone hall, tall gothic arches, champion banners and an illuminated heraldic dais.</desc>
+<defs>
+ <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#26373a"/><stop offset=".7" stop-color="#1b2a2b"/><stop offset="1" stop-color="#101b1e"/></linearGradient>
+ <linearGradient id="drape" x1="0" y1="0" x2=".4" y2="1"><stop stop-color="#8d583b"/><stop offset=".6" stop-color="#57322e"/><stop offset="1" stop-color="#321f22"/></linearGradient>
+ <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f3d79e" stop-opacity=".85"/><stop offset="1" stop-color="#cba05d" stop-opacity="0"/></linearGradient>
+ <radialGradient id="halo"><stop stop-color="#ddb879" stop-opacity=".27"/><stop offset="1" stop-color="#ddb879" stop-opacity="0"/></radialGradient>
+ <pattern id="blocks" width="135" height="62" patternUnits="userSpaceOnUse"><rect width="135" height="62" fill="none" stroke="#a5aa8750" stroke-width="2"/><path d="M68 0V31M0 31H135M30 31V62M98 31V62" stroke="#e1c89a" stroke-opacity=".09"/></pattern>
+</defs>
+<rect width="1400" height="460" fill="url(#stone)"/><rect width="1400" height="460" fill="url(#blocks)" opacity=".28"/>
+<path d="M0 0H1400V110L0 110Z" fill="#101c20" opacity=".8"/>
+<g opacity=".95">
+ <path d="M95 400V160Q95 57 195 57Q295 57 295 160V400Z M426 400V160Q426 57 526 57Q626 57 626 160V400Z M758 400V160Q758 57 858 57Q958 57 958 160V400Z M1090 400V160Q1090 57 1190 57Q1290 57 1290 160V400Z" fill="#10191e" stroke="#987f5a" stroke-width="9"/>
+ <path d="M118 392V167Q118 82 195 82Q272 82 272 167V392Z M449 392V167Q449 82 526 82Q603 82 603 167V392Z M781 392V167Q781 82 858 82Q935 82 935 167V392Z M1113 392V167Q1113 82 1190 82Q1267 82 1267 167V392Z" fill="#263f42" stroke="#5b5851" stroke-width="5"/>
+ <path d="M132 381V170Q132 96 195 96Q258 96 258 170V381Z M463 381V170Q463 96 526 96Q589 96 589 170V381Z M795 381V170Q795 96 858 96Q921 96 921 170V381Z M1127 381V170Q1127 96 1190 96Q1253 96 1253 170V381Z" fill="#18262a"/>
+</g>
+<g opacity=".8" stroke="#d7c18c">
+ <path d="M172 98V373M218 98V373M503 98V373M549 98V373M835 98V373M881 98V373M1167 98V373M1213 98V373" opacity=".15" stroke-width="3"/>
+</g>
+<path d="M0 0H1400V33H0Z" fill="#473c31"/><path d="M0 33H1400" stroke="#ae9365" stroke-width="8"/>
+<g>
+ <path d="M290 0H390V209L340 239L290 209Z M626 0H726V209L676 239L626 209Z M960 0H1060V209L1010 239L960 209Z" fill="url(#drape)" stroke="#bba172" stroke-width="6"/>
+ <path d="M309 21H371V196L340 215L309 196Z M645 21H707V196L676 215L645 196Z M979 21H1041V196L1010 215L979 196Z" fill="none" stroke="#e5c280" stroke-width="3" opacity=".5"/>
+ <path d="M324 105L340 80L356 105L340 129Z M660 95L676 74L692 95L676 121Z M994 105L1010 80L1026 105L1010 129Z" fill="#d3a968"/>
+ <path d="M327 146L340 160L353 146M663 144L676 160L689 144M997 146L1010 160L1023 146" fill="none" stroke="#d3a968" stroke-width="4"/>
+</g>
+<g opacity=".8">
+ <path d="M0 375L700 300L1400 375V460H0Z" fill="#3d3631"/>
+ <path d="M0 401L700 320L1400 401M0 442L700 360L1400 442" fill="none" stroke="#b4a07e" opacity=".28" stroke-width="3"/>
+ <path d="M260 460L700 320L1140 460" fill="none" stroke="#b4a07e" opacity=".24" stroke-width="3"/>
+</g>
+<g>
+ <ellipse cx="700" cy="300" rx="270" ry="180" fill="url(#halo)"/>
+ <path d="M590 403L810 403L845 443L555 443Z" fill="#25282a" stroke="#a28a62" stroke-width="6"/>
+ <path d="M605 395V381H795V395" fill="none" stroke="#dec08c" stroke-width="4"/>
+ <path d="M642 380Q700 362 758 380" fill="none" stroke="#caa371" stroke-width="3" opacity=".7"/>
+</g>
+<g>
+ <path d="M93 280L110 254L127 280L116 301H104Z M1273 280L1290 254L1307 280L1296 301H1284Z" fill="#d9a35d"/>
+ <path d="M90 296V356M110 298V360M1290 298V360M1310 296V356" stroke="#836d51" stroke-width="6"/>
+ <ellipse cx="110" cy="257" rx="90" ry="130" fill="url(#halo)"/><ellipse cx="1290" cy="257" rx="90" ry="130" fill="url(#halo)"/>
+ <path d="M105 278Q91 267 100 246Q112 237 110 218Q126 238 121 251Q128 269 116 279Z M1285 278Q1271 267 1280 246Q1292 237 1290 218Q1306 238 1301 251Q1308 269 1296 279Z" fill="#ffca78"/>
+ <path d="M108 268Q101 257 111 242Q122 261 113 269Z M1288 268Q1281 257 1291 242Q1302 261 1293 269Z" fill="#ffedaf"/>
+</g>
+<rect width="1400" height="460" fill="url(#glow)" opacity=".07"/>
+</svg>

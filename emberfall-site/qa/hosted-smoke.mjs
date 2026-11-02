@@ -82,6 +82,17 @@ try{
  if(!helm||!legs||!boots||!(helm.y<charm.y&&legs.y>armour.y&&boots.y>weapon.y))throw Error('Hosted nine worn slots arranged incorrectly');
  if(!(await page.locator('.paperdoll-slot-armour .paperdoll-unequip').isVisible()))throw Error('Hosted equipped armour cannot be unequipped from body slot');
  if(!(await page.locator('.equipment-character-svg').isVisible()))throw Error('Reference-style centre hero illustration missing');
+  if((await page.locator('link[href*="hall.css"]').count())!==1)throw Error('Live Hall styles missing');
+  if((await page.locator('.hall-hero-card').count())!==4)throw Error('Live champion gallery missing');
+  if(!(await page.locator('.hall-dossier').isVisible()))throw Error('Live Hall hero dossier missing');
+  if((await page.locator('.workshop-shell').evaluate(el=>getComputedStyle(el).flexDirection))!=='column')throw Error('Live Hall is still a sidebar');
+  if(!(await page.locator('.hall-visible-gear').getAttribute('data-equipped-slots')).includes('armour'))throw Error('Live hero artwork does not reflect worn armour');
+  await page.locator('.hall-hero-card[data-id="ranger"]').click();
+  if((await page.locator('.hall-hero-card[data-id="ranger"]').getAttribute('aria-pressed'))!=='true')throw Error('Live hero switching failed');
+  await page.locator('.hall-section-link[data-tab="talents"]').click();
+  if(!(await page.locator('.talent-tree').isVisible()))throw Error('Live Hall talent wing inaccessible');
+  await page.locator('.hall-section-link[data-tab="heroes"]').click();
+  await page.locator('.hall-hero-card[data-id="knight"]').click();
  if(!(await page.locator('.armory-titlebar').innerText()).includes('Aldric'))throw Error('Reference-style hero header not showing selected hero');
  if(!(await page.locator('.armory-inspection-copy').innerText()).includes('Fieldkeeper Vest'))throw Error('Initial equipped item details missing');
  await page.locator('[data-action="inspect-gear-slot"][data-slot="charm"]').click();
@@ -169,13 +180,13 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.17.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.18.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.17.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.18.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
@@ -212,7 +223,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.17.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.18.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -235,7 +246,7 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.17.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.18.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -269,7 +280,7 @@ try{
  await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  // Isolated live source must also support real craft XP, generated gear and potion effects.
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.17.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.18.0');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=30;
   if(!writeProfile(localStorage,p))throw Error('Live crafting fixture could not be saved');
