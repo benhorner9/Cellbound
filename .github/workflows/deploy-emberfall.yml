@@ -93,7 +93,7 @@ jobs:
             sleep 7
           done
           test "$found" -eq 1
-          mkdir -p /tmp/emberfall-hosted/src
+          mkdir -p /tmp/emberfall-hosted/src /tmp/emberfall-hosted/assets
           for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css src/mobile-testing.css src/refuge.css assets/refuge-scene.svg source.json; do
             curl -fsSL --retry 2 --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/emberfall-hosted/$asset"
             cmp -s "dist/$asset" "/tmp/emberfall-hosted/$asset"
