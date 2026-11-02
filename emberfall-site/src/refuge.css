@@ -1,0 +1,81 @@
+/* UX Block 1 — Emberfall Refuge. Original illustrated location hub; management mechanics untouched. */
+#app[data-view="camp"]{background:radial-gradient(ellipse at 50% 0,#30443e 0,transparent 56%)}
+#app[data-view="camp"] .camp-screen{max-width:1460px;margin:0 auto}
+#app[data-view="camp"] .camp-nav{border-color:#806d50;background:linear-gradient(90deg,#242d2b,#1b2d2b);box-shadow:0 3px 17px #050e0b66}
+#app[data-view="camp"] .camp-nav-button{border-color:#7b7964;background:transparent;color:#e0d2b6}
+#app[data-view="camp"] .camp-nav-button.active{background:linear-gradient(#6b624b,#393c32);border-color:#d8b574;color:#fff0d3}
+.camp-screen[data-camp-tab="home"] .camp-content{display:flex;flex-direction:column;gap:16px}
+.camp-screen[data-camp-tab="home"] .camp-building-area,.camp-screen[data-camp-tab="home"] .camp-expedition-panel{width:100%;max-width:none}
+.camp-intro.refuge-intro{border-color:#957c58;background:linear-gradient(96deg,#1b2a2b 0,#253d37 62%,#4a4434 100%);padding:21px 29px;box-shadow:inset 0 1px #fff0cb32}
+.refuge-intro:after{content:'✦';font:200px Georgia,serif;right:50px;color:#c9984719}
+.refuge-intro .refuge-kicker{font:700 10px system-ui,sans-serif;letter-spacing:.2em;color:#d7b888}
+.refuge-intro h1{font-size:clamp(29px,3.2vw,47px);text-shadow:0 2px 10px #030f0cb3}
+.refuge-intro p{font-size:clamp(12px,1.1vw,15px);max-width:800px;color:#d4d4c1}
+.refuge-intro .camp-status-line{gap:9px 22px;padding-top:9px;border-top:1px solid #c6b98b33;font-size:12px}
+.refuge-intro .camp-status-line>span{white-space:nowrap}
+.refuge-grounds.camp-grounds{margin-top:14px;padding:0;border-color:#ab895b;border-radius:17px;overflow:hidden;background:#112c29;box-shadow:0 16px 40px #07120d99}
+.refuge-grounds.camp-grounds:before{content:none}
+.refuge-heading.camp-ground-heading{margin:0;padding:12px 18px;min-height:42px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg,#293932,#142922);border-bottom:1px solid #ad925b70;color:#ddc9a3}
+.refuge-heading .eyebrow{font-size:11px;letter-spacing:.19em;color:#e5c389}
+.refuge-heading .refuge-hint{font:12px system-ui,sans-serif;color:#c4c8b3}
+.refuge-map{position:relative;height:clamp(420px,43vw,590px);overflow:hidden;isolation:isolate;background:#253f3e}
+.refuge-map:before{content:"";position:absolute;inset:0;background-image:url("../assets/refuge-scene.svg");background-position:center;background-size:cover;background-repeat:no-repeat;filter:saturate(.95)}
+.refuge-map:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#071c2090,transparent 25%,transparent 76%,#08171983),linear-gradient(0deg,#091d198f,transparent 24%,transparent 75%,#071a2663)}
+.refuge-map .camp-buildings{position:absolute;inset:0;z-index:2;display:block}
+.refuge-site.camp-building{position:absolute;width:clamp(125px,16.5%,228px);min-height:68px;padding:7px 12px 9px;gap:1px;display:grid;grid-template-columns:auto 1fr;align-items:center;justify-items:start;text-align:left;border:1px solid #e4b876ba;border-radius:5px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 88%,97% 100%,3% 100%,0 88%,0 12%);background:linear-gradient(142deg,#4f3f30f5,#292b26f5 72%);box-shadow:inset 0 1px #fff5cb3d,0 8px 15px #04120c9c;cursor:pointer;transform:translate(-50%,-50%);transition:filter .18s,background .18s,scale .18s}
+.refuge-site.camp-building:hover,.refuge-site.camp-building:focus-visible{background:linear-gradient(135deg,#685039,#384335);filter:brightness(1.22);scale:1.04;outline:3px solid #f4d495;outline-offset:2px}
+.refuge-site.camp-building:active{scale:.98}
+.refuge-site .camp-building-icon{grid-row:span 2;display:grid;place-items:center;width:37px;height:41px;margin-right:8px;background:radial-gradient(#64513b,#222c27);border-color:#b99a62;border-radius:50%;font-size:22px}
+.refuge-site strong{font-size:clamp(13px,1.28vw,18px);line-height:1.1}
+.refuge-site small{font-size:clamp(9px,.82vw,11px);line-height:1.2;opacity:.95}
+.refuge-site--party{left:12%;top:49%}
+.refuge-site--heroes{left:37%;top:25%}
+.refuge-site--craft{left:76%;top:28%}
+.refuge-site--slayer{left:57%;top:66%}
+.refuge-site--pack{left:25%;top:79%}
+.refuge-site--delving{left:87%;top:77%}
+.refuge-expedition{position:absolute;z-index:3;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:13px;align-items:center;justify-content:center;min-height:53px;min-width:220px;max-width:calc(100% - 20px);padding:10px 23px;border:1px solid #f2c785;border-radius:5px;background:linear-gradient(#725038,#463429);box-shadow:0 4px 17px #020e0cba;color:#fff0cf;font:700 17px Georgia,serif;text-align:center;cursor:pointer}
+.refuge-expedition span{font-size:23px}.refuge-expedition:hover,.refuge-expedition:focus-visible{background:#825f3b;outline:3px solid #f7dba9;outline-offset:2px}
+.refuge-service-heading{display:flex;gap:12px;align-items:baseline;margin:18px 17px 10px;color:#e9d7af}
+.refuge-service-heading strong{font:700 20px Georgia,serif}.refuge-service-heading small{font:12px system-ui,sans-serif;color:#b8c4b6}
+.refuge-services{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;padding:0 14px 16px}
+.refuge-service.camp-building{min-height:78px;align-items:start;justify-content:center;display:flex;flex-direction:column;gap:4px;padding:9px 9px 9px 13px;text-align:left;border:1px solid #6a6852;border-left:3px solid #987950;border-radius:3px;background:linear-gradient(135deg,#283d34,#1b2c29);box-shadow:none}
+.refuge-service.camp-building:hover,.refuge-service.camp-building:focus-visible{background:#3c503d;border-color:#d3b476;outline:2px solid #f5d6a0;outline-offset:1px}
+.refuge-service .camp-building-icon{display:none}
+.refuge-service strong{color:#ead6ad;font-size:14px}.refuge-service small{color:#bcc8b6;font-size:10px}
+.refuge-status{display:flex;gap:8px 20px;justify-content:space-between;flex-wrap:wrap;align-items:center;padding:11px 17px 13px;background:#1a302b;border-top:1px solid #947c5969;font:12px/1.4 system-ui,sans-serif;color:#d6c7a8}
+.refuge-status b{color:#f0d39b}
+.refuge-status [data-camp]{color:#f3d6a3;text-decoration:underline;text-underline-offset:3px;background:transparent;border:none;font:700 12px system-ui,sans-serif;min-height:38px;padding:6px;cursor:pointer}
+.camp-screen[data-camp-tab="home"] .camp-expedition-panel{border-color:#85724f;background:linear-gradient(120deg,#263b33,#152927)}
+.camp-screen[data-camp-tab="home"] .camp-expedition-panel .encounter-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.camp-screen[data-camp-tab="home"] .camp-expedition-panel .encounter-choice{min-height:88px}
+.camp-screen .camp-roster-panel{border-color:#927d5c;background:linear-gradient(90deg,#243d32,#192c2a)}
+.camp-screen .camp-roster-member{background:#283c32;border-color:#746b52}
+.camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel{border-color:#a58a5f;background:linear-gradient(145deg,#293c33,#172a2b)}
+@media(max-width:1000px){
+ .refuge-site--party{left:14%;top:50%}.refuge-site--heroes{left:37%;top:26%}.refuge-site--craft{left:78%;top:28%}
+ .refuge-site--slayer{left:55%;top:66%}.refuge-site--pack{left:24%;top:80%}.refuge-site--delving{left:87%;top:81%}
+ .refuge-services{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .refuge-map{height:490px}
+}
+@media(max-width:670px){
+ .refuge-intro.camp-intro{padding:16px}.refuge-intro h1{font-size:29px}
+ .refuge-intro .camp-status-line{gap:6px 15px;font-size:11px}
+ .refuge-heading.camp-ground-heading{padding:10px 13px}.refuge-heading .refuge-hint{font-size:10px}
+ .refuge-map{height:auto;min-height:0;padding-top:clamp(168px,44vw,230px)}
+ .refuge-map:before{bottom:auto;height:clamp(168px,44vw,230px);background-size:cover;background-position:center}
+ .refuge-map:after{bottom:auto;height:clamp(168px,44vw,230px)}
+ .refuge-map .camp-buildings{position:relative;inset:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px;background:#182c29}
+ .refuge-site.camp-building{position:relative;left:auto;top:auto;transform:none;scale:1;width:100%;min-height:78px;clip-path:none;border-radius:6px;box-shadow:none;padding:9px 8px}
+ .refuge-site.camp-building:hover,.refuge-site.camp-building:focus-visible{scale:1}
+ .refuge-site .camp-building-icon{width:33px;height:35px;font-size:20px;margin-right:6px}
+ .refuge-site strong{font-size:14px}.refuge-site small{font-size:10px}
+ .refuge-expedition{top:clamp(116px,29vw,175px);bottom:auto;min-width:195px;min-height:44px;padding:8px 18px;font-size:15px}
+ .refuge-expedition span{font-size:19px}
+ .refuge-services{grid-template-columns:repeat(2,minmax(0,1fr));padding:0 12px 13px}
+ .refuge-service-heading{margin:13px 12px 9px}.refuge-service-heading strong{font-size:18px}.refuge-service-heading small{font-size:11px}
+ .refuge-service.camp-building{min-height:71px}
+ .refuge-status{gap:5px;font-size:11px;padding:9px 12px}
+ .camp-screen[data-camp-tab="home"] .camp-expedition-panel .encounter-choices{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.refuge-site.camp-building{transition:none}}

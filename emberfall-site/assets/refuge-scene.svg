@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" role="img" aria-label="A hand-drawn night-time refuge with a keep, forge, storehouse and lantern-lit roads">
+<defs>
+<linearGradient id="sky" x2="0" y2="1"><stop stop-color="#112534"/><stop offset=".57" stop-color="#3c4b45"/><stop offset="1" stop-color="#8b6541"/></linearGradient>
+<linearGradient id="hill" x2="0" y2="1"><stop stop-color="#466051"/><stop offset="1" stop-color="#182e2d"/></linearGradient>
+<linearGradient id="ground" x2="0" y2="1"><stop stop-color="#33483a"/><stop offset="1" stop-color="#122d28"/></linearGradient>
+<linearGradient id="roof" x2="0" y2="1"><stop stop-color="#754e3b"/><stop offset=".5" stop-color="#422e30"/><stop offset="1" stop-color="#2c282a"/></linearGradient>
+<radialGradient id="lamp"><stop stop-color="#ffd998" stop-opacity=".76"/><stop offset=".4" stop-color="#e5a04e" stop-opacity=".24"/><stop offset="1" stop-color="#dd7d37" stop-opacity="0"/></radialGradient>
+<pattern id="stone" width="30" height="21" patternUnits="userSpaceOnUse"><path d="M0 20H30M15 0V10M0 10h15M30 10H15" stroke="#a5a08a" stroke-opacity=".14" fill="none" stroke-width="1"/></pattern>
+<g id="fir"><path d="M0 -100L-35 -32H-21L-43 5H-23L-46 43H45L22 5H41L20 -32H33Z" fill="#183a34" stroke="#102923" stroke-width="4"/><path d="M0 -100L-11 -27L-27 18L-8 14L-29 43" stroke="#648070" stroke-opacity=".5" stroke-width="4" fill="none"/><path d="M0 43v21" stroke="#342c27" stroke-width="11"/></g>
+<g id="torch"><ellipse cx="0" cy="0" rx="67" ry="58" fill="url(#lamp)"/><path d="M-3 3V39" stroke="#191f1d" stroke-width="8"/><path d="M-8 -5L-1 -31L13 -9L0 7Z" fill="#ffdb88"/><path d="M0 -14L-8 -1L6 1Z" fill="#fff2b0"/></g>
+<g id="hut"><path d="M-72 -40L0 -102L72 -40V42H-72Z" fill="#746a58" stroke="#242b26" stroke-width="7"/><path d="M-85 -39L-2 -118L84 -38L62 -34L0 -87L-63 -33Z" fill="url(#roof)" stroke="#201e22" stroke-width="6"/><path d="M-13 42V-9Q0 -22 13 -9V42Z" fill="#252a25" stroke="#1d2421" stroke-width="5"/><rect x="-55" y="-6" width="22" height="28" fill="#ecb36d" stroke="#332925" stroke-width="6"/><rect x="34" y="-6" width="22" height="28" fill="#edb06c" stroke="#332925" stroke-width="6"/><path d="M-68 -33H69" stroke="#b28c5b" stroke-width="5" opacity=".5"/></g>
+</defs>
+<rect width="1200" height="580" fill="url(#sky)"/>
+<circle cx="916" cy="104" r="62" fill="#e8caa0" opacity=".23"/><circle cx="916" cy="104" r="37" fill="#d9c7a8" opacity=".72"/>
+<g fill="#fae2b3" opacity=".55"><circle cx="89" cy="42" r="1.5"/><circle cx="151" cy="94" r="2"/><circle cx="450" cy="40" r="1.5"/><circle cx="667" cy="67" r="1.7"/><circle cx="1116" cy="66" r="2"/><circle cx="1030" cy="32" r="1.3"/></g>
+<path d="M0 277L90 194L200 247L332 153L470 242L608 161L761 231L896 147L1014 215L1104 148L1200 231V580H0Z" fill="#253d42" opacity=".76"/>
+<path d="M0 322L157 253L295 292L466 231L632 275L784 221L916 296L1085 217L1200 269V580H0Z" fill="url(#hill)"/>
+<path d="M0 399Q201 296 434 351T863 342T1200 362V580H0Z" fill="url(#ground)"/>
+<g opacity=".85"><use href="#fir" transform="translate(33 331) scale(1.2)"/><use href="#fir" transform="translate(95 335) scale(.88)"/><use href="#fir" transform="translate(1151 330) scale(1.15)"/><use href="#fir" transform="translate(1076 330) scale(.82)"/><use href="#fir" transform="translate(1040 304) scale(.66)"/><use href="#fir" transform="translate(231 306) scale(.6)"/><use href="#fir" transform="translate(803 282) scale(.52)"/></g>
+<!-- palisade and distant buildings -->
+<path d="M142 367V267L165 249L186 267V367M1016 366V263L1036 246L1056 263V366" fill="#5e5c4c" stroke="#222f2b" stroke-width="9"/>
+<path d="M150 272L112 283V346M1025 271L1080 287V348" fill="none" stroke="#9c825d" stroke-width="13" stroke-dasharray="5 9"/>
+<path d="M158 365Q355 345 580 370T1044 367V468H158Z" fill="#6e6b54" stroke="#27332e" stroke-width="9"/>
+<path d="M165 369V448M195 362V454M225 363V450M255 364V450M285 366V453M315 363V458M345 365V452M375 366V453M405 368V456M435 367V452M465 368V458M495 369V458M525 369V458M555 369V458M585 369V458M615 369V458M645 369V458M675 368V458M705 369V458M735 368V458M765 367V458M795 368V458M825 367V458M855 365V458M885 365V458M915 365V458M945 365V458M975 368V458M1005 369V458M1035 371V460" stroke="#344137" stroke-width="11"/>
+<!-- path and central square -->
+<path d="M545 580C545 502 573 483 581 436S590 378 582 342M0 541Q287 442 582 455T1200 525" stroke="#a48a65" stroke-opacity=".56" stroke-width="88" fill="none"/>
+<path d="M545 580C545 502 573 483 581 436S590 378 582 342M0 541Q287 442 582 455T1200 525" stroke="#443f33" stroke-opacity=".62" stroke-width="66" fill="none"/>
+<ellipse cx="598" cy="452" rx="190" ry="71" fill="#605d4b"/><ellipse cx="598" cy="452" rx="190" ry="71" fill="url(#stone)"/>
+<!-- keep / hall -->
+<g transform="translate(420 311)"><rect x="-140" y="-115" width="275" height="173" fill="#8c8570" stroke="#2d3230" stroke-width="10"/><rect x="-164" y="-148" width="53" height="210" fill="#6e715e" stroke="#2b322f" stroke-width="8"/><rect x="106" y="-148" width="53" height="210" fill="#6e715e" stroke="#2b322f" stroke-width="8"/><path d="M-175 -148l37 -55l38 55M93 -148l38 -55l38 55" fill="url(#roof)" stroke="#302729" stroke-width="7"/><path d="M-127 -116L0 -217L126 -116Z" fill="url(#roof)" stroke="#2b2b2c" stroke-width="8"/><path d="M-44 58V-43Q0 -82 44 -43V58" fill="#242b28" stroke="#28302a" stroke-width="7"/><rect x="-107" y="-65" width="32" height="45" rx="14" fill="#ecae68" stroke="#303029" stroke-width="7"/><rect x="76" y="-65" width="32" height="45" rx="14" fill="#ecae68" stroke="#303029" stroke-width="7"/><path d="M0 -216V-264" stroke="#c5ab79" stroke-width="5"/><path d="M0 -260L70 -238L0 -225Z" fill="#b75e40"/><path d="M-134 0H132" stroke="#342e29" stroke-width="5" opacity=".4"/><path d="M-140 24H135" stroke="#d2c7a7" stroke-width="6" opacity=".12"/></g>
+<!-- blacksmith forging chimney -->
+<g transform="translate(876 320)"><use href="#hut" transform="scale(1.25)"/><rect x="39" y="-153" width="29" height="67" fill="#6d6964" stroke="#312e28" stroke-width="5"/><path d="M48 -169Q24 -191 49 -210T61 -252" fill="none" stroke="#8d9685" stroke-width="16" opacity=".38"/><path d="M-40 53H35L20 24H-27Z" fill="#515048" stroke="#1e2b27" stroke-width="5"/><path d="M-13 24V10" stroke="#f4a553" stroke-width="9"/></g>
+<!-- left war barracks -->
+<use href="#hut" transform="translate(175 417) scale(.84)"/>
+<!-- right gate -->
+<g transform="translate(1044 441)"><rect x="-63" y="-77" width="130" height="101" fill="#79725d" stroke="#2a322d" stroke-width="9"/><path d="M-76 -78L0 -144L79 -78Z" fill="url(#roof)" stroke="#352b29" stroke-width="7"/><path d="M-31 25V-34Q0 -56 31 -34V25" fill="#1d2929" stroke="#ac8b5e" stroke-width="6"/><path d="M0 -64V-107" stroke="#a99474" stroke-width="5"/></g>
+<!-- storehouse and noticeboard -->
+<use href="#hut" transform="translate(290 514) scale(.64)"/>
+<g transform="translate(668 466)"><path d="M-70 -68H70V53H-70Z" fill="#5b3b29" stroke="#2a2923" stroke-width="9"/><path d="M-78 -73L80 -70L64 -92H-61Z" fill="#8b6547" stroke="#2d2a27" stroke-width="7"/><rect x="-42" y="-55" width="31" height="43" fill="#dbc7a0" transform="rotate(-7 -42 -55)"/><rect x="-2" y="-47" width="42" height="47" fill="#a88b64" transform="rotate(8 -2 -47)"/><rect x="31" y="-60" width="24" height="37" fill="#ebc68e" transform="rotate(-3 31 -60)"/><path d="M-50 52V75M54 52V75" stroke="#41352a" stroke-width="11"/></g>
+<!-- campfire -->
+<g transform="translate(566 468)"><ellipse cy="19" rx="63" ry="27" fill="#2d342e"/><ellipse cy="-5" rx="64" ry="51" fill="url(#lamp)"/><path d="M-23 24L23 -6M-23 -3L23 25" stroke="#5a3427" stroke-width="11"/><path d="M-11 14Q-38 -15 5 -41Q-1 -8 17 -27Q41 15 5 26Z" fill="#f2944d"/><path d="M-5 16Q-12 -8 8 -18Q5 -2 20 9L9 22Z" fill="#ffe19a"/></g>
+<!-- torches and flowers -->
+<use href="#torch" transform="translate(255 431) scale(.8)"/><use href="#torch" transform="translate(793 439) scale(.8)"/><use href="#torch" transform="translate(997 393) scale(.7)"/><use href="#torch" transform="translate(410 386) scale(.65)"/>
+<g fill="#bd9e66" opacity=".5"><circle cx="131" cy="514" r="3"/><circle cx="167" cy="548" r="2"/><circle cx="799" cy="548" r="3"/><circle cx="1095" cy="513" r="3"/><circle cx="1132" cy="475" r="2"/></g>
+<path d="M0 560Q260 522 461 558T1200 539V580H0Z" fill="#092423" opacity=".55"/>
+</svg>
