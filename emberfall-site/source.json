@@ -1,7 +1,7 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "6504180144feacafababa18e05189d9ab0d1c987",
+  "sourceCommit": "81ad5fae93ebeb89568c8a5081616eadc01113aa",
   "target": "/emberfall/",
   "stage": "refuge-ux-block-1-v4.15.0",
   "assets": [
@@ -16,5 +16,5 @@
     "src/refuge.css",
     "assets/refuge-scene.svg"
   ],
-  "note": "UX Block 1: illustrated Emberfall Refuge headquarters, six interactive main-site signs, seven supporting locations, War Table expedition entry, live bounty/boss summaries, desktop/iPad/mobile layouts; existing company saves, combat, contract progression, skills and items unchanged. Deployed only via /emberfall/ isolated bridge. Canonical QA and hosted byte/MIME/browser checks required."
+  "note": "UX Block 1: illustrated Emberfall Refuge headquarters, six interactive main-site signs, seven supporting locations, War Table expedition entry, live bounty/boss summaries, desktop/iPad/mobile layouts; existing company saves, combat, contract progression, skills and items unchanged. Deployed only via /emberfall/ isolated bridge. Canonical QA and hosted byte/MIME/browser checks required. Canonical Emberfall PR #47 merged at 81ad5fae93ebeb89568c8a5081616eadc01113aa with full source unit, Chromium, iPad and WebKit QA passed."
 }
