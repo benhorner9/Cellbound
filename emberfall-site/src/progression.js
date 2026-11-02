@@ -35,9 +35,9 @@ export const ACCOUNT_SKILLS=Object.freeze({
  smithing:{name:'Blacksmithing',icon:'⚒️',description:'Forge lasting weapons and armour from boss materials.',available:true,unlocks:[[1,'Basic armour patterns'],[5,'Improved set pieces'],[10,'Epic equipment recipes'],[25,'Mythic forging · future']]},
  alchemy:{name:'Alchemy',icon:'⚗️',description:'Brew elixirs that strengthen your party in battle.',available:true,unlocks:[[1,'Basic battle elixirs'],[4,'Additional elemental recipes'],[10,'Grand elixirs'],[25,'Spiritbound tonics · future']]},
  slayer:{name:'Slayer',icon:'☠️',description:'Hunt assigned bosses, earn XP per victory and spend Slayer Points on supplies. Longer assignments and hunt streaks unlock better rewards.',available:true,unlocks:[[1,'Thornwarden contracts & rewards shop'],[3,'Bramble Purge extended tasks'],[5,'Cindermaw hunts'],[7,'Furnace Purge extended tasks'],[10,'Tempest Seraph hunts'],[12,'Skybreak Trial'],[20,'Master hunts · future']]},
- enchanting:{name:'Enchanting',icon:'✨',description:'Future profession: imbue equipment with magical properties.',available:false,unlocks:[[1,'Arcane inscriptions · future'],[10,'Elemental enhancements · future']]},
+ enchanting:{name:'Enchanting',icon:'✨',description:'Permanently enhance owned equipment with elemental infusions that improve real combat stats.',available:true,unlocks:[[1,'Ironroot Ward · bonus health'],[5,'Ember Brand · bonus damage'],[10,'Skywoven Rune · combat speed'],[25,'Runic resonance · future']]},
  salvaging:{name:'Salvaging',icon:'🧰',description:'Recover crafting materials from unwanted boss loot at the Salvaging Station. Crafted pieces return a little material but no Salvaging XP.',available:true,unlocks:[[1,'Uncommon boss-loot salvage'],[5,'Rare equipment recovery'],[10,'Additional material from boss gear'],[15,'Refined essence recovery'],[25,'Relic reclamation · future']]},
- delving:{name:'Delving',icon:'🗝️',description:'Future adventure skill: challenge deeper multi-stage expeditions.',available:false,unlocks:[[1,'First descent · future'],[10,'Elite dungeon routes · future']]}
+ delving:{name:'Delving',icon:'🗝️',description:'Challenge persistent multi-boss gauntlets. Earn XP for each expedition victory and collect finishing rewards.',available:true,unlocks:[[1,'Ashen Trail · two encounters'],[5,'Stormbound Passage · three encounters'],[10,'Skybreak Ordeal · elite route'],[25,'Forgotten depths · future']]}
 });
 export const SLAYER_CONTRACTS=Object.freeze({
  thornwarden:{bossId:'thornwarden',level:1,target:3,xp:65,points:3},
@@ -72,6 +72,11 @@ export const MATERIAL_DEFS=Object.freeze({
  'verdant-ore':{name:'Ironroot Ore',icon:'🪨'},'verdant-essence':{name:'Verdant Essence',icon:'🌿'},'verdant-seal':{name:'Thornwarden Mark',icon:'🍃'},
  'ember-ore':{name:'Cinder Ore',icon:'🪨'},'ember-essence':{name:'Ember Essence',icon:'🔥'},'ember-seal':{name:'Cindermaw Mark',icon:'☄️'},
  'tempest-ore':{name:'Skyiron Ore',icon:'🪨'},'tempest-essence':{name:'Storm Essence',icon:'⚡'},'tempest-seal':{name:'Tempest Mark',icon:'🌀'}
+});
+export const ENCHANTMENTS=Object.freeze({
+ 'ironroot-ward':{name:'Ironroot Ward',icon:'🌿',level:1,xp:90,bonus:{health:16},materials:{'verdant-essence':3,'verdant-seal':1}},
+ 'ember-brand':{name:'Ember Brand',icon:'🔥',level:5,xp:135,bonus:{attack:4},materials:{'ember-essence':3,'ember-seal':1}},
+ 'skywoven-rune':{name:'Skywoven Rune',icon:'⚡',level:10,xp:180,bonus:{speed:7,cooldown:.04},materials:{'tempest-essence':4,'tempest-seal':2}}
 });
 const CRAFT_THEMES=Object.freeze({
  verdant:{title:'Ironroot',boss:'thornwarden',purple:'verdant-aegis',purpleName:'Ironroot Aegis',purpleIcon:'🛡️',purpleSlot:'offhand',purpleBonus:{health:28,armour:4,shielding:.12}},
@@ -128,7 +133,8 @@ function blankCrafting(){
  return {skills:Object.fromEntries(ACCOUNT_SKILL_IDS.map(id=>[id,{level:1,xp:0}])),
   materials:Object.fromEntries(Object.keys(MATERIAL_DEFS).map(id=>[id,0])),
   potions:Object.fromEntries(Object.keys(ALCHEMY_EFFECTS).map(id=>[id,0])),preparedElixir:null,
-  slayer:{active:null,points:0,completed:0,streak:0}};
+  slayer:{active:null,points:0,completed:0,streak:0},
+   delving:{active:null,completed:0,bestStage:0,nextRunId:1}};
 }
 export function craftingStatus(profile,recipeId){
  const recipe=CRAFT_RECIPES.find(r=>r.id===recipeId);
@@ -191,6 +197,7 @@ export function normalizeProfileSlots(profile){
  }
  if(profile&&profile.preparedElixir===undefined)profile.preparedElixir=null;
  if(profile&&profile.slayer===undefined)profile.slayer={active:null,points:0,completed:0,streak:0};
+ if(profile&&profile.delving===undefined)profile.delving={active:null,completed:0,bestStage:0,nextRunId:1};
  for(const id of HERO_IDS)for(const slot of SLOTS){
   const gear=profile?.heroes?.[id]?.gear;
   if(gear&&gear[slot]===undefined)gear[slot]=null;
@@ -329,6 +336,11 @@ export function canChallenge(profile,id){
 }
 export function bossDropTable(id='thornwarden'){return bossInfo(id).drops;}
 export function bossRewardInfo(id='thornwarden'){const b=bossInfo(id);return {xp:b.xp,gold:b.gold};}
+export const DELVE_ROUTES=Object.freeze({
+ 'ashen-trail':{name:'Ashen Trail',icon:'🌲',level:1,bosses:['thornwarden','cindermaw'],xp:[85,110],bonus:{'verdant-seal':2,'ember-essence':2},description:'Cross the Ironroot ruins before confronting the Ashen Foundry.'},
+ 'stormbound-passage':{name:'Stormbound Passage',icon:'⛈️',level:5,bosses:['thornwarden','cindermaw','tempest'],xp:[105,130,150],bonus:{'ember-seal':2,'tempest-essence':3},description:'Three linked hunts ending at Skybreak Spire.'},
+ 'skybreak-ordeal':{name:'Skybreak Ordeal',icon:'⚡',level:10,bosses:['tempest','cindermaw','tempest'],xp:[155,160,200],bonus:{'tempest-seal':3,'tempest-essence':4},description:'A veteran route through the fiercest storms and flames.'}
+});
 export const QUARTERMASTER=Object.freeze(['recruit-sword','briar-bow','apprentice-focus','field-vest','brass-charm','village-helm','traveller-leggings','leather-gloves','roadworn-boots','bronze-band','worn-buckler']);
 export const XP_REWARD=145;
 export const GOLD_REWARD=80;
@@ -355,6 +367,16 @@ export function validateProfile(p){
    Object.entries(p[field]).some(([id,n])=>!Object.hasOwn(defs,id)||!Number.isSafeInteger(n)||n<0||n>99999)))return false;
  }
  if(p.preparedElixir!==undefined&&p.preparedElixir!==null&&!Object.hasOwn(ALCHEMY_EFFECTS,p.preparedElixir))return false;
+ if(p.delving!==undefined){
+  const d=p.delving,a=d?.active;
+  if(!d||!validNum(d.completed)||d.completed>1000000||!validNum(d.bestStage)||d.bestStage>3||
+     !validNum(d.nextRunId)||d.nextRunId<1||d.nextRunId>1000001)return false;
+  if(a!==null){
+   const route=a&&DELVE_ROUTES[a.routeId];
+   if(!route||!validNum(a.stage)||a.stage>route.bosses.length||
+      !validNum(a.runId)||a.runId<1||a.runId>=d.nextRunId)return false;
+  }
+ }
  if(p.slayer!==undefined){
   const s=p.slayer,active=s?.active;
   if(!s||!validNum(s.points)||s.points>1000000||!validNum(s.completed)||s.completed>1000000||!validNum(s.streak)||s.streak>s.completed)return false;
@@ -366,7 +388,7 @@ export function validateProfile(p){
  }
  const ids=new Set(), equipped=new Set();
  for(const it of p.items){
-  if(typeof it?.id!=='string'||!/^\bi\d+\b$/.test(it.id)||ids.has(it.id)||!Object.hasOwn(ITEM_DEFS,it.defId))return false;
+  if(typeof it?.id!=='string'||!/^\bi\d+\b$/.test(it.id)||ids.has(it.id)||!Object.hasOwn(ITEM_DEFS,it.defId)||(it.enchantId!==undefined&&!Object.hasOwn(ENCHANTMENTS,it.enchantId)))return false;
   ids.add(it.id);
  }
  for(const key of HERO_IDS){
@@ -443,6 +465,8 @@ export function bonuses(p,heroId){
   const item=p.items.find(it=>it.id===h.gear?.[slot]);
   const b=item&&ITEM_DEFS[item.defId]?.bonus;
   if(b)for(const [k,v] of Object.entries(b))if(k in out)out[k]+=v;
+  const enchant=item?.enchantId&&ENCHANTMENTS[item.enchantId]?.bonus;
+  if(enchant)for(const [k,v] of Object.entries(enchant))if(k in out)out[k]+=v;
  }
  for(const id of h.talents){
   const b=TALENTS[heroId].find(t=>t.id===id)?.bonus;
@@ -525,7 +549,81 @@ function recordSlayerVictory(p,bossId){
  if(skill.level===SKILL_CAP)skill.xp=0;
  return {bossId,taskId:active.taskId||active.bossId,xp:task.xp,levelFrom:before,levelTo:skill.level,kills:active.kills,target:active.target,complete:active.kills===active.target};
 }
-export function grantVictory(p,receiptId,seed,bossId='thornwarden'){
+
+export function enchantingStatus(p,itemId,enchantId){
+ if(!validateProfile(p))return {ok:false,reason:'Invalid company save.'};
+ const instance=p.items.find(it=>it.id===itemId),def=instance&&ITEM_DEFS[instance.defId];
+ const enchant=ENCHANTMENTS[enchantId];
+ if(!def)return {ok:false,reason:'Choose equipment you actually own.'};
+ if(!enchant)return {ok:false,reason:'Unknown enchantment.'};
+ if(def.shop)return {ok:false,reason:'Quartermaster starter equipment cannot be enchanted.'};
+ if(instance.enchantId)return {ok:false,reason:'This item has already received its one permanent enchantment.'};
+ if((p.skills.enchanting?.level||1)<enchant.level)return {ok:false,reason:'Requires Enchanting level '+enchant.level+'.'};
+ for(const [id,n] of Object.entries(enchant.materials))
+  if((p.materials?.[id]||0)<n)return {ok:false,reason:'Not enough '+MATERIAL_DEFS[id].name+'.'};
+ return {ok:true,itemId,enchantId,materials:{...enchant.materials},xp:enchant.xp,bonus:enchant.bonus};
+}
+export function enchantEquipment(p,itemId,enchantId){
+ const status=enchantingStatus(p,itemId,enchantId);
+ if(!status.ok)return status;
+ normalizeProfileSlots(p);
+ const item=p.items.find(it=>it.id===itemId);
+ if(!item||item.enchantId)return {ok:false,reason:'Equipment is already enchanted or missing.'};
+ for(const [id,n] of Object.entries(status.materials))p.materials[id]-=n;
+ item.enchantId=enchantId;
+ const sk=p.skills.enchanting,from=sk.level;
+ sk.xp+=status.xp;
+ while(sk.level<SKILL_CAP&&sk.xp>=skillXpNeeded(sk.level)){sk.xp-=skillXpNeeded(sk.level);sk.level++;}
+ if(sk.level===SKILL_CAP)sk.xp=0;
+ return {...status,ok:true,levelFrom:from,levelTo:sk.level};
+}
+export function currentDelveStage(p){
+ const a=p.delving?.active,route=a&&DELVE_ROUTES[a.routeId];
+ return a&&route&&a.stage<route.bosses.length?{routeId:a.routeId,runId:a.runId,stage:a.stage,bossId:route.bosses[a.stage],total:route.bosses.length}:null;
+}
+export function delveStageToken(p){
+ const stage=currentDelveStage(p);
+ return stage?stage.runId+':'+stage.stage+':'+stage.routeId:null;
+}
+export function startDelve(p,routeId){
+ if(!validateProfile(p)||!Object.hasOwn(DELVE_ROUTES,routeId))return false;
+ normalizeProfileSlots(p);
+ const route=DELVE_ROUTES[routeId];
+ if(p.delving.active||p.skills.delving.level<route.level||p.delving.nextRunId>=1000001)return false;
+ p.delving.active={routeId,runId:p.delving.nextRunId++,stage:0};
+ return true;
+}
+export function abandonDelve(p){
+ if(!validateProfile(p))return false;
+ normalizeProfileSlots(p);
+ if(!p.delving.active)return false;
+ p.delving.active=null;
+ return true;
+}
+export function claimDelve(p){
+ if(!validateProfile(p))return null;
+ normalizeProfileSlots(p);
+ const a=p.delving.active,route=a&&DELVE_ROUTES[a.routeId];
+ if(!route||a.stage!==route.bosses.length||p.delving.completed>=1000000)return null;
+ for(const [id,n] of Object.entries(route.bonus))if(p.materials[id]+n>99999)return null;
+ for(const [id,n] of Object.entries(route.bonus))p.materials[id]+=n;
+ p.delving.completed++;
+ p.delving.active=null;
+ return {routeId:a.routeId,completed:p.delving.completed,materials:{...route.bonus}};
+}
+function recordDelveVictory(p,bossId,token){
+ const a=p.delving.active,route=a&&DELVE_ROUTES[a.routeId];
+ if(!route||a.stage>=route.bosses.length||token!==delveStageToken(p)||route.bosses[a.stage]!==bossId)return null;
+ const stageIndex=a.stage,skill=p.skills.delving,from=skill.level,xp=route.xp[stageIndex];
+ a.stage++;
+ p.delving.bestStage=Math.max(p.delving.bestStage,a.stage);
+ skill.xp+=xp;
+ while(skill.level<SKILL_CAP&&skill.xp>=skillXpNeeded(skill.level)){skill.xp-=skillXpNeeded(skill.level);skill.level++;}
+ if(skill.level===SKILL_CAP)skill.xp=0;
+ return {routeId:a.routeId,stage:a.stage,total:route.bosses.length,xp,levelFrom:from,levelTo:skill.level,complete:a.stage===route.bosses.length};
+}
+
+export function grantVictory(p,receiptId,seed,bossId='thornwarden',delveToken=null){
  if(!Object.hasOwn(BOSSES,bossId)||!canChallenge(p,bossId))return null;
  if(typeof receiptId!=='string'||!receiptId||receiptId.length>120||p.claims.includes(receiptId)||!validateProfile(p))return null;
  if(p.items.length>=400)return null;
@@ -549,6 +647,7 @@ export function grantVictory(p,receiptId,seed,bossId='thornwarden'){
   p.materials[id]+=added;if(added>0)reward.materials.push({id,quantity:added});
  }
  reward.slayer=recordSlayerVictory(p,bossId);
+ reward.delve=recordDelveVictory(p,bossId,delveToken);
  p.claims.push(receiptId);if(p.claims.length>100)p.claims=p.claims.slice(-100);
  return reward;
 }
@@ -589,7 +688,7 @@ export function salvageStatus(p,itemId,builds=null){
  }
  for(const [id,n] of Object.entries(drops))if((p.materials[id]||0)+n>99999)return {ok:false,reason:'Material storage is full for '+MATERIAL_DEFS[id].name+'.'};
  return {ok:true,itemId,defId:instance.defId,rarity,source:source||'crafted',crafted:!!crafted,materials:drops,xp,levelNeeded,
-  warning:rarity==='Rare'||rarity==='Epic'?'Rare or epic equipment is permanently destroyed. Confirm carefully.':crafted?'Crafted equipment only returns one ore and awards no Salvaging XP.':''};
+  warning:(rarity==='Rare'||rarity==='Epic'?'Rare or epic equipment is permanently destroyed. Confirm carefully. ':crafted?'Crafted equipment only returns one ore and awards no Salvaging XP. ':'')+(instance.enchantId?'Any permanent Enchanting rune on this item will also be destroyed.':'')};
 }
 export function salvageItem(p,itemId,builds=null){
  const status=salvageStatus(p,itemId,builds);
