@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "01eab4e72062b546cb4e7856f5952758a1835280",
+  "sourceCommit": "c5cc09cbec76a512c2b2207758f293cca2cfc651",
   "target": "/emberfall/",
-  "stage": "skills-update3-enchanting-delving-v4.12.0",
+  "stage": "huntcraft-rebrand-v4.13.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -14,5 +14,5 @@
     "src/style.css",
     "src/mobile-testing.css"
   ],
-  "note": "Canonical heroes-of-emberfall PR #40: Enchanting Forge with permanent single-use equipment runes affecting live combat bonuses, material costs, XP and safe profile migration; Delving Gate with three multi-stage boss routes, verified token-bound stage XP, retry/resume, claim-once material caches and mobile/iPad layouts. All six account-wide skills now playable. Existing Slayer, Salvaging, Blacksmithing, Alchemy, builds and company-v1 browser saves preserved. Source check/unit/desktop iPad WebKit/mobile smoke all passed. Deploy exclusively to /emberfall/; other projects unchanged."
+  "note": "Canonical heroes-of-emberfall PR #42 merged. Player-facing Slayer renamed Huntcraft: Hunt Board, Hunt Contracts, Hunt Marks, Hunter’s Exchange and Huntcraft XP in camp, skill guide, boss rewards, notifications. Legacy local profile keys skills.slayer and slayer and receipt.slayer intentionally unchanged so player levels, XP, active assignments, mark balances, streaks and old backups remain valid with no conversion or duplicate rewards. Added save compatibility and iPad browser branding tests; source QA passed Node unit, desktop Chromium, iPad WebKit and mobile smoke. Deploy only /emberfall/; no other games."
 }

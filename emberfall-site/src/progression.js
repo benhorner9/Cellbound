@@ -30,11 +30,15 @@ export const SLOT_ICONS=Object.freeze({helm:'🪖',charm:'📿',armour:'🛡️'
 export const SKILL_CAP=20;
 // Recipe skills remain distinct: unfinished skills must not appear in the Forge.
 export const SKILL_IDS=Object.freeze(['smithing','alchemy']);
+// Legacy "slayer" identifiers are intentionally retained in saved profile keys,
+// receipt fields and contract APIs: existing local saves, backups and active hunts
+// must keep their XP, Hunt Marks, completion streaks and one-time claim protection.
+// Only the player-facing discipline is named Huntcraft.
 export const ACCOUNT_SKILL_IDS=Object.freeze([...SKILL_IDS,'slayer','enchanting','salvaging','delving']);
 export const ACCOUNT_SKILLS=Object.freeze({
  smithing:{name:'Blacksmithing',icon:'⚒️',description:'Forge lasting weapons and armour from boss materials.',available:true,unlocks:[[1,'Basic armour patterns'],[5,'Improved set pieces'],[10,'Epic equipment recipes'],[25,'Mythic forging · future']]},
  alchemy:{name:'Alchemy',icon:'⚗️',description:'Brew elixirs that strengthen your party in battle.',available:true,unlocks:[[1,'Basic battle elixirs'],[4,'Additional elemental recipes'],[10,'Grand elixirs'],[25,'Spiritbound tonics · future']]},
- slayer:{name:'Slayer',icon:'☠️',description:'Hunt assigned bosses, earn XP per victory and spend Slayer Points on supplies. Longer assignments and hunt streaks unlock better rewards.',available:true,unlocks:[[1,'Thornwarden contracts & rewards shop'],[3,'Bramble Purge extended tasks'],[5,'Cindermaw hunts'],[7,'Furnace Purge extended tasks'],[10,'Tempest Seraph hunts'],[12,'Skybreak Trial'],[20,'Master hunts · future']]},
+ slayer:{name:'Huntcraft',icon:'🏹',description:'Master the craft of pursuing Emberfall’s most dangerous creatures. Complete Hunt Contracts, gain Huntcraft XP and earn Hunt Marks for the Hunter’s Exchange.',available:true,unlocks:[[1,'Thornwarden Hunt Contracts & Hunter’s Exchange'],[3,'Bramble Purge contracts'],[5,'Cindermaw contracts'],[7,'Furnace Purge contracts'],[10,'Tempest Seraph contracts'],[12,'Skybreak Trial'],[20,'Master Hunts · future']]},
  enchanting:{name:'Enchanting',icon:'✨',description:'Permanently enhance owned equipment with elemental infusions that improve real combat stats.',available:true,unlocks:[[1,'Ironroot Ward · bonus health'],[5,'Ember Brand · bonus damage'],[10,'Skywoven Rune · combat speed'],[25,'Runic resonance · future']]},
  salvaging:{name:'Salvaging',icon:'🧰',description:'Recover crafting materials from unwanted boss loot at the Salvaging Station. Crafted pieces return a little material but no Salvaging XP.',available:true,unlocks:[[1,'Uncommon boss-loot salvage'],[5,'Rare equipment recovery'],[10,'Additional material from boss gear'],[15,'Refined essence recovery'],[25,'Relic reclamation · future']]},
  delving:{name:'Delving',icon:'🗝️',description:'Challenge persistent multi-boss gauntlets. Earn XP for each expedition victory and collect finishing rewards.',available:true,unlocks:[[1,'Ashen Trail · two encounters'],[5,'Stormbound Passage · three encounters'],[10,'Skybreak Ordeal · elite route'],[25,'Forgotten depths · future']]}
