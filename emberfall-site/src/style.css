@@ -1146,7 +1146,7 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
 }
 
 
-/* Account-wide skills and Hunt Board: camp-native, touch-friendly surfaces. */
+/* Account-wide skills and Bounty Board: camp-native, touch-friendly surfaces. */
 .account-skill-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 20px}
 .account-skill-tile{display:flex;align-items:center;gap:11px;text-align:left;min-height:88px;padding:14px;border:1px solid #688370;border-radius:13px;background:linear-gradient(140deg,#29483c,#1a302e);box-shadow:inset 0 1px #e6d69e19}
 .account-skill-tile.selected{border-color:#f2d18c;background:linear-gradient(140deg,#3c5540,#253c34);box-shadow:0 0 0 2px #e9c47832}
@@ -1174,7 +1174,7 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
 @media(max-width:570px){.account-skill-grid,.slayer-contract-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.account-skill-tile{padding:9px;gap:5px;min-height:80px}.account-skill-icon{width:34px;min-width:34px;height:36px;font-size:21px}.account-skill-info b{font-size:14px}.account-skill-guide,.slayer-active,.slayer-contract{padding:12px}.slayer-stats{gap:5px}.slayer-stats>span{padding:8px}.slayer-stats b{font-size:14px}.slayer-stats small{font-size:10px}.slayer-contract h3{font-size:17px}}
 
 
-/* Skills Update 2 — Huntcraft contracts, exchange rewards and Salvaging Station. */
+/* Legacy skill selectors retained for Bounty Hunting, exchange and Salvaging. */
 .slayer-streak-note{padding:12px 15px;border-radius:10px;border:1px solid #8d8665;background:linear-gradient(110deg,#3b432d,#21342d);color:#f6e3af;font:600 13px/1.5 system-ui,sans-serif}
 .slayer-shop{border:1px solid #6b7d6c;border-radius:15px;padding:16px;margin:18px 0;background:linear-gradient(#1e3630,#182d2c)}
 .slayer-shop>.workshop-subheading{margin:0 0 8px}.slayer-shop>p{color:#c4d0be;font-size:13px;line-height:1.5}
@@ -1236,3 +1236,19 @@ canvas#arena{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action
  .delve-stage{align-items:flex-start;flex-direction:column;gap:6px}.delve-stage small{text-align:left}
  .enchant-layout{gap:10px}
 }
+
+/* Bounty Hunting — readable variants and no-touch-target-loss on phones. */
+.bounty-contract.is-dangerous{border-color:#c89460;background:linear-gradient(130deg,#45342b,#1c302d 78%)}
+.bounty-contract.is-dangerous>.eyebrow{color:#ffe1aa}
+.bounty-contract-modifier{border-left:3px solid #d2ab77;padding:7px 10px;background:#263d34;color:#e8dbc1;font:13px/1.5 system-ui,sans-serif}
+.bounty-legacy-note{background:#3a3b29;border:1px solid #9f925d;border-radius:9px;padding:12px;color:#f3e6bd;font:13px/1.5 system-ui,sans-serif}
+.bounty-boarding{border-color:#c1a468;background:#374632}
+@media(max-width:650px){.bounty-contract-grid{grid-template-columns:minmax(0,1fr)}.bounty-contract{padding:14px}.slayer-stats{grid-template-columns:minmax(0,1fr)}}
+
+/* Bounty Hunting: readable challenge cards, persistent legacy contract indication, touch-first actions. */
+.bounty-contract.is-dangerous{border-color:#b89c61;background:linear-gradient(145deg,#493b2a,#1e302c 78%)}
+.bounty-contract-modifier{color:#e6dcbd!important;font-size:13px;line-height:1.55;margin:4px 0 9px!important}
+.bounty-legacy-note{border-left:3px solid #d4b16c;padding:9px 12px;background:#403c2b;color:#ffe3a0!important;font:13px/1.5 system-ui,sans-serif}
+.bounty-boarding{border-color:#c39b58;background:#3c3529}
+.bounty-contract-grid .bounty-contract button{margin-top:auto;min-height:44px}
+@media(max-width:570px){.bounty-contract-grid{grid-template-columns:minmax(0,1fr)}.bounty-contract{padding:13px}}

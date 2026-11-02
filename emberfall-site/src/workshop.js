@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
- xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
-} from './progression.js?v=4.13.0';
+ xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
+} from './progression.js?v=4.14.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.13.0';
+} from './builds.js?v=4.14.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -18,7 +18,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  let returnFocus=null;
  let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false,confirmReroll=false,confirmPurchaseId=null,selectedSalvageId=null,confirmSalvageId=null,selectedEnchantItemId=null,selectedEnchantId='ironroot-ward',confirmEnchantId=null,confirmDelveAbandon=false;
  const builds=readBuilds(storage);
- const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Hunt Board',salvage:'Salvaging Station',enchant:'Enchanting Forge',delving:'Delving Gate',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
+ const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Bounty Board',salvage:'Salvaging Station',enchant:'Enchanting Forge',delving:'Delving Gate',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
  const tabId=tab=>'workshopTab-'+tab;
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
@@ -374,42 +374,42 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const need=skillXpNeeded(level);
   html+='<p class="account-skill-xp">'+(active.available?(need?profile.skills[selectedAccountSkill].xp+' / '+need+' XP until next level':'MAX LEVEL'):'This skill cannot earn XP yet.')+'</p>';
   html+='<div class="account-skill-unlocks"><h4>Unlocks &amp; milestones</h4>'+active.unlocks.map(([required,label])=>{
-   const isFuture=required>SKILL_CAP||!active.available;
+   const isFuture=required>SKILL_CAP||!active.available||/\bfuture\b/i.test(label);
    return '<div class="account-skill-unlock '+(!isFuture&&level>=required?'is-unlocked':'')+'"><b>Lv '+required+'</b><span>'+esc(label)+'</span><small>'+(!isFuture&&level>=required?'✓ Unlocked':isFuture?'Future':'Locked')+'</small></div>';
   }).join('')+'</div>';
-  if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'🏹 Visit Hunt Board':selectedAccountSkill==='salvaging'?'🧰 Visit Salvaging Station':selectedAccountSkill==='enchanting'?'✨ Visit Enchanting Forge':selectedAccountSkill==='delving'?'🗝️ Visit Delving Gate':'⚒ Open Crafting Guild')+'</button>';
+  if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'🎯 Visit Bounty Board':selectedAccountSkill==='salvaging'?'🧰 Visit Salvaging Station':selectedAccountSkill==='enchanting'?'✨ Visit Enchanting Forge':selectedAccountSkill==='delving'?'🗝️ Visit Delving Gate':'⚒ Open Crafting Guild')+'</button>';
   else html+='<p class="workshop-disclaimer">Preview only — this profession will be implemented in a future development block.</p>';
   return html+'</section>';
  }
 
- function renderHuntcraft(){
+ function renderBounty(){
   const sk=profile.skills.slayer,progress=profile.slayer,active=progress.active,need=skillXpNeeded(sk.level);
-  let html='<div class="workshop-intro"><span class="eyebrow">EMBERGUARD · HUNTCRAFT GUILD</span><h3>🏹 Hunt Board</h3><p>Accept a Hunt Contract, track its assigned boss and earn Huntcraft XP for each matching victory. Finish your Hunt Contract to earn Hunt Marks. Longer contracts and streaks unlock extra rewards.</p></div>';
-  html+='<div class="slayer-stats"><span><b>Level '+sk.level+' / '+SKILL_CAP+'</b><small>Huntcraft '+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small></span><span><b>'+progress.points+' Hunt Marks</b><small>Spend in Hunter’s Exchange</small></span><span><b>'+progress.completed+' Hunts</b><small>Streak '+progress.streak+'</small></span></div>';
+  const nextBonus=slayerStreakBonus(progress.streak+1);
+  let html='<div class="workshop-intro"><span class="eyebrow">EMBERGUARD · BOUNTY HUNTERS GUILD</span><h3>🎯 Bounty Board</h3><p>Choose one target and overcome its encounter. Dangerous Bounties add special combat challenges. Earn Bounty Hunting XP on victory and claim Bounty Marks here.</p></div>';
+  html+='<div class="slayer-stats"><span><b>Bounty Hunting Lv '+sk.level+' / '+SKILL_CAP+'</b><small>'+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small></span><span><b>'+progress.points+' Bounty Marks</b><small>Bounty Exchange</small></span><span><b>'+progress.completed+' Bounties</b><small>Bounty Chain '+progress.streak+'</small></span></div>';
   html+='<div class="craft-xp-track slayer-level-track"><i style="width:'+(need?Math.floor(sk.xp/need*100):100)+'%"></i></div>';
-  const nextStreak=progress.streak+1,nextBonus=slayerStreakBonus(nextStreak);
-  html+='<p class="slayer-streak-note">⚔ Hunt streak '+progress.streak+' · Every 5th consecutive contract adds +2 Hunt Marks; every 10th adds +5. '+(nextBonus?'Your next completed contract earns +'+nextBonus+' bonus marks.':'Keep completing contracts to reach the next milestone.')+'</p>';
+  html+='<p class="slayer-streak-note">🎯 Bounty Chain '+progress.streak+' · Every 5th claim earns +2 Bounty Marks, every 10th earns +5. '+(nextBonus?'Your next claimed bounty earns +'+nextBonus+' bonus Marks.':'Defeat does not reset your chain; withdrawal does.')+'</p>';
   if(active){
-   const boss=BOSSES[active.bossId],task=slayerTask(active),done=active.kills===active.target;
-   html+='<section class="slayer-active" aria-label="Active Hunt Contract"><span class="eyebrow">'+(done?'CONTRACT COMPLETE':'CURRENT CONTRACT')+'</span><h3>'+boss.icon+' '+esc(task.name)+' · '+esc(boss.name)+'</h3><p>'+esc(boss.place)+' · '+active.kills+' / '+active.target+' victories</p><div class="craft-xp-track"><i style="width:'+Math.floor(active.kills/active.target*100)+'%"></i></div><div class="slayer-reward-line"><span>+'+task.xp+' Huntcraft XP per assigned victory</span><span>+'+(task.points+(nextBonus||0))+' Hunt Marks to claim'+(nextBonus?' (streak bonus included)':'')+'</span></div>';
-   if(done)html+='<button type="button" class="tiny-btn craft-primary" data-action="slayer-claim">Claim '+(task.points+(nextBonus||0))+' Hunt Marks →</button><p class="workshop-disclaimer">Claiming completes this Hunt Contract once. You can then choose a new hunt.</p>';
-   else html+='<div class="slayer-actions"><button type="button" class="tiny-btn craft-primary" data-action="slayer-travel" data-id="'+active.bossId+'">Hunt '+esc(boss.name)+' →</button><button type="button" class="tiny-btn ghost" data-action="slayer-reroll" '+(progress.points<SLAYER_REROLL_COST||Object.values(SLAYER_TASKS).filter(t=>t.level<=sk.level).length<2?'disabled':'')+'>'+(confirmReroll?'Confirm reroll · costs '+SLAYER_REROLL_COST+' Hunt Marks':'Reroll · '+SLAYER_REROLL_COST+' Hunt Marks')+'</button><button type="button" class="tiny-btn ghost" data-action="slayer-abandon">'+(confirmAbandon?'Confirm abandon · resets streak':'Abandon contract')+'</button></div><p class="workshop-disclaimer">Rerolling resets the current Hunt Contract’s progress but keeps your streak and earned Huntcraft XP. Abandoning resets your streak.</p>';
+   const boss=BOSSES[active.bossId],task=slayerTask(active),done=active.kills===active.target,legacy=!active.bountyId;
+   html+='<section class="slayer-active" aria-label="Active Bounty Contract"><span class="eyebrow">'+(done?'BOUNTY COMPLETE':legacy?'GRANDFATHERED CONTRACT · ORIGINAL RULES':'ACTIVE '+(task.kind==='dangerous'?'DANGEROUS':'STANDARD')+' BOUNTY')+'</span><h3>'+boss.icon+' '+esc(task.name)+' · '+esc(boss.name)+'</h3><p>'+esc(boss.place)+' · '+active.kills+' / '+active.target+' '+(legacy?'victories':'target defeated')+'</p>'+(legacy?'<p class="bounty-legacy-note">Legacy assignment: complete its original kill count for the original rewards. Already earned progress is preserved.</p>':'<p class="bounty-contract-modifier">'+esc(task.description)+'</p>')+'<div class="craft-xp-track"><i style="width:'+Math.floor(active.kills/active.target*100)+'%"></i></div><div class="slayer-reward-line"><span>+'+task.xp+' Bounty Hunting XP '+(legacy?'per assigned victory':'for one contracted victory')+'</span><span>+'+(task.points+(nextBonus||0))+' Bounty Marks to claim'+(nextBonus?' (chain bonus included)':'')+'</span></div>';
+   if(done)html+='<button type="button" class="tiny-btn craft-primary" data-action="slayer-claim">Claim '+(task.points+(nextBonus||0))+' Bounty Marks →</button><p class="workshop-disclaimer">Claiming completes this Bounty Contract once. Choose another Bounty Contract afterwards.</p>';
+   else html+='<div class="slayer-actions"><button type="button" class="tiny-btn craft-primary" data-action="slayer-travel" data-id="'+active.bossId+'">Enter '+(legacy?'Legacy Hunt':'Bounty Encounter')+' →</button><button type="button" class="tiny-btn ghost '+(legacy?'':'hidden')+'" data-action="slayer-reroll" '+(progress.points<SLAYER_REROLL_COST||Object.values(SLAYER_TASKS).filter(t=>t.level<=sk.level).length<2?'disabled':'')+'>'+(confirmReroll?'Confirm reroll · costs '+SLAYER_REROLL_COST+' Bounty Marks':'Reroll · '+SLAYER_REROLL_COST+' Bounty Marks')+'</button><button type="button" class="tiny-btn ghost" data-action="slayer-abandon">'+(confirmAbandon?'Confirm withdrawal · resets chain':'Withdraw Contract')+'</button></div><p class="workshop-disclaimer">Defeats can be retried. Withdrawing resets the Bounty Chain, but keeps earned XP and Marks. New Bounty Contracts cannot be rerolled.</p>';
    html+='</section>';
   }else{
-   html+='<div class="workshop-subheading"><h3>Hunt Contracts</h3><span>One active Hunt Contract at a time · six variations</span></div><div class="slayer-contract-grid">';
-   for(const [id,task] of Object.entries(SLAYER_TASKS)){
+   html+='<div class="workshop-subheading"><h3>Bounty Contracts</h3><span>One encounter per contract · six choices</span></div><div class="slayer-contract-grid bounty-contract-grid">';
+   for(const [id,task] of Object.entries(BOUNTY_TASKS)){
     const boss=BOSSES[task.bossId],locked=sk.level<task.level;
-    html+='<article class="slayer-contract '+(locked?'locked':'')+'"><span class="eyebrow">'+(locked?'REQUIRES HUNTCRAFT '+task.level:'AVAILABLE · HUNTCRAFT '+task.level)+'</span><h3>'+boss.icon+' '+esc(task.name)+'</h3><p>'+esc(boss.name)+' · '+esc(boss.place)+'</p><small>'+task.target+' victories · +'+task.xp+' XP per kill · '+task.points+' Hunt Marks on claim</small><button type="button" class="tiny-btn" data-action="slayer-accept" data-id="'+id+'" '+(locked?'disabled':'')+'>'+(locked?'🔒 Locked':'Accept Contract')+'</button></article>';
+    html+='<article class="slayer-contract bounty-contract '+(task.kind==='dangerous'?'is-dangerous ':'')+(locked?'locked':'')+'"><span class="eyebrow">'+(locked?'REQUIRES BOUNTY HUNTING '+task.level:'AVAILABLE · '+(task.kind==='dangerous'?'DANGEROUS':'STANDARD')+' BOUNTY · LV '+task.level)+'</span><h3>'+boss.icon+' '+esc(task.name)+'</h3><p>'+esc(boss.name)+' · '+esc(boss.place)+'</p><p class="bounty-contract-modifier">'+esc(task.description)+'</p><small>Recommended party Lv '+boss.unlock+' · 1 encounter · +'+task.xp+' Bounty Hunting XP · +'+task.points+' Bounty Marks</small><button type="button" class="tiny-btn" data-action="slayer-accept" data-id="'+id+'" '+(locked?'disabled':'')+'>'+(locked?'🔒 Locked':'Accept Bounty Contract')+'</button></article>';
    }
    html+='</div>';
   }
-  html+='<section class="slayer-shop" aria-label="Hunter’s Exchange"><div class="workshop-subheading"><h3>✦ Hunter’s Exchange</h3><span>'+progress.points+' Hunt Marks available</span></div><p>Spend your Hunt Marks on real consumables and crafting materials. Purchases deduct marks immediately; there are no free repeat claims.</p><div class="slayer-shop-grid">';
+  html+='<section class="slayer-shop" aria-label="Bounty Exchange"><div class="workshop-subheading"><h3>✦ Bounty Exchange</h3><span>'+progress.points+' Bounty Marks available</span></div><p>Spend your Bounty Marks on real consumables and crafting materials. Purchases deduct marks immediately; there are no free repeat claims.</p><div class="slayer-shop-grid">';
   for(const [id,product] of Object.entries(SLAYER_REWARDS)){
    const locked=sk.level<product.level,afford=progress.points>=product.points;
    const stock=[...Object.entries(product.materials||{}).map(([key,n])=>MATERIAL_DEFS[key].name+' ×'+n),...Object.entries(product.potions||{}).map(([key,n])=>ALCHEMY_EFFECTS[key].name+' ×'+n)];
-   html+='<article class="slayer-shop-item"><span class="slayer-shop-icon">'+product.icon+'</span><div><h4>'+esc(product.name)+'</h4><small>'+esc(stock.join(' · '))+'</small><small>Huntcraft Lv '+product.level+'</small></div><button type="button" class="tiny-btn '+(confirmPurchaseId===id?'danger':'')+'" data-action="slayer-purchase" data-id="'+id+'" '+(locked||!afford?'disabled':'')+'>'+(locked?'🔒 Locked':!afford?'Need '+product.points+' Hunt Marks':confirmPurchaseId===id?'Confirm '+product.points+' Hunt Marks':'Buy · '+product.points+' Hunt Marks')+'</button></article>';
+   html+='<article class="slayer-shop-item"><span class="slayer-shop-icon">'+product.icon+'</span><div><h4>'+esc(product.name)+'</h4><small>'+esc(stock.join(' · '))+'</small><small>Bounty Hunting Lv '+product.level+'</small></div><button type="button" class="tiny-btn '+(confirmPurchaseId===id?'danger':'')+'" data-action="slayer-purchase" data-id="'+id+'" '+(locked||!afford?'disabled':'')+'>'+(locked?'🔒 Locked':!afford?'Need '+product.points+' Bounty Marks':confirmPurchaseId===id?'Confirm '+product.points+' Bounty Marks':'Buy · '+product.points+' Bounty Marks')+'</button></article>';
   }
-  html+='</div></section><p class="workshop-disclaimer">Huntcraft XP is gained on actual assigned boss victories, not on accepting or claiming tasks. Your existing Hunt Contracts and Hunt Marks are preserved. Current progression is stored locally, not authoritative for online PvP.</p>';
+  html+='</div></section><p class="workshop-disclaimer">Bounty Hunting XP is earned from one dedicated contract victory. Grandfathered multi-kill contracts retain their original requirements. Your existing contracts and Bounty Marks are preserved. Current progression is stored locally, not authoritative for online PvP.</p>';
   return html;
  }
  function renderSalvage(){
@@ -519,7 +519,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   body.classList.toggle('inventory-mode',current==='pack');
    body.classList.toggle('salvage-mode',current==='salvage');
   body.innerHTML=(notice?'<div class="workshop-notice '+(noticeBad?'is-error':'')+'" role="status">'+esc(notice)+'</div>':'')
-    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='skills'?renderSkills():current==='slayer'?renderHuntcraft():current==='salvage'?renderSalvage():current==='enchant'?renderEnchant():current==='delving'?renderDelving():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
+    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='skills'?renderSkills():current==='slayer'?renderBounty():current==='salvage'?renderSalvage():current==='enchant'?renderEnchant():current==='delving'?renderDelving():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
  }
  function rerenderBag(){
   const offset=body.querySelector('#inventoryScroll')?.scrollTop||0;
@@ -622,22 +622,22 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
     if(stage&&stage.bossId===id&&token){close();onDelveStage({...stage,token});}return;
    }
    if(action==='slayer-accept'&&current==='slayer'){
-    commitAccountChange(()=>takeSlayerContract(profile,id),()=>{confirmAbandon=false;confirmReroll=false;return 'Contract accepted. Defeat '+BOSSES[SLAYER_TASKS[id].bossId].name+' to earn Huntcraft XP.';});return;
+    commitAccountChange(()=>takeSlayerContract(profile,id),()=>{confirmAbandon=false;confirmReroll=false;return 'Bounty accepted. Enter '+BOUNTY_TASKS[id].name+' from the Bounty Board to earn Bounty Hunting XP.';});return;
    }
    if(action==='slayer-claim'&&current==='slayer'){
-    commitAccountChange(()=>claimSlayerContract(profile),r=>'Contract complete! +'+r.points+' Hunt Marks'+(r.bonus?' including +'+r.bonus+' streak bonus':'')+' · Streak '+r.streak+'.');return;
+    commitAccountChange(()=>claimSlayerContract(profile),r=>'Bounty claimed! +'+r.points+' Bounty Marks'+(r.bonus?' including +'+r.bonus+' Bounty Chain bonus':'')+' · Bounty Chain '+r.streak+'.');return;
    }
    if(action==='slayer-abandon'&&current==='slayer'){
     if(!confirmAbandon){confirmAbandon=true;confirmReroll=false;render();return;}
-    commitAccountChange(()=>abandonSlayerContract(profile),()=>{confirmAbandon=false;return 'Contract abandoned; streak reset. Already earned Huntcraft XP was kept.';});return;
+    commitAccountChange(()=>abandonSlayerContract(profile),()=>{confirmAbandon=false;return 'Bounty withdrawn; chain reset. Existing Bounty Hunting XP remains yours.';});return;
    }
    if(action==='slayer-reroll'&&current==='slayer'){
     if(!confirmReroll){confirmReroll=true;confirmAbandon=false;render();return;}
-    commitAccountChange(()=>rerollSlayerContract(profile),r=>{confirmReroll=false;return 'Rerolled for '+r.cost+' Hunt Marks. New Hunt Contract: '+SLAYER_TASKS[r.taskId].name+'. Existing kill progress was lost.';});return;
+    commitAccountChange(()=>rerollSlayerContract(profile),r=>{confirmReroll=false;return 'Legacy contract rerolled for '+r.cost+' Bounty Marks. New contract: '+SLAYER_TASKS[r.taskId].name+'. Existing kill progress was lost.';});return;
    }
    if(action==='slayer-purchase'&&current==='slayer'){
     if(confirmPurchaseId!==id){confirmPurchaseId=id;render();return;}
-    commitAccountChange(()=>purchaseSlayerReward(profile,id),r=>{confirmPurchaseId=null;return 'Purchased '+SLAYER_REWARDS[id].name+' for '+r.points+' Hunt Marks. Rewards added to stock.';});return;
+    commitAccountChange(()=>purchaseSlayerReward(profile,id),r=>{confirmPurchaseId=null;return 'Purchased '+SLAYER_REWARDS[id].name+' for '+r.points+' Bounty Marks. Rewards added to stock.';});return;
    }
    if(action==='salvage-select'&&current==='salvage'){
     selectedSalvageId=id;confirmSalvageId=null;notice='';render();return;
@@ -650,7 +650,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
      return 'Salvaged '+ITEM_DEFS[r.defId].name+' · +'+r.xp+' Salvaging XP'+(r.levelTo>r.levelFrom?' · LEVEL UP '+r.levelTo+'!':'')+'. Materials added.';
     });return;
    }
-   if(action==='slayer-travel'&&current==='slayer'&&profile.slayer.active?.bossId===id){close();onExpedition(id);return;}
+   if(action==='slayer-travel'&&current==='slayer'&&profile.slayer.active?.bossId===id){close();onExpedition(id,bountyStageToken(profile));return;}
   if(action==='inspect'){
    if(current==='pack'){
     selectedBagId=id;pendingSell=null;notice='';rerenderBag();

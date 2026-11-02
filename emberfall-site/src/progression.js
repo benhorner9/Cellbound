@@ -33,12 +33,12 @@ export const SKILL_IDS=Object.freeze(['smithing','alchemy']);
 // Legacy "slayer" identifiers are intentionally retained in saved profile keys,
 // receipt fields and contract APIs: existing local saves, backups and active hunts
 // must keep their XP, Hunt Marks, completion streaks and one-time claim protection.
-// Only the player-facing discipline is named Huntcraft.
+// Player-facing name is Bounty Hunting; previous labels do not affect legacy saves.
 export const ACCOUNT_SKILL_IDS=Object.freeze([...SKILL_IDS,'slayer','enchanting','salvaging','delving']);
 export const ACCOUNT_SKILLS=Object.freeze({
  smithing:{name:'Blacksmithing',icon:'⚒️',description:'Forge lasting weapons and armour from boss materials.',available:true,unlocks:[[1,'Basic armour patterns'],[5,'Improved set pieces'],[10,'Epic equipment recipes'],[25,'Mythic forging · future']]},
  alchemy:{name:'Alchemy',icon:'⚗️',description:'Brew elixirs that strengthen your party in battle.',available:true,unlocks:[[1,'Basic battle elixirs'],[4,'Additional elemental recipes'],[10,'Grand elixirs'],[25,'Spiritbound tonics · future']]},
- slayer:{name:'Huntcraft',icon:'🏹',description:'Master the craft of pursuing Emberfall’s most dangerous creatures. Complete Hunt Contracts, gain Huntcraft XP and earn Hunt Marks for the Hunter’s Exchange.',available:true,unlocks:[[1,'Thornwarden Hunt Contracts & Hunter’s Exchange'],[3,'Bramble Purge contracts'],[5,'Cindermaw contracts'],[7,'Furnace Purge contracts'],[10,'Tempest Seraph contracts'],[12,'Skybreak Trial'],[20,'Master Hunts · future']]},
+ slayer:{name:'Bounty Hunting',icon:'🎯',description:'Accept single-target bounties, overcome dangerous boss modifiers and earn Bounty Hunting XP and spendable Bounty Marks at the Bounty Exchange. Existing multi-victory hunts remain finishable.',available:true,unlocks:[[1,'Bounty Board · Warden Patrol'],[3,'Dangerous · Bramble Siege'],[5,'Ashen Warrant'],[7,'Dangerous · Furnace Pressure'],[10,'Storm Watch'],[12,'Dangerous · Skybreak Pursuit'],[15,'Notorious Bounties · future'],[20,'Master Bounty Hunter milestone'],[25,'Legendary Bounties · future']]},
  enchanting:{name:'Enchanting',icon:'✨',description:'Permanently enhance owned equipment with elemental infusions that improve real combat stats.',available:true,unlocks:[[1,'Ironroot Ward · bonus health'],[5,'Ember Brand · bonus damage'],[10,'Skywoven Rune · combat speed'],[25,'Runic resonance · future']]},
  salvaging:{name:'Salvaging',icon:'🧰',description:'Recover crafting materials from unwanted boss loot at the Salvaging Station. Crafted pieces return a little material but no Salvaging XP.',available:true,unlocks:[[1,'Uncommon boss-loot salvage'],[5,'Rare equipment recovery'],[10,'Additional material from boss gear'],[15,'Refined essence recovery'],[25,'Relic reclamation · future']]},
  delving:{name:'Delving',icon:'🗝️',description:'Challenge persistent multi-boss gauntlets. Earn XP for each expedition victory and collect finishing rewards.',available:true,unlocks:[[1,'Ashen Trail · two encounters'],[5,'Stormbound Passage · three encounters'],[10,'Skybreak Ordeal · elite route'],[25,'Forgotten depths · future']]}
@@ -57,6 +57,16 @@ export const SLAYER_TASKS=Object.freeze({
  tempest:{...SLAYER_CONTRACTS.tempest,name:'Storm Watch'},
  'tempest-endurance':{bossId:'tempest',name:'Skybreak Trial',level:12,target:3,xp:150,points:12}
 });
+// New bounties are single, explicitly launched boss encounters. Old SLAYER_TASKS
+// remain immutable for active multi-kill saves and their original payout rules.
+export const BOUNTY_TASKS=Object.freeze({
+ 'bounty-warden-patrol':{bossId:'thornwarden',name:'Warden Patrol',level:1,target:1,xp:65,points:1,kind:'standard',modifier:null,description:'Defeat the Thornwarden in its original encounter.'},
+ 'bounty-bramble-siege':{bossId:'thornwarden',name:'Bramble Siege',level:3,target:1,xp:100,points:3,kind:'dangerous',modifier:'bramble-siege',description:'Thornwarden gains 15% health. Bramblekin join at 60% health instead of 42%.'},
+ 'bounty-ashen-warrant':{bossId:'cindermaw',name:'Ashen Warrant',level:5,target:1,xp:95,points:2,kind:'standard',modifier:null,description:'Defeat Cindermaw in its original encounter.'},
+ 'bounty-furnace-pressure':{bossId:'cindermaw',name:'Furnace Pressure',level:7,target:1,xp:145,points:4,kind:'dangerous',modifier:'furnace-pressure',description:'Cindermaw gains 10% health and uses Furnace Breath 15% more often. Warning time stays intact.'},
+ 'bounty-storm-watch':{bossId:'tempest',name:'Storm Watch',level:10,target:1,xp:135,points:3,kind:'standard',modifier:null,description:'Defeat Tempest Seraph in its original encounter.'},
+ 'bounty-skybreak-pursuit':{bossId:'tempest',name:'Skybreak Pursuit',level:12,target:1,xp:195,points:5,kind:'dangerous',modifier:'skybreak-pursuit',description:'Tempest Seraph gains 8% health and launches two sequential, individually telegraphed lightning lanes.'}
+});
 export const SLAYER_REROLL_COST=2;
 export const SLAYER_REWARDS=Object.freeze({
  'verdant-essence-cache':{name:'Ironroot Essence Cache',icon:'🌿',points:3,level:1,materials:{'verdant-essence':4}},
@@ -65,7 +75,9 @@ export const SLAYER_REWARDS=Object.freeze({
  'ember-essence-cache':{name:'Ember Essence Cache',icon:'🔥',points:5,level:5,materials:{'ember-essence':4}},
  'storm-essence-cache':{name:'Storm Essence Cache',icon:'⚡',points:8,level:10,materials:{'tempest-essence':4}}
 });
-export function slayerTask(active){return active?SLAYER_TASKS[active.taskId||active.bossId]||null:null;}
+export function slayerTask(active){return active?(active.bountyId?BOUNTY_TASKS[active.taskId]:SLAYER_TASKS[active.taskId||active.bossId])||null:null;}
+// Token is accepted only for a single active, unfinished bounty, never an ordinary boss or a Delving stage.
+export function bountyStageToken(profile){const a=profile?.slayer?.active;return a?.bountyId&&a.kills===0&&BOUNTY_TASKS[a.taskId]?.bossId===a.bossId?`${a.bountyId}:${a.taskId}:${a.bossId}`:null;}
 export function slayerStreakBonus(nextStreak){return nextStreak>0&&nextStreak%10===0?5:nextStreak>0&&nextStreak%5===0?2:0;}
 export const MATERIAL_GROUPS=Object.freeze({
  thornwarden:{tier:'verdant',ore:'verdant-ore',essence:'verdant-essence',seal:'verdant-seal'},
@@ -137,7 +149,7 @@ function blankCrafting(){
  return {skills:Object.fromEntries(ACCOUNT_SKILL_IDS.map(id=>[id,{level:1,xp:0}])),
   materials:Object.fromEntries(Object.keys(MATERIAL_DEFS).map(id=>[id,0])),
   potions:Object.fromEntries(Object.keys(ALCHEMY_EFFECTS).map(id=>[id,0])),preparedElixir:null,
-  slayer:{active:null,points:0,completed:0,streak:0},
+  slayer:{active:null,points:0,completed:0,streak:0,nextBountyId:1},
    delving:{active:null,completed:0,bestStage:0,nextRunId:1}};
 }
 export function craftingStatus(profile,recipeId){
@@ -200,7 +212,8 @@ export function normalizeProfileSlots(profile){
   for(const id of Object.keys(ALCHEMY_EFFECTS))if(profile.potions&&profile.potions[id]===undefined)profile.potions[id]=0;
  }
  if(profile&&profile.preparedElixir===undefined)profile.preparedElixir=null;
- if(profile&&profile.slayer===undefined)profile.slayer={active:null,points:0,completed:0,streak:0};
+ if(profile&&profile.slayer===undefined)profile.slayer={active:null,points:0,completed:0,streak:0,nextBountyId:1};
+ if(profile?.slayer&&profile.slayer.nextBountyId===undefined)profile.slayer.nextBountyId=1;
  if(profile&&profile.delving===undefined)profile.delving={active:null,completed:0,bestStage:0,nextRunId:1};
  for(const id of HERO_IDS)for(const slot of SLOTS){
   const gear=profile?.heroes?.[id]?.gear;
@@ -383,11 +396,15 @@ export function validateProfile(p){
  }
  if(p.slayer!==undefined){
   const s=p.slayer,active=s?.active;
-  if(!s||!validNum(s.points)||s.points>1000000||!validNum(s.completed)||s.completed>1000000||!validNum(s.streak)||s.streak>s.completed)return false;
+  if(!s||!validNum(s.points)||s.points>1000000||!validNum(s.completed)||s.completed>1000000||!validNum(s.streak)||s.streak>s.completed||
+     (s.nextBountyId!==undefined&&(!validNum(s.nextBountyId)||s.nextBountyId<1||s.nextBountyId>1000001)))return false;
   if(active!==null){
    const contract=active&&slayerTask(active);
    if(!contract||active.bossId!==contract.bossId||!validNum(active.kills)||active.target!==contract.target||active.kills>active.target||
-      (active.taskId!==undefined&&typeof active.taskId!=='string'))return false;
+      (active.taskId!==undefined&&typeof active.taskId!=='string')||
+      (active.bountyId!==undefined&&(!validNum(active.bountyId)||active.bountyId<1||active.bountyId>1000000||
+       !Object.hasOwn(BOUNTY_TASKS,active.taskId)||active.bountyId>=(s.nextBountyId??1)))||
+      (active.bountyId===undefined&&active.taskId!==undefined&&Object.hasOwn(BOUNTY_TASKS,active.taskId)))return false;
   }
  }
  const ids=new Set(), equipped=new Set();
@@ -495,11 +512,11 @@ export function rollBossDrop(seed,bossId='thornwarden'){
 }
 
 export function takeSlayerContract(p,taskId){
- if(!validateProfile(p)||!Object.hasOwn(SLAYER_TASKS,taskId))return false;
+ if(!validateProfile(p)||!Object.hasOwn(BOUNTY_TASKS,taskId))return false;
  normalizeProfileSlots(p);
- const task=SLAYER_TASKS[taskId];
- if(p.slayer.active||p.skills.slayer.level<task.level)return false;
- p.slayer.active={taskId,bossId:task.bossId,target:task.target,kills:0};
+ const task=BOUNTY_TASKS[taskId];
+ if(p.slayer.active||p.skills.slayer.level<task.level||p.slayer.nextBountyId>1000000)return false;
+ p.slayer.active={taskId,bossId:task.bossId,target:1,kills:0,bountyId:p.slayer.nextBountyId++};
  return true;
 }
 export function abandonSlayerContract(p){
@@ -512,7 +529,7 @@ export function rerollSlayerContract(p){
  if(!validateProfile(p))return null;
  normalizeProfileSlots(p);
  const current=p.slayer.active;
- if(!current||current.kills>=current.target||p.slayer.points<SLAYER_REROLL_COST)return null;
+ if(!current||current.bountyId||current.kills>=current.target||p.slayer.points<SLAYER_REROLL_COST)return null;
  const eligible=Object.entries(SLAYER_TASKS).filter(([,v])=>v.level<=p.skills.slayer.level).map(([id])=>id);
  const id=eligible[(eligible.indexOf(current.taskId||current.bossId)+1)%eligible.length];
  if(!id||id===(current.taskId||current.bossId))return null;
@@ -543,15 +560,16 @@ export function purchaseSlayerReward(p,id){
  for(const [key,n] of Object.entries(item.potions||{}))p.potions[key]+=n;
  return {id,points:item.points,materials:item.materials||{},potions:item.potions||{}};
 }
-function recordSlayerVictory(p,bossId){
+function recordSlayerVictory(p,bossId,bountyToken=null,delveToken=null){
  const active=p.slayer.active;
- if(!active||active.bossId!==bossId||active.kills>=active.target)return null;
+ if(!active||active.bossId!==bossId||active.kills>=active.target||
+  (active.bountyId&&(!bountyToken||bountyToken!==bountyStageToken(p)||delveToken!==null)))return null;
  const task=slayerTask(active),skill=p.skills.slayer,before=skill.level;
  active.kills++;
  skill.xp+=task.xp;
  while(skill.level<SKILL_CAP&&skill.xp>=skillXpNeeded(skill.level)){skill.xp-=skillXpNeeded(skill.level);skill.level++;}
  if(skill.level===SKILL_CAP)skill.xp=0;
- return {bossId,taskId:active.taskId||active.bossId,xp:task.xp,levelFrom:before,levelTo:skill.level,kills:active.kills,target:active.target,complete:active.kills===active.target};
+ return {bossId,taskId:active.taskId||active.bossId,xp:before===SKILL_CAP?0:task.xp,levelFrom:before,levelTo:skill.level,kills:active.kills,target:active.target,complete:active.kills===active.target};
 }
 
 export function enchantingStatus(p,itemId,enchantId){
@@ -627,7 +645,7 @@ function recordDelveVictory(p,bossId,token){
  return {routeId:a.routeId,stage:a.stage,total:route.bosses.length,xp,levelFrom:from,levelTo:skill.level,complete:a.stage===route.bosses.length};
 }
 
-export function grantVictory(p,receiptId,seed,bossId='thornwarden',delveToken=null){
+export function grantVictory(p,receiptId,seed,bossId='thornwarden',delveToken=null,bountyToken=null){
  if(!Object.hasOwn(BOSSES,bossId)||!canChallenge(p,bossId))return null;
  if(typeof receiptId!=='string'||!receiptId||receiptId.length>120||p.claims.includes(receiptId)||!validateProfile(p))return null;
  if(p.items.length>=400)return null;
@@ -650,7 +668,7 @@ export function grantVictory(p,receiptId,seed,bossId='thornwarden',delveToken=nu
   const added=Math.min(amount,99999-p.materials[id]);
   p.materials[id]+=added;if(added>0)reward.materials.push({id,quantity:added});
  }
- reward.slayer=recordSlayerVictory(p,bossId);
+ reward.slayer=recordSlayerVictory(p,bossId,bountyToken,delveToken);
  reward.delve=recordDelveVictory(p,bossId,delveToken);
  p.claims.push(receiptId);if(p.claims.length>100)p.claims=p.claims.slice(-100);
  return reward;

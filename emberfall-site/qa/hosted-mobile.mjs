@@ -23,7 +23,7 @@ try {
   page.on('pageerror', err => errors.push(err.message));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto(base, { waitUntil: 'networkidle', timeout: 45000 });
-  assert(await page.locator('html').getAttribute('data-emberfall-ready') === '4.13.0',
+  assert(await page.locator('html').getAttribute('data-emberfall-ready') === '4.14.0',
     'Hosted phone Safari could not initialise Emberfall');
   assert(await page.locator('link[href*="mobile-testing.css"]').count() === 1,
     'Hosted HTML does not load the phone layout');
@@ -100,7 +100,7 @@ try {
     !matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 540px) and (max-width: 950px)').matches
   );
   assert(tabletLayoutPreserved &&
-         await ipadPage.locator('html').getAttribute('data-emberfall-ready') === '4.13.0',
+         await ipadPage.locator('html').getAttribute('data-emberfall-ready') === '4.14.0',
     'Hosted iPad layout or boot regressed');
   assert(errors.length === 0, 'Hosted mobile WebKit errors: ' + errors.join(' | '));
   console.log('PASS hosted Emberfall iPhone portrait, landscape and iPad isolation.');
