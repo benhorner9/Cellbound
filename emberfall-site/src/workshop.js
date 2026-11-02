@@ -1,24 +1,24 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
- xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem
-} from './progression.js?v=4.11.0';
+ xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
+} from './progression.js?v=4.12.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.11.0';
+} from './builds.js?v=4.12.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const pretty={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
 const slotTitle=SLOT_NAMES;
 const rarityClass=name=>String(name).toLowerCase();
-export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{},onExpedition=()=>{}}){
+export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{},onExpedition=()=>{},onDelveStage=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),context=document.getElementById('workshopContext'),tabs=document.getElementById('workshopTabs');
  let returnFocus=null;
- let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false,confirmReroll=false,confirmPurchaseId=null,selectedSalvageId=null,confirmSalvageId=null;
+ let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false,confirmReroll=false,confirmPurchaseId=null,selectedSalvageId=null,confirmSalvageId=null,selectedEnchantItemId=null,selectedEnchantId='ironroot-ward',confirmEnchantId=null,confirmDelveAbandon=false;
  const builds=readBuilds(storage);
- const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Slayer Lodge',salvage:'Salvaging Station',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
+ const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Slayer Lodge',salvage:'Salvaging Station',enchant:'Enchanting Forge',delving:'Delving Gate',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
  const tabId=tab=>'workshopTab-'+tab;
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
@@ -31,7 +31,8 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    +'<small class="item-effects">'+esc(itemBonusText(def))+'</small>'
    +(itemSet(item.defId)?'<small class="item-set-tag">'+esc(SET_DEFS[itemSet(item.defId)].icon+' '+SET_DEFS[itemSet(item.defId)].name)+' set</small>':'')
    +'<small class="item-owner">'+(item.id.startsWith('shop-')?'Quartermaster stock · Price '+def.shop+' gold':owner?'Equipped by '+esc(HERO_NAMES[owner])+' · Sell for '+def.value+' gold':'In your bag · Sell for '+def.value+' gold')+'</small>'
-   +(actions?'<div class="loot-actions">'+actions+'</div>':'')+'</div></article>';
+   +(item.enchantId&&ENCHANTMENTS[item.enchantId]?'<small class="item-enchantment">✨ '+esc(ENCHANTMENTS[item.enchantId].name)+'</small>':'')
+    +(actions?'<div class="loot-actions">'+actions+'</div>':'')+'</div></article>';
  }
  // Original lightweight vector hero illustration: visual only, never affects item ownership.
  function equipmentCharacterArt(id){
@@ -86,11 +87,12 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   // Nine real equipment slots; legacy Charm and Armour keep their original save keys.
   for(const slot of SLOTS){
    const itemId=hero.gear[slot],def=itemId?itemName(itemId):null;
+   const rune=itemId?profile.items.find(it=>it.id===itemId)?.enchantId:null;
    const symbol=SLOT_ICONS[slot];
    const selected=slot===inspectedSlot;
    html+='<section class="paperdoll-slot paperdoll-slot-'+slot+' '+(def?'is-equipped rarity-'+rarityClass(def.rarity):'is-empty')+(selected?' is-inspected':'')+'" data-slot="'+slot+'" aria-label="'+esc(slotTitle[slot])+' slot: '+esc(def?.name||'empty')+'">'
     +'<button type="button" class="armory-slot-select" data-action="inspect-gear-slot" data-slot="'+slot+'" aria-pressed="'+selected+'" aria-label="Inspect '+esc(slotTitle[slot])+(def?' · '+esc(def.name):' · empty')+'">'
-    +'<span class="paperdoll-slot-symbol" aria-hidden="true">'+(def?esc(def.icon):symbol)+'</span>'
+    +'<span class="paperdoll-slot-symbol" aria-hidden="true">'+(def?esc(def.icon):symbol)+(rune?'✨':'')+'</span>'
     +'<span class="paperdoll-slot-details"><strong>'+esc(slotTitle[slot])+'</strong><small>'+esc(def?.name||'Empty slot')+'</small></span></button>'
     +(itemId?'<button type="button" class="tiny-btn paperdoll-unequip" data-action="unequip" data-slot="'+slot+'" aria-label="Unequip '+esc(def.name)+' from '+esc(HERO_NAMES[heroId])+'">Unequip</button>':'')
     +'</section>';
@@ -100,7 +102,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    html+='<div class="armory-inspection-icon rarity-'+rarityClass(inspectedDef.rarity)+'">'+esc(inspectedDef.icon)+'</div>'
     +'<div class="armory-inspection-copy"><span class="armory-item-rarity rarity-text-'+rarityClass(inspectedDef.rarity)+'">'+esc(inspectedDef.rarity)+' · '+esc(slotTitle[inspectedSlot])+'</span>'
     +'<strong>'+esc(inspectedInfo.name)+'</strong>'
-    +'<p>'+esc(inspectedInfo.flavour)+'</p><small>'+esc(inspectedInfo.bonus)+(inspectedInfo.setName?' · '+esc(inspectedInfo.setName)+' Set':'')+'</small></div>'
+    +'<p>'+esc(inspectedInfo.flavour)+'</p><small>'+esc(inspectedInfo.bonus)+(inspectedInfo.setName?' · '+esc(inspectedInfo.setName)+' Set':'')+'</small>'+(inspectedInstance.enchantId&&ENCHANTMENTS[inspectedInstance.enchantId]?'<small class="item-enchantment">✨ '+esc(ENCHANTMENTS[inspectedInstance.enchantId].name)+' · '+esc(itemBonusText(ENCHANTMENTS[inspectedInstance.enchantId]))+'</small>':'')+'</div>'
     +'<div class="armory-inspection-actions"><button type="button" class="tiny-btn armory-remove" data-action="unequip" data-slot="'+inspectedSlot+'">Unequip</button></div>';
   }else{
    html+='<div class="armory-inspection-icon is-empty" aria-hidden="true">◇</div>'
@@ -199,9 +201,11 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  }
  function renderInspection(itemId,defId,persistent=false,compareHeroId=heroId){
   const info=itemDetails(defId);if(!info)return '';
+   const instance=itemId&&profile.items.find(x=>x.id===itemId),enchantment=instance?.enchantId&&ENCHANTMENTS[instance.enchantId];
   const comparison=itemId&&profile.items.some(x=>x.id===itemId)?compareItem(profile,compareHeroId,itemId):null;
   let html='<section class="item-inspector" id="itemInspector"><div class="inspection-head"><span class="inspection-icon">'+esc(info.icon)+'</span><div><span class="eyebrow">EXAMINE EQUIPMENT</span><h3>'+esc(info.name)+'</h3><small>'+esc(info.rarity+' · '+slotTitle[info.slot])+(info.setName?' · '+esc(info.setName):'')+'</small></div>'+(persistent?'':'<button class="tiny-btn ghost" type="button" data-action="close-inspect">Close</button>')+'</div><p class="inspection-flavour">'+esc(info.flavour)+'</p>';
   html+='<p class="inspection-line"><b>Base bonuses:</b> '+esc(info.bonus)+'</p>';
+   if(enchantment)html+='<p class="inspection-line"><b>✨ Enchanted:</b> '+esc(enchantment.name)+' · '+esc(itemBonusText(enchantment))+' (permanent; applies in battle)</p>';
   html+='<p class="inspection-line"><b>Where to find:</b> '+esc(info.sources.length?info.sources.map(x=>x.name+' ('+x.rate+'% per victory)').join(' · '):info.shop?'Quartermaster · '+info.shop+' gold':CRAFT_RECIPES.some(r=>r.product===defId&&r.skill==='smithing')?'Smithing · boss reagents':'Boss rewards / relics')+'</p>';
   if(comparison){
    if(!comparison.eligible)html+='<div class="compare-warning">'+esc(comparison.reason)+'</div>';
@@ -246,7 +250,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   for(const item of visible){
    const itemDef=ITEM_DEFS[item.defId],active=item.id===selectedBagId;
    html+='<button type="button" class="inventory-slot rarity-'+rarityClass(itemDef.rarity)+(active?' is-selected':'')+'" data-action="inspect" data-id="'+esc(item.id)+'" title="'+esc(itemDef.name)+'" aria-label="'+esc(itemDef.name+', '+itemDef.rarity+', in bag')+'" aria-pressed="'+active+'">'
-    +'<span class="inventory-slot-icon" aria-hidden="true">'+esc(itemDef.icon)+'</span></button>';
+    +'<span class="inventory-slot-icon" aria-hidden="true">'+esc(itemDef.icon)+(item.enchantId?'<small class="gear-enchant-mark" aria-hidden="true">✦</small>':'')+'</span></button>';
   }
   for(let empty=0;empty<Math.max(0,24-visible.length);empty++)html+='<span class="inventory-slot inventory-slot-empty" aria-hidden="true"></span>';
   html+='</div></div>';
@@ -360,7 +364,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  }
  function renderSkills(){
   const active=ACCOUNT_SKILLS[selectedAccountSkill],level=profile.skills[selectedAccountSkill].level;
-  let html='<div class="workshop-intro"><span class="eyebrow">THE EMBERGUARD · ACCOUNT PROGRESSION</span><h3>Adventurer Skills</h3><p>Six skills shared by your entire company. Hero levels, talents and equipment stay individual. Only Blacksmithing, Alchemy and Slayer currently earn XP; the other professions are previews.</p></div>';
+  let html='<div class="workshop-intro"><span class="eyebrow">THE EMBERGUARD · ACCOUNT PROGRESSION</span><h3>Adventurer Skills</h3><p>Six fully playable, account-wide skills shared by your entire company. Hero levels, talents and equipped items remain individual. Explore each discipline from its own camp building.</p></div>';
   html+='<div class="account-skill-grid" role="group" aria-label="Account-wide skill selection">';
   for(const id of ACCOUNT_SKILL_IDS){
    const info=ACCOUNT_SKILLS[id],sk=profile.skills[id],needed=skillXpNeeded(sk.level),pct=needed?Math.round(sk.xp/needed*100):100;
@@ -373,7 +377,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    const isFuture=required>SKILL_CAP||!active.available;
    return '<div class="account-skill-unlock '+(!isFuture&&level>=required?'is-unlocked':'')+'"><b>Lv '+required+'</b><span>'+esc(label)+'</span><small>'+(!isFuture&&level>=required?'✓ Unlocked':isFuture?'Future':'Locked')+'</small></div>';
   }).join('')+'</div>';
-  if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'☠ Visit Slayer Lodge':selectedAccountSkill==='salvaging'?'🧰 Visit Salvaging Station':'⚒ Open Crafting Guild')+'</button>';
+  if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'☠ Visit Slayer Lodge':selectedAccountSkill==='salvaging'?'🧰 Visit Salvaging Station':selectedAccountSkill==='enchanting'?'✨ Visit Enchanting Forge':selectedAccountSkill==='delving'?'🗝️ Visit Delving Gate':'⚒ Open Crafting Guild')+'</button>';
   else html+='<p class="workshop-disclaimer">Preview only — this profession will be implemented in a future development block.</p>';
   return html+'</section>';
  }
@@ -435,6 +439,69 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   html+='</section></div><p class="workshop-disclaimer">Only original boss drops train Salvaging. Shop items cannot be recycled; crafted items recover just one ore and grant no Salvaging XP to prevent manufacturing loops. Rare gear unlocks at level 5; epic at level 10. Future rewards beyond level 20 remain previews.</p>';
   return html;
  }
+
+ function renderEnchant(){
+  const sk=profile.skills.enchanting,need=skillXpNeeded(sk.level);
+  const equipped=profile.items.slice().sort((a,b)=>Number(!!itemOwner(profile,b.id))-Number(!!itemOwner(profile,a.id)));
+  const chosen=equipped.find(it=>it.id===selectedEnchantItemId)||equipped[0]||null;
+  selectedEnchantItemId=chosen?.id||null;
+  const def=chosen&&ITEM_DEFS[chosen.defId],already=chosen?.enchantId&&ENCHANTMENTS[chosen.enchantId];
+  const enchant=ENCHANTMENTS[selectedEnchantId]||ENCHANTMENTS['ironroot-ward'],status=chosen?enchantingStatus(profile,chosen.id,selectedEnchantId):null;
+  let html='<div class="workshop-intro"><span class="eyebrow">THE RUNEFORGE · ACCOUNT SKILL</span><h3>✨ Enchanting Forge</h3><p>Inscribe a permanent elemental rune into a single piece of real equipment. Each item may be enchanted <b>once</b>. Bonuses affect your heroes in actual combat; enchanting an equipped item is allowed and applies from the next battle.</p></div>';
+  html+='<div class="salvage-summary"><span><b>Enchanting Lv '+sk.level+' / '+SKILL_CAP+'</b><small>'+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small></span><span><b>'+profile.items.length+' Owned Items</b><small>Enhancements remain with the item</small></span></div><div class="craft-xp-track"><i style="width:'+(need?Math.floor(sk.xp/need*100):100)+'%"></i></div>';
+  html+='<div class="enchant-layout"><section class="salvage-collection" aria-label="Choose an item to enchant"><h3>Choose equipment</h3><div class="salvage-item-grid">';
+  for(const item of equipped){
+   const d=ITEM_DEFS[item.defId],owner=itemOwner(profile,item.id),active=item.id===selectedEnchantItemId;
+   html+='<button type="button" class="salvage-item '+(active?'selected':'')+' rarity-'+rarityClass(d.rarity)+'" data-action="enchant-item" data-id="'+esc(item.id)+'" aria-pressed="'+active+'"><span>'+esc(d.icon)+(item.enchantId?'✨':'')+'</span><small>'+esc(d.name)+(owner?' · '+esc(HERO_NAMES[owner]):'')+'</small></button>';
+  }
+  html+='</div>'+(equipped.length?'':'<p>Earn your first boss item to begin enchanting.</p>')+'</section><section class="enchant-station" aria-label="Choose rune and preview enchantment">';
+  html+='<span class="eyebrow">THE RUNEFORGE</span><h3>'+esc(def?.name||'No equipment selected')+'</h3>';
+  if(already)html+='<p class="enchant-owned">✨ Already imbued with <b>'+esc(already.name)+'</b> · '+esc(itemBonusText(already))+'. This permanent enchantment cannot be replaced.</p>';
+  else if(def)html+='<p>'+esc(def.rarity)+' '+esc(SLOT_NAMES[def.slot])+' · '+esc(itemBonusText(def))+'</p>';
+  html+='<div class="enchant-recipe-list" role="group" aria-label="Available enchantment recipes">';
+  for(const [id,recipe] of Object.entries(ENCHANTMENTS)){
+   const locked=sk.level<recipe.level,selected=id===selectedEnchantId;
+   html+='<button type="button" class="enchant-recipe '+(selected?'selected':'')+'" data-action="enchant-recipe" data-id="'+id+'" aria-pressed="'+selected+'"><b>'+recipe.icon+' '+esc(recipe.name)+'</b><small>Level '+recipe.level+(locked?' · Locked':'')+' · '+esc(itemBonusText(recipe))+'</small></button>';
+  }
+  html+='</div><div class="salvage-returns"><h4>'+esc(enchant.name)+' · Required materials</h4>';
+  for(const [id,count] of Object.entries(enchant.materials)){
+   const stock=profile.materials[id];
+   html+='<div><span>'+MATERIAL_DEFS[id].icon+' '+esc(MATERIAL_DEFS[id].name)+'</span><b class="'+(stock<count?'enchant-insufficient':'')+'">'+stock+' / '+count+'</b></div>';
+  }
+  html+='<div><span>✦ Enchanting XP</span><b>+'+enchant.xp+'</b></div></div>';
+  if(already)html+='<p class="craft-warning">One rune per item. Select unenchanted equipment to continue.</p>';
+  else if(!chosen)html+='<p class="craft-warning">Select equipment first.</p>';
+  else if(!status.ok)html+='<p class="craft-warning">'+esc(status.reason)+'</p>';
+  if(chosen&&!already)html+='<button type="button" class="tiny-btn '+(confirmEnchantId===chosen.id+':'+selectedEnchantId?'danger':'craft-primary')+'" data-action="enchant-apply" '+(!status?.ok?'disabled':'')+'>'+(confirmEnchantId===chosen.id+':'+selectedEnchantId?'Confirm Permanent Enchantment':'Inscribe '+esc(enchant.name))+'</button>';
+  html+='</section></div><p class="workshop-disclaimer">Enchanting consumes boss essences and marks. Shop starter items cannot be enchanted. Each unique piece grants Enchanting XP only once. No enchants are transferred or duplicated when equipping, selling or restoring a backup.</p>';
+  return html;
+ }
+ function renderDelving(){
+  const sk=profile.skills.delving,progress=profile.delving,need=skillXpNeeded(sk.level),run=progress.active;
+  let html='<div class="workshop-intro"><span class="eyebrow">THE DEEP GATE · ACCOUNT SKILL</span><h3>🗝️ Delving Gate</h3><p>Choose a multi-stage route through Emberfall\'s existing boss arenas. Your company recovers between stages, but the expedition continues until you finish or abandon it. Each victorious stage grants real Delving XP and normal boss loot; claim an extra cache at the end.</p></div>';
+  html+='<div class="slayer-stats"><span><b>Delving Lv '+sk.level+' / '+SKILL_CAP+'</b><small>'+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small></span><span><b>'+progress.completed+' Cleared</b><small>Finished expeditions</small></span><span><b>Stage '+progress.bestStage+'</b><small>Longest run reached</small></span></div><div class="craft-xp-track slayer-level-track"><i style="width:'+(need?Math.floor(sk.xp/need*100):100)+'%"></i></div>';
+  if(run){
+   const route=DELVE_ROUTES[run.routeId],complete=run.stage===route.bosses.length,next=currentDelveStage(profile);
+   html+='<section class="delve-active"><span class="eyebrow">'+(complete?'EXPEDITION COMPLETE · CLAIM YOUR CACHE':'ACTIVE EXPEDITION')+'</span><h3>'+route.icon+' '+esc(route.name)+'</h3><p>'+esc(route.description)+'</p><div class="delve-stages">';
+   for(const [i,id] of route.bosses.entries()){
+    const boss=BOSSES[id],status=i<run.stage?'✓ Defeated':i===run.stage?'Next encounter':'Awaiting';
+    html+='<div class="delve-stage '+(i<run.stage?'cleared':i===run.stage?'up-next':'')+'"><b>Stage '+(i+1)+' · '+boss.icon+' '+esc(boss.name)+'</b><small>'+status+' · +'+route.xp[i]+' Delving XP</small></div>';
+   }
+   html+='</div><div class="salvage-returns"><h4>Completion cache</h4>'+Object.entries(route.bonus).map(([id,n])=>'<div><span>'+MATERIAL_DEFS[id].icon+' '+esc(MATERIAL_DEFS[id].name)+'</span><b>×'+n+'</b></div>').join('')+'</div>';
+   if(complete)html+='<button type="button" class="tiny-btn craft-primary" data-action="delve-claim">Claim Expedition Cache →</button>';
+   else html+='<button type="button" class="tiny-btn craft-primary" data-action="delve-battle" data-id="'+next.bossId+'">Fight Stage '+(run.stage+1)+' · '+esc(BOSSES[next.bossId].name)+' →</button>';
+   html+='<button type="button" class="tiny-btn ghost delve-abandon" data-action="delve-abandon">'+(confirmDelveAbandon?'Confirm Abandon · Lose Remaining Stages':'Abandon Expedition')+'</button>';
+   html+='<p class="workshop-disclaimer">Leaving the gate keeps your progress. Defeat lets you retry this stage; abandoning keeps earned loot and XP but loses remaining stages and the unclaimed completion cache.</p></section>';
+  }else{
+   html+='<div class="workshop-subheading"><h3>Expedition routes</h3><span>Only one active Delve at a time</span></div><div class="delve-route-grid">';
+   for(const [id,route] of Object.entries(DELVE_ROUTES)){
+    const locked=sk.level<route.level;
+    html+='<article class="slayer-contract delve-route '+(locked?'locked':'')+'"><span class="eyebrow">'+(locked?'REQUIRES DELVING '+route.level:'UNLOCKED · DELVING '+route.level)+'</span><h3>'+route.icon+' '+esc(route.name)+'</h3><p>'+esc(route.description)+'</p><div class="delve-boss-line">'+route.bosses.map(b=>BOSSES[b].icon+' '+esc(BOSSES[b].name)).join(' → ')+'</div><small>'+route.bosses.length+' stages · '+route.xp.reduce((a,b)=>a+b,0)+' Delving XP · bonus cache</small><button type="button" class="tiny-btn" data-action="delve-start" data-id="'+id+'" '+(locked?'disabled':'')+'>'+(locked?'🔒 Locked':'Enter Expedition')+'</button></article>';
+   }
+   html+='</div>';
+  }
+  return html+'<p class="workshop-disclaimer">Delving XP is only awarded for wins launched from an active Delving stage, never for ordinary boss farming or duplicate victory receipts. Runs and stage completion survive a reload. This is local PvE progression, not an online dungeon or co-op system.</p>';
+ }
  function render(){
   title.textContent=tabNames[current];
   context.textContent='EMBERGUARD CAMP · '+tabNames[current].toUpperCase();
@@ -452,7 +519,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   body.classList.toggle('inventory-mode',current==='pack');
    body.classList.toggle('salvage-mode',current==='salvage');
   body.innerHTML=(notice?'<div class="workshop-notice '+(noticeBad?'is-error':'')+'" role="status">'+esc(notice)+'</div>':'')
-    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='skills'?renderSkills():current==='slayer'?renderSlayer():current==='salvage'?renderSalvage():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
+    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='skills'?renderSkills():current==='slayer'?renderSlayer():current==='salvage'?renderSalvage():current==='enchant'?renderEnchant():current==='delving'?renderDelving():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
  }
  function rerenderBag(){
   const offset=body.querySelector('#inventoryScroll')?.scrollTop||0;
@@ -479,6 +546,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(!root.classList.contains('hidden'))return;
   returnFocus=document.activeElement;
   if(tabNames[tab])current=tab;
+   confirmEnchantId=null;confirmDelveAbandon=false;
    confirmSalvageId=null;confirmPurchaseId=null;confirmReroll=false;
   if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;selectedTalentId=null;partyPosition=Math.max(0,partyOrder(profile).indexOf(selected));}
   pendingSell=null;
@@ -494,6 +562,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  tabs.addEventListener('click',e=>{
   const tab=e.target.closest('button[data-tab]')?.dataset.tab;
   if(tabNames[tab]){
+   confirmEnchantId=null;confirmDelveAbandon=false;
    current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;render();
    if(root.classList.contains('camp-page'))window.scrollTo({top:0,behavior:'instant'});else body.scrollTop=0;
   }
@@ -521,9 +590,36 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const action=btn.dataset.action,id=btn.dataset.id,slot=btn.dataset.slot;
    if(action==='skill-select'&&ACCOUNT_SKILL_IDS.includes(id)){selectedAccountSkill=id;render();return;}
    if(action==='skill-visit'&&ACCOUNT_SKILLS[id]?.available){
-    current=id==='slayer'?'slayer':id==='salvaging'?'salvage':'craft';
+    current=id==='slayer'?'slayer':id==='salvaging'?'salvage':id==='enchanting'?'enchant':id==='delving'?'delving':'craft';
     if(SKILL_IDS.includes(id)){craftSkill=id;craftRecipeId=null;}
     notice='';render();return;
+   }
+   if(action==='enchant-item'&&current==='enchant'){
+    if(profile.items.some(x=>x.id===id)){selectedEnchantItemId=id;confirmEnchantId=null;notice='';render();}return;
+   }
+   if(action==='enchant-recipe'&&current==='enchant'){
+    if(Object.hasOwn(ENCHANTMENTS,id)){selectedEnchantId=id;confirmEnchantId=null;notice='';render();}return;
+   }
+   if(action==='enchant-apply'&&current==='enchant'&&selectedEnchantItemId){
+    const key=selectedEnchantItemId+':'+selectedEnchantId;
+    if(confirmEnchantId!==key){confirmEnchantId=key;render();return;}
+    commitAccountChange(()=>{const r=enchantEquipment(profile,selectedEnchantItemId,selectedEnchantId);return r.ok?r:null;},r=>{
+     confirmEnchantId=null;return '✨ '+ENCHANTMENTS[r.enchantId].name+' inscribed! +'+r.xp+' Enchanting XP'+(r.levelTo>r.levelFrom?' · LEVEL UP '+r.levelTo+'!':'')+'. Combat bonuses now apply to this item.';
+    });return;
+   }
+   if(action==='delve-start'&&current==='delving'){
+    commitAccountChange(()=>startDelve(profile,id),()=>{confirmDelveAbandon=false;return 'Expedition started! Select Fight Stage 1 to enter the first encounter.';});return;
+   }
+   if(action==='delve-claim'&&current==='delving'){
+    commitAccountChange(()=>claimDelve(profile),r=>'🗝️ Expedition complete! Your cache from '+DELVE_ROUTES[r.routeId].name+' has been added to the material store. '+r.completed+' total clears.');return;
+   }
+   if(action==='delve-abandon'&&current==='delving'){
+    if(!confirmDelveAbandon){confirmDelveAbandon=true;render();return;}
+    commitAccountChange(()=>abandonDelve(profile),()=>{confirmDelveAbandon=false;return 'Expedition abandoned. Rewards and Delving XP already gained are kept.';});return;
+   }
+   if(action==='delve-battle'&&current==='delving'){
+    const stage=currentDelveStage(profile),token=delveStageToken(profile);
+    if(stage&&stage.bossId===id&&token){close();onDelveStage({...stage,token});}return;
    }
    if(action==='slayer-accept'&&current==='slayer'){
     commitAccountChange(()=>takeSlayerContract(profile,id),()=>{confirmAbandon=false;confirmReroll=false;return 'Contract accepted. Defeat '+BOSSES[SLAYER_TASKS[id].bossId].name+' to earn Slayer XP.';});return;
@@ -708,7 +804,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    render();return;
   }
   if(action==='hero'&&HERO_IDS.includes(id)){heroId=id;equipmentSlot=null;selectedTalentId=null;confirmSpendId=null;confirmRespec=false;render();return;}
-  if(action==='tab'&&tabNames[btn.dataset.tab]){current=btn.dataset.tab;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;render();return;}
+  if(action==='tab'&&tabNames[btn.dataset.tab]){confirmEnchantId=null;confirmDelveAbandon=false;current=btn.dataset.tab;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;render();return;}
   if(action==='talent'){if(chooseTalent(profile,heroId,id))save();return;}
   if(action==='equip'){
    if(current==='pack'){
