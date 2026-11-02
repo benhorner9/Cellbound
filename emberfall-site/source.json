@@ -1,7 +1,7 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "6c7537471450b561cb2c8d034e08a3ea58e5ef54",
+  "sourceCommit": "f7d4db568a9c3e1b4971528bd806f48ba5466f67",
   "target": "/emberfall/",
   "stage": "immersive-ui-ux-block-3-v4.17.0",
   "assets": [
@@ -20,5 +20,5 @@
     "assets/refuge-scene.svg",
     "assets/interior-chamber.svg"
   ],
-  "note": "UX Block 3: ambient lantern light and embers, immediate navigation/war-table/combat arrival gestures, accessible non-blocking travel and saved-progress feedback, touch and keyboard focus restoration, prefers-reduced-motion, hidden tab animation pause. No changes to save schema, Bounty Hunting, reward paths, equipment or combat. Final source SHA will be pinned to merged PR #51 after CI."
+  "note": "UI/UX Block 3 released from canonical PR #51 merged at f7d4db568a9c3e1b4971528bd806f48ba5466f67. Ambient lantern halos/embers, non-blocking location and battle arrivals, readable accessible travel and saved-progress feedback, focus-safe workshop controls, consistent touch and hover states, reduced-motion support, and hidden-tab animation pause. All Node, Chromium, iPad WebKit and phone WebKit source checks passed. No changes to hero ownership, combat, rewards, Bounty Hunting, account skill levels, save schema or other hosted projects."
 }
