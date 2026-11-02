@@ -23,7 +23,7 @@ try {
   page.on('pageerror', err => errors.push(err.message));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto(base, { waitUntil: 'networkidle', timeout: 45000 });
-  assert(await page.locator('html').getAttribute('data-emberfall-ready') === '4.15.0',
+  assert(await page.locator('html').getAttribute('data-emberfall-ready') === '4.16.0',
     'Hosted phone Safari could not initialise Emberfall');
   assert(await page.locator('link[href*="mobile-testing.css"]').count() === 1,
     'Hosted HTML does not load the phone layout');
@@ -37,6 +37,9 @@ try {
   await tap(page, '[data-camp="party"]');
   assert((await page.locator('#app').getAttribute('data-view')) === 'workshop',
     'Party is not a proper mobile management screen');
+  assert(await page.locator('#workshopJump').isVisible(), 'Hosted phone needs Refuge location selector');
+  await page.locator('#workshopJump').selectOption('talents');
+  assert((await page.locator('#workshopHeading').innerText()) === 'Talent Trees', 'Hosted phone quick travel did not work');
   await tap(page, '#workshopTabs [data-tab="talents"]');
   assert(await page.locator('.talent-tree').isVisible(), 'Mobile talents inaccessible');
   await tap(page, '#workshopTabs [data-tab="pack"]');
@@ -100,7 +103,7 @@ try {
     !matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 540px) and (max-width: 950px)').matches
   );
   assert(tabletLayoutPreserved &&
-         await ipadPage.locator('html').getAttribute('data-emberfall-ready') === '4.15.0',
+         await ipadPage.locator('html').getAttribute('data-emberfall-ready') === '4.16.0',
     'Hosted iPad layout or boot regressed');
   assert(errors.length === 0, 'Hosted mobile WebKit errors: ' + errors.join(' | '));
   console.log('PASS hosted Emberfall iPhone portrait, landscape and iPad isolation.');
