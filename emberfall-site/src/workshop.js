@@ -374,7 +374,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const need=skillXpNeeded(level);
   html+='<p class="account-skill-xp">'+(active.available?(need?profile.skills[selectedAccountSkill].xp+' / '+need+' XP until next level':'MAX LEVEL'):'This skill cannot earn XP yet.')+'</p>';
   html+='<div class="account-skill-unlocks"><h4>Unlocks &amp; milestones</h4>'+active.unlocks.map(([required,label])=>{
-   const isFuture=required>SKILL_CAP||!active.available;
+   const isFuture=required>SKILL_CAP||!active.available||/\bfuture\b/i.test(label);
    return '<div class="account-skill-unlock '+(!isFuture&&level>=required?'is-unlocked':'')+'"><b>Lv '+required+'</b><span>'+esc(label)+'</span><small>'+(!isFuture&&level>=required?'✓ Unlocked':isFuture?'Future':'Locked')+'</small></div>';
   }).join('')+'</div>';
   if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'🎯 Visit Bounty Board':selectedAccountSkill==='salvaging'?'🧰 Visit Salvaging Station':selectedAccountSkill==='enchanting'?'✨ Visit Enchanting Forge':selectedAccountSkill==='delving'?'🗝️ Visit Delving Gate':'⚒ Open Crafting Guild')+'</button>';
