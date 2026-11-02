@@ -34,9 +34,9 @@ export const ACCOUNT_SKILL_IDS=Object.freeze([...SKILL_IDS,'slayer','enchanting'
 export const ACCOUNT_SKILLS=Object.freeze({
  smithing:{name:'Blacksmithing',icon:'⚒️',description:'Forge lasting weapons and armour from boss materials.',available:true,unlocks:[[1,'Basic armour patterns'],[5,'Improved set pieces'],[10,'Epic equipment recipes'],[25,'Mythic forging · future']]},
  alchemy:{name:'Alchemy',icon:'⚗️',description:'Brew elixirs that strengthen your party in battle.',available:true,unlocks:[[1,'Basic battle elixirs'],[4,'Additional elemental recipes'],[10,'Grand elixirs'],[25,'Spiritbound tonics · future']]},
- slayer:{name:'Slayer',icon:'☠️',description:'Take hunting contracts, defeat assigned bosses and earn Slayer Points.',available:true,unlocks:[[1,'Thornwarden contracts'],[5,'Cindermaw contracts'],[10,'Tempest Seraph contracts'],[20,'Master hunts · future']]},
+ slayer:{name:'Slayer',icon:'☠️',description:'Hunt assigned bosses, earn XP per victory and spend Slayer Points on supplies. Longer assignments and hunt streaks unlock better rewards.',available:true,unlocks:[[1,'Thornwarden contracts & rewards shop'],[3,'Bramble Purge extended tasks'],[5,'Cindermaw hunts'],[7,'Furnace Purge extended tasks'],[10,'Tempest Seraph hunts'],[12,'Skybreak Trial'],[20,'Master hunts · future']]},
  enchanting:{name:'Enchanting',icon:'✨',description:'Future profession: imbue equipment with magical properties.',available:false,unlocks:[[1,'Arcane inscriptions · future'],[10,'Elemental enhancements · future']]},
- salvaging:{name:'Salvaging',icon:'🧰',description:'Future profession: reclaim resources from unwanted gear.',available:false,unlocks:[[1,'Basic dismantling · future'],[10,'Rare-component recovery · future']]},
+ salvaging:{name:'Salvaging',icon:'🧰',description:'Recover crafting materials from unwanted boss loot at the Salvaging Station. Crafted pieces return a little material but no Salvaging XP.',available:true,unlocks:[[1,'Uncommon boss-loot salvage'],[5,'Rare equipment recovery'],[10,'Additional material from boss gear'],[15,'Refined essence recovery'],[25,'Relic reclamation · future']]},
  delving:{name:'Delving',icon:'🗝️',description:'Future adventure skill: challenge deeper multi-stage expeditions.',available:false,unlocks:[[1,'First descent · future'],[10,'Elite dungeon routes · future']]}
 });
 export const SLAYER_CONTRACTS=Object.freeze({
@@ -44,6 +44,25 @@ export const SLAYER_CONTRACTS=Object.freeze({
  cindermaw:{bossId:'cindermaw',level:5,target:2,xp:95,points:5},
  tempest:{bossId:'tempest',level:10,target:2,xp:135,points:8}
 });
+// Base contract IDs remain stable so active tasks in existing browser saves migrate unchanged.
+export const SLAYER_TASKS=Object.freeze({
+ thornwarden:{...SLAYER_CONTRACTS.thornwarden,name:'Warden Patrol'},
+ 'thornwarden-endurance':{bossId:'thornwarden',name:'Bramble Purge',level:3,target:5,xp:75,points:6},
+ cindermaw:{...SLAYER_CONTRACTS.cindermaw,name:'Ashen Hunt'},
+ 'cindermaw-endurance':{bossId:'cindermaw',name:'Furnace Purge',level:7,target:4,xp:110,points:9},
+ tempest:{...SLAYER_CONTRACTS.tempest,name:'Storm Watch'},
+ 'tempest-endurance':{bossId:'tempest',name:'Skybreak Trial',level:12,target:3,xp:150,points:12}
+});
+export const SLAYER_REROLL_COST=2;
+export const SLAYER_REWARDS=Object.freeze({
+ 'verdant-essence-cache':{name:'Ironroot Essence Cache',icon:'🌿',points:3,level:1,materials:{'verdant-essence':4}},
+ 'vitality-tonics':{name:'Twin Vitality Draughts',icon:'🧪',points:4,level:1,potions:{'verdant-draught':2}},
+ 'warden-marks':{name:'Warden Mark Bundle',icon:'🍃',points:7,level:4,materials:{'verdant-seal':2}},
+ 'ember-essence-cache':{name:'Ember Essence Cache',icon:'🔥',points:5,level:5,materials:{'ember-essence':4}},
+ 'storm-essence-cache':{name:'Storm Essence Cache',icon:'⚡',points:8,level:10,materials:{'tempest-essence':4}}
+});
+export function slayerTask(active){return active?SLAYER_TASKS[active.taskId||active.bossId]||null:null;}
+export function slayerStreakBonus(nextStreak){return nextStreak>0&&nextStreak%10===0?5:nextStreak>0&&nextStreak%5===0?2:0;}
 export const MATERIAL_GROUPS=Object.freeze({
  thornwarden:{tier:'verdant',ore:'verdant-ore',essence:'verdant-essence',seal:'verdant-seal'},
  cindermaw:{tier:'ember',ore:'ember-ore',essence:'ember-essence',seal:'ember-seal'},
@@ -340,8 +359,9 @@ export function validateProfile(p){
   const s=p.slayer,active=s?.active;
   if(!s||!validNum(s.points)||s.points>1000000||!validNum(s.completed)||s.completed>1000000||!validNum(s.streak)||s.streak>s.completed)return false;
   if(active!==null){
-   const contract=active&&SLAYER_CONTRACTS[active.bossId];
-   if(!contract||!validNum(active.kills)||active.target!==contract.target||active.kills>active.target)return false;
+   const contract=active&&slayerTask(active);
+   if(!contract||active.bossId!==contract.bossId||!validNum(active.kills)||active.target!==contract.target||active.kills>active.target||
+      (active.taskId!==undefined&&typeof active.taskId!=='string'))return false;
   }
  }
  const ids=new Set(), equipped=new Set();
@@ -445,12 +465,13 @@ export function rollBossDrop(seed,bossId='thornwarden'){
  let sum=0;for(const d of table){sum+=d.weight;if(roll<sum)return d.id;}
  return table.at(-1).id;
 }
-export function takeSlayerContract(p,bossId){
- if(!validateProfile(p)||!Object.hasOwn(SLAYER_CONTRACTS,bossId))return false;
+
+export function takeSlayerContract(p,taskId){
+ if(!validateProfile(p)||!Object.hasOwn(SLAYER_TASKS,taskId))return false;
  normalizeProfileSlots(p);
- const contract=SLAYER_CONTRACTS[bossId];
- if(p.slayer.active||p.skills.slayer.level<contract.level)return false;
- p.slayer.active={bossId,target:contract.target,kills:0};
+ const task=SLAYER_TASKS[taskId];
+ if(p.slayer.active||p.skills.slayer.level<task.level)return false;
+ p.slayer.active={taskId,bossId:task.bossId,target:task.target,kills:0};
  return true;
 }
 export function abandonSlayerContract(p){
@@ -459,25 +480,50 @@ export function abandonSlayerContract(p){
  if(!p.slayer.active)return false;
  p.slayer.active=null;p.slayer.streak=0;return true;
 }
+export function rerollSlayerContract(p){
+ if(!validateProfile(p))return null;
+ normalizeProfileSlots(p);
+ const current=p.slayer.active;
+ if(!current||current.kills>=current.target||p.slayer.points<SLAYER_REROLL_COST)return null;
+ const eligible=Object.entries(SLAYER_TASKS).filter(([,v])=>v.level<=p.skills.slayer.level).map(([id])=>id);
+ const id=eligible[(eligible.indexOf(current.taskId||current.bossId)+1)%eligible.length];
+ if(!id||id===(current.taskId||current.bossId))return null;
+ p.slayer.points-=SLAYER_REROLL_COST;
+ const task=SLAYER_TASKS[id];p.slayer.active={taskId:id,bossId:task.bossId,target:task.target,kills:0};
+ return {...p.slayer.active,cost:SLAYER_REROLL_COST};
+}
 export function claimSlayerContract(p){
  if(!validateProfile(p))return null;
  normalizeProfileSlots(p);
  const active=p.slayer.active;
  if(!active||active.kills!==active.target)return null;
- const reward=SLAYER_CONTRACTS[active.bossId];
- p.slayer.points+=reward.points;p.slayer.completed++;p.slayer.streak++;
+ const task=slayerTask(active),streak=p.slayer.streak+1,bonus=slayerStreakBonus(streak);
+ if(p.slayer.points+task.points+bonus>1000000||p.slayer.completed>=1000000)return null;
+ p.slayer.points+=task.points+bonus;p.slayer.completed++;p.slayer.streak=streak;
  p.slayer.active=null;
- return {bossId:reward.bossId,points:reward.points,completed:p.slayer.completed,streak:p.slayer.streak};
+ return {bossId:task.bossId,taskId:active.taskId||active.bossId,points:task.points+bonus,basePoints:task.points,bonus,completed:p.slayer.completed,streak};
+}
+export function purchaseSlayerReward(p,id){
+ if(!validateProfile(p)||!Object.hasOwn(SLAYER_REWARDS,id))return null;
+ normalizeProfileSlots(p);
+ const item=SLAYER_REWARDS[id];
+ if(p.slayer.points<item.points||p.skills.slayer.level<item.level)return null;
+ for(const [field,items] of [['materials',item.materials||{}],['potions',item.potions||{}]])
+  for(const [key,n] of Object.entries(items))if(p[field][key]+n>99999)return null;
+ p.slayer.points-=item.points;
+ for(const [key,n] of Object.entries(item.materials||{}))p.materials[key]+=n;
+ for(const [key,n] of Object.entries(item.potions||{}))p.potions[key]+=n;
+ return {id,points:item.points,materials:item.materials||{},potions:item.potions||{}};
 }
 function recordSlayerVictory(p,bossId){
  const active=p.slayer.active;
  if(!active||active.bossId!==bossId||active.kills>=active.target)return null;
- const contract=SLAYER_CONTRACTS[bossId],skill=p.skills.slayer,before=skill.level;
+ const task=slayerTask(active),skill=p.skills.slayer,before=skill.level;
  active.kills++;
- skill.xp+=contract.xp;
+ skill.xp+=task.xp;
  while(skill.level<SKILL_CAP&&skill.xp>=skillXpNeeded(skill.level)){skill.xp-=skillXpNeeded(skill.level);skill.level++;}
  if(skill.level===SKILL_CAP)skill.xp=0;
- return {bossId,xp:contract.xp,levelFrom:before,levelTo:skill.level,kills:active.kills,target:active.target,complete:active.kills===active.target};
+ return {bossId,taskId:active.taskId||active.bossId,xp:task.xp,levelFrom:before,levelTo:skill.level,kills:active.kills,target:active.target,complete:active.kills===active.target};
 }
 export function grantVictory(p,receiptId,seed,bossId='thornwarden'){
  if(!Object.hasOwn(BOSSES,bossId)||!canChallenge(p,bossId))return null;
@@ -506,4 +552,61 @@ export function grantVictory(p,receiptId,seed,bossId='thornwarden'){
  p.claims.push(receiptId);if(p.claims.length>100)p.claims=p.claims.slice(-100);
  return reward;
 }
+
+/**
+ * Salvaging never creates an equipment instance and cannot award XP from any
+ * shop item or forged product. Saved build references are blocked until cleared.
+ */
+export function salvageStatus(p,itemId,builds=null){
+ if(!validateProfile(p))return {ok:false,reason:'Invalid company save.'};
+ const instance=p.items.find(item=>item.id===itemId),def=instance&&ITEM_DEFS[instance.defId];
+ if(!def)return {ok:false,reason:'That item is no longer in your bag.'};
+ if(itemOwner(p,itemId))return {ok:false,reason:'Unequip this item before salvaging it.'};
+ for(const records of Object.values(builds?.heroes||{}))
+  for(const preset of records||[])
+   if(preset&&Object.values(preset.gear||{}).includes(itemId))
+    return {ok:false,reason:'Protected by a saved equipment loadout. Replace or clear that loadout before salvaging.'};
+ if(def.shop)return {ok:false,reason:'Quartermaster purchases cannot be salvaged to prevent recycling exploits.'};
+ const crafted=CRAFT_RECIPES.find(r=>r.skill==='smithing'&&r.product===instance.defId);
+ const source=Object.keys(BOSSES).find(boss=>BOSSES[boss].drops.some(row=>row.id===instance.defId));
+ if(!crafted&&!source)return {ok:false,reason:'Only boss loot and crafted equipment can be salvaged.'};
+ const rarity=def.rarity,levelNeeded=rarity==='Epic'?10:rarity==='Rare'?5:1;
+ const currentLevel=p.skills?.salvaging?.level||1;
+ if(currentLevel<levelNeeded)return {ok:false,reason:'Requires Salvaging level '+levelNeeded+' for '+rarity+' equipment.'};
+ const tier=source||CRAFT_THEMES[Object.keys(CRAFT_THEMES).find(k=>instance.defId.startsWith(k+'-'))]?.boss;
+ // All existing crafted item IDs use an elemental prefix, except purple
+ // accessories, which are identified by the crafting recipe's material keys.
+ const mat=source?MATERIAL_GROUPS[source]:crafted?MATERIAL_GROUPS[Object.keys(MATERIAL_GROUPS).find(id=>Object.hasOwn(crafted.materials,MATERIAL_GROUPS[id].ore))]:null;
+ if(!mat)return {ok:false,reason:'This item has no compatible recovery recipe.'};
+ let drops,xp;
+ if(crafted){drops={[mat.ore]:1};xp=0;}
+ else{
+  drops={[mat.ore]:rarity==='Rare'?2:1};
+  if(rarity==='Rare')drops[mat.essence]=2;
+  if(currentLevel>=10)drops[mat.ore]++;
+  if(currentLevel>=15&&rarity==='Rare')drops[mat.essence]++;
+  xp=rarity==='Rare'?105:65;
+ }
+ for(const [id,n] of Object.entries(drops))if((p.materials[id]||0)+n>99999)return {ok:false,reason:'Material storage is full for '+MATERIAL_DEFS[id].name+'.'};
+ return {ok:true,itemId,defId:instance.defId,rarity,source:source||'crafted',crafted:!!crafted,materials:drops,xp,levelNeeded,
+  warning:rarity==='Rare'||rarity==='Epic'?'Rare or epic equipment is permanently destroyed. Confirm carefully.':crafted?'Crafted equipment only returns one ore and awards no Salvaging XP.':''};
+}
+export function salvageItem(p,itemId,builds=null){
+ const status=salvageStatus(p,itemId,builds);
+ if(!status.ok)return status;
+ normalizeProfileSlots(p);
+ // Mutation is single-use: this instance ID disappears before it can pay out again.
+ const index=p.items.findIndex(item=>item.id===itemId);
+ if(index<0)return {ok:false,reason:'Item is no longer available.'};
+ p.items.splice(index,1);
+ for(const [id,n] of Object.entries(status.materials))p.materials[id]+=n;
+ const sk=p.skills.salvaging,before=sk.level;
+ if(status.xp){
+  sk.xp+=status.xp;
+  while(sk.level<SKILL_CAP&&sk.xp>=skillXpNeeded(sk.level)){sk.xp-=skillXpNeeded(sk.level);sk.level++;}
+  if(sk.level===SKILL_CAP)sk.xp=0;
+ }
+ return {...status,ok:true,levelFrom:before,levelTo:sk.level};
+}
+
 export function recordDefeat(p){if(validateProfile(p)){p.defeats++;return true;}return false;}
