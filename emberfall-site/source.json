@@ -14,5 +14,5 @@
     "src/style.css",
     "src/mobile-testing.css"
   ],
-  "note": "Emberfall PR #45: Bounty Hunting with six one-target contracts, dangerous combat challenges, legacy-save compatibility, account-wide progression and isolated release. Deploy only /emberfall/."
+  "note": "Canonical Heroes of Emberfall PR #45 merged, Bounty Hunting Option A: Bounty Board, Bounty Contracts, Bounty Marks, Bounty Exchange, Bounty Chain, six single-encounter contracts and three genuine boss modifiers; +15% Thornwarden health with early Bramblekin, +10% Cindermaw health/faster Furnace Breath, +8% Tempest health/two distinct telegraphed lanes. Dedicated encounter tokens isolate reward attribution from ordinary farming and Delving; claim once and keep existing rewards. Grandfather all older multi-kill hunts and preserve skill XP/levels, Mark balances, streaks, completed count, claimed receipts, hero gear, account-wide skills, and backup compatibility (legacy slayer keys intentionally unchanged). Passed source Node test, Chromium/iPad WebKit and mobile browser smoke. Isolated /emberfall/ deployment, no Vercel and no other-game changes."
 }
