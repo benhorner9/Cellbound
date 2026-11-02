@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
-} from './progression.js?v=4.15.0';
+} from './progression.js?v=4.16.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.15.0';
+} from './builds.js?v=4.16.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -19,6 +19,26 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false,confirmReroll=false,confirmPurchaseId=null,selectedSalvageId=null,confirmSalvageId=null,selectedEnchantItemId=null,selectedEnchantId='ironroot-ward',confirmEnchantId=null,confirmDelveAbandon=false;
  const builds=readBuilds(storage);
  const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Bounty Board',salvage:'Salvaging Station',enchant:'Enchanting Forge',delving:'Delving Gate',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
+
+ const locationDetails={
+  party:{name:'THE WAR ROOM',icon:'♜',description:'Place your four heroes on the front line. Their positions decide how each expedition begins.'},
+  heroes:{name:'HALL OF HEROES',icon:'⚔',description:'Equip and develop the champions who carry the name of the Emberguard.'},
+  talents:{name:'THE TALENT SANCTUM',icon:'✧',description:'Choose the paths that shape each hero and decide how they fight.'},
+  pack:{name:'THE STOREHOUSE',icon:'🎒',description:'Keep the company supplied. Inspect, equip and organise the gear you have earned.'},
+  craft:{name:'THE FORGE & APOTHECARY',icon:'⚒',description:'Turn hard-won materials into blades, armour and elixirs for the road.'},
+  skills:{name:'THE GUILD HALL',icon:'✦',description:'Track the professions and shared skills that strengthen your entire company.'},
+  salvage:{name:'THE SALVAGING STATION',icon:'⛏',description:'Recover useful materials from unwanted spoils of war.'},
+  enchant:{name:'THE ENCHANTING FORGE',icon:'✧',description:'Imbue equipment with rare properties before setting out.'},
+  slayer:{name:'THE BOUNTY HUNTERS GUILD',icon:'🎯',description:'Follow a single quarry. Each contract has its own challenge and reward.'},
+  delving:{name:'THE DELVING GATE',icon:'🗝',description:'Take your company beyond the Refuge on an expedition of linked encounters.'},
+  loot:{name:'THE BOSS LEDGER',icon:'☠',description:'Study the creatures of Emberfall and the treasures they may yield.'},
+  shop:{name:'THE QUARTERMASTER',icon:'🪙',description:'Outfit your heroes for the next hunt using your earned gold.'},
+  backup:{name:'THE SAVE ARCHIVE',icon:'📜',description:'Safeguard the story of your company before it leaves this device.'}
+ };
+ const stageTagline=document.getElementById('workshopTagline'),
+  stageSigil=document.getElementById('workshopSigil'),
+  locationTrail=document.getElementById('workshopTrail'),
+  locationJump=document.getElementById('workshopJump');
  const tabId=tab=>'workshopTab-'+tab;
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
@@ -503,8 +523,19 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   return html+'<p class="workshop-disclaimer">Delving XP is only awarded for wins launched from an active Delving stage, never for ordinary boss farming or duplicate victory receipts. Runs and stage completion survive a reload. This is local PvE progression, not an online dungeon or co-op system.</p>';
  }
  function render(){
+  const location=locationDetails[current];
+  root.dataset.location=current;
   title.textContent=tabNames[current];
-  context.textContent='EMBERGUARD CAMP · '+tabNames[current].toUpperCase();
+  context.textContent='EMBERFALL REFUGE · '+location.name;
+  stageTagline.textContent=location.description;
+  stageSigil.textContent=location.icon;
+  locationTrail.textContent=tabNames[current];
+  locationJump.value=current;
+  document.getElementById('workshopGold').textContent=String(profile.gold);
+  document.getElementById('workshopItems').textContent=String(profile.items.length);
+  document.getElementById('workshopMarks').textContent=String(profile.slayer?.points??0);
+  document.getElementById('workshopFormation').textContent=partyOrder(profile).length+' / '+PARTY_SIZE;
+  document.getElementById('workshopRailSummary').textContent=partyOrder(profile).length+' active heroes · '+profile.wins+' boss victories';
   for(const tab of tabs.querySelectorAll('button[data-tab]')){
    const active=tab.dataset.tab===current;
    tab.id=tabId(tab.dataset.tab);
@@ -566,6 +597,12 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;render();
    if(root.classList.contains('camp-page'))window.scrollTo({top:0,behavior:'instant'});else body.scrollTop=0;
   }
+ });
+ // The native phone selector travels through the exact same tab navigation
+ // as the desktop rail, preserving its state and keyboard semantics.
+ locationJump.addEventListener('change',()=>{
+  const dest=locationJump.value;
+  if(tabNames[dest])tabs.querySelector('button[data-tab="'+dest+'"]')?.click();
  });
  tabs.addEventListener('keydown',e=>{
   if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;

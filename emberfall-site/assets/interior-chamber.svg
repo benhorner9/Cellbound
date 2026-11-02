@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 340" role="img" aria-label="A candlelit stone hall in the Emberfall Refuge">
+<defs>
+ <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#18282b"/><stop offset=".55" stop-color="#384440"/><stop offset="1" stop-color="#57483b"/></linearGradient>
+ <linearGradient id="floor" x2="0" y2="1"><stop stop-color="#74624b"/><stop offset="1" stop-color="#252f2a"/></linearGradient>
+ <linearGradient id="window" x2="0" y2="1"><stop stop-color="#141f2c"/><stop offset="1" stop-color="#57605a"/></linearGradient>
+ <radialGradient id="flame"><stop stop-color="#ffe8b8" stop-opacity=".65"/><stop offset=".45" stop-color="#e6a45b" stop-opacity=".22"/><stop offset="1" stop-color="#df9c53" stop-opacity="0"/></radialGradient>
+ <linearGradient id="banner" x2="0" y2="1"><stop stop-color="#8b5b47"/><stop offset="1" stop-color="#493e3d"/></linearGradient>
+ <pattern id="masonry" width="94" height="58" patternUnits="userSpaceOnUse"><path d="M0 0H94M0 29H94M47 0V29M0 29V58" fill="none" stroke="#bdad8c" stroke-opacity=".12" stroke-width="3"/></pattern>
+</defs>
+<rect width="1400" height="340" fill="url(#wall)"/>
+<rect width="1400" height="340" fill="url(#masonry)"/>
+<path d="M0 16H1400V36H0Z" fill="#131f22"/><path d="M0 43H1400" stroke="#bf9e6e" stroke-width="7" opacity=".35"/>
+<!-- pointed stone arch windows -->
+<g fill="url(#window)" stroke="#a59879" stroke-width="15">
+ <path d="M65 273V123Q146 20 231 123V273Z"/>
+ <path d="M1108 272V123Q1193 20 1277 123V273Z"/>
+ <path d="M494 239V130Q557 58 624 130V239Z" opacity=".62"/>
+ <path d="M791 239V130Q858 58 923 130V239Z" opacity=".62"/>
+</g>
+<g stroke="#d5b987" opacity=".28" stroke-width="4"><path d="M145 60V267M1193 60V267M557 82V238M855 82V238"/><path d="M70 170H230M1115 170H1270M499 180H621M791 180H922"/></g>
+<path d="M0 278H1400V340H0Z" fill="url(#floor)"/><path d="M0 280H1400" stroke="#c8a16a" stroke-opacity=".3" stroke-width="8"/>
+<path d="M270 340L510 278H910L1150 340Z" fill="#312d2d" opacity=".7"/><path d="M350 340L542 288H887L1038 340Z" fill="#695044" opacity=".6"/>
+<!-- banners -->
+<g><path d="M280 48H353V244L318 218L280 244Z" fill="url(#banner)" stroke="#3a2d2c" stroke-width="7"/><path d="M1045 48H1118V244L1080 218L1045 244Z" fill="url(#banner)" stroke="#3a2d2c" stroke-width="7"/><path d="M317 74L336 111L317 153L298 111Z M1082 74L1102 111L1082 153L1063 111Z" fill="none" stroke="#d2b079" stroke-width="6"/></g>
+<!-- braziers -->
+<g><ellipse cx="374" cy="205" rx="88" ry="92" fill="url(#flame)"/><path d="M353 243L345 267H401L394 243Z" fill="#302a26"/><path d="M344 208L405 208L393 240H357Z" fill="#8a7053" stroke="#282a24" stroke-width="7"/><path d="M361 207Q329 174 372 151Q364 179 388 161Q412 195 381 212Z" fill="#e89550"/><path d="M374 199Q363 177 384 170Q378 195 390 200Z" fill="#ffdf99"/></g>
+<g transform="translate(1027 0)"><ellipse cx="0" cy="205" rx="88" ry="92" fill="url(#flame)"/><path d="M-20 243L-29 267H28L21 243Z" fill="#302a26"/><path d="M-29 208L30 208L19 240H-16Z" fill="#8a7053" stroke="#282a24" stroke-width="7"/><path d="M-12 207Q-44 174 -1 151Q-10 179 13 161Q37 195 5 212Z" fill="#e89550"/><path d="M1 199Q-10 177 10 170Q5 195 14 200Z" fill="#ffdf99"/></g>
+<!-- centre carved dais, map table -->
+<path d="M530 292L584 260H815L871 292L817 315H582Z" fill="#44342d" stroke="#181e1c" stroke-width="8"/>
+<path d="M571 265L602 246H793L824 265L793 280H606Z" fill="#a48b65" stroke="#2c3029" stroke-width="6"/>
+<path d="M638 256L680 250L710 260L766 254M641 263L661 270L703 259L753 269" stroke="#576856" stroke-width="4" fill="none"/>
+<circle cx="716" cy="251" r="6" fill="#ae5a48"/><circle cx="652" cy="259" r="4" fill="#d7ba70"/>
+<path d="M0 315Q348 290 696 317T1400 312" stroke="#9e805d" opacity=".18" stroke-width="6" fill="none"/>
+</svg>

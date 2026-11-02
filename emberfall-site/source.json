@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "81ad5fae93ebeb89568c8a5081616eadc01113aa",
+  "sourceCommit": "0a41afc2109130e5fc79766ca63e9992ab07af6e",
   "target": "/emberfall/",
-  "stage": "refuge-ux-block-1-v4.15.0",
+  "stage": "immersive-ui-ux-block-2-v4.16.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -14,7 +14,9 @@
     "src/style.css",
     "src/mobile-testing.css",
     "src/refuge.css",
-    "assets/refuge-scene.svg"
+    "src/locations.css",
+    "assets/refuge-scene.svg",
+    "assets/interior-chamber.svg"
   ],
-  "note": "UX Block 1: illustrated Emberfall Refuge headquarters, six interactive main-site signs, seven supporting locations, War Table expedition entry, live bounty/boss summaries, desktop/iPad/mobile layouts; existing company saves, combat, contract progression, skills and items unchanged. Deployed only via /emberfall/ isolated bridge. Canonical QA and hosted byte/MIME/browser checks required. Canonical Emberfall PR #47 merged at 81ad5fae93ebeb89568c8a5081616eadc01113aa with full source unit, Chromium, iPad and WebKit QA passed."
+  "note": "UI/UX Block 2: location-based management for 13 Refuge destinations in four wings; original stone-chamber artwork; heroes, talents, equipment, inventory, account skills, Bounty Hunting, forging, enchanting, delving, records and market screens re-themed. War Table expedition identity, live gold/gear/Bounty Marks, phone quick travel. No save schema, combat or rewards changes. Canonical PR #49 merged at 0a41afc2109130e5fc79766ca63e9992ab07af6e after full unit and cross-browser QA; deploy exclusively to /emberfall/."
 }

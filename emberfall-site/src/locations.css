@@ -1,0 +1,143 @@
+/* Emberfall UI/UX Block 2 — location-based management with a living RPG interior. */
+#app[data-view="workshop"]{background:radial-gradient(ellipse at 50% 16%,#34473b 0%,#142624 58%,#0d1b1b 100%)}
+#app[data-view="workshop"] .topbar{border-bottom:1px solid #8674546c}
+.workshop-cover .workshop-dialog{background:#142727;overflow:hidden}
+.workshop-cover.camp-page .workshop-dialog{border:1px solid #94764c;border-radius:9px;box-shadow:0 12px 50px #050c0a9c;background:#182b29;overflow:visible}
+.workshop-cover .workshop-topline{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 17px;background:linear-gradient(100deg,#101e1e,#28342c 54%,#151f1d);border-bottom:1px solid #9a825d66}
+.workshop-trail{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.10em;color:#e3c593}
+.workshop-trail span:first-child{color:#9cbaaa}.workshop-trail .trail-sep{font-size:18px;color:#947b56}.workshop-trail strong{color:#fff0c9}
+.workshop-cover .workshop-close,.workshop-cover.camp-page .workshop-close{flex:0 0 auto;min-height:44px;min-width:139px;padding:10px 13px;border:1px solid #bd9d68;border-radius:6px;background:#304137;color:#fff1cb;font:700 13px system-ui,sans-serif;text-align:center}
+.workshop-cover .workshop-close:hover,.workshop-cover .workshop-close:focus-visible{background:#526245;outline:2px solid #f0ce91;outline-offset:2px}
+.workshop-shell{display:grid;grid-template-columns:230px minmax(0,1fr);align-items:stretch;min-width:0;min-height:520px}
+.workshop-rail{position:relative;z-index:4;background:linear-gradient(175deg,#29382f,#1a302a 53%,#152723);border-right:1px solid #806b4e;min-width:0}
+.workshop-rail-header{padding:20px 15px 14px;border-bottom:1px solid #8a765159}
+.workshop-rail-emblem{display:grid;place-items:center;width:43px;height:43px;margin-bottom:12px;color:#f4d79c;border:1px solid #cba96d;border-radius:50%;background:radial-gradient(circle,#55513b,#20362c);box-shadow:0 0 0 5px #e4c2800b;font:25px Georgia,serif}
+.workshop-rail-header strong{display:block;font:700 20px Georgia,serif;color:#f3ddac;margin-bottom:5px}
+.workshop-rail-header small{display:block;font:11px/1.5 system-ui,sans-serif;color:#b8c9b9}
+.workshop-cover .workshop-nav,.workshop-cover.camp-page .workshop-nav{position:relative;top:auto;z-index:auto;display:flex;flex-direction:column;gap:0;overflow:visible;max-height:none;padding:11px 8px 14px;border:none;background:transparent;box-shadow:none}
+.workshop-nav-group{display:flex;flex-direction:column;gap:3px;margin:0 0 12px}
+.workshop-nav-group-label{display:block;padding:12px 11px 5px;color:#c9ad79;font:700 10px system-ui,sans-serif;letter-spacing:.15em}
+.workshop-cover .workshop-nav button,.workshop-cover.camp-page .workshop-nav button{display:flex;align-items:center;gap:10px;flex:0 0 auto;min-width:0;width:100%;min-height:41px;margin:0;padding:8px 9px;text-align:left;border:1px solid transparent;border-left:3px solid transparent;border-radius:4px;background:transparent;color:#d0d7ca;box-shadow:none;font:600 12px/1.28 system-ui,sans-serif;white-space:normal;scroll-snap-align:none}
+.workshop-nav button .tab-symbol{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border:1px solid #62766169;border-radius:4px;background:#132723a8;font-size:15px;font-weight:400}
+.workshop-nav button .tab-name{flex:1;min-width:0}
+.workshop-nav button .tab-pointer{color:#8c997e;opacity:.6;font-size:16px}
+.workshop-cover .workshop-nav button[aria-selected="true"],.workshop-cover.camp-page .workshop-nav button[aria-selected="true"]{border-color:#806d4b;border-left-color:#e6c27e;background:linear-gradient(95deg,#4b513c,#2d4434);color:#fff2cf;box-shadow:inset 0 1px #efd6aa19}
+.workshop-nav button[aria-selected="true"] .tab-symbol{background:#554b33;border-color:#bba270}
+.workshop-cover .workshop-nav button:hover,.workshop-cover .workshop-nav button:focus-visible{background:#4a6049;border-color:#cba96d;outline:2px solid #e8cb93;outline-offset:-2px}
+.workshop-rail-footer{margin:0 12px 18px;padding:13px 10px;border-top:1px solid #b79b6b58;font:11px/1.45 system-ui,sans-serif;color:#bcc8b6}
+.workshop-rail-footer span{display:block}.workshop-rail-footer b{color:#f4d89f}
+.workshop-mobile-jump{display:none}
+.workshop-stage{min-width:0;display:flex;flex-direction:column;position:relative;background:linear-gradient(125deg,#172927,#1e332d 62%,#182b27)}
+.workshop-stage .workshop-head,.workshop-cover.camp-page .workshop-head{position:relative;top:auto;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;min-height:194px;overflow:hidden;padding:34px 29px 21px;border:0;border-bottom:1px solid #b99b6659;border-radius:0;background:radial-gradient(ellipse at 85% 45%,var(--location-glow,#8c665b44),transparent 42%),linear-gradient(98deg,#142b2be8 0%,#182c2cd8 51%,#24372b85 100%),url("../assets/interior-chamber.svg") center/cover no-repeat}
+.workshop-stage .workshop-head:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,#172b27dc,transparent 64%);opacity:.6}
+.workshop-heading-group{position:relative;z-index:1;flex:1;min-width:0}
+.workshop-stage .workshop-head .eyebrow{display:block;color:var(--location-accent,#d8bc8e);font:700 10px system-ui,sans-serif;letter-spacing:.17em}
+.workshop-stage .workshop-head h2{font:700 clamp(30px,3.35vw,49px)/1.04 Georgia,serif;color:#f9e5b6;margin:9px 0 8px;text-shadow:0 3px 16px #07130ee5}
+.workshop-tagline{display:block;max-width:660px;margin:0;color:#d3dccc;font:13px/1.5 system-ui,sans-serif}
+.workshop-sigil{display:grid;place-items:center;position:relative;z-index:1;flex:0 0 92px;width:92px;height:92px;border:2px solid #d6b980;border-radius:50%;background:radial-gradient(circle at 40% 30%,#786b4b,#273e33 72%);box-shadow:0 8px 25px #040e0cbb,inset 0 0 0 7px #e8cd9f12;color:#f6dfa0;font:52px Georgia,serif}
+.workshop-quickstats{display:flex;align-items:center;gap:12px 19px;flex-wrap:wrap;padding:10px 28px;border-bottom:1px solid #7b785b55;background:#152a27;color:#cbd6c5;font:12px system-ui,sans-serif}
+.workshop-quickstats b{color:#f6dc9e}
+.workshop-stage .workshop-body,.workshop-cover.camp-page .workshop-body{flex:1;min-height:380px;min-width:0;max-height:none;overflow:visible;padding:24px 27px 37px;background:radial-gradient(ellipse at 95% 2%,var(--location-glow,#82633b21),transparent 45%),linear-gradient(155deg,#22392f,#162b29 65%)}
+.workshop-cover:not(.camp-page) .workshop-stage .workshop-body{overflow-y:auto;min-height:160px}
+.workshop-stage .workshop-bottom,.workshop-cover.camp-page .workshop-bottom{border-top:1px solid #8e784c61;background:#102522;color:#aabdab;padding:12px 25px}
+.workshop-stage .workshop-intro{border-bottom:1px solid #9b865b58;padding:0 0 16px;margin:0 0 18px}
+.workshop-stage .workshop-intro h3{color:#f0d49f;font:700 24px Georgia,serif}
+.workshop-stage .workshop-subheading h3,.workshop-stage .party-section-title b{color:#f2d8a6}
+.workshop-stage .workshop-intro p{color:#c4d3c4;font-size:13px;max-width:76ch}
+.workshop-stage .party-formation,.workshop-stage .party-roster,.workshop-stage .talent-tree,.workshop-stage .talent-inspector,.workshop-stage .inventory-collection,.workshop-stage .inventory-detail-panel,.workshop-stage .craft-catalog,.workshop-stage .craft-station,.workshop-stage .salvage-collection,.workshop-stage .salvage-details,.workshop-stage .enchant-station,.workshop-stage .delve-active{border-color:#8c7956;background:linear-gradient(143deg,#293d34,#162c28);box-shadow:inset 0 1px #fff1bc18,0 9px 25px #06151052}
+.workshop-stage .hero-picker-btn,.workshop-stage .party-position,.workshop-stage .party-roster-hero,.workshop-stage .account-skill-tile,.workshop-stage .talent-node,.workshop-stage .enchant-recipe{border-color:#806e54;background:linear-gradient(126deg,#304838,#1b342d);box-shadow:inset 0 1px #fff2c111}
+.workshop-stage .hero-picker-btn.active,.workshop-stage .party-position.active,.workshop-stage .party-roster-hero.active,.workshop-stage .talent-node.inspecting,.workshop-stage .account-skill-tile.selected,.workshop-stage .enchant-recipe.selected{border-color:#e4be80;background:linear-gradient(126deg,#4c553c,#2b4437);box-shadow:0 0 0 2px #e8c88826}
+.workshop-stage .hero-picker-btn:focus-visible,.workshop-stage .party-position:focus-visible,.workshop-stage .party-roster-hero:focus-visible,.workshop-stage .talent-node:focus-visible,.workshop-stage .account-skill-tile:focus-visible{outline:3px solid #f0cf90;outline-offset:2px}
+.workshop-stage .slayer-contract,.workshop-stage .slayer-active,.workshop-stage .account-skill-guide{border-color:#a28d69;background:linear-gradient(136deg,#464435,#2e3d30 48%,#1b2d28);box-shadow:inset 0 1px #fff0b621,0 12px 25px #04140f52}
+.workshop-stage .bounty-contract.is-dangerous{background:linear-gradient(135deg,#593b32,#362f2b 55%,#1d2c2a);border-color:#d2a071}
+.workshop-stage .slayer-contract h3,.workshop-stage .slayer-active h3{color:#f7d99e}
+.workshop-stage .workshop-notice{border-color:#bda772;background:#35483a}
+.workshop-stage .workshop-notice.is-error{border-color:#d5a086;background:#543a30}
+.workshop-stage .tiny-btn:not(:disabled),.workshop-stage .primary-btn{border-color:#bca06a;background:linear-gradient(160deg,#5b6746,#3a5139);color:#fff1d0;box-shadow:0 2px 0 #14291c}
+.workshop-stage .tiny-btn:not(:disabled):hover,.workshop-stage .tiny-btn:focus-visible{background:#687750;outline:2px solid #eed39a;outline-offset:2px}
+.workshop-stage .craft-primary,.workshop-stage .tiny-btn.craft-primary:not(:disabled){background:linear-gradient(#a57343,#704b31);border-color:#e5bc7e}
+.workshop-stage .tiny-btn.ghost:not(:disabled){background:#283b32}
+.workshop-stage .inventory-slot,.workshop-stage .salvage-item{border-color:#7c755b}
+.workshop-stage .equipment-character-svg{filter:drop-shadow(0 8px 15px #07151199)}
+.workshop-stage .workshop-subheading{border-bottom:1px solid #9c8a6366;padding-bottom:9px}
+.workshop-stage .workshop-disclaimer{border-top:1px solid #99876555;padding-top:13px}
+.workshop-cover[data-location="party"]{--location-accent:#efc88b;--location-glow:#d59b553d}
+.workshop-cover[data-location="heroes"],.workshop-cover[data-location="pack"]{--location-accent:#d4c5a1;--location-glow:#7da6a333}
+.workshop-cover[data-location="talents"],.workshop-cover[data-location="enchant"]{--location-accent:#d4b4ff;--location-glow:#9a76ce36}
+.workshop-cover[data-location="craft"],.workshop-cover[data-location="salvage"]{--location-accent:#edbd8c;--location-glow:#d87b4a3e}
+.workshop-cover[data-location="skills"],.workshop-cover[data-location="delving"]{--location-accent:#acd3a9;--location-glow:#78bda340}
+.workshop-cover[data-location="slayer"],.workshop-cover[data-location="loot"]{--location-accent:#e0ac86;--location-glow:#b45e543a}
+.workshop-cover[data-location="shop"],.workshop-cover[data-location="backup"]{--location-accent:#f4d8a2;--location-glow:#c9a76b35}
+.workshop-stage [data-action],.workshop-stage select,.workshop-stage input{scroll-margin-top:120px}
+/* The War Table now looks like an expedition chamber, rather than a second menu list. */
+.camp-screen[data-camp-tab="expeditions"]{max-width:1380px;margin:auto}
+.camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel{max-width:none;border:1px solid #a48b60;padding:clamp(14px,2vw,26px);background:radial-gradient(circle at 50% 0%,#75583d42,transparent 40%),linear-gradient(#172826e6,#192c29f7 220px),url("../assets/interior-chamber.svg") top center / 100% auto no-repeat}
+.camp-screen .camp-board-heading{padding:13px 10px 19px;border-bottom:1px solid #b69c6c64;margin-bottom:20px}
+.camp-screen .camp-board-heading h2{font:700 clamp(29px,3vw,45px) Georgia,serif;letter-spacing:.02em;text-shadow:0 4px 15px #030b0bb3}
+.camp-screen .camp-board-heading .eyebrow{color:#ddb77d;letter-spacing:.14em}
+.camp-screen .encounter-choice{border:1px solid #998667;background:linear-gradient(145deg,#3c4c3b,#1d312c);box-shadow:inset 0 1px #f8e4b221,0 6px 14px #08140f82;transition:background .15s,border-color .15s}
+.camp-screen .encounter-choice.current{border-color:#f0c37b;box-shadow:0 0 0 2px #dfac5b49,inset 0 1px #fff0d035;background:linear-gradient(145deg,#5a543a,#2e4839)}
+.camp-screen .encounter-choice:hover,.camp-screen .encounter-choice:focus-visible{border-color:#f1d49c;background:#4f624a}
+.camp-screen .encounter-choice .encounter-icon{display:grid;place-items:center;background:radial-gradient(circle,#62513b,#182e29);border:1px solid #ad956b;border-radius:50%;width:58px;height:58px;flex:0 0 58px;font-size:32px}
+.camp-screen .camp-fight-btn{background:linear-gradient(#906b45,#624932);border-color:#f0c98c;color:#fff1d7;max-width:490px;display:block;margin:20px auto 10px;box-shadow:0 4px 0 #25271e}
+.camp-screen .picker-actions{max-width:510px;margin:auto}
+@media(min-width:1000px){
+ .workshop-cover.camp-page .workshop-rail{position:sticky;top:9px;align-self:start;max-height:calc(100dvh - 16px);overflow-y:auto;scrollbar-width:thin}
+ .workshop-cover.camp-page .workshop-nav{display:flex;flex-direction:column;overflow:visible}
+}
+@media(max-width:1050px){
+ .workshop-shell{grid-template-columns:200px minmax(0,1fr)}
+ .workshop-nav button .tab-pointer{display:none}
+ .workshop-stage .workshop-body,.workshop-cover.camp-page .workshop-body{padding:19px 16px 27px}
+ .workshop-stage .workshop-head,.workshop-cover.camp-page .workshop-head{min-height:165px;padding:23px 19px 19px}
+ .workshop-stage .workshop-head h2{font-size:34px}
+}
+@media(max-width:780px){
+ .workshop-shell{display:flex;flex-direction:column;min-height:0}
+ .workshop-rail{position:relative;display:flex;flex-direction:column;border-right:none;border-bottom:1px solid #977e55}
+ .workshop-rail-header,.workshop-rail-footer{display:none}
+ .workshop-mobile-jump{display:flex;align-items:center;gap:10px;padding:8px 11px;background:#253b32}
+ .workshop-mobile-jump label{flex:0 0 auto;color:#ebcf9b;font:700 11px system-ui,sans-serif}
+ .workshop-mobile-jump select{flex:1;min-width:0;min-height:46px;width:100%;color:#f9e8c7;background:#1a312c;border:1px solid #a8916b;border-radius:5px;font:600 13px system-ui,sans-serif;padding:8px}
+ .workshop-cover .workshop-nav,.workshop-cover.camp-page .workshop-nav{position:relative;top:auto;display:flex;flex-direction:row;gap:9px;padding:8px 11px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:thin}
+ .workshop-nav-group{display:contents}
+ .workshop-nav-group-label{display:none}
+ .workshop-cover .workshop-nav button,.workshop-cover.camp-page .workshop-nav button{flex:0 0 auto;width:auto;min-width:128px;min-height:44px;gap:6px;padding:9px;white-space:nowrap;scroll-snap-align:start;border:1px solid #556d58;border-bottom:3px solid transparent;border-radius:5px;background:#243a31;font-size:12px}
+ .workshop-cover .workshop-nav button[aria-selected="true"],.workshop-cover.camp-page .workshop-nav button[aria-selected="true"]{border:1px solid #c5a877;border-bottom:3px solid #f0cf87;background:#47543d}
+ .workshop-nav button .tab-symbol{flex:0 0 23px;width:23px;height:23px}
+ .workshop-stage .workshop-head,.workshop-cover.camp-page .workshop-head{min-height:160px;padding:20px 16px}
+ .workshop-stage .workshop-head h2{font-size:32px}
+ .workshop-stage .workshop-body,.workshop-cover.camp-page .workshop-body{padding:17px 13px 26px}
+ .workshop-stage .workshop-quickstats{padding:10px 13px}
+ .workshop-cover.camp-page .workshop-nav{flex-wrap:nowrap}
+}
+@media(max-width:540px){
+ .workshop-cover .workshop-topline{padding:7px 9px;gap:8px}
+ .workshop-trail{font-size:10px;gap:5px;letter-spacing:.04em}
+ .workshop-cover .workshop-close,.workshop-cover.camp-page .workshop-close{min-height:44px;min-width:108px;padding:7px 8px;font-size:11px}
+ .workshop-stage .workshop-head,.workshop-cover.camp-page .workshop-head{min-height:146px;padding:14px 12px 16px;gap:8px}
+ .workshop-stage .workshop-head h2{font-size:29px}
+ .workshop-stage .workshop-head .eyebrow{font-size:9px}
+ .workshop-tagline{font-size:11px;line-height:1.4}
+ .workshop-sigil{flex:0 0 54px;width:54px;height:54px;font-size:31px;border-width:1px}
+ .workshop-stage .workshop-quickstats{gap:6px 11px;font-size:10px}
+ .workshop-nav button .tab-symbol{font-size:13px}
+ .workshop-cover .workshop-nav button,.workshop-cover.camp-page .workshop-nav button{font-size:11px;min-width:109px}
+ .workshop-stage .workshop-body,.workshop-cover.camp-page .workshop-body{padding:12px 9px 20px}
+ .workshop-stage .workshop-intro h3{font-size:21px}
+ .camp-screen[data-camp-tab="expeditions"] .camp-expedition-panel{padding:12px}
+}
+@media(prefers-reduced-motion:reduce){.camp-screen .encounter-choice,.workshop-nav button{transition:none}}
+
+/* In-combat management stays a bounded modal; the Refuge version uses natural page scroll. */
+.workshop-cover:not(.camp-page) .workshop-dialog{min-height:0}
+.workshop-cover:not(.camp-page) .workshop-shell{flex:1;min-height:0;overflow:hidden}
+.workshop-cover:not(.camp-page) .workshop-rail{overflow-y:auto;scrollbar-width:thin}
+.workshop-cover:not(.camp-page) .workshop-stage{min-height:0;overflow:hidden}
+.workshop-cover:not(.camp-page) .workshop-stage .workshop-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:780px){
+ .workshop-cover:not(.camp-page) .workshop-shell{overflow:hidden}
+ .workshop-cover:not(.camp-page) .workshop-rail{flex:0 0 auto;overflow:visible}
+ .workshop-cover:not(.camp-page) .workshop-stage{min-height:0;flex:1}
+ .workshop-cover:not(.camp-page) .workshop-stage .workshop-body{min-height:0;overflow-y:auto}
+}
