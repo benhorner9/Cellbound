@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.12.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken} from './progression.js?v=4.12.0';
-import {mountWorkshop} from './workshop.js?v=4.12.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.13.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken} from './progression.js?v=4.13.0';
+import {mountWorkshop} from './workshop.js?v=4.13.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -226,7 +226,7 @@ function renderEncounterChoices(){
  const contract=company.slayer?.active;
  const delveStage=currentDelveStage(company),delveReady=delveStage&&pendingDelveToken===delveStageToken(company)&&bossSelection===delveStage.bossId;
  const delveBanner=delveReady?'<div class="camp-slayer-banner delve-boarding">🗝️ <b>'+DELVE_ROUTES[delveStage.routeId].name+'</b> · Stage '+(delveStage.stage+1)+' / '+delveStage.total+' · <b>'+BOSSES[delveStage.bossId].name+'</b>. This fight counts towards your Delving expedition.</div>':'';
- const slayerBanner=contract?'<div class="camp-slayer-banner">☠ Slayer contract: <b>'+BOSSES[contract.bossId].name+'</b> · '+contract.kills+'/'+contract.target+' victories'+(contract.kills===contract.target?' · Ready to claim':'')+' <button type="button" data-camp="slayer">Open Lodge</button></div>':'';
+ const slayerBanner=contract?'<div class="camp-slayer-banner">🏹 Hunt Contract: <b>'+BOSSES[contract.bossId].name+'</b> · '+contract.kills+'/'+contract.target+' victories'+(contract.kills===contract.target?' · Ready to claim':'')+' <button type="button" data-camp="slayer">Open Lodge</button></div>':'';
  const options=Object.values(BOSSES).map(b=>{
   const active=b.id===bossSelection,ready=atRecommendedLevel(company,b.id);
   return '<button type="button" class="encounter-choice '+(active?'current ':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(ready?'✓ Party ready · recommended Lv '+b.unlock:'⚠ Recommended party level '+b.unlock+' · You can still fight')+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
@@ -628,12 +628,12 @@ function showEnd(){
     }).join('');
     const drops=reward.materials.map(m=>'<div class="victory-loot-chip">'+MATERIAL_DEFS[m.id].icon+' '+escText(MATERIAL_DEFS[m.id].name)+' ×'+m.quantity+'</div>').join('');
     const delveReward=reward.delve?'<div class="victory-loot-chip">🗝️ +'+reward.delve.xp+' Delving XP · Stage '+reward.delve.stage+'/'+reward.delve.total+(reward.delve.levelTo>reward.delve.levelFrom?' · LEVEL UP '+reward.delve.levelTo:'')+(reward.delve.complete?' · Expedition clear!':'')+'</div>':'';
-     const slayerReward=reward.slayer?'<div class="victory-loot-chip">☠ +'+reward.slayer.xp+' Slayer XP · '+reward.slayer.kills+'/'+reward.slayer.target+(reward.slayer.levelTo>reward.slayer.levelFrom?' · LEVEL UP '+reward.slayer.levelTo:'')+(reward.slayer.complete?' · Contract complete!':'')+'</div>':'';
+     const slayerReward=reward.slayer?'<div class="victory-loot-chip">☠ +'+reward.slayer.xp+' Huntcraft XP · '+reward.slayer.kills+'/'+reward.slayer.target+(reward.slayer.levelTo>reward.slayer.levelFrom?' · LEVEL UP '+reward.slayer.levelTo:'')+(reward.slayer.complete?' · Contract complete!':'')+'</div>':'';
     rewardHTML='<div class="victory-rewards" aria-label="Actual granted victory rewards"><h3>✦ Victory Rewards</h3><p>Each hero gained '+reward.xp+' XP. These are your actual awarded items and reagents.</p><div class="victory-xp-party">'+xpRows+'</div><div class="victory-loot-grid"><div class="victory-loot-chip rarity-'+def.rarity.toLowerCase()+'">'+def.icon+' '+escText(def.name)+' · '+def.rarity+'</div><div class="victory-loot-chip">🪙 '+reward.gold+' gold</div>'+drops+slayerReward+delveReward+'</div><small class="notice-local">'+(saved?'All rewards saved in this browser.':'Storage unavailable — rewards are held only until this page closes.')+'</small></div>';
    }
   }else{recordDefeat(company);writeProfile(storage,company);}
  }
- $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button>'+(win&&company.slayer?.active&&company.slayer.active.kills===company.slayer.active.target?'<button class="quiet-btn" type="button" id="slayerRewardsBtn">☠ Claim Slayer Contract</button>':'')+(win&&activeDelveToken&&company.delving.active?'<button class="quiet-btn" type="button" id="delveRewardsBtn">🗝️ '+(currentDelveStage(company)?'Continue Delving Route':'Claim Delve Cache')+'</button>':'')+'<button class="quiet-btn" type="button" id="dismissRewardsBtn">Return to Camp</button></div>';
+ $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button>'+(win&&company.slayer?.active&&company.slayer.active.kills===company.slayer.active.target?'<button class="quiet-btn" type="button" id="slayerRewardsBtn">🏹 Claim Hunt Contract</button>':'')+(win&&activeDelveToken&&company.delving.active?'<button class="quiet-btn" type="button" id="delveRewardsBtn">🗝️ '+(currentDelveStage(company)?'Continue Delving Route':'Claim Delve Cache')+'</button>':'')+'<button class="quiet-btn" type="button" id="dismissRewardsBtn">Return to Camp</button></div>';
  $('overlay').classList.add('result-mode');
  $('overlay').setAttribute('role','dialog');
  $('overlay').setAttribute('aria-label','Boss fight result');
@@ -700,5 +700,5 @@ resize();
 showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.12.0';
+document.documentElement.dataset.emberfallReady='4.13.0';
 requestAnimationFrame(frame);
