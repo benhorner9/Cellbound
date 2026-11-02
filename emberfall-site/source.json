@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "f7d4db568a9c3e1b4971528bd806f48ba5466f67",
+  "sourceCommit": "440b73aa2e11c65085660744d57f04ed81d77f24",
   "target": "/emberfall/",
-  "stage": "immersive-ui-ux-block-3-v4.17.0",
+  "stage": "screen-overhaul-block-1-hall-of-heroes-v4.18.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -18,7 +18,9 @@
     "src/polish.js",
     "src/polish.css",
     "assets/refuge-scene.svg",
-    "assets/interior-chamber.svg"
+    "assets/interior-chamber.svg",
+    "src/hall.css",
+    "assets/hall-chamber.svg"
   ],
-  "note": "UI/UX Block 3 released from canonical PR #51 merged at f7d4db568a9c3e1b4971528bd806f48ba5466f67. Ambient lantern halos/embers, non-blocking location and battle arrivals, readable accessible travel and saved-progress feedback, focus-safe workshop controls, consistent touch and hover states, reduced-motion support, and hidden-tab animation pause. All Node, Chromium, iPad WebKit and phone WebKit source checks passed. No changes to hero ownership, combat, rewards, Bounty Hunting, account skill levels, save schema or other hosted projects."
+  "note": "Screen Overhaul Block 1 candidate: standalone Hall of Heroes with original chamber scene, four champion portraits, slot-aware equipment visuals, real stat dossier and integrated talent wing. No hero, item, progress or combat schema changes. Source PR #53 awaits full CI; pin exact merged SHA before release."
 }
