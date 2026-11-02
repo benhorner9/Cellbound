@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "0a41afc2109130e5fc79766ca63e9992ab07af6e",
+  "sourceCommit": "6c7537471450b561cb2c8d034e08a3ea58e5ef54",
   "target": "/emberfall/",
-  "stage": "immersive-ui-ux-block-2-v4.16.0",
+  "stage": "immersive-ui-ux-block-3-v4.17.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -15,8 +15,10 @@
     "src/mobile-testing.css",
     "src/refuge.css",
     "src/locations.css",
+    "src/polish.js",
+    "src/polish.css",
     "assets/refuge-scene.svg",
     "assets/interior-chamber.svg"
   ],
-  "note": "UI/UX Block 2: location-based management for 13 Refuge destinations in four wings; original stone-chamber artwork; heroes, talents, equipment, inventory, account skills, Bounty Hunting, forging, enchanting, delving, records and market screens re-themed. War Table expedition identity, live gold/gear/Bounty Marks, phone quick travel. No save schema, combat or rewards changes. Canonical PR #49 merged at 0a41afc2109130e5fc79766ca63e9992ab07af6e after full unit and cross-browser QA; deploy exclusively to /emberfall/."
+  "note": "UX Block 3: ambient lantern light and embers, immediate navigation/war-table/combat arrival gestures, accessible non-blocking travel and saved-progress feedback, touch and keyboard focus restoration, prefers-reduced-motion, hidden tab animation pause. No changes to save schema, Bounty Hunting, reward paths, equipment or combat. Final source SHA will be pinned to merged PR #51 after CI."
 }
