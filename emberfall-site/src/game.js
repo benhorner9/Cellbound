@@ -1,6 +1,6 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.15.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.15.0';
-import {mountWorkshop} from './workshop.js?v=4.15.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.16.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.16.0';
+import {mountWorkshop} from './workshop.js?v=4.16.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -238,7 +238,7 @@ function renderEncounterChoices(){
   const active=b.id===bossSelection,ready=atRecommendedLevel(company,b.id);
   return '<button type="button" class="encounter-choice '+(active?'current ':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(ready?'✓ Party ready · recommended Lv '+b.unlock:'⚠ Recommended party level '+b.unlock+' · You can still fight')+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
  }).join('');
- $('campExpeditionBody').innerHTML='<div class="camp-board-heading"><span class="eyebrow">THE EXPEDITION BOARD</span><h2>Choose Your Hunt</h2><p>Choose a boss, then leave the safety of the camp when your party is ready.</p></div><div class="encounter-choices" id="encounterList">'+options+'</div>'+slayerBanner+delveBanner+bountyBanner+'<p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. You can still attempt this fight.</p>')+'<button id="startBtn" class="primary-btn large camp-fight-btn" type="button">'+(delveReady?'Enter Delving Stage '+(delveStage.stage+1):bountyTask?'Enter '+bountyTask.name:'Fight '+boss.name)+' →</button><p class="encounter-controls">Selected boss: <b id="selectedBossName">'+boss.name+'</b></p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">♜ Manage Party</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
+ $('campExpeditionBody').innerHTML='<div class="camp-board-heading"><span class="eyebrow">WAR TABLE · THE EMBERFALL REFUGE</span><h2>The War Table</h2><p>Study the threats beyond the walls, choose a quarry and send your company into danger when ready.</p></div><div class="encounter-choices" id="encounterList">'+options+'</div>'+slayerBanner+delveBanner+bountyBanner+'<p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. You can still attempt this fight.</p>')+'<button id="startBtn" class="primary-btn large camp-fight-btn" type="button">'+(delveReady?'Enter Delving Stage '+(delveStage.stage+1):bountyTask?'Enter '+bountyTask.name:'Fight '+boss.name)+' →</button><p class="encounter-controls">Selected boss: <b id="selectedBossName">'+boss.name+'</b></p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">♜ Manage Party</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
 }
 function returnToCamp(tab='expeditions'){
  paused=false;rewardCommitted=false;resultDismissed=false;
@@ -710,5 +710,5 @@ resize();
 showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.15.0';
+document.documentElement.dataset.emberfallReady='4.16.0';
 requestAnimationFrame(frame);
