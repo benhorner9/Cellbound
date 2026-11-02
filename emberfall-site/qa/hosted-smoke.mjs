@@ -19,7 +19,7 @@ try{
  if((await page.locator('#app').getAttribute('data-view'))!=='workshop')throw Error('Live Save Archive is not a dedicated page');
  if((await page.locator('#workshopHeading').innerText())!=='Save Backup')throw Error('Save Archive opened wrong section');
  if(!(await page.locator('#workshopClose').innerText()).includes('Back to Camp'))throw Error('Hosted management page lacks back navigation');
- if((await page.locator('#workshopTabs [role="tab"]').count())!==11)throw Error('Management sections not consistently reachable');
+ if((await page.locator('#workshopTabs [role="tab"]').count())!==13)throw Error('Management sections not consistently reachable');
  await page.locator('#workshopClose').click();
  if((await page.locator('#app').getAttribute('data-view'))!=='camp')throw Error('Live return to camp failed');
  await page.locator('#manageFromPickerBtn').click();
@@ -72,7 +72,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('178 / 178'))throw Error('Equipment did not change real combat HP');
  if((await page.locator('#app').getAttribute('data-view'))!=='camp')throw Error('Live game does not start in its camp');
  if(await page.locator('#battleFrame').isVisible())throw Error('Camp menus layered over active combat');
- if((await page.locator('.camp-building').count())!==11)throw Error('Hosted camp locations missing');
+ if((await page.locator('.camp-building').count())!==13)throw Error('Hosted camp locations missing');
  if((await page.locator('#campRoster .camp-roster-member').count())!==4)throw Error('Hosted active party not shown at camp');
  await page.locator('#campNavExpeditions').click();
  if((await page.locator('#campScreen').getAttribute('data-camp-tab'))!=='expeditions')throw Error('Expedition navigation failed');
@@ -147,13 +147,13 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.11.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.12.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.11.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.12.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
@@ -190,7 +190,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.11.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.12.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -213,7 +213,7 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.11.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.12.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -247,7 +247,7 @@ try{
  await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  // Isolated live source must also support real craft XP, generated gear and potion effects.
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.11.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.12.0');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=30;
   if(!writeProfile(localStorage,p))throw Error('Live crafting fixture could not be saved');
