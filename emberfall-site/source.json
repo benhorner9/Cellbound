@@ -1,9 +1,9 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "73f50ee957ef328b3a574ac35e4c76434e9d52a4",
+  "sourceCommit": "254c97b6e0e1fa5b37c86340bb49a8855a755eba",
   "target": "/emberfall/",
-  "stage": "account-wide-skills-slayer-v4.10.0",
+  "stage": "skills-update2-slayer-salvaging-v4.11.0",
   "assets": [
     "index.html",
     "src/engine.js",
@@ -14,5 +14,5 @@
     "src/style.css",
     "src/mobile-testing.css"
   ],
-  "note": "Canonical Emberfall source PR #36: account-wide six-skill foundation, live Smithing and Alchemy retained, Slayer Lodge contracts driven by real boss victories with receipt-safe XP and claim-once points, three clearly marked future skill previews, and responsive camp navigation. Existing browser profile, equipment and hero progression preserved. Source QA passed (Node tests, desktop/iPad Chromium, iPad WebKit and mobile). Deploy only /emberfall/; other game routes unchanged."
+  "note": "Merged canonical Emberfall PR #38: Slayer Lodge 2.0 with six contract variants, earned point shop, paid rerolls and hunt-streak bonuses; fully playable account-wide Salvaging Station with safeguarded item destruction, material recovery, non-farmable XP, saved-build protections and responsive camp UI. Existing Slayer tasks, company-v1 profile, builds and crafting preserved. Source Node + Chromium + WebKit + mobile QA passed. Deploy only /emberfall/."
 }

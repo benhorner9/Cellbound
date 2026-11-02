@@ -1,11 +1,11 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
- xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,takeSlayerContract,claimSlayerContract,abandonSlayerContract
-} from './progression.js?v=4.10.0';
+ xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem
+} from './progression.js?v=4.11.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.10.0';
+} from './builds.js?v=4.11.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -16,9 +16,9 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),context=document.getElementById('workshopContext'),tabs=document.getElementById('workshopTabs');
  let returnFocus=null;
- let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false;
+ let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false,confirmReroll=false,confirmPurchaseId=null,selectedSalvageId=null,confirmSalvageId=null;
  const builds=readBuilds(storage);
- const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Slayer Lodge',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
+ const tabNames={party:'Party',heroes:'Heroes & Gear',talents:'Talent Trees',skills:'Skills',slayer:'Slayer Lodge',salvage:'Salvaging Station',pack:'Equipment Bag',craft:'Crafting',shop:'Quartermaster',loot:'Boss Drops',backup:'Save Backup'};
  const tabId=tab=>'workshopTab-'+tab;
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
@@ -373,30 +373,67 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    const isFuture=required>SKILL_CAP||!active.available;
    return '<div class="account-skill-unlock '+(!isFuture&&level>=required?'is-unlocked':'')+'"><b>Lv '+required+'</b><span>'+esc(label)+'</span><small>'+(!isFuture&&level>=required?'✓ Unlocked':isFuture?'Future':'Locked')+'</small></div>';
   }).join('')+'</div>';
-  if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'☠ Visit Slayer Lodge':'⚒ Open Crafting Guild')+'</button>';
+  if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'☠ Visit Slayer Lodge':selectedAccountSkill==='salvaging'?'🧰 Visit Salvaging Station':'⚒ Open Crafting Guild')+'</button>';
   else html+='<p class="workshop-disclaimer">Preview only — this profession will be implemented in a future development block.</p>';
   return html+'</section>';
  }
+
  function renderSlayer(){
   const sk=profile.skills.slayer,progress=profile.slayer,active=progress.active,need=skillXpNeeded(sk.level);
-  let html='<div class="workshop-intro"><span class="eyebrow">EMBERGUARD · HUNTERS GUILD</span><h3>☠ Slayer Lodge</h3><p>Accept a monster-hunting contract. Every assigned boss victory grants Slayer XP immediately; return here to claim Slayer Points after completing the required kills. Your party can change without affecting the contract.</p></div>';
-  html+='<div class="slayer-stats"><span><b>Level '+sk.level+' / '+SKILL_CAP+'</b><small>Slayer '+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small></span><span><b>'+progress.points+' Points</b><small>Unspent</small></span><span><b>'+progress.completed+' Hunts</b><small>Completed · streak '+progress.streak+'</small></span></div>';
+  let html='<div class="workshop-intro"><span class="eyebrow">EMBERGUARD · HUNTERS GUILD</span><h3>☠ Slayer Lodge</h3><p>Take a contract, fight its assigned boss and earn Slayer XP for each matching victory. Complete the hunt to claim Slayer Points. Longer contracts and streaks unlock extra rewards.</p></div>';
+  html+='<div class="slayer-stats"><span><b>Level '+sk.level+' / '+SKILL_CAP+'</b><small>Slayer '+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small></span><span><b>'+progress.points+' Points</b><small>Spend in Hunter Rewards</small></span><span><b>'+progress.completed+' Hunts</b><small>Streak '+progress.streak+'</small></span></div>';
   html+='<div class="craft-xp-track slayer-level-track"><i style="width:'+(need?Math.floor(sk.xp/need*100):100)+'%"></i></div>';
+  const nextStreak=progress.streak+1,nextBonus=slayerStreakBonus(nextStreak);
+  html+='<p class="slayer-streak-note">⚔ Hunt streak '+progress.streak+' · Every 5th consecutive contract adds +2 Slayer Points; every 10th adds +5. '+(nextBonus?'Your next completed contract earns +'+nextBonus+' bonus points.':'Keep completing contracts to reach the next milestone.')+'</p>';
   if(active){
-   const boss=BOSSES[active.bossId],contract=SLAYER_CONTRACTS[active.bossId],done=active.kills===active.target;
-   html+='<section class="slayer-active" aria-label="Active Slayer contract"><span class="eyebrow">'+(done?'CONTRACT COMPLETE':'CURRENT CONTRACT')+'</span><h3>'+boss.icon+' Hunt the '+esc(boss.name)+'</h3><p>'+esc(boss.place)+' · '+active.kills+' / '+active.target+' victories</p><div class="craft-xp-track"><i style="width:'+Math.floor(active.kills/active.target*100)+'%"></i></div><div class="slayer-reward-line"><span>+'+contract.xp+' Slayer XP per assigned victory</span><span>+'+contract.points+' Points on claim</span></div>';
-   if(done)html+='<button type="button" class="tiny-btn craft-primary" data-action="slayer-claim">Claim '+contract.points+' Slayer Points →</button><p class="workshop-disclaimer">Claiming completes this contract and lets you select another.</p>';
-   else html+='<div class="slayer-actions"><button type="button" class="tiny-btn craft-primary" data-action="slayer-travel" data-id="'+active.bossId+'">Hunt '+esc(boss.name)+' →</button><button type="button" class="tiny-btn ghost" data-action="slayer-abandon">'+(confirmAbandon?'Confirm abandon · resets streak':'Abandon contract')+'</button></div>';
+   const boss=BOSSES[active.bossId],task=slayerTask(active),done=active.kills===active.target;
+   html+='<section class="slayer-active" aria-label="Active Slayer contract"><span class="eyebrow">'+(done?'CONTRACT COMPLETE':'CURRENT CONTRACT')+'</span><h3>'+boss.icon+' '+esc(task.name)+' · '+esc(boss.name)+'</h3><p>'+esc(boss.place)+' · '+active.kills+' / '+active.target+' victories</p><div class="craft-xp-track"><i style="width:'+Math.floor(active.kills/active.target*100)+'%"></i></div><div class="slayer-reward-line"><span>+'+task.xp+' Slayer XP per assigned victory</span><span>+'+(task.points+(nextBonus||0))+' Points to claim'+(nextBonus?' (streak bonus included)':'')+'</span></div>';
+   if(done)html+='<button type="button" class="tiny-btn craft-primary" data-action="slayer-claim">Claim '+(task.points+(nextBonus||0))+' Slayer Points →</button><p class="workshop-disclaimer">Claiming completes this task once. You can then choose a new hunt.</p>';
+   else html+='<div class="slayer-actions"><button type="button" class="tiny-btn craft-primary" data-action="slayer-travel" data-id="'+active.bossId+'">Hunt '+esc(boss.name)+' →</button><button type="button" class="tiny-btn ghost" data-action="slayer-reroll" '+(progress.points<SLAYER_REROLL_COST||Object.values(SLAYER_TASKS).filter(t=>t.level<=sk.level).length<2?'disabled':'')+'>'+(confirmReroll?'Confirm reroll · costs '+SLAYER_REROLL_COST+' points':'Reroll · '+SLAYER_REROLL_COST+' Points')+'</button><button type="button" class="tiny-btn ghost" data-action="slayer-abandon">'+(confirmAbandon?'Confirm abandon · resets streak':'Abandon contract')+'</button></div><p class="workshop-disclaimer">Rerolling loses your current kill progress but keeps your streak and earned XP. Abandoning resets your streak.</p>';
    html+='</section>';
   }else{
-   html+='<div class="workshop-subheading"><h3>Available contracts</h3><span>One active assignment at a time</span></div><div class="slayer-contract-grid">';
-   for(const [id,contract] of Object.entries(SLAYER_CONTRACTS)){
-    const b=BOSSES[id],locked=sk.level<contract.level;
-    html+='<article class="slayer-contract '+(locked?'locked':'')+'"><span class="eyebrow">'+(locked?'REQUIRES SLAYER '+contract.level:'AVAILABLE · SLAYER '+contract.level)+'</span><h3>'+b.icon+' '+esc(b.name)+'</h3><p>'+esc(b.place)+'</p><small>'+contract.target+' victories · +'+contract.xp+' XP per kill · '+contract.points+' Points on claim</small><button type="button" class="tiny-btn" data-action="slayer-accept" data-id="'+id+'" '+(locked?'disabled':'')+'>'+(locked?'🔒 Locked':'Accept Contract')+'</button></article>';
+   html+='<div class="workshop-subheading"><h3>Hunting contracts</h3><span>One assignment at a time · six variations</span></div><div class="slayer-contract-grid">';
+   for(const [id,task] of Object.entries(SLAYER_TASKS)){
+    const boss=BOSSES[task.bossId],locked=sk.level<task.level;
+    html+='<article class="slayer-contract '+(locked?'locked':'')+'"><span class="eyebrow">'+(locked?'REQUIRES SLAYER '+task.level:'AVAILABLE · SLAYER '+task.level)+'</span><h3>'+boss.icon+' '+esc(task.name)+'</h3><p>'+esc(boss.name)+' · '+esc(boss.place)+'</p><small>'+task.target+' victories · +'+task.xp+' XP per kill · '+task.points+' Points on claim</small><button type="button" class="tiny-btn" data-action="slayer-accept" data-id="'+id+'" '+(locked?'disabled':'')+'>'+(locked?'🔒 Locked':'Accept Contract')+'</button></article>';
    }
    html+='</div>';
   }
-  return html+'<p class="workshop-disclaimer">Current boss hunts use your existing expeditions. No points or extra items are granted on defeat, for duplicate victory receipts or for unclaimed tasks. Slayer progression is saved locally with the company.</p>';
+  html+='<section class="slayer-shop" aria-label="Slayer Rewards Shop"><div class="workshop-subheading"><h3>✦ Hunter Rewards</h3><span>'+progress.points+' Slayer Points available</span></div><p>Spend your points on real consumables and crafting materials. Purchases deduct points immediately; there are no free repeat claims.</p><div class="slayer-shop-grid">';
+  for(const [id,product] of Object.entries(SLAYER_REWARDS)){
+   const locked=sk.level<product.level,afford=progress.points>=product.points;
+   const stock=[...Object.entries(product.materials||{}).map(([key,n])=>MATERIAL_DEFS[key].name+' ×'+n),...Object.entries(product.potions||{}).map(([key,n])=>ALCHEMY_EFFECTS[key].name+' ×'+n)];
+   html+='<article class="slayer-shop-item"><span class="slayer-shop-icon">'+product.icon+'</span><div><h4>'+esc(product.name)+'</h4><small>'+esc(stock.join(' · '))+'</small><small>Slayer Lv '+product.level+'</small></div><button type="button" class="tiny-btn '+(confirmPurchaseId===id?'danger':'')+'" data-action="slayer-purchase" data-id="'+id+'" '+(locked||!afford?'disabled':'')+'>'+(locked?'🔒 Locked':!afford?'Need '+product.points+' Points':confirmPurchaseId===id?'Confirm '+product.points+' Points':'Buy · '+product.points+' Points')+'</button></article>';
+  }
+  html+='</div></section><p class="workshop-disclaimer">Slayer XP is gained on actual assigned boss victories, not on accepting or claiming tasks. Existing saved contracts and points are preserved. Current progression is stored locally, not authoritative for online PvP.</p>';
+  return html;
+ }
+ function renderSalvage(){
+  const sk=profile.skills.salvaging,need=skillXpNeeded(sk.level);
+  const bag=profile.items.filter(it=>!itemOwner(profile,it.id));
+  const selected=bag.find(it=>it.id===selectedSalvageId)||bag[0]||null;
+  selectedSalvageId=selected?.id||null;
+  const def=selected?ITEM_DEFS[selected.defId]:null;
+  const status=selected?salvageStatus(profile,selected.id,builds):null;
+  let html='<div class="workshop-intro"><span class="eyebrow">EMBERGUARD · MATERIAL RECOVERY</span><h3>🧰 Salvaging Station</h3><p>Turn unused boss loot into crafting resources. Select an item, review the exact returns and confirm its permanent destruction. Equipment protected by a saved loadout must be removed from that preset first.</p></div>';
+  html+='<div class="salvage-summary"><span><b>Salvaging Lv '+sk.level+' / '+SKILL_CAP+'</b><small>'+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small></span><span><b>'+bag.length+' Unequipped Items</b><small>Shop gear cannot be salvaged</small></span></div><div class="craft-xp-track"><i style="width:'+(need?Math.floor(sk.xp/need*100):100)+'%"></i></div>';
+  html+='<div class="salvage-layout"><section class="salvage-collection" aria-label="Choose equipment to salvage"><h3>Your Equipment Bag</h3><div class="salvage-item-grid">';
+  for(const it of bag){
+   const item=ITEM_DEFS[it.defId],active=selectedSalvageId===it.id;
+   html+='<button type="button" data-action="salvage-select" data-id="'+esc(it.id)+'" aria-pressed="'+active+'" aria-label="'+esc(item.name)+'" class="salvage-item '+(active?'selected':'')+' rarity-'+rarityClass(item.rarity)+'"><span>'+esc(item.icon)+'</span><small>'+esc(item.name)+'</small></button>';
+  }
+  html+='</div>'+(bag.length?'':'<p>Nothing to salvage. Boss victories can earn more equipment.</p>')+'</section>';
+  html+='<section class="salvage-details" aria-label="Selected salvage preview"><span class="eyebrow">BEFORE YOU DISMANTLE</span>';
+  if(selected&&def){
+   html+='<h3>'+esc(def.icon)+' '+esc(def.name)+'</h3><p>'+esc(def.rarity)+' · '+esc(SLOT_NAMES[def.slot])+'</p>';
+   if(status.ok){
+    html+='<div class="salvage-returns"><h4>You will receive</h4>'+Object.entries(status.materials).map(([id,n])=>'<div><span>'+MATERIAL_DEFS[id].icon+' '+esc(MATERIAL_DEFS[id].name)+'</span><b>+'+n+'</b></div>').join('')+'<div><span>✦ Salvaging XP</span><b>+'+status.xp+'</b></div></div>';
+    if(status.warning)html+='<p class="craft-warning">'+esc(status.warning)+'</p>';
+    html+='<button type="button" class="tiny-btn '+(confirmSalvageId===selected.id?'danger':'craft-primary')+'" data-action="salvage-confirm" data-id="'+selected.id+'">'+(confirmSalvageId===selected.id?'Confirm Destroy · Cannot Undo':'Salvage This Item')+'</button>';
+   }else html+='<p class="craft-warning">'+esc(status.reason)+'</p>';
+  }else html+='<p>Select a piece of equipment to preview materials and XP.</p>';
+  html+='</section></div><p class="workshop-disclaimer">Only original boss drops train Salvaging. Shop items cannot be recycled; crafted items recover just one ore and grant no Salvaging XP to prevent manufacturing loops. Rare gear unlocks at level 5; epic at level 10. Future rewards beyond level 20 remain previews.</p>';
+  return html;
  }
  function render(){
   title.textContent=tabNames[current];
@@ -413,8 +450,9 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   document.getElementById('goldTotal').textContent=profile.gold+' gold';
   document.getElementById('bagCount').textContent=String(profile.items.filter(item=>!itemOwner(profile,item.id)).length);
   body.classList.toggle('inventory-mode',current==='pack');
+   body.classList.toggle('salvage-mode',current==='salvage');
   body.innerHTML=(notice?'<div class="workshop-notice '+(noticeBad?'is-error':'')+'" role="status">'+esc(notice)+'</div>':'')
-    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='skills'?renderSkills():current==='slayer'?renderSlayer():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
+    +(current==='party'?renderParty():current==='heroes'?renderHeroes():current==='talents'?renderTalents():current==='skills'?renderSkills():current==='slayer'?renderSlayer():current==='salvage'?renderSalvage():current==='pack'?renderPack():current==='craft'?renderCrafting():current==='shop'?renderShop():current==='loot'?renderDrops():renderBackup());
  }
  function rerenderBag(){
   const offset=body.querySelector('#inventoryScroll')?.scrollTop||0;
@@ -427,10 +465,21 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   root.classList.toggle('dirty',!success);
   onChange(profile);rerenderBag();
  }
+ function commitAccountChange(action,describe){
+  const previous=structuredClone(profile);
+  const result=action();
+  if(!result){notice='That action is not currently available. Check its requirements.';noticeBad=true;render();return null;}
+  if(!writeProfile(storage,profile)){
+   Object.assign(profile,previous);notice='Storage refused the change; your items, points and progress were restored.';noticeBad=true;root.classList.add('dirty');render();return null;
+  }
+  notice=describe(result);noticeBad=false;root.classList.remove('dirty');
+  onChange(profile);render();return result;
+ }
  function open(tab='heroes',selected='knight'){
   if(!root.classList.contains('hidden'))return;
   returnFocus=document.activeElement;
   if(tabNames[tab])current=tab;
+   confirmSalvageId=null;confirmPurchaseId=null;confirmReroll=false;
   if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;selectedTalentId=null;partyPosition=Math.max(0,partyOrder(profile).indexOf(selected));}
   pendingSell=null;
   root.classList.remove('hidden');render();onOpen();
@@ -472,23 +521,38 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const action=btn.dataset.action,id=btn.dataset.id,slot=btn.dataset.slot;
    if(action==='skill-select'&&ACCOUNT_SKILL_IDS.includes(id)){selectedAccountSkill=id;render();return;}
    if(action==='skill-visit'&&ACCOUNT_SKILLS[id]?.available){
-    current=id==='slayer'?'slayer':'craft';
+    current=id==='slayer'?'slayer':id==='salvaging'?'salvage':'craft';
     if(SKILL_IDS.includes(id)){craftSkill=id;craftRecipeId=null;}
     notice='';render();return;
    }
    if(action==='slayer-accept'&&current==='slayer'){
-    if(takeSlayerContract(profile,id)){confirmAbandon=false;notice='Contract accepted. Defeat '+BOSSES[id].name+' to gain Slayer XP.';noticeBad=false;save();}
-    return;
+    commitAccountChange(()=>takeSlayerContract(profile,id),()=>{confirmAbandon=false;confirmReroll=false;return 'Contract accepted. Defeat '+BOSSES[SLAYER_TASKS[id].bossId].name+' to earn Slayer XP.';});return;
    }
    if(action==='slayer-claim'&&current==='slayer'){
-    const result=claimSlayerContract(profile);
-    if(result){notice='Contract complete! +'+result.points+' Slayer Points · Hunt streak '+result.streak+'.';noticeBad=false;save();}
-    return;
+    commitAccountChange(()=>claimSlayerContract(profile),r=>'Contract complete! +'+r.points+' Slayer Points'+(r.bonus?' including +'+r.bonus+' streak bonus':'')+' · Streak '+r.streak+'.');return;
    }
    if(action==='slayer-abandon'&&current==='slayer'){
-    if(!confirmAbandon){confirmAbandon=true;render();return;}
-    if(abandonSlayerContract(profile)){confirmAbandon=false;notice='Contract abandoned; hunt streak reset. Slayer XP already earned is kept.';noticeBad=false;save();}
-    return;
+    if(!confirmAbandon){confirmAbandon=true;confirmReroll=false;render();return;}
+    commitAccountChange(()=>abandonSlayerContract(profile),()=>{confirmAbandon=false;return 'Contract abandoned; streak reset. Already earned Slayer XP was kept.';});return;
+   }
+   if(action==='slayer-reroll'&&current==='slayer'){
+    if(!confirmReroll){confirmReroll=true;confirmAbandon=false;render();return;}
+    commitAccountChange(()=>rerollSlayerContract(profile),r=>{confirmReroll=false;return 'Rerolled for '+r.cost+' points. New task: '+SLAYER_TASKS[r.taskId].name+'. Existing kill progress was lost.';});return;
+   }
+   if(action==='slayer-purchase'&&current==='slayer'){
+    if(confirmPurchaseId!==id){confirmPurchaseId=id;render();return;}
+    commitAccountChange(()=>purchaseSlayerReward(profile,id),r=>{confirmPurchaseId=null;return 'Purchased '+SLAYER_REWARDS[id].name+' for '+r.points+' Slayer Points. Rewards added to stock.';});return;
+   }
+   if(action==='salvage-select'&&current==='salvage'){
+    selectedSalvageId=id;confirmSalvageId=null;notice='';render();return;
+   }
+   if(action==='salvage-confirm'&&current==='salvage'){
+    if(selectedSalvageId!==id)return;
+    if(confirmSalvageId!==id){confirmSalvageId=id;render();return;}
+    commitAccountChange(()=>salvageItem(profile,id,builds),r=>{
+     selectedSalvageId=null;confirmSalvageId=null;
+     return 'Salvaged '+ITEM_DEFS[r.defId].name+' · +'+r.xp+' Salvaging XP'+(r.levelTo>r.levelFrom?' · LEVEL UP '+r.levelTo+'!':'')+'. Materials added.';
+    });return;
    }
    if(action==='slayer-travel'&&current==='slayer'&&profile.slayer.active?.bossId===id){close();onExpedition(id);return;}
   if(action==='inspect'){
