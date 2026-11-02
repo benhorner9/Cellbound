@@ -625,7 +625,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
     commitAccountChange(()=>takeSlayerContract(profile,id),()=>{confirmAbandon=false;confirmReroll=false;return 'Bounty accepted. Enter '+BOUNTY_TASKS[id].name+' from the Bounty Board to earn Bounty Hunting XP.';});return;
    }
    if(action==='slayer-claim'&&current==='slayer'){
-    commitAccountChange(()=>claimSlayerContract(profile),r=>'Bounty claimed! +'+r.points+' Bounty Marks'+(r.bonus?' including +'+r.bonus+' streak bonus':'')+' · Streak '+r.streak+'.');return;
+    commitAccountChange(()=>claimSlayerContract(profile),r=>'Bounty claimed! +'+r.points+' Bounty Marks'+(r.bonus?' including +'+r.bonus+' Bounty Chain bonus':'')+' · Bounty Chain '+r.streak+'.');return;
    }
    if(action==='slayer-abandon'&&current==='slayer'){
     if(!confirmAbandon){confirmAbandon=true;confirmReroll=false;render();return;}
