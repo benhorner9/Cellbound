@@ -642,6 +642,12 @@ function renderHeroes(){
   polishFeedback('Company progress updated','success');
   return result;
  }
+ function revealTalentTree(){
+  const tree=body.querySelector('.talent-screen-layout');
+  if(!tree||!root.classList.contains('camp-page'))return;
+  const y=window.scrollY+tree.getBoundingClientRect().top-155;
+  window.scrollTo({top:Math.max(0,y),behavior:'instant'});
+ }
  function open(tab='heroes',selected='knight'){
   if(!root.classList.contains('hidden'))return;
   returnFocus=document.activeElement;
@@ -652,6 +658,7 @@ function renderHeroes(){
   pendingSell=null;
   lastPresentedLocation=null;
   root.classList.remove('hidden');render();onOpen();
+  if(current==='talents')revealTalentTree();
   root.querySelector('#workshopClose').focus({preventScroll:true});
  }
  function close(){
@@ -665,7 +672,7 @@ function renderHeroes(){
   if(tabNames[tab]){
    confirmEnchantId=null;confirmDelveAbandon=false;
    current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;render();
-   if(root.classList.contains('camp-page'))window.scrollTo({top:0,behavior:'instant'});else body.scrollTop=0;
+   if(root.classList.contains('camp-page')){if(current==='talents')revealTalentTree();else window.scrollTo({top:0,behavior:'instant'});}else body.scrollTop=0;
   }
  });
  // The native phone selector travels through the exact same tab navigation
@@ -916,6 +923,7 @@ function renderHeroes(){
   if(action==='tab'&&tabNames[btn.dataset.tab]){
    confirmEnchantId=null;confirmDelveAbandon=false;current=btn.dataset.tab;
    notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;render();
+   if(current==='talents')revealTalentTree();
    tabs.querySelector('button[data-tab="'+current+'"]')?.focus({preventScroll:true});
    return;
   }
