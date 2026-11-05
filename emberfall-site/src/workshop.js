@@ -1,13 +1,13 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,FIELD_TOOLS,FIELD_GEAR,fieldGearBonusText,fieldKitSnapshot,toolUpgradeStatus,upgradeGatherTool,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
-} from './progression.js?v=4.20.0';
+} from './progression.js?v=4.21.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.20.0';
-import {polishEnter,polishFeedback} from './polish.js?v=4.20.0';
-import {venueSummary} from './experience.js?v=4.20.0';
+} from './builds.js?v=4.21.0';
+import {polishEnter,polishFeedback} from './polish.js?v=4.21.0';
+import {venueSummary} from './experience.js?v=4.21.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -577,7 +577,8 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    tab.setAttribute('aria-selected',String(active));tab.setAttribute('aria-pressed',String(active));
    tab.tabIndex=active?0:-1;
   }
-  body.setAttribute('aria-labelledby',tabId(current));
+  // Each building is a full-page landmark, not a tab panel.
+   body.setAttribute('aria-labelledby','workshopHeading');
   document.getElementById('goldTotal').textContent=profile.gold+' gold';
   document.getElementById('bagCount').textContent=String(profile.items.filter(item=>!itemOwner(profile,item.id)).length);
   body.classList.toggle('inventory-mode',current==='pack');
@@ -644,13 +645,23 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const target=returnFocus?.isConnected&&returnFocus.getClientRects().length?returnFocus:document.getElementById('campNavHome');
   target?.focus({preventScroll:true});returnFocus=null;
  }
- // Real contextual travel through the same existing venue buttons and state.
+ // Actual building transitions, not a visible global menu.
+ function enterBuilding(tab){
+  if(!tabNames[tab])return false;
+  confirmEnchantId=null;confirmDelveAbandon=false;
+  current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;
+  venueSearch.value='';filterVenues('');render();
+  if(root.classList.contains('camp-page'))window.scrollTo({top:0,behavior:'instant'});else body.scrollTop=0;
+  title.tabIndex=-1;title.focus({preventScroll:true});
+  return true;
+ }
+ // Doorways allow travel to nearby rooms without a world-scale menu.
  venueGuide.addEventListener('click',e=>{
   const where=e.target.closest('button[data-ux-go]')?.dataset.uxGo;
   if(!where)return;
   if(where==='war-table'){close();onWarTable();return;}
   const target=tabs.querySelector('button[data-tab="'+where+'"]');
-  if(target){venueSearch.value='';filterVenues('');target.click();}
+  if(target)enterBuilding(where);
  });
  function filterVenues(value=''){
   const query=value.trim().toLowerCase();let found=0;
@@ -670,24 +681,16 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   }else none?.remove();
  }
  venueSearch.addEventListener('input',()=>filterVenues(venueSearch.value));
- root.addEventListener('keydown',e=>{
-  if(e.key!=='/'||root.classList.contains('hidden')||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
-  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
-  e.preventDefault();venueSearch.focus();
- });
+
  tabs.addEventListener('click',e=>{
   const tab=e.target.closest('button[data-tab]')?.dataset.tab;
-  if(tabNames[tab]){
-   confirmEnchantId=null;confirmDelveAbandon=false;
-   current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;venueSearch.value='';filterVenues('');render();
-   if(root.classList.contains('camp-page'))window.scrollTo({top:0,behavior:'instant'});else body.scrollTop=0;
-  }
+  if(tabNames[tab])enterBuilding(tab);
  });
  // The native phone selector travels through the exact same tab navigation
  // as the desktop rail, preserving its state and keyboard semantics.
  locationJump.addEventListener('change',()=>{
   const dest=locationJump.value;
-  if(tabNames[dest])tabs.querySelector('button[data-tab="'+dest+'"]')?.click();
+  if(tabNames[dest])enterBuilding(dest);
  });
  tabs.addEventListener('keydown',e=>{
   if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
@@ -698,6 +701,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   buttons[next].click();buttons[next].focus({preventScroll:true});
  });
  root.querySelector('#workshopClose').addEventListener('click',close);
+ root.querySelector('#workshopReturn').addEventListener('click',close);
  root.addEventListener('click',e=>{if(e.target===root&&!root.classList.contains('camp-page'))close();});
  root.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
  body.addEventListener('input',e=>{
@@ -942,12 +946,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    return;
   }
   if(action==='hero'&&HERO_IDS.includes(id)){heroId=id;equipmentSlot=null;selectedTalentId=null;confirmSpendId=null;confirmRespec=false;render();return;}
-  if(action==='tab'&&tabNames[btn.dataset.tab]){
-   confirmEnchantId=null;confirmDelveAbandon=false;current=btn.dataset.tab;
-   notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;render();
-   tabs.querySelector('button[data-tab="'+current+'"]')?.focus({preventScroll:true});
-   return;
-  }
+  if(action==='tab'&&tabNames[btn.dataset.tab]){enterBuilding(btn.dataset.tab);return;}
   if(action==='talent'){if(chooseTalent(profile,heroId,id))save();return;}
   if(action==='equip'){
    if(current==='pack'){
