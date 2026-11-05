@@ -5,6 +5,13 @@ let browser;
 const errors = [];
 function assert(ok, reason) { if (!ok) throw Error(reason); }
 async function tap(page, selector) {
+  if(['#startBtn','#manageFromPickerBtn','#bagFromPickerBtn'].includes(selector)||selector.startsWith('[data-boss=')){
+   if((await page.locator('#app').getAttribute('data-view'))==='camp'&&
+      (await page.locator('#campScreen').getAttribute('data-camp-tab'))!=='expeditions'){
+    await page.locator('#campNavExpeditions').click();
+   }
+   selector=selector==='#manageFromPickerBtn'?'[data-prep-open="party"]':selector==='#bagFromPickerBtn'?'[data-prep-open="pack"]':selector;
+  }
   const el = page.locator(selector).first();
   await el.scrollIntoViewIfNeeded();
   await el.tap({ timeout: 15000 });
@@ -23,12 +30,15 @@ try {
   page.on('pageerror', err => errors.push(err.message));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto(base, { waitUntil: 'networkidle', timeout: 45000 });
-  assert(await page.locator('html').getAttribute('data-emberfall-ready') === '4.21.0',
+  assert(await page.locator('html').getAttribute('data-emberfall-ready') === '4.22.0',
     'Hosted phone Safari could not initialise Emberfall');
   assert(await page.locator('link[href*="mobile-testing.css"]').count() === 1,
     'Hosted HTML does not load the phone layout');
   assert(await page.locator('.refuge-lantern').count() === 3, 'Hosted phone missing Refuge lantern animation');
   assert((await page.locator('#polishFeedback').evaluate(el=>getComputedStyle(el).pointerEvents)) === 'none', 'Hosted phone feedback intercepts taps');
+  assert((await page.locator('#companyDockHeroes .company-dock-hero').count())===4,'Live phone persistent company strip missing');
+  assert(!(await page.locator('#campExpeditionPanel').isVisible()),'Phone Refuge still exposes boss selection before Embark');
+  assert((await page.locator('link[href*="hamlet-flow.css"]').count())===1,'Live phone flow styling missing');
   assert(await page.locator('.camp-building').count() === 13,
     'Hosted phone camp cannot reach all management buildings');
   const campCols = await page.locator('.camp-buildings').evaluate(el =>
@@ -108,7 +118,7 @@ try {
     !matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 540px) and (max-width: 950px)').matches
   );
   assert(tabletLayoutPreserved &&
-         await ipadPage.locator('html').getAttribute('data-emberfall-ready') === '4.21.0',
+         await ipadPage.locator('html').getAttribute('data-emberfall-ready') === '4.22.0',
     'Hosted iPad layout or boot regressed');
   assert(errors.length === 0, 'Hosted mobile WebKit errors: ' + errors.join(' | '));
   console.log('PASS hosted Emberfall iPhone portrait, landscape and iPad isolation.');

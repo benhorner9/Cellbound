@@ -11,10 +11,24 @@ page.on('response',r=>{
   if(!r.ok())errors.push('JS HTTP '+r.status()+' '+r.url());
  }
 });
+async function ensureEmbark(){
+ if((await page.locator('#app').getAttribute('data-view'))==='camp'&&
+    (await page.locator('#campScreen').getAttribute('data-camp-tab'))!=='expeditions'){
+  await page.locator('#campNavExpeditions').click();
+ }
+}
+async function clickEmbark(selector){
+ await ensureEmbark();
+ const target=selector==='#manageFromPickerBtn'?'[data-prep-open="party"]':selector==='#bagFromPickerBtn'?'[data-prep-open="pack"]':selector;
+ await page.locator(target).click();
+}
 try{
  await page.goto(base+'?sha='+process.env.GITHUB_SHA,{waitUntil:'networkidle',timeout:35000});
  // Verify this is a playable, persistent progression release, not a cosmetic mock-up.
  if((await page.locator('#app').getAttribute('data-view'))!=='camp'||await page.locator('#battleFrame').isVisible())throw Error('Hosted UX must start on camp only');
+ if(await page.locator('#campExpeditionPanel').isVisible())throw Error('Town must not show mission choices until Embark');
+ if((await page.locator('#companyDockHeroes .company-dock-hero').count())!==4)throw Error('Persistent party strip missing');
+ if((await page.locator('link[href*="hamlet-flow.css"]').count())!==1)throw Error('Game flow stylesheet unavailable');
  if((await page.locator('#campJourney .camp-journey-route').count())!==4)throw Error('Live company journal missing four playable routes');
  if((await page.locator('link[href*="experience.css"]').count())!==1||(await page.locator('link[href*="venue-world.css"]').count())!==1)throw Error('The full-screen interiors and their styling were not served');
  const huntTile=page.locator('.camp-building[data-camp="slayer"]');
@@ -45,11 +59,11 @@ try{
  await page.locator('.camp-building[data-camp="backup"]').click();
  if((await page.locator('#app').getAttribute('data-view'))!=='workshop')throw Error('Live Save Archive is not a dedicated page');
  if((await page.locator('#workshopHeading').innerText())!=='Save Backup')throw Error('Save Archive opened wrong section');
- if(!(await page.locator('#workshopClose').innerText()).includes('Back to Camp'))throw Error('Hosted management page lacks back navigation');
+ if(!(await page.locator('#workshopClose').innerText()).includes('Return to Refuge'))throw Error('Hosted management page lacks back navigation');
  if(!(await page.locator('#workshopReturn').isVisible()))throw Error('Save Archive has no way back to Refuge');
  await page.locator('#workshopClose').click();
  if((await page.locator('#app').getAttribute('data-view'))!=='camp')throw Error('Live return to camp failed');
- await page.locator('#manageFromPickerBtn').click();
+ await clickEmbark('#manageFromPickerBtn');
  if((await page.locator('#app').getAttribute('data-view'))!=='workshop')throw Error('Live Party screen is still a floating overlay');
  if(!(await page.locator('.party-formation').isVisible())||(await page.locator('.party-position').count())!==4)throw Error('Live dedicated 4-slot Party screen missing');
  await page.locator('#workshopTabs [data-tab="talents"]').evaluate(el=>el.click());
@@ -71,7 +85,7 @@ try{
  if((await page.locator('#bagCount').innerText())!=='0')throw Error('Bag count includes equipped vest');
  await page.locator('#workshopClose').click();
  await page.reload({waitUntil:'networkidle'});
- await page.locator('#manageFromPickerBtn').click();
+ await clickEmbark('#manageFromPickerBtn');
  await page.locator('#workshopTabs [data-tab="pack"]').evaluate(el=>el.click());
  if(await page.locator('#inventoryGrid [data-id="i1"]').count())throw Error('Equipped item returned to bag after reload');
  await page.locator('#workshopTabs [data-tab="heroes"]').evaluate(el=>el.click());
@@ -107,7 +121,7 @@ try{
  await page.locator('#campNavHome').click();
  const box=await page.locator('#campExpeditionPanel').boundingBox();
  if(!box||box.width<300||!(await page.locator('#campExpeditionPanel').isVisible()))throw Error('Live expedition board not visible');
- await page.locator('#startBtn').click();
+ await clickEmbark('#startBtn');
  await page.waitForFunction(()=>document.getElementById('phaseLabel').textContent.includes('LIVE'),null,{timeout:10000});
  const dock=await page.locator('#combatActionDock').boundingBox();
  const stage=await page.locator('#battleFrame').boundingBox();
@@ -148,16 +162,16 @@ try{
   {id:'cindermaw',name:'Cindermaw',hp:865,unique:'The Cinderheart',warning:'FURNACE BREATH'},
   {id:'tempest',name:'Tempest Seraph',hp:1010,unique:'Eye of the Tempest',warning:'LIGHTNING LANE'}
  ]){
-  await page.locator('[data-boss="'+entry.id+'"]').click();
+  await clickEmbark('[data-boss="'+entry.id+'"]');
   if((await page.locator('#selectedBossName').innerText())!==entry.name)throw Error('Boss picker failed to select '+entry.name);
   if(await page.locator('#startBtn').isDisabled())throw Error('Boss '+entry.name+' wrongly locked at level one');
   if(!(await page.locator('#startBtn').innerText()).includes(entry.name))throw Error('Fight button does not match selected boss');
-  await page.locator('#manageFromPickerBtn').click();
+  await clickEmbark('#manageFromPickerBtn');
   await page.locator('#workshopTabs [data-tab="loot"]').evaluate(el=>el.click());
   await page.locator('#dropBoss').selectOption(entry.id);
   if(!(await page.locator('#workshopBody').innerText()).includes(entry.unique))throw Error('Exclusive item missing');
   await page.locator('#workshopClose').click();
-  await page.locator('#startBtn').click();
+  await clickEmbark('#startBtn');
   if((await page.locator('#bossLabel').innerText())!==entry.name.toUpperCase())throw Error('Wrong actual boss after selection');
   const hp=Number((await page.locator('#bossHpText').innerText()).split('/')[1].trim());
   if(hp!==entry.hp)throw Error('Wrong battle stats for '+entry.name+': '+hp);
@@ -168,21 +182,21 @@ try{
  }
  await page.reload({waitUntil:'networkidle'});
  if((await page.locator('#selectedBossName').innerText())!=='Tempest Seraph')throw Error('Selected boss did not persist after reload');
- await page.locator('#startBtn').click();
+ await clickEmbark('#startBtn');
  if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Reloaded boss selection switched back to Thornwarden');
  await page.locator('#bossSelectTopBtn').click();
  if(!(await page.locator('#encounterList').isVisible()))throw Error('Top choose boss failed after reload');
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.21.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.22.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.21.0')throw Error('Live Block04 module tree did not initialize');
- await page.locator('#manageFromPickerBtn').click();
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.22.0')throw Error('Live Block04 module tree did not initialize');
+ await clickEmbark('#manageFromPickerBtn');
  await page.locator('#workshopTabs [data-tab="heroes"]').evaluate(el=>el.click());
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
  if(!(await page.locator('#workshopBody').innerText()).includes('2/4 equipped'))throw Error('Live 2-piece set not active');
@@ -210,21 +224,21 @@ try{
  if(!(await page.locator('#workshopBody').innerText()).includes('Backup restored'))throw Error('Live double confirmed import failed');
  await page.locator('#workshopClose').click();
  await page.reload({waitUntil:'networkidle'});
- await page.locator('#manageFromPickerBtn').click();
+ await clickEmbark('#manageFromPickerBtn');
  await page.locator('#workshopTabs [data-tab="heroes"]').evaluate(el=>el.click());
  if(!(await page.locator('#workshopBody').innerText()).includes('Hosted Tank'))throw Error('Live saved build disappeared after reload');
  await page.locator('#workshopClose').click();
- await page.locator('#startBtn').click();
+ await clickEmbark('#startBtn');
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.21.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.22.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
  });
  await page.reload({waitUntil:'networkidle'});
- await page.locator('#bagFromPickerBtn').click();
+ await clickEmbark('#bagFromPickerBtn');
  const mageItem=page.locator('#inventoryGrid [data-id="i5"]');
  if(!(await mageItem.isVisible()))throw Error('Class-restricted gear missing from bag');
  await mageItem.click();
@@ -241,12 +255,12 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.21.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.22.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
  await page.reload({waitUntil:'networkidle'});
- await page.locator('#bagFromPickerBtn').click();
+ await clickEmbark('#bagFromPickerBtn');
  await page.locator('[data-action="inspect"][data-id="i6"]').click();
  const rangerChoice=page.locator('[data-action="target-hero"][data-id="ranger"]');
  if(!(await rangerChoice.isVisible()))throw Error('Ranger selection not visible');
@@ -264,7 +278,7 @@ try{
  if(positioned.partyOrder[0]!=='ranger')throw Error('Live Party swap failed to persist');
  await page.locator('#workshopClose').click();
  await page.reload({waitUntil:'networkidle'});
- await page.locator('#startBtn').click();
+ await clickEmbark('#startBtn');
  if((await page.locator('#partyList .hero-card').first().getAttribute('data-hero'))!=='ranger')throw Error('Live swapped Party did not apply to next battle');
  const canvas=await page.locator('#arena').boundingBox();
  if(!canvas)throw Error('Live combat canvas missing');
@@ -275,13 +289,13 @@ try{
  await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  // Isolated live source must also support real craft XP, generated gear and potion effects.
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.21.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.22.0');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=30;
   if(!writeProfile(localStorage,p))throw Error('Live crafting fixture could not be saved');
  });
  await page.reload({waitUntil:'networkidle'});
- await page.locator('#manageFromPickerBtn').click();
+ await clickEmbark('#manageFromPickerBtn');
  await page.locator('#workshopTabs [data-tab="craft"]').evaluate(el=>el.click());
  if(!(await page.locator('.craft-studio').isVisible())||(await page.locator('.craft-skill-tab').count())!==2)throw Error('Live Smithing and Alchemy guild missing');
  await page.locator('[data-action="craft-select"][data-id="forge-verdant-helm"]').click();
@@ -298,7 +312,7 @@ try{
  const ready=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
  if(ready.preparedElixir!=='verdant-draught'||ready.skills.alchemy.level<2)throw Error('Live potion mixing and preparation failed');
  await page.locator('#workshopClose').click();
- await page.locator('#startBtn').click();
+ await clickEmbark('#startBtn');
  const afterUse=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
  if(afterUse.preparedElixir!==null)throw Error('Live potion was not consumed at fight start');
  if(errors.length)throw Error(errors.join('\n'));

@@ -7,6 +7,13 @@ const context=await browser.newContext({viewport:{width:1180,height:820},isMobil
 let staleDependencyRequests=0;
 const tap=async(page,selector)=>{
  if(selector.startsWith('#workshopTabs ')){await page.locator(selector).evaluate(el=>el.click());return;}
+ if(['#startBtn','#manageFromPickerBtn','#bagFromPickerBtn'].includes(selector)||selector.startsWith('[data-boss=')){
+  if((await page.locator('#app').getAttribute('data-view'))==='camp'&&
+     (await page.locator('#campScreen').getAttribute('data-camp-tab'))!=='expeditions'){
+   await page.locator('#campNavExpeditions').click();
+  }
+  selector=selector==='#manageFromPickerBtn'?'[data-prep-open="party"]':selector==='#bagFromPickerBtn'?'[data-prep-open="pack"]':selector;
+ }
  await page.locator(selector).scrollIntoViewIfNeeded();
  const box=await page.locator(selector).boundingBox();
  if(!box||box.width<1||box.height<1)throw Error('Tap target hidden: '+selector);
@@ -15,7 +22,7 @@ const tap=async(page,selector)=>{
 try{
  await context.route(/\/src\/progression\.js(?:\?.*)?$/,async route=>{
   const url=new URL(route.request().url());
-  if(url.searchParams.get('v')!=='4.21.0'){
+  if(url.searchParams.get('v')!=='4.22.0'){
    staleDependencyRequests++;
    // Simulate what the returning iPad used to have cached: no new named exports.
    await route.fulfill({status:200,contentType:'application/javascript',body:'export const oldProgression = true;'});
@@ -26,11 +33,11 @@ try{
  page.on('requestfailed',r=>failures.push('Request failed: '+r.url()+' '+r.failure()?.errorText));
  page.on('response',r=>{if(r.status()>=400)failures.push('HTTP '+r.status()+' '+r.url());});
  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.goto(site+'?safari-cache-recovery=4.21.0',{waitUntil:'networkidle',timeout:45000});
+ await page.goto(site+'?safari-cache-recovery=4.22.0',{waitUntil:'networkidle',timeout:45000});
  // WebKit can report networkidle while document.readyState is still "interactive".
  // Wait for the game's own post-listener startup marker instead of racing ES-module execution.
  let started=false;
- try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.21.0',null,{timeout:20000});started=true;}catch{}
+ try{await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.22.0',null,{timeout:20000});started=true;}catch{}
  if(!started){
   const snapshot=await page.evaluate(()=>({
    title:document.title,url:location.href,readyState:document.readyState,
@@ -45,6 +52,9 @@ try{
  if((await page.locator('#app').getAttribute('data-view'))!=='camp')throw Error('Live Safari must boot into the Emberguard camp');
  if(await page.locator('#battleFrame').isVisible())throw Error('Live Safari camp is still overlaid on a battle');
  if((await page.locator('.camp-building').count())!==13)throw Error('Live Safari camp destinations absent');
+ if(await page.locator('#campExpeditionPanel').isVisible())throw Error('Safari town still shows duplicate mission selectors');
+ if((await page.locator('#companyDockHeroes .company-dock-hero').count())!==4)throw Error('Safari party strip missing');
+ if((await page.locator('link[href*="hamlet-flow.css"]').count())!==1)throw Error('Safari did not load 4.22 flow styling');
  if((await page.locator('link[href*="polish.css"]').count())!==1)throw Error('Block 3 styling missing in hosted Safari');
  if((await page.locator('.refuge-ambience').evaluate(el=>getComputedStyle(el).pointerEvents))!=='none')throw Error('Decorative ambience intercepted Safari touches');
   if((await page.locator('link[href*="locations.css"]').count())!==1)throw Error('Live Safari did not load location styling');
@@ -114,13 +124,13 @@ try{
  if(!(await page.locator('#backupExport').inputValue()).includes('emberfall-local-backup'))throw Error('Live Safari backup UI not responsive');
  await tap(page,'#workshopClose');
  await page.reload({waitUntil:'networkidle',timeout:45000});
- await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.21.0',null,{timeout:20000})
+ await page.waitForFunction(()=>document.documentElement.dataset.emberfallReady==='4.22.0',null,{timeout:20000})
    .catch(()=>{throw Error('Live Safari warm-cache reload failed to initialise in 20s');});
  if((await page.locator('#selectedBossName').innerText())!=='Tempest Seraph')throw Error('Selected boss lost after warm-cache reload');
  await tap(page,'#startBtn');
  if((await page.locator('#bossLabel').innerText())!=='TEMPEST SERAPH')throw Error('Saved boss fails after reload');
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.21.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.22.0');
   const p=readProfile(localStorage);addItem(p,'emberglass-staff');addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('WebKit gear setup failed');
  });
@@ -158,7 +168,7 @@ try{
  if(saved.heroes.ranger.gear.armour!=='i2')throw Error('Safari selected Ranger was not equipped');
  await tap(page,'#workshopClose');
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.21.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.22.0');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=12;
   if(!writeProfile(localStorage,p))throw Error('Safari reagent fixture could not be saved');

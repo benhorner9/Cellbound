@@ -1,8 +1,8 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.21.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken,HARVEST_TYPES,HARVEST_AREAS,fieldKitSnapshot,getHarvestSite,pendingHarvestSites,harvestStatus,harvestNode} from './progression.js?v=4.21.0';
-import {mountWorkshop} from './workshop.js?v=4.21.0';
-import {initPolish,polishEnter,polishFeedback} from './polish.js?v=4.21.0';
-import {refugeJourney} from './experience.js?v=4.21.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.22.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken,HARVEST_TYPES,HARVEST_AREAS,fieldKitSnapshot,getHarvestSite,pendingHarvestSites,harvestStatus,harvestNode} from './progression.js?v=4.22.0';
+import {mountWorkshop} from './workshop.js?v=4.22.0';
+import {initPolish,polishEnter,polishFeedback} from './polish.js?v=4.22.0';
+import {refugeJourney} from './experience.js?v=4.22.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -28,6 +28,7 @@ function newBattle(id=bossSelection,bountyTaskId=null){
 let state=newBattle(),selected=(company.partyOrder?.[0]||'knight'),paused=false,sound=false,last=0,uiLast=0;
 let currentView='camp',campTab='home',pendingDelveToken=null,activeDelveToken=null,pendingBountyToken=null,activeBountyToken=null;
 let rewardCommitted=false,resultDismissed=false,workshopWasPaused=false,workshopOpenedFromCamp=false;
+let lastExpedition=null;
 let activeHarvestReceipt=null,selectedHarvestNode=null,harvestNotice='';
 const HARVEST_POSITIONS=[{x:315,y:202},{x:545,y:467},{x:776,y:226},{x:925,y:457},{x:560,y:153}];
 let floaters=[],bursts=[],projectiles=[],markers=[],noticeUntil=0,noticeText='',startPoint=null;
@@ -194,6 +195,17 @@ function selectBoss(id){
  return true;
 }
 const campScreen=$('campScreen');
+const rosterSymbols={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
+const rosterRoles={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
+const escapeUI=v=>String(v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function renderCompanyDock(){
+ $('companyDockHeroes').innerHTML=(company.partyOrder||[]).map(id=>{
+  const h=company.heroes[id];if(!h)return '';
+  const active=selected===id;
+  return '<button type="button" class="company-dock-hero" data-company-hero="'+id+'" aria-pressed="'+active+'" aria-label="Inspect '+escapeUI(HERO_NAMES[id])+' level '+h.level+' '+rosterRoles[id]+'">'+
+   '<span class="company-dock-portrait portrait '+id+'" aria-hidden="true">'+rosterSymbols[id]+'</span><span class="company-dock-data"><strong>'+escapeUI(HERO_NAMES[id])+'</strong><small>'+rosterRoles[id]+' · Lv '+h.level+'</small></span></button>';
+ }).join('');
+}
 function setCampTab(tab='home'){
  const previous=campTab;
  campTab=tab==='expeditions'?'expeditions':'home';
@@ -215,14 +227,26 @@ function renderCampSummary(){
  const contract=company.slayer?.active;
  $('refugeBountyStatus').textContent=contract?(BOSSES[contract.bossId]?.name||'Unknown target')+' · '+contract.kills+'/'+contract.target+' victories'+(contract.kills>=contract.target?' · Ready to claim':''):'No active bounty';
  $('refugeSelectedHunt').textContent=bossInfo(bossSelection).name;
- const icons={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
- const roles={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
+ const icons=rosterSymbols;
+ const roles=rosterRoles;
  const journey=refugeJourney(company);
   $('campJourney').innerHTML='<div class="camp-journey-heading"><div><span class="eyebrow">YOUR COMPANY · THE NEXT CHAPTER</span><h2>A living adventurer’s journal</h2></div><p>Choose how to spend your next session. Every journey uses your actual heroes, skills and supplies.</p></div><div class="camp-journey-list">'+journey.map(a=>'<button type="button" class="camp-journey-route" data-journey="'+a.action+'" aria-label="'+a.title+'. '+a.label+'"><span class="camp-journey-stamp" aria-hidden="true">'+a.icon+'</span><span class="camp-journey-copy"><small>'+a.number+' · '+a.kind+'</small><strong>'+a.title+'</strong><span>'+a.detail+'</span><span class="camp-journey-cta">'+a.label+' <span aria-hidden="true">→</span></span></span></button>').join('')+'</div>';
   $('campRoster').innerHTML=company.partyOrder.map(id=>{
   const hero=company.heroes[id];
   return '<div class="camp-roster-member"><span class="camp-roster-icon portrait '+id+'">'+icons[id]+'</span><div><strong>'+HERO_NAMES[id]+'</strong><small>'+roles[id]+' · Lv '+hero.level+'</small></div></div>';
  }).join('');
+ const report=$('campDebrief');
+ report.hidden=!lastExpedition;
+ if(lastExpedition){
+  const x=lastExpedition;
+  report.innerHTML='<span class="eyebrow">'+(x.win?'EXPEDITION COMPLETE · RETURN TO THE REFUGE':'THE COMPANY RETURNS · DEFEAT')+'</span>'+
+   '<h2>'+(x.win?'Returned from '+escapeUI(x.name):'Retreated from '+escapeUI(x.name))+'</h2>'+
+   '<p>'+(x.win?'Rewards already earned: <b>'+escapeUI(x.item)+'</b>, '+x.gold+' gold, '+x.xp+' XP per hero and '+x.materials+' crafting materials.'+(x.saved?'':' <strong>Warning: browser storage was unavailable.</strong>'):'Your company was defeated. Adjust formation, talents or gear before your next attempt.')+'</p>'+
+   '<div class="camp-debrief-actions"><button type="button" data-debrief="heroes">Inspect heroes</button>'+
+   '<button type="button" data-debrief="expeditions">Prepare next expedition</button>'+
+   '<button type="button" data-debrief="dismiss">Close report</button></div>';
+ }
+ renderCompanyDock();
 }
 function showCamp(tab='home'){
  const returnedFromBattle=currentView==='battle';
@@ -239,6 +263,18 @@ function showCamp(tab='home'){
  }
 }
 campScreen.addEventListener('click',event=>{
+ const reportAction=event.target.closest('[data-debrief]')?.dataset.debrief;
+ if(reportAction){
+  if(reportAction==='dismiss'){lastExpedition=null;renderCampSummary();return;}
+  if(reportAction==='expeditions'){setCampTab('expeditions');return;}
+  if(reportAction==='heroes'){workshop.open('heroes',selected);return;}
+ }
+ const heroPrep=event.target.closest('[data-prep-hero]')?.dataset.prepHero;
+ if(heroPrep&&company.partyOrder.includes(heroPrep)){
+  selected=heroPrep;workshop.open('heroes',heroPrep);renderCompanyDock();return;
+ }
+ const roomPrep=event.target.closest('[data-prep-open]')?.dataset.prepOpen;
+ if(['party','heroes','pack','craft','slayer'].includes(roomPrep)){workshop.open(roomPrep,selected);return;}
  const journeyAction=event.target.closest('[data-journey]');
   if(journeyAction){
    const tab=journeyAction.dataset.journey;
@@ -263,6 +299,17 @@ campScreen.addEventListener('click',event=>{
  if(event.target.closest('#manageFromPickerBtn'))workshop.open('party',selected);
  if(event.target.closest('#bagFromPickerBtn'))workshop.open('pack',selected);
 });
+$('companyDock').addEventListener('click',event=>{
+ const hero=event.target.closest('[data-company-hero]')?.dataset.companyHero;
+ if(hero&&company.partyOrder.includes(hero)){
+  selected=hero;workshop.open('heroes',hero);renderCompanyDock();return;
+ }
+ const to=event.target.closest('[data-dock-go]')?.dataset.dockGo;
+ if(to==='home'||to==='expeditions'){
+  if(workshop.isOpen())workshop.close();
+  showCamp(to);
+ }
+});
 function renderEncounterChoices(){
  const boss=bossInfo(bossSelection),recommended=atRecommendedLevel(company,bossSelection);
  const kit=fieldKitSnapshot(company),pct=n=>Math.round(n*100);
@@ -276,11 +323,19 @@ function renderEncounterChoices(){
  const pendingSites=pendingHarvestSites(company).slice().reverse();
   const gatheringLinks=pendingSites.length?'<details class="pending-harvest"><summary>⛏️ Unfinished gathering sites ('+pendingSites.length+')</summary><div class="pending-harvest-list">'+pendingSites.map(site=>'<button type="button" class="tiny-btn" data-resume-harvest="'+site.receiptId+'">'+HARVEST_AREAS[site.bossId].name+' · '+site.nodes.filter(n=>!n.harvested).length+' nodes remain</button>').join('')+'</div></details>':'';
   const kitBanner='<div class="field-kit-preview"><strong>⛏️ Field Kit · '+kit.count+' piece'+(kit.count===1?'':'s')+' equipped</strong><p>'+(kit.count?'Rare discovery +'+pct(kit.rare)+' points · Bonus ore +'+pct(kit.ore)+'% · timber +'+pct(kit.wood)+'% · additional deposit +'+pct(kit.extra)+'%.':'Equip gathering items to improve resource discoveries. No free bonuses — field gear replaces combat equipment.')+'</p><small>Only gear worn at battle launch counts. Farming gear weakens the party in combat.</small><div class="field-kit-actions"><button type="button" data-field-nav="craft" class="tiny-btn">⚒ Forge Field Gear</button><button type="button" data-field-nav="heroes" class="tiny-btn">⚔ Equip Farming Build</button></div></div>';
-  const options=Object.values(BOSSES).map(b=>{
+ const chosenKit=kit.count?'Field kit: '+kit.count+' equipped · harvesting improves, but protective combat gear is replaced.':'Combat loadout · no field-kit pieces equipped.';
+ const partyCards=(company.partyOrder||[]).map(id=>'<button type="button" class="embark-hero" data-prep-hero="'+id+'" aria-label="Inspect '+escapeUI(HERO_NAMES[id])+'">'+
+  '<span aria-hidden="true">'+rosterSymbols[id]+'</span><strong>'+escapeUI(HERO_NAMES[id])+'</strong><small>Lv '+company.heroes[id].level+'</small></button>').join('');
+ const preparation='<section class="embark-planning" aria-label="Prepare your next expedition"><div class="embark-planning-header"><strong>Prepare your expedition</strong><small>Choose a destination → Ready the company → Embark</small></div><div class="embark-stages">'+
+  '<div class="embark-stage" aria-current="step"><span class="stage-label">01 · DESTINATION</span><h3>'+boss.icon+' '+escapeUI(boss.name)+'</h3><p>'+escapeUI(boss.place)+' · '+(recommended?'Party meets recommended level':'Recommended Lv '+boss.unlock+' · You can still attempt it')+'</p><small>Choose another threat below to change the destination.</small></div>'+
+  '<div class="embark-stage"><span class="stage-label">02 · COMPANY</span><h3>Four heroes, one formation</h3><div class="embark-party">'+partyCards+'</div><div class="embark-stage-buttons"><button type="button" data-prep-open="party">Arrange party</button><button type="button" data-prep-open="heroes">Equip heroes</button></div></div>'+
+  '<div class="embark-stage"><span class="stage-label">03 · LOADOUT</span><h3>Ready the supplies</h3><p class="'+(kit.count?'embark-field-warning':'')+'">'+escapeUI(chosenKit)+'</p><div class="embark-stage-buttons"><button type="button" data-prep-open="pack">Equipment bag</button><button type="button" data-prep-open="craft">Craft supplies</button></div></div>'+
+  '</div></section>';
+ const options=Object.values(BOSSES).map(b=>{
   const active=b.id===bossSelection,ready=atRecommendedLevel(company,b.id);
   return '<button type="button" class="encounter-choice '+(active?'current ':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(ready?'✓ Party ready · recommended Lv '+b.unlock:'⚠ Recommended party level '+b.unlock+' · You can still fight')+'</small><small class="encounter-resource">⛏️ '+HARVEST_AREAS[b.id].theme+' · '+Math.min(85,Math.round((HARVEST_AREAS[b.id].rareChance+kit.rare)*100))+'% rare-node chance with current kit</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
  }).join('');
- $('campExpeditionBody').innerHTML='<div class="camp-board-heading"><span class="eyebrow">WAR TABLE · THE EMBERFALL REFUGE</span><h2>The War Table</h2><p>Study the threats beyond the walls, choose a quarry and send your company into danger when ready.</p></div><div class="encounter-choices" id="encounterList">'+options+'</div>'+kitBanner+slayerBanner+delveBanner+bountyBanner+gatheringLinks+'<p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. You can still attempt this fight.</p>')+'<button id="startBtn" class="primary-btn large camp-fight-btn" type="button">'+(delveReady?'Enter Delving Stage '+(delveStage.stage+1):bountyTask?'Enter '+bountyTask.name:'Fight '+boss.name)+' →</button><p class="encounter-controls">Selected boss: <b id="selectedBossName">'+boss.name+'</b></p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">♜ Manage Party</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
+ $('campExpeditionBody').innerHTML='<div class="camp-board-heading"><span class="eyebrow">EMBARK · FROM THE EMBERFALL REFUGE</span><h2>Choose your next expedition</h2><p>Set your target, inspect the heroes and their field gear, then leave the Refuge prepared. Your selected company remains ready between visits.</p></div>'+preparation+'<div class="encounter-choices" id="encounterList">'+options+'</div>'+kitBanner+slayerBanner+delveBanner+bountyBanner+gatheringLinks+'<p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. You can still attempt this fight.</p>')+'<button id="startBtn" class="primary-btn large camp-fight-btn" type="button">'+(delveReady?'Enter Delving Stage '+(delveStage.stage+1):bountyTask?'Enter '+bountyTask.name:'Embark against '+boss.name)+' →</button><p class="encounter-controls">Selected boss: <b id="selectedBossName">'+boss.name+'</b></p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">♜ Manage Party</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
 }
 function returnToCamp(tab='expeditions'){
   activeHarvestReceipt=null;selectedHarvestNode=null;harvestNotice='';$('harvestPanel').classList.add('hidden');
@@ -743,6 +798,7 @@ function showEnd(){
    const reward=grantVictory(company,state.receiptId,state.seed,state.bossId,activeDelveToken,activeBountyToken,state.fieldKit);
    if(reward){
     const saved=writeProfile(storage,company),def=ITEM_DEFS[reward.item.defId];
+    lastExpedition={win:true,name:defeated.name,item:def.name,gold:reward.gold,xp:reward.xp,materials:reward.materials.reduce((n,m)=>n+m.quantity,0),saved};
     const escText=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     const xpRows=reward.heroXp.map(h=>{
      const fromNeed=xpNeeded(h.fromLevel),toNeed=xpNeeded(h.toLevel);
@@ -755,9 +811,9 @@ function showEnd(){
      const slayerReward=reward.slayer?'<div class="victory-loot-chip">🎯 +'+reward.slayer.xp+' Bounty Hunting XP · '+reward.slayer.kills+'/'+reward.slayer.target+(reward.slayer.levelTo>reward.slayer.levelFrom?' · LEVEL UP '+reward.slayer.levelTo:'')+(reward.slayer.complete?' · Contract complete!':'')+'</div>':'';
     rewardHTML='<div class="victory-rewards" aria-label="Actual granted victory rewards"><h3>✦ Victory Rewards</h3><p>Each hero gained '+reward.xp+' XP. These are your actual awarded items and reagents.</p><div class="victory-xp-party">'+xpRows+'</div><div class="victory-loot-grid"><div class="victory-loot-chip rarity-'+def.rarity.toLowerCase()+'">'+def.icon+' '+escText(def.name)+' · '+def.rarity+'</div><div class="victory-loot-chip">🪙 '+reward.gold+' gold</div>'+drops+kitReward+slayerReward+delveReward+'</div><small class="notice-local">'+(saved?'All rewards saved in this browser.':'Storage unavailable — rewards are held only until this page closes.')+'</small></div>';
    }
-  }else{recordDefeat(company);writeProfile(storage,company);}
+  }else{recordDefeat(company);writeProfile(storage,company);lastExpedition={win:false,name:defeated.name};}
  }
- $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions">'+(win&&getHarvestSite(company,state.receiptId)?'<button class="primary-btn large" type="button" id="gatherBtn">⛏️ Explore Cleared Area →</button>':'')+'<button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button>'+(win&&company.slayer?.active&&company.slayer.active.kills===company.slayer.active.target?'<button class="quiet-btn" type="button" id="slayerRewardsBtn">🎯 Claim Bounty Contract</button>':'')+(win&&activeDelveToken&&company.delving.active?'<button class="quiet-btn" type="button" id="delveRewardsBtn">🗝️ '+(currentDelveStage(company)?'Continue Delving Route':'Claim Delve Cache')+'</button>':'')+'<button class="quiet-btn" type="button" id="dismissRewardsBtn">Return to Camp</button></div>';
+ $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions">'+(win&&getHarvestSite(company,state.receiptId)?'<button class="primary-btn large" type="button" id="gatherBtn">⛏️ Explore Cleared Area →</button>':'')+'<button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button>'+(win&&company.slayer?.active&&company.slayer.active.kills===company.slayer.active.target?'<button class="quiet-btn" type="button" id="slayerRewardsBtn">🎯 Claim Bounty Contract</button>':'')+(win&&activeDelveToken&&company.delving.active?'<button class="quiet-btn" type="button" id="delveRewardsBtn">🗝️ '+(currentDelveStage(company)?'Continue Delving Route':'Claim Delve Cache')+'</button>':'')+'<button class="quiet-btn" type="button" id="dismissRewardsBtn">Return to Refuge</button></div>';
  $('overlay').classList.add('result-mode');
  $('overlay').setAttribute('role','dialog');
  $('overlay').setAttribute('aria-label','Boss fight result');
@@ -789,7 +845,7 @@ const workshop=mountWorkshop({
   const root=$('workshop'),back=$('workshopClose');
   root.classList.toggle('camp-page',workshopOpenedFromCamp);
   root.setAttribute('role',workshopOpenedFromCamp?'main':'dialog');
-  if(workshopOpenedFromCamp){root.removeAttribute('aria-modal');$('app').dataset.view='workshop';back.textContent='← Back to Camp';}
+  if(workshopOpenedFromCamp){root.removeAttribute('aria-modal');$('app').dataset.view='workshop';back.textContent='← Return to Refuge';}
   else{root.setAttribute('aria-modal','true');back.textContent='✕ Back to Battle';}
   polishEnter(root.querySelector('.workshop-head'));
   syncUI(true);
@@ -825,12 +881,12 @@ $('slayerBtn').addEventListener('click',()=>workshop.open('slayer',selected));
 $('salvageBtn').addEventListener('click',()=>workshop.open('salvage',selected));
 $('enchantBtn').addEventListener('click',()=>workshop.open('enchant',selected));
 $('delvingBtn').addEventListener('click',()=>workshop.open('delving',selected));
-for(const id of ['bossSelectBtn','bossSelectTopBtn'])$(id).addEventListener('click',returnToCamp);
+for(const id of ['bossSelectBtn','bossSelectTopBtn'])$(id).addEventListener('click',()=>returnToCamp('expeditions'));
 initPolish();
 makeBackground();
 resize();
 showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.21.0';
+document.documentElement.dataset.emberfallReady='4.22.0';
 requestAnimationFrame(frame);
