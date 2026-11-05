@@ -1,7 +1,8 @@
-import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.17.0';
-import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken} from './progression.js?v=4.17.0';
-import {mountWorkshop} from './workshop.js?v=4.17.0';
-import {initPolish,polishEnter,polishFeedback} from './polish.js?v=4.17.0';
+import {WORLD, ABILITIES, createEncounter, startEncounter, updateEncounter, commandMove, commandTarget, castAbility, getHero, getUnit, drainEvents, combatSpeed, advanceDeathVisuals, enemyDeathVisual, heroDownVisual, ENEMY_DEATH_DURATION, HERO_DOWN_DURATION} from './engine.js?v=4.20.0';
+import {readProfile,writeProfile,grantVictory,recordDefeat,ITEM_DEFS,MATERIAL_DEFS,ALCHEMY_EFFECTS,consumePreparedElixir,xpNeeded,BOSSES,bossInfo,canChallenge,atRecommendedLevel,HERO_NAMES,DELVE_ROUTES,currentDelveStage,delveStageToken,BOUNTY_TASKS,bountyStageToken,HARVEST_TYPES,HARVEST_AREAS,fieldKitSnapshot,getHarvestSite,pendingHarvestSites,harvestStatus,harvestNode} from './progression.js?v=4.20.0';
+import {mountWorkshop} from './workshop.js?v=4.20.0';
+import {initPolish,polishEnter,polishFeedback} from './polish.js?v=4.20.0';
+import {refugeJourney} from './experience.js?v=4.20.0';
 
 const $=id=>document.getElementById(id);
 const canvas=$('arena'),ctx=canvas.getContext('2d',{alpha:false});
@@ -20,11 +21,15 @@ function newBattle(id=bossSelection,bountyTaskId=null){
  const serial=++fightSerial;
  const fight=createEncounter(((Date.now()>>>0)+serial)||1337,company,id,bountyTaskId);
  fight.receiptId='fight-'+Date.now().toString(36)+'-'+serial+'-'+Math.random().toString(36).slice(2,9);
+ // Only gear actually worn at fight launch improves that victory's resources.
+ fight.fieldKit=fieldKitSnapshot(company);
  return fight;
 }
 let state=newBattle(),selected=(company.partyOrder?.[0]||'knight'),paused=false,sound=false,last=0,uiLast=0;
 let currentView='camp',campTab='home',pendingDelveToken=null,activeDelveToken=null,pendingBountyToken=null,activeBountyToken=null;
 let rewardCommitted=false,resultDismissed=false,workshopWasPaused=false,workshopOpenedFromCamp=false;
+let activeHarvestReceipt=null,selectedHarvestNode=null,harvestNotice='';
+const HARVEST_POSITIONS=[{x:315,y:202},{x:545,y:467},{x:776,y:226},{x:925,y:457},{x:560,y:153}];
 let floaters=[],bursts=[],projectiles=[],markers=[],noticeUntil=0,noticeText='',startPoint=null;
 let audioCtx=null;
 const heroColors={knight:'#8cb6c0',ranger:'#94bd79',mage:'#c2a4e9',cleric:'#f4d28c'};
@@ -116,6 +121,13 @@ canvas.addEventListener('pointerup',e=>{
  else issueFromPoint(p,null);
 });
 canvas.addEventListener('pointercancel',()=>{startPoint=null;state.manualPositioning=false;});
+canvas.addEventListener('click',event=>{
+ if(currentView!=='battle'||state.phase!=='victory'||$('harvestPanel').classList.contains('hidden'))return;
+ const site=getHarvestSite(company,activeHarvestReceipt),p=screenPoint(event);
+ if(!site)return;
+ const hit=site.nodes.find((n,i)=>!n.harvested&&Math.hypot(p.x-HARVEST_POSITIONS[i].x,p.y-HARVEST_POSITIONS[i].y)<61);
+ if(hit){selectedHarvestNode=hit.id;harvestNotice='';renderHarvestPanel();}
+});
 for(const card of document.querySelectorAll('[data-hero]'))card.addEventListener('click',()=>selectHero(card.dataset.hero));
 function useSlot(slot){
  if(paused||state.phase!=='playing')return;
@@ -145,6 +157,7 @@ $('overlayContent').addEventListener('click',e=>{
  }
  if(e.target.closest('#startBtn'))start();
  if(e.target.closest('#againBtn'))restart();
+  if(e.target.closest('#gatherBtn'))openHarvestSite(state.receiptId);
  if(e.target.closest('#inspectBtn')){const tab=state.phase==='victory'?'pack':'heroes';returnToCamp('home');workshop.open(tab,selected);}
  if(e.target.closest('#chooseBossBtn'))returnToCamp('expeditions');
  if(e.target.closest('#manageFromPickerBtn'))workshop.open('party',selected);
@@ -204,7 +217,9 @@ function renderCampSummary(){
  $('refugeSelectedHunt').textContent=bossInfo(bossSelection).name;
  const icons={knight:'🛡',ranger:'🏹',mage:'✦',cleric:'✚'};
  const roles={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
- $('campRoster').innerHTML=company.partyOrder.map(id=>{
+ const journey=refugeJourney(company);
+  $('campJourney').innerHTML='<div class="camp-journey-heading"><div><span class="eyebrow">YOUR COMPANY · THE NEXT CHAPTER</span><h2>A living adventurer’s journal</h2></div><p>Choose how to spend your next session. Every journey uses your actual heroes, skills and supplies.</p></div><div class="camp-journey-list">'+journey.map(a=>'<button type="button" class="camp-journey-route" data-journey="'+a.action+'" aria-label="'+a.title+'. '+a.label+'"><span class="camp-journey-stamp" aria-hidden="true">'+a.icon+'</span><span class="camp-journey-copy"><small>'+a.number+' · '+a.kind+'</small><strong>'+a.title+'</strong><span>'+a.detail+'</span><span class="camp-journey-cta">'+a.label+' <span aria-hidden="true">→</span></span></span></button>').join('')+'</div>';
+  $('campRoster').innerHTML=company.partyOrder.map(id=>{
   const hero=company.heroes[id];
   return '<div class="camp-roster-member"><span class="camp-roster-icon portrait '+id+'">'+icons[id]+'</span><div><strong>'+HERO_NAMES[id]+'</strong><small>'+roles[id]+' · Lv '+hero.level+'</small></div></div>';
  }).join('');
@@ -224,6 +239,16 @@ function showCamp(tab='home'){
  }
 }
 campScreen.addEventListener('click',event=>{
+ const journeyAction=event.target.closest('[data-journey]');
+  if(journeyAction){
+   const tab=journeyAction.dataset.journey;
+   if(tab==='expeditions'){setCampTab('expeditions');return;}
+   if(['skills','craft','slayer'].includes(tab)){workshop.open(tab,selected);return;}
+  }
+  const resume=event.target.closest('[data-resume-harvest]');
+  if(resume){openHarvestSite(resume.dataset.resumeHarvest,true);return;}
+  const fieldNav=event.target.closest('[data-field-nav]');
+ if(fieldNav){workshop.open(fieldNav.dataset.fieldNav,selected);return;}
  const campAction=event.target.closest('[data-camp]');
  if(campAction){
   const tab=campAction.dataset.camp;
@@ -240,6 +265,7 @@ campScreen.addEventListener('click',event=>{
 });
 function renderEncounterChoices(){
  const boss=bossInfo(bossSelection),recommended=atRecommendedLevel(company,bossSelection);
+ const kit=fieldKitSnapshot(company),pct=n=>Math.round(n*100);
  const contract=company.slayer?.active;
  const delveStage=currentDelveStage(company),delveReady=delveStage&&pendingDelveToken===delveStageToken(company)&&bossSelection===delveStage.bossId;
  const delveBanner=delveReady?'<div class="camp-slayer-banner delve-boarding">🗝️ <b>'+DELVE_ROUTES[delveStage.routeId].name+'</b> · Stage '+(delveStage.stage+1)+' / '+delveStage.total+' · <b>'+BOSSES[delveStage.bossId].name+'</b>. This fight counts towards your Delving expedition.</div>':'';
@@ -247,13 +273,17 @@ function renderEncounterChoices(){
  const bountyReady=!delveReady&&pendingBountyToken&&pendingBountyToken===bountyStageToken(company)&&contract?.bossId===bossSelection;
  const bountyTask=bountyReady?BOUNTY_TASKS[contract.taskId]:null;
  const bountyBanner=bountyTask?'<div class="camp-slayer-banner bounty-boarding">🎯 <b>'+bountyTask.name+'</b> · '+(bountyTask.kind==='dangerous'?'DANGEROUS':'STANDARD')+' BOUNTY · '+bountyTask.description+' This dedicated encounter counts towards your Bounty Contract.</div>':'';
- const options=Object.values(BOSSES).map(b=>{
+ const pendingSites=pendingHarvestSites(company).slice().reverse();
+  const gatheringLinks=pendingSites.length?'<details class="pending-harvest"><summary>⛏️ Unfinished gathering sites ('+pendingSites.length+')</summary><div class="pending-harvest-list">'+pendingSites.map(site=>'<button type="button" class="tiny-btn" data-resume-harvest="'+site.receiptId+'">'+HARVEST_AREAS[site.bossId].name+' · '+site.nodes.filter(n=>!n.harvested).length+' nodes remain</button>').join('')+'</div></details>':'';
+  const kitBanner='<div class="field-kit-preview"><strong>⛏️ Field Kit · '+kit.count+' piece'+(kit.count===1?'':'s')+' equipped</strong><p>'+(kit.count?'Rare discovery +'+pct(kit.rare)+' points · Bonus ore +'+pct(kit.ore)+'% · timber +'+pct(kit.wood)+'% · additional deposit +'+pct(kit.extra)+'%.':'Equip gathering items to improve resource discoveries. No free bonuses — field gear replaces combat equipment.')+'</p><small>Only gear worn at battle launch counts. Farming gear weakens the party in combat.</small><div class="field-kit-actions"><button type="button" data-field-nav="craft" class="tiny-btn">⚒ Forge Field Gear</button><button type="button" data-field-nav="heroes" class="tiny-btn">⚔ Equip Farming Build</button></div></div>';
+  const options=Object.values(BOSSES).map(b=>{
   const active=b.id===bossSelection,ready=atRecommendedLevel(company,b.id);
-  return '<button type="button" class="encounter-choice '+(active?'current ':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(ready?'✓ Party ready · recommended Lv '+b.unlock:'⚠ Recommended party level '+b.unlock+' · You can still fight')+'</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
+  return '<button type="button" class="encounter-choice '+(active?'current ':'')+'" data-boss="'+b.id+'" aria-pressed="'+active+'"><span class="encounter-icon">'+b.icon+'</span><span class="encounter-main"><b>'+b.name+'</b><small>'+b.place+'</small><small class="encounter-unlock">'+(ready?'✓ Party ready · recommended Lv '+b.unlock:'⚠ Recommended party level '+b.unlock+' · You can still fight')+'</small><small class="encounter-resource">⛏️ '+HARVEST_AREAS[b.id].theme+' · '+Math.min(85,Math.round((HARVEST_AREAS[b.id].rareChance+kit.rare)*100))+'% rare-node chance with current kit</small></span><span class="encounter-check">'+(active?'✓':'›')+'</span></button>';
  }).join('');
- $('campExpeditionBody').innerHTML='<div class="camp-board-heading"><span class="eyebrow">WAR TABLE · THE EMBERFALL REFUGE</span><h2>The War Table</h2><p>Study the threats beyond the walls, choose a quarry and send your company into danger when ready.</p></div><div class="encounter-choices" id="encounterList">'+options+'</div>'+slayerBanner+delveBanner+bountyBanner+'<p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. You can still attempt this fight.</p>')+'<button id="startBtn" class="primary-btn large camp-fight-btn" type="button">'+(delveReady?'Enter Delving Stage '+(delveStage.stage+1):bountyTask?'Enter '+bountyTask.name:'Fight '+boss.name)+' →</button><p class="encounter-controls">Selected boss: <b id="selectedBossName">'+boss.name+'</b></p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">♜ Manage Party</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
+ $('campExpeditionBody').innerHTML='<div class="camp-board-heading"><span class="eyebrow">WAR TABLE · THE EMBERFALL REFUGE</span><h2>The War Table</h2><p>Study the threats beyond the walls, choose a quarry and send your company into danger when ready.</p></div><div class="encounter-choices" id="encounterList">'+options+'</div>'+kitBanner+slayerBanner+delveBanner+bountyBanner+gatheringLinks+'<p class="encounter-warning"><b>'+boss.name+':</b> '+boss.mechanics+'</p>'+(recommended?'':'<p class="unlock-message" role="status">⚠ '+boss.name+' is recommended for a level '+boss.unlock+' party. You can still attempt this fight.</p>')+'<button id="startBtn" class="primary-btn large camp-fight-btn" type="button">'+(delveReady?'Enter Delving Stage '+(delveStage.stage+1):bountyTask?'Enter '+bountyTask.name:'Fight '+boss.name)+' →</button><p class="encounter-controls">Selected boss: <b id="selectedBossName">'+boss.name+'</b></p><div class="picker-actions"><button class="quiet-btn" id="manageFromPickerBtn" type="button">♜ Manage Party</button><button class="quiet-btn" id="bagFromPickerBtn" type="button">🎒 Equipment Bag</button></div>';
 }
 function returnToCamp(tab='expeditions'){
+  activeHarvestReceipt=null;selectedHarvestNode=null;harvestNotice='';$('harvestPanel').classList.add('hidden');
  paused=false;rewardCommitted=false;resultDismissed=false;
  pendingDelveToken=null;activeDelveToken=null;pendingBountyToken=null;activeBountyToken=null;
  selected=company.partyOrder?.[0]||'knight';state=newBattle();
@@ -266,7 +296,7 @@ function start(){
   activeBountyToken=(!activeDelveToken&&pendingBountyToken&&pendingBountyToken===bountyStageToken(company)&&company.slayer.active?.bossId===bossSelection)?pendingBountyToken:null;
   pendingDelveToken=null;pendingBountyToken=null;
   // Recreate for newly equipped items, but explicitly pin to the selected boss.
-  state=newBattle(bossSelection,activeBountyToken?company.slayer.active.taskId:null);rewardCommitted=false;resultDismissed=false;selected=state.heroes[0].id;
+  state=newBattle(bossSelection,activeBountyToken?company.slayer.active.taskId:null);rewardCommitted=false;resultDismissed=false;selected=state.heroes[0].id;activeHarvestReceipt=null;$('harvestPanel').classList.add('hidden');
   // The benefit was already included when createEncounter read preparedElixir.
   // Consume the prepared bottle exactly once at the start of this attempt.
   const used=consumePreparedElixir(company);
@@ -282,7 +312,7 @@ function start(){
 function restart(){
  if(activeDelveToken!==delveStageToken(company)||currentDelveStage(company)?.bossId!==bossSelection)activeDelveToken=null;
  if(activeBountyToken!==bountyStageToken(company)||company.slayer?.active?.bossId!==bossSelection)activeBountyToken=null;
- state=newBattle(bossSelection,activeBountyToken?company.slayer.active.taskId:null);rewardCommitted=false;resultDismissed=false;selected=state.heroes[0].id;paused=false;
+ state=newBattle(bossSelection,activeBountyToken?company.slayer.active.taskId:null);rewardCommitted=false;resultDismissed=false;selected=state.heroes[0].id;paused=false;activeHarvestReceipt=null;$('harvestPanel').classList.add('hidden');
  const used=consumePreparedElixir(company);
  if(used){state.elixirUsed=used;writeProfile(storage,company);}
  floaters=[];bursts=[];projectiles=[];markers=[];noticeUntil=0;startEncounter(state);
@@ -539,6 +569,31 @@ function renderMarkers(){
   else if(hero.focus){const target=getUnit(state,hero.focus);if(target?.hp>0&&hero.id===selected)strokeEllipse(ctx,target.x,target.y,47,21,'#f7d88b',2.5);}
  }
 }
+function renderHarvestNodes(){
+ if(state.phase!=='victory'||$('harvestPanel').classList.contains('hidden'))return;
+ const site=getHarvestSite(company,activeHarvestReceipt);if(!site)return;
+ for(const [i,node] of site.nodes.entries()){
+  if(node.harvested)continue;
+  const def=HARVEST_TYPES[node.type],pos=HARVEST_POSITIONS[i],isSelected=node.id===selectedHarvestNode;
+  ctx.save();ctx.translate(pos.x,pos.y);
+  ctx.fillStyle=def.rare?'rgba(255,208,109,.24)':'rgba(128,192,157,.2)';
+  ctx.beginPath();ctx.ellipse(0,4,53,22,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=isSelected?'#fff0a6':def.rare?'#f7d58b':'#a7dac5';ctx.lineWidth=isSelected?5:3;
+  ctx.beginPath();ctx.ellipse(0,4,49,22,0,0,Math.PI*2);ctx.stroke();
+  if(def.skill==='mining'){
+   ctx.fillStyle=def.rare?'#fbd093':'#86afbb';
+   ctx.beginPath();ctx.moveTo(-27,-1);ctx.lineTo(-8,-51);ctx.lineTo(22,-40);ctx.lineTo(30,-1);ctx.closePath();ctx.fill();
+   ctx.strokeStyle='#263c44';ctx.lineWidth=3;ctx.stroke();
+  }else{
+   ctx.fillStyle='#72503c';ctx.fillRect(-10,-43,20,49);
+   ctx.fillStyle=def.rare?'#ded492':'#77b783';
+   ctx.beginPath();ctx.moveTo(-39,-28);ctx.lineTo(0,-84);ctx.lineTo(39,-28);ctx.closePath();ctx.fill();
+  }
+  ctx.fillStyle='#f8f0dd';ctx.strokeStyle='#17312b';ctx.lineWidth=4;ctx.font='bold 15px sans-serif';ctx.textAlign='center';
+  ctx.strokeText(def.rare?'★ RARE':'✦ RESOURCE',0,-90);ctx.fillText(def.rare?'★ RARE':'✦ RESOURCE',0,-90);
+  ctx.restore();
+ }
+}
 function renderFx(){
  for(const p of projectiles){
   const t=p.age/p.ttl,x=p.fromX+(p.toX-p.fromX)*t,y=p.fromY+(p.toY-p.fromY)*t;
@@ -575,7 +630,7 @@ function render(){
   else if(unit.faction==='enemy')drawBramble(ctx,unit);
   else drawHuman(ctx,unit);
  }
- renderFx();
+ renderHarvestNodes();renderFx();
  if(paused){ctx.fillStyle='#112e2a97';ctx.fillRect(0,0,WORLD.width,WORLD.height);label(ctx,'PAUSED',600,320,58,'#fff0c6');}
 }
 function syncUI(force=false){
@@ -631,6 +686,50 @@ function syncUI(force=false){
  $('commandInfo').textContent=paused?'Game paused. Press the play button to resume.':hero.hp<=0?'Select a surviving hero to command.':hero.moveTo?'Moving to your commanded position.':focus?.hp>0?'Focusing '+focus.name+'. Choose abilities as their cooldowns finish.':'Tap or drag '+hero.name+' to a position or enemy. Heroes attack automatically when in range.';
  if(force)$('partyList').scrollTop=0;
 }
+function renderHarvestPanel(){
+ const site=getHarvestSite(company,activeHarvestReceipt),panel=$('harvestPanel');
+ if(!site){panel.classList.add('hidden');return;}
+ const remaining=site.nodes.filter(n=>!n.harvested).length;
+ if(!site.nodes.some(n=>n.id===selectedHarvestNode))selectedHarvestNode=site.nodes.find(n=>!n.harvested)?.id||null;
+ const selectedNode=site.nodes.find(n=>n.id===selectedHarvestNode);
+ const status=selectedNode?harvestStatus(company,site.receiptId,selectedHarvestNode):null;
+ $('harvestHeading').textContent=HARVEST_AREAS[site.bossId].name+' · Cleared';
+ $('harvestProgress').textContent=(remaining?remaining+' deposits left':'All deposits gathered — clearing complete')+(site.fieldKit?.count?' · '+site.fieldKit.count+' field-kit pieces counted at victory':'');
+ $('harvestList').innerHTML=site.nodes.map(n=>{
+  const def=HARVEST_TYPES[n.type],check=harvestStatus(company,site.receiptId,n.id);
+  return '<button type="button" class="harvest-node '+(n.id===selectedHarvestNode?'selected ':'')+(n.harvested?'harvested':'')+'" data-harvest-node="'+n.id+'" aria-pressed="'+(n.id===selectedHarvestNode)+'"><span class="harvest-node-icon">'+def.icon+'</span><span><b>'+def.name+'</b><small>'+n.quantity+' × '+MATERIAL_DEFS[def.material].name+' · '+(def.skill==='mining'?'Mining':'Woodcutting')+' '+def.level+'</small><small>'+(n.harvested?'✓ Gathered':check.ok?'Ready to collect':check.reason)+'</small></span></button>';
+ }).join('');
+ $('harvestStatus').textContent=harvestNotice||(status?.ok?'Tap the highlighted deposit in the arena or gather it here.':status?.reason||'Your company has cleared this area.');
+ $('harvestCollectBtn').disabled=!status?.ok;
+ $('harvestCollectBtn').textContent=selectedNode?'Gather '+HARVEST_TYPES[selectedNode.type].name:'Nothing left to gather';
+}
+function openHarvestSite(receiptId,resume=false){
+ const site=getHarvestSite(company,receiptId);if(!site)return;
+ if(resume){
+  state=newBattle(site.bossId);state.receiptId=site.receiptId;state.phase='victory';state.result='Cleared gathering site';
+  for(const enemy of state.enemies){enemy.hp=0;enemy.deathAge=ENEMY_DEATH_DURATION;}
+  selected=state.heroes[0].id;currentView='battle';$('app').dataset.view='battle';resize();
+  pendingDelveToken=null;pendingBountyToken=null;activeDelveToken=null;activeBountyToken=null;
+ }
+ activeHarvestReceipt=receiptId;selectedHarvestNode=site.nodes.find(n=>!n.harvested)?.id||null;harvestNotice='';
+ rewardCommitted=true;resultDismissed=true;paused=false;
+ $('overlay').classList.add('hidden');$('overlay').classList.remove('result-mode','choose-mode');
+ $('harvestPanel').classList.remove('hidden');$('pauseBtn').disabled=true;
+ renderHarvestPanel();syncUI(true);polishFeedback('Gathering grounds · '+HARVEST_AREAS[site.bossId].name);
+}
+$('harvestPanel').addEventListener('click',e=>{
+ const node=e.target.closest('[data-harvest-node]');
+ if(node){selectedHarvestNode=node.dataset.harvestNode;harvestNotice='';renderHarvestPanel();return;}
+ if(e.target.closest('#harvestReturnBtn')){returnToCamp('home');return;}
+ if(!e.target.closest('#harvestCollectBtn')||!selectedHarvestNode)return;
+ const before=structuredClone(company),result=harvestNode(company,activeHarvestReceipt,selectedHarvestNode);
+ if(!result.ok){harvestNotice=result.reason;renderHarvestPanel();return;}
+ if(!writeProfile(storage,company)){
+  Object.assign(company,before);harvestNotice='Could not save this harvest. Free up browser storage and try again.';renderHarvestPanel();return;
+ }
+ harvestNotice='+'+result.quantity+' '+MATERIAL_DEFS[result.material].name+' · +'+result.xp+' '+(result.skill==='mining'?'Mining':'Woodcutting')+' XP'+(result.levelTo>result.levelFrom?' · Level '+result.levelTo+'!':'');
+ renderHarvestPanel();syncUI(true);polishFeedback(harvestNotice,'success');
+});
 function showEnd(){
  if(state.phase!=='victory'&&state.phase!=='defeat')return;
  $('pauseBtn').disabled=true;
@@ -641,7 +740,7 @@ function showEnd(){
  if(!rewardCommitted){
   rewardCommitted=true;
   if(win){
-   const reward=grantVictory(company,state.receiptId,state.seed,state.bossId,activeDelveToken,activeBountyToken);
+   const reward=grantVictory(company,state.receiptId,state.seed,state.bossId,activeDelveToken,activeBountyToken,state.fieldKit);
    if(reward){
     const saved=writeProfile(storage,company),def=ITEM_DEFS[reward.item.defId];
     const escText=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -650,14 +749,15 @@ function showEnd(){
      const start=fromNeed?Math.floor(100*h.fromXp/fromNeed):100,end=toNeed?Math.floor(100*h.toXp/toNeed):100;
      return '<div class="victory-xp-hero"><b>'+escText(HERO_NAMES[h.id])+' · Lv '+h.toLevel+'</b><small>+'+h.xp+' XP '+(h.toLevel>h.fromLevel?'· LEVEL UP!':'')+'</small><span class="victory-xp-track" style="--start:'+start+'%;--end:'+end+'%"><i></i></span><small>'+(toNeed?h.toXp+' / '+toNeed+' XP':'MAX LEVEL')+'</small></div>';
     }).join('');
+    const kitReward=reward.harvest?.fieldKit?.count?'<div class="victory-loot-chip">⛏️ Field Kit · '+reward.harvest.fieldKit.count+' equipped · +'+Math.round(reward.harvest.fieldKit.rare*100)+' points rare discovery</div>':'';
     const drops=reward.materials.map(m=>'<div class="victory-loot-chip">'+MATERIAL_DEFS[m.id].icon+' '+escText(MATERIAL_DEFS[m.id].name)+' ×'+m.quantity+'</div>').join('');
     const delveReward=reward.delve?'<div class="victory-loot-chip">🗝️ +'+reward.delve.xp+' Delving XP · Stage '+reward.delve.stage+'/'+reward.delve.total+(reward.delve.levelTo>reward.delve.levelFrom?' · LEVEL UP '+reward.delve.levelTo:'')+(reward.delve.complete?' · Expedition clear!':'')+'</div>':'';
      const slayerReward=reward.slayer?'<div class="victory-loot-chip">🎯 +'+reward.slayer.xp+' Bounty Hunting XP · '+reward.slayer.kills+'/'+reward.slayer.target+(reward.slayer.levelTo>reward.slayer.levelFrom?' · LEVEL UP '+reward.slayer.levelTo:'')+(reward.slayer.complete?' · Contract complete!':'')+'</div>':'';
-    rewardHTML='<div class="victory-rewards" aria-label="Actual granted victory rewards"><h3>✦ Victory Rewards</h3><p>Each hero gained '+reward.xp+' XP. These are your actual awarded items and reagents.</p><div class="victory-xp-party">'+xpRows+'</div><div class="victory-loot-grid"><div class="victory-loot-chip rarity-'+def.rarity.toLowerCase()+'">'+def.icon+' '+escText(def.name)+' · '+def.rarity+'</div><div class="victory-loot-chip">🪙 '+reward.gold+' gold</div>'+drops+slayerReward+delveReward+'</div><small class="notice-local">'+(saved?'All rewards saved in this browser.':'Storage unavailable — rewards are held only until this page closes.')+'</small></div>';
+    rewardHTML='<div class="victory-rewards" aria-label="Actual granted victory rewards"><h3>✦ Victory Rewards</h3><p>Each hero gained '+reward.xp+' XP. These are your actual awarded items and reagents.</p><div class="victory-xp-party">'+xpRows+'</div><div class="victory-loot-grid"><div class="victory-loot-chip rarity-'+def.rarity.toLowerCase()+'">'+def.icon+' '+escText(def.name)+' · '+def.rarity+'</div><div class="victory-loot-chip">🪙 '+reward.gold+' gold</div>'+drops+kitReward+slayerReward+delveReward+'</div><small class="notice-local">'+(saved?'All rewards saved in this browser.':'Storage unavailable — rewards are held only until this page closes.')+'</small></div>';
    }
   }else{recordDefeat(company);writeProfile(storage,company);}
  }
- $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions"><button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button>'+(win&&company.slayer?.active&&company.slayer.active.kills===company.slayer.active.target?'<button class="quiet-btn" type="button" id="slayerRewardsBtn">🎯 Claim Bounty Contract</button>':'')+(win&&activeDelveToken&&company.delving.active?'<button class="quiet-btn" type="button" id="delveRewardsBtn">🗝️ '+(currentDelveStage(company)?'Continue Delving Route':'Claim Delve Cache')+'</button>':'')+'<button class="quiet-btn" type="button" id="dismissRewardsBtn">Return to Camp</button></div>';
+ $('overlayContent').innerHTML='<div class="overlay-emblem">'+(win?'✦':'⚔')+'</div><span class="eyebrow">'+(win?'VICTORY · '+defeated.name.toUpperCase()+' DEFEATED':'DEFEAT · '+defeated.name.toUpperCase())+'</span><h1>'+title+'</h1><p>'+desc+'</p>'+rewardHTML+'<div class="overlay-hints"><span>Damage dealt: '+Math.round(state.stats.damage)+'</span><span>Healing: '+Math.round(state.stats.healing)+'</span><span>Battle time: '+Math.ceil(state.time)+'s</span></div><div class="victory-actions">'+(win&&getHarvestSite(company,state.receiptId)?'<button class="primary-btn large" type="button" id="gatherBtn">⛏️ Explore Cleared Area →</button>':'')+'<button class="primary-btn large" type="button" id="againBtn">Fight Again →</button><button class="quiet-btn" type="button" id="inspectBtn">'+(win?'View Your Loot & Talents':'Prepare Your Heroes')+'</button><button class="quiet-btn" type="button" id="chooseBossBtn">Choose Another Boss</button>'+(win&&company.slayer?.active&&company.slayer.active.kills===company.slayer.active.target?'<button class="quiet-btn" type="button" id="slayerRewardsBtn">🎯 Claim Bounty Contract</button>':'')+(win&&activeDelveToken&&company.delving.active?'<button class="quiet-btn" type="button" id="delveRewardsBtn">🗝️ '+(currentDelveStage(company)?'Continue Delving Route':'Claim Delve Cache')+'</button>':'')+'<button class="quiet-btn" type="button" id="dismissRewardsBtn">Return to Camp</button></div>';
  $('overlay').classList.add('result-mode');
  $('overlay').setAttribute('role','dialog');
  $('overlay').setAttribute('aria-label','Boss fight result');
@@ -706,6 +806,7 @@ const workshop=mountWorkshop({
   renderCampSummary();renderEncounterChoices();syncUI(true);
  },
  onChange:()=>{renderCampSummary();renderEncounterChoices();syncUI(true);},
+  onWarTable:()=>showCamp('expeditions'),
  onExpedition:(id,token=null)=>{pendingDelveToken=null;pendingBountyToken=null;if(selectBoss(id)){if(token&&token===bountyStageToken(company)&&company.slayer.active?.bossId===id)pendingBountyToken=token;showCamp('expeditions');}},
  onDelveStage:(stage)=>{
   pendingBountyToken=null;
@@ -731,5 +832,5 @@ resize();
 showCamp('home');
 // Boot marker: the HTML recovery guard only treats gameplay as ready after
 // controls, workshop, rendering and the initial boss picker have initialised.
-document.documentElement.dataset.emberfallReady='4.17.0';
+document.documentElement.dataset.emberfallReady='4.20.0';
 requestAnimationFrame(frame);

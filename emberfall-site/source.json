@@ -1,24 +1,46 @@
 {
   "project": "heroes-of-emberfall",
   "source": "benhorner9/heroes-of-emberfall",
-  "sourceCommit": "f7d4db568a9c3e1b4971528bd806f48ba5466f67",
+  "sourceCommit": "ef2ad4164410b7ed1ce9e1e9425cce64391fc1f2",
   "target": "/emberfall/",
-  "stage": "immersive-ui-ux-block-3-v4.17.0",
+  "stage": "living-world-gathering-field-kit-immersive-ui-v4.20.0",
   "assets": [
-    "index.html",
     "src/engine.js",
     "src/game.js",
     "src/progression.js",
     "src/workshop.js",
     "src/builds.js",
+    "src/gathering.js",
+    "src/experience.js",
+    "src/polish.js",
     "src/style.css",
     "src/mobile-testing.css",
     "src/refuge.css",
     "src/locations.css",
-    "src/polish.js",
     "src/polish.css",
+    "src/experience.css",
     "assets/refuge-scene.svg",
-    "assets/interior-chamber.svg"
+    "assets/interior-chamber.svg",
+    "index.html"
   ],
-  "note": "UI/UX Block 3 released from canonical PR #51 merged at f7d4db568a9c3e1b4971528bd806f48ba5466f67. Ambient lantern halos/embers, non-blocking location and battle arrivals, readable accessible travel and saved-progress feedback, focus-safe workshop controls, consistent touch and hover states, reduced-motion support, and hidden-tab animation pause. All Node, Chromium, iPad WebKit and phone WebKit source checks passed. No changes to hero ownership, combat, rewards, Bounty Hunting, account skill levels, save schema or other hosted projects."
+  "gitBlobs": {
+    "src/engine.js": "0292ffa4be1b3a80cb8099ecea6e36904fb5d637",
+    "src/game.js": "9aae783ff093f65d4adf7803ba4af8d300894e3d",
+    "src/progression.js": "9bcc823a168239f2a5e2d66bcc2f03adef7612a9",
+    "src/workshop.js": "d212214bc86adc2d057114d72b7504f4b7c5a658",
+    "src/builds.js": "faa1b38d54bbb5725856314e6e9635b3f420cdc3",
+    "src/gathering.js": "dc12749afb2ac4f7f99a6c6a7f03a7e3b8476cdf",
+    "src/experience.js": "52ff326af57717c84ab554e5f7733cee73f2ef12",
+    "src/polish.js": "971d30e5bd666cf29a6bee2ab2c5460ed136853c",
+    "src/style.css": "24be36affb2a8ee5ee710b4e295d8a2130336dcd",
+    "src/mobile-testing.css": "605a4e1930839c9d13728b922bdd58c7c03b17ec",
+    "src/refuge.css": "0f364c8087fed30694aa9cdcc8f2fe6fda190ac2",
+    "src/locations.css": "e7c4d2946bde5142ce256e48e0c45e958fd8ef7d",
+    "src/polish.css": "c1e8530aab017b034b29f0d1daeb6c47f049e155",
+    "src/experience.css": "67405a7cabe383623b76ad1d744b783bad7bf4bc",
+    "assets/refuge-scene.svg": "819dd26aba06d5b844ce00613876921936afed08",
+    "assets/interior-chamber.svg": "60f7a43eaae687df6e86345d369faad36f819f8b",
+    "index.html": "efdfbb9a06ead8c01c548334d7caa9bea0858caa"
+  },
+  "note": "Integrated release: Evolution Block 1 arena gathering (PR 55), Block 2 wearable field kits (PR 57), and immersive full management UI/UX (PR 59). Source asset Git blob SHA is verified pre-deployment; only /emberfall/ is uploaded; save and quest progression preserved."
 }

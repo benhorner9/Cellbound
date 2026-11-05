@@ -141,3 +141,60 @@
  .workshop-cover:not(.camp-page) .workshop-stage{min-height:0;flex:1}
  .workshop-cover:not(.camp-page) .workshop-stage .workshop-body{min-height:0;overflow-y:auto}
 }
+
+/* Evolution Block 1 — cleared arena gathering, iPad landscape + compact mobile */
+.harvest-panel.hidden{display:none}
+.harvest-panel{position:absolute;z-index:9;top:12px;right:12px;bottom:12px;width:min(370px,42%);padding:16px;overflow:auto;overscroll-behavior:contain;color:#f4e9cb;background:linear-gradient(155deg,rgba(18,45,41,.96),rgba(13,28,27,.97));border:1px solid #8f9f78;border-radius:14px;box-shadow:0 12px 35px #071211ba;display:flex;flex-direction:column;gap:8px}
+.harvest-panel h2{font-size:1.15rem;margin:0;line-height:1.3}
+.harvest-panel .eyebrow{font-size:.7rem;color:#d7be86;letter-spacing:.08em}
+.harvest-panel p{margin:2px 0}
+.harvest-list{display:flex;flex-direction:column;gap:7px;min-height:0;overflow:auto;padding:3px}
+.harvest-node{display:flex;gap:10px;width:100%;text-align:left;align-items:center;min-height:56px;border:1px solid #627669;border-radius:9px;background:#264239;color:#f3eddb;padding:9px;cursor:pointer}
+.harvest-node.selected{border:2px solid #e8c787;background:#355046}
+.harvest-node.harvested{opacity:.58}
+.harvest-node-icon{font-size:1.6rem;flex:none;width:34px;text-align:center}
+.harvest-node span:last-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.harvest-node small{font-size:.76rem;color:#d8dac9;line-height:1.3}
+.harvest-status{font-size:.82rem;line-height:1.35;min-height:2em;color:#d9e8c9}
+.harvest-actions{display:flex;flex-wrap:wrap;gap:8px}
+.harvest-actions button{min-height:44px;flex:1 1 130px}
+.pending-harvest{margin:13px 0;border:1px solid #819078;border-radius:10px;padding:11px;background:rgba(32,61,52,.6)}
+.pending-harvest summary{cursor:pointer;min-height:36px;font-weight:700;color:#e5d6a4}
+.pending-harvest-list{display:flex;flex-wrap:wrap;gap:9px;padding:9px 0 3px}
+.pending-harvest-list button{min-height:44px}
+.field-tools{margin-top:14px;border:1px solid #899576;border-radius:12px;padding:12px;background:rgba(34,60,53,.52)}
+.field-tools p{margin:8px 0;line-height:1.45}
+.field-tools button{min-height:44px}
+@media (max-width:700px),(max-height:520px){
+ .harvest-panel{inset:auto 6px 6px 6px;width:auto;max-height:60%;padding:10px;border-radius:10px}
+ .harvest-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .harvest-node{padding:6px;min-height:52px}
+ .harvest-node-icon{font-size:1.1rem;width:20px}
+ .harvest-node small{font-size:.68rem}
+ .harvest-actions button{flex:1 1 110px}
+}
+@media (prefers-reduced-motion:reduce){.harvest-panel,.harvest-node{animation:none!important;transition:none!important}}
+
+.inventory-materials{margin:16px 0 5px;padding:14px;border:1px solid #70886f;border-radius:12px;background:rgba(25,54,46,.52)}
+.material-stock-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:9px;margin-top:12px}
+.material-stock-entry{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:9px;padding:10px;border:1px solid #647769;border-radius:9px;background:#273d35;color:#f0e7ce}
+.material-stock-entry span{font-size:1.35rem}.material-stock-entry b{font-size:.83rem}.material-stock-entry small{font-size:.84rem;color:#f5d990}
+@media (max-width:600px){.material-stock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.material-stock-entry{grid-template-columns:24px 1fr;gap:4px;padding:7px}.material-stock-entry small{grid-column:2}}
+
+/* Evolution Block 2 — field kits are real gear, with visible combat costs. */
+.field-kit-preview{margin:10px 0;border:1px solid #908459;border-radius:11px;padding:10px 12px;background:linear-gradient(120deg,rgba(69,64,43,.5),rgba(29,59,49,.65));color:#e5ebce}
+.field-kit-preview strong,.field-kit-banner strong{font-size:.91rem;color:#f1ddac}
+.field-kit-preview p,.field-kit-banner p{margin:5px 0;line-height:1.35;font-size:.82rem}
+.field-kit-preview small{display:block;color:#d8d5b7;font-size:.75rem;line-height:1.4}
+.field-kit-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.field-kit-actions button{min-height:42px;flex:1 1 125px;white-space:normal}
+.field-kit-banner{background:rgba(47,71,54,.66);color:#efe8ce;border:1px solid #a09665;border-radius:10px;margin:10px 0;padding:12px}
+.field-inspection{border-left:3px solid #ddb980;background:rgba(77,67,37,.27);border-radius:6px;padding:8px}
+.field-kit-tradeoff{font-size:.84rem;line-height:1.4;margin-top:8px}
+.field-kit-tradeoff strong{display:block;color:#f2b5a6;margin-top:4px;font-size:.79rem}
+@media (max-width:650px),(max-height:520px){
+ .field-kit-preview{padding:8px 9px}
+ .field-kit-preview p{font-size:.76rem}
+ .field-kit-actions{flex-wrap:nowrap}
+ .field-kit-actions button{font-size:.72rem;padding:8px 5px;min-height:44px}
+}

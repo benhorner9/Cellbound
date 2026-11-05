@@ -1,22 +1,24 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
- xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
-} from './progression.js?v=4.17.0';
+ xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,FIELD_TOOLS,FIELD_GEAR,fieldGearBonusText,fieldKitSnapshot,toolUpgradeStatus,upgradeGatherTool,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
+} from './progression.js?v=4.20.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.17.0';
-import {polishEnter,polishFeedback} from './polish.js?v=4.17.0';
+} from './builds.js?v=4.20.0';
+import {polishEnter,polishFeedback} from './polish.js?v=4.20.0';
+import {venueSummary} from './experience.js?v=4.20.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const pretty={knight:'Guardian',ranger:'Ranger',mage:'Arcanist',cleric:'Cleric'};
 const slotTitle=SLOT_NAMES;
 const rarityClass=name=>String(name).toLowerCase();
-export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{},onExpedition=()=>{},onDelveStage=()=>{}}){
+export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onChange=()=>{},onExpedition=()=>{},onDelveStage=()=>{},onWarTable=()=>{}}){
  const root=document.getElementById('workshop'),body=document.getElementById('workshopBody'),
  title=document.getElementById('workshopHeading'),context=document.getElementById('workshopContext'),tabs=document.getElementById('workshopTabs');
  let returnFocus=null;
+ let bagQuery='',bagSort='newest';
  let lastPresentedLocation=null;
  let current='heroes',heroId='knight',partyPosition=0,selectedTalentId=null,confirmSpendId=null,confirmRespec=false,pendingSell=null,dropBoss='thornwarden',detailsId=null,selectedBagId=null,equipTarget=null,equipmentSlot=null,bagFilter='all',notice='',noticeBad=false,importText='',validatedImport=null,importConfirm=false,craftSkill='smithing',craftRecipeId=null,craftStage='idle',craftStartedAt=0,craftMix=[],selectedAccountSkill='slayer',confirmAbandon=false,confirmReroll=false,confirmPurchaseId=null,selectedSalvageId=null,confirmSalvageId=null,selectedEnchantItemId=null,selectedEnchantId='ironroot-ward',confirmEnchantId=null,confirmDelveAbandon=false;
  const builds=readBuilds(storage);
@@ -40,7 +42,9 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  const stageTagline=document.getElementById('workshopTagline'),
   stageSigil=document.getElementById('workshopSigil'),
   locationTrail=document.getElementById('workshopTrail'),
-  locationJump=document.getElementById('workshopJump');
+  locationJump=document.getElementById('workshopJump'),
+  venueGuide=document.getElementById('workshopGuide'),
+  venueSearch=document.getElementById('workshopFind');
  const tabId=tab=>'workshopTab-'+tab;
  function itemName(itemId){
   const inst=profile.items.find(x=>x.id===itemId);return inst?ITEM_DEFS[inst.defId]:null;
@@ -124,7 +128,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    html+='<div class="armory-inspection-icon rarity-'+rarityClass(inspectedDef.rarity)+'">'+esc(inspectedDef.icon)+'</div>'
     +'<div class="armory-inspection-copy"><span class="armory-item-rarity rarity-text-'+rarityClass(inspectedDef.rarity)+'">'+esc(inspectedDef.rarity)+' · '+esc(slotTitle[inspectedSlot])+'</span>'
     +'<strong>'+esc(inspectedInfo.name)+'</strong>'
-    +'<p>'+esc(inspectedInfo.flavour)+'</p><small>'+esc(inspectedInfo.bonus)+(inspectedInfo.setName?' · '+esc(inspectedInfo.setName)+' Set':'')+'</small>'+(inspectedInstance.enchantId&&ENCHANTMENTS[inspectedInstance.enchantId]?'<small class="item-enchantment">✨ '+esc(ENCHANTMENTS[inspectedInstance.enchantId].name)+' · '+esc(itemBonusText(ENCHANTMENTS[inspectedInstance.enchantId]))+'</small>':'')+'</div>'
+    +'<p>'+esc(inspectedInfo.flavour)+'</p><small>'+esc(inspectedInfo.bonus)+(inspectedInfo.fieldBonus?' · ⛏️ '+esc(inspectedInfo.fieldBonus):'')+(inspectedInfo.setName?' · '+esc(inspectedInfo.setName)+' Set':'')+'</small>'+(inspectedInstance.enchantId&&ENCHANTMENTS[inspectedInstance.enchantId]?'<small class="item-enchantment">✨ '+esc(ENCHANTMENTS[inspectedInstance.enchantId].name)+' · '+esc(itemBonusText(ENCHANTMENTS[inspectedInstance.enchantId]))+'</small>':'')+'</div>'
     +'<div class="armory-inspection-actions"><button type="button" class="tiny-btn armory-remove" data-action="unequip" data-slot="'+inspectedSlot+'">Unequip</button></div>';
   }else{
    html+='<div class="armory-inspection-icon is-empty" aria-hidden="true">◇</div>'
@@ -226,7 +230,8 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    const instance=itemId&&profile.items.find(x=>x.id===itemId),enchantment=instance?.enchantId&&ENCHANTMENTS[instance.enchantId];
   const comparison=itemId&&profile.items.some(x=>x.id===itemId)?compareItem(profile,compareHeroId,itemId):null;
   let html='<section class="item-inspector" id="itemInspector"><div class="inspection-head"><span class="inspection-icon">'+esc(info.icon)+'</span><div><span class="eyebrow">EXAMINE EQUIPMENT</span><h3>'+esc(info.name)+'</h3><small>'+esc(info.rarity+' · '+slotTitle[info.slot])+(info.setName?' · '+esc(info.setName):'')+'</small></div>'+(persistent?'':'<button class="tiny-btn ghost" type="button" data-action="close-inspect">Close</button>')+'</div><p class="inspection-flavour">'+esc(info.flavour)+'</p>';
-  html+='<p class="inspection-line"><b>Base bonuses:</b> '+esc(info.bonus)+'</p>';
+  html+='<p class="inspection-line"><b>Combat effects:</b> '+esc(info.bonus)+'</p>';
+  if(info.fieldBonus)html+='<p class="inspection-line field-inspection"><b>⛏️ Farming benefits:</b> '+esc(info.fieldBonus)+' · Only counts if worn during the boss encounter.</p>';
    if(enchantment)html+='<p class="inspection-line"><b>✨ Enchanted:</b> '+esc(enchantment.name)+' · '+esc(itemBonusText(enchantment))+' (permanent; applies in battle)</p>';
   html+='<p class="inspection-line"><b>Where to find:</b> '+esc(info.sources.length?info.sources.map(x=>x.name+' ('+x.rate+'% per victory)').join(' · '):info.shop?'Quartermaster · '+info.shop+' gold':CRAFT_RECIPES.some(r=>r.product===defId&&r.skill==='smithing')?'Smithing · boss reagents':'Boss rewards / relics')+'</p>';
   if(comparison){
@@ -246,7 +251,13 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   // Equipped item instances remain in the canonical profile for save/build compatibility,
   // but do not occupy bag slots until they are unequipped.
   const all=profile.items.filter(item=>!itemOwner(profile,item.id)).slice().reverse();
-  const visible=all.filter(item=>bagFilter==='all'||ITEM_DEFS[item.defId].slot===bagFilter);
+  const visible=all.filter(item=>{
+    const def=ITEM_DEFS[item.defId],q=bagQuery.trim().toLowerCase();
+    return (bagFilter==='all'||def.slot===bagFilter)&&(!q||[def.name,def.rarity,def.slot,item.defId].some(text=>String(text).toLowerCase().includes(q)));
+   });
+   const rarityOrder={Common:1,Uncommon:2,Rare:3,Epic:4,Legendary:5};
+   if(bagSort==='rarity')visible.sort((a,b)=>(rarityOrder[ITEM_DEFS[b.defId].rarity]||0)-(rarityOrder[ITEM_DEFS[a.defId].rarity]||0));
+   if(bagSort==='name')visible.sort((a,b)=>ITEM_DEFS[a.defId].name.localeCompare(ITEM_DEFS[b.defId].name));
   const selected=visible.find(item=>item.id===selectedBagId)||visible[0]||null;
   selectedBagId=selected?.id||null;
   const def=selected?ITEM_DEFS[selected.defId]:null;
@@ -268,16 +279,17 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    +'<div class="inventory-filters"><label for="bagFilter">Show items</label><select id="bagFilter" aria-label="Filter inventory items">'
    +[['all','All gear'],...SLOTS.map(slot=>[slot,slotTitle[slot]])].map(([value,name])=>'<option value="'+value+'" '+(bagFilter===value?'selected':'')+'>'+name+'</option>').join('')
    +'</select><span class="inventory-gold">'+profile.gold+' gold</span></div>'
+    +'<div class="inventory-search"><label for="bagSearch">FIND</label><input id="bagSearch" type="search" placeholder="Sword, helm, field gear…" value="'+esc(bagQuery)+'" autocomplete="off" aria-label="Search equipment by name, slot or rarity"><label for="bagSort">SORT</label><select id="bagSort" class="inventory-sort" aria-label="Sort bag equipment">'+[['newest','Newest'],['rarity','Rarest'],['name','A–Z']].map(([value,label])=>'<option value="'+value+'" '+(bagSort===value?'selected':'')+'>'+label+'</option>').join('')+'</select></div>'
    +'<div class="inventory-slot-scroll" id="inventoryScroll" tabindex="0" role="region" aria-label="Scrollable inventory"><div class="inventory-slot-grid" id="inventoryGrid">';
   for(const item of visible){
    const itemDef=ITEM_DEFS[item.defId],active=item.id===selectedBagId;
    html+='<button type="button" class="inventory-slot rarity-'+rarityClass(itemDef.rarity)+(active?' is-selected':'')+'" data-action="inspect" data-id="'+esc(item.id)+'" title="'+esc(itemDef.name)+'" aria-label="'+esc(itemDef.name+', '+itemDef.rarity+', in bag')+'" aria-pressed="'+active+'">'
     +'<span class="inventory-slot-icon" aria-hidden="true">'+esc(itemDef.icon)+(item.enchantId?'<small class="gear-enchant-mark" aria-hidden="true">✦</small>':'')+'</span></button>';
   }
-  for(let empty=0;empty<Math.max(0,24-visible.length);empty++)html+='<span class="inventory-slot inventory-slot-empty" aria-hidden="true"></span>';
+  for(let empty=0;empty<Math.max(0,bagQuery?0:24-visible.length);empty++)html+='<span class="inventory-slot inventory-slot-empty" aria-hidden="true"></span>';
   html+='</div></div>';
   if(!all.length)html+='<p class="inventory-empty-note">'+(profile.items.length?'All your items are equipped. Visit Heroes &amp; Talents to unequip them.':'Your bag is empty. Earn gear from a boss or visit the Quartermaster.')+'</p>';
-  else if(!visible.length)html+='<p class="inventory-empty-note">No unequipped items match this filter.</p>';
+  else if(!visible.length)html+='<div class="inventory-empty-route"><p>No equipment matches those filters. Try another name or slot.</p><button type="button" data-action="ux-reset-bag" class="tiny-btn">Clear inventory search</button></div>';
   html+='</section><aside class="inventory-detail-panel" aria-label="Selected item details and actions">'
    +'<div class="inventory-detail-top"><div><span class="eyebrow">ITEM DETAILS</span><h3>Inspect &amp; equip</h3></div><button type="button" class="tiny-btn ghost" data-action="tab" data-tab="heroes">Equipped gear →</button></div>';
   if(selected&&def){
@@ -290,7 +302,10 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
     +'<button type="button" class="tiny-btn inventory-action-primary" data-action="equip" data-id="'+esc(selected.id)+'" data-hero="'+target+'">Equip to '+esc(HERO_NAMES[target])+'</button>'
     +'<button type="button" class="tiny-btn ghost danger" data-action="sell" data-id="'+esc(selected.id)+'">'+(pendingSell===selected.id?'Confirm sale for '+def.value+' gold':'Sell for '+def.value+' gold')+'</button></div>';
   }else html+='<div class="inventory-no-selection"><span aria-hidden="true">✦</span><h4>No item selected</h4><p>Choose a bag slot or adjust your filter. To remove equipped gear, open Heroes &amp; Talents.</p></div>';
-  return html+'</aside></div>';
+  html+='</aside></div><section class="inventory-materials" aria-label="Gathered resources and reagents"><div class="inventory-section-head"><div><span class="eyebrow">COMPANY STORES</span><h3>Gathered Materials</h3></div><span class="inventory-capacity">Used for crafting and tool upgrades</span></div><div class="material-stock-grid">';
+   const ownedMaterials=Object.entries(MATERIAL_DEFS).filter(([id])=>(profile.materials[id]||0)>0);
+   html+=ownedMaterials.length?ownedMaterials.map(([id,mat])=>'<div class="material-stock-entry"><span>'+mat.icon+'</span><b>'+esc(mat.name)+'</b><small>×'+profile.materials[id]+'</small></div>').join(''):'<p class="inventory-empty-note">No materials stored yet. Defeat bosses and gather from cleared arenas.</p>';
+   return html+'</div></section>';
  }
  function renderShop(){
   let html='<div class="workshop-intro"><h3>Quartermaster</h3><p>Buy inexpensive starter equipment using gold earned from bosses. Everything here is a fixed, local NPC offer—not another player’s listing.</p></div><div class="pack-stats"><span>Gold available</span><b>'+profile.gold+'</b></div>';
@@ -329,6 +344,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    return '<button type="button" data-action="craft-skill" data-skill="'+id+'" class="craft-skill-tab '+(craftSkill===id?'active':'')+'" aria-pressed="'+(craftSkill===id)+'"><b>'+(id==='smithing'?'⚒️ Smithing':'⚗️ Alchemy')+'</b><small>Level '+sk.level+'/'+SKILL_CAP+' · '+(need?sk.xp+' / '+need+' XP':'MAX LEVEL')+'</small><span class="craft-xp-track"><i style="width:'+pct+'%"></i></span></button>';
   }).join('')+'</div>';
   const recipes=CRAFT_RECIPES.filter(r=>r.skill===craftSkill);
+  if(craftSkill==='smithing')html+='<div class="field-kit-banner"><strong>⛏️ Field Kits · risk for reward</strong><p>Forge gathering gear from mined ore and timber. Field kits occupy real combat slots and <b>reduce battle stats</b>, but help uncover resources after victory. Equip before the fight; save a dedicated farm-run build for fast switching.</p></div>';
   html+='<div class="craft-studio"><section class="craft-recipe-list" aria-label="Crafting recipes"><div class="party-section-title"><b>'+(craftSkill==='smithing'?'The Forge':'The Alchemy Table')+'</b><small>Level '+skill.level+'/'+SKILL_CAP+'</small></div>';
   for(const recipe of recipes){
    const status=craftingStatus(profile,recipe.id);
@@ -341,7 +357,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    html+='<div class="craft-empty"><span>✦</span><h3>Select a recipe</h3><p>Choose an item to see its materials, level requirement and interactive crafting challenge.</p></div>';
   }else{
    const status=craftingStatus(profile,recipe.id);
-   html+='<div class="craft-product-preview"><span>'+esc(recipe.icon)+'</span><div><small>'+esc(recipe.rarity)+' · LEVEL '+recipe.level+'</small><h3>'+esc(recipe.name)+'</h3><p>+ '+recipe.xp+' '+esc(craftSkill)+' XP per successful item</p></div></div>';
+   html+='<div class="craft-product-preview"><span>'+esc(recipe.icon)+'</span><div><small>'+esc(recipe.rarity)+' · LEVEL '+recipe.level+'</small><h3>'+esc(recipe.name)+'</h3><p>+ '+recipe.xp+' '+esc(craftSkill)+' XP per successful item</p>'+(recipe.fieldKit?'<p class="field-kit-tradeoff"><b>Farming benefits:</b> '+esc(fieldGearBonusText(FIELD_GEAR[recipe.product]))+'<strong> Combat penalty: '+esc(itemBonusText(FIELD_GEAR[recipe.product]))+'</strong></p>':'')+'</div></div>';
    html+='<div class="craft-ingredients"><strong>Ingredients in your stock</strong>'+Object.entries(recipe.materials).filter(([,count])=>count>0).map(([id,count])=>'<div class="'+(profile.materials[id]>=count?'owned':'missing')+'"><span>'+MATERIAL_DEFS[id].icon+' '+esc(MATERIAL_DEFS[id].name)+'</span><b>'+profile.materials[id]+' / '+count+'</b></div>').join('')+'</div>';
    if(skill.level<recipe.level)html+='<p class="craft-warning">Reach '+esc(craftSkill)+' level '+recipe.level+' to unlock this recipe.</p>';
    else if(!status.ok)html+='<p class="craft-warning">'+esc(status.reason)+'</p>';
@@ -386,7 +402,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  }
  function renderSkills(){
   const active=ACCOUNT_SKILLS[selectedAccountSkill],level=profile.skills[selectedAccountSkill].level;
-  let html='<div class="workshop-intro"><span class="eyebrow">THE EMBERGUARD · ACCOUNT PROGRESSION</span><h3>Adventurer Skills</h3><p>Six fully playable, account-wide skills shared by your entire company. Hero levels, talents and equipped items remain individual. Explore each discipline from its own camp building.</p></div>';
+  let html='<div class="workshop-intro"><span class="eyebrow">THE EMBERGUARD · ACCOUNT PROGRESSION</span><h3>Adventurer Skills</h3><p>Eight playable, account-wide skills shared by your entire company. Hero levels, talents and equipped items remain individual. Explore each discipline from its own camp building.</p></div>';
   html+='<div class="account-skill-grid" role="group" aria-label="Account-wide skill selection">';
   for(const id of ACCOUNT_SKILL_IDS){
    const info=ACCOUNT_SKILLS[id],sk=profile.skills[id],needed=skillXpNeeded(sk.level),pct=needed?Math.round(sk.xp/needed*100):100;
@@ -399,7 +415,16 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
    const isFuture=required>SKILL_CAP||!active.available||/\bfuture\b/i.test(label);
    return '<div class="account-skill-unlock '+(!isFuture&&level>=required?'is-unlocked':'')+'"><b>Lv '+required+'</b><span>'+esc(label)+'</span><small>'+(!isFuture&&level>=required?'✓ Unlocked':isFuture?'Future':'Locked')+'</small></div>';
   }).join('')+'</div>';
-  if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'🎯 Visit Bounty Board':selectedAccountSkill==='salvaging'?'🧰 Visit Salvaging Station':selectedAccountSkill==='enchanting'?'✨ Visit Enchanting Forge':selectedAccountSkill==='delving'?'🗝️ Visit Delving Gate':'⚒ Open Crafting Guild')+'</button>';
+  if(selectedAccountSkill==='mining'||selectedAccountSkill==='woodcutting'){
+     const toolId=selectedAccountSkill==='mining'?'pickaxe':'axe',tool=FIELD_TOOLS[toolId],tier=profile.gathering.tools[toolId],next=tool.levels[tier],status=toolUpgradeStatus(profile,toolId);
+     html+='<section class="field-tools"><h4>⛏️ Field Tools</h4><p>Your company starts with a field tool for each profession. Better tools unlock advanced resource nodes in cleared boss arenas.</p><p><b>'+esc(tool.levels[tier-1].name)+'</b> · Tier '+tier+' / 3</p>';
+     if(next){
+       html+='<p>Next: <b>'+esc(next.name)+'</b> · Requires '+tool.skill+' level '+next.required+' · '+next.gold+' gold'+Object.entries(next.materials).map(([id,n])=>' · '+n+' '+esc(MATERIAL_DEFS[id].name)).join('')+'</p>';
+       html+='<button class="tiny-btn craft-primary" type="button" data-action="tool-upgrade" data-id="'+toolId+'" '+(status.ok?'':'disabled')+'>Upgrade '+esc(tool.name)+'</button>';
+       if(!status.ok)html+='<small class="workshop-disclaimer">'+esc(status.reason)+'</small>';
+     }else html+='<p>Fully upgraded. All known resource nodes can be harvested at the required skill level.</p>';
+     html+='</section><button class="tiny-btn craft-primary" type="button" data-action="field-kit-craft">⚒️ Forge Field Kit Gear</button><p class="workshop-disclaimer">Enter or revisit a cleared boss arena from the War Table to gather. Clearing encounters still rewards the original XP and boss loot.</p>';
+   }else if(active.available)html+='<button class="tiny-btn craft-primary" type="button" data-action="skill-visit" data-id="'+selectedAccountSkill+'">'+(selectedAccountSkill==='slayer'?'🎯 Visit Bounty Board':selectedAccountSkill==='salvaging'?'🧰 Visit Salvaging Station':selectedAccountSkill==='enchanting'?'✨ Visit Enchanting Forge':selectedAccountSkill==='delving'?'🗝️ Visit Delving Gate':'⚒ Open Crafting Guild')+'</button>';
   else html+='<p class="workshop-disclaimer">Preview only — this profession will be implemented in a future development block.</p>';
   return html+'</section>';
  }
@@ -531,6 +556,8 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const locationChanged=lastPresentedLocation!==current;
   const location=locationDetails[current];
   root.dataset.location=current;
+  const scene=venueSummary(current,profile);
+  venueGuide.innerHTML='<div class="workshop-guide-story"><span class="workshop-guide-symbol" aria-hidden="true">'+esc(locationDetails[current].icon)+'</span><div><small>'+esc(scene.meta.chapter)+' · '+esc(scene.meta.tone.toUpperCase())+'</small><strong>'+esc(scene.meta.verb)+'</strong><p>'+esc(scene.meta.hint)+'</p><div class="workshop-guide-details"><span class="workshop-guide-stat">'+esc(scene.stat)+'</span><span>'+esc(scene.substat)+'</span></div></div></div><div class="workshop-guide-actions">'+scene.meta.actions.map(([where,label])=>'<button type="button" data-ux-go="'+where+'">'+esc(label)+' →</button>').join('')+'</div>';
   title.textContent=tabNames[current];
   context.textContent='EMBERFALL REFUGE · '+location.name;
   stageTagline.textContent=location.description;
@@ -608,7 +635,7 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;selectedTalentId=null;partyPosition=Math.max(0,partyOrder(profile).indexOf(selected));}
   pendingSell=null;
   lastPresentedLocation=null;
-  root.classList.remove('hidden');render();onOpen();
+  venueSearch.value='';filterVenues('');root.classList.remove('hidden');render();onOpen();
   root.querySelector('#workshopClose').focus({preventScroll:true});
  }
  function close(){
@@ -617,11 +644,42 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   const target=returnFocus?.isConnected&&returnFocus.getClientRects().length?returnFocus:document.getElementById('campNavHome');
   target?.focus({preventScroll:true});returnFocus=null;
  }
+ // Real contextual travel through the same existing venue buttons and state.
+ venueGuide.addEventListener('click',e=>{
+  const where=e.target.closest('button[data-ux-go]')?.dataset.uxGo;
+  if(!where)return;
+  if(where==='war-table'){close();onWarTable();return;}
+  const target=tabs.querySelector('button[data-tab="'+where+'"]');
+  if(target){venueSearch.value='';filterVenues('');target.click();}
+ });
+ function filterVenues(value=''){
+  const query=value.trim().toLowerCase();let found=0;
+  for(const group of tabs.querySelectorAll('.workshop-nav-group')){
+   let visible=0;
+   for(const tab of group.querySelectorAll('button[data-tab]')){
+    const key=tab.dataset.tab,match=!query||key.includes(query)||(tab.textContent||'').toLowerCase().includes(query)||(locationDetails[key]?.name||'').toLowerCase().includes(query);
+    tab.dataset.uxHidden=String(!match);
+    if(match){visible++;found++;}
+   }
+   group.dataset.uxHidden=String(visible===0);
+  }
+  let none=root.querySelector('.workshop-no-results');
+  if(!found){
+   if(!none){none=document.createElement('p');none.className='workshop-no-results';none.setAttribute('role','status');tabs.after(none);}
+   none.textContent='No locations match "'+value.trim().slice(0,60)+'".';
+  }else none?.remove();
+ }
+ venueSearch.addEventListener('input',()=>filterVenues(venueSearch.value));
+ root.addEventListener('keydown',e=>{
+  if(e.key!=='/'||root.classList.contains('hidden')||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
+  e.preventDefault();venueSearch.focus();
+ });
  tabs.addEventListener('click',e=>{
   const tab=e.target.closest('button[data-tab]')?.dataset.tab;
   if(tabNames[tab]){
    confirmEnchantId=null;confirmDelveAbandon=false;
-   current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;render();
+   current=tab;pendingSell=null;notice='';detailsId=null;confirmSpendId=null;confirmRespec=false;importConfirm=false;venueSearch.value='';filterVenues('');render();
    if(root.classList.contains('camp-page'))window.scrollTo({top:0,behavior:'instant'});else body.scrollTop=0;
   }
  });
@@ -643,16 +701,30 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
  root.addEventListener('click',e=>{if(e.target===root&&!root.classList.contains('camp-page'))close();});
  root.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
  body.addEventListener('input',e=>{
+   if(e.target.id==='bagSearch'){
+    const caret=e.target.selectionStart??e.target.value.length;
+    bagQuery=e.target.value;selectedBagId=null;rerenderBag();
+    const replacement=body.querySelector('#bagSearch');
+    if(replacement){replacement.focus({preventScroll:true});replacement.setSelectionRange(Math.min(caret,bagQuery.length),Math.min(caret,bagQuery.length));}
+    return;
+   }
+
   if(e.target.id==='backupImport'){importText=e.target.value;validatedImport=null;importConfirm=false;notice='';}
  });
  body.addEventListener('change',e=>{
   if(e.target.id==='bagFilter'&&['all',...SLOTS].includes(e.target.value)){bagFilter=e.target.value;pendingSell=null;selectedBagId=null;rerenderBag();}
+   if(e.target.id==='bagSort'&&['newest','rarity','name'].includes(e.target.value)){bagSort=e.target.value;selectedBagId=null;rerenderBag();}
   if(e.target.id==='dropBoss'&&Object.hasOwn(BOSSES,e.target.value)){dropBoss=e.target.value;render();}
  });
  body.addEventListener('click',e=>{
   const btn=e.target.closest('button[data-action]');if(!btn||btn.disabled)return;
   const action=btn.dataset.action,id=btn.dataset.id,slot=btn.dataset.slot;
+   if(action==='ux-reset-bag'){bagQuery='';bagFilter='all';bagSort='newest';selectedBagId=null;render();body.querySelector('#bagSearch')?.focus({preventScroll:true});return;}
    if(action==='skill-select'&&ACCOUNT_SKILL_IDS.includes(id)){selectedAccountSkill=id;render();return;}
+    if(action==='field-kit-craft'){current='craft';craftSkill='smithing';craftRecipeId='forge-prospector-helm';craftStage='idle';notice='';render();return;}
+    if(action==='tool-upgrade'&&Object.hasOwn(FIELD_TOOLS,id)){
+      commitAccountChange(()=>{const r=upgradeGatherTool(profile,id);return r.ok?r:null;},r=>'Upgraded to '+r.name+' (tier '+r.tier+'). Advanced harvesting nodes are now available.');return;
+    }
    if(action==='skill-visit'&&ACCOUNT_SKILLS[id]?.available){
     current=id==='slayer'?'slayer':id==='salvaging'?'salvage':id==='enchanting'?'enchant':id==='delving'?'delving':'craft';
     if(SKILL_IDS.includes(id)){craftSkill=id;craftRecipeId=null;}

@@ -1,7 +1,7 @@
 import {
  HERO_IDS,HERO_NAMES,SLOTS,ITEM_DEFS,BOSSES,validateProfile,normalizeProfileSlots,bonuses,itemOwner,
- itemSet,SET_DEFS,itemBonusText,PROFILE_KEY
-} from './progression.js?v=4.17.0';
+ itemSet,SET_DEFS,itemBonusText,fieldGearBonusText,PROFILE_KEY
+} from './progression.js?v=4.20.0';
 
 // Offline-local build and backup helpers. Presets reference instances, never clone them.
 // Do not use this data as authoritative items in future online play.
@@ -120,12 +120,12 @@ export function itemDetails(defId){
   'thornsap-pendant':'A charm still carrying the scent of ancient woodland.',
   'cloudstaff':'A staff whose crystal crown pulls at the nearby air.',
   'molten-focus':'Raw furnace light held inside a rune-cut lens.'
- }[defId]||(
+ }[defId]||(def.description||(
   setId?SET_DEFS[setId].description:
   'A dependable piece of equipment for a rising Emberguard hero.'
- );
+ ));
  return {name:def.name,icon:def.icon,rarity:def.rarity,slot:def.slot,setId,setName,
-  flavour,sources,shop:def.shop??null,sell:def.value,bonus:itemBonusText(def)};
+  flavour,sources,shop:def.shop??null,sell:def.value,bonus:itemBonusText(def),fieldBonus:fieldGearBonusText(def)};
 }
 export function exportBackup(profile,builds){
  if(!validateProfile(profile)||!validateBuilds(builds))throw Error('Cannot export invalid character or preset data.');

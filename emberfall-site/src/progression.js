@@ -1,4 +1,6 @@
 // Block 02: offline-local character development. Never trust this state for online trading or PvP.
+import {GATHER_MATERIALS,FIELD_GEAR,createHarvestSite,ensureGatherState,freshGatherState,validateGatherState} from './gathering.js?v=4.20.0';
+export {HARVEST_TYPES,HARVEST_AREAS,FIELD_TOOLS,FIELD_GEAR,fieldKitSnapshot,fieldGearBonusText,getHarvestSite,pendingHarvestSites,harvestStatus,harvestNode,toolUpgradeStatus,upgradeGatherTool} from './gathering.js?v=4.20.0';
 export const PROFILE_KEY='emberfall-company-v1';
 export const MAX_LEVEL=6;
 export const HERO_IDS=Object.freeze(['knight','ranger','mage','cleric']);
@@ -34,8 +36,10 @@ export const SKILL_IDS=Object.freeze(['smithing','alchemy']);
 // receipt fields and contract APIs: existing local saves, backups and active hunts
 // must keep their XP, Hunt Marks, completion streaks and one-time claim protection.
 // Player-facing name is Bounty Hunting; previous labels do not affect legacy saves.
-export const ACCOUNT_SKILL_IDS=Object.freeze([...SKILL_IDS,'slayer','enchanting','salvaging','delving']);
+export const ACCOUNT_SKILL_IDS=Object.freeze([...SKILL_IDS,'slayer','enchanting','salvaging','delving','mining','woodcutting']);
 export const ACCOUNT_SKILLS=Object.freeze({
+  mining:{name:'Mining',icon:'⛏️',description:'Mine ore and rare minerals from cleared battlefields. Higher levels unlock deeper seams and improved picks.',available:true,unlocks:[[1,'Ironroot outcrops'],[3,'Cinder seams'],[5,'Reinforced pickaxe'],[7,'Skyiron veins'],[8,'Furnace geodes'],[10,'Runic pickaxe'],[12,'Tempest crystals']]},
+  woodcutting:{name:'Woodcutting',icon:'🌲',description:'Harvest timber from cleared arenas. Train to collect ancient heartwood and stormwoven trees.',available:true,unlocks:[[1,'Ironroot timber'],[3,'Charred Ashwood'],[5,'Reinforced logging axe and Elder Heartwood'],[7,'Stormwoven timber'],[10,'Runic logging axe']]},
  smithing:{name:'Blacksmithing',icon:'⚒️',description:'Forge lasting weapons and armour from boss materials.',available:true,unlocks:[[1,'Basic armour patterns'],[5,'Improved set pieces'],[10,'Epic equipment recipes'],[25,'Mythic forging · future']]},
  alchemy:{name:'Alchemy',icon:'⚗️',description:'Brew elixirs that strengthen your party in battle.',available:true,unlocks:[[1,'Basic battle elixirs'],[4,'Additional elemental recipes'],[10,'Grand elixirs'],[25,'Spiritbound tonics · future']]},
  slayer:{name:'Bounty Hunting',icon:'🎯',description:'Accept single-target bounties, overcome dangerous boss modifiers and earn Bounty Hunting XP and spendable Bounty Marks at the Bounty Exchange. Existing multi-victory hunts remain finishable.',available:true,unlocks:[[1,'Bounty Board · Warden Patrol'],[3,'Dangerous · Bramble Siege'],[5,'Ashen Warrant'],[7,'Dangerous · Furnace Pressure'],[10,'Storm Watch'],[12,'Dangerous · Skybreak Pursuit'],[15,'Notorious Bounties · future'],[20,'Master Bounty Hunter milestone'],[25,'Legendary Bounties · future']]},
@@ -85,6 +89,7 @@ export const MATERIAL_GROUPS=Object.freeze({
  tempest:{tier:'tempest',ore:'tempest-ore',essence:'tempest-essence',seal:'tempest-seal'}
 });
 export const MATERIAL_DEFS=Object.freeze({
+  ...GATHER_MATERIALS,
  'verdant-ore':{name:'Ironroot Ore',icon:'🪨'},'verdant-essence':{name:'Verdant Essence',icon:'🌿'},'verdant-seal':{name:'Thornwarden Mark',icon:'🍃'},
  'ember-ore':{name:'Cinder Ore',icon:'🪨'},'ember-essence':{name:'Ember Essence',icon:'🔥'},'ember-seal':{name:'Cindermaw Mark',icon:'☄️'},
  'tempest-ore':{name:'Skyiron Ore',icon:'🪨'},'tempest-essence':{name:'Storm Essence',icon:'⚡'},'tempest-seal':{name:'Tempest Mark',icon:'🌀'}
@@ -118,6 +123,10 @@ export const ALCHEMY_EFFECTS=Object.freeze({
  'tempest-grand':{name:'Grand Storm Tonic',icon:'💙',bonus:{speed:20,cooldown:.06}}
 });
 export const CRAFT_RECIPES=Object.freeze([
+ ...Object.entries(FIELD_GEAR).map(([id,def])=>({
+  id:'forge-'+id,skill:'smithing',level:def.level,name:def.name,icon:def.icon,
+  product:id,rarity:def.rarity,xp:def.xp,materials:{...def.materials},fieldKit:true
+ })),
  ...Object.entries(CRAFT_THEMES).flatMap(([key,info])=>{
   const mat=MATERIAL_GROUPS[info.boss];
   return SET_SLOT_KEYS.map(slot=>({id:'forge-'+key+'-'+slot,skill:'smithing',level:SET_SLOT_LEVELS[slot],
@@ -150,7 +159,7 @@ function blankCrafting(){
   materials:Object.fromEntries(Object.keys(MATERIAL_DEFS).map(id=>[id,0])),
   potions:Object.fromEntries(Object.keys(ALCHEMY_EFFECTS).map(id=>[id,0])),preparedElixir:null,
   slayer:{active:null,points:0,completed:0,streak:0,nextBountyId:1},
-   delving:{active:null,completed:0,bestStage:0,nextRunId:1}};
+   delving:{active:null,completed:0,bestStage:0,nextRunId:1},gathering:freshGatherState()};
 }
 export function craftingStatus(profile,recipeId){
  const recipe=CRAFT_RECIPES.find(r=>r.id===recipeId);
@@ -215,6 +224,7 @@ export function normalizeProfileSlots(profile){
  if(profile&&profile.slayer===undefined)profile.slayer={active:null,points:0,completed:0,streak:0,nextBountyId:1};
  if(profile?.slayer&&profile.slayer.nextBountyId===undefined)profile.slayer.nextBountyId=1;
  if(profile&&profile.delving===undefined)profile.delving={active:null,completed:0,bestStage:0,nextRunId:1};
+  ensureGatherState(profile);
  for(const id of HERO_IDS)for(const slot of SLOTS){
   const gear=profile?.heroes?.[id]?.gear;
   if(gear&&gear[slot]===undefined)gear[slot]=null;
@@ -258,7 +268,8 @@ export const ITEM_DEFS=Object.freeze({
  'skywarden-censer':{name:'Skywarden Censer',icon:'✚',slot:'weapon',rarity:'Rare',classes:['cleric'],bonus:{healing:.28,health:16},value:285},
  'tempest-eye':{name:'Eye of the Tempest',icon:'💠',slot:'charm',rarity:'Rare',bonus:{attack:12,health:30,cooldown:.18},value:1100},
  ...FORGED_SET_ITEMS,
- ...FORGED_PURPLE_ITEMS
+ ...FORGED_PURPLE_ITEMS,
+ ...FIELD_GEAR
 });
 
 // Block 04 — complete original boss collections reward thoughtful gear combinations.
@@ -384,6 +395,7 @@ export function validateProfile(p){
    Object.entries(p[field]).some(([id,n])=>!Object.hasOwn(defs,id)||!Number.isSafeInteger(n)||n<0||n>99999)))return false;
  }
  if(p.preparedElixir!==undefined&&p.preparedElixir!==null&&!Object.hasOwn(ALCHEMY_EFFECTS,p.preparedElixir))return false;
+  if(!validateGatherState(p))return false;
  if(p.delving!==undefined){
   const d=p.delving,a=d?.active;
   if(!d||!validNum(d.completed)||d.completed>1000000||!validNum(d.bestStage)||d.bestStage>3||
@@ -645,7 +657,7 @@ function recordDelveVictory(p,bossId,token){
  return {routeId:a.routeId,stage:a.stage,total:route.bosses.length,xp,levelFrom:from,levelTo:skill.level,complete:a.stage===route.bosses.length};
 }
 
-export function grantVictory(p,receiptId,seed,bossId='thornwarden',delveToken=null,bountyToken=null){
+export function grantVictory(p,receiptId,seed,bossId='thornwarden',delveToken=null,bountyToken=null,kitAtLaunch=null){
  if(!Object.hasOwn(BOSSES,bossId)||!canChallenge(p,bossId))return null;
  if(typeof receiptId!=='string'||!receiptId||receiptId.length>120||p.claims.includes(receiptId)||!validateProfile(p))return null;
  if(p.items.length>=400)return null;
@@ -670,6 +682,7 @@ export function grantVictory(p,receiptId,seed,bossId='thornwarden',delveToken=nu
  }
  reward.slayer=recordSlayerVictory(p,bossId,bountyToken,delveToken);
  reward.delve=recordDelveVictory(p,bossId,delveToken);
+  reward.harvest=createHarvestSite(p,receiptId,seed,bossId,kitAtLaunch);
  p.claims.push(receiptId);if(p.claims.length>100)p.claims=p.claims.slice(-100);
  return reward;
 }

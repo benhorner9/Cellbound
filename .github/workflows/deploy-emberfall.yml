@@ -22,24 +22,41 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css src/mobile-testing.css src/refuge.css src/locations.css src/polish.js src/polish.css assets/refuge-scene.svg assets/interior-chamber.svg source.json; do test -s "emberfall-site/$asset"; done
+          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/gathering.js src/experience.js src/polish.js src/style.css src/mobile-testing.css src/refuge.css src/locations.css src/polish.css src/experience.css assets/refuge-scene.svg assets/interior-chamber.svg source.json; do test -s "emberfall-site/$asset"; done
           node --input-type=module --check < emberfall-site/src/engine.js
           node --input-type=module --check < emberfall-site/src/game.js
           node --input-type=module --check < emberfall-site/src/progression.js
           node --input-type=module --check < emberfall-site/src/workshop.js
           node --input-type=module --check < emberfall-site/src/builds.js
           node --input-type=module --check < emberfall-site/src/polish.js
+          node --input-type=module --check < emberfall-site/src/gathering.js
+          node --input-type=module --check < emberfall-site/src/experience.js
           grep -F './src/game.js' emberfall-site/index.html
           grep -F './src/style.css' emberfall-site/index.html
           grep -F './src/mobile-testing.css' emberfall-site/index.html
           grep -F './src/refuge.css' emberfall-site/index.html
           grep -F './src/locations.css' emberfall-site/index.html
           grep -F './src/polish.css' emberfall-site/index.html
+          grep -F './src/experience.css' emberfall-site/index.html
+          grep -F './experience.js' emberfall-site/src/game.js
+          grep -F './gathering.js' emberfall-site/src/progression.js
           grep -F './engine.js' emberfall-site/src/game.js
           grep -F './progression.js' emberfall-site/src/game.js
           grep -F './workshop.js' emberfall-site/src/game.js
           grep -F './builds.js' emberfall-site/src/workshop.js
           python3 -m json.tool emberfall-site/source.json >/dev/null
+          node <<'NODE'
+          const {execFileSync}=require('node:child_process');
+          const {readFileSync}=require('node:fs');
+          const s=JSON.parse(readFileSync('emberfall-site/source.json','utf8'));
+          if(s.sourceCommit!=='ef2ad4164410b7ed1ce9e1e9425cce64391fc1f2'||s.source!=='benhorner9/heroes-of-emberfall'||s.target!=='/emberfall/')throw Error('Unexpected Emberfall release provenance');
+          if(!s.gitBlobs||Object.keys(s.gitBlobs).length!==17)throw Error('Incomplete canonical asset manifest');
+          for(const [asset,expected] of Object.entries(s.gitBlobs)){
+            const got=execFileSync('git',['hash-object','emberfall-site/'+asset],{encoding:'utf8'}).trim();
+            if(got!==expected)throw Error('Canonical source mismatch for '+asset+' (expected '+expected+', got '+got+')');
+          }
+          console.log('Verified 17 canonical Emberfall assets from commit ef2ad4164410b7ed1ce9e1e9425cce64391fc1f2');
+          NODE
       - name: Record other games before publishing
         shell: bash
         run: |
@@ -54,14 +71,14 @@ jobs:
           set -euo pipefail
           mkdir -p dist/src dist/assets
           cp emberfall-site/index.html dist/
-          cp emberfall-site/src/engine.js emberfall-site/src/game.js emberfall-site/src/progression.js emberfall-site/src/workshop.js emberfall-site/src/builds.js emberfall-site/src/style.css emberfall-site/src/mobile-testing.css emberfall-site/src/refuge.css emberfall-site/src/locations.css emberfall-site/src/polish.css emberfall-site/src/polish.js dist/src/
+          cp emberfall-site/src/engine.js emberfall-site/src/game.js emberfall-site/src/progression.js emberfall-site/src/workshop.js emberfall-site/src/builds.js emberfall-site/src/gathering.js emberfall-site/src/experience.js emberfall-site/src/polish.js emberfall-site/src/style.css emberfall-site/src/mobile-testing.css emberfall-site/src/refuge.css emberfall-site/src/locations.css emberfall-site/src/polish.css emberfall-site/src/experience.css dist/src/
           cp emberfall-site/assets/refuge-scene.svg emberfall-site/assets/interior-chamber.svg dist/assets/
           cp emberfall-site/source.json dist/
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync} from 'node:fs';
           const s=JSON.parse(readFileSync('dist/source.json','utf8'));
           if(s.source!=='benhorner9/heroes-of-emberfall'||s.target!=='/emberfall/'||!/^[a-f0-9]{40}$/.test(s.sourceCommit))throw Error('Incorrect source or deploy target');
-          writeFileSync('dist/build-meta.json',JSON.stringify({project:'heroes-of-emberfall',target:s.target,sourceCommit:s.sourceCommit,bridgeCommit:process.env.GITHUB_SHA,block:'refuge-ux-03',deployedAt:new Date().toISOString()},null,2)+'\n');
+          writeFileSync('dist/build-meta.json',JSON.stringify({project:'heroes-of-emberfall',target:s.target,sourceCommit:s.sourceCommit,bridgeCommit:process.env.GITHUB_SHA,block:'living-world-immersive-ux-v4.20.0',deployedAt:new Date().toISOString()},null,2)+'\n');
           NODE
       - name: Require existing shared-host FTPS secrets
         env:
@@ -97,7 +114,7 @@ jobs:
           done
           test "$found" -eq 1
           mkdir -p /tmp/emberfall-hosted/src /tmp/emberfall-hosted/assets
-          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/style.css src/mobile-testing.css src/refuge.css src/locations.css src/polish.js src/polish.css assets/refuge-scene.svg assets/interior-chamber.svg source.json; do
+          for asset in index.html src/engine.js src/game.js src/progression.js src/workshop.js src/builds.js src/gathering.js src/experience.js src/polish.js src/style.css src/mobile-testing.css src/refuge.css src/locations.css src/polish.css src/experience.css assets/refuge-scene.svg assets/interior-chamber.svg source.json; do
             curl -fsSL --retry 2 --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/emberfall-hosted/$asset"
             cmp -s "dist/$asset" "/tmp/emberfall-hosted/$asset"
           done
@@ -105,7 +122,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for asset in src/game.js src/engine.js src/progression.js src/workshop.js src/builds.js src/polish.js; do
+          for asset in src/game.js src/engine.js src/progression.js src/workshop.js src/builds.js src/polish.js src/gathering.js src/experience.js; do
             mime="$(curl -LfsS --max-time 20 -o /dev/null -w '%{content_type}' "https://playcellbound.com/emberfall/$asset?sha=$GITHUB_SHA")"
             case "$mime" in
               text/javascript*|application/javascript*|application/x-javascript*|text/ecmascript*|application/ecmascript*) echo "PASS $asset: $mime";;
