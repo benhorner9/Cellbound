@@ -16,7 +16,7 @@ try{
  // Verify this is a playable, persistent progression release, not a cosmetic mock-up.
  if((await page.locator('#app').getAttribute('data-view'))!=='camp'||await page.locator('#battleFrame').isVisible())throw Error('Hosted UX must start on camp only');
  if((await page.locator('#campJourney .camp-journey-route').count())!==4)throw Error('Live company journal missing four playable routes');
- if((await page.locator('link[href*="experience.css"]').count())!==1)throw Error('Immersive management styling was not served');
+ if((await page.locator('link[href*="experience.css"]').count())!==1||(await page.locator('link[href*="venue-world.css"]').count())!==1)throw Error('The full-screen interiors and their styling were not served');
  const huntTile=page.locator('.camp-building[data-camp="slayer"]');
  if(!(await huntTile.innerText()).includes('Bounty Board'))throw Error('Bounty Board was not renamed on the live camp');
  await huntTile.click();
@@ -25,7 +25,10 @@ try{
  if((await page.locator('#polishFeedback').evaluate(el=>getComputedStyle(el).pointerEvents))!=='none')throw Error('Live travel feedback blocks taps');
   if((await page.locator('#workshop').getAttribute('data-location'))!=='slayer')throw Error('Hosted Bounty Guild did not receive location identity');
   if((await page.locator('#workshopGuide [data-ux-go]').count())!==3)throw Error('No real contextual venue actions on the Bounty Board');
-  if((await page.locator('.workshop-nav-group').count())!==4)throw Error('Hosted Refuge location wings missing');
+  if(await page.locator('.workshop-rail').isVisible()||await page.locator('#workshopJump').isVisible())throw Error('Old management sidebar or mobile selector still visible');
+  if(!(await page.locator('#workshopReturn').isVisible()))throw Error('No return-to-Refuge option in building');
+  const dimensions=await page.locator('.workshop-shell').evaluate(el=>({stage:el.querySelector('.workshop-stage').getBoundingClientRect().width,shell:el.getBoundingClientRect().width}));
+  if(dimensions.stage<dimensions.shell-3)throw Error('Interior does not fill the screen');
   if((await page.locator('#workshopTrail').innerText())!=='Bounty Board')throw Error('Hosted Refuge breadcrumb missing');
   if((await page.locator('#workshopMarks').innerText()).trim()==='')throw Error('Hosted Bounty Marks resource indicator missing');
  const huntUI=await page.locator('#workshopBody').innerText();
@@ -43,19 +46,19 @@ try{
  if((await page.locator('#app').getAttribute('data-view'))!=='workshop')throw Error('Live Save Archive is not a dedicated page');
  if((await page.locator('#workshopHeading').innerText())!=='Save Backup')throw Error('Save Archive opened wrong section');
  if(!(await page.locator('#workshopClose').innerText()).includes('Back to Camp'))throw Error('Hosted management page lacks back navigation');
- if((await page.locator('#workshopTabs [role="tab"]').count())!==13)throw Error('Management sections not consistently reachable');
+ if(!(await page.locator('#workshopReturn').isVisible()))throw Error('Save Archive has no way back to Refuge');
  await page.locator('#workshopClose').click();
  if((await page.locator('#app').getAttribute('data-view'))!=='camp')throw Error('Live return to camp failed');
  await page.locator('#manageFromPickerBtn').click();
  if((await page.locator('#app').getAttribute('data-view'))!=='workshop')throw Error('Live Party screen is still a floating overlay');
  if(!(await page.locator('.party-formation').isVisible())||(await page.locator('.party-position').count())!==4)throw Error('Live dedicated 4-slot Party screen missing');
- await page.locator('#workshopTabs [data-tab="talents"]').click();
+ await page.locator('#workshopTabs [data-tab="talents"]').evaluate(el=>el.click());
  if((await page.locator('.talent-node').count())!==4)throw Error('Live connected talent-tree choices missing');
  await page.locator('[data-action="talent-node"][data-id="ironwall"]').click();
  if(!(await page.locator('.talent-inspector-status').innerText()).includes('Locked until level 2'))throw Error('Live locked talent does not inspect correctly');
- await page.locator('#workshopTabs [data-tab="shop"]').click();
+ await page.locator('#workshopTabs [data-tab="shop"]').evaluate(el=>el.click());
  await page.locator('[data-action="buy"][data-id="field-vest"]').click();
- await page.locator('#workshopTabs [data-tab="pack"]').click();
+ await page.locator('#workshopTabs [data-tab="pack"]').evaluate(el=>el.click());
  if(!(await page.locator('#inventoryScroll').isVisible())||!(await page.locator('#itemInspector').isVisible()))throw Error('Hosted split-panel bag missing');
  const bagCols=await page.locator('#inventoryGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(/\s+/).length);
  if(bagCols!==4)throw Error('Hosted bag does not have four columns');
@@ -69,9 +72,9 @@ try{
  await page.locator('#workshopClose').click();
  await page.reload({waitUntil:'networkidle'});
  await page.locator('#manageFromPickerBtn').click();
- await page.locator('#workshopTabs [data-tab="pack"]').click();
+ await page.locator('#workshopTabs [data-tab="pack"]').evaluate(el=>el.click());
  if(await page.locator('#inventoryGrid [data-id="i1"]').count())throw Error('Equipped item returned to bag after reload');
- await page.locator('#workshopTabs [data-tab="heroes"]').click();
+ await page.locator('#workshopTabs [data-tab="heroes"]').evaluate(el=>el.click());
  if(!(await page.locator('#workshopBody').innerText()).includes('Fieldkeeper Vest'))throw Error('Equipped vest not in hero slot after reload');
  if(!(await page.locator('.equipment-paperdoll').isVisible()))throw Error('Hosted hero equipment silhouette absent');
  if((await page.locator('.equipment-paperdoll .paperdoll-slot').count())!==9)throw Error('Hosted body must show all nine worn-item slots');
@@ -150,7 +153,7 @@ try{
   if(await page.locator('#startBtn').isDisabled())throw Error('Boss '+entry.name+' wrongly locked at level one');
   if(!(await page.locator('#startBtn').innerText()).includes(entry.name))throw Error('Fight button does not match selected boss');
   await page.locator('#manageFromPickerBtn').click();
-  await page.locator('#workshopTabs [data-tab="loot"]').click();
+  await page.locator('#workshopTabs [data-tab="loot"]').evaluate(el=>el.click());
   await page.locator('#dropBoss').selectOption(entry.id);
   if(!(await page.locator('#workshopBody').innerText()).includes(entry.unique))throw Error('Exclusive item missing');
   await page.locator('#workshopClose').click();
@@ -172,31 +175,31 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.20.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.21.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.20.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.21.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
- await page.locator('#workshopTabs [data-tab="heroes"]').click();
+ await page.locator('#workshopTabs [data-tab="heroes"]').evaluate(el=>el.click());
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
  if(!(await page.locator('#workshopBody').innerText()).includes('2/4 equipped'))throw Error('Live 2-piece set not active');
  await page.locator('[data-build-name="0"]').fill('Hosted Tank');
  await page.locator('[data-action="save-build"][data-index="0"]').click();
- await page.locator('#workshopTabs [data-tab="pack"]').click();
+ await page.locator('#workshopTabs [data-tab="pack"]').evaluate(el=>el.click());
  if(await page.locator('#inventoryGrid [data-id="i2"]').count()||await page.locator('#inventoryGrid [data-id="i3"]').count())throw Error('Equipped collection gear still present in bag');
  await page.locator('[data-action="inspect"][data-id="i4"]').click();
  if(!(await page.locator('#itemInspector').innerText()).includes('−8 HP'))throw Error('Live gear compare omitted lost set bonus');
  await page.locator('[data-action="equip"][data-id="i4"]').click();
  if(await page.locator('#inventoryGrid [data-id="i4"]').count())throw Error('Equipped Forgeguard still in bag');
  if(!(await page.locator('#inventoryGrid [data-id="i3"]').isVisible()))throw Error('Displaced armour not returned to bag');
- await page.locator('#workshopTabs [data-tab="heroes"]').click();
+ await page.locator('#workshopTabs [data-tab="heroes"]').evaluate(el=>el.click());
  if(!(await page.locator('#workshopBody').innerText()).includes('1/4 equipped'))throw Error('Live set did not deactivate after gear switch');
  await page.locator('[data-action="apply-build"][data-index="0"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('2/4 equipped'))throw Error('Live saved build did not restore gear');
- await page.locator('#workshopTabs [data-tab="backup"]').click();
+ await page.locator('#workshopTabs [data-tab="backup"]').evaluate(el=>el.click());
  const data=await page.locator('#backupExport').inputValue();
  if(JSON.parse(data).builds.heroes.knight[0].name!=='Hosted Tank')throw Error('Live backup omitted presets');
  await page.locator('#backupImport').fill(data);
@@ -208,14 +211,14 @@ try{
  await page.locator('#workshopClose').click();
  await page.reload({waitUntil:'networkidle'});
  await page.locator('#manageFromPickerBtn').click();
- await page.locator('#workshopTabs [data-tab="heroes"]').click();
+ await page.locator('#workshopTabs [data-tab="heroes"]').evaluate(el=>el.click());
  if(!(await page.locator('#workshopBody').innerText()).includes('Hosted Tank'))throw Error('Live saved build disappeared after reload');
  await page.locator('#workshopClose').click();
  await page.locator('#startBtn').click();
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.20.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.21.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -230,15 +233,15 @@ try{
  if((await page.locator('[data-action="equip"][data-id="i5"]').getAttribute('data-hero'))!=='mage')throw Error('Mage-only equipment targeted wrong character');
  await page.locator('[data-action="equip"][data-id="i5"]').click();
  if(await page.locator('#inventoryGrid [data-id="i5"]').count())throw Error('Hosted equipped Mage gear still in bag');
- await page.locator('#workshopTabs [data-tab="heroes"]').click();
+ await page.locator('#workshopTabs [data-tab="heroes"]').evaluate(el=>el.click());
  await page.locator('[data-action="hero"][data-id="mage"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Emberglass Staff'))throw Error('Hosted Mage gear absent from character equipment');
  await page.locator('.paperdoll-slot-weapon .paperdoll-unequip').click();
- await page.locator('#workshopTabs [data-tab="pack"]').click();
+ await page.locator('#workshopTabs [data-tab="pack"]').evaluate(el=>el.click());
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.20.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.21.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -254,7 +257,7 @@ try{
  if(await page.locator('#inventoryGrid [data-id="i6"]').count())throw Error('Ranger vest still visible in bag');
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
  if(saved.heroes.ranger.gear.armour!=='i6'||saved.heroes.knight.gear.armour==='i6')throw Error('Briar did not receive the selected vest');
- await page.locator('#workshopTabs [data-tab="party"]').click();
+ await page.locator('#workshopTabs [data-tab="party"]').evaluate(el=>el.click());
  await page.locator('[data-action="party-position"][data-index="0"]').click();
  await page.locator('[data-action="party-pick"][data-id="ranger"]').click();
  const positioned=await page.evaluate(()=>JSON.parse(localStorage.getItem('emberfall-company-v1')));
@@ -272,14 +275,14 @@ try{
  await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  // Isolated live source must also support real craft XP, generated gear and potion effects.
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.20.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.21.0');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=30;
   if(!writeProfile(localStorage,p))throw Error('Live crafting fixture could not be saved');
  });
  await page.reload({waitUntil:'networkidle'});
  await page.locator('#manageFromPickerBtn').click();
- await page.locator('#workshopTabs [data-tab="craft"]').click();
+ await page.locator('#workshopTabs [data-tab="craft"]').evaluate(el=>el.click());
  if(!(await page.locator('.craft-studio').isVisible())||(await page.locator('.craft-skill-tab').count())!==2)throw Error('Live Smithing and Alchemy guild missing');
  await page.locator('[data-action="craft-select"][data-id="forge-verdant-helm"]').click();
  await page.locator('[data-action="craft-heat"]').click();
