@@ -1,0 +1,223 @@
+/* Emberfall v4.21 — dedicated building interiors, not a menu sidebar.
+   The hidden old route registry only retains backward-compatible programmatic
+   navigation; there is no visible rail, tab strip, or selector at any breakpoint. */
+#workshop .workshop-rail{display:none!important}
+#workshop .workshop-shell,
+#workshop.camp-page .workshop-shell{
+ display:block!important;grid-template-columns:none!important;
+ width:100%;min-width:0;min-height:0;overflow:visible
+}
+#workshop .workshop-stage{
+ width:100%;min-width:0;overflow:visible!important;
+ background:linear-gradient(155deg,#263b34,#182d2b 55%,#102422)
+}
+#workshop.camp-page .workshop-dialog{
+ width:100%;max-width:none;min-height:calc(100dvh - 124px);
+ border:0;border-radius:0;box-shadow:none;overflow:visible;
+ background:#152b27
+}
+#workshop.camp-page{padding:0 0 max(20px,env(safe-area-inset-bottom));}
+#app[data-view="workshop"] .app{max-width:none}
+#workshop .workshop-topline{
+ position:relative;z-index:6;min-height:57px;
+ padding:8px clamp(14px,2.6vw,34px);
+ border-bottom:1px solid #bda47777;
+ background:linear-gradient(95deg,#1b302b,#2c4135 50%,#182c27)
+}
+#workshop .workshop-close{
+ border:2px solid #d8b276;border-radius:5px;min-width:164px;
+ min-height:46px;background:linear-gradient(145deg,#6e533b,#3b4032);
+ box-shadow:0 3px 0 #13251e;color:#fff0d1;
+ font:700 13px Georgia,serif;letter-spacing:.01em
+}
+#workshop .workshop-close:focus-visible,#workshop .workshop-close:hover{
+ border-color:#ffe7b2;background:linear-gradient(150deg,#896b45,#4d5440);
+ outline:3px solid #ffdda1;outline-offset:3px
+}
+/* The location now fills the entire screen. Illustrated chambers replace a
+   side column with environmental depth and a clear, stable work surface. */
+#workshop .workshop-stage .workshop-head,
+#workshop.camp-page .workshop-head{
+ position:relative;top:auto!important;
+ min-height:clamp(166px,23vw,258px);
+ padding:clamp(23px,3.5vw,48px) clamp(20px,4.5vw,70px) 25px;
+ display:flex;align-items:end;
+ background:
+  linear-gradient(0deg,#162a28ed,#1b302d60 55%,#192b2ba0),
+  radial-gradient(ellipse at 78% 35%,var(--venue-a,#425a4d) 0,transparent 56%),
+  url("../assets/interior-chamber.svg") center 44% / cover no-repeat!important;
+ border-bottom:2px solid var(--venue-glow,#d8bf8d)
+}
+#workshop .workshop-stage .workshop-head:before{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(90deg,#10221dbf,transparent 78%)
+}
+#workshop .workshop-head:after{
+ content:var(--venue-mark,"✦")!important;
+ position:absolute;right:6%;top:4%;font:clamp(120px,17vw,244px) Georgia,serif;
+ color:var(--venue-glow,#cbaa7a);opacity:.12;pointer-events:none
+}
+#workshop .workshop-head h2{
+ font:700 clamp(34px,4vw,64px)/1.03 Georgia,serif;
+ color:#f8e5c2;letter-spacing:.012em;text-shadow:0 5px 22px #060d0be0;
+ max-width:890px
+}
+#workshop .workshop-tagline{
+ max-width:760px;margin-top:9px;
+ font:clamp(13px,1.25vw,17px)/1.45 Georgia,serif;color:#e4dcc9
+}
+#workshop .workshop-sigil{
+ width:clamp(80px,10vw,125px);height:clamp(80px,10vw,125px);
+ flex-basis:clamp(80px,10vw,125px);font-size:clamp(45px,6vw,68px);
+ border-color:var(--venue-glow,#dbbe80);
+ background:radial-gradient(circle,#45594a 0,#24392f 64%,#10271f);
+ box-shadow:0 0 0 9px #d8bc6b14,0 13px 32px #0009;
+ position:relative;z-index:2
+}
+#workshop .workshop-quickstats{
+ padding:12px clamp(20px,4.5vw,70px);gap:12px 26px;
+ font-size:clamp(12px,1.2vw,15px);
+ border-bottom:1px solid #c2a87955;
+ background:linear-gradient(100deg,#283a30,#152c28)
+}
+#workshop .workshop-guide{
+ padding:clamp(16px,2.4vw,27px) clamp(20px,4.5vw,70px);
+ grid-template-columns:minmax(0,1fr) minmax(320px,1fr);
+ gap:18px 28px;
+ border-bottom:1px solid #d1b98770;
+ background:
+  radial-gradient(ellipse at 88% 10%,var(--venue-a,#3b5a47) 0,transparent 60%),
+  linear-gradient(120deg,var(--venue-b,#20342c),#1d342c)
+}
+#workshop .workshop-guide-symbol{
+ width:68px;height:68px;border-width:2px;
+ font-size:37px;
+ box-shadow:0 0 0 6px #cab77818
+}
+#workshop .workshop-guide-story strong{
+ font:700 clamp(22px,2.3vw,29px)/1.14 Georgia,serif
+}
+#workshop .workshop-guide-story p{font-size:clamp(12px,1.1vw,15px);max-width:650px}
+#workshop .workshop-guide-details{font-size:12px}
+#workshop .workshop-guide-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}
+#workshop .workshop-guide-actions button{
+ min-height:83px;min-width:0;padding:11px 9px;
+ background:linear-gradient(145deg,#3c5140,#263b32);
+ box-shadow:inset 0 1px #f4e2b02c,0 5px 14px #09150f77;
+ border:1px solid var(--venue-glow,#cab377);
+ border-bottom:4px solid #8f6f48;
+ border-radius:7px;
+ font:700 clamp(11px,1vw,14px)/1.26 Georgia,serif;
+ text-align:center;white-space:normal;color:#f5e3bf
+}
+#workshop .workshop-guide-actions button:before{
+ content:"↗";display:block;font:25px Georgia,serif;
+ color:var(--venue-glow,#f5dca4);margin-bottom:5px
+}
+#workshop .workshop-guide-actions button[data-ux-go="war-table"]:before{content:"⚔";font-size:22px}
+#workshop .workshop-guide-actions button:hover,
+#workshop .workshop-guide-actions button:focus-visible{
+ filter:brightness(1.15);transform:translateY(-2px);border-color:#ffe3a3;
+ outline:3px solid #ffe0a3;outline-offset:2px
+}
+#workshop .workshop-body,
+#workshop.camp-page .workshop-body{
+ width:100%;max-width:none;min-width:0;min-height:420px;
+ padding:clamp(16px,3vw,37px) clamp(18px,4.5vw,70px) clamp(24px,4vw,52px);
+ background:radial-gradient(ellipse at 87% 5%,var(--venue-a,#344e3f) 0,transparent 62%),
+ linear-gradient(160deg,#263d32,#142b27 85%);
+ box-sizing:border-box
+}
+/* No fake permanent map panel: leaving a room returns to the actual Refuge. */
+#workshop .venue-exit{
+ display:flex;align-items:center;justify-content:space-between;gap:15px;
+ padding:clamp(16px,2.5vw,26px) clamp(20px,4.5vw,70px);
+ border-top:2px solid #ab9064;background:linear-gradient(105deg,#374537,#172d2a)
+}
+#workshop .venue-exit strong{display:block;font:700 22px Georgia,serif;color:#f4d9a1;margin:3px 0}
+#workshop .venue-exit p{margin:0;color:#c6d4c4;font:12px/1.5 system-ui,sans-serif}
+#workshop .venue-exit-button{
+ flex:0 0 auto;min-height:49px;padding:10px 21px;
+ background:linear-gradient(150deg,#7c6347,#4e503b);
+ border:2px solid #d6b882;border-radius:6px;color:#fff0d4;
+ font:700 15px Georgia,serif;cursor:pointer
+}
+#workshop .venue-exit-button:hover,#workshop .venue-exit-button:focus-visible{
+ background:#816f4e;outline:3px solid #f9db9d;outline-offset:2px
+}
+#workshop:not(.camp-page) .venue-exit{display:none}
+#workshop:not(.camp-page) .workshop-shell{min-height:0}
+#workshop:not(.camp-page) .workshop-dialog{
+ width:min(1100px,96vw);max-height:min(94dvh,930px);
+}
+#workshop:not(.camp-page) .workshop-stage{min-height:0;overflow:hidden!important}
+#workshop:not(.camp-page) .workshop-body{min-height:0;overflow:auto;overscroll-behavior:contain}
+#workshop:not(.camp-page) .workshop-stage .workshop-head{
+ min-height:118px;padding:17px 22px
+}
+/* Refuges beyond the main courtyard now read as destinations along a
+   connected street, not a second sidebar of administrative shortcuts. */
+.refuge-service-heading{margin-top:21px;padding:0 9px}
+.refuge-services{
+ position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:10px;padding:16px 20px 25px;
+ background:
+  linear-gradient(90deg,#182c2773,#2c44366a,#182c2773),
+  repeating-linear-gradient(90deg,transparent 0 13%,#af986217 13.1% 13.2%);
+}
+.refuge-services:before{
+ content:"THE INNER QUARTERS · WALK THE REFUGE";
+ grid-column:1/-1;
+ font:700 10px/1.4 system-ui,sans-serif;letter-spacing:.19em;
+ color:#d8bc80;border-bottom:1px solid #b6a47780;padding:0 0 9px
+}
+.refuge-services .refuge-service.camp-building{
+ min-height:85px;padding:12px 14px;
+ border:1px solid #988561;border-left:4px solid #b99660;
+ border-radius:5px;
+ background:linear-gradient(125deg,#34483a,#1b302c);
+ box-shadow:0 4px 14px #0717127c;
+}
+.refuge-services .refuge-service .camp-building-icon{display:inline-grid}
+.refuge-services .refuge-service strong{font-size:clamp(14px,1.1vw,17px)}
+.refuge-services .refuge-service small{font-size:11px}
+@media(max-width:1100px){
+ #workshop .workshop-guide{grid-template-columns:1fr;gap:13px}
+ #workshop .workshop-guide-actions{max-width:900px}
+ .refuge-services{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:780px){
+ #workshop .workshop-stage{display:flex;flex-direction:column}
+ #workshop .workshop-guide{padding:12px 15px;gap:10px}
+ #workshop .workshop-guide-actions{grid-template-columns:repeat(3,minmax(0,1fr));padding:0;gap:6px;overflow:visible}
+ #workshop .workshop-guide-actions button{min-height:69px;font-size:11px;padding:8px 6px;flex:auto}
+ #workshop .workshop-quickstats{padding:8px 15px;font-size:11px}
+ #workshop .workshop-body,#workshop.camp-page .workshop-body{min-height:300px;padding:17px 15px 27px}
+ #workshop .workshop-stage .workshop-head,#workshop.camp-page .workshop-head{min-height:154px;padding:15px 17px 18px}
+ #workshop .workshop-head h2{font-size:clamp(28px,5vw,37px)}
+ #workshop .workshop-tagline{font-size:12px}
+ #workshop .workshop-sigil{width:60px;height:60px;flex-basis:60px;font-size:32px}
+ #workshop .venue-exit{padding:14px 15px}
+ .refuge-services{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:510px){
+ #workshop .workshop-topline{padding:7px 9px;gap:5px}
+ #workshop .workshop-trail{font-size:9px;letter-spacing:0}
+ #workshop .workshop-close{min-width:126px;padding:8px;min-height:45px;font-size:11px}
+ #workshop .workshop-head h2{font-size:29px}
+ #workshop .workshop-stage .workshop-head,#workshop.camp-page .workshop-head{min-height:136px}
+ #workshop .workshop-guide-story{gap:9px}
+ #workshop .workshop-guide-symbol{width:44px;height:44px;font-size:25px}
+ #workshop .workshop-guide-story strong{font-size:20px}
+ #workshop .workshop-guide-story p{font-size:11px}
+ #workshop .workshop-guide-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #workshop .workshop-guide-actions button{min-height:65px}
+ #workshop .workshop-guide-actions button:before{margin-bottom:2px;font-size:20px}
+ #workshop .venue-exit{display:block;text-align:center}
+ #workshop .venue-exit-button{margin-top:12px;width:100%}
+ .refuge-services{padding:9px 10px 16px}
+ .refuge-services .refuge-service.camp-building{min-height:82px;padding:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ #workshop .workshop-guide-actions button{transition:none!important;transform:none!important}
+}
