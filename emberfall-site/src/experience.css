@@ -1,0 +1,143 @@
+/* Emberfall — immersive management overhaul. Game state and battle canvas unchanged. */
+:root{--ux-ink:#e8e1cc;--ux-mist:#b9cbbb;--ux-gold:#e3c28a}
+#app[data-view="camp"]{background:radial-gradient(ellipse at 60% -10%,#52624839,transparent 56%),linear-gradient(170deg,#0b1c1a,#192e29 46%,#0d1f1d)}
+/* A living task board: the route is an action, not an inert statistic panel. */
+.camp-journey{margin:15px 0 4px;padding:18px clamp(14px,2.1vw,28px);position:relative;overflow:hidden;border:1px solid #9d8b61;border-radius:12px;background:linear-gradient(115deg,#28372f,#1b2927 53%,#364134);box-shadow:0 12px 28px #04130f74,inset 0 1px #fff0c429}
+.camp-journey:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.16;background-image:repeating-linear-gradient(0deg,transparent 0 28px,#d5b98120 29px 30px)}
+.camp-journey-heading{position:relative;display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:13px}
+.camp-journey-heading h2{font:700 clamp(21px,2.3vw,30px)/1.12 Georgia,serif;color:#f6dfa7;margin:4px 0 0}
+.camp-journey-heading p{font:12px/1.4 system-ui,sans-serif;color:#bfccb8;margin:0;max-width:450px}
+.camp-journey-list{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.camp-journey-route{position:relative;min-width:0;display:flex;gap:11px;align-items:flex-start;min-height:151px;padding:16px 12px 14px;text-align:left;border:1px solid #9f885e83;border-top:2px solid #c4a875;border-radius:8px;background:linear-gradient(155deg,#375047,#233832 80%);color:#efe7d2;cursor:pointer;box-shadow:0 4px 14px #06160f66;transition:background .18s,border-color .18s,transform .18s}
+.camp-journey-route:hover,.camp-journey-route:focus-visible{background:#3e584a;border-color:#f2d393;transform:translateY(-2px);outline:2px solid #f1d5a2;outline-offset:2px}
+.camp-journey-route:active{transform:translateY(1px)}
+.camp-journey-stamp{flex:none;display:grid;place-items:center;width:39px;height:40px;border:1px solid #b9a26d;border-radius:50% 50% 42% 42%;font:23px Georgia,serif;color:#ffe1a1;background:radial-gradient(circle,#6b694b,#233d32 74%)}
+.camp-journey-copy{min-width:0;display:flex;flex-direction:column;gap:4px}
+.camp-journey-copy small{font:700 9px/1.2 system-ui,sans-serif;letter-spacing:.13em;color:#d7bd89}
+.camp-journey-copy strong{font:700 clamp(14px,1.25vw,19px)/1.12 Georgia,serif;color:#fff0d0}
+.camp-journey-copy span{font:11px/1.45 system-ui,sans-serif;color:#cfdfcd}
+.camp-journey-cta{display:flex;align-items:center;gap:5px;margin-top:auto;padding-top:8px;font:700 11px system-ui,sans-serif;color:#f0d399}
+.camp-journey-route:focus-visible .camp-journey-cta,.camp-journey-route:hover .camp-journey-cta{color:#ffebb8}
+
+/* Each location is its own illustrated interior, not a stack of grey rectangles. */
+#workshop{--venue-a:#496657;--venue-b:#263b37;--venue-glow:#cba778;--venue-mark:"✦"}
+#workshop[data-location=party]{--venue-a:#425b6b;--venue-b:#1d3039;--venue-glow:#a8c8dc;--venue-mark:"♜"}
+#workshop[data-location=heroes]{--venue-a:#594b48;--venue-b:#2e3538;--venue-glow:#e3b889;--venue-mark:"⚔"}
+#workshop[data-location=talents]{--venue-a:#504265;--venue-b:#2c2b42;--venue-glow:#d7b5ff;--venue-mark:"✧"}
+#workshop[data-location=pack]{--venue-a:#5d5340;--venue-b:#343c2f;--venue-glow:#e6c789;--venue-mark:"🎒"}
+#workshop[data-location=craft]{--venue-a:#644337;--venue-b:#3a302b;--venue-glow:#f4ab72;--venue-mark:"⚒"}
+#workshop[data-location=skills]{--venue-a:#3c6157;--venue-b:#223f3a;--venue-glow:#98dec3;--venue-mark:"✦"}
+#workshop[data-location=slayer]{--venue-a:#693c42;--venue-b:#342b35;--venue-glow:#e8a59b;--venue-mark:"🎯"}
+#workshop[data-location=salvage]{--venue-a:#50504c;--venue-b:#2d3636;--venue-glow:#d3c8aa;--venue-mark:"⛏"}
+#workshop[data-location=enchant]{--venue-a:#454c75;--venue-b:#252f4c;--venue-glow:#b5beff;--venue-mark:"✧"}
+#workshop[data-location=delving]{--venue-a:#374c58;--venue-b:#1b2937;--venue-glow:#a2c8dd;--venue-mark:"🗝"}
+#workshop[data-location=shop]{--venue-a:#66563d;--venue-b:#39372c;--venue-glow:#ffe0a0;--venue-mark:"🪙"}
+#workshop[data-location=loot]{--venue-a:#514b4f;--venue-b:#2d303b;--venue-glow:#e5b9bf;--venue-mark:"☠"}
+#workshop[data-location=backup]{--venue-a:#43585b;--venue-b:#293f44;--venue-glow:#b2dce0;--venue-mark:"📜"}
+.workshop-cover.camp-page .workshop-dialog{background:linear-gradient(120deg,var(--venue-b),#152c28 75%);border-color:#947b5f}
+.workshop-cover.camp-page .workshop-head{min-height:112px;position:relative;z-index:1;overflow:hidden;border-bottom:1px solid color-mix(in srgb,var(--venue-glow) 45%,transparent);background:radial-gradient(ellipse at 72% 0%,var(--venue-a) 0,transparent 72%),linear-gradient(110deg,var(--venue-b),#172d2b);padding:16px 22px}
+.workshop-cover.camp-page .workshop-head:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:url("../assets/interior-chamber.svg");background-size:cover;background-position:center;opacity:.12;mix-blend-mode:screen;filter:sepia(.5)}
+.workshop-cover.camp-page .workshop-head:after{content:var(--venue-mark);position:absolute;right:78px;top:-48px;font:175px Georgia,serif;color:var(--venue-glow);opacity:.1;pointer-events:none}
+.workshop-cover.camp-page .workshop-heading-group{position:relative;z-index:1;max-width:780px}
+.workshop-cover.camp-page .workshop-head h2{font:700 clamp(26px,2.6vw,35px)/1.12 Georgia,serif;color:#fff1d8;text-shadow:0 2px 7px #07120e88}
+.workshop-cover.camp-page .workshop-tagline{color:#e2dac4;line-height:1.4;max-width:660px}
+.workshop-cover.camp-page .workshop-sigil{position:relative;z-index:1;border-color:var(--venue-glow);color:var(--venue-glow);background:#1b2a2ce0}
+.workshop-cover.camp-page .workshop-quickstats{background:linear-gradient(90deg,#1b302d,#243d35);border-bottom:1px solid #b7a47755}
+.workshop-cover.camp-page .workshop-body{background:linear-gradient(150deg,transparent,rgba(7,23,19,.09))}
+.workshop-cover.camp-page .workshop-body>.workshop-intro{border:0;border-left:4px solid var(--venue-glow);border-radius:4px;background:linear-gradient(100deg,var(--venue-a),transparent 85%);padding:14px 18px;box-shadow:none}
+.workshop-cover.camp-page .workshop-body>.workshop-intro h3{font:700 clamp(21px,2vw,28px)/1.12 Georgia,serif;color:#fff2d9}
+.workshop-cover.camp-page .workshop-body>.workshop-intro p{color:#d4dacd;line-height:1.55}
+.workshop-cover.camp-page .workshop-body button:not(:disabled):focus-visible,
+.workshop-cover.camp-page .workshop-guide button:focus-visible,
+.workshop-find input:focus-visible{outline:3px solid #ffe0a3;outline-offset:3px}
+
+/* Scene journal: a useful route through the game, always derived from real progress. */
+.workshop-guide{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.9fr);gap:12px 18px;padding:15px 23px 16px;border-bottom:1px solid #d6be8655;background:linear-gradient(96deg,var(--venue-b),#21382f);color:var(--ux-ink)}
+.workshop-guide:before{content:"";position:absolute;pointer-events:none;inset:5px auto 5px 8px;width:3px;background:linear-gradient(transparent,var(--venue-glow),transparent);opacity:.7}
+.workshop-guide-story{display:flex;gap:13px;align-items:center;min-width:0}
+.workshop-guide-symbol{flex:none;display:grid;place-items:center;width:60px;height:60px;border:1px solid var(--venue-glow);border-radius:50%;font:28px Georgia,serif;background:radial-gradient(circle at 50% 35%,var(--venue-a),#172d2a 78%);box-shadow:0 0 20px #0e27174a;color:#ffe5b3}
+.workshop-guide-story small{display:block;margin-bottom:3px;font:700 9px system-ui,sans-serif;letter-spacing:.16em;color:var(--venue-glow)}
+.workshop-guide-story strong{display:block;font:700 clamp(17px,1.5vw,23px)/1.15 Georgia,serif;color:#fff0d5}
+.workshop-guide-story p{margin:4px 0 0;color:#c9d5c7;font:11px/1.5 system-ui,sans-serif}
+.workshop-guide-details{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:7px;font:11px system-ui,sans-serif;color:#d9d5b6}
+.workshop-guide-stat{border-right:1px solid #d7ba7966;padding-right:10px;color:#f6dca3;font-weight:700}
+.workshop-guide-actions{display:flex;gap:7px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.workshop-guide-actions button{min-height:44px;flex:0 1 auto;padding:8px 10px;border:1px solid #998765;border-radius:5px;background:linear-gradient(145deg,#345046,#273a35);color:#f1e0be;font:700 11px/1.25 system-ui,sans-serif;cursor:pointer}
+.workshop-guide-actions button[data-ux-go="war-table"]{background:linear-gradient(145deg,#6d543a,#453b30);border-color:#d5af78}
+.workshop-guide-actions button:hover,.workshop-guide-actions button:focus-visible{filter:brightness(1.2);border-color:#ffe2ad;transform:translateY(-1px)}
+.workshop-guide-actions button:active{transform:translateY(1px)}
+/* Search keeps the existing location rail but makes all 13 places findable instantly. */
+.workshop-find{padding:8px 9px;margin:0 5px 10px;border:1px solid #9b825c;border-radius:8px;background:#102923}
+.workshop-find label{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px;color:#e3c692;font:700 10px system-ui,sans-serif;letter-spacing:.12em}
+.workshop-find input{display:block;box-sizing:border-box;width:100%;min-height:43px;border-radius:6px;border:1px solid #819381;background:#20382f;color:#fff2d9;font:13px system-ui,sans-serif;padding:9px 10px;outline:0}
+.workshop-find input::placeholder{color:#a8b7aa}
+.workshop-shortcut{display:inline-grid;place-items:center;width:22px;height:22px;border:1px solid #a5906a;border-radius:4px;color:#e4c68e;font:700 12px system-ui,sans-serif}
+.workshop-nav button[data-ux-hidden="true"]{display:none!important}
+.workshop-nav-group[data-ux-hidden="true"]{display:none!important}
+.workshop-nav button[aria-selected="true"]{background:linear-gradient(90deg,var(--venue-a),#375344);box-shadow:inset 3px 0 0 var(--venue-glow)}
+.workshop-rail{background:linear-gradient(160deg,#1b312b,#142723)}
+.workshop-rail-footer{border-top-color:#c1ab7655}
+.workshop-no-results{font:12px/1.4 system-ui,sans-serif;color:#d9d1b1;padding:10px 14px}
+.workshop-cover.camp-page .workshop-body .tiny-btn:not(:disabled),
+.workshop-cover.camp-page .workshop-body button.inventory-slot:not(:disabled){transition:filter .16s,border-color .16s,background .16s,transform .16s}
+.workshop-cover.camp-page .workshop-body .tiny-btn:not(:disabled):hover{filter:brightness(1.16);transform:translateY(-1px)}
+.workshop-cover.camp-page .workshop-body .tiny-btn:active{transform:translateY(1px)}
+/* The inventory and crafting become browsable equipment stations instead of walls of tiny items. */
+.inventory-search{display:flex;flex-wrap:wrap;align-items:center;gap:7px;min-width:0;padding:6px 0}
+.inventory-search label{font:700 10px system-ui,sans-serif;color:#dfcc9e}
+.inventory-search input{flex:1 1 140px;min-width:100px;min-height:42px;box-sizing:border-box;background:#162e29;color:#ffeed5;border:1px solid #af9e75;border-radius:6px;padding:9px 10px;font:13px system-ui,sans-serif}
+.inventory-search input::placeholder{color:#9eac9f}
+.inventory-sort{min-height:42px;border:1px solid #af9e75;border-radius:6px;background:#213a32;color:#f2e2c6;font:12px system-ui,sans-serif;padding:7px}
+.inventory-empty-route{border:1px dashed #ac9565;border-radius:8px;padding:14px 16px;text-align:center;background:#253b3285}
+.inventory-empty-route p{margin:0 0 10px;color:#d7d8c6}
+.inventory-no-selection .tiny-btn{margin-top:10px}
+.field-kit-banner,.field-kit-preview{box-shadow:inset 0 1px #f8e1a035}
+.workshop-cover.camp-page .craft-recipe-list .craft-recipe{min-height:72px}
+.workshop-cover.camp-page .drop-row{border-left:3px solid var(--venue-glow)}
+.workshop-cover.camp-page .account-skill-tile{min-height:76px}
+.workshop-cover.camp-page .shop-pack-quick{display:flex;gap:6px;flex-wrap:wrap}
+.workshop-guide-actions button:disabled{opacity:.5;cursor:default}
+
+/* iPad landscape: compact journal, full-width body and comfortable hit targets. */
+@media(max-width:1150px){
+ .camp-journey-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .camp-journey-route{min-height:116px}
+ .workshop-guide{grid-template-columns:1fr;gap:9px;padding:10px 13px}
+ .workshop-guide-symbol{width:46px;height:46px;font-size:23px}
+ .workshop-guide-actions{justify-content:flex-start;padding-left:58px}
+ .workshop-cover.camp-page .workshop-head{min-height:95px}
+}
+@media(min-width:1151px) and (max-height:850px){
+ .workshop-guide{padding:10px 15px}
+ .workshop-guide-symbol{width:48px;height:48px}
+ .workshop-cover.camp-page .workshop-head{min-height:93px;padding:12px 18px}
+}
+@media(max-width:760px){
+ .workshop-find{display:none}
+ .camp-journey{padding:13px}
+ .camp-journey-heading{flex-wrap:wrap}
+ .camp-journey-list{gap:8px}
+ .camp-journey-route{padding:11px;min-height:125px}
+ .camp-journey-stamp{width:32px;height:33px;font-size:18px}
+ .camp-journey-copy strong{font-size:15px}
+ .workshop-guide-story strong{font-size:17px}
+ .workshop-guide-actions{padding-left:0;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-inline:contain}
+ .workshop-guide-actions button{flex:0 0 auto;min-height:44px}
+ .workshop-cover.camp-page .workshop-head{min-height:90px;padding:11px 13px}
+}
+@media(max-width:510px){
+ .camp-journey-list{grid-template-columns:1fr}
+ .camp-journey-route{min-height:91px;gap:10px}
+ .camp-journey-copy strong{font-size:17px}
+ .camp-journey-heading h2{font-size:23px}
+ .workshop-guide-story p{font-size:11px}
+ .workshop-guide-symbol{width:39px;height:39px;font-size:21px}
+ .workshop-guide-actions button{font-size:10px}
+ .workshop-cover.camp-page .workshop-head:after{right:30px}
+ .inventory-search{align-items:stretch}
+ .inventory-search input{width:100%;flex-basis:100%}
+}
+/* Keep motion subtle and never block interactions or cause horizontal scroll. */
+@media(prefers-reduced-motion:reduce){
+ .camp-journey-route,.workshop-guide-actions button,.workshop-cover.camp-page .workshop-body .tiny-btn{transition:none!important;transform:none!important}
+}

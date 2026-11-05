@@ -13,7 +13,15 @@ function walk(dir){
   checked++;
   const text=fs.readFileSync(full,'utf8');
   const refs=[...text.matchAll(/(?:\.\/)?(assets\/[A-Za-z0-9_./-]+\.(?:webp|png|jpg|jpeg|svg|avif))/gi)];
-  for(const m of refs){count++;const dest=path.join(root,m[1]);if(!fs.existsSync(dest))errors.push(path.relative(root,full)+': '+m[1])}
+  for(const m of refs){
+   count++;
+   const relativeFile=path.relative(root,full);
+   const candidates=[path.join(root,m[1])];
+   // Emberfall is intentionally deployed from its own isolated /emberfall/ directory.
+   // Its src/*.css uses ../assets/ paths; those assets live within emberfall-site/.
+   if(relativeFile.startsWith('emberfall-site'+path.sep))candidates.push(path.join(root,'emberfall-site',m[1]));
+   if(!candidates.some(dest=>fs.existsSync(dest)))errors.push(relativeFile+': '+m[1]);
+  }
  }
 }
 walk(root);

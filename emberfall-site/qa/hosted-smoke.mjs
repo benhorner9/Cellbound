@@ -15,6 +15,8 @@ try{
  await page.goto(base+'?sha='+process.env.GITHUB_SHA,{waitUntil:'networkidle',timeout:35000});
  // Verify this is a playable, persistent progression release, not a cosmetic mock-up.
  if((await page.locator('#app').getAttribute('data-view'))!=='camp'||await page.locator('#battleFrame').isVisible())throw Error('Hosted UX must start on camp only');
+ if((await page.locator('#campJourney .camp-journey-route').count())!==4)throw Error('Live company journal missing four playable routes');
+ if((await page.locator('link[href*="experience.css"]').count())!==1)throw Error('Immersive management styling was not served');
  const huntTile=page.locator('.camp-building[data-camp="slayer"]');
  if(!(await huntTile.innerText()).includes('Bounty Board'))throw Error('Bounty Board was not renamed on the live camp');
  await huntTile.click();
@@ -22,6 +24,7 @@ try{
  if((await page.locator('.refuge-lantern').count())!==3||(await page.locator('.refuge-ember').count())!==5)throw Error('Block 3 Refuge ambience missing');
  if((await page.locator('#polishFeedback').evaluate(el=>getComputedStyle(el).pointerEvents))!=='none')throw Error('Live travel feedback blocks taps');
   if((await page.locator('#workshop').getAttribute('data-location'))!=='slayer')throw Error('Hosted Bounty Guild did not receive location identity');
+  if((await page.locator('#workshopGuide [data-ux-go]').count())!==3)throw Error('No real contextual venue actions on the Bounty Board');
   if((await page.locator('.workshop-nav-group').count())!==4)throw Error('Hosted Refuge location wings missing');
   if((await page.locator('#workshopTrail').innerText())!=='Bounty Board')throw Error('Hosted Refuge breadcrumb missing');
   if((await page.locator('#workshopMarks').innerText()).trim()==='')throw Error('Hosted Bounty Marks resource indicator missing');
@@ -169,13 +172,13 @@ try{
  // Live Block 04: simulate a legitimate local inventory from published boss item
  // definitions and verify the actual website's compare -> save -> swap -> restore loop.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.17.0');
+  const {readProfile,addItem,equip,writeProfile}=await import('./src/progression.js?v=4.20.0');
   const p=readProfile(localStorage),sword=addItem(p,'ironroot-edge'),armour=addItem(p,'brambleguard');
   addItem(p,'forgeguard');equip(p,'knight',sword.id);equip(p,'knight',armour.id);
   if(!writeProfile(localStorage,p))throw Error('Could not stage legitimate local gear set');
  });
  await page.reload({waitUntil:'networkidle'});
- if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.17.0')throw Error('Live Block04 module tree did not initialize');
+ if((await page.locator('html').getAttribute('data-emberfall-ready'))!=='4.20.0')throw Error('Live Block04 module tree did not initialize');
  await page.locator('#manageFromPickerBtn').click();
  await page.locator('#workshopTabs [data-tab="heroes"]').click();
  if(!(await page.locator('#workshopBody').innerText()).includes('Verdant Covenant'))throw Error('Live set bonuses missing');
@@ -212,7 +215,7 @@ try{
  if(!(await page.locator('[data-hero="knight"] .hero-stats').innerText()).includes('224 / 224'))throw Error('Live new combat stats did not include 2-piece set');
  // Hosted mage-only equipment must not offer an incompatible character.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.17.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.20.0');
   const p=readProfile(localStorage);
   addItem(p,'emberglass-staff');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage class-specific gear');
@@ -235,7 +238,7 @@ try{
  if(!(await page.locator('#inventoryGrid [data-id="i5"]').isVisible()))throw Error('Hosted unequipped gear did not return to bag');
  // Explicitly select a different hero for unrestricted gear and check actual saved owner.
  await page.evaluate(async()=>{
-  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.17.0');
+  const {readProfile,addItem,writeProfile}=await import('./src/progression.js?v=4.20.0');
   const p=readProfile(localStorage);addItem(p,'field-vest');
   if(!writeProfile(localStorage,p))throw Error('Cannot stage shared vest');
  });
@@ -269,7 +272,7 @@ try{
  await page.waitForFunction(()=>document.getElementById('combatTempo').classList.contains('hidden'),null,{timeout:6000});
  // Isolated live source must also support real craft XP, generated gear and potion effects.
  await page.evaluate(async()=>{
-  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.17.0');
+  const {readProfile,writeProfile}=await import('./src/progression.js?v=4.20.0');
   const p=readProfile(localStorage);
   for(const id of ['verdant-ore','verdant-seal','verdant-essence'])p.materials[id]=30;
   if(!writeProfile(localStorage,p))throw Error('Live crafting fixture could not be saved');

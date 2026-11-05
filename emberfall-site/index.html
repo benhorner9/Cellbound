@@ -3,11 +3,12 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#132323"><meta name="description" content="Heroes of Emberfall — an original hand-drawn inspired four-hero fantasy RPG with an Emberguard camp and boss expeditions.">
 <title>Heroes of Emberfall · The Thornwarden</title>
-<link rel="stylesheet" href="./src/style.css?v=4.17.0">
+<link rel="stylesheet" href="./src/style.css?v=4.20.0">
 <link rel="stylesheet" href="./src/mobile-testing.css?v=1" media="(max-width: 600px) and (pointer: coarse), (pointer: coarse) and (orientation: landscape) and (max-height: 540px) and (max-width: 950px)">
-<link rel="stylesheet" href="./src/refuge.css?v=4.17.0">
-<link rel="stylesheet" href="./src/locations.css?v=4.17.0">
-<link rel="stylesheet" href="./src/polish.css?v=4.17.0">
+<link rel="stylesheet" href="./src/refuge.css?v=4.20.0">
+<link rel="stylesheet" href="./src/locations.css?v=4.20.0">
+<link rel="stylesheet" href="./src/polish.css?v=4.20.0">
+<link rel="stylesheet" href="./src/experience.css?v=4.20.0">
 </head><body>
 <div class="app" id="app" data-view="camp">
  <header class="topbar">
@@ -42,7 +43,8 @@
      <p>Beyond the ruins, your heroes have a home. Explore the lantern-lit grounds, prepare your company, collect contracts and set forth for the next hunt.</p>
      <div class="camp-status-line"><span>🪙 <b id="campGold">90</b> gold</span><span>✦ <b id="campWins">0</b> boss victories</span><span>🎒 <b id="campItems">0</b> owned items</span></div>
     </div>
-    <div class="camp-grounds refuge-grounds">
+    <section id="campJourney" class="camp-journey" aria-label="Your next adventures" aria-live="polite"></section>
+     <div class="camp-grounds refuge-grounds">
      <div class="camp-ground-heading refuge-heading"><span class="eyebrow">THE REFUGE · EXPLORE THE GROUNDS</span><span class="refuge-hint">Select a building or its sign to enter</span></div>
      <div class="refuge-map" aria-label="Illustrated Emberfall Refuge with interactive buildings">
       <div class="refuge-ambience" aria-hidden="true"><span class="refuge-lantern one"></span><span class="refuge-lantern two"></span><span class="refuge-lantern three"></span><span class="refuge-ember a"></span><span class="refuge-ember b"></span><span class="refuge-ember c"></span><span class="refuge-ember d"></span><span class="refuge-ember e"></span></div>
@@ -81,7 +83,15 @@
      <div class="battle-tag"><span class="live-dot"></span><span id="phaseLabel">READY</span></div>
      <div id="combatTempo" class="combat-tempo hidden" aria-hidden="true"><span class="combat-tempo-icon">◈</span> REPOSITIONING <strong>70% SPEED</strong></div>
      <div id="announcement" class="announcement" aria-live="polite"></div>
-     <div class="overlay hidden" id="overlay">
+     <section class="harvest-panel hidden" id="harvestPanel" aria-label="Cleared arena gathering">
+       <span class="eyebrow">GATHERING GROUNDS · POST-BATTLE</span>
+       <h2 id="harvestHeading">Cleared arena</h2>
+       <p id="harvestProgress" aria-live="polite"></p>
+       <div id="harvestList" class="harvest-list" role="group" aria-label="Harvestable resource nodes"></div>
+       <p id="harvestStatus" class="harvest-status" aria-live="polite"></p>
+       <div class="harvest-actions"><button id="harvestCollectBtn" class="primary-btn" type="button">Gather resource</button><button id="harvestReturnBtn" class="quiet-btn" type="button">Return to Camp</button></div>
+      </section>
+      <div class="overlay hidden" id="overlay">
       <div class="overlay-content" id="overlayContent" tabindex="-1"></div>
      </div>
     </div>
@@ -113,6 +123,7 @@
     <div class="workshop-shell">
       <aside class="workshop-rail" aria-label="Travel between locations">
         <div class="workshop-rail-header"><span class="workshop-rail-emblem" aria-hidden="true">✦</span><strong>Your Stronghold</strong><small>Every hall serves your company. Choose where to prepare for the next expedition.</small></div>
+        <div class="workshop-find"><label for="workshopFind">FIND A LOCATION <span class="workshop-shortcut">/</span></label><input id="workshopFind" type="search" placeholder="Search the stronghold…" autocomplete="off" aria-label="Search Refuge locations"></div>
         <div class="workshop-mobile-jump"><label for="workshopJump">TRAVEL TO</label><select id="workshopJump" aria-label="Travel to another Refuge location"><option value="party">♜ Party</option><option value="heroes">⚔ Heroes & Gear</option><option value="talents">✧ Talent Trees</option><option value="pack">🎒 Equipment Bag</option><option value="craft">⚒ Forge & Alchemy</option><option value="skills">✦ Account Skills</option><option value="salvage">⛏ Salvaging Station</option><option value="enchant">✧ Enchanting Forge</option><option value="slayer">🎯 Bounty Board</option><option value="delving">🗝 Delving Gate</option><option value="loot">☠ Boss Ledger</option><option value="shop">🪙 Quartermaster</option><option value="backup">📜 Save Archive</option></select></div>
         <nav class="workshop-nav" id="workshopTabs" role="tablist" aria-label="Company management sections"><div class="workshop-nav-group" role="presentation"><span class="workshop-nav-group-label">THE COMPANY</span><button type="button" data-tab="party"><span class="tab-symbol" aria-hidden="true">♜</span><span class="tab-name">Party</span><span class="tab-pointer" aria-hidden="true">›</span></button><button type="button" data-tab="heroes"><span class="tab-symbol" aria-hidden="true">⚔</span><span class="tab-name">Heroes & Gear</span><span class="tab-pointer" aria-hidden="true">›</span></button><button type="button" data-tab="talents"><span class="tab-symbol" aria-hidden="true">✧</span><span class="tab-name">Talent Trees</span><span class="tab-pointer" aria-hidden="true">›</span></button><button type="button" data-tab="pack"><span class="tab-symbol" aria-hidden="true">🎒</span><span class="tab-name">Equipment Bag</span><span class="tab-pointer" aria-hidden="true">›</span></button></div>
 <div class="workshop-nav-group" role="presentation"><span class="workshop-nav-group-label">THE GUILD QUARTER</span><button type="button" data-tab="craft"><span class="tab-symbol" aria-hidden="true">⚒</span><span class="tab-name">Forge & Alchemy</span><span class="tab-pointer" aria-hidden="true">›</span></button><button type="button" data-tab="skills"><span class="tab-symbol" aria-hidden="true">✦</span><span class="tab-name">Account Skills</span><span class="tab-pointer" aria-hidden="true">›</span></button><button type="button" data-tab="salvage"><span class="tab-symbol" aria-hidden="true">⛏</span><span class="tab-name">Salvaging Station</span><span class="tab-pointer" aria-hidden="true">›</span></button><button type="button" data-tab="enchant"><span class="tab-symbol" aria-hidden="true">✧</span><span class="tab-name">Enchanting Forge</span><span class="tab-pointer" aria-hidden="true">›</span></button></div>
@@ -126,6 +137,7 @@
           <span class="workshop-sigil" id="workshopSigil" aria-hidden="true">⚔</span>
         </header>
         <div class="workshop-quickstats" aria-label="Company resources"><span>🪙 <b id="workshopGold">0</b> Gold</span><span>🎒 <b id="workshopItems">0</b> Owned items</span><span>🎯 <b id="workshopMarks">0</b> Bounty Marks</span><span>♜ <b id="workshopFormation">4/4</b> Active heroes</span></div>
+        <section id="workshopGuide" class="workshop-guide" aria-label="Location objectives and shortcuts"></section>
         <div id="workshopBody" class="workshop-body" role="tabpanel" tabindex="0"></div>
         <div class="workshop-bottom">Your progress is saved in this browser. Visit the Save Archive to export a backup. <span class="save-warning">Storage unavailable — changes may not persist.</span></div>
       </div>
@@ -142,7 +154,7 @@
 (function(){
  var shown=false;
  function showRecovery(){
-  if(shown||document.documentElement.dataset.emberfallReady==='4.17.0')return;
+  if(shown||document.documentElement.dataset.emberfallReady==='4.20.0')return;
   shown=true;
   var overlay=document.getElementById('overlay');
   var content=document.getElementById('overlayContent');
@@ -152,7 +164,7 @@
   content.innerHTML='<div class="overlay-emblem">⚔</div><h1>Emberfall did not finish loading</h1><p>Safari may have kept an older game file. Your locally saved heroes and items have not been deleted.</p><button type="button" id="reloadGame" class="primary-btn large">Reload the Game</button><p class="encounter-controls">If the problem continues, close this tab and reopen Emberfall using its website address.</p>';
   document.getElementById('reloadGame').addEventListener('click',function(){
    var path=window.location.pathname;
-   window.location.replace(path+'?refresh=4.17.0-'+Date.now());
+   window.location.replace(path+'?refresh=4.20.0-'+Date.now());
   });
  }
  window.addEventListener('error',function(event){
@@ -160,12 +172,12 @@
   if(/module|import|export|syntaxerror/i.test(message)||String(event.filename||'').includes('/emberfall/src/'))showRecovery();
  });
  window.addEventListener('unhandledrejection',function(event){
-  if(document.documentElement.dataset.emberfallReady!=='4.17.0')showRecovery();
+  if(document.documentElement.dataset.emberfallReady!=='4.20.0')showRecovery();
  });
  window.addEventListener('load',function(){
   setTimeout(showRecovery,4500);
  });
 })();
 </script>
-<script type="module" src="./src/game.js?v=4.17.0"></script>
+<script type="module" src="./src/game.js?v=4.20.0"></script>
 </body></html>
