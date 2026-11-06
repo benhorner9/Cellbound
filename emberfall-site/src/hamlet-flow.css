@@ -1,0 +1,153 @@
+/* v4.22 — Darkest Dungeon-inspired navigation rhythm, original Emberfall art.
+   Town -> a purpose-built room -> mission preparation -> fight -> debrief. */
+#app[data-view="camp"] #companyDock,
+#app[data-view="workshop"] #companyDock{display:grid}
+#app[data-view="battle"] #companyDock{display:none}
+.company-dock{
+ display:none;position:fixed;z-index:60;bottom:0;left:50%;transform:translateX(-50%);
+ width:min(100%,1560px);gap:12px;align-items:center;
+ grid-template-columns:minmax(135px,.76fr) minmax(0,3fr) minmax(126px,.8fr);
+ padding:9px clamp(12px,2vw,26px) max(9px,env(safe-area-inset-bottom));
+ border:1px solid #b8a177;border-bottom:0;border-radius:12px 12px 0 0;
+ background:linear-gradient(175deg,#263a32f7,#142923fc);
+ box-shadow:0 -7px 28px #06150fcf;backdrop-filter:blur(10px);
+}
+#app[data-view="camp"] .camp-screen,
+#app[data-view="workshop"] #workshop.camp-page{padding-bottom:112px}
+#app[data-view="camp"] footer,#app[data-view="workshop"] footer{margin-bottom:84px}
+.company-dock-heading{display:flex;flex-direction:column;gap:5px}
+.company-dock-heading strong{font:700 16px/1.1 Georgia,serif;color:#f4ddb0}
+.company-dock-heading .eyebrow{color:#ccb787;font-size:9px;letter-spacing:.13em}
+.company-dock-heroes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;min-width:0}
+.company-dock-hero{display:flex;align-items:center;min-width:0;min-height:59px;gap:8px;padding:7px 9px;
+ border:1px solid #697a61;border-radius:7px;background:#31443a;
+ color:#ead8b0;text-align:left;touch-action:manipulation}
+.company-dock-hero[aria-pressed="true"]{border-color:#edcf8a;background:#5c5b3f;box-shadow:inset 0 0 0 1px #eed99a60}
+.company-dock-hero:hover,.company-dock-hero:focus-visible{border-color:#ffe0a2;background:#4c654d;outline:2px solid #f4d7a1;outline-offset:2px}
+.company-dock-portrait{display:grid;place-items:center;flex:0 0 35px;width:35px;height:38px;border:1px solid #ac976a;border-radius:5px;background:#1b302c;font:23px Georgia,serif}
+.company-dock-data{display:flex;min-width:0;flex-direction:column;gap:3px}
+.company-dock-data strong{font:700 clamp(11px,1vw,15px) Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.company-dock-data small{font:10px system-ui,sans-serif;color:#c1d1c0;white-space:nowrap}
+.company-dock-town,.company-dock-embark{min-height:43px;padding:9px 12px;border:1px solid #bba16a;border-radius:5px;background:#405343;color:#f3e0bd;font:700 13px Georgia,serif}
+.company-dock-embark{min-height:61px;background:linear-gradient(#977249,#5e4632);font-size:17px;border-color:#f1cd89}
+.company-dock-embark:hover,.company-dock-town:hover,.company-dock-embark:focus-visible,.company-dock-town:focus-visible{background:#856a45;outline:2px solid #f5d8a0;outline-offset:2px}
+/* An inventory's sticky equip/sell toolbar must sit ABOVE the persistent
+   party dock, never underneath its tap surface on Safari or desktop. */
+#workshop.camp-page .inventory-actions{bottom:calc(100px + env(safe-area-inset-bottom));}
+#workshop.camp-page .inventory-actions [data-action],
+#workshop.camp-page .workshop-body [data-action]{scroll-margin-bottom:135px}
+/* A fixed quick-action tray above the party dock keeps Equip/Sell reachable
+   without scrolling past long item descriptions. Both bars have distinct,
+   non-overlapping hit regions on desktop, iPad and narrow phones. */
+#app[data-view="workshop"] #workshop.camp-page[data-location="pack"] .inventory-actions{
+ position:fixed;z-index:75;bottom:calc(110px + env(safe-area-inset-bottom));
+ left:auto;right:clamp(10px,3vw,44px);width:min(540px,calc(100vw - 20px));
+ margin:0;padding:9px 11px 11px;border:1px solid #bca371;
+ box-shadow:0 6px 24px #071510dd;order:initial;
+}
+#app[data-view="workshop"] #workshop.camp-page[data-location="pack"] .inventory-detail-panel{padding-bottom:116px}
+#app[data-view="workshop"] #workshop.camp-page[data-location="pack"] .inventory-detail-scroll{order:initial}
+@media(max-width:780px){
+ #app[data-view="workshop"] #workshop.camp-page[data-location="pack"] .inventory-actions{
+  bottom:calc(112px + env(safe-area-inset-bottom));right:10px;
+ }
+}
+/* Give the town the visual weight. Expedition decisions live only at Embark. */
+.camp-screen[data-camp-tab="home"] #campExpeditionPanel{display:none!important}
+.camp-screen[data-camp-tab="expeditions"] .camp-content{display:block}
+.camp-screen[data-camp-tab="expeditions"] #campExpeditionPanel{width:100%;max-width:1260px;margin:0 auto}
+.camp-screen[data-camp-tab="home"] .camp-building-area{width:100%}
+.camp-journey{padding:12px 15px;margin:17px 0 7px}
+.camp-journey-heading{margin-bottom:8px}
+.camp-journey-heading h2{font-size:20px}
+.camp-journey-heading p{max-width:620px}
+.camp-journey-route{min-height:96px;padding:10px;gap:8px}
+.camp-journey-stamp{width:31px;height:33px;font-size:17px}
+.camp-journey-copy strong{font-size:15px}
+.camp-journey-copy span{font-size:10px}
+.camp-journey-cta{padding-top:3px}
+.camp-nav{max-width:1460px;margin-left:auto;margin-right:auto}
+.camp-nav-links{gap:9px}
+.camp-nav-button{min-height:47px}
+.camp-nav-button[data-camp="expeditions"]{border-color:#bd955e;background:linear-gradient(#806344,#4e4534);color:#fae3b8}
+/* The live party strip replaces the duplicate roster panel. Preparation actions
+   live in the numbered staging areas, not a second row of generic menu buttons. */
+.camp-screen[data-camp-tab="home"] .camp-roster-panel{display:none}
+#campExpeditionPanel .picker-actions{display:none!important}
+/* The building itself is the destination. Its functional workstation appears
+   before any optional links to neighbouring quarters. */
+#workshop .workshop-guide{border-top:2px solid #aa9365;border-bottom:0;background:linear-gradient(125deg,#263d31,#192e2b)}
+#workshop .workshop-body{border-bottom:0}
+#workshop .workshop-guide-story strong{font-size:clamp(19px,1.8vw,24px)}
+/* Each mission is a coherent 'choose / prepare / embark' step, not an arbitrary list. */
+.embark-planning{margin:0 0 19px;padding:clamp(13px,2vw,22px);border:1px solid #b29b74;
+ border-radius:9px;background:linear-gradient(120deg,#314537,#1c342f)}
+.embark-planning-header{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin:0 0 13px}
+.embark-planning-header strong{font:700 22px Georgia,serif;color:#f7dfa9}
+.embark-planning-header small{color:#c3d4c6;font:12px system-ui,sans-serif}
+.embark-stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.embark-stage{min-width:0;padding:12px;border:1px solid #857c5b;border-radius:6px;background:#1b302c}
+.embark-stage .stage-label{display:block;margin-bottom:7px;color:#d7b77c;font:700 10px system-ui,sans-serif;letter-spacing:.13em}
+.embark-stage h3{margin:0 0 5px;color:#f5dfa9;font:700 17px Georgia,serif}
+.embark-stage p{margin:0 0 10px;font:12px/1.5 system-ui,sans-serif;color:#d0dacc}
+.embark-stage[aria-current="step"]{border-color:#d8bc80;background:linear-gradient(#3a513d,#283c32)}
+.embark-stage-buttons{display:flex;flex-wrap:wrap;gap:7px}
+.embark-stage-buttons button,.embark-hero{
+ min-height:44px;padding:9px;border:1px solid #a99775;border-radius:5px;
+ color:#f0ddb3;background:#405647;font:700 12px Georgia,serif;cursor:pointer;
+}
+.embark-stage-buttons button:hover,.embark-stage-buttons button:focus-visible,
+.embark-hero:hover,.embark-hero:focus-visible{background:#61734f;outline:2px solid #f5d8a2;outline-offset:2px}
+.embark-party{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.embark-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;padding:7px 3px;font-size:10px}
+.embark-hero span{font-size:23px}
+.embark-hero strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.embark-hero small{font:9px system-ui,sans-serif;color:#c5d7c5}
+.embark-field-warning{color:#f4cba4!important}
+.camp-debrief{margin:14px 0 17px;padding:16px clamp(13px,2vw,22px);border:1px solid #ceac71;
+ border-left:5px solid #e2b978;border-radius:6px;background:linear-gradient(110deg,#344d3b,#1c2f29)}
+.camp-debrief[hidden]{display:none!important}
+.camp-debrief .eyebrow{font-size:10px;letter-spacing:.14em;color:#e9c88c}
+.camp-debrief h2{font:700 24px Georgia,serif;color:#fbe0a9;margin:4px 0}
+.camp-debrief p{font:13px/1.5 system-ui,sans-serif;color:#e0e2cc;margin:5px 0 11px}
+.camp-debrief-actions{display:flex;flex-wrap:wrap;gap:9px}
+.camp-debrief-actions button{min-height:44px;padding:9px 13px;border:1px solid #ac986f;border-radius:6px;background:#3e5746;font:700 12px Georgia,serif;color:#fff0cb}
+.camp-debrief-actions button:hover,.camp-debrief-actions button:focus-visible{outline:2px solid #ffe0a2;background:#637652}
+@media(max-width:1070px){
+ .company-dock{grid-template-columns:96px minmax(0,1fr) 115px;gap:8px;padding-left:9px;padding-right:9px}
+ .company-dock-heading strong{display:none}
+ .company-dock-hero{padding:6px;gap:5px}
+ .company-dock-portrait{width:30px;height:34px;flex-basis:30px;font-size:20px}
+ .company-dock-data small{font-size:9px}
+ .embark-stages{gap:7px}
+}
+@media(max-width:780px){
+ .company-dock{grid-template-columns:1fr auto;grid-template-areas:"heroes embark" "town embark";gap:5px;padding:6px 9px max(6px,env(safe-area-inset-bottom))}
+ .company-dock-heading{grid-area:town;flex-direction:row;align-items:center}
+ .company-dock-heading .eyebrow{display:none}
+ .company-dock-heading .company-dock-town{min-height:30px;padding:5px 11px}
+ .company-dock-heroes{grid-area:heroes;gap:4px}
+ .company-dock-hero{min-height:42px;padding:5px 3px;flex-direction:column;gap:2px}
+ .company-dock-portrait{height:25px;width:25px;flex-basis:auto;font-size:17px}
+ .company-dock-data strong{font-size:10px}
+ .company-dock-data small{display:none}
+ .company-dock-embark{grid-area:embark;min-height:76px;max-width:95px;padding:6px;font-size:14px}
+ #app[data-view="camp"] .camp-screen,#app[data-view="workshop"] #workshop.camp-page{padding-bottom:125px}
+ .embark-stages{grid-template-columns:1fr}
+ .embark-stage{padding:10px}
+ .embark-stage[aria-current="step"]{order:0}
+ .embark-hero{flex-direction:row;gap:5px;font-size:11px}
+ .embark-hero span{font-size:18px}
+ .camp-journey-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .camp-journey-heading p{display:none}
+ .camp-debrief h2{font-size:21px}
+}
+@media(max-width:440px){
+ .company-dock-hero{min-height:40px}
+ .company-dock-town{font-size:11px}
+ .embark-party{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .embark-hero{flex-direction:column;font-size:9px}
+ .camp-journey-list{grid-template-columns:1fr}
+ .camp-journey-route{min-height:70px}
+}
+@media(prefers-reduced-motion:reduce){.company-dock button,.embark-planning button,.camp-debrief button{transition:none!important}}

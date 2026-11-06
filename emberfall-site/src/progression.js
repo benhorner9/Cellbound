@@ -1,6 +1,6 @@
 // Block 02: offline-local character development. Never trust this state for online trading or PvP.
-import {GATHER_MATERIALS,FIELD_GEAR,createHarvestSite,ensureGatherState,freshGatherState,validateGatherState} from './gathering.js?v=4.21.0';
-export {HARVEST_TYPES,HARVEST_AREAS,FIELD_TOOLS,FIELD_GEAR,fieldKitSnapshot,fieldGearBonusText,getHarvestSite,pendingHarvestSites,harvestStatus,harvestNode,toolUpgradeStatus,upgradeGatherTool} from './gathering.js?v=4.21.0';
+import {GATHER_MATERIALS,FIELD_GEAR,createHarvestSite,ensureGatherState,freshGatherState,validateGatherState} from './gathering.js?v=4.22.0';
+export {HARVEST_TYPES,HARVEST_AREAS,FIELD_TOOLS,FIELD_GEAR,fieldKitSnapshot,fieldGearBonusText,getHarvestSite,pendingHarvestSites,harvestStatus,harvestNode,toolUpgradeStatus,upgradeGatherTool} from './gathering.js?v=4.22.0';
 export const PROFILE_KEY='emberfall-company-v1';
 export const MAX_LEVEL=6;
 export const HERO_IDS=Object.freeze(['knight','ranger','mage','cleric']);

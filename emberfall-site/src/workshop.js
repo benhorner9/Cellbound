@@ -1,13 +1,13 @@
 import {
  HERO_IDS,HERO_NAMES,ITEM_DEFS,TALENTS,PARTY_ROLES,PARTY_SIZE,TALENT_RESPEC_COST,partyOrder,swapPartyMembers,respecTalents,SLOTS,SLOT_NAMES,SLOT_ICONS,QUARTERMASTER,DROP_TABLE,MAX_LEVEL,BOSSES,bossDropTable,canChallenge,
  xpNeeded,talentPoints,itemOwner,chooseTalent,equip,unequip,sell,buy,itemBonusText,writeProfile,setProgress,SET_DEFS,itemSet,SKILL_CAP,SKILL_IDS,skillXpNeeded,CRAFT_RECIPES,FUTURE_CRAFTS,MATERIAL_DEFS,ALCHEMY_EFFECTS,craftingStatus,craftRecipe,prepareElixir,ACCOUNT_SKILL_IDS,ACCOUNT_SKILLS,FIELD_TOOLS,FIELD_GEAR,fieldGearBonusText,fieldKitSnapshot,toolUpgradeStatus,upgradeGatherTool,SLAYER_CONTRACTS,SLAYER_TASKS,BOUNTY_TASKS,bountyStageToken,SLAYER_REWARDS,SLAYER_REROLL_COST,slayerTask,slayerStreakBonus,takeSlayerContract,claimSlayerContract,abandonSlayerContract,rerollSlayerContract,purchaseSlayerReward,salvageStatus,salvageItem,ENCHANTMENTS,enchantingStatus,enchantEquipment,DELVE_ROUTES,currentDelveStage,delveStageToken,startDelve,abandonDelve,claimDelve
-} from './progression.js?v=4.21.0';
+} from './progression.js?v=4.22.0';
 import {
  readBuilds,writeBuilds,saveBuild,buildStatus,applyBuild,compareItem,itemDetails,deltaLabel,
  exportBackup,inspectBackup,restoreBackup
-} from './builds.js?v=4.21.0';
-import {polishEnter,polishFeedback} from './polish.js?v=4.21.0';
-import {venueSummary} from './experience.js?v=4.21.0';
+} from './builds.js?v=4.22.0';
+import {polishEnter,polishFeedback} from './polish.js?v=4.22.0';
+import {venueSummary} from './experience.js?v=4.22.0';
 
 // Pure DOM: no canvas dependencies. The workshop is local-only and never implies online ownership.
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -628,7 +628,11 @@ export function mountWorkshop({profile,storage,onOpen=()=>{},onClose=()=>{},onCh
   return result;
  }
  function open(tab='heroes',selected='knight'){
-  if(!root.classList.contains('hidden'))return;
+  if(!root.classList.contains('hidden')){
+   // Party portrait selection is an active hero-inspection journey, not a tab.
+   if(HERO_IDS.includes(selected)){heroId=selected;equipmentSlot=null;selectedTalentId=null;partyPosition=Math.max(0,partyOrder(profile).indexOf(selected));}
+   enterBuilding(tab);return;
+  }
   returnFocus=document.activeElement;
   if(tabNames[tab])current=tab;
    confirmEnchantId=null;confirmDelveAbandon=false;

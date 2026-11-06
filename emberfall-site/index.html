@@ -3,13 +3,14 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#132323"><meta name="description" content="Heroes of Emberfall — an original hand-drawn inspired four-hero fantasy RPG with an Emberguard camp and boss expeditions.">
 <title>Heroes of Emberfall · The Thornwarden</title>
-<link rel="stylesheet" href="./src/style.css?v=4.21.0">
+<link rel="stylesheet" href="./src/style.css?v=4.22.0">
 <link rel="stylesheet" href="./src/mobile-testing.css?v=1" media="(max-width: 600px) and (pointer: coarse), (pointer: coarse) and (orientation: landscape) and (max-height: 540px) and (max-width: 950px)">
-<link rel="stylesheet" href="./src/refuge.css?v=4.21.0">
-<link rel="stylesheet" href="./src/locations.css?v=4.21.0">
-<link rel="stylesheet" href="./src/polish.css?v=4.21.0">
-<link rel="stylesheet" href="./src/experience.css?v=4.21.0">
-<link rel="stylesheet" href="./src/venue-world.css?v=4.21.0">
+<link rel="stylesheet" href="./src/refuge.css?v=4.22.0">
+<link rel="stylesheet" href="./src/locations.css?v=4.22.0">
+<link rel="stylesheet" href="./src/polish.css?v=4.22.0">
+<link rel="stylesheet" href="./src/experience.css?v=4.22.0">
+<link rel="stylesheet" href="./src/venue-world.css?v=4.22.0">
+<link rel="stylesheet" href="./src/hamlet-flow.css?v=4.22.0">
 </head><body>
 <div class="app" id="app" data-view="camp">
  <header class="topbar">
@@ -33,8 +34,8 @@
 
  <main id="campScreen" class="camp-screen" data-camp-tab="home" aria-label="Emberguard Camp home base">
   <nav class="camp-nav" aria-label="Camp navigation">
-   <div class="camp-nav-links"><button id="campNavHome" data-camp="home" class="camp-nav-button active" type="button" aria-pressed="true">⌂ Camp</button><button id="campNavExpeditions" data-camp="expeditions" class="camp-nav-button" type="button" aria-pressed="false">⚔ Expeditions</button></div>
-   <div class="camp-nav-note">Build your company before you enter battle</div>
+   <div class="camp-nav-links"><button id="campNavHome" data-camp="home" class="camp-nav-button active" type="button" aria-pressed="true">⌂ Refuge</button><button id="campNavExpeditions" data-camp="expeditions" class="camp-nav-button" type="button" aria-pressed="false">⚔ Embark</button></div>
+   <div class="camp-nav-note">Choose a building, prepare your party, then embark</div>
   </nav>
   <div class="camp-content">
    <section class="camp-building-area" aria-label="The Emberguard stronghold">
@@ -44,7 +45,7 @@
      <p>Beyond the ruins, your heroes have a home. Explore the lantern-lit grounds, prepare your company, collect contracts and set forth for the next hunt.</p>
      <div class="camp-status-line"><span>🪙 <b id="campGold">90</b> gold</span><span>✦ <b id="campWins">0</b> boss victories</span><span>🎒 <b id="campItems">0</b> owned items</span></div>
     </div>
-    <section id="campJourney" class="camp-journey" aria-label="Your next adventures" aria-live="polite"></section>
+    <section id="campDebrief" class="camp-debrief" aria-label="Last expedition report" aria-live="polite" hidden></section>
      <div class="camp-grounds refuge-grounds">
      <div class="camp-ground-heading refuge-heading"><span class="eyebrow">THE REFUGE · EXPLORE THE GROUNDS</span><span class="refuge-hint">Select a building or its sign to enter</span></div>
      <div class="refuge-map" aria-label="Illustrated Emberfall Refuge with interactive buildings">
@@ -71,6 +72,7 @@
      </div>
      <div class="refuge-status"><span>🎯 <b>Active contract:</b> <span id="refugeBountyStatus">Checking the Bounty Board</span></span><span>⚔ <b>Next expedition:</b> <span id="refugeSelectedHunt">Preparing</span></span><button type="button" data-camp="expeditions">Go to the War Table →</button></div>
     </div>
+    <section id="campJourney" class="camp-journey" aria-label="Your next adventures" aria-live="polite"></section>
     <div class="camp-roster-panel"><div><span class="eyebrow">THE EMBERGUARD</span><h2>Your active party</h2></div><div class="camp-roster" id="campRoster" aria-label="Current party"></div></div>
    </section>
    <aside id="campExpeditionPanel" class="camp-expedition-panel" aria-label="Expedition board"><div id="campExpeditionBody"></div></aside>
@@ -138,14 +140,19 @@
           <span class="workshop-sigil" id="workshopSigil" aria-hidden="true">⚔</span>
         </header>
         <div class="workshop-quickstats" aria-label="Company resources"><span>🪙 <b id="workshopGold">0</b> Gold</span><span>🎒 <b id="workshopItems">0</b> Owned items</span><span>🎯 <b id="workshopMarks">0</b> Bounty Marks</span><span>♜ <b id="workshopFormation">4/4</b> Active heroes</span></div>
-        <section id="workshopGuide" class="workshop-guide" aria-label="Location objectives and shortcuts"></section>
         <div id="workshopBody" class="workshop-body" role="region" aria-labelledby="workshopHeading" tabindex="0"></div>
+        <section id="workshopGuide" class="workshop-guide" aria-label="Nearby locations and next steps"></section>
          <div class="venue-exit"><div><span class="eyebrow">THE REFUGE AWAITS</span><strong>Finished here?</strong><p>Your adventuring company is ready whenever you are.</p></div><button type="button" id="workshopReturn" class="venue-exit-button">← Walk back to the Refuge</button></div>
         <div class="workshop-bottom">Your progress is saved in this browser. Visit the Save Archive to export a backup. <span class="save-warning">Storage unavailable — changes may not persist.</span></div>
       </div>
     </div>
   </div>
 </section>
+ <section id="companyDock" class="company-dock" aria-label="Your active adventuring party">
+  <div class="company-dock-heading"><div><span class="eyebrow">THE EMBERGUARD</span><strong>Ready your company</strong></div><button type="button" class="company-dock-town" data-dock-go="home">⌂ Refuge</button></div>
+  <div id="companyDockHeroes" class="company-dock-heroes" role="group" aria-label="Choose a hero to inspect equipment and talents"></div>
+  <button type="button" id="companyDockEmbark" class="company-dock-embark" data-dock-go="expeditions">⚔ Embark <span aria-hidden="true">›</span></button>
+ </section>
  <div id="polishFeedback" role="status" aria-live="polite" aria-atomic="true"></div>
  <footer><span>Heroes of Emberfall · An original fantasy game in development</span><span>Playable on phone, iPad and desktop</span></footer>
 </div>
@@ -156,7 +163,7 @@
 (function(){
  var shown=false;
  function showRecovery(){
-  if(shown||document.documentElement.dataset.emberfallReady==='4.21.0')return;
+  if(shown||document.documentElement.dataset.emberfallReady==='4.22.0')return;
   shown=true;
   var overlay=document.getElementById('overlay');
   var content=document.getElementById('overlayContent');
@@ -166,7 +173,7 @@
   content.innerHTML='<div class="overlay-emblem">⚔</div><h1>Emberfall did not finish loading</h1><p>Safari may have kept an older game file. Your locally saved heroes and items have not been deleted.</p><button type="button" id="reloadGame" class="primary-btn large">Reload the Game</button><p class="encounter-controls">If the problem continues, close this tab and reopen Emberfall using its website address.</p>';
   document.getElementById('reloadGame').addEventListener('click',function(){
    var path=window.location.pathname;
-   window.location.replace(path+'?refresh=4.21.0-'+Date.now());
+   window.location.replace(path+'?refresh=4.22.0-'+Date.now());
   });
  }
  window.addEventListener('error',function(event){
@@ -174,12 +181,12 @@
   if(/module|import|export|syntaxerror/i.test(message)||String(event.filename||'').includes('/emberfall/src/'))showRecovery();
  });
  window.addEventListener('unhandledrejection',function(event){
-  if(document.documentElement.dataset.emberfallReady!=='4.21.0')showRecovery();
+  if(document.documentElement.dataset.emberfallReady!=='4.22.0')showRecovery();
  });
  window.addEventListener('load',function(){
   setTimeout(showRecovery,4500);
  });
 })();
 </script>
-<script type="module" src="./src/game.js?v=4.21.0"></script>
+<script type="module" src="./src/game.js?v=4.22.0"></script>
 </body></html>
