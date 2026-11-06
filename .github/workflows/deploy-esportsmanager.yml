@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: esportsmanager-isolated-ftps
-  cancel-in-progress: false
+  cancel-in-progress: ${{ contains(github.event.head_commit.message, 'B0.2 preflight recovery') }}
 
 jobs:
   publish:
@@ -51,7 +51,7 @@ jobs:
         shell: bash
         run: |
           npm install --no-save --package-lock=false playwright@1.56.1
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
 
       - name: Verify all seven screens and legacy saves BEFORE deploying
         shell: bash
