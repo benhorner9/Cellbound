@@ -37,6 +37,7 @@ jobs:
           test -s esportsmanager-site/favicon.svg
           test -s esportsmanager-site/src/world.js
           test -s esportsmanager-site/src/engine.js
+          test -s esportsmanager-site/src/commands.js
           test -s esportsmanager-site/src/app.js
           test -s esportsmanager-site/src/styles.css
           test -s esportsmanager-site/package.json
@@ -76,7 +77,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist/src
           cp esportsmanager-site/index.html esportsmanager-site/favicon.svg dist/
-          cp esportsmanager-site/src/world.js esportsmanager-site/src/engine.js esportsmanager-site/src/app.js esportsmanager-site/src/styles.css dist/src/
+          cp esportsmanager-site/src/world.js esportsmanager-site/src/engine.js esportsmanager-site/src/commands.js esportsmanager-site/src/app.js esportsmanager-site/src/styles.css dist/src/
           node --input-type=module <<'NODE'
           import {writeFileSync} from 'node:fs';
           writeFileSync('dist/build-meta.json', JSON.stringify({
@@ -86,7 +87,7 @@ jobs:
             target:'/esportsmanager/',
             bridgeCommit:process.env.GITHUB_SHA,
             createdAt:new Date().toISOString(),
-            version:'starter-v1.1-world-v2'
+            version:'starter-v1.2-portable-commands'
           },null,2)+'\n');
           NODE
 
@@ -130,11 +131,11 @@ jobs:
           done
           test "$matched" = "1"
           mkdir -p /tmp/esportsmanager-hosted/src
-          for asset in index.html favicon.svg src/world.js src/engine.js src/app.js src/styles.css; do
+          for asset in index.html favicon.svg src/world.js src/engine.js src/commands.js src/app.js src/styles.css; do
             curl --fail --silent --show-error --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/esportsmanager-hosted/$asset"
             cmp -s "dist/$asset" "/tmp/esportsmanager-hosted/$asset"
           done
-          for js in src/world.js src/engine.js src/app.js; do
+          for js in src/world.js src/engine.js src/commands.js src/app.js; do
             mime="$(curl -LfsS -o /dev/null -w '%{content_type}' "$base/$js?verify=$GITHUB_SHA")"
             case "$(echo "$mime" | cut -d ';' -f1)" in
               text/javascript|application/javascript|application/x-javascript|text/ecmascript|application/ecmascript) echo "PASS JS MIME: $js";;
