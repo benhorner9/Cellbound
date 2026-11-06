@@ -1,4 +1,4 @@
-import {WORLD_VERSION,packLegacy,hydrateWorld,validateWorld,reconcileContracts,advanceSeason} from './world.js?v=1.1.0';
+import {WORLD_VERSION,packLegacy,hydrateWorld,validateWorld,reconcileContracts,advanceSeason,prepareCpuOrganisations} from './world.js?v=1.3.0';
 // Esports Empire — deterministic, self-contained starter simulation.
 // Financial values are stored in integer pence. Fictional organisations and people.
 export const GAME_KEY = 'esports-empire-save-v1';
@@ -59,7 +59,7 @@ export function createGame(name='Apex Esports',tag='APX',colour='#9d55ed',showca
   s.products[0].stock=3000;s.products[0].sold=1200;
   s.facilities=4;s.officeRent=cash(1800);
  }
- return hydrateWorld(packLegacy(s));
+ return prepareCpuOrganisations(hydrateWorld(packLegacy(s)));
 }
 export function nextOpponent(s){if(s.week<=7)return s.league[(s.week-1)%7];if(s.week<=9)return s.league[(s.week-1)%7];return null;}
 export function runway(s){const a=s.weeklyRecords.slice(-4);if(!a.length)return null;const net=a.reduce((x,r)=>x+r.net,0)/a.length;return net>=0?null:Math.max(0,round(s.cash/-net));}
@@ -172,8 +172,8 @@ export function perform(s,action,payload={}){
  if(result?.ok&&s.version===VERSION)reconcileContracts(s);
  return result;
 }
-function simulateMatch(s){
- const rival=nextOpponent(s);if(!rival)return null;
+function simulateMatch(s,options={}){
+ const rival=options.cpu ? s.league.filter(r=>r.id!==s.world?.organisations[s.activeOrganisationId]?.id && r.id!==s.world?.leagues[Object.keys(s.world.leagues)[0]]?.participantIds[0])[(s.week-1)%6] : nextOpponent(s);if(!rival||s.week>9)return null;
  const base=s.players.reduce((a,p)=>a+p.skill+p.form*.1-p.fatigue*.13,0)/s.players.length;
  const coach=s.staff.some(x=>x.role==='Head Coach')?3:0;
  const synergy=s.teamChemistry*.065;
@@ -185,15 +185,15 @@ function simulateMatch(s){
  s.players.forEach(x=>{x.form=clamp(round(x.form+(won?2:-2)+(roll(s)-.5)*5),42,99);x.fatigue=clamp(x.fatigue+5,0,95);x.morale=clamp(x.morale+(won?3:-4),20,100);});
  const prize=won?cash(380):cash(80);
  s.results.unshift({week:s.week,opponent:rival.name,score:ours+'–'+theirs,won,chance:round(p*100),prize,summary:won?'Confident series win':'Hard-fought series loss'});
- rival.wins+=won?0:1;rival.losses+=won?1:0;
+ if(!options.cpu){rival.wins+=won?0:1;rival.losses+=won?1:0;}
  note(s,s.org+' '+(won?'defeated ':'fell to ')+rival.name+' ('+ours+'–'+theirs+').','match');
  return {won,opponent:rival.name,score:ours+'–'+theirs,prize,chance:round(p*100)};
 }
 const absoluteWeek=s=>(s.year-1)*52+s.week;
-function advanceWeekLegacy(s){
+function advanceWeekLegacy(s,options={}){
  if(!s||(s.version!==1&&s.version!==VERSION))throw new Error('Invalid save version');
  const completedWeek=s.week,completedYear=s.year;
- const match=simulateMatch(s);
+ const match=simulateMatch(s,options);
  let revenue=match?match.prize:0,expenses=0,fanGain=0,merchRevenue=0,creatorRevenue=0,sponsorRevenue=0,contentViews=0;
  const details=[];
  // Sponsorships pay per week and depend on creator activity delivering contracted integrations.
@@ -259,13 +259,15 @@ function advanceWeekLegacy(s){
    else note(s,pitch.name+' declined the current sponsorship offer.','deal');
  }
  s.pitches=s.pitches.filter(x=>x.resolve>absoluteWeek(s));
- for(const rival of s.league){rival.skill=clamp(rival.skill+(roll(s)>.88?1:0),50,94);rival.fans=round(rival.fans*(1.002+roll(s)*.006));if(roll(s)<.18)note(s,rival.name+' announced a new roster or commercial signing.','rival');}
+ if(!options.cpu)for(const rival of s.league){rival.skill=clamp(rival.skill+(roll(s)>.88?1:0),50,94);rival.fans=round(rival.fans*(1.002+roll(s)*.006));if(roll(s)<.18)note(s,rival.name+' announced a new roster or commercial signing.','rival');}
  const net=revenue-expenses;s.cash+=net;
  safe(s);
  const report={week:completedWeek,year:completedYear,match,revenue,expenses,net,fanGain,merchRevenue,creatorRevenue,sponsorRevenue,contentViews,details,cash:s.cash};
  s.weeklyRecords.push(report);s.lastReport=report;s.decisions=4;
- if(completedWeek===52){s.year=completedYear+1;s.week=1;s.season++;}
- else s.week=completedWeek+1;
+ if(!options.deferCalendar){
+  if(completedWeek===52){s.year=completedYear+1;s.week=1;s.season++;}
+  else s.week=completedWeek+1;
+ }
  if(completedWeek===12){note(s,'Season complete! Review your organisation and continue into the next calendar.','event');}
  if(s.cash<0)note(s,'Critical cash warning: the organisation must restore solvency.','alert');
  return report;
@@ -319,7 +321,7 @@ export function validateSave(raw){
 }
 export function restoreSave(raw){
  if(!validateSave(raw))throw Error('Unsupported or damaged organisation save.');
- return hydrateWorld(raw.version===1?packLegacy(raw):raw);
+ return prepareCpuOrganisations(hydrateWorld(raw.version===1?packLegacy(raw):raw));
 }
 export function advanceWeek(s){
  const result=advanceWeekLegacy(s);
@@ -328,4 +330,42 @@ export function advanceWeek(s){
   if(result.week===52)advanceSeason(s.world);
  }
  return result;
+}
+
+
+// B0.4 World-wide weekly processing: apply the same base business and payroll
+// simulation to any organisation without advancing the shared calendar per club.
+// CPU clubs have independent deterministic seeds; human economic RNG is unchanged.
+export function simulateOrganisationWeek(state,organisationId){
+ if(state.version!==VERSION||!validateSave(state))throw Error('Valid World v2 state required.');
+ const organisation=state.world.organisations[organisationId];
+ const controller=state.world.controllers[organisation?.controllerId];
+ if(!organisation||!controller)throw Error('Unknown organisation.');
+ const founderId=state.activeOrganisationId,founderSeed=state.seed;
+ const isCpu=controller.type==='cpu';
+ let report;
+ try{
+  if(isCpu){
+   state.activeOrganisationId=organisationId;
+   state.seed=organisation.simulationSeed;
+  }
+  report=advanceWeekLegacy(state,{deferCalendar:true,cpu:isCpu});
+  if(isCpu)organisation.simulationSeed=state.seed;
+ }finally{
+  state.activeOrganisationId=founderId;
+  if(isCpu)state.seed=founderSeed;
+ }
+ reconcileContracts(state);
+ return report;
+}
+
+// Exactly one calendar advance for the eight-club sandbox. Atomic durability,
+// idempotency keys and server processing are explicitly the next steps B0.5/B7.
+export function finishWorldWeek(state){
+ if(state.version!==VERSION)throw Error('A World v2 save is required.');
+ const finishedWeek=state.week,finishedYear=state.year;
+ if(finishedWeek===52){
+  state.year=finishedYear+1;state.week=1;state.season++;
+  advanceSeason(state.world);
+ }else state.week=finishedWeek+1;
 }
