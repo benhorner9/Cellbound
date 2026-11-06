@@ -1,4 +1,4 @@
-import {WORLD_VERSION,packLegacy,hydrateWorld,validateWorld,reconcileContracts,advanceSeason} from './world.js';
+import {WORLD_VERSION,packLegacy,hydrateWorld,validateWorld,reconcileContracts,advanceSeason} from './world.js?v=1.1.0';
 // Esports Empire — deterministic, self-contained starter simulation.
 // Financial values are stored in integer pence. Fictional organisations and people.
 export const GAME_KEY = 'esports-empire-save-v1';
