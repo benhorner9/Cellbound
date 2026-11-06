@@ -201,6 +201,8 @@ function operations(){
  const cost=game.players.reduce((a,p)=>a+p.wage,0)+game.creators.reduce((a,p)=>a+p.wage,0)+game.staff.reduce((a,p)=>a+p.wage,0)+game.officeRent+game.contentBudget;
  const run=runway(game);
  const records=last(8).slice().reverse();
+ const opponents=Object.values(game.world.organisations).filter(o=>game.world.controllers[o.controllerId]?.type==='cpu');
+ const opponentRows=opponents.map(o=>'<tr><td><strong>'+e(o.name)+'</strong></td><td>'+e(game.world.controllers[o.controllerId].strategy)+'</td><td>'+money(o.cash)+'</td><td>'+count(o.fans)+'</td><td>'+count(o.staff.length)+'</td><td>'+o.teamWins+'–'+o.teamLosses+'</td><td>'+money(o.weeklyRecords.at(-1)?.net||0)+'</td></tr>').join('');
  return page('Business Operations','Headquarters · Staff · Finance · Strategy',bt(ic('plus')+' Hire Staff','open','hire','primary'))
  +hero('Organisation Headquarters','Build your people, facilities and financial resilience.',[['home','HQ Level '+game.facilities],['users',game.staff.length+' Employees'],['coins',money(cost)+' Weekly Fixed Costs']],'compact operations')
  +'<div class="kpi-row" style="margin-top:12px">'+metric('coins','Cash Available',money(game.cash))
@@ -213,14 +215,15 @@ function operations(){
  +pn(ic('archive')+' Financial Ledger',line('Creator payroll',money(game.creators.reduce((a,c)=>a+c.wage,0))+'/wk')+line('Esports payroll',money(game.players.reduce((a,p)=>a+p.wage,0))+'/wk')+
  line('Core operating costs',money(cost)+'/wk')+line('Sponsor revenue (4 weeks)',money(recentTotal(game,'sponsorRevenue')))+line('Trading revenue (4 weeks)',money(recentTotal(game,'merchRevenue')))+line('Trust',pct(game.trust)))
  +'</div>'
+ +'<div style="margin-top:12px">'+pn(ic('users')+' Rival Organisations — Live CPU Business','<p class="help">Rival clubs operate with their own cash, payroll, talent, contracts, content and sales. Figures update when you advance the week.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Organisation</th><th>Strategy</th><th>Cash</th><th>Fans</th><th>Staff</th><th>Match W–L</th><th>Latest Profit</th></tr></thead><tbody>'+opponentRows+'</tbody></table></div>','7 CPU clubs')+'</div>'
  +'<div class="grid2" style="margin-top:12px">'
  +pn(ic('chart')+' Weekly Trading History','<div class="table-wrap"><table class="data-table"><thead><tr><th>Week</th><th>Revenue</th><th>Expenses</th><th>Profit</th><th>Fans gained</th></tr></thead><tbody>'+records.map(x=>'<tr><td>W'+x.week+'</td><td>'+money(x.revenue)+'</td><td>'+money(x.expenses)+'</td><td class="'+(x.net>=0?'positive':'negative')+'">'+money(x.net)+'</td><td>'+count(x.fanGain)+'</td></tr>').join('')+'</tbody></table></div>'+(records.length?'':'<div class="empty">Advance the week to begin trading.</div>'))
- +pn(ic('archive')+' Save & Organisation Tools','<p class="help">Your progress automatically saves to this browser after each action. You can export a copy to move between devices.</p><div class="btn-group">'+bt(ic('archive')+' Export Save','export','','primary')+bt('Import Save','open','import','soft')+bt('Load Showcase','open','showcase','soft')+bt('Restart','open','reset','danger')+'</div><div class="divider"></div>'+line('Game version','Starter v1.1 · Save v2')+line('Season',game.season)+line('CEO decisions',game.decisions+' remaining'))
+ +pn(ic('archive')+' Save & Organisation Tools','<p class="help">Your progress automatically saves to this browser after each action. You can export a copy to move between devices.</p><div class="btn-group">'+bt(ic('archive')+' Export Save','export','','primary')+bt('Import Save','open','import','soft')+bt('Load Showcase','open','showcase','soft')+bt('Restart','open','reset','danger')+'</div><div class="divider"></div>'+line('Game version','Starter v1.3 · CPU Business')+line('Season',game.season)+line('CEO decisions',game.decisions+' remaining'))
  +'</div><div style="margin-top:12px">'+pn(ic('archive')+' Organisation News Log',game.industry.slice(0,9).map(n=>'<div class="news-item"><strong>'+e(n.text)+'</strong><small>Week '+n.week+' · '+e(n.kind)+'</small></div>').join(''))+'</div>';
 }
 function shell(){
  const activeScreen={hq:headquarters,esports,creators,content,merch,sponsors,operations}[view]();
- return '<div class="app-shell">'+header()+'<div class="shell-body"><nav class="sidebar" aria-label="Game navigation">'+nav()+'<div class="side-mark">♛</div></nav><main class="main" id="game-content">'+activeScreen+'<div class="version">ESPORTS EMPIRE · STARTER BUILD 1.1 · ALL-ROUND ORGANISATION</div></main></div></div>';
+ return '<div class="app-shell">'+header()+'<div class="shell-body"><nav class="sidebar" aria-label="Game navigation">'+nav()+'<div class="side-mark">♛</div></nav><main class="main" id="game-content">'+activeScreen+'<div class="version">ESPORTS EMPIRE · STARTER BUILD 1.3 · ALL-ROUND ORGANISATION</div></main></div></div>';
 }
 function modalMarkup(){
  if(!modal)return '';
