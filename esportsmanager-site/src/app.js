@@ -201,8 +201,8 @@ function operations(){
  +'</div><div style="margin-top:12px">'+pn(ic('archive')+' Organisation News Log',game.industry.slice(0,9).map(n=>'<div class="news-item"><strong>'+e(n.text)+'</strong><small>Week '+n.week+' · '+e(n.kind)+'</small></div>').join(''))+'</div>';
 }
 function shell(){
- const content={hq:headquarters,esports,creators,content,merch,sponsors,operations}[view]();
- return '<div class="app-shell">'+header()+'<div class="shell-body"><nav class="sidebar" aria-label="Game navigation">'+nav()+'<div class="side-mark">♛</div></nav><main class="main" id="game-content">'+content+'<div class="version">ESPORTS EMPIRE · STARTER BUILD 1.0 · ALL-ROUND ORGANISATION</div></main></div></div>';
+ const activeScreen={hq:headquarters,esports,creators,content,merch,sponsors,operations}[view]();
+ return '<div class="app-shell">'+header()+'<div class="shell-body"><nav class="sidebar" aria-label="Game navigation">'+nav()+'<div class="side-mark">♛</div></nav><main class="main" id="game-content">'+activeScreen+'<div class="version">ESPORTS EMPIRE · STARTER BUILD 1.0 · ALL-ROUND ORGANISATION</div></main></div></div>';
 }
 function modalMarkup(){
  if(!modal)return '';
