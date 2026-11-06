@@ -36,6 +36,14 @@
 #workshop.camp-page .inventory-actions{bottom:calc(100px + env(safe-area-inset-bottom));}
 #workshop.camp-page .inventory-actions [data-action],
 #workshop.camp-page .workshop-body [data-action]{scroll-margin-bottom:135px}
+/* Keep item actions in the reachable part of the Storehouse. The fixed
+   company strip can hide the *bottom* of a tall inspector on desktop/iPad;
+   show Equip/Sell directly below the item heading, before long descriptions.
+   This retains native scrolling and makes the actions tappable at all sizes. */
+#app[data-view="workshop"] #workshop.camp-page .inventory-detail-panel .inventory-actions{
+ order:1;position:relative;bottom:auto;z-index:4;margin:8px 0 12px;
+}
+#app[data-view="workshop"] #workshop.camp-page .inventory-detail-panel .inventory-detail-scroll{order:2;}
 /* Give the town the visual weight. Expedition decisions live only at Embark. */
 .camp-screen[data-camp-tab="home"] #campExpeditionPanel{display:none!important}
 .camp-screen[data-camp-tab="expeditions"] .camp-content{display:block}
