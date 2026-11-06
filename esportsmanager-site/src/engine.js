@@ -276,7 +276,7 @@ function validateLegacySave(o){
  const record=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
  const safeInt=Number.isSafeInteger;
  const finite=Number.isFinite;
- if(!record(o)||o.version!==VERSION||!safeInt(o.cash)||!safeInt(o.seed)||
+ if(!record(o)||o.version!==1||!safeInt(o.cash)||!safeInt(o.seed)||
     !safeInt(o.week)||o.week<1||o.week>52||!safeInt(o.year)||o.year<1||
     !safeInt(o.season)||o.season<1||!safeInt(o.decisions)||
     typeof o.org!=='string'||!o.org.trim()||typeof o.tag!=='string'||
