@@ -51,13 +51,13 @@ jobs:
           const {execFileSync}=require('node:child_process');
           const {readFileSync}=require('node:fs');
           const s=JSON.parse(readFileSync('emberfall-site/source.json','utf8'));
-          if(s.sourceCommit!=='894bc1809cf0d8dbc5bfb6f63d3eca0b3ade8bf0'||s.source!=='benhorner9/heroes-of-emberfall'||s.target!=='/emberfall/')throw Error('Unexpected Emberfall release provenance');
+          if(s.sourceCommit!=='61d2499d2e45af3321eee686d79b7348bb3306ec'||s.source!=='benhorner9/heroes-of-emberfall'||s.target!=='/emberfall/')throw Error('Unexpected Emberfall release provenance');
           if(!s.gitBlobs||Object.keys(s.gitBlobs).length!==19)throw Error('Incomplete canonical asset manifest');
           for(const [asset,expected] of Object.entries(s.gitBlobs)){
             const got=execFileSync('git',['hash-object','emberfall-site/'+asset],{encoding:'utf8'}).trim();
             if(got!==expected)throw Error('Canonical source mismatch for '+asset+' (expected '+expected+', got '+got+')');
           }
-          console.log('Verified 19 canonical Emberfall assets from commit 894bc1809cf0d8dbc5bfb6f63d3eca0b3ade8bf0');
+          console.log('Verified 19 canonical Emberfall assets from commit 61d2499d2e45af3321eee686d79b7348bb3306ec');
           NODE
       - name: Record other games before publishing
         shell: bash
