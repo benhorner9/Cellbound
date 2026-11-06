@@ -1,5 +1,5 @@
-import {GAME_KEY,VERSION,ROLES,TACTICS,ACTIVITIES,createGame,nextOpponent,runway,brandValue,recentTotal,pound,count,pct,validateSave,restoreSave} from './engine.js?v=1.2.0';
-import {applyCommand,simulateWeek,getControllerId} from './commands.js?v=1.2.0';
+import {GAME_KEY,VERSION,ROLES,TACTICS,ACTIVITIES,createGame,nextOpponent,runway,brandValue,recentTotal,pound,count,pct,validateSave,restoreSave} from './engine.js?v=1.3.0';
+import {applyCommand,simulateWeek,getControllerId} from './commands.js?v=1.3.0';
 const root=document.getElementById('app');
 let game=null,view='hq',modal=null,toast='',toastError=false,lastAdvance=0,showcase=false;
 const NAV=[['hq','home','HQ'],['esports','target','Esports'],['creators','users','Creators'],['content','video','Content'],['merch','shirt','Merch'],['sponsors','handshake','Sponsors'],['operations','settings','Operations']];
