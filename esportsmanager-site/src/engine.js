@@ -262,4 +262,42 @@ export function advanceWeek(s){
  if(s.cash<0)note(s,'Critical cash warning: the organisation must restore solvency.','alert');
  return report;
 }
-export function validateSave(o){return !!o&&o.version===VERSION&&Array.isArray(o.players)&&Array.isArray(o.creators)&&Array.isArray(o.weeklyRecords)&&Number.isInteger(o.cash);}
+// Read-only guard for the original v1 browser save. It must never mutate data or
+// reject valid founder/showcase exports made by the pre-B0.1 starter release.
+export function validateSave(o){
+ const record=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+ const safeInt=Number.isSafeInteger;
+ const finite=Number.isFinite;
+ if(!record(o)||o.version!==VERSION||!safeInt(o.cash)||!safeInt(o.seed)||
+    !safeInt(o.week)||o.week<1||o.week>52||!safeInt(o.year)||o.year<1||
+    !safeInt(o.season)||o.season<1||!safeInt(o.decisions)||
+    typeof o.org!=='string'||!o.org.trim()||typeof o.tag!=='string'||
+    typeof o.colour!=='string'||typeof o.tactic!=='string'||
+    typeof o.training!=='string'||typeof o.project!=='string'||
+    !finite(o.fans)||!finite(o.prestige)||!finite(o.trust)||
+    !finite(o.staffMood)||!finite(o.teamChemistry)||
+    !safeInt(o.officeRent)||!safeInt(o.contentBudget)||
+    !record(o.scheduled))return false;
+ const lists=['players','prospects','creators','creatorCandidates','sponsors',
+   'sponsorOffers','products','pitches','staff','league','weeklyRecords','results','industry'];
+ if(!lists.every(k=>Array.isArray(o[k])&&o[k].every(record)))return false;
+ if(o.players.length!==5||o.creators.length<1||o.league.length<1||
+    o.products.length<1)return false;
+ const people=[...o.players,...o.prospects];
+ if(!people.every(x=>typeof x.id==='string'&&typeof x.role==='string'&&
+    finite(x.skill)&&safeInt(x.wage)&&safeInt(x.contract)))return false;
+ const creators=[...o.creators,...o.creatorCandidates];
+ if(!creators.every(x=>typeof x.id==='string'&&typeof x.name==='string'&&
+    finite(x.audience)&&safeInt(x.wage)&&safeInt(x.contract)))return false;
+ if(!o.products.every(x=>typeof x.id==='string'&&safeInt(x.stock)&&x.stock>=0&&
+    safeInt(x.sold)&&x.sold>=0&&safeInt(x.producing)&&x.producing>=0&&
+    safeInt(x.price)&&safeInt(x.cost)))return false;
+ if(!o.sponsors.every(x=>safeInt(x.amount)&&safeInt(x.weeks)))return false;
+ if(!o.staff.every(x=>typeof x.role==='string'&&safeInt(x.wage)))return false;
+ if(!o.league.every(x=>typeof x.id==='string'&&typeof x.name==='string'&&
+    finite(x.skill)&&finite(x.fans)))return false;
+ if(!o.weeklyRecords.every(x=>safeInt(x.revenue)&&safeInt(x.expenses)&&
+    safeInt(x.net)&&safeInt(x.week)))return false;
+ if(o.lastReport!==null&&o.lastReport!==undefined&&!record(o.lastReport))return false;
+ return true;
+}
