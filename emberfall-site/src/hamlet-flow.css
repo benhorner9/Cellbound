@@ -36,14 +36,22 @@
 #workshop.camp-page .inventory-actions{bottom:calc(100px + env(safe-area-inset-bottom));}
 #workshop.camp-page .inventory-actions [data-action],
 #workshop.camp-page .workshop-body [data-action]{scroll-margin-bottom:135px}
-/* Keep item actions in the reachable part of the Storehouse. The fixed
-   company strip can hide the *bottom* of a tall inspector on desktop/iPad;
-   show Equip/Sell directly below the item heading, before long descriptions.
-   This retains native scrolling and makes the actions tappable at all sizes. */
-#app[data-view="workshop"] #workshop.camp-page .inventory-detail-panel .inventory-actions{
- order:1;position:relative;bottom:auto;z-index:4;margin:8px 0 12px;
+/* A fixed quick-action tray above the party dock keeps Equip/Sell reachable
+   without scrolling past long item descriptions. Both bars have distinct,
+   non-overlapping hit regions on desktop, iPad and narrow phones. */
+#app[data-view="workshop"] #workshop.camp-page[data-location="pack"] .inventory-actions{
+ position:fixed;z-index:75;bottom:calc(110px + env(safe-area-inset-bottom));
+ left:auto;right:clamp(10px,3vw,44px);width:min(540px,calc(100vw - 20px));
+ margin:0;padding:9px 11px 11px;border:1px solid #bca371;
+ box-shadow:0 6px 24px #071510dd;order:initial;
 }
-#app[data-view="workshop"] #workshop.camp-page .inventory-detail-panel .inventory-detail-scroll{order:2;}
+#app[data-view="workshop"] #workshop.camp-page[data-location="pack"] .inventory-detail-panel{padding-bottom:116px}
+#app[data-view="workshop"] #workshop.camp-page[data-location="pack"] .inventory-detail-scroll{order:initial}
+@media(max-width:780px){
+ #app[data-view="workshop"] #workshop.camp-page[data-location="pack"] .inventory-actions{
+  bottom:calc(112px + env(safe-area-inset-bottom));right:10px;
+ }
+}
 /* Give the town the visual weight. Expedition decisions live only at Embark. */
 .camp-screen[data-camp-tab="home"] #campExpeditionPanel{display:none!important}
 .camp-screen[data-camp-tab="expeditions"] .camp-content{display:block}
