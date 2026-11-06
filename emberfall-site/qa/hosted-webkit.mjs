@@ -14,8 +14,16 @@ const tap=async(page,selector)=>{
   }
   selector=selector==='#manageFromPickerBtn'?'[data-prep-open="party"]':selector==='#bagFromPickerBtn'?'[data-prep-open="pack"]':selector;
  }
- await page.locator(selector).scrollIntoViewIfNeeded();
- const box=await page.locator(selector).boundingBox();
+ const target=page.locator(selector);
+ await target.scrollIntoViewIfNeeded();
+ // On an iPad, the fixed four-hero strip may overlap a card that is
+ // geometrically in view; scroll the obscured target into a tappable area.
+ const exposed=await target.evaluate(el=>{
+  const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+  return !!hit&&(hit===el||el.contains(hit));
+ });
+ if(!exposed)await target.evaluate(el=>el.scrollIntoView({block:'center',inline:'nearest'}));
+ const box=await target.boundingBox();
  if(!box||box.width<1||box.height<1)throw Error('Tap target hidden: '+selector);
  await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);
 };
@@ -74,7 +82,9 @@ try{
  await tap(page,'#campNavExpeditions');
  if((await page.locator('#campScreen').getAttribute('data-camp-tab'))!=='expeditions')throw Error('Live Safari Expeditions navigation failed');
  await tap(page,'#campNavHome');
- if(!(await page.locator('#startBtn').isVisible()))throw Error('Live camp Fight button is unresponsive or missing');
+ if(await page.locator('#campExpeditionPanel').isVisible())throw Error('Refuge must not show the Embark board');
+ await tap(page,'#campNavExpeditions');
+ if(!(await page.locator('#startBtn').isVisible()))throw Error('Live Embark Fight button is unresponsive or missing');
  if(staleDependencyRequests!==0)throw Error('Live module loader requested '+staleDependencyRequests+' stale/unversioned progression files');
  await tap(page,'[data-boss="cindermaw"]');
  if((await page.locator('#selectedBossName').innerText())!=='Cindermaw')throw Error('Cindermaw selection not responsive');
