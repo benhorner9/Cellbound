@@ -119,6 +119,8 @@ try{
  await page.locator('#campNavExpeditions').click();
  if((await page.locator('#campScreen').getAttribute('data-camp-tab'))!=='expeditions')throw Error('Expedition navigation failed');
  await page.locator('#campNavHome').click();
+ if(await page.locator('#campExpeditionPanel').isVisible())throw Error('Returning to Refuge must hide expedition choices');
+ await page.locator('#campNavExpeditions').click();
  const box=await page.locator('#campExpeditionPanel').boundingBox();
  if(!box||box.width<300||!(await page.locator('#campExpeditionPanel').isVisible()))throw Error('Live expedition board not visible');
  await clickEmbark('#startBtn');
