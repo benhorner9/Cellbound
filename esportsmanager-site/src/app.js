@@ -326,7 +326,8 @@ function render(){
  if(modal){document.querySelector('.modal .btn')?.focus();}else document.querySelector('.main')?.scrollTo(0,y);
 }
 function createNew(form){
- game=createGame(form.org.value,form.tag.value,form.colour.value,false);view='hq';modal=null;save();render();
+ const values=new FormData(form);
+ game=createGame(values.get('org'),values.get('tag'),values.get('colour'),false);view='hq';modal=null;save();render();
 }
 function exportFile(){
  const blob=new Blob([JSON.stringify(game,null,2)],{type:'application/json'});
