@@ -21,4 +21,4 @@ try{
  await page.getByText('Week 2').first().waitFor();
  assert.deepEqual(errors,[]);
  console.log('PASS hosted navigation, 7 screens, week processing, browser persistence:',target);
-}finally{await browser.close();}
+}catch(err){console.error('Browser page errors:',errors);console.error('Current page content:',(await page.locator('body').innerText()).slice(0,1400));throw err;}finally{await browser.close();}
