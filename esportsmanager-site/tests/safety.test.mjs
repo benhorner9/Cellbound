@@ -11,8 +11,8 @@ const copy=x=>JSON.parse(JSON.stringify(x));
 const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/starter-v1-founder-week3.json',import.meta.url),'utf8'));
 const nonNegative=x=>Number.isSafeInteger(x)&&x>=0;
 
-test('B0.1: unchanged public starter version and storage namespace',()=>{
- assert.equal(VERSION,1);
+test('B0.1: v2 migration retains the original browser storage namespace',()=>{
+ assert.equal(VERSION,2);
  assert.equal(GAME_KEY,'esports-empire-save-v1');
  assert.ok(validateSave(createGame()));
  assert.ok(validateSave(createGame('Apex Esports','APX','#9d55ed',true)));
@@ -132,20 +132,44 @@ test('B0.1: team and talent IDs are unique within initial active and candidate p
  }
 });
 
-test('B0.1: invalid shape, old version and invalid money cannot be loaded as starter saves',()=>{
- const base=createGame();
+test('B0.1: invalid flat-v1 and nested-v2 saves are rejected',()=>{
+ const founder=createGame();
+ const base=JSON.parse(JSON.stringify(founder));
+ const invalid=[
+  null,0,{},[],
+  {...base,version:99},
+  {...base,world:null},
+  {...base,world:{...base.world,calendar:null}},
+  {...base,world:{...base.world,seed:'abc'}},
+  {...base,world:{...base.world,organisations:null}},
+  {...base,world:{...base.world,talents:{}}},
+  {...base,world:{...base.world,calendar:{...base.world.calendar,week:0}}},
+  {...base,world:{...base.world,calendar:{...base.world.calendar,week:'1'}}},
+  {...base,world:{...base.world,organisations:{
+   ...base.world.organisations,[base.activeOrganisationId]:{
+    ...base.world.organisations[base.activeOrganisationId],cash:12.5
+   }
+  }}}
+ ];
+ for(const value of invalid){
+  assert.equal(validateSave(value),false,'Accepted corrupted v2 save: '+JSON.stringify(value)?.slice(0,160));
+ }
+ const legacy=fixture();
+ assert.equal(validateSave(legacy),true);
  for(const value of [
-  null,0,{},[],{...base,version:99},
-  {...base,players:null},
-  {...base,creators:'fake'},
-  {...base,weeklyRecords:{}},
-  {...base,cash:NaN},
-  {...base,cash:Infinity},
-  {...base,cash:'1000'},
-  {...base,cash:12.50},
-  {...base,week:'1'},
-  {...base,week:0},
-  {...base,products:null},
-  {...base,league:undefined}
- ])assert.equal(validateSave(value),false,'Accepted corrupted save: '+JSON.stringify(value)?.slice(0,160));
+   {...legacy,version:99},
+   {...legacy,players:null},
+   {...legacy,creators:'fake'},
+   {...legacy,weeklyRecords:{}},
+   {...legacy,cash:NaN},
+   {...legacy,cash:Infinity},
+   {...legacy,cash:'1000'},
+   {...legacy,cash:12.5},
+   {...legacy,week:'1'},
+   {...legacy,week:0},
+   {...legacy,products:null},
+   {...legacy,league:undefined}
+ ]){
+  assert.equal(validateSave(value),false,'Accepted damaged v1 save: '+JSON.stringify(value)?.slice(0,160));
+ }
 });
