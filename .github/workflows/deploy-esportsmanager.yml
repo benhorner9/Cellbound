@@ -87,7 +87,7 @@ jobs:
             target:'/esportsmanager/',
             bridgeCommit:process.env.GITHUB_SHA,
             createdAt:new Date().toISOString(),
-            version:'starter-v1.2-portable-commands'
+            version:'starter-v1.3-cpu-parity'
           },null,2)+'\n');
           NODE
 
