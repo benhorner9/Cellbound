@@ -1,4 +1,4 @@
-import {GAME_KEY,VERSION,ROLES,TACTICS,ACTIVITIES,createGame,advanceWeek,perform,nextOpponent,runway,brandValue,recentTotal,pound,count,pct,validateSave} from './engine.js';
+import {GAME_KEY,VERSION,ROLES,TACTICS,ACTIVITIES,createGame,advanceWeek,perform,nextOpponent,runway,brandValue,recentTotal,pound,count,pct,validateSave,restoreSave} from './engine.js';
 const root=document.getElementById('app');
 let game=null,view='hq',modal=null,toast='',toastError=false,lastAdvance=0,showcase=false;
 const NAV=[['hq','home','HQ'],['esports','target','Esports'],['creators','users','Creators'],['content','video','Content'],['merch','shirt','Merch'],['sponsors','handshake','Sponsors'],['operations','settings','Operations']];
@@ -25,7 +25,24 @@ const last=(n)=>game.weeklyRecords.slice(-n);
 const profit=()=>game.weeklyRecords.length?game.weeklyRecords[game.weeklyRecords.length-1].net:0;
 const round=(n)=>Math.round(n);
 function save(){try{localStorage.setItem(GAME_KEY,JSON.stringify(game));return true;}catch(err){flash('Save failed: browser storage may be full or disabled.',true);return false;}}
-function load(){try{const obj=JSON.parse(localStorage.getItem(GAME_KEY)||'null');if(validateSave(obj))game=obj;}catch(err){console.warn('Save not loaded',err);}}
+function load(){
+ try{
+  const raw=localStorage.getItem(GAME_KEY);
+  if(!raw)return;
+  const parsed=JSON.parse(raw);
+  if(!validateSave(parsed))return;
+  const restored=restoreSave(parsed);
+  if(parsed.version===1){
+   // Keep the original save untouched as a rollback safety net, then upgrade
+   // the active save once. Never delete it in response to failed parsing.
+   try{
+    if(!localStorage.getItem(GAME_KEY+'-legacy-backup'))localStorage.setItem(GAME_KEY+'-legacy-backup',raw);
+    localStorage.setItem(GAME_KEY,JSON.stringify(restored));
+   }catch(err){console.warn('Migration succeeded in memory; backup/storage unavailable',err);}
+  }
+  game=restored;
+ }catch(err){console.warn('Save not loaded',err);}
+}
 function flash(text,error=false){toast=String(text);toastError=error;render();if(window.__toastTimer)clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>{toast='';const t=document.querySelector('.toast');if(t)t.remove();},3600);}
 function performAction(action,payload){const result=perform(game,action,payload);if(result.ok){save();modal=null;flash(result.message);return;}flash(result.message,true);}
 function openModal(type,id='',value=''){modal={type,id,value};render();}
@@ -197,12 +214,12 @@ function operations(){
  +'</div>'
  +'<div class="grid2" style="margin-top:12px">'
  +pn(ic('chart')+' Weekly Trading History','<div class="table-wrap"><table class="data-table"><thead><tr><th>Week</th><th>Revenue</th><th>Expenses</th><th>Profit</th><th>Fans gained</th></tr></thead><tbody>'+records.map(x=>'<tr><td>W'+x.week+'</td><td>'+money(x.revenue)+'</td><td>'+money(x.expenses)+'</td><td class="'+(x.net>=0?'positive':'negative')+'">'+money(x.net)+'</td><td>'+count(x.fanGain)+'</td></tr>').join('')+'</tbody></table></div>'+(records.length?'':'<div class="empty">Advance the week to begin trading.</div>'))
- +pn(ic('archive')+' Save & Organisation Tools','<p class="help">Your progress automatically saves to this browser after each action. You can export a copy to move between devices.</p><div class="btn-group">'+bt(ic('archive')+' Export Save','export','','primary')+bt('Import Save','open','import','soft')+bt('Load Showcase','open','showcase','soft')+bt('Restart','open','reset','danger')+'</div><div class="divider"></div>'+line('Game version','Starter v1.0')+line('Season',game.season)+line('CEO decisions',game.decisions+' remaining'))
+ +pn(ic('archive')+' Save & Organisation Tools','<p class="help">Your progress automatically saves to this browser after each action. You can export a copy to move between devices.</p><div class="btn-group">'+bt(ic('archive')+' Export Save','export','','primary')+bt('Import Save','open','import','soft')+bt('Load Showcase','open','showcase','soft')+bt('Restart','open','reset','danger')+'</div><div class="divider"></div>'+line('Game version','Starter v1.1 · Save v2')+line('Season',game.season)+line('CEO decisions',game.decisions+' remaining'))
  +'</div><div style="margin-top:12px">'+pn(ic('archive')+' Organisation News Log',game.industry.slice(0,9).map(n=>'<div class="news-item"><strong>'+e(n.text)+'</strong><small>Week '+n.week+' · '+e(n.kind)+'</small></div>').join(''))+'</div>';
 }
 function shell(){
  const activeScreen={hq:headquarters,esports,creators,content,merch,sponsors,operations}[view]();
- return '<div class="app-shell">'+header()+'<div class="shell-body"><nav class="sidebar" aria-label="Game navigation">'+nav()+'<div class="side-mark">♛</div></nav><main class="main" id="game-content">'+activeScreen+'<div class="version">ESPORTS EMPIRE · STARTER BUILD 1.0 · ALL-ROUND ORGANISATION</div></main></div></div>';
+ return '<div class="app-shell">'+header()+'<div class="shell-body"><nav class="sidebar" aria-label="Game navigation">'+nav()+'<div class="side-mark">♛</div></nav><main class="main" id="game-content">'+activeScreen+'<div class="version">ESPORTS EMPIRE · STARTER BUILD 1.1 · ALL-ROUND ORGANISATION</div></main></div></div>';
 }
 function modalMarkup(){
  if(!modal)return '';
@@ -302,7 +319,7 @@ function modalMarkup(){
  }
  else if(typ==='settings'){
   title='Settings & Save Management';
-  body=line('Current save',e(game.org))+line('Mode',e(game.mode))+line('Game week',game.week)+line('Version','v1.0')+
+  body=line('Current save',e(game.org))+line('Mode',e(game.mode))+line('Game week',game.week)+line('Version','v1.1 · Save v2')+
   '<p class="help">Progress saves automatically in this browser. Export or import JSON to move to another device.</p><div class="btn-group">'+bt('Export Save','export','','soft')+bt('Import','open','import','soft')+bt('Showcase','open','showcase','soft')+bt('New Game','open','reset','danger')+'</div>';
  }
  else if(typ==='news'){
@@ -336,8 +353,9 @@ function exportFile(){
 }
 async function importFile(){
  const file=document.getElementById('import-file')?.files?.[0];if(!file)return flash('Select a save file first.',true);
- try{const parsed=JSON.parse(await file.text());if(!validateSave(parsed))throw new Error('This is not a valid starter v1 save.');
- game=parsed;view='hq';modal=null;save();flash('Organisation imported successfully.');}catch(err){flash('Import failed: '+err.message,true);}
+ try{const parsed=JSON.parse(await file.text());if(!validateSave(parsed))throw new Error('This save is invalid or its format is unsupported.');
+ const restored=restoreSave(parsed);
+ game=restored;view='hq';modal=null;save();flash('Organisation imported successfully.');}catch(err){flash('Import failed: '+err.message,true);}
 }
 root.addEventListener('submit',ev=>{if(ev.target.id==='start-form'){ev.preventDefault();createNew(ev.target);}});
 root.addEventListener('click',ev=>{
