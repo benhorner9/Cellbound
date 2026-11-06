@@ -1,7 +1,8 @@
+import {WORLD_VERSION,packLegacy,hydrateWorld,validateWorld,reconcileContracts,advanceSeason} from './world.js';
 // Esports Empire — deterministic, self-contained starter simulation.
 // Financial values are stored in integer pence. Fictional organisations and people.
 export const GAME_KEY = 'esports-empire-save-v1';
-export const VERSION = 1;
+export const VERSION = WORLD_VERSION;
 export const ROLES = ['IGL','Entry','Rifler','Flex','Support'];
 export const TACTICS = ['Aggressive','Balanced','Defensive'];
 export const ACTIVITIES = ['Ranked livestream','Community event','Creator collaboration','Sponsored feature','Rest week'];
@@ -27,7 +28,7 @@ const person=(name,role,skill,wage,index)=>({id:'p'+index,name,role,skill,potent
 const idea=(id,title,value,fit,description)=>({id,title,value:cash(value),fit,description,status:'Available'});
 export function createGame(name='Apex Esports',tag='APX',colour='#9d55ed',showcase=false){
  const org=String(name||'Apex Esports').trim().slice(0,32);
- const s={version:VERSION,seed:20261106,org,tag:String(tag||'APX').toUpperCase().slice(0,5),colour,week:1,year:1,season:1,cash:cash(45000),fans:2500,prestige:12,trust:67,staffMood:79,decisions:4,
+ const s={version:1,seed:20261106,org,tag:String(tag||'APX').toUpperCase().slice(0,5),colour,week:1,year:1,season:1,cash:cash(45000),fans:2500,prestige:12,trust:67,staffMood:79,decisions:4,
   ownerTitle:'Founder & CEO',tactic:'Balanced',training:'Teamwork',teamChemistry:66,teamWins:0,teamLosses:0,teamMapsWon:0,teamMapsLost:0,
   players:[person('Rexx','IGL',68,220,1),person('Kaze','Entry',70,230,2),person('Velo','Rifler',67,185,3),person('Nyx','Flex',64,160,4),person('Echo','Support',66,180,5)],
   prospects:[person('Blitz','Entry',74,340,6),person('Sera','Support',71,290,7),person('Voss','Rifler',76,400,8)],
@@ -58,7 +59,7 @@ export function createGame(name='Apex Esports',tag='APX',colour='#9d55ed',showca
   s.products[0].stock=3000;s.products[0].sold=1200;
   s.facilities=4;s.officeRent=cash(1800);
  }
- return s;
+ return hydrateWorld(packLegacy(s));
 }
 export function nextOpponent(s){if(s.week<=7)return s.league[(s.week-1)%7];if(s.week<=9)return s.league[(s.week-1)%7];return null;}
 export function runway(s){const a=s.weeklyRecords.slice(-4);if(!a.length)return null;const net=a.reduce((x,r)=>x+r.net,0)/a.length;return net>=0?null:Math.max(0,round(s.cash/-net));}
@@ -69,7 +70,7 @@ function spendDecision(s){if(s.decisions<=0)return 'No CEO decisions left this w
 function charge(s,n){if(s.cash<n)return 'Insufficient cash: you need '+pound(n)+'.';return null;}
 function target(list,id){return list.find(a=>a.id===id);}
 function safe(s){s.fans=Math.max(0,round(s.fans));s.cash=round(s.cash);s.prestige=clamp(s.prestige,0,100);s.trust=clamp(s.trust,0,100);s.staffMood=clamp(s.staffMood,0,100);}
-export function perform(s,action,payload={}){
+function performLegacy(s,action,payload={}){
  let t,c,cost,err;
  switch(action){
  case 'tactic':
@@ -91,7 +92,7 @@ export function perform(s,action,payload={}){
    if(s.sponsors.some(x=>x.name===t.title))return {ok:false,message:'Already an active partner.'};
    if((err=charge(s,cash(180))))return {ok:false,message:err};
    s.cash-=cash(180);s.decisions--;t.status='In negotiation';
-   s.pitches.push({id:t.id,name:t.title,amount:t.value,fit:t.fit,target:t.title==='Vertex Energy'?3:2,resolve:s.week+1});
+   s.pitches.push({id:t.id,name:t.title,amount:t.value,fit:t.fit,target:t.title==='Vertex Energy'?3:2,resolve:absoluteWeek(s)+1});
    s.sponsorOffers=s.sponsorOffers.filter(x=>x.id!==t.id);
    note(s,'A commercial proposal has been sent to '+t.title+'.','deal');
    return {ok:true,message:'Proposal sent to '+t.title+'. Result arrives next week.'};
@@ -100,7 +101,7 @@ export function perform(s,action,payload={}){
    if((err=spendDecision(s)))return {ok:false,message:err};
    if(t.producing)return {ok:false,message:'A manufacturing run is already underway.'};
    cost=t.cost*100;if((err=charge(s,cost)))return {ok:false,message:err};
-   s.cash-=cost;s.decisions--;t.producing=100;t.arrival=s.week+2;
+   s.cash-=cost;s.decisions--;t.producing=100;t.arrival=absoluteWeek(s)+2;
    note(s,t.name+': 100 units ordered from the manufacturer for '+pound(cost)+'.','merch');
    return {ok:true,message:'100 '+t.name+' units arrive after two weeks.'};
  case 'price':
@@ -134,7 +135,7 @@ export function perform(s,action,payload={}){
    if((err=spendDecision(s)))return {ok:false,message:err};
    t=target(s.creatorCandidates,payload.id);if(!t)return {ok:false,message:'Creator no longer available.'};
    cost=t.wage*3;if((err=charge(s,cost)))return {ok:false,message:err};
-   s.cash-=cost;s.decisions--;s.creators.push({...t});s.creatorCandidates=s.creatorCandidates.filter(x=>x.id!==t.id);
+   s.cash-=cost;s.decisions--;s.creators=[...s.creators,{...t}];s.creatorCandidates=s.creatorCandidates.filter(x=>x.id!==t.id);
    s.scheduled[t.id]='Ranked livestream';note(s,t.name+' joins the '+s.org+' creator roster.','creator');
    return {ok:true,message:'Signed '+t.name+' for '+pound(cost)+' upfront.'};
  case 'signPlayer':
@@ -145,7 +146,7 @@ export function perform(s,action,payload={}){
    cost=t.wage*4;if((err=charge(s,cost)))return {ok:false,message:err};
    s.cash-=cost;s.decisions--;
    s.players=s.players.map(x=>x.id===c.id?{...t,role:c.role}:x);
-   s.prospects=s.prospects.filter(x=>x.id!==t.id);s.prospects.push({...c,contract:10});
+   s.prospects=s.prospects.filter(x=>x.id!==t.id);s.prospects=[...s.prospects,{...c,contract:10}];
    s.teamChemistry=clamp(s.teamChemistry-12,10,100);
    note(s,t.name+' signs for '+s.org+'; '+c.name+' joins the free-agent market.','transfer');
    return {ok:true,message:'Signed '+t.name+'. Chemistry takes a temporary hit.'};
@@ -166,6 +167,11 @@ export function perform(s,action,payload={}){
  default:return {ok:false,message:'Unknown action.'};
  }
 }
+export function perform(s,action,payload={}){
+ const result=performLegacy(s,action,payload);
+ if(result?.ok&&s.version===VERSION)reconcileContracts(s);
+ return result;
+}
 function simulateMatch(s){
  const rival=nextOpponent(s);if(!rival)return null;
  const base=s.players.reduce((a,p)=>a+p.skill+p.form*.1-p.fatigue*.13,0)/s.players.length;
@@ -183,10 +189,10 @@ function simulateMatch(s){
  note(s,s.org+' '+(won?'defeated ':'fell to ')+rival.name+' ('+ours+'–'+theirs+').','match');
  return {won,opponent:rival.name,score:ours+'–'+theirs,prize,chance:round(p*100)};
 }
-export function advanceWeek(s){
- if(!s||s.version!==VERSION)throw new Error('Invalid save version');
- if(s.week>=52){s.year++;s.week=1;s.season++;}
- const completedWeek=s.week;
+const absoluteWeek=s=>(s.year-1)*52+s.week;
+function advanceWeekLegacy(s){
+ if(!s||(s.version!==1&&s.version!==VERSION))throw new Error('Invalid save version');
+ const completedWeek=s.week,completedYear=s.year;
  const match=simulateMatch(s);
  let revenue=match?match.prize:0,expenses=0,fanGain=0,merchRevenue=0,creatorRevenue=0,sponsorRevenue=0,contentViews=0;
  const details=[];
@@ -233,7 +239,7 @@ export function advanceWeek(s){
  s.promo=0;
  // Product stock, sales and cost of goods. Inventory manufacturing was prepaid.
  for(const product of s.products){
-  if(product.producing&&product.arrival<=s.week){product.stock+=product.producing;product.producing=0;product.arrival=0;note(s,product.name+' manufacturing shipment received.','merch');}
+  if(product.producing&&product.arrival<=absoluteWeek(s)){product.stock+=product.producing;product.producing=0;product.arrival=0;note(s,product.name+' manufacturing shipment received.','merch');}
   const demand=round((s.fans/110+.5*s.prestige)*(product.price>cash(75)?.5:product.price<cash(30)?1.25:1)*(.68+roll(s)*.6)/s.products.length);
   const sold=Math.max(0,Math.min(product.stock,demand));
   product.stock-=sold;product.sold+=sold;
@@ -247,24 +253,26 @@ export function advanceWeek(s){
  s.staffMood=clamp(round(s.staffMood+(match?.won?1:match?-2:0)+(s.cash>cash(12000)?1:-2)),20,100);
  s.teamChemistry=clamp(s.teamChemistry+(s.training==='Teamwork'?3:s.training==='Rest'?1:0),0,100);
  // Sponsor negotiations resolve on a future week; each has an actual chance of success.
- for(const pitch of s.pitches.filter(x=>x.resolve<=s.week)){
+ for(const pitch of s.pitches.filter(x=>x.resolve<=absoluteWeek(s))){
    const success=roll(s)<clamp(.27+pitch.fit/200+s.trust/300,.2,.9);
    if(success){s.sponsors.push({id:pitch.id,name:pitch.name,category:'Commercial',amount:pitch.amount,weeks:12,deliveries:0,target:pitch.target,relationship:70,logo:pitch.name.slice(0,2).toUpperCase(),colour:'#aa7ff2',status:'Active'});note(s,pitch.name+' accepted your sponsorship proposal.','deal');}
    else note(s,pitch.name+' declined the current sponsorship offer.','deal');
  }
- s.pitches=s.pitches.filter(x=>x.resolve>s.week);
+ s.pitches=s.pitches.filter(x=>x.resolve>absoluteWeek(s));
  for(const rival of s.league){rival.skill=clamp(rival.skill+(roll(s)>.88?1:0),50,94);rival.fans=round(rival.fans*(1.002+roll(s)*.006));if(roll(s)<.18)note(s,rival.name+' announced a new roster or commercial signing.','rival');}
  const net=revenue-expenses;s.cash+=net;
  safe(s);
- const report={week:completedWeek,year:s.year,match,revenue,expenses,net,fanGain,merchRevenue,creatorRevenue,sponsorRevenue,contentViews,details,cash:s.cash};
- s.weeklyRecords.push(report);s.lastReport=report;s.decisions=4;s.week++;
+ const report={week:completedWeek,year:completedYear,match,revenue,expenses,net,fanGain,merchRevenue,creatorRevenue,sponsorRevenue,contentViews,details,cash:s.cash};
+ s.weeklyRecords.push(report);s.lastReport=report;s.decisions=4;
+ if(completedWeek===52){s.year=completedYear+1;s.week=1;s.season++;}
+ else s.week=completedWeek+1;
  if(completedWeek===12){note(s,'Season complete! Review your organisation and continue into the next calendar.','event');}
  if(s.cash<0)note(s,'Critical cash warning: the organisation must restore solvency.','alert');
  return report;
 }
 // Read-only guard for the original v1 browser save. It must never mutate data or
 // reject valid founder/showcase exports made by the pre-B0.1 starter release.
-export function validateSave(o){
+function validateLegacySave(o){
  const record=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
  const safeInt=Number.isSafeInteger;
  const finite=Number.isFinite;
@@ -300,4 +308,24 @@ export function validateSave(o){
     safeInt(x.net)&&safeInt(x.week)))return false;
  if(o.lastReport!==null&&o.lastReport!==undefined&&!record(o.lastReport))return false;
  return true;
+}
+
+// Flat v1 saves remain readable and runnable. JSON v2 saves have a canonical
+// world graph; the runtime facade is restored only after structural validation.
+export function validateSave(raw){
+ if(raw?.version===1)return validateLegacySave(raw);
+ if(raw?.version===VERSION)return validateWorld(raw);
+ return false;
+}
+export function restoreSave(raw){
+ if(!validateSave(raw))throw Error('Unsupported or damaged organisation save.');
+ return hydrateWorld(raw.version===1?packLegacy(raw):raw);
+}
+export function advanceWeek(s){
+ const result=advanceWeekLegacy(s);
+ if(s.version===VERSION){
+  reconcileContracts(s);
+  if(result.week===52)advanceSeason(s.world);
+ }
+ return result;
 }
