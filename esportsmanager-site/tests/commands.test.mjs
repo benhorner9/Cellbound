@@ -53,13 +53,23 @@ test('B0.3: immutable actions create new canonical worlds and deterministic even
  assert.ok(validateSave(a.state));
 });
 
-test('B0.3: wrong, CPU or unrelated controllers cannot manage the founder organisation',()=>{
+test('B0.4: CPU controls only its own club; unknown actors and CPU world advance are denied',()=>{
  const s=createGame(),snapshot=copy(s);
- const cpu=Object.values(s.world.controllers).find(x=>x.type==='cpu').id;
- for(const who of [cpu,'missing',s.activeOrganisationId,undefined,null,'']){
-  const valid=validateCommand(s,who,{type:'tactic',payload:{value:'Aggressive'}});
-  assert.equal(valid.ok,false,String(who));
-  const attempt=applyCommand(s,who,{type:'tactic',payload:{value:'Aggressive'}});
+ const cpu=Object.values(s.world.controllers).find(x=>x.type==='cpu');
+ const cpuOrg=s.world.organisations[cpu.organisationId];
+ const founderTactic=s.tactic, founderCash=s.cash;
+ const owned=applyCommand(s,cpu.id,{type:'tactic',payload:{value:'Aggressive'}});
+ assert.equal(owned.ok,true);
+ assert.equal(owned.events[0].organisationId,cpuOrg.id);
+ assert.equal(owned.state.world.organisations[cpuOrg.id].tactic,'Aggressive');
+ assert.equal(owned.state.tactic,founderTactic);
+ assert.equal(owned.state.cash,founderCash);
+ assert.equal(owned.state.activeOrganisationId,s.activeOrganisationId);
+ assert.equal(validateCommand(s,cpu.id,{type:'tactic',payload:{value:'Aggressive'}}).ok,true);
+ for(const who of ['missing',s.activeOrganisationId,undefined,null,'']){
+  const command={type:'tactic',payload:{value:'Aggressive'}};
+  assert.equal(validateCommand(s,who,command).ok,false);
+  const attempt=applyCommand(s,who,command);
   assert.equal(attempt.ok,false);
   assert.strictEqual(attempt.state,s);
   assert.deepEqual(attempt.events,[]);
@@ -67,6 +77,7 @@ test('B0.3: wrong, CPU or unrelated controllers cannot manage the founder organi
   assert.equal(week.ok,false);
   assert.strictEqual(week.state,s);
  }
+ assert.equal(simulateWeek(s,cpu.id).ok,false,'CPU cannot advance the whole world');
  assert.deepEqual(copy(s),snapshot);
 });
 
@@ -157,7 +168,12 @@ test('B0.3: old legacy rules and pure gateway yield identical reports, cash and 
  const old=advanceWeek(original);
  assert.equal(pure.ok,true);
  assert.deepEqual(pure.report,old);
- assert.deepEqual(copy(pure.state),copy(original));
+ assert.deepEqual(
+  pure.state.world.organisations[pure.state.activeOrganisationId],
+  original.world.organisations[original.activeOrganisationId],
+  'Founder data and economic outcome must remain identical'
+ );
+ assert.equal(pure.state.seed,original.seed,'CPU must never consume founder simulation seed');
  assert.deepEqual(copy(s),before);
  assert.equal(pure.report.revenue,240435);
  assert.equal(pure.report.net,37935);
