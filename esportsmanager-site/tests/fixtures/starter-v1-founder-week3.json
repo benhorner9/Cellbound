@@ -1,0 +1,478 @@
+{
+  "version": 1,
+  "seed": 363364469,
+  "org": "Baseline United",
+  "tag": "BLU",
+  "colour": "#9d55ed",
+  "week": 3,
+  "year": 1,
+  "season": 1,
+  "cash": 4458456,
+  "fans": 3201,
+  "prestige": 13,
+  "trust": 63,
+  "staffMood": 80,
+  "decisions": 4,
+  "ownerTitle": "Founder & CEO",
+  "tactic": "Defensive",
+  "training": "Aim",
+  "teamChemistry": 67,
+  "teamWins": 1,
+  "teamLosses": 1,
+  "teamMapsWon": 3,
+  "teamMapsLost": 2,
+  "players": [
+    {
+      "id": "p1",
+      "name": "Rexx",
+      "role": "IGL",
+      "skill": 68,
+      "potential": 75,
+      "form": 66,
+      "morale": 72,
+      "fatigue": 32,
+      "contract": 21,
+      "wage": 22000,
+      "avatar": 1
+    },
+    {
+      "id": "p2",
+      "name": "Kaze",
+      "role": "Entry",
+      "skill": 70,
+      "potential": 78,
+      "form": 71,
+      "morale": 73,
+      "fatigue": 32,
+      "contract": 19,
+      "wage": 23000,
+      "avatar": 2
+    },
+    {
+      "id": "p3",
+      "name": "Velo",
+      "role": "Rifler",
+      "skill": 67,
+      "potential": 76,
+      "form": 70,
+      "morale": 74,
+      "fatigue": 32,
+      "contract": 17,
+      "wage": 18500,
+      "avatar": 3
+    },
+    {
+      "id": "p4",
+      "name": "Nyx",
+      "role": "Flex",
+      "skill": 64,
+      "potential": 74,
+      "form": 70,
+      "morale": 75,
+      "fatigue": 32,
+      "contract": 15,
+      "wage": 16000,
+      "avatar": 4
+    },
+    {
+      "id": "p5",
+      "name": "Echo",
+      "role": "Support",
+      "skill": 66,
+      "potential": 72,
+      "form": 73,
+      "morale": 76,
+      "fatigue": 32,
+      "contract": 13,
+      "wage": 18000,
+      "avatar": 5
+    }
+  ],
+  "prospects": [
+    {
+      "id": "p6",
+      "name": "Blitz",
+      "role": "Entry",
+      "skill": 74,
+      "potential": 81,
+      "form": 73,
+      "morale": 78,
+      "fatigue": 12,
+      "contract": 13,
+      "wage": 34000,
+      "avatar": 6
+    },
+    {
+      "id": "p7",
+      "name": "Sera",
+      "role": "Support",
+      "skill": 71,
+      "potential": 79,
+      "form": 74,
+      "morale": 79,
+      "fatigue": 12,
+      "contract": 11,
+      "wage": 29000,
+      "avatar": 7
+    },
+    {
+      "id": "p8",
+      "name": "Voss",
+      "role": "Rifler",
+      "skill": 76,
+      "potential": 85,
+      "form": 75,
+      "morale": 80,
+      "fatigue": 12,
+      "contract": 9,
+      "wage": 40000,
+      "avatar": 8
+    }
+  ],
+  "creators": [
+    {
+      "id": "c1",
+      "name": "LunaX",
+      "role": "Streamer",
+      "audience": 21000,
+      "engagement": 7.4,
+      "mood": 93,
+      "energy": 100,
+      "fit": 89,
+      "wage": 15500,
+      "contract": 22,
+      "avatar": 9
+    },
+    {
+      "id": "c2",
+      "name": "MiraBits",
+      "role": "Influencer",
+      "audience": 12873,
+      "engagement": 8.2,
+      "mood": 75,
+      "energy": 57,
+      "fit": 86,
+      "wage": 11500,
+      "contract": 18,
+      "avatar": 10
+    }
+  ],
+  "creatorCandidates": [
+    {
+      "id": "c3",
+      "name": "NitroJay",
+      "role": "Streamer",
+      "audience": 34000,
+      "engagement": 6.8,
+      "mood": 82,
+      "energy": 79,
+      "fit": 75,
+      "wage": 34000,
+      "contract": 28,
+      "avatar": 11
+    },
+    {
+      "id": "c4",
+      "name": "ApexVox",
+      "role": "Host",
+      "audience": 17000,
+      "engagement": 9.1,
+      "mood": 88,
+      "energy": 90,
+      "fit": 92,
+      "wage": 21000,
+      "contract": 26,
+      "avatar": 12
+    }
+  ],
+  "scheduled": {
+    "c1": "Rest week",
+    "c2": "Creator collaboration"
+  },
+  "sponsors": [
+    {
+      "id": "s1",
+      "name": "PixelForge",
+      "category": "Hardware",
+      "amount": 65000,
+      "weeks": 4,
+      "deliveries": 1,
+      "target": 2,
+      "relationship": 62,
+      "logo": "PF",
+      "colour": "#52e19c",
+      "status": "Active"
+    }
+  ],
+  "sponsorOffers": [
+    {
+      "id": "s2",
+      "title": "NitroTech",
+      "value": 92000,
+      "fit": 76,
+      "description": "Requires two creator mentions per week.",
+      "status": "Available"
+    },
+    {
+      "id": "s3",
+      "title": "Vertex Energy",
+      "value": 115000,
+      "fit": 62,
+      "description": "Premium deal with three campaign deliveries weekly.",
+      "status": "Available"
+    },
+    {
+      "id": "s4",
+      "title": "StreamForge",
+      "value": 78000,
+      "fit": 86,
+      "description": "Streaming software partnership with one integration weekly.",
+      "status": "Available"
+    }
+  ],
+  "products": [
+    {
+      "id": "m1",
+      "name": "Core Jersey",
+      "price": 3800,
+      "cost": 1700,
+      "stock": 51,
+      "sold": 59,
+      "producing": 0,
+      "arrival": 0,
+      "category": "Apparel",
+      "symbol": "shirt",
+      "approved": true
+    }
+  ],
+  "pitches": [],
+  "staff": [
+    {
+      "name": "Sam Porter",
+      "role": "Head Coach",
+      "wage": 22000,
+      "effect": 3
+    },
+    {
+      "name": "Jordan Lane",
+      "role": "Operations Coordinator",
+      "wage": 18000,
+      "effect": 2
+    }
+  ],
+  "facilities": 1,
+  "officeRent": 28000,
+  "weeklyRecords": [
+    {
+      "week": 1,
+      "year": 1,
+      "match": {
+        "won": false,
+        "opponent": "Vertex Esports",
+        "score": "1–2",
+        "prize": 8000,
+        "chance": 63
+      },
+      "revenue": 182959,
+      "expenses": 202500,
+      "net": -19541,
+      "fanGain": 267,
+      "merchRevenue": 129200,
+      "creatorRevenue": 8059,
+      "sponsorRevenue": 37700,
+      "contentViews": 15364,
+      "details": [
+        "PixelForge: missed campaign deliverables."
+      ],
+      "cash": 4480459
+    },
+    {
+      "week": 2,
+      "year": 1,
+      "match": {
+        "won": true,
+        "opponent": "Nova Union",
+        "score": "2–0",
+        "prize": 38000,
+        "chance": 80
+      },
+      "revenue": 180497,
+      "expenses": 202500,
+      "net": -22003,
+      "fanGain": 434,
+      "merchRevenue": 95000,
+      "creatorRevenue": 9797,
+      "sponsorRevenue": 37700,
+      "contentViews": 16502,
+      "details": [
+        "PixelForge: missed campaign deliverables."
+      ],
+      "cash": 4458456
+    }
+  ],
+  "results": [
+    {
+      "week": 2,
+      "opponent": "Nova Union",
+      "score": "2–0",
+      "won": true,
+      "chance": 80,
+      "prize": 38000,
+      "summary": "Confident series win"
+    },
+    {
+      "week": 1,
+      "opponent": "Vertex Esports",
+      "score": "1–2",
+      "won": false,
+      "chance": 63,
+      "prize": 8000,
+      "summary": "Hard-fought series loss"
+    }
+  ],
+  "industry": [
+    {
+      "week": 2,
+      "text": "Nightfall Club announced a new roster or commercial signing.",
+      "kind": "rival"
+    },
+    {
+      "week": 2,
+      "text": "Baseline United defeated Nova Union (2–0).",
+      "kind": "match"
+    },
+    {
+      "week": 1,
+      "text": "Titan Core announced a new roster or commercial signing.",
+      "kind": "rival"
+    },
+    {
+      "week": 1,
+      "text": "Vertex Esports announced a new roster or commercial signing.",
+      "kind": "rival"
+    },
+    {
+      "week": 1,
+      "text": "Baseline United fell to Vertex Esports (1–2).",
+      "kind": "match"
+    },
+    {
+      "week": 1,
+      "text": "Welcome to the industry. Your organisation is ready to compete.",
+      "kind": "news"
+    },
+    {
+      "week": 1,
+      "text": "Strikefront regional season begins — eight teams, twelve weeks.",
+      "kind": "event"
+    }
+  ],
+  "notifications": [],
+  "project": "Behind the scenes",
+  "contentBudget": 10000,
+  "promo": 0,
+  "league": [
+    {
+      "id": "r0",
+      "name": "Vertex Esports",
+      "skill": 71,
+      "colour": "#ec526d",
+      "tactic": "Aggressive",
+      "fans": 2630,
+      "wins": 1,
+      "losses": 0,
+      "prestige": 18
+    },
+    {
+      "id": "r1",
+      "name": "Nova Union",
+      "skill": 64,
+      "colour": "#5e9bff",
+      "tactic": "Balanced",
+      "fans": 3196,
+      "wins": 0,
+      "losses": 1,
+      "prestige": 20
+    },
+    {
+      "id": "r2",
+      "name": "Orion Circuit",
+      "skill": 67,
+      "colour": "#ffaf68",
+      "tactic": "Defensive",
+      "fans": 3770,
+      "wins": 0,
+      "losses": 0,
+      "prestige": 22
+    },
+    {
+      "id": "r3",
+      "name": "Titan Core",
+      "skill": 73,
+      "colour": "#9b8aff",
+      "tactic": "Aggressive",
+      "fans": 4344,
+      "wins": 0,
+      "losses": 0,
+      "prestige": 24
+    },
+    {
+      "id": "r4",
+      "name": "Meridian Gaming",
+      "skill": 61,
+      "colour": "#38c5b4",
+      "tactic": "Balanced",
+      "fans": 4920,
+      "wins": 0,
+      "losses": 0,
+      "prestige": 26
+    },
+    {
+      "id": "r5",
+      "name": "Pulse Five",
+      "skill": 65,
+      "colour": "#db79e4",
+      "tactic": "Defensive",
+      "fans": 5502,
+      "wins": 0,
+      "losses": 0,
+      "prestige": 28
+    },
+    {
+      "id": "r6",
+      "name": "Nightfall Club",
+      "skill": 69,
+      "colour": "#788aff",
+      "tactic": "Balanced",
+      "fans": 6084,
+      "wins": 0,
+      "losses": 0,
+      "prestige": 30
+    }
+  ],
+  "lastReport": {
+    "week": 2,
+    "year": 1,
+    "match": {
+      "won": true,
+      "opponent": "Nova Union",
+      "score": "2–0",
+      "prize": 38000,
+      "chance": 80
+    },
+    "revenue": 180497,
+    "expenses": 202500,
+    "net": -22003,
+    "fanGain": 434,
+    "merchRevenue": 95000,
+    "creatorRevenue": 9797,
+    "sponsorRevenue": 37700,
+    "contentViews": 16502,
+    "details": [
+      "PixelForge: missed campaign deliverables."
+    ],
+    "cash": 4458456
+  },
+  "createdAt": "2026-11-06T00:00:00.000Z",
+  "mode": "Founder"
+}
