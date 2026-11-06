@@ -14,6 +14,11 @@ async function tap(page, selector) {
   }
   const el = page.locator(selector).first();
   await el.scrollIntoViewIfNeeded();
+  const exposed=await el.evaluate(node=>{
+    const r=node.getBoundingClientRect(),top=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+    return !!top&&(top===node||node.contains(top));
+  });
+  if(!exposed)await el.evaluate(node=>node.scrollIntoView({block:'center',inline:'nearest'}));
   await el.tap({ timeout: 15000 });
 }
 async function checkNoSidewaysScroll(page, name) {
