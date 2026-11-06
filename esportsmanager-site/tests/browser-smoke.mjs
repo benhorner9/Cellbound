@@ -25,6 +25,9 @@ try{
    assert.equal(training.world.organisations[training.activeOrganisationId].training,'Aim');
   }
  }
+ const rivalPanel=page.locator('.panel').filter({hasText:'Rival Organisations — Live CPU Business'});
+ await rivalPanel.waitFor();
+ assert.equal(await rivalPanel.locator('tbody tr').count(),7);
  await page.getByRole('navigation',{name:'Game navigation'}).getByRole('button',{name:'HQ',exact:true}).click();
  await page.getByRole('button',{name:/Advance to Next Week/i}).click();
  await page.getByRole('dialog',{name:/Week 1 — Executive Report/i}).waitFor();
