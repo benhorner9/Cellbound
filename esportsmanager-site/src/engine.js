@@ -70,7 +70,7 @@ function charge(s,n){if(s.cash<n)return 'Insufficient cash: you need '+pound(n)+
 function target(list,id){return list.find(a=>a.id===id);}
 function safe(s){s.fans=Math.max(0,round(s.fans));s.cash=round(s.cash);s.prestige=clamp(s.prestige,0,100);s.trust=clamp(s.trust,0,100);s.staffMood=clamp(s.staffMood,0,100);}
 export function perform(s,action,payload={}){
- let t,cost,err;
+ let t,c,cost,err;
  switch(action){
  case 'tactic':
    if(!TACTICS.includes(payload.value))return {ok:false,message:'Choose a valid tactical setup.'};
