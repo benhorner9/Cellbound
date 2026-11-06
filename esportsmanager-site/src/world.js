@@ -53,6 +53,77 @@ export function packLegacy(v1){
  reconcileContracts(state);
  return state;
 }
+
+// B0.4: fill historical B0.2 CPU shells with one genuine starter-sized business
+// each. Idempotent for existing saves and deterministic without advancing the
+// founder's RNG. The same company fields/contract mechanics apply to every club.
+export function prepareCpuOrganisations(state){
+ if(!state||state.version!==WORLD_VERSION||!state.world)return state;
+ const w=state.world;
+ const roles=['IGL','Entry','Rifler','Flex','Support'];
+ let changed=false;
+ const rivals=Object.values(w.organisations).filter(o=>w.controllers[o.controllerId]?.type==='cpu');
+ rivals.forEach((o,index)=>{
+  if(!integer(o.simulationSeed)){
+   const seeded=Number.parseInt(fingerprint(w.id+'|'+o.id+'|cpu'),16)>>>0;
+   o.simulationSeed=seeded||1;
+   changed=true;
+  }
+  if(o.playerIds.length===5&&o.creatorIds.length>=1&&o.products.length>=1)return;
+  const prefix='cpu'+(index+1);
+  const rating=Number.isFinite(o.skill)?o.skill:65;
+  const person=(i)=>({
+   id:prefix+'-p'+(i+1),name:['Rook','Blitz','Dart','Nova','Anchor'][i]+' '+(index+1),
+   role:roles[i],skill:Math.max(45,Math.min(95,rating+[1,3,0,-2,-1][i])),
+   potential:Math.max(50,Math.min(97,rating+9)),
+   form:70+i*2,morale:75,fatigue:12,contract:24-i*2,
+   wage:[22000,23000,18500,16000,18000][i],avatar:i+1
+  });
+  const freeAgent=(i)=>({
+   id:prefix+'-free'+(i+1),name:['Scout','Ace','Viper'][i]+' '+(index+1),
+   role:['Entry','Support','Rifler'][i],skill:rating+3+i,
+   potential:Math.min(98,rating+13+i),form:72,morale:75,fatigue:5,
+   contract:20,wage:[34000,29000,40000][i],avatar:i+6
+  });
+  const creator=(i,candidate=false)=>({
+   id:prefix+(candidate?'-guest':'-c')+(i+1),
+   name:(candidate?['Volt','Glimmer']:['Pixel','Echo'])[i]+' '+(index+1),
+   role:i?'Influencer':'Streamer',
+   audience:candidate?24000+i*5000:18000-i*5500,
+   engagement:i?8.1:7.4,mood:82,energy:80,fit:83,
+   wage:candidate?30000+i*4000:15500-i*4000,contract:24,avatar:i+9
+  });
+  register(w,o,'players',roles.map((_,i)=>person(i)));
+  register(w,o,'prospects',[0,1,2].map(freeAgent));
+  register(w,o,'creators',[0,1].map(i=>creator(i)));
+  register(w,o,'creatorCandidates',[0,1].map(i=>creator(i,true)));
+  o.scheduled={};
+  for(const id of o.creatorIds)o.scheduled[w.talents[id].id]='Ranked livestream';
+  o.staff=[
+   {id:makeId(w,'staff',prefix+'-coach'),name:'Coach '+(index+1),role:'Head Coach',wage:22000,effect:3},
+   {id:makeId(w,'staff',prefix+'-ops'),name:'Coordinator '+(index+1),role:'Operations Coordinator',wage:18000,effect:2}
+  ];
+  o.sponsors=[{
+   id:prefix+'-s1',name:'Circuit Partner '+(index+1),category:'Hardware',
+   amount:65000,weeks:24,deliveries:0,target:2,relationship:72,logo:'CP',
+   colour:'#53dda2',status:'Active'
+  }];
+  o.sponsorOffers=[
+   {id:prefix+'-s2',title:'Meridian Media '+(index+1),value:92000,fit:75,
+    description:'Two creator campaign deliveries each week.',status:'Available'},
+   {id:prefix+'-s3',title:'Arcade Energy '+(index+1),value:78000,fit:68,
+    description:'Two creator campaign deliveries each week.',status:'Available'}
+  ];
+  o.products=[{id:prefix+'-m1',name:'Club Jersey',price:3800,cost:1700,
+   stock:110,sold:0,producing:0,arrival:0,category:'Apparel',symbol:'shirt',approved:true}];
+  o.strategyHistory=[];
+  o.mode='CPU';
+  changed=true;
+ });
+ if(changed)reconcileContracts(state);
+ return state;
+}
+
 export function reconcileContracts(state){
  if(!state||state.version!==WORLD_VERSION)return;
  const w=state.world,next={...w.contracts};
