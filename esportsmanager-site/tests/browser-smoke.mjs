@@ -14,6 +14,16 @@ try{
  for(const [name,heading] of [['Esports','Esports Operations'],['Creators','Creator Studio'],['Content','Content Production'],['Merch','Merchandise Studio'],['Sponsors','Commercial Office'],['Operations','Business Operations']]){
   await page.getByRole('navigation',{name:'Game navigation'}).getByRole('button',{name,exact:true}).click();
   await page.getByRole('heading',{name:heading}).waitFor();
+  if(name==='Esports'){
+   // B0.3: a real management command must commit through the immutable gateway.
+   await page.getByRole('button',{name:'Aggressive',exact:true}).click();
+   const commanded=await page.evaluate(()=>JSON.parse(localStorage.getItem('esports-empire-save-v1')));
+   assert.equal(commanded.world.organisations[commanded.activeOrganisationId].tactic,'Aggressive');
+   assert.equal(commanded.world.calendar.week,1);
+   await page.getByRole('button',{name:'Aim',exact:true}).click();
+   const training=await page.evaluate(()=>JSON.parse(localStorage.getItem('esports-empire-save-v1')));
+   assert.equal(training.world.organisations[training.activeOrganisationId].training,'Aim');
+  }
  }
  await page.getByRole('navigation',{name:'Game navigation'}).getByRole('button',{name:'HQ',exact:true}).click();
  await page.getByRole('button',{name:/Advance to Next Week/i}).click();
