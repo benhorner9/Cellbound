@@ -141,3 +141,12 @@ jobs:
           else
             echo "- cellbound.com hostname is not confirmed; established playcellbound.com link is canonical." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Check whether requested cellbound.com URL serves this exact release
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 20 "https://cellbound.com/esportsmanager/build-meta.json?sha=$GITHUB_SHA" -o /tmp/esports-short-host.json
+          node -e "const m=require('/tmp/esports-short-host.json');if(m.bridgeCommit!==process.env.GITHUB_SHA||m.target!=='/esportsmanager/')process.exit(1)"
+          echo "CONFIRMED: https://cellbound.com/esportsmanager/ serves this release"
