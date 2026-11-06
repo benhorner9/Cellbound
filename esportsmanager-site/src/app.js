@@ -83,7 +83,7 @@ function headquarters(){
 function playerCard(p){
  return '<article class="player-card"><div class="top"><span>'+e(p.role)+'</span><span class="rating">'+p.skill+'</span></div>'+portrait(e(p.name).slice(0,1),p.avatar)+'<div class="player-meta"><strong>'+e(p.name)+'</strong><span class="micro">'+e(p.role)+' · Contract '+p.contract+'w</span>'
  +'<div class="stat-line"><span>Form</span><span class="positive">'+pct(p.form)+'</span></div><div class="stat-line"><span>Morale</span><span>'+pct(p.morale)+'</span></div><div class="stat-line"><span>Salary</span><span>'+money(p.wage)+'/wk</span></div>'
- +bt('Contract','renew','', 'tiny-btn',p.id)+'</div></article>';
+ +bt('Contract','open','renew', 'tiny-btn',p.id)+'</div></article>';
 }
 function esports(){
  const rival=nextOpponent(game),latest=game.results[0];
