@@ -228,8 +228,11 @@ test('B0.3: deterministic year boundary and commercial orders retain their deadl
  assert.equal(a.state.year,2);
  assert.equal(a.state.season,2);
  assert.equal(a.state.products[0].producing,100);
- const next=simulateWeek(a.state,who);
- assert.equal(next.ok,true);
- assert.equal(next.state.products[0].producing,0);
+ const yearTwoWeekOne=simulateWeek(a.state,who);
+ assert.equal(yearTwoWeekOne.ok,true);
+ assert.equal(yearTwoWeekOne.state.products[0].producing,100);
+ const yearTwoWeekTwo=simulateWeek(yearTwoWeekOne.state,who);
+ assert.equal(yearTwoWeekTwo.ok,true);
+ assert.equal(yearTwoWeekTwo.state.products[0].producing,0);
  assert.deepEqual(copy(s),before);
 });
