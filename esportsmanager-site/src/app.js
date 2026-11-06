@@ -1,4 +1,5 @@
-import {GAME_KEY,VERSION,ROLES,TACTICS,ACTIVITIES,createGame,advanceWeek,perform,nextOpponent,runway,brandValue,recentTotal,pound,count,pct,validateSave,restoreSave} from './engine.js?v=1.1.0';
+import {GAME_KEY,VERSION,ROLES,TACTICS,ACTIVITIES,createGame,nextOpponent,runway,brandValue,recentTotal,pound,count,pct,validateSave,restoreSave} from './engine.js?v=1.2.0';
+import {applyCommand,simulateWeek,getControllerId} from './commands.js?v=1.2.0';
 const root=document.getElementById('app');
 let game=null,view='hq',modal=null,toast='',toastError=false,lastAdvance=0,showcase=false;
 const NAV=[['hq','home','HQ'],['esports','target','Esports'],['creators','users','Creators'],['content','video','Content'],['merch','shirt','Merch'],['sponsors','handshake','Sponsors'],['operations','settings','Operations']];
@@ -44,7 +45,7 @@ function load(){
  }catch(err){console.warn('Save not loaded',err);}
 }
 function flash(text,error=false){toast=String(text);toastError=error;render();if(window.__toastTimer)clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>{toast='';const t=document.querySelector('.toast');if(t)t.remove();},3600);}
-function performAction(action,payload){const result=perform(game,action,payload);if(result.ok){save();modal=null;flash(result.message);return;}flash(result.message,true);}
+function performAction(action,payload){const result=applyCommand(game,getControllerId(game),{type:action,payload});if(result.ok){game=result.state;save();modal=null;flash(result.message);return;}flash(result.message,true);}
 function openModal(type,id='',value=''){modal={type,id,value};render();}
 function setView(name){if(!NAV.some(x=>x[0]===name))return;view=name;modal=null;render();document.querySelector('.main')?.scrollTo(0,0);}
 function nav(){return NAV.map(([id,symbol,label])=>'<button type="button" data-view="'+id+'" aria-label="'+label+'" class="nav-link '+(view===id?'active':'')+'">'+ic(symbol)+'<span>'+label+'</span></button>').join('');}
@@ -368,7 +369,7 @@ root.addEventListener('click',ev=>{
  if(action==='open'){openModal(value,id);return;}
  if(action==='advance'){
   const now=Date.now();if(now-lastAdvance<750)return;lastAdvance=now;
-  try{advanceWeek(game);save();modal={type:'report'};render();document.querySelector('.modal')?.scrollTo(0,0);}catch(err){flash('Week could not advance: '+err.message,true);}return;
+  try{const result=simulateWeek(game,getControllerId(game));if(!result.ok){flash(result.message,true);return;}game=result.state;save();modal={type:'report'};render();document.querySelector('.modal')?.scrollTo(0,0);}catch(err){flash('Week could not advance: '+err.message,true);}return;
  }
  if(action==='export'){exportFile();return;}
  if(action==='tactic'||action==='training'||action==='content'){performAction(action,{value});return;}
