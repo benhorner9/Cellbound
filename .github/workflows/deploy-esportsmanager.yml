@@ -1,0 +1,143 @@
+name: Esports Empire — isolated /esportsmanager/ deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'esportsmanager-site/**'
+      - '.github/workflows/deploy-esportsmanager.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: esportsmanager-isolated-ftps
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Validate, upload and test Esports Empire
+    runs-on: ubuntu-latest
+    timeout-minutes: 26
+    steps:
+      - name: Check out Cellbound hosting bridge
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate all game modules and simulation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s esportsmanager-site/index.html
+          test -s esportsmanager-site/favicon.svg
+          test -s esportsmanager-site/src/engine.js
+          test -s esportsmanager-site/src/app.js
+          test -s esportsmanager-site/src/styles.css
+          test -s esportsmanager-site/package.json
+          test -s esportsmanager-site/tests/browser-smoke.mjs
+          npm --prefix esportsmanager-site run check
+          if grep -nE '(src|href)=["'\'']/[^/]' esportsmanager-site/index.html; then
+            echo "::error::Root-relative asset paths break subdirectory hosting" >&2
+            exit 1
+          fi
+
+      - name: Prepare exact isolated web distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/src
+          cp esportsmanager-site/index.html esportsmanager-site/favicon.svg dist/
+          cp esportsmanager-site/src/engine.js esportsmanager-site/src/app.js esportsmanager-site/src/styles.css dist/src/
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          writeFileSync('dist/build-meta.json', JSON.stringify({
+            project:'Esports Empire',
+            source:'benhorner9/Esportsmanager',
+            deploymentBridge:'benhorner9/Cellbound',
+            target:'/esportsmanager/',
+            bridgeCommit:process.env.GITHUB_SHA,
+            createdAt:new Date().toISOString(),
+            version:'starter-v1.0'
+          },null,2)+'\n');
+          NODE
+
+      - name: Check existing shared-host FTPS credentials
+        env:
+          FTP_HOST: ${{ secrets.FTP_SERVER }}
+          FTP_USER: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+        shell: bash
+        run: |
+          test -n "$FTP_HOST" && test -n "$FTP_USER" && test -n "$FTP_PASS"
+
+      - name: Upload ONLY the esportsmanager directory
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./dist/
+          server-dir: ./esportsmanager/
+          state-name: .ftp-deploy-esportsmanager-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+
+      - name: Verify live build identity and hosted asset bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://playcellbound.com/esportsmanager"
+          matched=0
+          for attempt in 1 2 3 4 5; do
+            if curl --fail --silent --show-error --max-time 30 "$base/build-meta.json?sha=$GITHUB_SHA" -o /tmp/esportsmanager-meta.json; then
+              if node -e "const m=require('/tmp/esportsmanager-meta.json');if(m.bridgeCommit!==process.env.GITHUB_SHA||m.target!=='/esportsmanager/')process.exit(1)"; then
+                matched=1
+                break
+              fi
+            fi
+            sleep 9
+          done
+          test "$matched" = "1"
+          mkdir -p /tmp/esportsmanager-hosted/src
+          for asset in index.html favicon.svg src/engine.js src/app.js src/styles.css; do
+            curl --fail --silent --show-error --max-time 30 "$base/$asset?sha=$GITHUB_SHA" -o "/tmp/esportsmanager-hosted/$asset"
+            cmp -s "dist/$asset" "/tmp/esportsmanager-hosted/$asset"
+          done
+          for js in src/engine.js src/app.js; do
+            mime="$(curl -LfsS -o /dev/null -w '%{content_type}' "$base/$js?verify=$GITHUB_SHA")"
+            case "$(echo "$mime" | cut -d ';' -f1)" in
+              text/javascript|application/javascript|application/x-javascript|text/ecmascript|application/ecmascript) echo "PASS JS MIME: $js";;
+              *) echo "::error::Incorrect Javascript MIME for $js: $mime";exit 1;;
+            esac
+          done
+
+      - name: Install browser smoke-test dependency
+        shell: bash
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Exercise live hosted game in Chromium
+        env:
+          ESPORTS_URL: https://playcellbound.com/esportsmanager/
+        run: node esportsmanager-site/tests/browser-smoke.mjs
+
+      - name: Release summary
+        shell: bash
+        run: |
+          echo "### Esports Empire starter deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Play: https://playcellbound.com/esportsmanager/" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Bridge commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Isolated target: /esportsmanager/; no clean slate or root deployment." >> "$GITHUB_STEP_SUMMARY"
+          if curl -ILfsS --max-time 10 https://cellbound.com/esportsmanager/ >/dev/null; then
+            echo "- Alternate cellbound.com hostname responds; verify that it maps to the same site before advertising." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- cellbound.com hostname is not confirmed; established playcellbound.com link is canonical." >> "$GITHUB_STEP_SUMMARY"
+          fi
