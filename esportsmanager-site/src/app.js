@@ -1,4 +1,4 @@
-import {GAME_KEY,VERSION,ROLES,TACTICS,ACTIVITIES,createGame,advanceWeek,perform,nextOpponent,runway,brandValue,recentTotal,pound,count,pct,validateSave,restoreSave} from './engine.js';
+import {GAME_KEY,VERSION,ROLES,TACTICS,ACTIVITIES,createGame,advanceWeek,perform,nextOpponent,runway,brandValue,recentTotal,pound,count,pct,validateSave,restoreSave} from './engine.js?v=1.1.0';
 const root=document.getElementById('app');
 let game=null,view='hq',modal=null,toast='',toastError=false,lastAdvance=0,showcase=false;
 const NAV=[['hq','home','HQ'],['esports','target','Esports'],['creators','users','Creators'],['content','video','Content'],['merch','shirt','Merch'],['sponsors','handshake','Sponsors'],['operations','settings','Operations']];
