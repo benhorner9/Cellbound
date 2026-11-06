@@ -46,6 +46,29 @@ jobs:
             exit 1
           fi
 
+      - name: Install Chromium for pre-deploy and hosted regression tests
+        shell: bash
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Verify all seven screens and legacy saves BEFORE deploying
+        shell: bash
+        env:
+          ESPORTS_URL: http://127.0.0.1:8765/
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --directory esportsmanager-site >/tmp/esportsmanager-preflight.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in 1 2 3 4 5 6 7; do
+            if curl -fsS --max-time 3 http://127.0.0.1:8765/ >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = "1"
+          node esportsmanager-site/tests/browser-smoke.mjs
+
       - name: Prepare exact isolated web distribution
         shell: bash
         run: |
@@ -117,12 +140,6 @@ jobs:
               *) echo "::error::Incorrect Javascript MIME for $js: $mime";exit 1;;
             esac
           done
-
-      - name: Install browser smoke-test dependency
-        shell: bash
-        run: |
-          npm install --no-save --package-lock=false playwright@1.56.1
-          npx playwright install --with-deps chromium
 
       - name: Exercise live hosted game in Chromium
         env:
