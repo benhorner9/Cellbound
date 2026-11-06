@@ -35,6 +35,17 @@ try{
  assert.equal(founderV2.version,2);
  assert.equal(founderV2.world.calendar.week,2);
  assert.equal(Object.values(founderV2.world.organisations).length,8);
+ // The single Advance Week action now updates all seven CPU businesses too.
+ const cpuCompanies=Object.values(founderV2.world.organisations)
+  .filter(o=>founderV2.world.controllers[o.controllerId]?.type==='cpu');
+ assert.equal(cpuCompanies.length,7);
+ assert.ok(cpuCompanies.every(o=>o.playerIds.length===5&&o.creatorIds.length===2));
+ assert.ok(cpuCompanies.every(o=>o.weeklyRecords.length===1));
+ assert.ok(cpuCompanies.every(o=>o.weeklyRecords[0].expenses>0));
+ assert.ok(cpuCompanies.every(o=>o.cash!==4500000));
+ assert.equal(founderV2.activeOrganisationId,
+  Object.values(founderV2.world.organisations).find(o=>o.mode!=='CPU')?.id);
+
  // A real v1 founder save must still open, simulate, and persist in the hosted UI.
  const legacy=await browser.newPage({viewport:{width:1180,height:820}});
  legacy.on('pageerror',e=>errors.push('Legacy save: '+String(e)));
