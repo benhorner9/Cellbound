@@ -21,6 +21,10 @@ try{
  await page.getByRole('button',{name:'Close'}).last().click();
  await page.reload({waitUntil:'networkidle'});
  await page.getByText('Week 2').first().waitFor();
+ const founderV2=await page.evaluate(()=>JSON.parse(localStorage.getItem('esports-empire-save-v1')));
+ assert.equal(founderV2.version,2);
+ assert.equal(founderV2.world.calendar.week,2);
+ assert.equal(Object.values(founderV2.world.organisations).length,8);
  // A real v1 founder save must still open, simulate, and persist in the hosted UI.
  const legacy=await browser.newPage({viewport:{width:1180,height:820}});
  legacy.on('pageerror',e=>errors.push('Legacy save: '+String(e)));
@@ -34,9 +38,26 @@ try{
  await legacy.getByRole('dialog',{name:/Week 3 — Executive Report/i}).waitFor();
  await legacy.getByRole('button',{name:'Close'}).last().click();
  const continued=await legacy.evaluate(()=>JSON.parse(localStorage.getItem('esports-empire-save-v1')));
- assert.equal(continued.week,4);
- assert.equal(continued.org,'Baseline United');
- assert.equal(continued.weeklyRecords.length,3);
+ assert.equal(continued.version,2);
+ assert.equal(continued.world.calendar.week,4);
+ assert.equal(continued.world.organisations[continued.activeOrganisationId].name,'Baseline United');
+ assert.equal(continued.world.organisations[continued.activeOrganisationId].weeklyRecords.length,3);
+ assert.ok(continued.world.organisations[continued.activeOrganisationId].playerIds.length===5);
+ const backup=await legacy.evaluate(()=>JSON.parse(localStorage.getItem('esports-empire-save-v1-legacy-backup')));
+ assert.equal(backup.version,1);
+ assert.equal(backup.week,3);
+ // Week 52 must actually simulate before rolling to Year 2, Week 1.
+ await legacy.evaluate(save=>{save.week=52;save.year=1;save.season=1;localStorage.setItem('esports-empire-save-v1',JSON.stringify(save));},oldSave);
+ await legacy.reload({waitUntil:'networkidle'});
+ await legacy.getByText('Week 52').first().waitFor();
+ await legacy.getByRole('button',{name:/Advance to Next Week/i}).click();
+ await legacy.getByRole('dialog',{name:/Week 52 — Executive Report/i}).waitFor();
+ await legacy.getByRole('button',{name:'Close'}).last().click();
+ const year2=await legacy.evaluate(()=>JSON.parse(localStorage.getItem('esports-empire-save-v1')));
+ assert.equal(year2.world.calendar.week,1);
+ assert.equal(year2.world.calendar.year,2);
+ assert.equal(year2.world.calendar.season,2);
+ assert.equal(year2.world.organisations[year2.activeOrganisationId].lastReport.week,52);
  // Corrupted JSON with a known version must never crash the management screens.
  await legacy.evaluate(()=>localStorage.setItem('esports-empire-save-v1',JSON.stringify({version:1,cash:123,players:[],creators:[],weeklyRecords:[]})));
  await legacy.reload({waitUntil:'networkidle'});
