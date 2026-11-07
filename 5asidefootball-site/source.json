@@ -2,7 +2,7 @@
   "project": "5asidefootball",
   "source": "benhorner9/5AsideManager",
   "sourceBranch": "main",
-  "sourceCommit": "1fe86de0eb1daa5502d7932072386a4144e3e507",
+  "sourceCommit": "427f8f09f7d7a66f84eb6c3156475a123974632a",
   "target": "/5asidefootball.com/",
-  "note": "Static mirror of private 5AsideManager source. The isolated Cellbound workflow deploys only the /5asidefootball.com/ path, pending direct source-repo credentials."
+  "note": "Static mirror of private 5AsideManager source; Cellbound workflow deploys the isolated game folder until source repository credentials are configured."
 }
