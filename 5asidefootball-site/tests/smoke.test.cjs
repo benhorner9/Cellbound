@@ -247,3 +247,39 @@ test("legacy saves skip onboarding and receive a default kit",()=>{
   assert.equal(saved.clubCreated,true);
   assert.equal(saved.kit.pattern,"stripes");
 });
+
+test("manager navigation groups pages and full player reports expose meaningful sections",()=>{
+  const g=boot();
+  assert.match(g.app.innerHTML,/Main management areas/);
+  assert.match(g.app.innerHTML,/Match Day/);
+  g.click({"data-tab":"squad"});
+  g.click({"data-action":"profile-player","data-player":"3"});
+  assert.match(g.app.innerHTML,/PLAYER REPORT/);
+  assert.match(g.app.innerHTML,/Individual attributes/);
+  assert.match(g.app.innerHTML,/Fixture availability/);
+  assert.match(g.app.innerHTML,/Career record/);
+  g.click({"data-action":"profile-section","data-value":"attributes"});
+  assert.match(g.app.innerHTML,/Technical skills/);
+  assert.match(g.app.innerHTML,/Physical skills/);
+  g.click({"data-action":"profile-section","data-value":"development"});
+  assert.match(g.app.innerHTML,/Individual development/);
+  g.click({"data-action":"profile-section","data-value":"availability"});
+  assert.match(g.app.innerHTML,/Education commitment|Available|Work/);
+  g.click({"data-action":"profile-close"});
+  assert.match(g.app.innerHTML,/Registered squad/);
+});
+
+test("simulated matches create authentic appearances and scorer statistics",()=>{
+  const g=boot();
+  g.click({"data-action":"go-fixtures"});
+  const before=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  g.click({"data-action":"start-auto"});
+  g.click({"data-action":"finish"});
+  const after=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  const regular=before.roster.filter(p=>p.available[0]);
+  assert.ok(Object.values(after.playerStats).some(s=>s.appearances===1));
+  assert.ok(Object.values(after.playerStats).every(s=>s.appearances>=1&&s.goals>=0&&s.cleanSheets>=0));
+  g.click({"data-action":"go-squad"});
+  g.click({"data-action":"profile-player","data-player":"3"});
+  assert.match(g.app.innerHTML,/Appearances/);
+});

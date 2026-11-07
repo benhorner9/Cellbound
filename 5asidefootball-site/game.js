@@ -67,7 +67,7 @@
   }
   function initial() {
     return {tab:'overview', club:'Sunday Strikers',clubCreated:false,kit:defaultKit(),money:240, sponsor:35, formation:'1-2-1',style:'balanced',plan:'balanced', offers:{},guest:{},round:0,results:{}, fitness:{},seasonDone:false, season:1,division:8,roster:JSON.parse(JSON.stringify(originalRoster)),registeredCap:12,
-      market:marketPool(1,8),youth:youthPool(1),training:{},injuries:{},lineup:[],lineupRound:0,lineupCustomized:false,
+      market:marketPool(1,8),youth:youthPool(1),training:{},injuries:{},playerStats:{},lineup:[],lineupRound:0,lineupCustomized:false,
       planBehind:'press',planAhead:'counter',formerGuests:[],seasonHistory:[],financeLog:[{kind:'Starting funds',amount:240,season:1,round:0}],match:null, log:[], standings:names.map(function(n){return {name:n,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0};}).concat([{name:'Sunday Strikers',played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}])};
   }
   function read() {
@@ -89,7 +89,7 @@
   state.roster=Array.isArray(state.roster)?state.roster:JSON.parse(JSON.stringify(originalRoster));
   roster=state.roster;roster.forEach(ensureDetails);state.season=state.season||1;state.division=state.division||8;state.registeredCap=12;
   state.market=state.market||marketPool(state.season,state.division);state.youth=state.youth||youthPool(state.season);
-  state.training=state.training||{};state.injuries=state.injuries||{};state.seasonHistory=state.seasonHistory||[];state.formerGuests=state.formerGuests||[];state.financeLog=state.financeLog||[];
+  state.training=state.training||{};state.injuries=state.injuries||{};state.playerStats=state.playerStats||{};state.seasonHistory=state.seasonHistory||[];state.formerGuests=state.formerGuests||[];state.financeLog=state.financeLog||[];
   state.lineup=state.lineup||[];state.lineupCustomized=!!state.lineupCustomized;
   var app=document.getElementById('app');
   function esc(x){return String(x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -165,12 +165,32 @@
     return '<div class="metrics"><div class="metric"><small>CLUB BALANCE</small><strong>'+money(state.money)+'</strong></div><div class="metric"><small>LEAGUE POSITION</small><strong>'+rank+'<span class="muted"> / 7</span></strong></div><div class="metric"><small>POINTS</small><strong>'+p.points+'</strong></div><div class="metric"><small>AVAILABLE PLAYERS</small><strong>'+ (fixture()?players().length:'—')+' <span class="muted">/ 9+</span></strong></div></div>';
   }
   function sortTable(a,b){return b.points-a.points || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf || a.name.localeCompare(b.name);}
+
+  // Familiar manager navigation: a small number of responsibilities, with contextual submenus.
   function nav(){
-    var sections=[['overview','◈','Overview'],['squad','♙','Squad'],['fixtures','▦','Fixtures'],['tactics','⌁','Tactics'],['training','✦','Training'],['transfers','⇄','Transfers'],['academy','♧','Academy'],['finances','£','Finances'],['league','≡','League'],['career','★','Career']];
-    return sections.map(function(s){return '<button data-tab="'+s[0]+'" class="'+((state.tab===s[0] || state.tab==='match' && s[0]==='fixtures')?'active':'')+'"><span class="symbol">'+s[1]+'</span>'+s[2]+'</button>';}).join('');
+    var sections=[
+      {name:'Home',entries:[['overview','Dashboard']]},
+      {name:'Squad',entries:[['squad','First Team'],['training','Training'],['academy','Academy']]},
+      {name:'Tactics',entries:[['tactics','Tactical Setup']]},
+      {name:'Match Day',entries:[['fixtures','Fixtures & Results'],['league','League Table']]},
+      {name:'Recruitment',entries:[['transfers','Transfer Market']]},
+      {name:'Club',entries:[['finances','Finances'],['career','Career & Club']]}
+    ];
+    var active=state.tab==='profile'?'squad':state.tab==='match'?'fixtures':state.tab;
+    var group=sections.find(function(s){return s.entries.some(function(x){return x[0]===active;});})||sections[0];
+    var primary=sections.map(function(s){
+      var selected=s===group;
+      return '<button type="button" data-tab="'+s.entries[0][0]+'" class="'+(selected?'active':'')+'" aria-current="'+(selected?'page':'false')+'">'+s.name+'</button>';
+    }).join('');
+    var secondary=group.entries.map(function(x){
+      return '<button type="button" data-tab="'+x[0]+'" class="'+(x[0]===active?'active':'')+'">'+x[1]+'</button>';
+    }).join('');
+    if(state.tab==='profile')secondary+='<span class="fm-breadcrumb">/ Player report</span>';
+    return '<nav aria-label="Main management areas" class="fm-primary-nav">'+primary+'</nav>'+
+      '<nav aria-label="'+group.name+' pages" class="fm-secondary-nav">'+secondary+'</nav>';
   }
   function heading(){
-    var headings={overview:['CLUB DASHBOARD','The Clubhouse'],squad:['TEAM SELECTION','Squad & Availability'],fixtures:['MATCH CENTRE','Fixtures & Results'],tactics:['TOUCHLINE','Tactical Setup'],league:['DIVISION '+state.division,'League Standings'],training:['TEAM DEVELOPMENT','Training Ground'],transfers:['RECRUITMENT','Transfer Market'],academy:['FUTURE TALENT','Youth Academy'],finances:['CLUB ACCOUNTS','Club Finances'],career:['YOUR JOURNEY','Manager Career'],match:['MATCHDAY LIVE','The Touchline']};
+    var headings={overview:['CLUB DASHBOARD','The Clubhouse'],squad:['TEAM SELECTION','Squad & Availability'],fixtures:['MATCH CENTRE','Fixtures & Results'],tactics:['TOUCHLINE','Tactical Setup'],league:['DIVISION '+state.division,'League Standings'],training:['TEAM DEVELOPMENT','Training Ground'],transfers:['RECRUITMENT','Transfer Market'],academy:['FUTURE TALENT','Youth Academy'],finances:['CLUB ACCOUNTS','Club Finances'],career:['YOUR JOURNEY','Manager Career'],profile:['PLAYER REPORT','Player Profile'],match:['MATCHDAY LIVE','The Touchline']};
     var t=headings[state.tab]||headings.overview;
     return '<header class="top"><div><div class="eyebrow">'+t[0]+'</div><h1>'+t[1]+'</h1></div><div class="topmeta"><span class="chip">SEASON '+String(state.season).padStart(2,'0')+'</span><span class="chip highlight">DIVISION '+state.division+'</span></div></header>';
   }
@@ -197,7 +217,7 @@
       '<p class="fine">Guest players participate for one game only. If they are particularly talented, recruiting a permanent player later may become worthwhile.</p></div>'+
       '<div class="card" style="margin-top:16px"><div class="head"><h2>Next fixture</h2></div>'+
       (f?'<div class="detail-list"><div class="detail-line"><span>Opponent</span><b>'+esc(f.opponent)+'</b></div><div class="detail-line"><span>Match night</span><b>'+f.night+'</b></div><div class="detail-line"><span>Kickoff</span><b>'+f.day+' '+f.time+'</b></div></div><div class="actions" style="margin-top:18px">'+button('SELECT STARTERS →','go-tactics','primary')+'</div>':'<p>Season '+state.season+' is complete.</p>'+button('NEXT SEASON →','next-season','primary'))+
-      '</div></div></div>'+profileView();
+      '</div></div></div>';
   }
 
   function tactics(){
@@ -229,18 +249,74 @@
   }
 
   function availableTeam(){return players(state.round);}
+
+  // All profile numbers come from the saved player or real simulated appearances.
+  function profileSkill(label,value){
+    var v=clamp(value,0,100),tier=v>=80?'elite':v>=65?'strong':'';
+    return '<div class="profile-skill"><span>'+label+'</span><div class="profile-skill-track"><span style="width:'+v+'%"></span></div><b class="'+tier+'">'+v+'</b></div>';
+  }
   function profileView(){
-    if(!state.profileId)return '';
-    var p=roster.find(function(x){return x.id===state.profileId;});if(!p)return '';
+    var p=roster.find(function(x){return x.id===state.profileId;});
+    if(!p)return '<div class="card"><p>That player is no longer in your squad.</p>'+button('BACK TO SQUAD','profile-close','primary')+'</div>';
     ensureDetails(p);
     var labels={pace:'Pace',finishing:'Finishing',passing:'Passing',defending:'Defending',keeping:'Goalkeeping',stamina:'Stamina'};
-    return '<div class="card" style="margin-top:16px"><div class="head"><h2>'+esc(p.name)+' · Player profile</h2>'+button('CLOSE','profile-player','small ghost','data-player="'+p.id+'"')+'</div>'+
-      '<div class="detail-list"><div class="detail-line"><span>Position / age</span><b>'+p.pos+' / '+p.age+'</b></div><div class="detail-line"><span>Employment / education</span><b>'+esc(p.job)+'</b></div><div class="detail-line"><span>Overall / potential</span><b>'+p.rating+' / '+p.potential+'</b></div><div class="detail-line"><span>Fitness / morale</span><b>'+fitness(p)+'% / '+p.morale+'%</b></div></div>'+
-      '<div class="head" style="margin-top:22px"><h2>Individual attributes</h2></div>'+
-      Object.keys(labels).map(function(k){return '<div class="training-player"><b>'+labels[k]+'</b><span>'+p.attributes[k]+' / 100</span><div class="progress"><span style="width:'+p.attributes[k]+'%"></span></div></div>';}).join('')+
-      ((state.injuries[p.id]||0)>state.round?'<div class="actions" style="margin-top:14px">'+button('PHYSIO TREATMENT · £40','physio','small warning','data-player="'+p.id+'" '+(state.money<40?'disabled':''))+'</div>':'')+
-      '<div class="head" style="margin-top:24px"><h2>Fixture availability</h2></div>'+
-      matchSlots.map(function(slot,i){return '<div class="detail-line"><span>Round '+(i+1)+' · '+slot[0]+' '+slot[1]+'</span><b style="color:'+(available(p,i)?'var(--mint)':'var(--orange)')+'">'+(available(p,i)?'Available':esc(reason(p,i)))+'</b></div>';}).join('')+'</div>';
+    var keys=Object.keys(labels).sort(function(a,b){return p.attributes[b]-p.attributes[a];});
+    var avg=Math.round((p.attributes.pace+p.attributes.finishing+p.attributes.passing+p.attributes.defending+p.attributes.keeping+p.attributes.stamina)/6);
+    var role=p.pos==='GK'?'Goalkeeper':p.pos==='DEF'?'Defensive Anchor':p.pos==='MID'?'Playmaker':'Forward';
+    var records=state.playerStats[p.id]||{appearances:0,goals:0,cleanSheets:0};
+    var index=roster.findIndex(function(x){return x.id===p.id;});
+    var tab=state.profileSection||'overview',progress=Math.min(100,Math.round(100*(p.xp||0)/Math.max(1,70+(p.rating-45)*5)));
+    var avail=fixture()?available(p,state.round):false,injured=(state.injuries[p.id]||0)>state.round;
+    var hero='<section class="card player-report-hero"><div class="profile-topline">'+button('← BACK TO SQUAD','profile-close','small ghost')+
+      '<div class="actions">'+button('← PREVIOUS','profile-prev','small',''+(index===0?'disabled':''))+button('NEXT →','profile-next','small',''+(index===roster.length-1?'disabled':''))+'</div></div>'+
+      '<div class="profile-head"><div class="profile-avatar '+(p.pos==='GK'?'keeper':'')+'">'+esc(p.name.split(' ').map(function(n){return n.charAt(0);}).join(''))+'</div>'+
+      '<div class="profile-identity"><div class="eyebrow">FIRST TEAM · PLAYER REPORT</div><h2>'+esc(p.name)+'</h2><p>'+esc(role)+' · '+esc(p.pos)+' · '+p.age+' years old</p><p>'+esc(p.job)+(p.professional?' · Professional':' · Amateur')+'</p></div>'+
+      '<div class="profile-status">'+badge(injured?'INJURED':avail?'AVAILABLE':fixture()?'UNAVAILABLE':'SEASON FINISHED',injured?'red':avail?'':'grey')+'</div></div>'+
+      '<div class="profile-metrics"><div><small>OVERALL</small><strong>'+p.rating+'</strong></div><div><small>POTENTIAL</small><strong>'+p.potential+'</strong></div><div><small>FITNESS</small><strong>'+fitness(p)+'%</strong></div><div><small>MORALE</small><strong>'+p.morale+'%</strong></div></div></section>';
+    var subtabs=[['overview','Overview'],['attributes','Individual attributes'],['development','Development'],['availability','Fixture availability']];
+    var nav='<nav class="profile-tabs" aria-label="Player profile sections">'+subtabs.map(function(s){
+      return '<button type="button" class="'+(tab===s[0]?'active':'')+'" data-action="profile-section" data-value="'+s[0]+'">'+s[1]+'</button>';
+    }).join('')+'</nav>';
+    var body='';
+    if(tab==='overview'){
+      body='<div class="grid"><section class="card"><div class="head"><h2>Player overview</h2>'+badge(esc(role),'grey')+'</div>'+
+        '<p>The information below reflects this player’s attributes and performance recorded in the current version.</p>'+
+        '<div class="head" style="margin-top:20px"><h3>Strongest skills</h3></div>'+keys.slice(0,3).map(function(k){return profileSkill(labels[k],p.attributes[k]);}).join('')+
+        '<div class="head" style="margin-top:24px"><h3>Areas to develop</h3></div>'+keys.slice(-2).reverse().map(function(k){return profileSkill(labels[k],p.attributes[k]);}).join('')+'</section>'+
+        '<section class="card"><div class="head"><h2>Career record</h2></div>'+
+        '<div class="profile-record"><div><strong>'+records.appearances+'</strong><small>Appearances</small></div><div><strong>'+records.goals+'</strong><small>Goals</small></div><div><strong>'+records.cleanSheets+'</strong><small>Clean sheets</small></div></div>'+
+        '<p class="fine">Career statistics start recording from this update. Earlier completed matches cannot be reconstructed from old saves.</p>'+
+        '<div class="detail-list"><div class="detail-line"><span>Primary position</span><b>'+esc(p.pos)+'</b></div>'+
+        '<div class="detail-line"><span>Overall potential</span><b>'+p.rating+' / '+p.potential+'</b></div>'+
+        '<div class="detail-line"><span>Skill average</span><b>'+avg+' / 100</b></div>'+
+        '<div class="detail-line"><span>Next fixture status</span><b>'+esc(fixture()?reason(p,state.round):'Season complete')+'</b></div></div></section></div>';
+    }else if(tab==='attributes'){
+      body='<div class="grid"><section class="card"><div class="head"><h2>Technical skills</h2></div>'+
+        ['finishing','passing','defending','keeping'].map(function(k){return profileSkill(labels[k],p.attributes[k]);}).join('')+
+        '<p class="fine">These skills already contribute to player training and the current match engine. A richer football engine will use them in individual actions.</p></section>'+
+        '<section class="card"><div class="head"><h2>Physical skills</h2></div>'+
+        ['pace','stamina'].map(function(k){return profileSkill(labels[k],p.attributes[k]);}).join('')+
+        '<div class="head" style="margin-top:28px"><h2>Mindset and condition</h2></div>'+
+        profileSkill('Morale',p.morale)+profileSkill('Fitness',fitness(p))+
+        '<p class="fine">All attribute values use a 1–100 scale. High numbers indicate greater ability.</p></section></div>';
+    }else if(tab==='development'){
+      body='<div class="grid"><section class="card"><div class="head"><h2>Individual development</h2></div>'+
+        '<div class="detail-list"><div class="detail-line"><span>Current ability</span><b>'+p.rating+'</b></div>'+
+        '<div class="detail-line"><span>Potential ceiling</span><b>'+p.potential+'</b></div>'+
+        '<div class="detail-line"><span>Growth remaining</span><b>'+Math.max(0,p.potential-p.rating)+' rating points</b></div></div>'+
+        '<p style="margin-top:24px">Progress towards next rating improvement</p><div class="progress"><span style="width:'+progress+'%"></span></div>'+
+        '<p class="fine">'+progress+'% progress · Match appearances and training provide experience.</p>'+
+        '<div class="actions">'+button('OPEN TRAINING','go-training','primary')+'</div></section>'+
+        '<section class="card"><div class="head"><h2>Development priorities</h2></div><p>Strongest attribute: <b>'+labels[keys[0]]+' ('+p.attributes[keys[0]]+')</b></p>'+
+        '<p>Weakest attribute: <b>'+labels[keys[keys.length-1]]+' ('+p.attributes[keys[keys.length-1]]+')</b></p>'+
+        '<p>Use team training to develop existing attributes. Individual training plans and a history graph can follow when the simulation supports them.</p></section></div>';
+    }else{
+      body='<section class="card"><div class="head"><h2>Fixture availability</h2></div><p>Five-a-side players also have work, education and other commitments. Check each upcoming league-night slot.</p>'+
+        matchSlots.map(function(slot,i){var status=available(p,i)?'Available':reason(p,i);return '<div class="detail-line"><span>Round '+(i+1)+' · '+slot[0]+' '+slot[1]+'</span><b class="'+(available(p,i)?'profile-good':'profile-warning')+'">'+esc(status)+'</b></div>';}).join('')+
+        (injured?'<div class="actions" style="margin-top:20px">'+button('PHYSIO TREATMENT · £40','physio','warning','data-player="'+p.id+'" '+(state.money<40?'disabled':''))+'</div>':'')+
+        '</section>';
+    }
+    return hero+nav+body;
   }
   function registeredCard(p){
     ensureDetails(p);var a=available(p,state.round),injured=(state.injuries[p.id]||0)>state.round;
@@ -334,7 +410,22 @@
   }
   function extraAction(action,target){
     var id=Number(target.getAttribute('data-player')),p,fee,f=fixture();
-    if(action==='profile-player'){state.profileId=state.profileId===id?null:id;render();return true;}
+    if(action==='profile-player'){
+      if(!roster.some(function(x){return x.id===id;}))return true;
+      state.profileId=id;state.profileSection='overview';state.tab='profile';render();return true;
+    }
+    if(action==='profile-close'){state.tab='squad';state.profileId=null;state.profileSection='overview';render();return true;}
+    if(action==='profile-section'){
+      var section=target.getAttribute('data-value');
+      if(['overview','attributes','development','availability'].includes(section)){state.profileSection=section;render();}
+      return true;
+    }
+    if(action==='profile-prev'||action==='profile-next'){
+      var current=roster.findIndex(function(x){return x.id===state.profileId;});
+      var next=current+(action==='profile-next'?1:-1);
+      if(next>=0&&next<roster.length){state.profileId=roster[next].id;state.profileSection='overview';render();}
+      return true;
+    }
     if(action==='rename-club'){
       var field=document.getElementById('club-name-input'),name=field&&typeof field.value==='string'?field.value.trim():'';
       if(!name)return true;
@@ -437,10 +528,14 @@
     return false;
   }
 
+
   function render(){
     if(!state.clubCreated||editingClub){app.innerHTML=creator();return;}
-    var body=state.tab==='overview'?overview():state.tab==='squad'?squad():state.tab==='tactics'?tactics():state.tab==='fixtures'?fixtures():state.tab==='league'?league():state.tab==='training'?trainingView():state.tab==='transfers'?transfersView():state.tab==='academy'?academyView():state.tab==='finances'?financesView():state.tab==='career'?careerView():match();
-    app.innerHTML='<div class="shell"><aside class="sidebar"><div class="brand"><div class="brandmark">5A</div><div class="brandcopy"><b>FIVE ASIDE</b><small>MANAGER · ALPHA</small></div></div><div><div class="side-label">CLUB OFFICE</div><nav class="nav">'+nav()+'</nav></div><div class="sidebar-foot"><span class="online-dot"></span> LOCAL TEST BUILD<br>Progress saves on this device.<br>No online managers yet.<br><br>'+button('RESET TEST SAVE','reset','small ghost')+'</div></aside><main class="main">'+heading()+(toast?'<div class="banner success" role="status">'+esc(toast)+'</div>':'')+body+'<div class="footer-note">5 ASIDE MANAGER · GAMEPLAY PROTOTYPE · NOT A LIVE ONLINE LEAGUE · <a href="./save-transfer.html">TRANSFER SAVE</a></div></main></div>';
+    var body=state.tab==='overview'?overview():state.tab==='squad'?squad():state.tab==='tactics'?tactics():state.tab==='fixtures'?fixtures():state.tab==='league'?league():state.tab==='training'?trainingView():state.tab==='transfers'?transfersView():state.tab==='academy'?academyView():state.tab==='finances'?financesView():state.tab==='career'?careerView():state.tab==='profile'?profileView():match();
+    app.innerHTML='<div class="shell fm-shell"><header class="fm-chrome"><div class="fm-header-row"><div class="brand"><div class="brandmark">5A</div><div class="brandcopy"><b>FIVE ASIDE</b><small>MANAGER · ALPHA</small></div></div>'+
+      '<div class="fm-header-meta"><span class="chip">SEASON '+String(state.season).padStart(2,'0')+'</span><span class="chip highlight">DIVISION '+state.division+'</span></div></div>'+nav()+'</header>'+
+      '<main class="main fm-main">'+heading()+(toast?'<div class="banner success" role="status">'+esc(toast)+'</div>':'')+body+
+      '<div class="footer-note">5 ASIDE MANAGER · LOCAL TEST BUILD · <a href="./save-transfer.html">TRANSFER SAVE</a> · '+button('RESET TEST SAVE','reset','small ghost')+'</div></main></div>';
   }
   function notice(msg){toast=msg;render();}
   function updateTable(name,gf,ga){
@@ -464,7 +559,7 @@
       m.home++;
       var scorer=team.filter(function(p){return p.pos!=='GK';});
       var p=scorer[Math.floor(Math.random()*scorer.length)]||team[0];
-      m.events.push({minute:m.minute,goal:true,text:'GOAL! '+p.name+' finishes a chance for '+state.club+'.'});
+      m.events.push({minute:m.minute,goal:true,scorerId:p.id,text:'GOAL! '+p.name+' finishes a chance for '+state.club+'.'});
     }else if(randomGoal(Math.max(.025,Math.min(.36,.14+(70-mean)*.008+fatigue+(m.instruction==='hold'?-0.07:.04)+(state.formation==='2-1-1'?-0.055:0))))){
       m.away++;m.events.push({minute:m.minute,goal:true,text:'Goal for '+m.opponent+' after a quick move.'});
     }else{
@@ -489,6 +584,18 @@
     if(m.forfeit){
       ledger('Fixture forfeit penalty',-15);
     }else{
+      state.playerStats=state.playerStats||{};
+      played.forEach(function(p){
+        if(p.id>=100&&p.id<2000)return;
+        var rec=state.playerStats[p.id]||(state.playerStats[p.id]={appearances:0,goals:0,cleanSheets:0});
+        rec.appearances++;
+        if(p.pos==='GK'&&m.away===0)rec.cleanSheets++;
+      });
+      m.events.forEach(function(event){
+        if(event.scorerId==null)return;
+        var stats=state.playerStats[event.scorerId];
+        if(stats)stats.goals++;
+      });
       played.forEach(function(p){
         if(p.id>=100 && p.id<2000)return;
         state.fitness[p.id]=Math.max(35,fitness(p)-(state.style==='press'||m.instruction==='press'?20:14));

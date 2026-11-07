@@ -110,3 +110,53 @@
 .pitch-player:first-child .shirt.kit-shirt{background:var(--orange);color:#18241d}
 @media(max-width:840px){.creation-layout{grid-template-columns:1fr}.creation-preview{min-height:385px}.creation-preview .kit-display{min-height:200px}.creation-preview .kit-shirt{width:155px;height:184px}.preview-note{margin-top:20px}}
 @media(max-width:520px){.creation-screen{padding:16px}.creation-header .chip{font-size:9px}.design-options{grid-template-columns:repeat(3,minmax(0,1fr))}.creation-form{padding:21px}.creation-preview{padding:24px 15px}.colour-choice{width:42px;height:42px}}
+
+/* Football-management navigation: fewer top-level areas, contextual pages. */
+.shell.fm-shell{display:block;max-width:1530px;margin:0 auto}
+.fm-chrome{background:#101f2b;border-bottom:1px solid var(--line);padding:15px clamp(16px,3vw,46px) 0}
+.fm-header-row{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}
+.fm-header-row .brand{padding:0}
+.fm-header-meta{display:flex;gap:8px;flex-wrap:wrap}
+.fm-primary-nav,.fm-secondary-nav{display:flex;align-items:center;gap:6px;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
+.fm-primary-nav button,.fm-secondary-nav button{border:0;cursor:pointer;white-space:nowrap;color:#b7c9d2;background:transparent;font-size:13px;font-weight:800;padding:13px 15px;border-radius:9px 9px 0 0}
+.fm-primary-nav button.active{color:var(--mint);background:#234236}
+.fm-primary-nav button:hover,.fm-secondary-nav button:hover{color:#fff;background:#263c49}
+.fm-secondary-nav{min-height:43px;border-top:1px solid #273b45}
+.fm-secondary-nav button{font-size:12px;padding:10px 15px;border-radius:8px}
+.fm-secondary-nav button.active{color:var(--mint);box-shadow:inset 0 -2px 0 var(--mint)}
+.fm-breadcrumb{font-size:12px;color:var(--muted);padding:6px}
+.fm-primary-nav button:focus-visible,.fm-secondary-nav button:focus-visible,.profile-tabs button:focus-visible{outline:2px solid var(--mint);outline-offset:-2px}
+.fm-main{padding:28px clamp(16px,3vw,46px) 44px}
+.player-report-hero{background:linear-gradient(125deg,#1b3d39,#172d3d)}
+.profile-topline,.profile-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.profile-topline{margin-bottom:21px}
+.profile-head{justify-content:flex-start}
+.profile-avatar{width:88px;height:88px;flex:0 0 auto;border-radius:18px;background:#35604b;display:grid;place-items:center;color:#ecffdb;font:800 33px 'Barlow Condensed'}
+.profile-avatar.keeper{background:#725f42}
+.profile-identity{flex:1;min-width:160px}
+.player-report-hero .profile-identity h2{font-size:clamp(28px,4vw,44px);margin:6px 0}
+.profile-identity p{margin:4px 0;font-size:12px}
+.profile-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:25px}
+.profile-metrics>div{background:#0f2830;padding:14px;border-radius:10px}
+.profile-metrics small,.profile-record small{display:block;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.6px}
+.profile-metrics strong,.profile-record strong{display:block;font:800 28px 'Barlow Condensed';color:var(--mint);margin-top:3px}
+.profile-tabs{display:flex;gap:7px;overflow-x:auto;margin:16px 0 18px;padding-bottom:4px}
+.profile-tabs button{background:#18313c;color:#c3d4d5;border:1px solid var(--line);padding:12px 15px;border-radius:9px;font-size:12px;font-weight:800;white-space:nowrap}
+.profile-tabs button.active{background:#254838;color:var(--mint);border-color:#6b9658}
+.profile-skill{display:grid;grid-template-columns:115px minmax(55px,1fr) 35px;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #29414a;font-size:12px}
+.profile-skill-track{height:7px;border-radius:99px;background:#263c44;overflow:hidden}
+.profile-skill-track span{display:block;height:100%;background:linear-gradient(90deg,#2e9a92,var(--mint))}
+.profile-skill b{font-size:13px;text-align:right}
+.profile-skill b.strong{color:#c7efac}.profile-skill b.elite{color:var(--mint)}
+.profile-record{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:5px 0 19px}
+.profile-record>div{background:#1a3540;border-radius:10px;padding:13px;text-align:center}
+.profile-good{color:var(--mint)!important}.profile-warning{color:var(--orange)!important}
+@media(max-width:700px){
+  .fm-header-row{align-items:flex-start}
+  .fm-header-meta .chip{padding:6px;font-size:10px}
+  .fm-primary-nav button{padding:12px 11px;font-size:12px}
+  .profile-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .profile-skill{grid-template-columns:90px minmax(40px,1fr) 30px;gap:7px}
+  .player-report-hero{padding:17px}
+  .profile-avatar{width:66px;height:66px;font-size:24px}
+}
