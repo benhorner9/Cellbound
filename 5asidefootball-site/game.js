@@ -166,31 +166,78 @@
   }
   function sortTable(a,b){return b.points-a.points || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf || a.name.localeCompare(b.name);}
 
-  // Familiar manager navigation: a small number of responsibilities, with contextual submenus.
+
+  // B01: a single consistent manager information architecture.
+  var MANAGER_GROUPS=[
+    {name:'Home',entries:[['overview','Dashboard']]},
+    {name:'Squad',entries:[['squad','First Team'],['training','Training'],['academy','Academy']]},
+    {name:'Tactics',entries:[['tactics','Tactical Setup']]},
+    {name:'Match Day',entries:[['fixtures','Fixtures & Results'],['league','League Table']]},
+    {name:'Recruitment',entries:[['transfers','Transfer Market']]},
+    {name:'Club',entries:[['finances','Finances'],['career','Career & Club'],['settings','Settings & Saves']]}
+  ];
+  var MANAGER_TABS=MANAGER_GROUPS.reduce(function(all,g){return all.concat(g.entries.map(function(e){return e[0];}));},[]).concat(['profile','match']);
+  function activeTab(){return state.tab==='profile'?'squad':state.tab==='match'?'fixtures':state.tab;}
+  function currentGroup(){return MANAGER_GROUPS.find(function(g){return g.entries.some(function(e){return e[0]===activeTab();});})||MANAGER_GROUPS[0];}
+  function pageName(tab){
+    for(var i=0;i<MANAGER_GROUPS.length;i++){
+      var page=MANAGER_GROUPS[i].entries.find(function(p){return p[0]===tab;});
+      if(page)return page[1];
+    }
+    return tab==='profile'?'Player Report':tab==='match'?'Live Match':'Dashboard';
+  }
+  function navigate(tab){
+    if(MANAGER_TABS.indexOf(tab)<0)return;
+    if(tab==='match'&&!state.match)return;
+    if(tab==='profile'&&!roster.some(function(p){return p.id===state.profileId;}))return;
+    state.tab=tab;toast='';render();save();
+    if(typeof window!=='undefined'&&window.scrollTo)window.scrollTo(0,0);
+  }
   function nav(){
-    var sections=[
-      {name:'Home',entries:[['overview','Dashboard']]},
-      {name:'Squad',entries:[['squad','First Team'],['training','Training'],['academy','Academy']]},
-      {name:'Tactics',entries:[['tactics','Tactical Setup']]},
-      {name:'Match Day',entries:[['fixtures','Fixtures & Results'],['league','League Table']]},
-      {name:'Recruitment',entries:[['transfers','Transfer Market']]},
-      {name:'Club',entries:[['finances','Finances'],['career','Career & Club']]}
-    ];
-    var active=state.tab==='profile'?'squad':state.tab==='match'?'fixtures':state.tab;
-    var group=sections.find(function(s){return s.entries.some(function(x){return x[0]===active;});})||sections[0];
-    var primary=sections.map(function(s){
-      var selected=s===group;
-      return '<button type="button" data-tab="'+s.entries[0][0]+'" class="'+(selected?'active':'')+'" aria-current="'+(selected?'page':'false')+'">'+s.name+'</button>';
+    var group=currentGroup(),active=activeTab();
+    var primary=MANAGER_GROUPS.map(function(g){
+      var chosen=g===group;
+      return '<button type="button" data-tab="'+g.entries[0][0]+'" class="'+(chosen?'active':'')+'" aria-current="'+(chosen?'page':'false')+'">'+g.name+'</button>';
     }).join('');
-    var secondary=group.entries.map(function(x){
-      return '<button type="button" data-tab="'+x[0]+'" class="'+(x[0]===active?'active':'')+'">'+x[1]+'</button>';
+    var secondary=group.entries.map(function(p){
+      var chosen=p[0]===active;
+      return '<button type="button" data-tab="'+p[0]+'" class="'+(chosen?'active':'')+'" aria-current="'+(chosen?'page':'false')+'">'+p[1]+'</button>';
     }).join('');
-    if(state.tab==='profile')secondary+='<span class="fm-breadcrumb">/ Player report</span>';
     return '<nav aria-label="Main management areas" class="fm-primary-nav">'+primary+'</nav>'+
-      '<nav aria-label="'+group.name+' pages" class="fm-secondary-nav">'+secondary+'</nav>';
+      '<nav aria-label="'+esc(group.name)+' pages" class="fm-secondary-nav">'+secondary+'</nav>';
+  }
+  function contextBar(){
+    var group=currentGroup(),name=state.tab==='profile'?'Player Report':state.tab==='match'?'Live Match':pageName(state.tab);
+    var crumbs='<div class="fm-crumbs" aria-label="Current location"><button type="button" data-tab="'+group.entries[0][0]+'">'+esc(group.name)+'</button>'+
+      '<span aria-hidden="true">/</span><strong aria-current="page">'+esc(name)+'</strong></div>';
+    var live=state.match&&state.tab!=='match'?button('RETURN TO LIVE MATCH','go-match','small primary'):'';
+    return '<div class="fm-contextbar">'+crumbs+'<div class="fm-quicktools">'+live+
+      '<span class="fm-save-status">● SAVED ON THIS DEVICE</span>'+
+      '<a class="btn small ghost" href="./save-transfer.html" aria-label="Export or import your local club save">SAVE TRANSFER</a>'+
+      (state.tab==='settings'?'':button('SETTINGS','go-settings','small ghost'))+'</div></div>';
+  }
+  function emptyState(title,body,action,label){
+    return '<div class="fm-empty" role="status"><strong>'+esc(title)+'</strong><p>'+esc(body)+'</p>'+
+      (action?button(label,action,'small primary'):'')+'</div>';
+  }
+  function sectionCard(title,body,footer){
+    return '<section class="card fm-section-card"><div class="head"><h2>'+esc(title)+'</h2></div>'+body+
+      (footer?'<div class="fm-card-footer">'+footer+'</div>':'')+'</section>';
+  }
+  function settingsView(){
+    return '<p class="section-intro">Manage this browser-only career safely. Your squad, kit, fixtures and finances are stored locally until online accounts arrive in a later block.</p>'+
+      '<div class="grid fm-settings-grid">'+
+      sectionCard('Save & restore','<p>Export a backup before changing devices, clearing Safari data or resetting your club. Importing a save creates a backup of the previous one.</p>'+
+        '<div class="fm-settings-facts"><div><span>Club</span><b>'+esc(state.club)+'</b></div><div><span>Season</span><b>'+state.season+'</b></div><div><span>Squad</span><b>'+roster.length+' registered</b></div></div>',
+        '<a class="btn primary" href="./save-transfer.html">EXPORT / IMPORT SAVE</a>')+
+      sectionCard('Career & support','<p>Your manager progress is not attached to an online account yet. Keep a copy of your save if you use several devices.</p>'+
+        '<p class="fine">Competition mode: local single-player alpha · real online leagues planned for a later block.</p>',
+        button('OPEN CLUB CAREER','go-career','ghost'))+
+      '<div class="span-all">'+sectionCard('Danger zone','<p>Resetting starts a brand-new local club. This cannot be undone unless you have exported your previous save.</p>',
+        button('RESET TEST SAVE','reset','warning'))+'</div></div>';
   }
   function heading(){
-    var headings={overview:['CLUB DASHBOARD','The Clubhouse'],squad:['TEAM SELECTION','Squad & Availability'],fixtures:['MATCH CENTRE','Fixtures & Results'],tactics:['TOUCHLINE','Tactical Setup'],league:['DIVISION '+state.division,'League Standings'],training:['TEAM DEVELOPMENT','Training Ground'],transfers:['RECRUITMENT','Transfer Market'],academy:['FUTURE TALENT','Youth Academy'],finances:['CLUB ACCOUNTS','Club Finances'],career:['YOUR JOURNEY','Manager Career'],profile:['PLAYER REPORT','Player Profile'],match:['MATCHDAY LIVE','The Touchline']};
+    var headings={overview:['CLUB DASHBOARD','The Clubhouse'],squad:['TEAM SELECTION','Squad & Availability'],fixtures:['MATCH CENTRE','Fixtures & Results'],tactics:['TOUCHLINE','Tactical Setup'],league:['DIVISION '+state.division,'League Standings'],training:['TEAM DEVELOPMENT','Training Ground'],transfers:['RECRUITMENT','Transfer Market'],academy:['FUTURE TALENT','Youth Academy'],finances:['CLUB ACCOUNTS','Club Finances'],career:['YOUR JOURNEY','Manager Career'],settings:['CAREER OPTIONS','Settings & Saves'],profile:['PLAYER REPORT','Player Profile'],match:['MATCHDAY LIVE','The Touchline']};
     var t=headings[state.tab]||headings.overview;
     return '<header class="top"><div><div class="eyebrow">'+t[0]+'</div><h1>'+t[1]+'</h1></div><div class="topmeta"><span class="chip">SEASON '+String(state.season).padStart(2,'0')+'</span><span class="chip highlight">DIVISION '+state.division+'</span></div></header>';
   }
@@ -355,7 +402,7 @@
       (state.market.length?state.market.map(function(p){
         var allowed=roster.length<12&&state.money>=p.fee&&(!p.professional||(state.division===1&&pros<3));
         return '<div class="player-row"><span class="avatar '+(p.pos==='GK'?'gk':'')+'">'+esc(p.name[0])+'</span><div class="player-main"><b>'+esc(p.name)+'</b><small>'+p.pos+' · '+p.age+' yrs · '+esc(p.job)+(p.professional?' · PRO':'')+'</small></div><span class="rating">'+p.rating+'</span>'+button('SIGN '+money(p.fee),'sign-player','small primary','data-player="'+p.id+'" '+(!allowed?'disabled':''))+'</div>';
-      }).join(''):'<p>No players remaining on this season’s market. A new list arrives next season.</p>')+'</div>'+
+      }).join(''):emptyState('Market cleared','A fresh list of candidates arrives next season.','go-career','VIEW YOUR CAREER'))+'</div>'+
       '<div class="card"><div class="head"><h2>Registered squad</h2></div><p>Release a player if you need room for a stronger signing. Released players cannot be recovered in this demo.</p>'+
       roster.map(function(p){return '<div class="detail-line"><span>'+esc(p.name)+' · '+p.pos+(p.professional?' · PRO':'')+'</span>'+button('RELEASE','release-player','small ghost','data-player="'+p.id+'" '+(roster.length<=5?'disabled':''))+'</div>';}).join('')+
       '<p class="fine">Only the highest division permits professional players, capped at three. At every other level players continue outside work or education. Professional appearances cost an additional £45 per match.</p></div></div>'+friendScoutingView();
@@ -530,12 +577,13 @@
 
 
   function render(){
+    if(typeof document!=='undefined')document.title=(state.clubCreated?state.club+' · '+pageName(state.tab):'Create your club')+' | 5 Aside Manager';
     if(!state.clubCreated||editingClub){app.innerHTML=creator();return;}
-    var body=state.tab==='overview'?overview():state.tab==='squad'?squad():state.tab==='tactics'?tactics():state.tab==='fixtures'?fixtures():state.tab==='league'?league():state.tab==='training'?trainingView():state.tab==='transfers'?transfersView():state.tab==='academy'?academyView():state.tab==='finances'?financesView():state.tab==='career'?careerView():state.tab==='profile'?profileView():match();
+    var body=state.tab==='overview'?overview():state.tab==='squad'?squad():state.tab==='tactics'?tactics():state.tab==='fixtures'?fixtures():state.tab==='league'?league():state.tab==='training'?trainingView():state.tab==='transfers'?transfersView():state.tab==='academy'?academyView():state.tab==='finances'?financesView():state.tab==='career'?careerView():state.tab==='settings'?settingsView():state.tab==='profile'?profileView():match();
     app.innerHTML='<div class="shell fm-shell"><header class="fm-chrome"><div class="fm-header-row"><div class="brand"><div class="brandmark">5A</div><div class="brandcopy"><b>FIVE ASIDE</b><small>MANAGER · ALPHA</small></div></div>'+
-      '<div class="fm-header-meta"><span class="chip">SEASON '+String(state.season).padStart(2,'0')+'</span><span class="chip highlight">DIVISION '+state.division+'</span></div></div>'+nav()+'</header>'+
+      '<div class="fm-header-meta"><span class="chip">SEASON '+String(state.season).padStart(2,'0')+'</span><span class="chip highlight">DIVISION '+state.division+'</span></div></div>'+nav()+'</header>'+contextBar()+
       '<main class="main fm-main">'+heading()+(toast?'<div class="banner success" role="status">'+esc(toast)+'</div>':'')+body+
-      '<div class="footer-note">5 ASIDE MANAGER · LOCAL TEST BUILD · <a href="./save-transfer.html">TRANSFER SAVE</a> · '+button('RESET TEST SAVE','reset','small ghost')+'</div></main></div>';
+      '<div class="footer-note">5 ASIDE MANAGER · LOCAL ALPHA · <a href="./save-transfer.html">BACK UP SAVE</a> · '+button('SETTINGS','go-settings','small ghost')+'</div></main></div>';
   }
   function notice(msg){toast=msg;render();}
   function updateTable(name,gf,ga){
@@ -670,10 +718,10 @@
       save();return;
     }
     if(!state.clubCreated||editingClub)return;
-    var tab=target.getAttribute('data-tab');if(tab){state.tab=tab;toast='';render();save();return;}
+    var tab=target.getAttribute('data-tab');if(tab){navigate(tab);return;}
     var action=target.getAttribute('data-action');if(!action)return;
     if(extraAction(action,target)){save();return;}
-    if(action.slice(0,3)==='go-'){state.tab=action.slice(3);toast='';render();save();return;}
+    if(action.slice(0,3)==='go-'){navigate(action.slice(3));return;}
     if(action==='offer'){
       var id=Number(target.getAttribute('data-player')),p=roster.find(function(v){return v.id===id;});
       if(!p || available(p,state.round)||state.money<20)return;
@@ -683,7 +731,7 @@
       var pool=['Taylor Clarke','Morgan Price','Riley Scott','Jordan Ellis','Casey Hall'];
       state.money-=15;state.guest[state.round]={id:100+state.round,name:pool[state.round%pool.length],pos:state.round%2?'DEF':'FWD',rating:44+Math.floor(Math.random()*40)};
       notice('Friend invited! Their ability was revealed when they turned up.');
-    } else if(action==='formation'||action==='style'||action==='plan'){
+    } else if(action==='formation'||action==='style'||action==='plan'||action==='planBehind'||action==='planAhead'){
       state[action]=target.getAttribute('data-value');toast='';render();
     } else if(action==='start-live'||action==='start-auto')start(action==='start-auto');
     else if(action==='push'||action==='hold'){

@@ -36,8 +36,8 @@ jobs:
           assert source['source']=='benhorner9/5AsideManager'
           assert re.fullmatch('[a-f0-9]{40}',source['sourceCommit'])
           html=pathlib.Path('index.html').read_text()
-          assert 'href="./styles.css?v=fm-profiles-20261107"' in html
-          assert 'src="./game.js?v=fm-profiles-20261107"' in html
+          assert 'href="./styles.css?v=b01-ui-20261107"' in html
+          assert 'src="./game.js?v=b01-ui-20261107"' in html
           transfer=pathlib.Path('save-transfer.html').read_text()
           assert 'five-aside-manager-alpha-v1' in transfer
           assert 'Import save' in transfer

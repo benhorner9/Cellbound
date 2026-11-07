@@ -283,3 +283,65 @@ test("simulated matches create authentic appearances and scorer statistics",()=>
   g.click({"data-action":"profile-player","data-player":"3"});
   assert.match(g.app.innerHTML,/Appearances/);
 });
+
+
+test("B01 groups all manager windows under reachable navigation and contextual controls",()=>{
+  const g=boot();
+  const pages=[
+    ["overview","The Clubhouse"],
+    ["squad","Squad &"],
+    ["training","Training Ground"],
+    ["academy","Youth Academy"],
+    ["tactics","Tactical Setup"],
+    ["fixtures","Fixtures &"],
+    ["league","League Standings"],
+    ["transfers","Transfer Market"],
+    ["finances","Club Finances"],
+    ["career","Manager Career"],
+    ["settings","Settings & Saves"]
+  ];
+  for(const [page,title] of pages){
+    g.click({"data-tab":page});
+    assert.ok(g.app.innerHTML.includes(title),"Missing "+title+" in "+page);
+    assert.match(g.app.innerHTML,/Main management areas/);
+    assert.match(g.app.innerHTML,/aria-label="Current location"/);
+    assert.match(g.app.innerHTML,/SAVE TRANSFER/);
+    assert.match(g.app.innerHTML,/SAVED ON THIS DEVICE/);
+  }
+  assert.match(g.app.innerHTML,/EXPORT \/ IMPORT SAVE/);
+  assert.match(g.app.innerHTML,/RESET TEST SAVE/);
+  g.click({"data-action":"go-career"});
+  assert.match(g.app.innerHTML,/Manager Career/);
+  g.click({"data-action":"go-settings"});
+  assert.match(g.app.innerHTML,/Settings & Saves/);
+  const state=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(state.tab,"settings");
+});
+
+test("B01 preserves and applies losing and winning pre-match tactical instructions",()=>{
+  const g=boot();
+  g.click({"data-tab":"tactics"});
+  g.click({"data-action":"planBehind","data-value":"counter"});
+  g.click({"data-action":"planAhead","data-value":"press"});
+  const saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.planBehind,"counter");
+  assert.equal(saved.planAhead,"press");
+  const reloaded=boot({autoCreate:false,saved});
+  reloaded.click({"data-tab":"tactics"});
+  assert.match(reloaded.app.innerHTML,/Automatic match plan/);
+  const again=JSON.parse(reloaded.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(again.planBehind,"counter");
+  assert.equal(again.planAhead,"press");
+});
+
+test("B01 keeps in-progress match reachable while visiting another section",()=>{
+  const g=boot();
+  g.click({"data-action":"start-live"});
+  assert.match(g.app.innerHTML,/The Touchline/);
+  g.click({"data-tab":"squad"});
+  assert.match(g.app.innerHTML,/RETURN TO LIVE MATCH/);
+  g.click({"data-action":"go-match"});
+  assert.match(g.app.innerHTML,/The Touchline/);
+  g.tick();
+  assert.match(g.app.innerHTML,/LIVE/);
+});
