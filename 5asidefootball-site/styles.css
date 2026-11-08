@@ -333,3 +333,98 @@ a.btn{text-decoration:none;align-items:center;justify-content:center}
   .match-scoreboard .home .club-crest{width:34px;height:34px;font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){.creator-step,.club-crest{transition:none}}
+
+
+/* B03 — Football-manager style decision-led clubhouse and persistent correspondence */
+.manager-dashboard{min-width:0}
+.manager-welcome{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 20px;margin:0 0 18px;padding:0 2px}
+.manager-welcome p{margin:7px 0 0;color:#adcbcc;font-size:13px;line-height:1.5}
+.manager-welcome .manager-identity{margin:0;font-weight:800}
+.manager-welcome .club-crest{width:40px;height:40px;font-size:20px}
+.manager-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(310px,.9fr);grid-template-areas:"next tasks" "inbox diary" "inbox status";gap:16px;align-items:start}
+.manager-layout>*{min-width:0}
+.manager-next{grid-area:next;min-height:330px;display:flex;flex-direction:column;justify-content:center;background:radial-gradient(circle at 90% 0,#31584f 0,transparent 51%),linear-gradient(125deg,#1c483d,#102831 75%);border-color:#46725b}
+.manager-next .eyebrow{color:#c5f09c}
+.manager-next h2{font:800 clamp(30px,3.8vw,51px)/.98 'Barlow Condensed';margin:14px 0 9px}
+.manager-next .manager-fixture-name{font-weight:800;font-size:16px;color:#e1ffd2;line-height:1.4}
+.manager-next p{max-width:600px;font-size:13px;color:#c0d4d1;line-height:1.7;margin:12px 0 18px}
+.manager-next-actions{display:flex;flex-wrap:wrap;gap:10px}
+.manager-next-actions .btn{min-height:46px}
+.manager-last-result{margin-top:20px;padding-top:14px;border-top:1px solid #477361;color:#bbd7ce;font-size:11px;font-weight:700}
+.manager-to-do{grid-area:tasks}
+.manager-to-do .head{margin-bottom:12px}
+.manager-task-list{display:grid}
+.manager-task{display:flex;align-items:flex-start;gap:10px;border-top:1px solid #2a4650;padding:15px 0}
+.manager-task:first-child{border-top:0}
+.manager-task-index{display:grid;place-items:center;flex-shrink:0;width:26px;height:26px;border-radius:8px;background:#345242;color:#d5ffb0;font:800 16px 'Barlow Condensed'}
+.manager-task-main{flex:1;min-width:0}
+.manager-task-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+.manager-task-heading b{font-size:13px;overflow-wrap:anywhere}
+.manager-task .status{font-size:9px;padding:5px 7px}
+.manager-task p{font-size:11px;line-height:1.55;margin:8px 0 10px}
+.manager-task .btn{min-height:42px}
+.manager-inbox{grid-area:inbox;min-height:360px}
+.manager-inbox .head{margin-bottom:14px}
+.manager-unread{font-weight:800;font-size:11px;background:#2f4b3f;color:#d2f9be;border:1px solid #557c61;border-radius:99px;padding:7px 11px;white-space:nowrap}
+.inbox-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-bottom:14px;border-bottom:1px solid #304751}
+.inbox-toolbar .btn{min-height:40px}
+.inbox-list{max-height:680px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.inbox-message{padding:16px 12px;margin:0 -3px;border-bottom:1px solid #304751;background:transparent}
+.inbox-message:last-child{border-bottom:0}
+.inbox-message.unread{border-left:3px solid var(--mint);background:#1b373b}
+.inbox-message-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.inbox-kind{display:inline-flex;align-items:center;border:1px solid #4a6870;background:#243c47;color:#d4e9ef;border-radius:6px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;padding:5px 7px}
+.inbox-kind.kind-result{background:#264739;color:#cbf9b2;border-color:#527c55}
+.inbox-kind.kind-injury,.inbox-kind.kind-availability{background:#533d32;color:#ffd9a6;border-color:#876447}
+.inbox-kind.kind-finance{background:#303e5a;color:#d1e0ff;border-color:#526a96}
+.inbox-period{color:#a6c3c7;font-size:10px;letter-spacing:.4px}
+.inbox-message h3{font:800 20px 'Barlow Condensed';margin:9px 0 4px}
+.inbox-message p{margin:4px 0 13px;color:#c5d7d6;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.inbox-actions{display:flex;gap:7px;flex-wrap:wrap}
+.inbox-actions .btn{min-height:40px}
+.inbox-empty{display:grid;justify-items:start;align-content:center;min-height:160px;padding:20px 7px}
+.inbox-empty strong{font:800 24px 'Barlow Condensed'}
+.inbox-empty p{max-width:400px;font-size:12px;line-height:1.6}
+.manager-diary{grid-area:diary}
+.manager-diary .fixture-row{gap:8px;padding:12px 0}
+.manager-diary .fixture-row .score{font-size:20px}
+.manager-diary .fixture-badges .club-crest{width:29px;height:30px;font-size:13px}
+.manager-diary .fixture-row .info b{font-size:12px}
+.manager-diary .fixture-row .info small{font-size:10px}
+.manager-club-status{grid-area:status}
+.manager-status-line{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #284450;padding:12px 0;font-size:12px}
+.manager-status-line>span{color:#abc1c7}
+.manager-status-line strong{text-align:right;overflow-wrap:anywhere}
+.manager-form-strip{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
+.form-chip{width:25px;height:25px;border-radius:6px;display:grid;place-items:center;font-size:12px;font-weight:900}
+.form-chip.win{background:#234e38;color:#c8ffad}
+.form-chip.draw{background:#354854;color:#d5e5ef}
+.form-chip.loss{background:#553a40;color:#ffd1cc}
+.manager-no-form{font-size:11px;color:#a2bbc0}
+.manager-status-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:19px}
+.manager-status-actions .btn{min-height:42px}
+.manager-metrics .metric strong{font-size:clamp(26px,2.4vw,33px)}
+@media(max-width:1040px){
+  .manager-layout{grid-template-columns:minmax(0,1fr) minmax(290px,.9fr)}
+  .manager-next{min-height:305px}
+}
+@media(max-width:790px){
+  .manager-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"next" "tasks" "inbox" "diary" "status"}
+  .manager-next{min-height:290px}
+  .inbox-list{max-height:530px}
+  .manager-inbox{min-height:unset}
+  .manager-welcome .manager-identity{max-width:100%}
+}
+@media(max-width:520px){
+  .manager-welcome{align-items:flex-start;gap:9px}
+  .manager-welcome .manager-identity{font-size:12px}
+  .manager-next{padding:20px 17px}
+  .manager-next h2{font-size:36px}
+  .manager-next-actions .btn{flex:1 1 auto}
+  .manager-to-do,.manager-inbox,.manager-diary,.manager-club-status{padding:17px 14px}
+  .manager-diary .fixture-badges .club-crest{width:25px;height:27px}
+  .manager-diary .fixture-row .status{font-size:9px;padding:5px 7px}
+  .manager-diary .fixture-row{flex-wrap:wrap}
+  .manager-diary .fixture-row .info{flex:1 1 130px}
+  .manager-diary .fixture-row .score{flex-shrink:0}
+}

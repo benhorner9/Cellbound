@@ -2,7 +2,7 @@
   "project": "5asidefootball",
   "source": "benhorner9/5AsideManager",
   "sourceBranch": "main",
-  "sourceCommit": "506d47980726dd7d0db8e0d267e4c2e5f4e3e4ad",
+  "sourceCommit": "ae09820a00024ba93f2eca968a96010e27b4b6ec",
   "target": "/5asidefootball.com/",
-  "note": "Verified isolated playtesting mirror from 5AsideManager B02; direct source FTPS cutover intentionally deferred to B16."
+  "note": "B03 state-driven Clubhouse and manager inbox; exact verified incremental playtest mirror. Direct source FTPS setup is deferred to B16."
 }

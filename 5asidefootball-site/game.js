@@ -68,7 +68,7 @@
   function initial() {
     return {tab:'overview', club:'Sunday Strikers',clubCreated:false,kit:defaultKit(),money:240, sponsor:35, formation:'1-2-1',style:'balanced',plan:'balanced', offers:{},guest:{},round:0,results:{}, fitness:{},seasonDone:false, season:1,division:8,roster:JSON.parse(JSON.stringify(originalRoster)),registeredCap:12,
       market:marketPool(1,8),youth:youthPool(1),training:{},injuries:{},playerStats:{},lineup:[],lineupRound:0,lineupCustomized:false,
-      planBehind:'press',planAhead:'counter',formerGuests:[],seasonHistory:[],financeLog:[{kind:'Starting funds',amount:240,season:1,round:0}],match:null, log:[], standings:names.map(function(n){return {name:n,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0};}).concat([{name:'Sunday Strikers',played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}])};
+      planBehind:'press',planAhead:'counter',formerGuests:[],seasonHistory:[],financeLog:[{kind:'Starting funds',amount:240,season:1,round:0}],inbox:[],inboxSeq:0,inboxFilter:'all',inboxReturn:false,homeReturn:false,profileReturn:'squad',match:null, log:[], standings:names.map(function(n){return {name:n,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0};}).concat([{name:'Sunday Strikers',played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}])};
   }
   function read() {
     try {
@@ -91,13 +91,35 @@
   state.market=state.market||marketPool(state.season,state.division);state.youth=state.youth||youthPool(state.season);
   state.training=state.training||{};state.injuries=state.injuries||{};state.playerStats=state.playerStats||{};state.seasonHistory=state.seasonHistory||[];state.formerGuests=state.formerGuests||[];state.financeLog=state.financeLog||[];
   state.lineup=state.lineup||[];state.lineupCustomized=!!state.lineupCustomized;
+  // B03: migrate old/imported saves in-place without changing player or season data.
+  state.inbox=Array.isArray(state.inbox)?state.inbox.filter(function(m){
+    return m&&Number.isSafeInteger(m.id)&&m.id>0&&typeof m.title==='string'&&typeof m.detail==='string'&&
+      ['club','availability','recruitment','injury','finance','result','league','training'].includes(m.kind);
+  }).slice(0,80).map(function(m){
+    return {id:m.id,kind:m.kind,title:m.title.slice(0,120),detail:m.detail.slice(0,600),
+      route:['overview','squad','tactics','fixtures','league','training','transfers','academy','finances','career','settings'].includes(m.route)?m.route:'overview',
+      season:Number.isInteger(m.season)&&m.season>=1&&m.season<=10000?m.season:state.season,
+      round:Number.isInteger(m.round)&&m.round>=0&&m.round<=6?m.round:state.round,
+      read:!!m.read,dismissed:!!m.dismissed};
+  }):[];
+  state.inboxSeq=Math.max(Number.isSafeInteger(state.inboxSeq)?state.inboxSeq:0,state.inbox.reduce(function(max,m){return Math.max(max,m.id);},0));
+  state.inboxFilter=state.inboxFilter==='unread'?'unread':'all';
+  state.inboxReturn=!!state.inboxReturn&&state.tab!=='overview';
+  state.homeReturn=!!state.homeReturn&&state.tab!=='overview';
+  state.profileReturn=state.profileReturn==='overview'?'overview':'squad';
   var app=document.getElementById('app');
   function esc(x){return String(x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function save(){try{state.roster=roster;var copy=Object.assign({},state,{match:null});localStorage.setItem(KEY,JSON.stringify(copy));}catch(e){}}
   function money(v){return '£'+v.toLocaleString('en-GB');}
   function fixtureAt(i){if(i<0||i>=6)return null;var x=matchSlots[i];return {id:i,opponent:names[(i+state.season-1)%6],day:x[0],time:x[1],night:x[2]};}
   function fixture(){return fixtureAt(state.round);}
-  function ledger(kind,amount){state.money+=amount;state.financeLog.unshift({kind:kind,amount:amount,season:state.season,round:state.round});state.financeLog=state.financeLog.slice(0,50);}
+  function ledger(kind,amount){
+    state.money+=amount;
+    state.financeLog.unshift({kind:kind,amount:amount,season:state.season,round:state.round});
+    state.financeLog=state.financeLog.slice(0,50);
+    if(state.clubCreated)pushInbox('finance',amount>=0?'Payment received':'Club expense recorded',
+      kind+' · '+(amount>=0?'+':'−')+money(Math.abs(amount))+'. Balance: '+money(state.money)+'.','finances');
+  }
   function fitness(p){return state.fitness[p.id]==null?100:state.fitness[p.id];}
   function reason(p,round){if(state.injuries[p.id]>round)return 'Injured';if(p.professional)return 'Available';return p.available[round]?'Available':(/student|college|university|apprentice/i.test(p.job)?'Education commitment':/evening|shift/i.test(p.job)?'Work shift':'Work / personal commitment');}
   function available(p,round){return (p.professional || !!(p.available&&p.available[round]) || !!state.offers[round+':'+p.id]) && !(state.injuries[p.id]>round);}
@@ -228,11 +250,103 @@
     var field=document.getElementById('club-create-name');
     if(field && typeof field.value==='string')draftClub.name=field.value;
   }
+  // B03 — Persist only actual management events. Dashboard decisions are derived each render.
+  var INBOX_ROUTES=['overview','squad','tactics','fixtures','league','training','transfers','academy','finances','career','settings'];
+  function pushInbox(kind,title,detail,route){
+    if(!state.inbox || !Array.isArray(state.inbox))state.inbox=[];
+    if(INBOX_ROUTES.indexOf(route)<0)route='overview';
+    state.inboxSeq=(Number.isSafeInteger(state.inboxSeq)?state.inboxSeq:0)+1;
+    state.inbox.unshift({id:state.inboxSeq,kind:kind,title:String(title),detail:String(detail),
+      route:route,season:state.season,round:state.round,read:false,dismissed:false});
+    if(state.inbox.length>80)state.inbox.length=80;
+  }
+  function unreadInbox(){return state.inbox.filter(function(m){return !m.read&&!m.dismissed;}).length;}
+  function currentRank(){
+    return state.standings.slice().sort(sortTable).findIndex(function(p){return p.name==='Sunday Strikers';})+1;
+  }
+  function latestMatchResult(){
+    if(state.round<1)return null;
+    var i=state.round-1,r=state.results[i];
+    return r?{result:r,fixture:fixtureAt(i),outcome:r.home>r.away?'W':r.home===r.away?'D':'L'}:null;
+  }
+  function managerTasks(){
+    var f=fixture(),tasks=[],key=state.season+':'+state.round;
+    function add(priority,title,description,action,cta,player){
+      tasks.push({priority:priority,title:title,description:description,action:action,cta:cta,player:player});
+    }
+    if(state.match){
+      add('critical','Match in progress','Your match against '+state.match.opponent+' is underway. Return to the touchline.','go-match','RETURN TO MATCH');
+      return tasks;
+    }
+    if(!f){
+      add('critical','Start the next season','Season '+state.season+' is complete. Review the final table and advance your career.','next-season','START NEXT SEASON');
+      add('standard','Review final standings','Your season results and league position are ready.','go-league','VIEW LEAGUE');
+      return tasks;
+    }
+    var eligible=players(state.round),keepers=eligible.filter(function(p){return p.pos==='GK';});
+    if(!keepers.length){
+      add('critical','A goalkeeper is needed','No eligible goalkeeper for round '+(state.round+1)+'. Check shifts, appearance offers and stand-ins.','go-squad','SOLVE AVAILABILITY');
+    }else if(eligible.length<5){
+      add('critical','Short of '+(5-eligible.length)+' player'+(5-eligible.length===1?'':'s'),
+        'You have '+eligible.length+' eligible for round '+(state.round+1)+'. Find cover before kickoff.','go-squad','FIND COVER');
+    }else if(!ready()){
+      add('critical','Complete your starting five','Choose five eligible footballers including a goalkeeper before kickoff.','go-tactics','PICK THE FIVE');
+    }
+    var injured=roster.filter(function(p){return state.injuries[p.id]>state.round;});
+    if(injured.length){
+      add('attention',injured.length+' player'+(injured.length===1?'':'s')+' injured',
+        injured.map(function(p){return p.name;}).slice(0,2).join(', ')+(injured.length>2?' + more':'')+'. Review treatment and future selection.',
+        'profile-player','REVIEW INJURY',injured[0].id);
+    }
+    if(!state.training[key] && state.money>=12){
+      add('standard','Training session available','A £12 team training session is still available before this fixture.','go-training','PLAN TRAINING');
+    }
+    if(ready()){
+      add('standard','Prepare the match plan',state.formation+' · '+state.style+' approach. Your saved plan runs when you are away.','go-tactics','SET TACTICS');
+      add('standard','Kickoff is ready','Five eligible starters are available for '+f.opponent+'.','go-fixtures','MATCH CENTRE');
+    }else{
+      add('standard','Review fixture details','Round '+(state.round+1)+' against '+f.opponent+' · '+f.day+' '+f.time+'.','go-fixtures','FIXTURE DETAILS');
+    }
+    return tasks.slice(0,4);
+  }
+  function inboxView(){
+    var unread=unreadInbox(),all=state.inbox.filter(function(m){return !m.dismissed;});
+    var showing=state.inboxFilter==='unread'?all.filter(function(m){return !m.read;}):all;
+    return '<section class="card manager-inbox" id="manager-inbox" aria-label="Manager inbox">'+
+      '<div class="head"><div><div class="eyebrow">CLUB COMMUNICATIONS</div><h2>Manager inbox</h2></div>'+
+      '<span class="manager-unread" aria-live="polite">'+unread+' unread</span></div>'+
+      '<div class="inbox-toolbar" role="group" aria-label="Inbox filter">'+
+      button('ALL ('+all.length+')','inbox-filter',state.inboxFilter==='all'?'small primary':'small ghost','data-value="all" aria-pressed="'+(state.inboxFilter==='all')+'"')+
+      button('UNREAD ('+unread+')','inbox-filter',state.inboxFilter==='unread'?'small primary':'small ghost','data-value="unread" aria-pressed="'+(state.inboxFilter==='unread')+'"')+
+      (unread?button('MARK ALL READ','inbox-all-read','small ghost'):'')+'</div>'+
+      (showing.length?'<div class="inbox-list">'+showing.map(function(m){
+        var focus=!m.read?' unread':'';
+        return '<article class="inbox-message'+focus+'"><div class="inbox-message-top">'+
+          '<span class="inbox-kind kind-'+esc(m.kind)+'">'+esc(m.kind)+'</span>'+
+          '<span class="inbox-period">SEASON '+m.season+' · ROUND '+(m.round+1)+'</span></div>'+
+          '<h3>'+esc(m.title)+'</h3><p>'+esc(m.detail)+'</p>'+
+          '<div class="inbox-actions">'+button('OPEN →','inbox-open','small primary','data-entry="'+m.id+'"')+
+          (!m.read?button('MARK READ','inbox-read','small ghost','data-entry="'+m.id+'"'):'')+
+          button('DISMISS','inbox-dismiss','small ghost','data-entry="'+m.id+'"')+'</div></article>';
+      }).join('')+'</div>':
+      '<div class="inbox-empty" role="status"><strong>'+(state.inboxFilter==='unread'?'You are up to date':'No messages yet')+'</strong>'+
+      '<p>'+(state.inboxFilter==='unread'?'All club communications have been read.':'Transfers, finances, results and availability updates will appear here as they happen.')+'</p></div>')+
+      '</section>';
+  }
+  function formStrip(){
+    var scores=Object.keys(state.results).map(function(key){return {i:Number(key),r:state.results[key]};})
+      .filter(function(x){return x.r&&Number.isInteger(x.i);}).sort(function(a,b){return b.i-a.i;}).slice(0,5).reverse();
+    return '<div class="manager-form-strip">'+(scores.length?scores.map(function(item){
+      var mode=item.r.home>item.r.away?'win':item.r.home===item.r.away?'draw':'loss';
+      return '<span class="form-chip '+mode+'" aria-label="Round '+(item.i+1)+' '+(mode==='win'?'win':mode==='draw'?'draw':'loss')+'">'+(mode==='win'?'W':mode==='draw'?'D':'L')+'</span>';
+    }).join(''):'<span class="manager-no-form">First match awaits</span>')+'</div>';
+  }
   function metrics(){
-    var p=state.standings.find(function(t){return t.name==='Sunday Strikers';});
-    var rank=state.standings.slice().sort(sortTable).findIndex(function(t){return t.name===state.club;})+1;
-    if(!rank) rank=state.standings.slice().sort(sortTable).findIndex(function(t){return t.name==='Sunday Strikers';})+1;
-    return '<div class="metrics"><div class="metric"><small>CLUB BALANCE</small><strong>'+money(state.money)+'</strong></div><div class="metric"><small>LEAGUE POSITION</small><strong>'+rank+'<span class="muted"> / 7</span></strong></div><div class="metric"><small>POINTS</small><strong>'+p.points+'</strong></div><div class="metric"><small>AVAILABLE PLAYERS</small><strong>'+ (fixture()?players().length:'—')+' <span class="muted">/ 9+</span></strong></div></div>';
+    var p=state.standings.find(function(t){return t.name==='Sunday Strikers';})||{points:0};
+    return '<div class="metrics manager-metrics"><div class="metric"><small>LEAGUE POSITION</small><strong>'+currentRank()+' <span class="muted">/ 7</span></strong></div>'+
+      '<div class="metric"><small>LEAGUE POINTS</small><strong>'+p.points+'</strong></div>'+
+      '<div class="metric"><small>CLUB BALANCE</small><strong>'+money(state.money)+'</strong></div>'+
+      '<div class="metric"><small>UNREAD MESSAGES</small><strong>'+unreadInbox()+'</strong></div></div>';
   }
   function sortTable(a,b){return b.points-a.points || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf || a.name.localeCompare(b.name);}
 
@@ -256,10 +370,12 @@
     }
     return tab==='profile'?'Player Report':tab==='match'?'Live Match':'Dashboard';
   }
-  function navigate(tab){
+  function navigate(tab,origin){
     if(MANAGER_TABS.indexOf(tab)<0)return;
     if(tab==='match'&&!state.match)return;
     if(tab==='profile'&&!roster.some(function(p){return p.id===state.profileId;}))return;
+    state.inboxReturn=origin==='inbox'&&tab!=='overview';
+    state.homeReturn=origin==='dashboard'&&tab!=='overview';
     state.tab=tab;toast='';render();save();
     if(typeof window!=='undefined'&&window.scrollTo)window.scrollTo(0,0);
   }
@@ -281,7 +397,9 @@
     var crumbs='<div class="fm-crumbs" aria-label="Current location"><button type="button" data-tab="'+group.entries[0][0]+'">'+esc(group.name)+'</button>'+
       '<span aria-hidden="true">/</span><strong aria-current="page">'+esc(name)+'</strong></div>';
     var live=state.match&&state.tab!=='match'?button('RETURN TO LIVE MATCH','go-match','small primary'):'';
-    return '<div class="fm-contextbar">'+crumbs+'<div class="fm-quicktools">'+live+
+    var back=state.inboxReturn?button('← BACK TO INBOX','back-dashboard','small ghost'):
+      state.homeReturn?button('← BACK TO CLUBHOUSE','back-dashboard','small ghost'):'';
+    return '<div class="fm-contextbar">'+crumbs+'<div class="fm-quicktools">'+back+live+
       '<span class="fm-save-status">● SAVED ON THIS DEVICE</span>'+
       '<a class="btn small ghost" href="./save-transfer.html" aria-label="Export or import your local club save">SAVE TRANSFER</a>'+
       (state.tab==='settings'?'':button('SETTINGS','go-settings','small ghost'))+'</div></div>';
@@ -316,11 +434,52 @@
     return '<div class="fixture-row"><div class="fixture-badges">'+club(state.club,true)+club(f.opponent,false)+'</div><div class="info"><b>'+esc(state.club)+' vs '+esc(f.opponent)+'</b><small>ROUND '+(i+1)+' · '+f.day+' · '+f.time+' · NIGHT '+f.night+' (demo)</small></div>'+(r?'<span class="score">'+r.home+' – '+r.away+'</span>':i===state.round?badge('NEXT UP',''):badge('UPCOMING','grey'))+'</div>';
   }
   function overview(){
-    var f=fixture();
-    var section=f?'<div class="card hero"><div class="eyebrow">NEXT MATCH · ROUND '+(f.id+1)+' · NIGHT '+f.night+'</div><div class="club-hero-identity">'+club(state.club,true)+'<span>YOUR CLUB</span></div><h2>'+esc(state.club)+'<br>VS '+esc(f.opponent).toUpperCase()+'</h2><div class="kickoff">'+f.day+' · '+f.time+'</div><p>Your players have jobs, commitments and lives outside football. Check who can make kickoff before picking your side.</p><div class="actions">'+button('PREPARE MATCH →','go-squad','primary')+button('Match centre','go-fixtures','ghost')+'</div></div>':
-      '<div class="card hero"><div class="eyebrow">SEASON COMPLETE</div><h2>SEASON '+state.season+' FINISHED</h2><p>Check the final league table and advance to the next season, including promotion, relegation and new player schedules.</p>'+button('START NEXT SEASON →','next-season','primary')+button('League table','go-league','small')+'</div>';
-    var soon=names.map(function(n,i){return fixtureAt(i);}).slice(Math.max(0,state.round-1),Math.min(6,state.round+3));
-    return metrics()+'<div class="grid">'+section+'<div class="card"><div class="head"><h2>Club identity</h2>'+button('EDIT KIT & NAME','edit-club','small')+'</div>'+kitPreview(state.kit,true)+'<div class="club-office-mark">'+club(state.club,true)+'<strong>'+esc(state.club)+'</strong></div><div class="detail-list"><div class="detail-line"><span>Club</span><b>'+esc(state.club)+'</b></div><div class="detail-line"><span>Registered squad</span><b>'+roster.length+' / 12 players</b></div><div class="detail-line"><span>Level</span><b>'+(state.division===1?'Top division · up to 3 pros':'Semi-professional')+'</b></div><div class="detail-line"><span>Match income</span><b>'+money(state.sponsor)+' sponsorship</b></div><div class="detail-line"><span>Home venue</span><b>Community Sports Hall</b></div></div><p class="fine">At this level, your players still have work and education commitments. Match fees can help persuade a player to attend.</p></div><div class="card span-all"><div class="head"><h2>Fixture diary</h2>'+button('All fixtures →','go-fixtures','small')+'</div>'+soon.map(function(f){return rowFixture(f,f.id);}).join('')+'</div></div>';
+    var f=fixture(),tasks=managerTasks(),primary=tasks[0],latest=latestMatchResult();
+    var summary=state.match?'LIVE MATCH · MINUTE '+state.match.minute:
+      f?'ROUND '+(state.round+1)+' · NIGHT '+f.night+' · '+f.day+' '+f.time:'SEASON '+state.season+' COMPLETE';
+    var headline=state.match?'Return to the touchline':
+      f?(!ready()?'Your next match needs attention':'Your next match is on the horizon'):'Your season has finished';
+    var details=state.match?state.club+' vs '+state.match.opponent+' · '+state.match.home+'–'+state.match.away:
+      f?state.club+' vs '+f.opponent:'Review your final position and move into another league season.';
+    var diary=f?Array.from({length:Math.min(3,6-state.round)},function(_,i){return fixtureAt(state.round+i);}):
+      Array.from({length:Math.min(3,state.round)},function(_,i){return fixtureAt(Math.max(0,state.round-3)+i);});
+    var lastText=latest?'<div class="manager-last-result">LAST RESULT · '+esc(latest.fixture.opponent)+' · '+
+      latest.result.home+'–'+latest.result.away+' ('+latest.outcome+')</div>':'<div class="manager-last-result">Your first league result is still to come.</div>';
+    return '<div class="manager-dashboard">'+
+      '<div class="manager-welcome"><div><span class="eyebrow">MANAGER DESK · SEASON '+state.season+'</span>'+
+      '<p>Welcome to '+esc(state.club)+'. Focus on the next decision, then follow your club updates below.</p></div>'+
+      '<div class="manager-identity club-office-mark">'+club(state.club,true)+'<strong>'+esc(state.club)+'</strong></div></div>'+
+      metrics()+
+      '<div class="manager-layout">'+
+      '<section class="card manager-next" aria-label="Next manager decision"><div class="eyebrow">NEXT DECISION · '+esc(summary)+'</div>'+
+      '<h2>'+esc(headline)+'</h2><div class="manager-fixture-name">'+esc(details)+'</div>'+
+      '<p>'+esc(primary.description)+'</p>'+
+      '<div class="manager-next-actions">'+button(primary.cta,primary.action,'primary',
+        primary.player?'data-player="'+primary.player+'"':'')+
+      (f?button('VIEW FIXTURES','go-fixtures','ghost'):button('LEAGUE TABLE','go-league','ghost'))+'</div>'+
+      lastText+'</section>'+
+      '<section class="card manager-to-do" aria-label="Manager action list"><div class="head"><div><div class="eyebrow">WHAT NEEDS YOUR ATTENTION</div><h2>Manager priorities</h2></div>'+
+      badge(tasks.length+' ACTION'+(tasks.length===1?'':'S'),'grey')+'</div>'+
+      '<div class="manager-task-list">'+tasks.map(function(t,i){
+        return '<div class="manager-task"><span class="manager-task-index">'+(i+1)+'</span><div class="manager-task-main">'+
+          '<div class="manager-task-heading"><b>'+esc(t.title)+'</b>'+badge(t.priority==='critical'?'URGENT':t.priority==='attention'?'ATTENTION':'READY',t.priority==='critical'?'red':t.priority==='attention'?'amber':'grey')+'</div>'+
+          '<p>'+esc(t.description)+'</p>'+button(t.cta,t.action,'small ghost',t.player?'data-player="'+t.player+'" data-section="availability"':'')+'</div></div>';
+      }).join('')+'</div></section>'+
+      inboxView()+
+      '<section class="card manager-diary" aria-label="Fixture diary"><div class="head"><div><div class="eyebrow">SEASON '+state.season+' · SIX-MATCH TEST LEAGUE</div><h2>Fixture diary</h2></div>'+
+      button('VIEW ALL','go-fixtures','small ghost')+'</div>'+
+      (diary.length?diary.map(function(game){return rowFixture(game,game.id);}).join(''):
+        emptyState('No fixtures scheduled','Start another season to see your new match night slots.','next-season','START SEASON'))+
+      '</section>'+
+      '<section class="card manager-club-status" aria-label="Club status"><div class="head"><div><div class="eyebrow">THE BIG PICTURE</div><h2>Club overview</h2></div>'+
+      button('LEAGUE','go-league','small ghost')+'</div>'+
+      '<div class="manager-status-line"><span>Recent form</span>'+formStrip()+'</div>'+
+      '<div class="manager-status-line"><span>Eligible next match</span><strong>'+(f?players().length+' available · '+(ready()?'five ready':'selection needed'):'Season completed')+'</strong></div>'+
+      '<div class="manager-status-line"><span>Average fitness</span><strong>'+Math.round(roster.reduce(function(sum,p){return sum+fitness(p);},0)/Math.max(1,roster.length))+'%</strong></div>'+
+      '<div class="manager-status-line"><span>Sponsor per match</span><strong>'+money(state.sponsor)+'</strong></div>'+
+      '<div class="manager-status-actions">'+button('SQUAD','go-squad','small ghost')+button('FINANCES','go-finances','small ghost')+
+      button('EDIT CLUB','edit-club','small ghost')+'</div></section>'+
+      '</div></div>';
   }
 
   function squad(){
@@ -512,6 +671,9 @@
     state.division=Math.max(1,Math.min(8,old+shift));
     state.seasonHistory.push({season:prior,division:old,position:rank,points:state.standings.find(function(t){return t.name==='Sunday Strikers';}).points,prize:prize});
     ledger('Season '+prior+' finish prize',prize);
+    pushInbox('league','Season '+prior+' review', 'Finished '+(rank===1?'1st':rank===2?'2nd':rank===3?'3rd':rank+'th')+
+      ' in Division '+old+'. '+(state.division<old?'Promoted to Division '+state.division+'.':state.division>old?'Relegated to Division '+state.division+'.':'Division '+state.division+' retained.')+
+      ' '+money(prize)+' prize.','career');
     state.season++;state.round=0;state.results={};state.offers={};state.guest={};state.training={};state.injuries={};
     state.lineup=[];state.lineupCustomized=false;state.lineupRound=0;
     state.standings=names.map(function(n){return {name:n,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0};}).concat([{name:'Sunday Strikers',played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}]);
@@ -523,15 +685,41 @@
       p.available=Array.from({length:6},function(){return p.professional?1:Math.random()<chance?1:0;});
     });
     state.market=marketPool(state.season,state.division);state.youth=youthPool(state.season);state.sponsor=35+(8-state.division)*18;state.tab='overview';
+    pushInbox('availability','New season availability',roster.filter(function(p){return available(p,0);}).length+
+      ' registered players are eligible for round 1 of season '+state.season+'. Work, education and shifts may affect selection.','squad');
     notice('Season '+prior+' finished '+(rank<=2?'with promotion':rank>=6?'in the relegation places':'in mid-table')+'. Division '+state.division+' is ready. '+money(prize)+' prize received.');
   }
   function extraAction(action,target){
     var id=Number(target.getAttribute('data-player')),p,fee,f=fixture();
+    if(action==='inbox-filter'){
+      var filter=target.getAttribute('data-value');
+      if(filter==='all'||filter==='unread')state.inboxFilter=filter;
+      render();return true;
+    }
+    if(action==='inbox-all-read'){
+      state.inbox.forEach(function(m){m.read=true;});render();return true;
+    }
+    if(action==='inbox-open'||action==='inbox-read'||action==='inbox-dismiss'){
+      var entryId=Number(target.getAttribute('data-entry'));
+      var entry=state.inbox.find(function(m){return m.id===entryId&&!m.dismissed;});
+      if(!entry)return true;
+      if(action==='inbox-dismiss'){entry.dismissed=true;render();return true;}
+      entry.read=true;
+      if(action==='inbox-read'){render();return true;}
+      navigate(INBOX_ROUTES.includes(entry.route)?entry.route:'overview','inbox');return true;
+    }
+    if(action==='back-dashboard'){navigate('overview');return true;}
     if(action==='profile-player'){
       if(!roster.some(function(x){return x.id===id;}))return true;
-      state.profileId=id;state.profileSection='overview';state.tab='profile';render();return true;
+      state.profileReturn=state.tab==='overview'?'overview':'squad';
+      state.homeReturn=state.tab==='overview';
+      state.profileId=id;state.profileSection=target.getAttribute('data-section')==='availability'?'availability':'overview';
+      state.tab='profile';render();return true;
     }
-    if(action==='profile-close'){state.tab='squad';state.profileId=null;state.profileSection='overview';render();return true;}
+    if(action==='profile-close'){
+      state.tab=state.profileReturn==='overview'?'overview':'squad';
+      state.profileId=null;state.profileSection='overview';state.homeReturn=false;state.profileReturn='squad';render();return true;
+    }
     if(action==='profile-section'){
       var section=target.getAttribute('data-value');
       if(['overview','attributes','development','availability'].includes(section)){state.profileSection=section;render();}
@@ -547,6 +735,7 @@
       p=roster.find(function(x){return x.id===id;});
       if(!p||!(state.injuries[id]>state.round)||state.money<40)return true;
       ledger('Physio care: '+p.name,-40);state.injuries[id]=state.round;state.fitness[id]=Math.max(70,fitness(p));
+      pushInbox('injury','Player cleared for selection',p.name+' completed physio treatment. Check fixture eligibility.','squad');
       notice(p.name+' completed treatment and is available for selection.');return true;
     }
     if(action==='forfeit'){
@@ -578,7 +767,9 @@
         var gain=focus==='fitness'?5:focus==='finishing'?(p.pos==='FWD'?30:12):focus==='defending'?(p.pos==='DEF'||p.pos==='GK'?30:12):22;
         develop(p,gain);
         state.fitness[p.id]=Math.min(100,Math.max(45,fitness(p)+(focus==='fitness'?17:-5)));
-      });notice('Training session completed. Player development and fitness updated.');return true;
+      });
+      pushInbox('training','Training completed','The squad worked on '+focus+'. Fitness and attributes have been updated.','training');
+      notice('Training session completed. Player development and fitness updated.');return true;
     }
     if(action==='sign-guest'){
       var guest=state.formerGuests.find(function(g){return g.id===id;});
@@ -588,7 +779,9 @@
         potential:Math.min(95,guest.rating+8+guest.id%10),professional:false,xp:0,
         available:Array.from({length:6},function(){return Math.random()<.75?1:0;})});
       roster.push(pNew);state.formerGuests=state.formerGuests.filter(function(x){return x.id!==id;});
-      ledger('Signed former stand-in: '+guest.name,-guest.fee);notice(guest.name+' has been registered after impressing as a guest.');return true;
+      ledger('Signed former stand-in: '+guest.name,-guest.fee);
+      pushInbox('recruitment','Stand-in joined the squad',guest.name+' has joined your registered squad following their guest appearance.','squad');
+      notice(guest.name+' has been registered after impressing as a guest.');return true;
     }
     if(action==='sign-player'||action==='promote-youth'){
       var young=action==='promote-youth',pool=young?state.youth:state.market;
@@ -599,12 +792,15 @@
       var copy=ensureDetails(JSON.parse(JSON.stringify(p)));
       if(!copy.professional){var chance=/shift|evening/i.test(copy.job)?.58:.82;copy.available=Array.from({length:6},function(){return Math.random()<chance?1:0;});}
       roster.push(copy);pool.splice(pool.indexOf(p),1);ledger(young?'Youth promoted: '+p.name:'Signed: '+p.name,-fee);
+      pushInbox('recruitment',young?'Academy promotion confirmed':'New signing confirmed',
+        p.name+' ('+p.pos+', '+p.rating+' rating) joined the registered squad. '+roster.length+'/12 provisional places used.','squad');
       notice(p.name+' joined the registered squad.');return true;
     }
     if(action==='release-player'){
       if(roster.length<=5)return true;p=roster.find(function(x){return x.id===id;});if(!p)return true;
       if(!confirm('Release '+p.name+' from your registered squad? This cannot be undone.'))return true;
       roster.splice(roster.indexOf(p),1);state.lineup=state.lineup.filter(function(x){return x!==id;});
+      pushInbox('recruitment','Player released',p.name+' left the registered squad. '+roster.length+'/12 provisional places used.','squad');
       notice(p.name+' has left your squad.');return true;
     }
     if(action==='offer'){
@@ -614,8 +810,14 @@
       if(state.offerAttempts[key]){notice('You have already asked '+p.name+' about this fixture.');return true;}
       state.offerAttempts[key]=true;
       var odds=/shift|evening/i.test(p.job)?.62:/college|university|student/i.test(p.job)?.54:.75;
-      if(Math.random()<odds){state.offers[state.round+':'+id]=true;ledger('Appearance fee: '+p.name,-20);notice(p.name+' accepted the £20 appearance fee and will attend this fixture.');}
-      else notice(p.name+' could not change their plans, even for an appearance fee. No money was charged.');
+      if(Math.random()<odds){
+        state.offers[state.round+':'+id]=true;ledger('Appearance fee: '+p.name,-20);
+        pushInbox('availability','Appearance offer accepted',p.name+' will attend round '+(state.round+1)+' for a £20 appearance fee.','squad');
+        notice(p.name+' accepted the £20 appearance fee and will attend this fixture.');
+      }else{
+        pushInbox('availability','Player remains unavailable',p.name+' could not change commitments for round '+(state.round+1)+'. No fee was charged.','squad');
+        notice(p.name+' could not change their plans, even for an appearance fee. No money was charged.');
+      }
       return true;
     }
     if(action==='guest'){
@@ -628,6 +830,7 @@
       var guest={id:100+state.round*10+current.length,name:friends[(state.round+state.season+current.length)%friends.length],
         pos:needsGoalkeeper?'GK':current.length%2?'DEF':'FWD',rating:40+Math.floor(Math.random()*43)};
       current.push(guest);state.guest[state.round]=current;ledger('Stand-in introduced by '+p.name,-15);
+      pushInbox('availability','Stand-in arrived',guest.name+' is available as a '+guest.pos+' for round '+(state.round+1)+' only.','squad');
       notice(p.name+' brought '+guest.name+' along. '+guest.rating+' overall · '+guest.pos+' · guest for this match only.');return true;
     }
     if(action==='substitute'){
@@ -714,12 +917,20 @@
         state.fitness[p.id]=Math.max(35,fitness(p)-(state.style==='press'||m.instruction==='press'?20:14));
         develop(p,22+(m.home>m.away?8:0));
         p.morale=clamp(p.morale+(m.home>m.away?4:m.home===m.away?1:-3),35,100);
-        if(Math.random()<.025 && !p.professional)state.injuries[p.id]=state.round+2;
+        if(Math.random()<.025 && !p.professional){
+          state.injuries[p.id]=state.round+2;
+          pushInbox('injury','Injury report: '+p.name,p.name+' is sidelined after round '+(state.round+1)+'. Review treatment and future availability.','squad');
+        }
       });
       ledger('Local match sponsorship: '+m.opponent,state.sponsor);
       var paidProfessionals=roster.filter(function(p){return p.professional;});
       if(paidProfessionals.length)ledger('Professional match wages',-45*paidProfessionals.length);
     }
+    pushInbox('result',m.forfeit?'Fixture forfeited':'Full-time report',
+      state.club+' '+m.home+'–'+m.away+' '+f.opponent+'. '+
+      (m.forfeit?'Forfeited with no sponsor payment and a £15 penalty.':
+        m.home>m.away?'Three league points secured.':m.home===m.away?'One point gained.':'No league points gained.'),
+      'fixtures');
     if(state.guest[state.round]){
       var guests=Array.isArray(state.guest[state.round])?state.guest[state.round]:[state.guest[state.round]];
       guests.forEach(function(g){
@@ -731,7 +942,8 @@
     betweenNights(before,fixtureAt(state.round));
     state.lineupCustomized=false;state.lineup=[];state.lineupRound=state.round;
     state.match=null;state.tab='overview';
-    notice('Full-time: '+m.home+'–'+m.away+' against '+f.opponent+'. '+money(state.sponsor)+' sponsorship paid.');
+    notice('Full-time: '+m.home+'–'+m.away+' against '+f.opponent+'. '+
+      (m.forfeit?'No sponsorship paid; £15 penalty.':money(state.sponsor)+' sponsorship paid.'));
     save();
   }
   function start(auto){
@@ -795,6 +1007,9 @@
       state.club=name;state.kit=normalizeKit(draftClub.kit);state.clubCreated=true;state.tab='overview';
       editingClub=false;creatorStep=1;creatorError='';
       draftClub={name:state.club,kit:normalizeKit(state.kit)};
+      pushInbox('club',newClub?'Welcome to the league':'Club identity updated',
+        newClub?state.club+' has entered Division '+state.division+'. Check your first fixture and player availability.':
+          state.club+' will appear with its updated name and kit throughout the competition.','career');
       notice(newClub?'Welcome to '+state.club+'. Your club is ready!':'Your club identity has been updated.');
       save();return;
     }
@@ -802,7 +1017,7 @@
     var tab=target.getAttribute('data-tab');if(tab){navigate(tab);return;}
     var action=target.getAttribute('data-action');if(!action)return;
     if(extraAction(action,target)){save();return;}
-    if(action.slice(0,3)==='go-'){navigate(action.slice(3));return;}
+    if(action.slice(0,3)==='go-'){navigate(action.slice(3),state.tab==='overview'?'dashboard':null);return;}
     if(action==='offer'){
       var id=Number(target.getAttribute('data-player')),p=roster.find(function(v){return v.id===id;});
       if(!p || available(p,state.round)||state.money<20)return;
@@ -825,4 +1040,6 @@
     save();
   });
   render();
+  // Persist migration defaults for an existing career; never create a save before onboarding.
+  if(state.clubCreated)save();
 })();

@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 
-function boot({autoCreate=true,saved=null}={}) {
+function boot({autoCreate=true,saved=null,random=0.53}={}) {
   const key="five-aside-manager-alpha-v1";
   const storage = new Map(saved?[[key,JSON.stringify(saved)]]:[]);
   const nameInput = {value:"Test Town FC"};
@@ -14,7 +14,7 @@ function boot({autoCreate=true,saved=null}={}) {
   const app = {innerHTML:"", handle:null, inputHandle:null, addEventListener(event,cb){if(event==="click")this.handle=cb;if(event==="input")this.inputHandle=cb;}};
   let clock;
   const seededMath = Object.create(Math);
-  seededMath.random = () => 0.53;
+  seededMath.random = () => random;
   const sandbox = {
     document:{getElementById(name){if(name==="app")return app;if(name==="club-create-name")return nameInput;if(name==="kit-club-name")return previewName;if(name==="kit-club-crest")return previewCrest;if(name==="creator-name-length")return nameLength;return null;}},
     localStorage:{getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}},
@@ -473,4 +473,173 @@ test("B02 imported kit and name persist after reload and season change",()=>{
   imported.click({"data-action":"go-league"});
   assert.match(imported.app.innerHTML,/Coastal United/);
   assert.match(imported.app.innerHTML,/club-crest-own kit-sash/);
+});
+
+
+test("B03 first fixture dashboard prioritises real decisions and welcome correspondence",()=>{
+  const g=boot();
+  assert.match(g.app.innerHTML,/Manager priorities/);
+  assert.match(g.app.innerHTML,/Manager inbox/);
+  assert.match(g.app.innerHTML,/NEXT DECISION/);
+  assert.match(g.app.innerHTML,/Fixture diary/);
+  assert.match(g.app.innerHTML,/Recent form/);
+  const s=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(s.round,0);
+  assert.ok(s.inbox.length>=1);
+  assert.equal(s.inbox[0].kind,"club");
+  assert.equal(s.inbox[0].read,false);
+  assert.match(g.app.innerHTML,/Welcome to the league/);
+  g.click({"data-action":"inbox-open","data-entry":String(s.inbox[0].id)});
+  assert.match(g.app.innerHTML,/Manager Career/);
+  assert.match(g.app.innerHTML,/BACK TO INBOX/);
+  g.click({"data-action":"back-dashboard"});
+  assert.match(g.app.innerHTML,/Manager inbox/);
+  const changed=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(changed.inbox[0].read,true);
+  const reloaded=boot({autoCreate:false,saved:changed});
+  assert.match(reloaded.app.innerHTML,/Manager inbox/);
+  assert.doesNotMatch(reloaded.app.innerHTML,/Welcome to the league.*unread/);
+  assert.equal(JSON.parse(reloaded.storage.get("five-aside-manager-alpha-v1")).inbox.length,1);
+});
+
+test("B03 inbox read, dismiss, filters and mark-all survive local reload",()=>{
+  const g=boot();
+  g.click({"data-action":"go-training"});
+  g.click({"data-action":"train","data-value":"passing"});
+  let saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.ok(saved.inbox.some(m=>m.kind==="training"));
+  assert.ok(saved.inbox.some(m=>m.kind==="finance"));
+  g.click({"data-action":"go-overview"});
+  assert.match(g.app.innerHTML,/Manager inbox/);
+  const entry=saved.inbox.find(m=>m.kind==="training");
+  g.click({"data-action":"inbox-read","data-entry":String(entry.id)});
+  saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.inbox.find(m=>m.id===entry.id).read,true);
+  g.click({"data-action":"inbox-filter","data-value":"unread"});
+  assert.match(g.app.innerHTML,/UNREAD/);
+  assert.doesNotMatch(g.app.innerHTML,/Training completed/);
+  const finance=saved.inbox.find(m=>m.kind==="finance");
+  g.click({"data-action":"inbox-dismiss","data-entry":String(finance.id)});
+  saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.inbox.find(m=>m.id===finance.id).dismissed,true);
+  g.click({"data-action":"inbox-all-read"});
+  assert.match(g.app.innerHTML,/You are up to date/);
+  saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.inbox.filter(m=>!m.read&&!m.dismissed).length,0);
+  const again=boot({autoCreate:false,saved});
+  assert.match(again.app.innerHTML,/You are up to date/);
+  again.click({"data-action":"inbox-filter","data-value":"all"});
+  assert.match(again.app.innerHTML,/Training completed/);
+  assert.doesNotMatch(again.app.innerHTML,/Club expense recorded/);
+});
+
+test("B03 inbox is event-sourced by confirmed recruitment, fees and availability",()=>{
+  const g=boot();
+  g.click({"data-action":"go-transfers"});
+  let initial=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  g.click({"data-action":"sign-player","data-player":String(initial.market[0].id)});
+  let s=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(s.roster.length,10);
+  assert.ok(s.inbox.some(m=>m.kind==="recruitment"&&m.detail.includes("registered squad")));
+  assert.ok(s.inbox.some(m=>m.kind==="finance"&&m.detail.includes("Signed:")));
+  g.click({"data-action":"go-squad"});
+  const absent=s.roster.find(p=>!p.available[0]&&p.pos!=="GK"&&!s.injuries[p.id]);
+  assert.ok(absent);
+  g.click({"data-action":"offer","data-player":String(absent.id)});
+  s=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.ok(s.inbox.some(m=>m.kind==="availability"&&m.detail.includes(absent.name)));
+  g.click({"data-action":"go-overview"});
+  const notice=s.inbox.find(m=>m.kind==="recruitment");
+  g.click({"data-action":"inbox-open","data-entry":String(notice.id)});
+  assert.match(g.app.innerHTML,/Squad &amp; Availability|Squad & Availability/);
+  assert.match(g.app.innerHTML,/BACK TO INBOX/);
+  g.click({"data-action":"back-dashboard"});
+  assert.match(g.app.innerHTML,/Manager inbox/);
+});
+
+test("B03 dashboard handles absent goalkeeper and routes medical task to real player",()=>{
+  const base=boot();
+  const saved=JSON.parse(base.storage.get("five-aside-manager-alpha-v1"));
+  saved.roster.forEach(p=>{p.available[0]=0;});
+  saved.injuries={1:2};
+  const g=boot({autoCreate:false,saved});
+  assert.match(g.app.innerHTML,/A goalkeeper is needed/);
+  assert.match(g.app.innerHTML,/player injured/);
+  g.click({"data-action":"profile-player","data-player":"1","data-section":"availability"});
+  assert.match(g.app.innerHTML,/Fixture availability/);
+  assert.match(g.app.innerHTML,/BACK TO CLUBHOUSE/);
+  g.click({"data-action":"back-dashboard"});
+  assert.match(g.app.innerHTML,/A goalkeeper is needed/);
+  g.click({"data-action":"go-squad"});
+  assert.match(g.app.innerHTML,/Squad &/);
+});
+
+test("B03 live-match and mid-season dashboard priorities show real fixture progress and form",()=>{
+  const g=boot();
+  g.click({"data-action":"start-live"});
+  g.click({"data-tab":"overview"});
+  assert.match(g.app.innerHTML,/Match in progress/);
+  assert.match(g.app.innerHTML,/RETURN TO MATCH/);
+  g.click({"data-action":"go-match"});
+  assert.match(g.app.innerHTML,/The Touchline/);
+  for(let i=0;i<10;i++)g.tick();
+  g.click({"data-action":"finish"});
+  assert.match(g.app.innerHTML,/Manager priorities/);
+  assert.match(g.app.innerHTML,/LAST RESULT/);
+  assert.match(g.app.innerHTML,/form-chip/);
+  const s=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(s.round,1);
+  assert.ok(s.inbox.some(m=>m.kind==="result"&&m.detail.includes("Dockside Rovers")));
+  const resumed=boot({autoCreate:false,saved:s});
+  assert.match(resumed.app.innerHTML,/ROUND 2/);
+  assert.match(resumed.app.innerHTML,/LAST RESULT/);
+  assert.ok(JSON.parse(resumed.storage.get("five-aside-manager-alpha-v1")).inbox.some(m=>m.kind==="result"));
+});
+
+test("B03 fixture completion and season rollover generate a real league message and new calendar",()=>{
+  const base=boot();
+  const saved=JSON.parse(base.storage.get("five-aside-manager-alpha-v1"));
+  saved.round=6;
+  saved.results={0:{home:2,away:1,opponent:"Dockside Rovers"},1:{home:0,away:2,opponent:"Briarwood FC"}};
+  const g=boot({autoCreate:false,saved});
+  assert.match(g.app.innerHTML,/Your season has finished/);
+  assert.match(g.app.innerHTML,/Start the next season/);
+  g.click({"data-action":"next-season"});
+  const s=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(s.season,2);
+  assert.equal(s.round,0);
+  assert.ok(s.inbox.some(m=>m.kind==="league"&&m.title.includes("Season 1 review")));
+  assert.ok(s.inbox.some(m=>m.kind==="availability"&&m.title==="New season availability"));
+  assert.ok(s.inbox.some(m=>m.kind==="finance"&&m.detail.includes("finish prize")));
+  assert.match(g.app.innerHTML,/ROUND 1/);
+  const prior=JSON.stringify(s.inbox);
+  const reloaded=boot({autoCreate:false,saved:s});
+  assert.equal(JSON.stringify(JSON.parse(reloaded.storage.get("five-aside-manager-alpha-v1")).inbox),prior);
+});
+
+test("B03 old/imported saves gain inbox safely without inventing historical messages",()=>{
+  const base=boot();
+  const legacy=JSON.parse(base.storage.get("five-aside-manager-alpha-v1"));
+  delete legacy.inbox;delete legacy.inboxSeq;delete legacy.inboxFilter;delete legacy.inboxReturn;
+  legacy.money=417;legacy.round=2;legacy.tab="overview";
+  const g=boot({autoCreate:false,saved:legacy});
+  assert.match(g.app.innerHTML,/No messages yet/);
+  const saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.money,417);
+  assert.equal(saved.round,2);
+  assert.equal(saved.club,legacy.club);
+  assert.deepEqual(saved.kit,legacy.kit);
+  assert.deepEqual(saved.roster,legacy.roster);
+  assert.equal(saved.inbox.length,0);
+});
+
+test("B03 injury messages follow actual simulation events and medical actions",()=>{
+  const g=boot({random:0.01});
+  g.click({"data-action":"start-auto"});
+  g.click({"data-action":"finish"});
+  const s=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  const injured=s.inbox.filter(m=>m.kind==="injury");
+  assert.ok(injured.length>0,"no simulated injury events");
+  assert.ok(injured.every(m=>m.detail.includes("sidelined")));
+  assert.ok(Object.values(s.injuries).some(round=>round>0));
 });
