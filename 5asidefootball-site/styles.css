@@ -428,3 +428,113 @@ a.btn{text-decoration:none;align-items:center;justify-content:center}
   .manager-diary .fixture-row .info{flex:1 1 130px}
   .manager-diary .fixture-row .score{flex-shrink:0}
 }
+
+
+/* B04 — First Team register, career records and complete individual player reports */
+.squad-workspace,.player-report-layout{min-width:0}
+.squad-register{min-width:0}
+.squad-register .head h2{font-size:29px}
+.squad-controls{display:grid;grid-template-columns:minmax(195px,1.3fr) repeat(3,minmax(120px,.8fr));gap:12px;margin:8px 0 17px}
+.squad-search,.squad-select{display:flex;flex-direction:column;gap:7px;min-width:0}
+.squad-search>span,.squad-select>span,.profile-compare-picker>label{font-size:10px;font-weight:800;letter-spacing:1.2px;color:#bcd1d1}
+.squad-search input,.squad-select select,.profile-compare-picker select{width:100%;height:45px;min-width:0;border:1px solid #56707a;border-radius:9px;background:#0f2530;color:#edf6ef;padding:9px 11px;font-size:13px}
+.squad-search input:focus-visible,.squad-select select:focus-visible,.profile-compare-picker select:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.squad-position-tabs{display:flex;flex-wrap:wrap;gap:7px;padding-bottom:15px;border-bottom:1px solid #304650}
+.squad-position-tabs .btn{min-height:44px}
+.squad-table-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:13px 0;font-size:12px;color:#b1c9c9;font-weight:700}
+.squad-table-wrap{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain;scrollbar-width:thin}
+.squad-table{border-collapse:collapse;width:100%;min-width:1000px;font-size:12px;font-variant-numeric:tabular-nums}
+.squad-table th{text-align:left;color:#b4ccd0;font-size:10px;letter-spacing:.8px;font-weight:800;white-space:nowrap;padding:12px 10px;background:#112c36}
+.squad-table td{padding:12px 10px;border-bottom:1px solid #2c4550;vertical-align:middle;min-width:0}
+.squad-table td>small{display:block;font-size:10px;color:#a9c2c4;line-height:1.45;margin-top:5px}
+.squad-table .squad-group-row td{background:#173831;color:#cefdaf;letter-spacing:1.2px;font-weight:900;padding:11px 12px;border-bottom:1px solid #466449;font-size:11px}
+.squad-player-cell{display:flex;align-items:center;gap:9px;min-width:170px}
+.squad-player-cell .avatar{flex-shrink:0}
+.squad-player-cell>div{min-width:0}
+.squad-player-cell strong{font-size:12px;white-space:normal;overflow-wrap:anywhere}
+.squad-player-cell small{display:block;font-size:10px;color:#a4bfc4;margin-top:5px;line-height:1.45}
+.squad-rating{font:800 25px 'Barlow Condensed';color:var(--mint)}
+.squad-condition{min-width:62px}
+.squad-condition strong{display:block}
+.squad-mini-meter{display:block;height:5px;min-width:54px;background:#2b4750;border-radius:30px;margin-top:8px;overflow:hidden}
+.squad-mini-meter>span{display:block;height:100%;background:#9fe17d;border-radius:30px}
+.squad-status{display:inline-flex;align-items:center;justify-content:center;padding:7px 9px;min-height:28px;border-radius:7px;font-size:10px;font-weight:800;white-space:normal;text-align:center;border:1px solid #587566;background:#214636;color:#c5f8c1}
+.squad-status.unavailable{background:#4d3b2d;border-color:#755b43;color:#ffdaa0}
+.squad-status.injured{background:#5c3337;border-color:#894a51;color:#ffc8c3}
+.squad-status.complete{background:#293e47;border-color:#546775;color:#c4d7df}
+.squad-table .btn{min-height:42px;font-size:10px;padding-inline:11px}
+.squad-bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:17px}
+.squad-bottom-grid>.card{min-width:0}
+.squad-context-actions{margin-top:19px}
+.squad-guest-row{padding:8px 0;color:#cce6dc}
+.player-report-hero{background:radial-gradient(circle at 100% 0,#38594d 0,transparent 48%),linear-gradient(140deg,#183b37,#142e3b)}
+.player-report-hero .profile-status{margin-inline-start:auto}
+.player-report-hero .profile-role{color:#d5f9c2;font-weight:800}
+.player-report-context{display:flex;flex-wrap:wrap;gap:7px 23px;margin-top:18px;border-top:1px solid #315347;padding-top:12px;color:#bad7ca;font-size:12px}
+.player-report-layout .profile-tabs{margin-top:17px}
+.profile-context-actions{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 16px;margin-bottom:16px;border:1px solid var(--line);background:#122c34;border-radius:13px}
+.profile-compare-picker{display:flex;align-items:flex-start;justify-content:center;flex-direction:column;gap:7px;max-width:380px;flex:1 1 260px}
+.profile-compare-picker select{max-width:360px}
+.profile-compare-picker .fine{margin:0}
+.profile-context-actions .actions{gap:7px}
+.profile-content-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.profile-content-grid>*{min-width:0}
+.profile-content-grid .profile-wide{grid-column:1/-1}
+.profile-content-grid .card .head h2{font-size:24px}
+.profile-content-grid .card p{line-height:1.65}
+.profile-history-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:13px 0;border-bottom:1px solid #304852;font-size:12px}
+.profile-history-row:last-of-type{border-bottom:0}
+.profile-history-row>span{color:#b0c8c8;min-width:0}
+.profile-history-row strong{color:#d9f4cb;text-align:right;overflow-wrap:anywhere}
+.player-fixture-timeline{display:grid;gap:0}
+.player-fixture-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #314650}
+.player-fixture-row:last-child{border-bottom:0}
+.player-fixture-row>div{min-width:0}
+.player-fixture-row>div:first-child strong{display:block;font-size:12px}
+.player-fixture-row small{display:block;margin-top:6px;color:#b0c8ca;font-size:11px;line-height:1.45}
+.player-fixture-row.current{background:#1a3f38;margin-inline:-9px;padding-inline:9px;border-radius:8px}
+.player-compare{margin-top:16px;min-width:0}
+.player-compare-wrap{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+.player-compare-table{width:100%;border-collapse:collapse;min-width:450px;font-size:12px;font-variant-numeric:tabular-nums}
+.player-compare-table th,.player-compare-table td{padding:11px 9px;border-bottom:1px solid #2f4b53;text-align:right}
+.player-compare-table th:first-child{text-align:left}
+.player-compare-table thead th{color:#b9d4d2;background:#18313d;font-size:11px}
+.player-compare-table tbody th{font-weight:600;color:#bed1d2}
+.player-compare-table .compare-better{color:#c9f7b0;font-weight:900;background:#1d4036}
+@media(max-width:1150px){
+  .squad-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .squad-table{min-width:900px}
+}
+@media(max-width:790px){
+  .squad-bottom-grid,.profile-content-grid{grid-template-columns:minmax(0,1fr)}
+  .profile-content-grid .profile-wide{grid-column:1}
+  .squad-table{min-width:0;display:block}
+  .squad-table thead{display:none}
+  .squad-table tbody{display:block}
+  .squad-table .squad-group-row{display:block}
+  .squad-table .squad-group-row td{display:block}
+  .squad-table .squad-data-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 13px;background:#142c37;border:1px solid #35505a;border-radius:11px;margin:11px 0;padding:8px 12px}
+  .squad-table .squad-data-row td{border-bottom:1px solid #2e4650;padding:10px 1px;min-width:0}
+  .squad-table .squad-data-row td:before{content:attr(data-label);display:block;color:#a5c0c0;font-size:9px;font-weight:800;letter-spacing:.7px;margin-bottom:6px}
+  .squad-table .squad-data-row td:first-child{grid-column:1/-1}
+  .squad-table .squad-data-row td:first-child:before{display:none}
+  .squad-table .squad-data-row td:nth-child(7){grid-column:1/-1}
+  .squad-table .squad-data-row td:last-child{grid-column:1/-1;border-bottom:0}
+  .squad-table .squad-data-row td:last-child .btn{width:100%;min-height:45px}
+  .squad-player-cell{min-width:0}
+  .squad-condition{max-width:140px}
+}
+@media(max-width:520px){
+  .squad-controls{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .squad-search{grid-column:1/-1}
+  .squad-position-tabs .btn{flex:1 1 110px}
+  .squad-register{padding:17px 13px}
+  .player-fixture-row{grid-template-columns:1fr;gap:9px}
+  .profile-context-actions{padding:13px}
+  .profile-context-actions .actions{width:100%}
+  .profile-context-actions .actions .btn{flex:1}
+  .player-report-hero .profile-topline{align-items:flex-start}
+  .player-report-hero .profile-topline .actions{width:100%;justify-content:space-between}
+  .profile-metrics strong{font-size:25px}
+  .profile-history-row strong{text-align:left}
+}

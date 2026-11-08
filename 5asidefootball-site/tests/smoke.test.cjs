@@ -11,7 +11,8 @@ function boot({autoCreate=true,saved=null,random=0.53}={}) {
   const previewName = {textContent:""};
   const previewCrest = {innerHTML:""};
   const nameLength = {textContent:""};
-  const app = {innerHTML:"", handle:null, inputHandle:null, addEventListener(event,cb){if(event==="click")this.handle=cb;if(event==="input")this.inputHandle=cb;}};
+  const app = {innerHTML:"", handle:null, inputHandle:null, changeHandle:null,
+    addEventListener(event,cb){if(event==="click")this.handle=cb;if(event==="input")this.inputHandle=cb;if(event==="change")this.changeHandle=cb;}};
   let clock;
   const seededMath = Object.create(Math);
   seededMath.random = () => random;
@@ -33,7 +34,11 @@ function boot({autoCreate=true,saved=null,random=0.53}={}) {
     click({"data-action":"creator-next"});
     click({"data-action":"create-club"});
   }
-  return {app,storage,nameInput,previewName,previewCrest,nameLength,click,input(value){nameInput.value=value;app.inputHandle({target:{id:"club-create-name",value}});},tick(){assert.ok(clock,"Running match clock");clock();}};
+  return {app,storage,nameInput,previewName,previewCrest,nameLength,click,
+    input(value){nameInput.value=value;app.inputHandle({target:{id:"club-create-name",value}});},
+    inputField(id,value){app.inputHandle({target:{id,value,selectionStart:value.length}});},
+    change(id,value){assert.ok(app.changeHandle,"Change handler installed");app.changeHandle({target:{id,value}});},
+    tick(){assert.ok(clock,"Running match clock");clock();}};
 }
 
 test("renders clubhouse and squad",()=>{
@@ -642,4 +647,232 @@ test("B03 injury messages follow actual simulation events and medical actions",(
   assert.ok(injured.length>0,"no simulated injury events");
   assert.ok(injured.every(m=>m.detail.includes("sidelined")));
   assert.ok(Object.values(s.injuries).some(round=>round>0));
+});
+
+
+test("B04 grouped squad sorting, position filtering, status and live search are functional",()=>{
+  const g=boot();
+  g.click({"data-tab":"squad"});
+  assert.match(g.app.innerHTML,/Registered squad/);
+  assert.match(g.app.innerHTML,/squad-table/);
+  assert.match(g.app.innerHTML,/GOALKEEPERS/);
+  assert.match(g.app.innerHTML,/DEFENDERS/);
+  assert.match(g.app.innerHTML,/MIDFIELDERS/);
+  assert.match(g.app.innerHTML,/FORWARDS/);
+  g.change("squad-sort","name");
+  assert.match(g.app.innerHTML,/option value="name" selected/);
+  g.click({"data-action":"squad-position","data-value":"DEF"});
+  assert.match(g.app.innerHTML,/DEFENDERS/);
+  assert.doesNotMatch(g.app.innerHTML,/GOALKEEPERS/);
+  assert.match(g.app.innerHTML,/3 of 9 registered players/);
+  g.inputField("squad-search","Lewis");
+  assert.match(g.app.innerHTML,/Lewis Carter/);
+  assert.doesNotMatch(g.app.innerHTML,/Sam Patel/);
+  assert.match(g.app.innerHTML,/1 of 9 registered players/);
+  g.change("squad-group","none");
+  assert.doesNotMatch(g.app.innerHTML,/class="squad-group-row"/);
+  let saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.squadView.position,"DEF");
+  assert.equal(saved.squadView.query,"Lewis");
+  assert.equal(saved.squadView.sort,"name");
+  assert.equal(saved.squadView.group,"none");
+  const again=boot({autoCreate:false,saved});
+  assert.match(again.app.innerHTML,/Registered squad/);
+  again.click({"data-tab":"squad"});
+  assert.match(again.app.innerHTML,/1 of 9 registered players/);
+  again.click({"data-action":"squad-clear"});
+  saved=JSON.parse(again.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.squadView.query,"");
+  assert.equal(saved.squadView.position,"all");
+  assert.match(again.app.innerHTML,/9 of 9 registered players/);
+  assert.match(again.app.innerHTML,/GOALKEEPERS/);
+});
+
+test("B04 squad eligibility, injury and season-complete filters reflect saved facts",()=>{
+  const created=boot();
+  const saved=JSON.parse(created.storage.get("five-aside-manager-alpha-v1"));
+  saved.injuries[1]=2;
+  saved.roster.find(p=>p.id===6).available[0]=0;
+  saved.tab="squad";
+  const g=boot({autoCreate:false,saved});
+  assert.match(g.app.innerHTML,/Injured/);
+  assert.match(g.app.innerHTML,/Paramedic/);
+  g.change("squad-availability","injured");
+  assert.match(g.app.innerHTML,/Jamie Foster/);
+  assert.match(g.app.innerHTML,/1 of 9 registered players/);
+  assert.doesNotMatch(g.app.innerHTML,/Lewis Carter/);
+  g.change("squad-availability","unavailable");
+  assert.match(g.app.innerHTML,/Dylan Brooks/);
+  assert.doesNotMatch(g.app.innerHTML,/Jamie Foster/);
+  g.change("squad-availability","available");
+  assert.match(g.app.innerHTML,/Lewis Carter/);
+  assert.doesNotMatch(g.app.innerHTML,/Jamie Foster/);
+  const data=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  data.round=6;data.tab="squad";data.squadView.availability="all";
+  const ended=boot({autoCreate:false,saved:data});
+  assert.match(ended.app.innerHTML,/Season 1 is complete/);
+  assert.match(ended.app.innerHTML,/Season finished/);
+  assert.doesNotMatch(ended.app.innerHTML,/Eligible next match.*9/);
+});
+
+test("B04 player comparisons use real statistics and preserve filtered next/previous order",()=>{
+  const g=boot();
+  g.click({"data-tab":"squad"});
+  g.click({"data-action":"squad-position","data-value":"MID"});
+  g.click({"data-action":"profile-player","data-player":"3"});
+  assert.match(g.app.innerHTML,/Alex Morgan/);
+  assert.match(g.app.innerHTML,/PLAYER REPORT/);
+  assert.match(g.app.innerHTML,/Career record/);
+  assert.match(g.app.innerHTML,/COMPARE WITH A TEAMMATE/);
+  g.change("profile-compare-select","9");
+  assert.match(g.app.innerHTML,/Side-by-side player comparison/);
+  assert.match(g.app.innerHTML,/Finley Hughes/);
+  assert.match(g.app.innerHTML,/Appearances/);
+  g.click({"data-action":"profile-section","data-value":"attributes"});
+  assert.match(g.app.innerHTML,/Technical skills/);
+  assert.match(g.app.innerHTML,/Side-by-side player comparison/);
+  g.click({"data-action":"profile-next"});
+  assert.match(g.app.innerHTML,/Finley Hughes/);
+  assert.match(g.app.innerHTML,/Technical skills/);
+  g.click({"data-action":"profile-prev"});
+  assert.match(g.app.innerHTML,/Alex Morgan/);
+  g.click({"data-action":"compare-clear"});
+  assert.doesNotMatch(g.app.innerHTML,/Side-by-side player comparison/);
+  const saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(saved.profileCompareId,null);
+  assert.equal(saved.squadView.position,"MID");
+  g.click({"data-action":"profile-close"});
+  assert.match(g.app.innerHTML,/Registered squad/);
+  assert.match(g.app.innerHTML,/3 of 9 registered players/);
+});
+
+test("B04 progress and appearance histories follow actual training and match records",()=>{
+  const g=boot();
+  const key="five-aside-manager-alpha-v1";
+  const prior=JSON.parse(g.storage.get(key));
+  const player=prior.roster.find(x=>x.id===3);
+  g.click({"data-action":"go-training"});
+  g.click({"data-action":"train","data-value":"passing"});
+  let after=JSON.parse(g.storage.get(key));
+  const dev=after.developmentHistory[3];
+  assert.equal(dev.length,1);
+  assert.equal(dev[0].source,"Training: passing");
+  assert.ok(dev[0].xpGained>0);
+  assert.equal(dev[0].ratingBefore,player.rating);
+  g.click({"data-action":"go-fixtures"});
+  g.click({"data-action":"start-auto"});
+  g.click({"data-action":"finish"});
+  after=JSON.parse(g.storage.get(key));
+  const matchHistories=Object.values(after.playerMatchHistory).flat();
+  assert.equal(matchHistories.length,5,"one goalkeeper and four outfielders logged");
+  const totalRecordedGoals=matchHistories.reduce((total,m)=>total+m.goals,0);
+  assert.equal(totalRecordedGoals,after.results[0].home);
+  for(const [id,history] of Object.entries(after.playerMatchHistory)){
+    const stats=after.playerStats[id];
+    assert.equal(stats.appearances,history.length);
+    assert.equal(stats.goals,history.reduce((sum,m)=>sum+m.goals,0));
+    assert.equal(stats.cleanSheets,history.filter(m=>m.cleanSheet).length);
+  }
+  assert.ok(after.developmentHistory[3].some(x=>x.source.startsWith("Match:")));
+  g.click({"data-action":"go-squad"});
+  g.click({"data-action":"profile-player","data-player":"3"});
+  assert.match(g.app.innerHTML,/Recent match record/);
+  assert.match(g.app.innerHTML,/Appearances/);
+  g.click({"data-action":"profile-section","data-value":"development"});
+  assert.match(g.app.innerHTML,/Recent progression/);
+  assert.match(g.app.innerHTML,/Training: passing/);
+  const finishable=JSON.parse(JSON.stringify(after));
+  finishable.roster.forEach(p=>{p.available=[1,1,1,1,1,1];});
+  const reloaded=boot({autoCreate:false,saved:finishable});
+  const same=JSON.parse(reloaded.storage.get(key));
+  assert.equal(same.developmentHistory[3].length,after.developmentHistory[3].length);
+  assert.equal(same.playerMatchHistory[3].length,after.playerMatchHistory[3].length);
+  reloaded.click({"data-action":"go-fixtures"});
+  for(let i=1;i<6;i++){
+    reloaded.click({"data-action":"start-auto"});
+    reloaded.click({"data-action":"finish"});
+    reloaded.click({"data-action":"go-fixtures"});
+  }
+  reloaded.click({"data-action":"next-season"});
+  const next=JSON.parse(reloaded.storage.get(key));
+  assert.equal(next.season,2);
+  assert.ok(next.developmentHistory[3].length>=after.developmentHistory[3].length);
+  assert.ok(next.playerMatchHistory[3].length>=after.playerMatchHistory[3].length);
+});
+
+test("B04 player availability distinguishes completed rounds from future work conflicts",()=>{
+  const g=boot();
+  g.click({"data-action":"go-squad"});
+  g.click({"data-action":"profile-player","data-player":"3"});
+  g.click({"data-action":"profile-section","data-value":"availability"});
+  assert.match(g.app.innerHTML,/Fixture availability/);
+  assert.match(g.app.innerHTML,/eligible for selection|Eligible for selection/);
+  assert.match(g.app.innerHTML,/ROUND 6/);
+  g.click({"data-action":"go-fixtures"});
+  g.click({"data-action":"start-auto"});
+  g.click({"data-action":"finish"});
+  g.click({"data-action":"go-squad"});
+  g.click({"data-action":"profile-player","data-player":"3"});
+  g.click({"data-action":"profile-section","data-value":"availability"});
+  assert.match(g.app.innerHTML,/Fixture complete/);
+  assert.match(g.app.innerHTML,/Result: /);
+  assert.match(g.app.innerHTML,/University student/);
+});
+
+test("B04 imported old saves preserve historical statistics without fabricating a match log",()=>{
+  const g=boot();
+  const old=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  old.playerStats={3:{appearances:7,goals:4,cleanSheets:0}};
+  delete old.squadView;delete old.developmentHistory;delete old.playerMatchHistory;delete old.profileCompareId;
+  old.money=376;old.round=3;
+  const loaded=boot({autoCreate:false,saved:old});
+  const upgraded=JSON.parse(loaded.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(upgraded.money,376);
+  assert.equal(upgraded.round,3);
+  assert.equal(upgraded.playerStats[3].appearances,7);
+  assert.equal(upgraded.playerStats[3].goals,4);
+  assert.equal(upgraded.developmentHistory[3],undefined);
+  assert.equal(upgraded.playerMatchHistory[3],undefined);
+  assert.equal(upgraded.squadView.group,"position");
+  assert.equal(upgraded.profileCompareId,null);
+  assert.equal(JSON.stringify(upgraded.roster),JSON.stringify(old.roster));
+  loaded.click({"data-action":"go-squad"});
+  loaded.click({"data-action":"profile-player","data-player":"3"});
+  assert.match(loaded.app.innerHTML,/Recent match record/);
+  assert.match(loaded.app.innerHTML,/7<\/strong><small>Appearances/);
+  assert.match(loaded.app.innerHTML,/Future matches will record appearances/);
+});
+
+
+test("B04 player report contextual physio and attendance offers obey existing fees and eligibility",()=>{
+  const key="five-aside-manager-alpha-v1";
+  const first=boot();
+  const save=JSON.parse(first.storage.get(key));
+  save.money=240;
+  save.injuries={1:2};
+  const g=boot({autoCreate:false,saved:save});
+  g.click({"data-action":"go-squad"});
+  g.click({"data-action":"profile-player","data-player":"1"});
+  g.click({"data-action":"profile-section","data-value":"availability"});
+  assert.match(g.app.innerHTML,/PHYSIO TREATMENT/);
+  g.click({"data-action":"physio","data-player":"1"});
+  let after=JSON.parse(g.storage.get(key));
+  assert.equal(after.money,200);
+  assert.equal(after.injuries[1],0);
+  assert.ok(after.inbox.some(m=>m.title==="Player cleared for selection"));
+  assert.match(g.app.innerHTML,/Available/);
+  g.click({"data-action":"profile-close"});
+  g.click({"data-action":"profile-player","data-player":"6"});
+  g.click({"data-action":"profile-section","data-value":"availability"});
+  assert.match(g.app.innerHTML,/OFFER £20 TO ATTEND/);
+  g.click({"data-action":"offer","data-player":"6"});
+  after=JSON.parse(g.storage.get(key));
+  assert.equal(after.money,180);
+  assert.equal(after.offers["0:6"],true);
+  assert.equal(after.offerAttempts["1:0:6"],true);
+  assert.ok(after.inbox.some(m=>m.title==="Appearance offer accepted"));
+  assert.match(g.app.innerHTML,/Available/);
+  // A previously accepted offer cannot be purchased twice.
+  g.click({"data-action":"offer","data-player":"6"});
+  assert.equal(JSON.parse(g.storage.get(key)).money,180);
 });
