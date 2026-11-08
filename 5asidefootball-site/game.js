@@ -1096,7 +1096,12 @@
       var m=state.match,used=starters(m.round),bench=players(m.round).filter(function(x){return !used.some(function(p){return p.id===x.id;});});
       var on=bench.sort(function(a,b){return b.rating-a.rating;})[0],off=used.filter(function(p){return p.pos!=='GK';}).sort(function(a,b){return fitness(a)-fitness(b);})[0];
       if(!on||!off){notice('No substitute is available.');return true;}
-      m.selectedIds[m.selectedIds.indexOf(off.id)]=on.id;m.events.push({minute:m.minute,text:'Substitution: '+on.name+' replaces '+off.name+'.'});render();return true;
+      // Keep every actual participant, including the footballer who just went off.
+      if(!Array.isArray(m.participantIds))m.participantIds=m.selectedIds.slice();
+      if(!m.participantIds.includes(on.id))m.participantIds.push(on.id);
+      m.selectedIds[m.selectedIds.indexOf(off.id)]=on.id;
+      m.events.push({minute:m.minute,text:'Substitution: '+on.name+' replaces '+off.name+'.'});
+      render();return true;
     }
     return false;
   }
@@ -1154,7 +1159,11 @@
       var a=others[i*2],b=others[i*2+1],x=Math.floor(Math.random()*4),y=Math.floor(Math.random()*4);
       updateTable(a,x,y);updateTable(b,y,x);
     }
-    var before=fixtureAt(state.round),played=starters(m.round);
+    var before=fixtureAt(state.round);
+    // B04: appearances belong to everyone who actually took part, not just the five at full time.
+    var participants=Array.isArray(m.participantIds)?m.participantIds:
+      Array.isArray(m.selectedIds)?m.selectedIds:starters(m.round).map(function(p){return p.id;});
+    var played=players(m.round).filter(function(p){return participants.includes(p.id);});
     if(m.forfeit){
       ledger('Fixture forfeit penalty',-15);
     }else{
@@ -1214,6 +1223,7 @@
     if(!ready()){notice('You need five available players including a goalkeeper before kickoff.');return;}
     toast='';
     state.match={round:state.round,opponent:fixture().opponent,minute:0,home:0,away:0,instruction:state.plan,auto:auto,selectedIds:starters(state.round).map(function(p){return p.id;}),events:[{minute:0,text:'Kickoff! '+state.club+' take on '+fixture().opponent+'.'}]};
+    state.match.participantIds=state.match.selectedIds.slice();
     state.tab='match';
     if(auto){for(var i=0;i<10;i++)tick();render();}
     else{render();timer=setInterval(function(){tick();},1050);}

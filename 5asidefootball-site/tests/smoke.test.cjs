@@ -876,3 +876,22 @@ test("B04 player report contextual physio and attendance offers obey existing fe
   g.click({"data-action":"offer","data-player":"6"});
   assert.equal(JSON.parse(g.storage.get(key)).money,180);
 });
+
+
+test("B04 substitutions preserve appearances for both outgoing and incoming footballers",()=>{
+  const g=boot();
+  g.click({"data-action":"start-live"});
+  g.click({"data-action":"substitute"});
+  assert.match(g.app.innerHTML,/The Touchline/);
+  for(let i=0;i<10;i++)g.tick();
+  g.click({"data-action":"finish"});
+  const data=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  const appeared=Object.entries(data.playerMatchHistory).filter(([id,rows])=>rows.some(r=>r.season===1&&r.round===0));
+  assert.equal(appeared.length,6,"Both the player substituted off and the replacement should receive an appearance");
+  for(const [id,rows] of appeared){
+    assert.equal(data.playerStats[id].appearances,1);
+    assert.equal(rows.length,1);
+  }
+  const goals=appeared.flatMap(([id,rows])=>rows).reduce((sum,r)=>sum+r.goals,0);
+  assert.equal(goals,data.results[0].home,"Recorded scorers must match the actual match result after substitutions");
+});

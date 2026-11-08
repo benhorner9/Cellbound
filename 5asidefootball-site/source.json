@@ -2,7 +2,7 @@
   "project": "5asidefootball",
   "source": "benhorner9/5AsideManager",
   "sourceBranch": "main",
-  "sourceCommit": "36ad5b05052379a5aa71ff3068b86fed3837edba",
+  "sourceCommit": "fa96e8584e73007f07f0c7ba3897786e025fdbb4",
   "target": "/5asidefootball.com/",
-  "note": "B04 squad and player reports playtest mirror. Direct publishing is deferred to B16."
+  "note": "Final B04 playtest mirror, including correct substituted footballer appearances and scorer records. Direct source FTPS deferred to B16."
 }
