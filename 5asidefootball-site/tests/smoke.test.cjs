@@ -9,12 +9,14 @@ function boot({autoCreate=true,saved=null}={}) {
   const storage = new Map(saved?[[key,JSON.stringify(saved)]]:[]);
   const nameInput = {value:"Test Town FC"};
   const previewName = {textContent:""};
+  const previewCrest = {innerHTML:""};
+  const nameLength = {textContent:""};
   const app = {innerHTML:"", handle:null, inputHandle:null, addEventListener(event,cb){if(event==="click")this.handle=cb;if(event==="input")this.inputHandle=cb;}};
   let clock;
   const seededMath = Object.create(Math);
   seededMath.random = () => 0.53;
   const sandbox = {
-    document:{getElementById(name){if(name==="app")return app;if(name==="club-create-name")return nameInput;if(name==="kit-club-name")return previewName;return null;}},
+    document:{getElementById(name){if(name==="app")return app;if(name==="club-create-name")return nameInput;if(name==="kit-club-name")return previewName;if(name==="kit-club-crest")return previewCrest;if(name==="creator-name-length")return nameLength;return null;}},
     localStorage:{getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}},
     setInterval(fn){clock=fn;return 1;},
     clearInterval(){clock=null;},
@@ -26,8 +28,12 @@ function boot({autoCreate=true,saved=null}={}) {
     assert.ok(app.handle,"Click handler installed");
     app.handle({target:{closest(){return {getAttribute(key){return data[key]??null;}};}}});
   };
-  if(autoCreate)click({"data-action":"create-club"});
-  return {app,storage,nameInput,click,input(value){nameInput.value=value;app.inputHandle({target:{id:"club-create-name",value}});},tick(){assert.ok(clock,"Running match clock");clock();}};
+  if(autoCreate){
+    click({"data-action":"creator-next"});
+    click({"data-action":"creator-next"});
+    click({"data-action":"create-club"});
+  }
+  return {app,storage,nameInput,previewName,previewCrest,nameLength,click,input(value){nameInput.value=value;app.inputHandle({target:{id:"club-create-name",value}});},tick(){assert.ok(clock,"Running match clock");clock();}};
 }
 
 test("renders clubhouse and squad",()=>{
@@ -61,6 +67,8 @@ test("runs live touchline instructions and resets",()=>{
   g.click({"data-action":"finish"});
   g.click({"data-action":"reset"});
   assert.match(g.app.innerHTML,/CREATE YOUR CLUB/);
+  g.click({"data-action":"creator-next"});
+  g.click({"data-action":"creator-next"});
   g.click({"data-action":"create-club"});
   assert.match(g.app.innerHTML,/The Clubhouse/);
   assert.match(g.app.innerHTML,/ROUND 1/);
@@ -186,23 +194,39 @@ test("a one-off guest may be scouted and signed but never automatically register
   assert.ok(snapshot.roster.some(p=>p.name===guest.name));
 });
 
-test("new managers must create a club before accessing the clubhouse",()=>{
+test("B02 guided onboarding validates name and colours before final confirmation",()=>{
   const g=boot({autoCreate:false});
   assert.match(g.app.innerHTML,/CREATE YOUR CLUB/);
+  assert.match(g.app.innerHTML,/STEP 1 OF 3/);
   assert.match(g.app.innerHTML,/Live kit preview/i);
   assert.doesNotMatch(g.app.innerHTML,/The Clubhouse/);
   g.click({"data-action":"go-fixtures"});
   assert.match(g.app.innerHTML,/CREATE YOUR CLUB/);
+  g.click({"data-action":"create-club"}); // hidden until confirmation: cannot bypass step 1
+  assert.equal(g.storage.size,0);
   g.input("  ");
-  g.click({"data-action":"create-club"});
+  g.click({"data-action":"creator-next"});
   assert.match(g.app.innerHTML,/between 3 and 28 characters/);
   assert.equal(g.storage.size,0);
+  g.input("Dockside Rovers");
+  g.click({"data-action":"creator-next"});
+  assert.match(g.app.innerHTML,/belongs to another team/);
   g.input("Harbour Fives FC");
+  assert.equal(g.previewName.textContent,"Harbour Fives FC");
+  assert.match(g.previewCrest.innerHTML,/club-crest-own/);
+  g.click({"data-action":"creator-next"});
+  assert.match(g.app.innerHTML,/STEP 2 OF 3/);
   g.click({"data-action":"kit-pattern","data-value":"hoops"});
   g.click({"data-action":"kit-primary","data-value":"#d63c4b"});
+  g.click({"data-action":"kit-secondary","data-value":"#d63c4b"});
+  g.click({"data-action":"creator-next"});
+  assert.match(g.app.innerHTML,/Choose two different kit colours/);
   g.click({"data-action":"kit-secondary","data-value":"#142f4d"});
   assert.match(g.app.innerHTML,/kit-hoops/);
+  g.click({"data-action":"creator-next"});
+  assert.match(g.app.innerHTML,/STEP 3 OF 3/);
   assert.match(g.app.innerHTML,/Harbour Fives FC/);
+  assert.equal(g.storage.size,0);
   g.click({"data-action":"create-club"});
   const state=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
   assert.equal(state.clubCreated,true);
@@ -213,25 +237,36 @@ test("new managers must create a club before accessing the clubhouse",()=>{
   assert.match(g.app.innerHTML,/The Clubhouse/);
 });
 
-test("kit editing preserves progress and blocks identical colours",()=>{
+test("B02 existing team edits preserve progress, can be cancelled and reject identical colours",()=>{
   const g=boot();
   g.click({"data-action":"go-fixtures"});
   const before=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
   g.click({"data-action":"go-overview"});
   g.click({"data-action":"edit-club"});
   assert.match(g.app.innerHTML,/YOUR CLUB IDENTITY/);
+  g.input("Should Be Cancelled FC");
+  g.click({"data-action":"creator-next"});
+  g.click({"data-action":"kit-pattern","data-value":"halves"});
+  g.click({"data-action":"cancel-creator"});
+  let after=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(after.club,before.club);
+  assert.deepEqual(after.kit,before.kit);
+  g.click({"data-action":"edit-club"});
+  g.input("New Club  Athletic");
+  g.click({"data-action":"creator-next"});
   g.click({"data-action":"kit-secondary","data-value":"#1d8967"});
-  g.click({"data-action":"create-club"});
+  g.click({"data-action":"creator-next"});
   assert.match(g.app.innerHTML,/Choose two different kit colours/);
   g.click({"data-action":"kit-secondary","data-value":"#f4bf52"});
-  g.input("New Club  Athletic");
+  g.click({"data-action":"creator-next"});
   g.click({"data-action":"create-club"});
-  const after=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  after=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
   assert.equal(after.club,"New Club Athletic");
   assert.equal(after.kit.secondary,"#f4bf52");
   assert.equal(after.money,before.money);
   assert.equal(after.round,before.round);
   assert.equal(after.roster.length,before.roster.length);
+  assert.equal(after.standings.length,before.standings.length);
   assert.match(g.app.innerHTML,/New Club Athletic/);
 });
 
@@ -344,4 +379,98 @@ test("B01 keeps in-progress match reachable while visiting another section",()=>
   assert.match(g.app.innerHTML,/The Touchline/);
   g.tick();
   assert.match(g.app.innerHTML,/LIVE/);
+});
+
+
+test("B02 kit selection covers all five patterns and rejects similar-contrast colours",()=>{
+  const g=boot({autoCreate:false});
+  g.input("Seafront FC");
+  g.click({"data-action":"creator-next"});
+  for(const p of ["solid","stripes","hoops","halves","sash"]){
+    g.click({"data-action":"kit-pattern","data-value":p});
+    assert.match(g.app.innerHTML,new RegExp("kit-"+p));
+    assert.match(g.app.innerHTML,new RegExp('data-action="kit-pattern" data-value="'+p+'" aria-pressed="true"'));
+  }
+  g.click({"data-action":"kit-primary","data-value":"#1d8967"});
+  g.click({"data-action":"kit-secondary","data-value":"#d63c4b"});
+  // Accept/reject based on measurable contrast, not just two different names.
+  g.click({"data-action":"creator-next"});
+  assert.match(g.app.innerHTML,/stronger contrast/);
+  g.click({"data-action":"kit-primary","data-value":"#142f4d"});
+  g.click({"data-action":"kit-secondary","data-value":"#f4f2e9"});
+  g.click({"data-action":"creator-next"});
+  assert.match(g.app.innerHTML,/STEP 3 OF 3/);
+  g.click({"data-action":"create-club"});
+  const s=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(s.kit.pattern,"sash");
+  assert.equal(s.kit.primary,"#142f4d");
+  assert.equal(s.kit.secondary,"#f4f2e9");
+});
+
+test("B02 club editor handles long and unsafe names while preserving existing career",()=>{
+  const g=boot();
+  const pre=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  g.click({"data-action":"go-career"});
+  g.click({"data-action":"edit-club"});
+  g.input('<script>alert("bad")</script>');
+  assert.doesNotMatch(g.app.innerHTML,/<script>alert/);
+  g.click({"data-action":"creator-next"});
+  assert.match(g.app.innerHTML,/between 3 and 28 characters/);
+  g.input("South Coast Eagles Football Club");
+  g.click({"data-action":"creator-next"});
+  assert.match(g.app.innerHTML,/between 3 and 28 characters/);
+  g.input("South Coast Eagles");
+  g.click({"data-action":"creator-next"});
+  g.click({"data-action":"creator-next"});
+  g.click({"data-action":"create-club"});
+  const after=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(after.club,"South Coast Eagles");
+  assert.equal(after.money,pre.money);
+  assert.equal(after.season,pre.season);
+  assert.equal(after.financeLog.length,pre.financeLog.length);
+  assert.match(g.app.innerHTML,/South Coast Eagles/);
+  g.click({"data-action":"go-fixtures"});
+  assert.match(g.app.innerHTML,/South Coast Eagles/);
+  assert.match(g.app.innerHTML,/club-crest-own/);
+  g.click({"data-action":"go-league"});
+  assert.match(g.app.innerHTML,/league-club/);
+  assert.match(g.app.innerHTML,/South Coast Eagles/);
+  g.click({"data-action":"start-auto"});
+  assert.match(g.app.innerHTML,/club-crest-own/);
+  g.click({"data-action":"finish"});
+  const post=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(post.club,"South Coast Eagles");
+});
+
+test("B02 imported kit and name persist after reload and season change",()=>{
+  const g=boot({autoCreate:false});
+  g.input("Coastal United");
+  g.click({"data-action":"creator-next"});
+  g.click({"data-action":"kit-pattern","data-value":"sash"});
+  g.click({"data-action":"kit-primary","data-value":"#7452ad"});
+  g.click({"data-action":"kit-secondary","data-value":"#f4f2e9"});
+  g.click({"data-action":"creator-next"});
+  g.click({"data-action":"create-club"});
+  const saved=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
+  const imported=boot({autoCreate:false,saved});
+  assert.match(imported.app.innerHTML,/The Clubhouse/);
+  assert.match(imported.app.innerHTML,/kit-sash/);
+  for(let i=0;i<6;i++){
+    imported.click({"data-action":"go-fixtures"});
+    const current=JSON.parse(imported.storage.get("five-aside-manager-alpha-v1"));
+    const keepers=current.roster.filter(p=>p.pos==="GK"&&p.available[i]&&!(current.injuries[p.id]>i));
+    if(!keepers.length)imported.click({"data-action":"guest"});
+    imported.click({"data-action":"start-auto"});
+    imported.click({"data-action":"finish"});
+  }
+  imported.click({"data-action":"next-season"});
+  const final=JSON.parse(imported.storage.get("five-aside-manager-alpha-v1"));
+  assert.equal(final.season,2);
+  assert.equal(final.club,"Coastal United");
+  assert.equal(final.kit.pattern,"sash");
+  assert.equal(final.kit.primary,"#7452ad");
+  assert.equal(final.kit.secondary,"#f4f2e9");
+  imported.click({"data-action":"go-league"});
+  assert.match(imported.app.innerHTML,/Coastal United/);
+  assert.match(imported.app.innerHTML,/club-crest-own kit-sash/);
 });

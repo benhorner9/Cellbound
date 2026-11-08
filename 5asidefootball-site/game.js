@@ -84,7 +84,7 @@
     return initial();
   }
   var state=read(), timer=null, toast='';
-  var editingClub=false, creatorError='';
+  var editingClub=false, creatorError='', creatorStep=1;
   var draftClub={name:state.clubCreated?state.club:'',kit:normalizeKit(state.kit)};
   state.roster=Array.isArray(state.roster)?state.roster:JSON.parse(JSON.stringify(originalRoster));
   roster=state.roster;roster.forEach(ensureDetails);state.season=state.season||1;state.division=state.division||8;state.registeredCap=12;
@@ -118,7 +118,14 @@
   function ready(){var group=starters(state.round);return group.length===5 && group.some(function(p){return p.pos==='GK';});}
   function develop(p,xp){ensureDetails(p);p.xp=(p.xp||0)+xp;var advanced=0,cap=p.potential;while(p.rating<cap&&p.xp>=70+(p.rating-45)*5){p.xp-=70+(p.rating-45)*5;p.rating++;advanced++;}return advanced;}
   function betweenNights(prev,next){if(prev&&next&&prev.night!==next.night)roster.forEach(function(p){state.fitness[p.id]=Math.min(100,fitness(p)+24);});}
-  function club(name){return '<span class="club-crest">'+esc(name.split(' ').map(function(w){return w.charAt(0)}).join('').slice(0,2))+'</span>';}
+  function clubMark(name,kit){
+    var short=String(name||'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w.charAt(0).toUpperCase();}).join('')||'FC';
+    var own=!!kit,theme=own?normalizeKit(kit):null;
+    return '<span class="club-crest '+(own?'club-crest-own kit-'+theme.pattern:'club-crest-rival')+'" '+
+      (own?kitVars(theme)+' ':'')+'aria-label="'+esc(name)+'">'+esc(short)+'</span>';
+  }
+  function club(name,own){return clubMark(name,own?state.kit:null);}
+
   function badge(text,mode){return '<span class="status '+(mode||'')+'">'+esc(text)+'</span>';}
   function button(label,action,style,extra){return '<button type="button" class="btn '+(style||'')+'" data-action="'+action+'" '+(extra||'')+'>'+label+'</button>';}
   function kitVars(kit){
@@ -129,30 +136,93 @@
     kit=normalizeKit(kit);
     return '<div class="kit-display '+(compact?'compact':'')+'" '+kitVars(kit)+'><div class="kit-shirt kit-'+kit.pattern+'"><span class="kit-number">5</span></div></div>';
   }
+  function tidyClubName(value){return String(value||'').trim().replace(/\s+/g,' ');}
+  function identityNameError(value){
+    var name=tidyClubName(value);
+    if(name.length<3||name.length>28)return 'Enter a club name between 3 and 28 characters.';
+    if(names.some(function(n){return n.toLowerCase()===name.toLowerCase();}))
+      return 'That name belongs to another team in this division. Choose a different name.';
+    return '';
+  }
+  function kitContrastRatio(kit){
+    function lum(hex){
+      var rgb=[1,3,5].map(function(i){var v=parseInt(hex.slice(i,i+2),16)/255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});
+      return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;
+    }
+    var a=lum(kit.primary),b=lum(kit.secondary);
+    return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+  }
+  function identityKitError(kit){
+    if(kit.primary===kit.secondary)return 'Choose two different kit colours so the design stays visible.';
+    if(kitContrastRatio(kit)<1.5)return 'Choose two shirt colours with stronger contrast so the kit is readable.';
+    return '';
+  }
   function creator(){
-    var kit=draftClub.kit, editing=state.clubCreated && editingClub;
-    function choices(kind){
+    var kit=draftClub.kit, editing=state.clubCreated&&editingClub, name=tidyClubName(draftClub.name);
+    var contrast=kitContrastRatio(kit),contrastNote=identityKitError(kit);
+    var steps=['Club name','Home kit','Confirm identity'];
+    var progress='<div class="creator-progress" aria-label="Creation progress">'+steps.map(function(label,i){
+      var current=creatorStep===i+1;
+      return '<div class="creator-step '+(current?'current':creatorStep>i+1?'done':'upcoming')+'" '+
+        (current?'aria-current="step"':'')+'><span>'+(i+1)+'</span><b>'+label+'</b></div>';
+    }).join('')+'</div>';
+    function colours(kind){
       return KIT_COLOURS.map(function(c){
         var selected=kit[kind]===c[1];
-        return '<button type="button" data-action="kit-'+kind+'" data-value="'+c[1]+'" class="colour-choice '+(selected?'chosen':'')+'" aria-label="'+c[0]+' '+kind+' colour" aria-pressed="'+selected+'" title="'+c[0]+'"><span style="background:'+c[1]+'"></span></button>';
+        return '<button type="button" data-action="kit-'+kind+'" data-value="'+c[1]+'" class="colour-choice '+(selected?'chosen':'')+
+          '" aria-label="'+c[0]+' '+kind+' colour" aria-pressed="'+selected+'" title="'+c[0]+'"><span style="background:'+c[1]+'"></span></button>';
       }).join('');
     }
+    var content='';
+    if(creatorStep===1){
+      content='<div class="creator-stage-heading"><span class="eyebrow">STEP 1 OF 3 · CLUB NAME</span><h2>Give your team its name</h2>'+
+        '<p>What will the league call your club? Your name appears in fixtures, the league table and match reports.</p></div>'+
+        '<label class="creation-label" for="club-create-name">Team name</label>'+
+        '<input class="club-input creation-name" id="club-create-name" maxlength="28" autocomplete="off" spellcheck="false" '+
+        'aria-describedby="creator-name-help" '+(creatorError?'aria-invalid="true" ':'')+
+        'placeholder="e.g. Harbour Fives FC" value="'+esc(draftClub.name)+'">'+
+        '<p class="creator-hint" id="creator-name-help">3–28 characters. You can change this in Club → Career later. <span id="creator-name-length">'+name.length+'</span>/28</p>'+
+        '<div class="creation-actions">'+button('CONTINUE TO HOME KIT →','creator-next','primary')+
+        (editing?button('CANCEL CHANGES','cancel-creator','ghost'):'')+'</div>';
+    }else if(creatorStep===2){
+      content='<div class="creator-stage-heading"><span class="eyebrow">STEP 2 OF 3 · DESIGN YOUR KIT</span><h2>Own your colours</h2>'+
+        '<p>Choose a shirt design and two contrasting club colours. You will see this kit in match preparation and club identity.</p></div>'+
+        '<div class="creation-label">Home shirt design</div><div class="design-options">'+KIT_PATTERNS.map(function(c){
+          var selected=kit.pattern===c[0];
+          return '<button type="button" class="design-choice '+(selected?'selected':'')+'" data-action="kit-pattern" data-value="'+c[0]+'" aria-pressed="'+selected+'">'+
+            '<span class="pattern-thumb kit-'+c[0]+'" '+kitVars(kit)+' aria-hidden="true"></span><b>'+c[1]+'</b></button>';
+        }).join('')+'</div>'+
+        '<div class="creation-label">Main shirt colour</div><div class="colour-options" role="group" aria-label="Main shirt colour">'+colours('primary')+'</div>'+
+        '<div class="creation-label">Secondary / trim colour</div><div class="colour-options" role="group" aria-label="Secondary shirt colour">'+colours('secondary')+'</div>'+
+        '<p class="creator-hint '+(contrastNote?'creator-warning':'creator-good')+'" role="status">'+
+        (contrastNote?esc(contrastNote):'Colour contrast: '+contrast.toFixed(1)+':1 · clear distinction')+'</p>'+
+        '<div class="creation-actions">'+button('← BACK TO NAME','creator-back','ghost')+button('REVIEW CLUB →','creator-next','primary')+
+        (editing?button('CANCEL CHANGES','cancel-creator','ghost'):'')+'</div>';
+    }else{
+      content='<div class="creator-stage-heading"><span class="eyebrow">STEP 3 OF 3 · FINAL CHECK</span><h2>Ready for the first match?</h2>'+
+        '<p>Review the identity you will take into your first league season. This does not reset existing progress when you are editing.</p></div>'+
+        '<div class="creator-review"><div class="creator-review-row"><span>Club name</span><strong>'+esc(name)+'</strong>'+button('EDIT NAME','creator-name-step','small ghost')+'</div>'+
+        '<div class="creator-review-row"><span>Home kit</span><strong>'+esc(KIT_PATTERNS.find(function(p){return p[0]===kit.pattern;})[1])+'</strong>'+button('EDIT KIT','creator-kit-step','small ghost')+'</div>'+
+        '<div class="creator-review-row"><span>Colours</span><strong>'+esc(KIT_COLOURS.find(function(c){return c[1]===kit.primary;})[0])+
+          ' / '+esc(KIT_COLOURS.find(function(c){return c[1]===kit.secondary;})[0])+'</strong></div></div>'+
+        '<div class="creator-confirmation">No online account is required. Your club, kit, squad and progress are saved on this device.</div>'+
+        '<div class="creation-actions">'+button('← BACK TO KIT','creator-back','ghost')+
+        button(editing?'SAVE CLUB IDENTITY':'CREATE MY TEAM →','create-club','primary')+
+        (editing?button('CANCEL CHANGES','cancel-creator','ghost'):'')+'</div>';
+    }
     return '<div class="creation-screen">'+
-      '<header class="creation-header"><div class="brand"><div class="brandmark">5A</div><div class="brandcopy"><b>FIVE ASIDE</b><small>MANAGER</small></div></div><span class="chip highlight">'+(editing?'EDIT CLUB':'NEW CAREER · STEP 1')+'</span></header>'+
-      '<div class="creation-layout"><section class="card creation-form"><div class="eyebrow">YOUR CLUB. YOUR COLOURS.</div><h1>'+(editing?'YOUR CLUB IDENTITY':'CREATE YOUR CLUB')+'</h1>'+
-      '<p>Start with a name and a kit that is unmistakably yours. You can change them from your club office later.</p>'+
-      (creatorError?'<div class="banner" role="alert">'+esc(creatorError)+'</div>':'')+
-      '<label class="creation-label" for="club-create-name">Club name</label>'+
-      '<input class="club-input creation-name" id="club-create-name" maxlength="28" autocomplete="off" placeholder="e.g. Harbour Fives FC" value="'+esc(draftClub.name)+'">'+
-      '<div class="creation-label">Kit design</div><div class="design-options">'+KIT_PATTERNS.map(function(c){return '<button type="button" class="design-choice '+(kit.pattern===c[0]?'selected':'')+'" data-action="kit-pattern" data-value="'+c[0]+'" aria-pressed="'+(kit.pattern===c[0])+'">'+c[1]+'</button>';}).join('')+'</div>'+
-      '<div class="creation-label">Main shirt colour</div><div class="colour-options">'+choices('primary')+'</div>'+
-      '<div class="creation-label">Secondary / trim colour</div><div class="colour-options">'+choices('secondary')+'</div>'+
-      '<div class="creation-actions">'+button(editing?'SAVE CLUB IDENTITY':'CREATE MY TEAM →','create-club','primary')+
-      (editing?button('CANCEL','cancel-creator','ghost'):'')+'</div></section>'+
-      '<section class="creation-preview" aria-label="Live kit preview"><div class="eyebrow">LIVE KIT PREVIEW</div>'+
-      kitPreview(kit,false)+'<div id="kit-club-name" class="preview-club-name">'+esc(draftClub.name.trim()||'YOUR CLUB FC')+'</div>'+
-      '<div class="preview-caption">'+esc(KIT_PATTERNS.find(function(p){return p[0]===kit.pattern;})[1])+' · Home kit</div>'+
-      '<div class="preview-note">Club identity is saved on this device in the test build. Online accounts will come later.</div></section></div></div>';
+      '<header class="creation-header"><div class="brand"><div class="brandmark">5A</div><div class="brandcopy"><b>FIVE ASIDE</b><small>MANAGER</small></div></div>'+
+        '<span class="chip highlight">'+(editing?'EDIT EXISTING CLUB':'NEW MANAGER CAREER')+'</span></header>'+
+      '<div class="creation-layout"><section class="card creation-form" aria-label="Club creator">'+
+      '<div class="eyebrow">THE CLUB IS YOURS</div><h1>'+(editing?'YOUR CLUB IDENTITY':'CREATE YOUR CLUB')+'</h1>'+progress+
+      (creatorError?'<div class="banner" role="alert">'+esc(creatorError)+'</div>':'')+content+'</section>'+
+      '<section class="creation-preview" aria-label="Live kit preview">'+
+      '<div class="eyebrow">YOUR CLUB · LIVE PREVIEW</div>'+
+      '<div class="creator-crest-preview" id="kit-club-crest">'+clubMark(name||'YOUR CLUB FC',kit)+'</div>'+
+      kitPreview(kit,false)+'<div id="kit-club-name" class="preview-club-name">'+esc(name||'YOUR CLUB FC')+'</div>'+
+      '<div class="preview-caption">'+esc(KIT_PATTERNS.find(function(p){return p[0]===kit.pattern;})[1])+' · Home strip</div>'+
+      '<div class="preview-note">Your colours and club badge follow your team into the fixture diary, league and match centre.</div>'+
+      '</section></div></div>';
   }
   function syncClubDraft(){
     var field=document.getElementById('club-create-name');
@@ -243,14 +313,14 @@
   }
   function rowFixture(f,i){
     var r=state.results[i];
-    return '<div class="fixture-row">'+club(f.opponent)+'<div class="info"><b>'+esc(state.club)+' vs '+esc(f.opponent)+'</b><small>ROUND '+(i+1)+' · '+f.day+' · '+f.time+' · NIGHT '+f.night+' (demo)</small></div>'+(r?'<span class="score">'+r.home+' – '+r.away+'</span>':i===state.round?badge('NEXT UP',''):badge('UPCOMING','grey'))+'</div>';
+    return '<div class="fixture-row"><div class="fixture-badges">'+club(state.club,true)+club(f.opponent,false)+'</div><div class="info"><b>'+esc(state.club)+' vs '+esc(f.opponent)+'</b><small>ROUND '+(i+1)+' · '+f.day+' · '+f.time+' · NIGHT '+f.night+' (demo)</small></div>'+(r?'<span class="score">'+r.home+' – '+r.away+'</span>':i===state.round?badge('NEXT UP',''):badge('UPCOMING','grey'))+'</div>';
   }
   function overview(){
     var f=fixture();
-    var section=f?'<div class="card hero"><div class="eyebrow">NEXT MATCH · ROUND '+(f.id+1)+' · NIGHT '+f.night+'</div><h2>'+esc(state.club)+'<br>VS '+esc(f.opponent).toUpperCase()+'</h2><div class="kickoff">'+f.day+' · '+f.time+'</div><p>Your players have jobs, commitments and lives outside football. Check who can make kickoff before picking your side.</p><div class="actions">'+button('PREPARE MATCH →','go-squad','primary')+button('Match centre','go-fixtures','ghost')+'</div></div>':
+    var section=f?'<div class="card hero"><div class="eyebrow">NEXT MATCH · ROUND '+(f.id+1)+' · NIGHT '+f.night+'</div><div class="club-hero-identity">'+club(state.club,true)+'<span>YOUR CLUB</span></div><h2>'+esc(state.club)+'<br>VS '+esc(f.opponent).toUpperCase()+'</h2><div class="kickoff">'+f.day+' · '+f.time+'</div><p>Your players have jobs, commitments and lives outside football. Check who can make kickoff before picking your side.</p><div class="actions">'+button('PREPARE MATCH →','go-squad','primary')+button('Match centre','go-fixtures','ghost')+'</div></div>':
       '<div class="card hero"><div class="eyebrow">SEASON COMPLETE</div><h2>SEASON '+state.season+' FINISHED</h2><p>Check the final league table and advance to the next season, including promotion, relegation and new player schedules.</p>'+button('START NEXT SEASON →','next-season','primary')+button('League table','go-league','small')+'</div>';
     var soon=names.map(function(n,i){return fixtureAt(i);}).slice(Math.max(0,state.round-1),Math.min(6,state.round+3));
-    return metrics()+'<div class="grid">'+section+'<div class="card"><div class="head"><h2>Club identity</h2>'+button('EDIT KIT & NAME','edit-club','small')+'</div>'+kitPreview(state.kit,true)+'<div class="detail-list"><div class="detail-line"><span>Club</span><b>'+esc(state.club)+'</b></div><div class="detail-line"><span>Registered squad</span><b>'+roster.length+' / 12 players</b></div><div class="detail-line"><span>Level</span><b>'+(state.division===1?'Top division · up to 3 pros':'Semi-professional')+'</b></div><div class="detail-line"><span>Match income</span><b>'+money(state.sponsor)+' sponsorship</b></div><div class="detail-line"><span>Home venue</span><b>Community Sports Hall</b></div></div><p class="fine">At this level, your players still have work and education commitments. Match fees can help persuade a player to attend.</p></div><div class="card span-all"><div class="head"><h2>Fixture diary</h2>'+button('All fixtures →','go-fixtures','small')+'</div>'+soon.map(function(f){return rowFixture(f,f.id);}).join('')+'</div></div>';
+    return metrics()+'<div class="grid">'+section+'<div class="card"><div class="head"><h2>Club identity</h2>'+button('EDIT KIT & NAME','edit-club','small')+'</div>'+kitPreview(state.kit,true)+'<div class="club-office-mark">'+club(state.club,true)+'<strong>'+esc(state.club)+'</strong></div><div class="detail-list"><div class="detail-line"><span>Club</span><b>'+esc(state.club)+'</b></div><div class="detail-line"><span>Registered squad</span><b>'+roster.length+' / 12 players</b></div><div class="detail-line"><span>Level</span><b>'+(state.division===1?'Top division · up to 3 pros':'Semi-professional')+'</b></div><div class="detail-line"><span>Match income</span><b>'+money(state.sponsor)+' sponsorship</b></div><div class="detail-line"><span>Home venue</span><b>Community Sports Hall</b></div></div><p class="fine">At this level, your players still have work and education commitments. Match fees can help persuade a player to attend.</p></div><div class="card span-all"><div class="head"><h2>Fixture diary</h2>'+button('All fixtures →','go-fixtures','small')+'</div>'+soon.map(function(f){return rowFixture(f,f.id);}).join('')+'</div></div>';
   }
 
   function squad(){
@@ -284,15 +354,15 @@
   function fixtures(){
     var f=fixture();
     var rows=names.map(function(n,i){return rowFixture(fixtureAt(i),i);}).join('');
-    return '<div class="grid"><div class="card"><div class="head"><h2>Season fixture list</h2>'+badge('6 MATCHES','grey')+'</div>'+rows+'</div><div><div class="card"><div class="head"><h2>'+(f?'Your next kickoff':'End of season')+'</h2></div>'+(f?'<div class="eyebrow">ROUND '+(state.round+1)+' · '+f.day+' '+f.time+'</div><h2 style="margin:15px 0 5px">'+esc(state.club)+'<br><span class="muted">vs</span> '+esc(f.opponent)+'</h2><p>'+players().length+' players available · '+state.formation+' · '+state.style+' play</p><div class="actions">'+button('WATCH LIVE MATCH','start-live','primary',!ready()?'disabled':'')+button('SIMULATE OFFLINE','start-auto','',!ready()?'disabled':'')+'</div>'+(!ready()?'<div class="banner">Five players, including a goalkeeper, are required to play. If you cannot get a team together, you can concede the fixture 0–3.</div>'+button('FORFEIT 0–3','forfeit','small warning'):''):'<p>All six test fixtures are complete.</p>'+button('START NEXT SEASON →','next-season','primary')+button('League table','go-league','small'))+'</div><div class="card" style="margin-top:16px"><h2>Testing modes</h2><p><b>Live:</b> Watch a 20-minute simulated game, sending simple touchline instructions as it runs.</p><p><b>Offline:</b> Apply your saved pre-match plan instantly. In the eventual online game, real scheduled fixtures will use this plan if you are away.</p></div></div></div>';
+    return '<div class="grid"><div class="card"><div class="head"><h2>Season fixture list</h2>'+badge('6 MATCHES','grey')+'</div>'+rows+'</div><div><div class="card"><div class="head"><h2>'+(f?'Your next kickoff':'End of season')+'</h2></div>'+(f?'<div class="eyebrow">ROUND '+(state.round+1)+' · '+f.day+' '+f.time+'</div><div class="fixture-feature-identity">'+club(state.club,true)+'<strong>'+esc(state.club)+'</strong></div><h2 style="margin:15px 0 5px"><span class="muted">vs</span> '+esc(f.opponent)+'</h2><p>'+players().length+' players available · '+state.formation+' · '+state.style+' play</p><div class="actions">'+button('WATCH LIVE MATCH','start-live','primary',!ready()?'disabled':'')+button('SIMULATE OFFLINE','start-auto','',!ready()?'disabled':'')+'</div>'+(!ready()?'<div class="banner">Five players, including a goalkeeper, are required to play. If you cannot get a team together, you can concede the fixture 0–3.</div>'+button('FORFEIT 0–3','forfeit','small warning'):''):'<p>All six test fixtures are complete.</p>'+button('START NEXT SEASON →','next-season','primary')+button('League table','go-league','small'))+'</div><div class="card" style="margin-top:16px"><h2>Testing modes</h2><p><b>Live:</b> Watch a 20-minute simulated game, sending simple touchline instructions as it runs.</p><p><b>Offline:</b> Apply your saved pre-match plan instantly. In the eventual online game, real scheduled fixtures will use this plan if you are away.</p></div></div></div>';
   }
   function league(){
     var sorted=state.standings.slice().sort(sortTable);
-    return '<p class="section-intro">Season '+state.season+' · Division '+state.division+'. The top two teams move up and the bottom two move down, except at the pyramid boundaries. For now, opponents are computer controlled.</p><div class="card"><div class="head"><h2>Division '+state.division+'</h2>'+badge('SEASON '+state.season,'grey')+'</div><div class="table-wrap"><table class="standings"><thead><tr><th>#</th><th>CLUB</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>PTS</th></tr></thead><tbody>'+sorted.map(function(t,i){return '<tr class="'+(t.name==='Sunday Strikers'?'highlight-row':'')+'"><td>'+(i+1)+'</td><td><b>'+esc(t.name==='Sunday Strikers'?state.club:t.name)+'</b></td><td>'+t.played+'</td><td>'+t.won+'</td><td>'+t.drawn+'</td><td>'+t.lost+'</td><td>'+t.gf+'</td><td>'+t.ga+'</td><td><b>'+t.points+'</b></td></tr>';}).join('')+'</tbody></table></div></div>';
+    return '<p class="section-intro">Season '+state.season+' · Division '+state.division+'. The top two teams move up and the bottom two move down, except at the pyramid boundaries. For now, opponents are computer controlled.</p><div class="card"><div class="head"><h2>Division '+state.division+'</h2>'+badge('SEASON '+state.season,'grey')+'</div><div class="table-wrap"><table class="standings"><thead><tr><th>#</th><th>CLUB</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>PTS</th></tr></thead><tbody>'+sorted.map(function(t,i){return '<tr class="'+(t.name==='Sunday Strikers'?'highlight-row':'')+'"><td>'+(i+1)+'</td><td><div class="league-club">'+club(t.name==='Sunday Strikers'?state.club:t.name,t.name==='Sunday Strikers')+'<b>'+esc(t.name==='Sunday Strikers'?state.club:t.name)+'</b></div></td><td>'+t.played+'</td><td>'+t.won+'</td><td>'+t.drawn+'</td><td>'+t.lost+'</td><td>'+t.gf+'</td><td>'+t.ga+'</td><td><b>'+t.points+'</b></td></tr>';}).join('')+'</tbody></table></div></div>';
   }
   function match(){
     var m=state.match;if(!m)return fixtures();
-    return '<div class="grid"><div class="card span-all"><div class="match-scoreboard"><div class="home">'+esc(state.club)+'</div><div><div class="big-score">'+m.home+' : '+m.away+'</div><div class="minute">'+m.minute+"' / 20'"+(m.auto?' · OFFLINE PLAN':' · LIVE')+'</div></div><div class="away">'+esc(m.opponent)+'</div></div><div class="actions" style="justify-content:center;margin-top:20px">'+(m.auto?'':button('PUSH FORWARD','push','primary',m.minute>=20?'disabled':'')+button('HOLD SHAPE','hold','',m.minute>=20?'disabled':'')+button('ROTATE SUBSTITUTE','substitute','',m.minute>=20?'disabled':''))+button('FINISH MATCH','finish','ghost',m.minute>=20?'':'disabled')+'</div></div><div class="card"><div class="head"><h2>Match commentary</h2>'+badge('LIVE','')+'</div><div class="log" aria-live="polite">'+m.events.slice().reverse().map(function(e){return '<div class="logline '+(e.goal?'goal':'')+'"><strong>'+e.minute+"'</strong><span>"+esc(e.text)+'</span></div>';}).join('')+'</div></div><div class="card"><div class="head"><h2>Touchline instructions</h2></div><div class="detail-list"><div class="detail-line"><span>Formation</span><b>'+esc(state.formation)+'</b></div><div class="detail-line"><span>Team style</span><b>'+esc(state.style)+'</b></div><div class="detail-line"><span>Current instruction</span><b>'+esc(m.instruction)+'</b></div><div class="detail-line"><span>Average squad rating</span><b>'+Math.round(starters(m.round).reduce(function(a,p){return a+p.rating;},0)/5)+'</b></div></div><p class="fine">This is a simplified playable match engine, not the finished real-time football simulation.</p></div></div>';
+    return '<div class="grid"><div class="card span-all"><div class="match-scoreboard"><div class="home">'+club(state.club,true)+'<span>'+esc(state.club)+'</span></div><div><div class="big-score">'+m.home+' : '+m.away+'</div><div class="minute">'+m.minute+"' / 20'"+(m.auto?' · OFFLINE PLAN':' · LIVE')+'</div></div><div class="away">'+esc(m.opponent)+'</div></div><div class="actions" style="justify-content:center;margin-top:20px">'+(m.auto?'':button('PUSH FORWARD','push','primary',m.minute>=20?'disabled':'')+button('HOLD SHAPE','hold','',m.minute>=20?'disabled':'')+button('ROTATE SUBSTITUTE','substitute','',m.minute>=20?'disabled':''))+button('FINISH MATCH','finish','ghost',m.minute>=20?'':'disabled')+'</div></div><div class="card"><div class="head"><h2>Match commentary</h2>'+badge('LIVE','')+'</div><div class="log" aria-live="polite">'+m.events.slice().reverse().map(function(e){return '<div class="logline '+(e.goal?'goal':'')+'"><strong>'+e.minute+"'</strong><span>"+esc(e.text)+'</span></div>';}).join('')+'</div></div><div class="card"><div class="head"><h2>Touchline instructions</h2></div><div class="detail-list"><div class="detail-line"><span>Formation</span><b>'+esc(state.formation)+'</b></div><div class="detail-line"><span>Team style</span><b>'+esc(state.style)+'</b></div><div class="detail-line"><span>Current instruction</span><b>'+esc(m.instruction)+'</b></div><div class="detail-line"><span>Average squad rating</span><b>'+Math.round(starters(m.round).reduce(function(a,p){return a+p.rating;},0)/5)+'</b></div></div><p class="fine">This is a simplified playable match engine, not the finished real-time football simulation.</p></div></div>';
   }
 
   function availableTeam(){return players(state.round);}
@@ -431,8 +501,8 @@
       (state.seasonHistory.length?state.seasonHistory.slice().reverse().map(function(s){return '<div class="detail-line"><span>Season '+s.season+' · Division '+s.division+' · '+s.points+' pts</span><b>#'+s.position+' · '+money(s.prize)+'</b></div>';}).join(''):'<p>Complete your first six-match season to start your managerial record.</p>')+'</div>'+
       '<div class="card" style="margin-top:16px"><div class="head"><h2>Road to the top</h2></div><p>Division 8 → Division 1. All levels remain semi-professional, with only the top division permitting up to three full-time professional players.</p><p>Future online version: real managers across time zones, scheduled live fixtures, pre-set instructions for absent managers, youth scouting, and negotiated player-to-player transfers. None of these online services are live yet.</p>'+
       (!fixture()?button('START NEXT SEASON →','next-season','primary'):'')+'</div>'+
-      '<div class="card" style="margin-top:16px"><div class="head"><h2>Club identity</h2></div><p>Change the club name, home shirt design and colours.</p>'+
-      '<div class="actions"><input class="club-input" id="club-name-input" aria-label="Club name" maxlength="28" value="'+esc(state.club)+'">'+button('SAVE NAME','rename-club','primary')+button('EDIT KIT','edit-club','ghost')+'</div></div>';
+      '<div class="card" style="margin-top:16px"><div class="head"><h2>Club identity</h2></div><div class="club-office-mark">'+club(state.club,true)+'<strong>'+esc(state.club)+'</strong></div>'+kitPreview(state.kit,true)+'<p>Change the club name, home shirt design and colours in one saved editor.</p>'+
+      '<div class="actions">'+button('EDIT CLUB IDENTITY','edit-club','primary')+'</div></div>';
   }
   function nextSeason(){
     if(fixture()||state.match)return;
@@ -472,11 +542,6 @@
       var next=current+(action==='profile-next'?1:-1);
       if(next>=0&&next<roster.length){state.profileId=roster[next].id;state.profileSection='overview';render();}
       return true;
-    }
-    if(action==='rename-club'){
-      var field=document.getElementById('club-name-input'),name=field&&typeof field.value==='string'?field.value.trim():'';
-      if(!name)return true;
-      state.club=name.slice(0,28);notice('Club renamed to '+state.club+'.');return true;
     }
     if(action==='physio'){
       p=roster.find(function(x){return x.id===id;});
@@ -577,11 +642,11 @@
 
 
   function render(){
-    if(typeof document!=='undefined')document.title=(state.clubCreated?state.club+' · '+pageName(state.tab):'Create your club')+' | 5 Aside Manager';
+    if(typeof document!=='undefined')document.title=(editingClub?'Edit '+state.club+' identity':state.clubCreated?state.club+' · '+pageName(state.tab):'Create your club')+' | 5 Aside Manager';
     if(!state.clubCreated||editingClub){app.innerHTML=creator();return;}
     var body=state.tab==='overview'?overview():state.tab==='squad'?squad():state.tab==='tactics'?tactics():state.tab==='fixtures'?fixtures():state.tab==='league'?league():state.tab==='training'?trainingView():state.tab==='transfers'?transfersView():state.tab==='academy'?academyView():state.tab==='finances'?financesView():state.tab==='career'?careerView():state.tab==='settings'?settingsView():state.tab==='profile'?profileView():match();
     app.innerHTML='<div class="shell fm-shell"><header class="fm-chrome"><div class="fm-header-row"><div class="brand"><div class="brandmark">5A</div><div class="brandcopy"><b>FIVE ASIDE</b><small>MANAGER · ALPHA</small></div></div>'+
-      '<div class="fm-header-meta"><span class="chip">SEASON '+String(state.season).padStart(2,'0')+'</span><span class="chip highlight">DIVISION '+state.division+'</span></div></div>'+nav()+'</header>'+contextBar()+
+      '<div class="fm-header-meta"><div class="fm-header-club">'+club(state.club,true)+'<b>'+esc(state.club)+'</b></div><span class="chip">SEASON '+String(state.season).padStart(2,'0')+'</span><span class="chip highlight">DIVISION '+state.division+'</span></div></div>'+nav()+'</header>'+contextBar()+
       '<main class="main fm-main">'+heading()+(toast?'<div class="banner success" role="status">'+esc(toast)+'</div>':'')+body+
       '<div class="footer-note">5 ASIDE MANAGER · LOCAL ALPHA · <a href="./save-transfer.html">BACK UP SAVE</a> · '+button('SETTINGS','go-settings','small ghost')+'</div></main></div>';
   }
@@ -680,9 +745,14 @@
   }
   app.addEventListener('input',function(e){
     if(e.target && e.target.id==='club-create-name'){
-      draftClub.name=e.target.value;
+      draftClub.name=e.target.value;creatorError='';
+      var normalized=tidyClubName(draftClub.name);
       var title=document.getElementById('kit-club-name');
-      if(title)title.textContent=draftClub.name.trim()||'YOUR CLUB FC';
+      if(title)title.textContent=normalized||'YOUR CLUB FC';
+      var crest=document.getElementById('kit-club-crest');
+      if(crest)crest.innerHTML=clubMark(normalized||'YOUR CLUB FC',draftClub.kit);
+      var length=document.getElementById('creator-name-length');
+      if(length)length.textContent=String(normalized.length);
     }
   });
   app.addEventListener('click',function(e){
@@ -690,14 +760,24 @@
     var creatorAction=target.getAttribute('data-action');
     if(creatorAction==='edit-club'){
       draftClub={name:state.club,kit:normalizeKit(state.kit)};
-      creatorError='';editingClub=true;render();return;
+      creatorError='';creatorStep=1;editingClub=true;render();return;
     }
     if(creatorAction==='cancel-creator'){
-      if(state.clubCreated){editingClub=false;creatorError='';render();}
+      if(state.clubCreated){editingClub=false;creatorError='';creatorStep=1;draftClub={name:state.club,kit:normalizeKit(state.kit)};render();}
       return;
     }
+    if(creatorAction==='creator-next'){
+      if(creatorStep===1){syncClubDraft();creatorError=identityNameError(draftClub.name);}
+      else if(creatorStep===2)creatorError=identityKitError(draftClub.kit);
+      if(!creatorError){creatorStep=Math.min(3,creatorStep+1);}
+      render();return;
+    }
+    if(creatorAction==='creator-back'){creatorError='';creatorStep=Math.max(1,creatorStep-1);render();return;}
+    if(creatorAction==='creator-name-step'||creatorAction==='creator-kit-step'){
+      creatorError='';creatorStep=creatorAction==='creator-name-step'?1:2;render();return;
+    }
     if(creatorAction==='kit-pattern'||creatorAction==='kit-primary'||creatorAction==='kit-secondary'){
-      if(state.clubCreated&&!editingClub)return;
+      if((state.clubCreated&&!editingClub)||creatorStep!==2)return;
       syncClubDraft();
       var choice=target.getAttribute('data-value');
       if(creatorAction==='kit-pattern'&&KIT_PATTERNS.some(function(p){return p[0]===choice;}))draftClub.kit.pattern=choice;
@@ -706,14 +786,15 @@
       creatorError='';render();return;
     }
     if(creatorAction==='create-club'){
-      if(state.clubCreated&&!editingClub)return;
+      if((state.clubCreated&&!editingClub)||creatorStep!==3)return;
       syncClubDraft();
-      var name=draftClub.name.trim().replace(/\s+/g,' ');
-      if(name.length<3||name.length>28){creatorError='Enter a club name between 3 and 28 characters.';render();return;}
-      if(draftClub.kit.primary===draftClub.kit.secondary){creatorError='Choose two different kit colours so the design stays visible.';render();return;}
+      var name=tidyClubName(draftClub.name);
+      creatorError=identityNameError(name)||identityKitError(draftClub.kit);
+      if(creatorError){creatorStep=identityNameError(name)?1:2;render();return;}
       var newClub=!state.clubCreated;
       state.club=name;state.kit=normalizeKit(draftClub.kit);state.clubCreated=true;state.tab='overview';
-      editingClub=false;creatorError='';
+      editingClub=false;creatorStep=1;creatorError='';
+      draftClub={name:state.club,kit:normalizeKit(state.kit)};
       notice(newClub?'Welcome to '+state.club+'. Your club is ready!':'Your club identity has been updated.');
       save();return;
     }
@@ -739,7 +820,7 @@
     } else if(action==='finish')finish();
     else if(action==='reset'){
       if(!confirm('Reset all local prototype progress? This cannot be undone.'))return;
-      if(timer)clearInterval(timer);timer=null;state=initial();roster=state.roster;editingClub=false;creatorError='';draftClub={name:'',kit:defaultKit()};toast='';render();
+      if(timer)clearInterval(timer);timer=null;state=initial();roster=state.roster;editingClub=false;creatorError='';draftClub={name:'',kit:defaultKit()};creatorStep=1;toast='';render();
     }
     save();
   });
