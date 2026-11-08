@@ -2,7 +2,7 @@
   "project": "5asidefootball",
   "source": "benhorner9/5AsideManager",
   "sourceBranch": "main",
-  "sourceCommit": "11aeb9ee6fae747196711dbcbd7304c3825f67a6",
+  "sourceCommit": "1f40bcc48a67de696271a6b57423161fc4bbbd6c",
   "target": "/5asidefootball.com/",
-  "note": "B05 complete fixture eligibility, team selection, one-time fee/guest decisions, live substitutions and fatigue. Playtesting bridge; direct source FTPS and physical Safari QA deferred to B16."
+  "note": "B06 tactical formations, skill-weighted roles, conditional absence plan and auto-rotation, Training Ground previews and actual reports. Direct source FTPS and physical Safari signoff deferred B16."
 }

@@ -636,3 +636,84 @@ a.btn{text-decoration:none;align-items:center;justify-content:center}
  .match-sub-person span{font-size:8px}
  .lineup-manager{padding:16px 12px}
 }
+
+
+/* B06 — Clear formation maps, meaningful football roles and Training Ground impact UI */
+.b06-tactics-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.b06-tactics-layout>section,.b06-tactics-layout>div{min-width:0}
+.b06-tactics-layout .head{flex-wrap:wrap}
+.b06-tactics-layout .head h2{font-size:clamp(24px,2.6vw,34px)}
+.b06-tactics-layout p,.training-b06-room p,.training-b06-impact p{font-size:12px;line-height:1.7;color:#c5dad7}
+.b06-tactics-layout .tactical-options{grid-template-columns:minmax(0,1fr);gap:9px}
+.b06-tactics-layout .tactical-options .tactic-choice{min-height:70px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:6px;padding:13px 14px;border-radius:11px;line-height:1.45}
+.b06-tactics-layout .tactical-options .tactic-choice b{font-size:13px}
+.b06-tactics-layout .tactical-options .tactic-choice small{font-size:10px;line-height:1.5}
+.b06-tactics-layout .tactical-options .tactic-choice:disabled{opacity:.6;cursor:not-allowed}
+.tactical-field-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:18px 0 11px}
+.tactical-field-header h3{font:800 20px 'Barlow Condensed';margin:0}
+.tactical-field-header span{font-size:11px;color:#b4c9c7}
+.tactical-pitch{height:360px;max-width:570px;position:relative;isolation:isolate;overflow:hidden;border-radius:14px;border:2px solid #527b60;background:repeating-linear-gradient(180deg,#1c4a3b 0%,#1c4a3b 19.9%,#205440 20%,#205440 40%);margin-inline:auto;box-shadow:inset 0 0 0 14px #153f343c}
+.tactical-pitch:before{content:'';position:absolute;inset:13px;border:2px solid #8cba9c88;border-radius:4px;pointer-events:none}
+.tactical-pitch:after{content:'';position:absolute;bottom:12px;left:25%;width:50%;height:55px;border:2px solid #8cba9c88;pointer-events:none}
+.tactical-centre-line{position:absolute;left:0;right:0;top:50%;border-top:2px solid #8cba9c88}
+.tactical-centre-circle{position:absolute;width:94px;height:94px;border:2px solid #8cba9c88;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.tactical-pitch-position{position:absolute;z-index:2;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;transform:translate(-50%,-50%);text-align:center;min-width:75px;max-width:135px}
+.tactical-pitch-shirt{width:37px;height:41px;background:var(--kit-primary,#1d8967);border:2px solid var(--kit-secondary,#f4f2e9);display:grid;place-items:center;font:900 12px 'Barlow Condensed';color:#fff;text-shadow:0 1px 2px #0018;clip-path:polygon(18% 0,36% 9%,64% 9%,82% 0,100% 20%,87% 40%,80% 34%,80% 100%,20% 100%,20% 34%,13% 40%,0 20%)}
+.tactical-pitch-shirt.keeper{background:#8b743b}
+.tactical-pitch-position b,.tactical-pitch-position small{display:block;line-height:1.12;padding:2px 5px;border-radius:3px;background:#102e33db;color:#ecf8f1;max-width:135px;overflow-wrap:anywhere}
+.tactical-pitch-position b{font-size:9px}
+.tactical-pitch-position small{font-size:9px;color:#c2eed7}
+.tactical-role-list{display:grid;gap:8px;margin:14px 0}
+.tactical-role-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(135px,1fr);gap:12px;align-items:center;min-width:0;border:1px solid #34535a;background:#122d38;border-radius:10px;padding:10px}
+.tactical-role-description{display:flex;flex-direction:column;gap:5px;min-width:0}
+.tactical-role-description strong{font-size:12px}
+.tactical-role-description small{font-size:10px;color:#b5ceca;line-height:1.35}
+.tactical-role-row select{min-width:0;width:100%;min-height:44px;border:1px solid #6b8586;background:#162f39;color:#effaf4;border-radius:8px;padding:9px;font-size:12px}
+.tactical-role-row select:disabled{opacity:.7}
+.tactical-role-row select:focus-visible{outline:2px solid #c4f0a9;outline-offset:2px}
+.tactical-forecast{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:17px 0}
+.tactical-forecast>div{background:#122f38;border:1px solid #3c5960;border-radius:10px;padding:12px;min-width:0}
+.tactical-forecast small{font-size:9px;color:#b6d3cf;letter-spacing:.6px;font-weight:800;display:block}
+.tactical-forecast strong{font:800 25px 'Barlow Condensed';display:block;margin-top:7px;color:#d6f4cb;font-variant-numeric:tabular-nums}
+.tactical-rule{padding-top:11px;margin-top:12px;border-top:1px solid #385157}
+.tactical-rule h3{font:800 22px 'Barlow Condensed';margin:0 0 11px;color:#d6f1e5}
+.tactical-selection{grid-column:1/-1}
+.tactical-selection .lineup-manager{margin-top:0}
+.tactical-match-summary{display:flex;flex-wrap:wrap;gap:10px;margin:13px 0;padding:13px;border-radius:9px;background:#183b39;border:1px solid #4a7868;font-size:11px}
+.tactical-match-summary span{flex:1 1 140px;min-width:0}
+.tactical-match-summary b{color:#ddf3cc}
+.training-focus-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
+.training-focus-card{display:flex;flex-direction:column;gap:10px;background:#122c38;border:1px solid #3a5057;border-radius:12px;padding:15px;min-width:0}
+.training-focus-card.selected{background:#214336;border-color:#b0db8a}
+.training-focus-card .training-focus-top{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;flex-wrap:wrap}
+.training-focus-card .training-focus-top h3{font:800 23px 'Barlow Condensed';margin:0}
+.training-focus-card p{font-size:11px;line-height:1.5;margin:0;flex:1}
+.training-focus-actions{display:flex;flex-wrap:wrap;gap:9px}
+.training-focus-actions .btn{flex:1 1 125px;min-height:43px}
+.training-b06-impact,.training-b06-development,.training-b06-report{margin-top:17px;min-width:0}
+.training-impact-list{display:grid;gap:8px}
+.training-impact-row{display:grid;grid-template-columns:minmax(120px,1.2fr) repeat(3,minmax(80px,1fr));gap:10px;align-items:center;padding:13px 12px;background:#142f39;border:1px solid #34515b;border-radius:10px}
+.training-impact-row>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.training-impact-row b,.training-impact-row strong{font-size:12px;overflow-wrap:anywhere}
+.training-impact-row small{font-size:9px;color:#aecbc9;line-height:1.3}
+.training-impact-row strong{color:#d9f8d0;font-variant-numeric:tabular-nums}
+@media(max-width:1000px){
+ .b06-tactics-layout{grid-template-columns:minmax(0,1fr)}
+ .tactical-selection{grid-column:1}
+ .tactical-pitch{height:400px}
+}
+@media(max-width:680px){
+ .training-focus-options{grid-template-columns:minmax(0,1fr)}
+ .training-impact-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .training-impact-row>div:first-child{grid-column:1/-1}
+ .tactical-role-row{grid-template-columns:minmax(0,1fr)}
+ .tactical-role-row select{min-height:46px}
+ .tactical-pitch{height:340px}
+}
+@media(max-width:390px){
+ .tactical-pitch{height:315px}
+ .tactical-pitch-position{min-width:66px}
+ .tactical-pitch-shirt{width:31px;height:35px;font-size:10px}
+ .tactical-pitch-position b,.tactical-pitch-position small{font-size:8px}
+ .tactical-forecast strong{font-size:22px}
+}

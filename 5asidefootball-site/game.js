@@ -66,7 +66,7 @@
     return p;
   }
   function initial() {
-    return {tab:'overview', club:'Sunday Strikers',clubCreated:false,kit:defaultKit(),money:240, sponsor:35, formation:'1-2-1',style:'balanced',plan:'balanced', offers:{},offerAttempts:{},guest:{},guestAttempts:{},round:0,results:{}, fitness:{},seasonDone:false, season:1,division:8,roster:JSON.parse(JSON.stringify(originalRoster)),registeredCap:12,
+    return {tab:'overview', club:'Sunday Strikers',clubCreated:false,kit:defaultKit(),money:240, sponsor:35, formation:'1-2-1',style:'balanced',plan:'balanced',roleAssignments:{},trainingReports:{},trainingFocus:'passing',tacticalReports:{},autoSubPolicy:'none', offers:{},offerAttempts:{},guest:{},guestAttempts:{},round:0,results:{}, fitness:{},seasonDone:false, season:1,division:8,roster:JSON.parse(JSON.stringify(originalRoster)),registeredCap:12,
       market:marketPool(1,8),youth:youthPool(1),training:{},injuries:{},playerStats:{},developmentHistory:{},playerMatchHistory:{},squadView:{position:'all',availability:'all',sort:'rating',group:'position',query:''},profileCompareId:null,lineup:[],lineupRound:0,lineupCustomized:false,
       planBehind:'press',planAhead:'counter',formerGuests:[],seasonHistory:[],financeLog:[{kind:'Starting funds',amount:240,season:1,round:0}],inbox:[],inboxSeq:0,inboxFilter:'all',inboxReturn:false,homeReturn:false,profileReturn:'squad',match:null, log:[], standings:names.map(function(n){return {name:n,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0};}).concat([{name:'Sunday Strikers',played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}])};
   }
@@ -89,7 +89,18 @@
   state.roster=Array.isArray(state.roster)?state.roster:JSON.parse(JSON.stringify(originalRoster));
   roster=state.roster;roster.forEach(ensureDetails);state.season=state.season||1;state.division=state.division||8;state.registeredCap=12;
   state.market=state.market||marketPool(state.season,state.division);state.youth=state.youth||youthPool(state.season);
-  state.training=state.training||{};state.injuries=state.injuries||{};state.playerStats=state.playerStats||{};state.seasonHistory=state.seasonHistory||[];state.formerGuests=state.formerGuests||[];state.financeLog=state.financeLog||[];
+  state.training=state.training||{};
+  // B06 adds strategy assignments and reports without overwriting legacy tactics, training or player XP.
+  state.roleAssignments=state.roleAssignments&&typeof state.roleAssignments==='object'&&!Array.isArray(state.roleAssignments)?state.roleAssignments:{};
+  state.trainingReports=state.trainingReports&&typeof state.trainingReports==='object'&&!Array.isArray(state.trainingReports)?state.trainingReports:{};
+  state.trainingFocus=['passing','finishing','defending','fitness'].includes(state.trainingFocus)?state.trainingFocus:'passing';
+  state.tacticalReports=state.tacticalReports&&typeof state.tacticalReports==='object'&&!Array.isArray(state.tacticalReports)?state.tacticalReports:{};
+  state.autoSubPolicy=state.autoSubPolicy==='rotate'?'rotate':'none';
+  state.formation=['1-2-1','2-1-1','1-1-2'].includes(state.formation)?state.formation:'1-2-1';
+  ['style','plan','planBehind','planAhead'].forEach(function(key){
+    if(!['balanced','press','counter'].includes(state[key]))state[key]=key==='planBehind'?'press':key==='planAhead'?'counter':'balanced';
+  });
+  state.injuries=state.injuries||{};state.playerStats=state.playerStats||{};state.seasonHistory=state.seasonHistory||[];state.formerGuests=state.formerGuests||[];state.financeLog=state.financeLog||[];
   state.lineup=Array.isArray(state.lineup)?state.lineup.filter(function(id){return Number.isSafeInteger(id);}):[];
   state.lineupCustomized=!!state.lineupCustomized;
   state.offerAttempts=state.offerAttempts&&typeof state.offerAttempts==='object'&&!Array.isArray(state.offerAttempts)?state.offerAttempts:{};
@@ -229,17 +240,124 @@
     var ids=starters(round).map(function(p){return p.id;});
     return players(round).filter(function(p){return !ids.includes(p.id);});
   }
+  var FORMATION_SLOTS={
+    '1-2-1':[
+      {key:'GK',label:'Goalkeeper',type:'GK',x:50,y:87},
+      {key:'BACK',label:'Defensive anchor',type:'DEF',x:50,y:67},
+      {key:'MID_L',label:'Left support',type:'MID',x:25,y:44},
+      {key:'MID_R',label:'Right support',type:'MID',x:75,y:44},
+      {key:'FRONT',label:'Striker',type:'FWD',x:50,y:19}
+    ],
+    '2-1-1':[
+      {key:'GK',label:'Goalkeeper',type:'GK',x:50,y:87},
+      {key:'BACK_L',label:'Left defender',type:'DEF',x:27,y:68},
+      {key:'BACK_R',label:'Right defender',type:'DEF',x:73,y:68},
+      {key:'MID',label:'Playmaker',type:'MID',x:50,y:44},
+      {key:'FRONT',label:'Striker',type:'FWD',x:50,y:19}
+    ],
+    '1-1-2':[
+      {key:'GK',label:'Goalkeeper',type:'GK',x:50,y:87},
+      {key:'BACK',label:'Defensive anchor',type:'DEF',x:50,y:70},
+      {key:'MID',label:'Playmaker',type:'MID',x:50,y:48},
+      {key:'FRONT_L',label:'Left attacker',type:'FWD',x:27,y:23},
+      {key:'FRONT_R',label:'Right attacker',type:'FWD',x:73,y:23}
+    ]
+  };
+  var TACTIC_PROFILES={
+    balanced:{label:'Possession / balanced',attack:0,concede:0,fatigue:1.4,
+      description:'Keep the ball, use passing links and conserve energy. Neutral goal risk.'},
+    press:{label:'High press',attack:0.055,concede:0.015,fatigue:2.0,
+      description:'More pressure and chances, but higher fatigue and a little more counterattack risk.'},
+    counter:{label:'Counterattack',attack:0.018,concede:-0.044,fatigue:1.3,
+      description:'Protect space and break with pace; fewer direct chances and lower defensive risk.'},
+    push:{label:'Push forward',attack:0.09,concede:0.055,fatigue:2.2},
+    hold:{label:'Hold shape',attack:-0.055,concede:-0.05,fatigue:1.15}
+  };
+  function roleQuality(p,slot){
+    ensureDetails(p);
+    var a=p.attributes,w=slot.type==='GK'?
+      {keeping:.65,passing:.15,stamina:.2}:slot.type==='DEF'?
+      {defending:.55,passing:.2,stamina:.15,pace:.1}:slot.type==='MID'?
+      {passing:.45,stamina:.3,pace:.15,defending:.1}:
+      {finishing:.55,pace:.25,passing:.15,stamina:.05};
+    var base=Object.keys(w).reduce(function(total,key){return total+(a[key]||40)*w[key];},0);
+    return clamp(base*.83+p.rating*.17+(p.morale-75)*.06+(fitness(p)-100)*.055,1,99);
+  }
+  function formationSlots(key){return FORMATION_SLOTS[key]||FORMATION_SLOTS['1-2-1'];}
+  function optimizeRoles(team,formation){
+    var slots=formationSlots(formation),keeper=team.find(function(p){return p.pos==='GK';});
+    var outfield=team.filter(function(p){return p.pos!=='GK';}),best=null,highest=-1;
+    function assign(index,ids,score){
+      if(index===slots.length-1){
+        if(score>highest){highest=score;best=ids.slice();}
+        return;
+      }
+      var slot=slots[index+1];
+      outfield.forEach(function(p){
+        if(ids.includes(p.id))return;
+        assign(index+1,ids.concat(p.id),score+roleQuality(p,slot));
+      });
+    }
+    if(keeper&&outfield.length===4)assign(0,[],0);
+    if(!best)return {};
+    var result={GK:keeper.id};
+    slots.slice(1).forEach(function(slot,i){result[slot.key]=best[i];});
+    return result;
+  }
+  function rolesForTeam(team,formation){
+    var saved=state.roleAssignments[formation],slots=formationSlots(formation);
+    if(saved&&typeof saved==='object'){
+      var ids=slots.map(function(slot){return saved[slot.key];});
+      if(ids.length===5&&new Set(ids).size===5&&ids.every(function(id){return team.some(function(p){return p.id===id;});})){
+        var keeper=team.find(function(p){return p.id===saved.GK;});
+        if(keeper&&keeper.pos==='GK'&&slots.slice(1).every(function(slot){
+          return team.some(function(p){return p.id===saved[slot.key]&&p.pos!=='GK';});
+        }))return Object.assign({},saved);
+      }
+    }
+    return optimizeRoles(team,formation);
+  }
+  function tacticalAssessment(team,formation,map){
+    var slots=formationSlots(formation),quality=0,byRole={};
+    slots.forEach(function(slot){
+      var p=team.find(function(p){return p.id===map[slot.key];});
+      if(!p)return;
+      var fit=roleQuality(p,slot);quality+=fit;
+      byRole[slot.key]={id:p.id,fit:fit,type:slot.type};
+    });
+    return {average:slots.length?Math.round(quality/slots.length):0,byRole:byRole};
+  }
+  function chanceRange(n){return Math.max(.025,Math.min(.43,n));}
+  function tacticForecast(team,formation,map,approach){
+    var assessment=tacticalAssessment(team,formation,map),profile=TACTIC_PROFILES[approach]||TACTIC_PROFILES.balanced;
+    var bias=formation==='1-1-2'?{attack:.045,concede:.035}:formation==='2-1-1'?{attack:-.015,concede:-.052}:{attack:0,concede:0};
+    var fin=assessment.average||60;
+    return {roleFit:fin,profile:profile,attack:chanceRange(.13+(fin-65)*.003+profile.attack+bias.attack),
+      concede:chanceRange(.14-(fin-65)*.0018+profile.concede+bias.concede),fatigue:profile.fatigue};
+  }
+  function trainingEstimate(p,focus){
+    ensureDetails(p);
+    var skill=focus==='finishing'?'finishing':focus==='defending'?(p.pos==='GK'?'keeping':'defending'):
+      focus==='fitness'?'stamina':'passing';
+    var gain=focus==='fitness'?5:focus==='finishing'?(p.pos==='FWD'?30:12):
+      focus==='defending'?(p.pos==='DEF'||p.pos==='GK'?30:12):22;
+    var change=focus==='fitness'?3:2;
+    return {skill:skill,from:p.attributes[skill],to:clamp(p.attributes[skill]+change,15,99),
+      xp:p.rating>=p.potential?0:gain,fitnessBefore:fitness(p),
+      fitnessAfter:Math.min(100,Math.max(45,fitness(p)+(focus==='fitness'?17:-5)))};
+  }
   function develop(p,xp,source){
     ensureDetails(p);
     var startRating=p.rating,startXP=p.xp||0;
-    p.xp=startXP+xp;
-    var advanced=0,cap=p.potential;
+    var cap=p.potential,actualXP=p.rating<cap?xp:0;
+    p.xp=startXP+actualXP;
+    var advanced=0;
     while(p.rating<cap&&p.xp>=70+(p.rating-45)*5){
       p.xp-=70+(p.rating-45)*5;p.rating++;advanced++;
     }
-    if(source&&Number.isSafeInteger(p.id)&&p.id>=1&&xp>0){
+    if(source&&Number.isSafeInteger(p.id)&&p.id>=1&&actualXP>0){
       var logs=state.developmentHistory[p.id]||(state.developmentHistory[p.id]=[]);
-      logs.push({season:state.season,round:state.round,source:source,xpGained:xp,
+      logs.push({season:state.season,round:state.round,source:source,xpGained:actualXP,
         ratingBefore:startRating,ratingAfter:p.rating,xpBefore:startXP,xpAfter:p.xp});
       if(logs.length>20)logs.splice(0,logs.length-20);
     }
@@ -748,19 +866,87 @@
   }
 
   function tactics(){
-    var choices=[['1-2-1','Balanced diamond','One defender, two midfielders and an attacker.'],['2-1-1','Stay compact','Two defenders protect the keeper.'],['1-1-2','Go for goals','Play two up front with less cover.']];
-    var styles=[['balanced','Balanced','Share possession while conserving energy.'],['press','High press','Win the ball early, with greater fatigue.'],['counter','Counterattack','Defend deeper and break quickly.']];
-    var picks=fixture()?starters(state.round):[];
-    var draw=function(arr,key){return '<div class="tactic-grid">'+arr.map(function(c){return '<button class="tactic-choice '+(state[key]===c[0]?'selected':'')+'" data-action="'+key+'" data-value="'+c[0]+'"><b>'+c[1]+'</b><small>'+c[2]+'</small></button>';}).join('')+'</div>';};
-    return '<p class="section-intro">Pick your five, set a formation, then prepare an automatic plan for when you cannot attend the match live. You can still issue direct commands during a live simulation.</p>'+
-      '<div class="grid"><div class="card"><div class="head"><h2>Formation</h2>'+badge(esc(state.formation),'')+'</div>'+draw(choices,'formation')+
-      '<div class="head" style="margin-top:27px"><h2>Live approach</h2></div>'+draw(styles,'style')+'</div>'+
-      '<div class="card"><div class="head"><h2>Your starting five</h2></div><div class="pitch" '+kitVars(state.kit)+'>'+picks.map(function(p){return '<div class="pitch-player"><span class="shirt kit-shirt kit-'+state.kit.pattern+'">'+p.rating+'</span><small>'+esc(p.name.split(' ').pop())+'<br>'+esc(p.pos)+'</small></div>';}).join('')+'</div><p class="fine">Eligible footballers not chosen for the starting five are shown on the explicit substitute bench below. Tired players may be better rested for the next game.</p></div>'+
-      '<div class="card"><div class="head"><h2>Automatic match plan</h2></div><p>Starting approach</p>'+draw(styles,'plan')+
-      '<p>If losing after 10 minutes</p>'+draw(styles,'planBehind')+
-      '<p>If winning after 14 minutes</p>'+draw(styles,'planAhead')+'</div>'+
-      '<div>'+lineupView()+'<div class="actions" style="margin-top:16px">'+button('MATCH CENTRE →','go-fixtures','primary')+'</div></div></div>';
+    var choices=[['1-2-1','Balanced diamond','One defender, two midfield links and one forward. Flexible possession.'],
+      ['2-1-1','Defensive base','Two defenders, one link and a forward. Better defensive cover, fewer attacking chances.'],
+      ['1-1-2','Attacking pair','One defender, one playmaker and two forwards. More chances, more space left behind.']];
+    var approaches=[['balanced','Possession / balanced','Short passing links · lowest risk · moderate fatigue'],
+      ['press','High press','More shots and ball pressure · higher fatigue · counterattack exposure'],
+      ['counter','Counterattack','Compact shape and quick breaks · safer defence · less open attacking']];
+    var picks=fixture()?starters(state.round):[],roles=rolesForTeam(picks,state.formation),
+      slots=formationSlots(state.formation),assessment=tacticalAssessment(picks,state.formation,roles),
+      forecast=tacticForecast(picks,state.formation,roles,state.style);
+    function draw(options,key){
+      return '<div class="tactic-grid tactical-options">'+options.map(function(c){
+        var active=state[key]===c[0];
+        return '<button type="button" class="tactic-choice '+(active?'selected':'')+
+          '" data-action="'+key+'" data-value="'+c[0]+'" aria-pressed="'+active+'"'+
+          (state.match?' disabled':'')+'><b>'+esc(c[1])+'</b><small>'+esc(c[2])+'</small></button>';
+      }).join('')+'</div>';
+    }
+    function roll(count){return (count*100).toFixed(1)+'%';}
+    var shape='<div class="tactical-pitch" '+kitVars(state.kit)+' aria-label="'+esc(state.formation)+' formation pitch">'+
+      '<div class="tactical-centre-line"></div><div class="tactical-centre-circle"></div>'+
+      slots.map(function(slot){
+        var p=picks.find(function(x){return x.id===roles[slot.key];});
+        var fit=p?roleQuality(p,slot):0;
+        return '<div class="tactical-pitch-position" style="left:'+slot.x+'%;top:'+slot.y+'%">'+
+          '<span class="tactical-pitch-shirt '+(slot.type==='GK'?'keeper':'')+'">'+
+          (p?esc(p.name.split(' ').map(function(w){return w[0];}).join('')):'—')+'</span>'+
+          '<b>'+esc(slot.label)+'</b><small>'+(p?esc(p.name.split(' ').pop())+' · '+fit+' fit':'Not assigned')+'</small></div>';
+      }).join('')+'</div>';
+    var assignments='<section class="card tactical-role-board" aria-label="Individual tactical role assignments">'+
+      '<div class="head"><div><div class="eyebrow">ROLE MATCHING · USES REAL PLAYER ATTRIBUTES</div><h2>Individual roles</h2></div>'+
+      badge(assessment.average+' / 100 AVG FIT',assessment.average>=70?'':'amber')+'</div>'+
+      '<p>Assign your eligible starting five to the role positions. Changing one outfield role swaps the two players rather than duplicating a player. Role fit is derived from current passing, defending, finishing, pace, stamina, keeping, morale and fitness.</p>'+
+      '<div class="tactical-role-list">'+slots.map(function(slot){
+        var p=picks.find(function(x){return x.id===roles[slot.key];});
+        var pool=slot.type==='GK'?picks.filter(function(x){return x.pos==='GK';}):picks.filter(function(x){return x.pos!=='GK';});
+        return '<label class="tactical-role-row" for="role-assign-'+slot.key+'">'+
+          '<div class="tactical-role-description"><strong>'+esc(slot.label)+'</strong>'+
+          '<small>'+esc(slot.type)+' · '+(p?roleQuality(p,slot)+'% suitability · '+esc(p.pos)+' natural':'Choose player')+'</small></div>'+
+          '<select id="role-assign-'+slot.key+'" aria-label="'+esc(slot.label)+' assignment"'+(state.match||slot.type==='GK'?' disabled':'')+'>'+
+          pool.map(function(x){
+            return '<option value="'+x.id+'"'+(p&&x.id===p.id?' selected':'')+'>'+esc(x.name)+' ('+roleQuality(x,slot)+' fit)</option>';
+          }).join('')+'</select></label>';
+      }).join('')+'</div>'+
+      '<p class="fine">A high striker score does not make a player an actual goalkeeper. Keeper eligibility and the starting-five rules remain enforced separately.</p></section>';
+    return '<p class="section-intro">Make tactical choices before the fixture: the five-on-the-pitch shape, individual roles and your approach change the existing match simulator. Save an absence plan to use when you are not watching live.</p>'+
+      '<div class="b06-tactics-layout">'+
+      '<section class="card tactical-formation"><div class="head"><div><div class="eyebrow">MATCH SHAPE</div><h2>Formation</h2></div>'+badge(esc(state.formation),'grey')+'</div>'+
+      draw(choices,'formation')+
+      '<div class="tactical-field-header"><h3>Positioning preview</h3><span>'+esc(state.formation)+' · '+picks.length+' / 5 selected</span></div>'+shape+'</section>'+
+      assignments+
+      '<section class="card tactical-approach"><div class="head"><div><div class="eyebrow">MATCH TRADE-OFFS</div><h2>Live approach</h2></div></div>'+
+      draw(approaches,'style')+
+      '<div class="tactical-forecast"><div><small>TEAM ROLE FIT</small><strong>'+assessment.average+'/100</strong></div>'+
+      '<div><small>ATTACK CHANCE / 2 MIN</small><strong>'+roll(forecast.attack)+'</strong></div>'+
+      '<div><small>CONCEDE CHANCE / 2 MIN</small><strong>'+roll(forecast.concede)+'</strong></div>'+
+      '<div><small>FATIGUE / MATCH</small><strong>~'+Math.round(forecast.fatigue*10)+' pts</strong></div></div>'+
+      '<p class="fine">Illustrative baseline probabilities, before in-match score, opposition and player condition changes. Chances are not guaranteed goals. Pressing increases fatigue; an attacking shape leaves more space; counterattacking protects against concessions.</p></section>'+
+      '<section class="card tactical-absence"><div class="head"><div><div class="eyebrow">SAVED ABSENCE RULES</div><h2>Automatic match plan</h2></div>'+
+      badge('SAVED ON DEVICE','grey')+'</div>'+
+      '<p>For instant simulation and future unattended fixtures, these rules execute on the same match engine as live play. They use the formation and player roles selected at kickoff; no bonus is granted just for being online.</p>'+
+      '<div class="tactical-rule"><h3>At kickoff</h3>'+draw(approaches,'plan')+'</div>'+
+      '<div class="tactical-rule"><h3>If losing from minute 10</h3>'+draw(approaches,'planBehind')+'</div>'+
+      '<div class="tactical-rule"><h3>If winning from minute 14</h3>'+draw(approaches,'planAhead')+'</div>'+
+      '<div class="tactical-rule"><h3>Unattended substitutions</h3>'+
+        '<p>Choose whether your saved plan should rotate exhausted outfielders from minute 12 when a clearly fresher eligible replacement is available. Goalkeepers never auto-swap. At most two automatic substitutions are made.</p>'+
+        draw([['none','Hold the selected five','No automatic changes; only a live manager can substitute.'],
+          ['rotate','Rotate tired outfielders','From minute 12, replace fatigued players if a bench player is at least 12 fitness points fresher. Maximum two swaps.']],
+          'autoSubPolicy')+'</div>'+
+      '<p class="fine">If level, use your initial plan. If a lead or deficit changes, instructions are reassessed at each 2-minute step. Live Push/Hold commands override the approach at the touchline.</p></section>'+
+      (state.tacticalReports[state.season+':'+(state.round-1)]?
+        '<section class="card tactical-recap"><div class="head"><h2>Previous match tactical report</h2></div>'+
+        '<p>Stored choices actually executed during your last fixture. These are recorded phases, not a reconstructed plan.</p>'+
+        state.tacticalReports[state.season+':'+(state.round-1)].phases.map(function(phase){
+          return '<div class="profile-history-row"><span>'+phase.minute+"' · "+esc(phase.reason)+'</span>'+
+            '<strong>'+esc((TACTIC_PROFILES[phase.approach]||TACTIC_PROFILES.balanced).label)+'</strong></div>';
+        }).join('')+'</section>':'')+
+      '<div class="tactical-selection">'+lineupView()+
+      '<div class="actions" style="margin-top:16px">'+button('MATCH CENTRE →','go-fixtures','primary')+
+      button('TRAINING GROUND','go-training','ghost')+'</div></div></div>';
   }
+
   function fixtures(){
     var f=fixture(),issues=f?selectionIssues():[],team=starters(state.round),bench=benchPlayers(state.round);
     var rows=names.map(function(n,i){return rowFixture(fixtureAt(i),i);}).join('');
@@ -817,6 +1003,13 @@
       '<div class="card span-all"><div class="match-scoreboard"><div class="home">'+club(state.club,true)+'<span>'+esc(state.club)+'</span></div>'+
       '<div><div class="big-score">'+m.home+' : '+m.away+'</div><div class="minute">'+m.minute+"' / 20'"+(m.auto?' · OFFLINE PLAN':' · LIVE')+'</div></div>'+
       '<div class="away">'+esc(m.opponent)+'</div></div>'+
+      '<div class="tactical-match-summary" data-attack-chance="'+(m.lastProbabilities?m.lastProbabilities.attack.toFixed(4):'')+
+      '" data-concede-chance="'+(m.lastProbabilities?m.lastProbabilities.concede.toFixed(4):'')+'">'+
+      '<span><b>FORMATION</b> '+esc(m.formation||state.formation)+'</span>'+
+      '<span><b>CURRENT APPROACH</b> '+esc((TACTIC_PROFILES[m.instruction]||TACTIC_PROFILES.balanced).label)+'</span>'+
+      '<span><b>ACTUAL ROLE FIT</b> '+tacticalAssessment(on,m.formation||state.formation,m.roleMap||rolesForTeam(on,m.formation||state.formation)).average+'/100</span>'+
+      (m.lastProbabilities?'<span><b>ATTACK / CONCEDE</b> '+(m.lastProbabilities.attack*100).toFixed(1)+'% / '+
+        (m.lastProbabilities.concede*100).toFixed(1)+'% this 2-minute phase</span>':'')+'</div>'+
       '<div class="actions" style="justify-content:center;margin-top:20px">'+
       (m.auto?'':button('PUSH FORWARD','push','primary',m.minute>=20?'disabled':'')+
         button('HOLD SHAPE','hold','',m.minute>=20?'disabled':'')+
@@ -1045,13 +1238,67 @@
 
   function trainingView(){
     var f=fixture(),key=state.season+':'+state.round,done=!!state.training[key];
-    var options=[['passing','Passing & movement','Work on possession and combination play.'],['finishing','Shooting & finishing','Give attacking players extra development.'],['defending','Shape & defending','Prioritise your defensive unit and keeper.'],['fitness','Fitness & recovery','Improve fitness, with less technical development.']];
-    return '<p class="section-intro">Train between matches, develop young players and manage fatigue. Sessions can only be used once before each fixture. On back-to-back match nights, fresh legs are valuable.</p>'+
-      '<div class="metrics"><div class="metric"><small>REGISTERED</small><strong>'+roster.length+' / 12</strong></div><div class="metric"><small>AVG FITNESS</small><strong>'+Math.round(roster.reduce(function(sum,p){return sum+fitness(p);},0)/Math.max(1,roster.length))+'%</strong></div><div class="metric"><small>TRAINING COST</small><strong>£12</strong></div><div class="metric"><small>SESSION</small><strong>'+(done?'DONE':state.match?'IN MATCH':f?'READY':'—')+'</strong></div></div>'+
-      (f?'<div class="card"><div class="head"><h2>Training focus</h2>'+badge('BEFORE ROUND '+(state.round+1),'grey')+'</div><div class="tactic-grid">'+options.map(function(o){return '<button class="tactic-choice" data-action="train" data-value="'+o[0]+'" '+(done||state.match||state.money<12?'disabled':'')+'><b>'+o[1]+'</b><small>'+o[2]+'</small></button>';}).join('')+'</div>'+(done?'<div class="banner success">You have completed this fixture’s training session.</div>':'<p class="fine">A training session costs £12. Technical work creates some fatigue; recovery work restores it.</p>')+'</div>':'<div class="banner">The season is complete. Begin the next season to schedule more training.</div>')+
-      '<div class="card" style="margin-top:16px"><div class="head"><h2>Player development</h2></div>'+
-      roster.map(function(p){var progress=Math.min(100,Math.round(100*(p.xp||0)/Math.max(1,70+(p.rating-45)*5)));return '<div class="training-player"><b>'+esc(p.name)+'</b><span>'+p.rating+' / '+(p.potential||Math.min(88,p.rating+10))+' potential · '+progress+'% towards next improvement</span><div class="progress"><span style="width:'+progress+'%"></span></div></div>';}).join('')+'</div>';
+    var focus=state.trainingFocus,report=state.trainingReports[key],canTrain=!!f&&!state.match&&!done&&state.money>=12;
+    var options=[['passing','Passing & movement','Passing +2, +22 XP before potential cap, -5% fitness'],
+      ['finishing','Shooting & finishing','Finishing +2; forwards +30 XP, others +12 XP; -5% fitness'],
+      ['defending','Shape & defending','Defending +2 (GK keeping +2); DEF/GK +30 XP; -5% fitness'],
+      ['fitness','Fitness & recovery','Stamina +3, +5 XP; restores up to 17% fitness']];
+    var choices='<div class="training-focus-options">'+options.map(function(option){
+      var active=focus===option[0],selected=active?'selected':'';
+      return '<section class="training-focus-card '+selected+'">'+
+        '<div class="training-focus-top"><h3>'+esc(option[1])+'</h3>'+badge(option[0]==='fitness'?'RECOVERY':'TECHNICAL','grey')+'</div>'+
+        '<p>'+esc(option[2])+'</p><div class="training-focus-actions">'+
+        button('VIEW IMPACT','training-preview','small ghost','data-value="'+option[0]+'"')+
+        button(done?'SESSION USED':'TRAIN · £12','train','small primary',
+          'data-value="'+option[0]+'" '+(!canTrain?'disabled':''))+'</div></section>';
+    }).join('')+'</div>';
+    var previews=roster.map(function(p){
+      var estimate=trainingEstimate(p,focus),skill=estimate.skill.charAt(0).toUpperCase()+estimate.skill.slice(1);
+      return '<div class="training-impact-row"><div><b>'+esc(p.name)+'</b><small>'+esc(p.pos)+' · '+p.rating+' / '+p.potential+' potential</small></div>'+
+        '<div><small>'+esc(skill)+'</small><strong>'+estimate.from+' → '+estimate.to+'</strong></div>'+
+        '<div><small>EXPERIENCE</small><strong>'+ (estimate.xp?'+'+estimate.xp+' XP':'AT POTENTIAL CAP')+'</strong></div>'+
+        '<div><small>FITNESS</small><strong>'+estimate.fitnessBefore+' → '+estimate.fitnessAfter+'%</strong></div></div>';
+    }).join('');
+    var history=Object.keys(state.trainingReports).filter(function(k){return k!==key;}).slice(-3).reverse();
+    return '<p class="section-intro">The Training Ground shows exactly which abilities, XP and fitness change before you spend £12. One session per fixture. Sessions have real capped player improvements and may leave the team tired for a same-night match.</p>'+
+      '<div class="metrics training-b06-metrics">'+
+      '<div class="metric"><small>REGISTERED</small><strong>'+roster.length+' / 12</strong></div>'+
+      '<div class="metric"><small>AVG FITNESS</small><strong>'+Math.round(roster.reduce(function(sum,p){return sum+fitness(p);},0)/Math.max(1,roster.length))+'%</strong></div>'+
+      '<div class="metric"><small>TRAINING COST</small><strong>£12</strong></div>'+
+      '<div class="metric"><small>SESSION</small><strong>'+(done?'DONE':state.match?'IN MATCH':f?'READY':'—')+'</strong></div></div>'+
+      (f?'<section class="card training-b06-room"><div class="head"><div><div class="eyebrow">SEASON '+state.season+' · ROUND '+(state.round+1)+'</div><h2>Training focus</h2></div>'+
+        badge(done?'SESSION COMPLETE':state.money<12?'INSUFFICIENT FUNDS':'ONE SESSION AVAILABLE',done?'':'grey')+'</div>'+
+        '<p>Pick a focus, inspect projected gains below, then pay £12 if eligible. These gains apply to every registered squad member only; temporary guests are excluded. Skill attributes are capped at 99 and overall ability cannot exceed potential.</p>'+
+        choices+(done?'<div class="banner success">You have completed this fixture’s training session. The recorded result is below.</div>':
+          state.match?'<div class="banner">Training is locked during a match.</div>':
+          state.money<12?'<div class="banner">You need £12 in club funds to train. No expenditure is made.</div>':
+          '<p class="fine">Technical sessions cost up to 5 fitness points per player. Fitness training restores up to 17 points, capped at 100.</p>')+'</section>':
+        '<div class="banner">The season is complete. Begin the next season to schedule more training.</div>')+
+      '<section class="card training-b06-impact"><div class="head"><h2>Training impact preview</h2>'+badge(esc(focus.toUpperCase()),'grey')+'</div>'+
+      '<p>Changes below are calculated from your saved player stats, injuries and current fatigue. A player at their overall potential limit gains no further XP, although technical skills can still develop to their own cap.</p>'+
+      '<div class="training-impact-list">'+previews+'</div></section>'+
+      (report?'<section class="card training-b06-report"><div class="head"><h2>Completed session report</h2>'+badge('£12 PAID','grey')+'</div>'+
+        '<p>Recorded outcomes from the actual '+esc(report.focus)+' session. Values are saved with your club and will not be replayed by opening this report.</p>'+
+        '<div class="training-impact-list">'+report.players.map(function(p){
+          return '<div class="training-impact-row"><div><b>'+esc(p.name)+'</b><small>Applied training · '+esc(p.skill)+'</small></div>'+
+            '<div><small>SKILL GAIN</small><strong>'+p.skillBefore+' → '+p.skillAfter+'</strong></div>'+
+            '<div><small>XP / OVERALL</small><strong>+'+p.xp+' XP · '+p.ratingBefore+' → '+p.ratingAfter+'</strong></div>'+
+            '<div><small>FITNESS</small><strong>'+p.fitnessBefore+' → '+p.fitnessAfter+'%</strong></div></div>';
+        }).join('')+'</div></section>':'')+
+      '<section class="card training-b06-development"><div class="head"><h2>Player development</h2></div>'+
+      roster.map(function(p){
+        var atCap=p.rating>=p.potential,progress=atCap?100:Math.min(100,Math.round(100*(p.xp||0)/Math.max(1,70+(p.rating-45)*5)));
+        return '<div class="training-player"><b>'+esc(p.name)+'</b><span>'+p.rating+' / '+p.potential+
+          ' potential · '+(atCap?'POTENTIAL REACHED':progress+'% towards next overall improvement')+
+          '</span><div class="progress" role="progressbar" aria-valuenow="'+progress+'" aria-valuemin="0" aria-valuemax="100">'+
+          '<span style="width:'+progress+'%"></span></div></div>';
+      }).join('')+
+      (history.length?'<p class="fine">Recent training: '+history.map(function(k){
+        var h=state.trainingReports[k];
+        return 'S'+h.season+' R'+(h.round+1)+' '+esc(h.focus);
+      }).join(' · ')+'</p>':'')+'</section>';
   }
+
   function friendScoutingView(){
     var guests=state.formerGuests||[];
     return '<div class="card" style="margin-top:16px"><div class="head"><h2>Scouted guest players</h2>'+badge('DISCOVERED AT MATCH NIGHT','grey')+'</div>'+
@@ -1136,8 +1383,14 @@
     if(!m.minutes||typeof m.minutes!=='object')m.minutes={};
     if(m.minutes[on.id]==null)m.minutes[on.id]=0;
     m.selectedIds[m.selectedIds.indexOf(off.id)]=on.id;
+    if(m.roleMap&&typeof m.roleMap==='object'){
+      var assigned=Object.keys(m.roleMap).find(function(key){return m.roleMap[key]===off.id;});
+      if(assigned)m.roleMap[assigned]=on.id;
+    }
     m.targetOffId=null;
     m.events.push({minute:m.minute,text:'Substitution: '+on.name+' replaces '+off.name+'.'});
+    if(!Array.isArray(m.substitutions))m.substitutions=[];
+    m.substitutions.push({minute:m.minute,offId:off.id,onId:on.id});
     render();return true;
   }
   function extraAction(action,target){
@@ -1234,19 +1487,27 @@
       else{notice('Deselect a starter before adding '+p.name+' to your five.');return true;}
       toast='';render();return true;
     }
+    if(action==='training-preview'){
+      var preview=target.getAttribute('data-value');
+      if(['passing','finishing','defending','fitness'].includes(preview))state.trainingFocus=preview;
+      render();return true;
+    }
     if(action==='train'){
       if(!f||state.match)return true;var key=state.season+':'+state.round,focus=target.getAttribute('data-value');
       if(state.training[key]||state.money<12)return true;
       if(!['passing','finishing','defending','fitness'].includes(focus))return true;
-      ledger('Training: '+focus,-12);state.training[key]=focus;
-      roster.forEach(function(p){
-        ensureDetails(p);
-        var skill=focus==='finishing'?'finishing':focus==='defending'?(p.pos==='GK'?'keeping':'defending'):focus==='fitness'?'stamina':'passing';
-        p.attributes[skill]=clamp(p.attributes[skill]+(focus==='fitness'?3:2),15,99);
-        var gain=focus==='fitness'?5:focus==='finishing'?(p.pos==='FWD'?30:12):focus==='defending'?(p.pos==='DEF'||p.pos==='GK'?30:12):22;
-        develop(p,gain,'Training: '+focus);
-        state.fitness[p.id]=Math.min(100,Math.max(45,fitness(p)+(focus==='fitness'?17:-5)));
+      ledger('Training: '+focus,-12);state.training[key]=focus;state.trainingFocus=focus;
+      var trained=roster.map(function(p){
+        var estimate=trainingEstimate(p,focus),priorRating=p.rating;
+        p.attributes[estimate.skill]=estimate.to;
+        develop(p,estimate.xp,'Training: '+focus);
+        state.fitness[p.id]=estimate.fitnessAfter;
+        return {id:p.id,name:p.name,skill:estimate.skill,skillBefore:estimate.from,skillAfter:estimate.to,
+          xp:estimate.xp,fitnessBefore:estimate.fitnessBefore,fitnessAfter:estimate.fitnessAfter,
+          ratingBefore:priorRating,ratingAfter:p.rating};
       });
+      state.trainingReports[key]={focus:focus,cost:12,season:state.season,round:state.round,players:trained};
+      if(Object.keys(state.trainingReports).length>36)delete state.trainingReports[Object.keys(state.trainingReports)[0]];
       pushInbox('training','Training completed','The squad worked on '+focus+'. Fitness and attributes have been updated.','training');
       notice('Training session completed. Player development and fitness updated.');return true;
     }
@@ -1378,31 +1639,78 @@
   }
   function randomGoal(chance){return Math.random()<chance;}
   function tick() {
-    var m=state.match;if(!m||m.minute>=20)return;
+    var m=state.match;
+    if(!m||m.minute>=20)return;
     if(!m.minutes||typeof m.minutes!=='object')m.minutes={};
-    (m.selectedIds||[]).forEach(function(id){m.minutes[id]=(m.minutes[id]||0)+2;});
+    if(!m.fatigueLoad||typeof m.fatigueLoad!=='object')m.fatigueLoad={};
+    if(!Array.isArray(m.tacticTimeline))m.tacticTimeline=[];
     m.minute+=2;
-    var team=starters(m.round),mean=team.reduce(function(a,p){
+    var team=starters(m.round);
+    if(m.auto){
+      var expected=m.minute>=14&&m.home>m.away?m.planAhead:
+        m.minute>=10&&m.home<m.away?m.planBehind:m.plan;
+      if(!TACTIC_PROFILES[expected])expected='balanced';
+      if(m.instruction!==expected){
+        m.tacticTimeline.push({minute:m.minute,reason:m.minute>=14&&m.home>m.away?'Protect or extend lead':
+          m.minute>=10&&m.home<m.away?'Trailing after 10 minutes':'Score levelled',
+          approach:expected});
+        m.instruction=expected;
+        m.events.push({minute:m.minute,text:'Saved plan: '+TACTIC_PROFILES[expected].label+' activated.'});
+      }
+    }
+    var planProfile=TACTIC_PROFILES[m.instruction]||TACTIC_PROFILES.balanced;
+    team.forEach(function(p){
+      m.minutes[p.id]=(m.minutes[p.id]||0)+2;
+      m.fatigueLoad[p.id]=Math.round(((m.fatigueLoad[p.id]||0)+planProfile.fatigue)*100)/100;
+    });
+    // Role assignments and live/offline instructions share precisely the same football calculation.
+    var formation=m.formation||state.formation;
+    var roles=m.roleMap||rolesForTeam(team,formation);
+    var stats=tacticForecast(team,formation,roles,m.instruction);
+    var mean=team.reduce(function(total,p){
       ensureDetails(p);
-      var skill=p.attributes[p.pos==='GK'?'keeping':p.pos==='DEF'?'defending':p.pos==='FWD'?'finishing':'passing'];
-      return a+p.rating+(skill-p.rating)*.18+(p.morale-75)*.08+(p.attributes.stamina-65)*.045-(100-fitness(p))*.13;
-    },0)/5;
-    if(m.auto)m.instruction=m.minute>=14&&m.home>m.away?state.planAhead:m.minute>=10&&m.home<m.away?state.planBehind:state.plan;
-    var attack=(m.instruction==='push'?0.10:m.instruction==='press'?.065:m.instruction==='hold'?-0.07:0);
-    var style=(m.auto?state.plan:state.style);
-    var bonus=style==='press'?.04:style==='counter'?.015:0;var fatigue=Math.max(0,m.minute-10)/10*(style==='press'?.045:.018);
-    if(randomGoal(Math.max(.02,Math.min(.40,.13+(mean-65)*.008+bonus+attack-fatigue+(state.formation==='1-1-2'?.045:0))))){
+      var role=formationSlots(formation).find(function(slot){return roles[slot.key]===p.id;});
+      var ability=role?roleQuality(p,role):p.rating;
+      var drained=m.fatigueLoad[p.id]||0;
+      return total+p.rating+(ability-p.rating)*.28+(p.morale-75)*.08+
+        (p.attributes.stamina-65)*.045-(100-fitness(p)+drained)*.12;
+    },0)/Math.max(1,team.length);
+    var attackChance=chanceRange(stats.attack+(mean-65)*.0075+(stats.roleFit-65)*.0018);
+    var concedeChance=chanceRange(stats.concede+(70-mean)*.007+(65-stats.roleFit)*.0014);
+    m.lastProbabilities={attack:attackChance,concede:concedeChance,roleFit:stats.roleFit,
+      approach:m.instruction,minute:m.minute};
+    if(randomGoal(attackChance)){
       m.home++;
-      var scorer=team.filter(function(p){return p.pos!=='GK';});
-      var p=scorer[Math.floor(Math.random()*scorer.length)]||team[0];
-      m.events.push({minute:m.minute,goal:true,scorerId:p.id,text:'GOAL! '+p.name+' finishes a chance for '+state.club+'.'});
-    }else if(randomGoal(Math.max(.025,Math.min(.36,.14+(70-mean)*.008+fatigue+(m.instruction==='hold'?-0.07:.04)+(state.formation==='2-1-1'?-0.055:0))))){
+      var scorers=team.filter(function(p){return p.pos!=='GK';});
+      var scorer=scorers[Math.floor(Math.random()*scorers.length)]||team[0];
+      m.events.push({minute:m.minute,goal:true,scorerId:scorer.id,
+        text:'GOAL! '+scorer.name+' finishes a chance for '+state.club+'.'});
+    }else if(randomGoal(concedeChance)){
       m.away++;m.events.push({minute:m.minute,goal:true,text:'Goal for '+m.opponent+' after a quick move.'});
     }else{
-      var lines=['A patient spell of possession in midfield.','Both sides battle for space on the small pitch.','The keeper makes a tidy save.','A shot flashes just wide of the post.','A good interception stops a dangerous move.'];
+      var lines=['Patient possession creates a passing lane.','Both teams compete for midfield space.',
+        'The keeper makes an important save.','A shot flashes just outside the post.',
+        'The defensive shape blocks a dangerous attack.'];
       m.events.push({minute:m.minute,text:lines[Math.floor(Math.random()*lines.length)]});
     }
-    if(m.minute>=20){clearInterval(timer);timer=null;m.events.push({minute:20,text:'Full-time whistle. Confirm the result to continue.'});}
+    if(m.auto&&m.autoSubPolicy==='rotate'&&m.minute>=12&&m.minute<20&&(m.autoRotations||0)<2){
+      var active=starters(m.round).filter(function(p){return p.pos!=='GK';});
+      var reserves=benchPlayers(m.round).filter(function(p){return p.pos!=='GK';});
+      var remaining=function(p){return fitness(p)-(m.fatigueLoad[p.id]||0);};
+      active.sort(function(a,b){return remaining(a)-remaining(b);});
+      reserves.sort(function(a,b){return remaining(b)-remaining(a);});
+      if(active.length&&reserves.length&&remaining(reserves[0])-remaining(active[0])>=12){
+        var off=active[0],on=reserves[0];
+        if(applySubstitution(off,on)){
+          m.autoRotations=(m.autoRotations||0)+1;
+          m.events.push({minute:m.minute,text:'Saved rotation rule: a fresher outfielder takes over.'});
+        }
+      }
+    }
+    if(m.minute>=20){
+      clearInterval(timer);timer=null;
+      m.events.push({minute:20,text:'Full-time whistle. Confirm the result to continue.'});
+    }
     render();
   }
   function finish(){
@@ -1445,7 +1753,9 @@
       played.forEach(function(p){
         if(p.id>=100 && p.id<2000)return;
         var minutes=m.minutes&&Number.isFinite(m.minutes[p.id])?m.minutes[p.id]:20;
-        var fatigueCost=Math.max(3,Math.round((state.style==='press'||m.instruction==='press'?20:14)*minutes/20));
+        var fatigueCost=m.fatigueLoad&&Number.isFinite(m.fatigueLoad[p.id])?
+          Math.max(2,Math.round(m.fatigueLoad[p.id])):
+          Math.max(3,Math.round((state.style==='press'||m.instruction==='press'?20:14)*minutes/20));
         state.fitness[p.id]=Math.max(35,fitness(p)-fatigueCost);
         develop(p,22+(m.home>m.away?8:0),'Match: '+f.opponent);
         p.morale=clamp(p.morale+(m.home>m.away?4:m.home===m.away?1:-3),35,100);
@@ -1457,6 +1767,17 @@
       ledger('Local match sponsorship: '+m.opponent,state.sponsor);
       var paidProfessionals=roster.filter(function(p){return p.professional;});
       if(paidProfessionals.length)ledger('Professional match wages',-45*paidProfessionals.length);
+    }
+    if(!m.forfeit){
+      var key=state.season+':'+state.round;
+      state.tacticalReports[key]={formation:m.formation||state.formation,
+        startingPlan:m.plan||state.plan,behind:m.planBehind||state.planBehind,
+        ahead:m.planAhead||state.planAhead,live:!m.auto,
+        initialRoles:m.initialRoles||{},phases:Array.isArray(m.tacticTimeline)?m.tacticTimeline.slice(0,30):[],
+        rotationPolicy:m.autoSubPolicy||'none',
+        substitutions:Array.isArray(m.substitutions)?m.substitutions.slice(0,15):[],
+        finalApproach:m.instruction,home:m.home,away:m.away};
+      if(Object.keys(state.tacticalReports).length>36)delete state.tacticalReports[Object.keys(state.tacticalReports)[0]];
     }
     pushInbox('result',m.forfeit?'Fixture forfeited':'Full-time report',
       state.club+' '+m.home+'–'+m.away+' '+f.opponent+'. '+
@@ -1482,7 +1803,16 @@
     if(!fixture()||state.match)return;
     if(!ready()){notice('You need five available players including a goalkeeper before kickoff.');return;}
     toast='';
-    state.match={round:state.round,opponent:fixture().opponent,minute:0,home:0,away:0,instruction:state.plan,auto:auto,selectedIds:starters(state.round).map(function(p){return p.id;}),minutes:{},events:[{minute:0,text:'Kickoff! '+state.club+' take on '+fixture().opponent+'.'}]};
+    var team=starters(state.round),roleMap=rolesForTeam(team,state.formation);
+    var kickoffStyle=auto?state.plan:state.style;
+    state.match={round:state.round,opponent:fixture().opponent,minute:0,home:0,away:0,
+      instruction:kickoffStyle,formation:state.formation,baseStyle:state.style,
+      plan:state.plan,planBehind:state.planBehind,planAhead:state.planAhead,
+      autoSubPolicy:auto?state.autoSubPolicy:'none',autoRotations:0,substitutions:[],
+      auto:auto,roleMap:Object.assign({},roleMap),initialRoles:Object.assign({},roleMap),
+      tacticTimeline:[{minute:0,reason:auto?'Saved absence plan':'Manager live setup',approach:kickoffStyle}],
+      selectedIds:team.map(function(p){return p.id;}),minutes:{},fatigueLoad:{},
+      events:[{minute:0,text:'Kickoff! '+state.club+' take on '+fixture().opponent+'.'}]};
     state.match.participantIds=state.match.selectedIds.slice();
     state.tab='match';
     if(auto){for(var i=0;i<10;i++)tick();render();}
@@ -1491,6 +1821,23 @@
   app.addEventListener('change',function(e){
     if(!state.clubCreated||editingClub||!e.target)return;
     var id=e.target.id,value=e.target.value;
+    if(typeof id==='string'&&id.indexOf('role-assign-')===0){
+      if(state.match||!fixture())return;
+      var slotKey=id.slice('role-assign-'.length),slots=formationSlots(state.formation);
+      var slot=slots.find(function(x){return x.key===slotKey;});
+      var team=starters(state.round),playerId=Number(value),person=team.find(function(p){return p.id===playerId;});
+      if(!slot||slot.type==='GK'||!person||person.pos==='GK'||team.length!==5)return;
+      var assignments=rolesForTeam(team,state.formation);
+      if(Object.keys(assignments).length!==5)return;
+      var fromSlot=slots.find(function(x){return assignments[x.key]===person.id;});
+      if(!fromSlot||fromSlot.type==='GK')return;
+      if(fromSlot.key!==slotKey){
+        var displaced=assignments[slotKey];
+        assignments[slotKey]=person.id;assignments[fromSlot.key]=displaced;
+        state.roleAssignments[state.formation]=assignments;
+      }
+      render();save();return;
+    }
     if(id==='squad-availability'&&['all','available','unavailable','injured'].includes(value))state.squadView.availability=value;
     else if(id==='squad-sort'&&['rating','name','position','fitness','morale','appearances','goals','availability'].includes(value))state.squadView.sort=value;
     else if(id==='squad-group'&&['position','none'].includes(value))state.squadView.group=value;
@@ -1583,11 +1930,21 @@
       var pool=['Taylor Clarke','Morgan Price','Riley Scott','Jordan Ellis','Casey Hall'];
       state.money-=15;state.guest[state.round]={id:100+state.round,name:pool[state.round%pool.length],pos:state.round%2?'DEF':'FWD',rating:44+Math.floor(Math.random()*40)};
       notice('Friend invited! Their ability was revealed when they turned up.');
-    } else if(action==='formation'||action==='style'||action==='plan'||action==='planBehind'||action==='planAhead'){
-      state[action]=target.getAttribute('data-value');toast='';render();
+    } else if(action==='formation'||action==='style'||action==='plan'||action==='planBehind'||action==='planAhead'||action==='autoSubPolicy'){
+      var choice=target.getAttribute('data-value');
+      if(state.match)return;
+      if(action==='formation'&&!['1-2-1','2-1-1','1-1-2'].includes(choice))return;
+      if(action==='autoSubPolicy'&&!['none','rotate'].includes(choice))return;
+      if(action!=='formation'&&action!=='autoSubPolicy'&&!['balanced','press','counter'].includes(choice))return;
+      state[action]=choice;toast='';render();
     } else if(action==='start-live'||action==='start-auto')start(action==='start-auto');
     else if(action==='push'||action==='hold'){
-      if(state.match){state.match.instruction=action;state.match.events.push({minute:state.match.minute,text:action==='push'?'Manager instruction: push forward!':'Manager instruction: hold shape.'});render();}
+      if(state.match&&!state.match.auto&&state.match.minute<20){
+        state.match.instruction=action;
+        state.match.tacticTimeline.push({minute:state.match.minute,reason:'Live manager',approach:action});
+        state.match.events.push({minute:state.match.minute,text:action==='push'?'Manager instruction: push forward!':'Manager instruction: hold shape.'});
+        render();
+      }
     } else if(action==='finish')finish();
     else if(action==='reset'){
       if(!confirm('Reset all local prototype progress? This cannot be undone.'))return;

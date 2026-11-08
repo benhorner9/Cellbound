@@ -15,7 +15,7 @@ function boot({autoCreate=true,saved=null,random=0.53}={}) {
     addEventListener(event,cb){if(event==="click")this.handle=cb;if(event==="input")this.inputHandle=cb;if(event==="change")this.changeHandle=cb;}};
   let clock;
   const seededMath = Object.create(Math);
-  seededMath.random = () => random;
+  seededMath.random = () => typeof random==='function'?random():random;
   const sandbox = {
     document:{getElementById(name){if(name==="app")return app;if(name==="club-create-name")return nameInput;if(name==="kit-club-name")return previewName;if(name==="kit-club-crest")return previewCrest;if(name==="creator-name-length")return nameLength;return null;}},
     localStorage:{getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}},
@@ -1189,4 +1189,363 @@ test("B05 injured players cannot pay to bypass injury and guest medical restrict
   assert.equal(after.money,19);
   assert.equal(after.offerAttempts["1:0:6"],undefined);
   assert.equal(after.injuries[6],2);
+});
+
+
+test("B06 each formation has five real pitch assignments with role-specific fit and save-safe matching",()=>{
+  const g=boot(),key="five-aside-manager-alpha-v1";
+  g.click({"data-action":"go-tactics"});
+  for(const [formation,labels] of [
+    ["1-2-1",["Defensive anchor","Left support","Right support","Striker"]],
+    ["2-1-1",["Left defender","Right defender","Playmaker","Striker"]],
+    ["1-1-2",["Defensive anchor","Playmaker","Left attacker","Right attacker"]]
+  ]){
+    g.click({"data-action":"formation","data-value":formation});
+    assert.match(g.app.innerHTML,new RegExp(formation.replace(/-/g,"-")));
+    assert.match(g.app.innerHTML,/tactical-pitch/);
+    assert.equal((g.app.innerHTML.match(/tactical-pitch-position"/g)||[]).length,5);
+    for(const label of labels)assert.match(g.app.innerHTML,new RegExp(label));
+    assert.match(g.app.innerHTML,/ROLE MATCHING/);
+    assert.match(g.app.innerHTML,/AVG FIT/);
+    assert.match(g.app.innerHTML,/ATTACK CHANCE/);
+  }
+  const saved=JSON.parse(g.storage.get(key));
+  assert.equal(saved.formation,"1-1-2");
+  assert.equal(saved.lineupCustomized,false);
+});
+
+test("B06 manual outfield role swap persists without duplicating players or assigning goalkeeper to attack",()=>{
+  const g=boot(),key="five-aside-manager-alpha-v1";
+  g.click({"data-action":"go-tactics"});
+  const before=JSON.parse(g.storage.get(key));
+  const select=(id)=>g.app.innerHTML.match(new RegExp('id="role-assign-'+id+'"[^>]*>([\\s\\S]*?)<\\/select>'))?.[1].match(/<option value="(\d+)" selected/)?.[1];
+  const left=Number(select("MID_L")),right=Number(select("MID_R"));
+  assert.ok(left&&right&&left!==right);
+  g.change("role-assign-MID_L",String(right));
+  const after=JSON.parse(g.storage.get(key));
+  assert.equal(after.roleAssignments["1-2-1"].MID_L,right);
+  assert.equal(after.roleAssignments["1-2-1"].MID_R,left);
+  assert.equal(after.roleAssignments["1-2-1"].GK,1);
+  assert.equal(new Set(Object.values(after.roleAssignments["1-2-1"])).size,5);
+  g.change("role-assign-MID_R","1");
+  assert.equal(JSON.parse(g.storage.get(key)).roleAssignments["1-2-1"].MID_R,left);
+  const again=boot({autoCreate:false,saved:after});
+  again.click({"data-action":"go-tactics"});
+  assert.match(again.app.innerHTML,/Right support/);
+  assert.equal(JSON.parse(again.storage.get(key)).roleAssignments["1-2-1"].MID_L,right);
+  assert.equal(JSON.parse(again.storage.get(key)).roster.length,before.roster.length);
+});
+
+test("B06 roles safely re-optimize when the lineup or saved assignment becomes invalid",()=>{
+  const g=boot(),key="five-aside-manager-alpha-v1";
+  const old=JSON.parse(g.storage.get(key));
+  old.roleAssignments={"1-2-1":{GK:3,BACK:3,MID_L:3,MID_R:3,FRONT:3}};
+  old.tab="tactics";
+  const migrated=boot({autoCreate:false,saved:old});
+  assert.match(migrated.app.innerHTML,/Individual roles/);
+  assert.match(migrated.app.innerHTML,/AVG FIT/);
+  assert.doesNotMatch(migrated.app.innerHTML,/NaN/);
+  migrated.click({"data-action":"auto-pick"});
+  migrated.click({"data-action":"go-fixtures"});
+  migrated.click({"data-action":"start-auto"});
+  migrated.click({"data-action":"finish"});
+  const report=JSON.parse(migrated.storage.get(key)).tacticalReports["1:0"];
+  assert.equal(report.formation,"1-2-1");
+  assert.equal(report.initialRoles.GK,1);
+  assert.equal(new Set(Object.values(report.initialRoles)).size,5);
+});
+
+test("B06 style and formation alter real match attack/defence probabilities",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1";
+  const old=JSON.parse(base.storage.get(key));
+  function probabilities(style,formation,roles=null){
+    const saved=JSON.parse(JSON.stringify(old));
+    saved.style=style;saved.formation=formation;
+    if(roles)saved.roleAssignments[formation]=roles;
+    const g=boot({autoCreate:false,saved});
+    g.click({"data-action":"start-live"});
+    g.tick();
+    const html=g.app.innerHTML;
+    const attack=Number(html.match(/data-attack-chance="([0-9.]+)"/)?.[1]);
+    const concede=Number(html.match(/data-concede-chance="([0-9.]+)"/)?.[1]);
+    assert.ok(attack>0&&concede>0);
+    return {attack,concede,html};
+  }
+  const balanced=probabilities("balanced","1-2-1");
+  const press=probabilities("press","1-2-1");
+  const counter=probabilities("counter","1-2-1");
+  assert.ok(press.attack>balanced.attack);
+  assert.ok(press.concede>balanced.concede);
+  assert.ok(counter.concede<balanced.concede);
+  assert.ok(counter.attack<press.attack);
+  const defence=probabilities("balanced","2-1-1");
+  const attack=probabilities("balanced","1-1-2");
+  assert.ok(defence.concede<balanced.concede);
+  assert.ok(attack.attack>balanced.attack);
+  assert.match(press.html,/CURRENT APPROACH/);
+  assert.match(press.html,/High press/);
+});
+
+test("B06 watched match and equal saved offline plan have equal score and fitness from same input",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1";
+  const old=JSON.parse(base.storage.get(key));
+  old.style="counter";old.plan="counter";
+  old.planBehind="press";old.planAhead="balanced";
+  old.formation="2-1-1";
+  function play(auto){
+    const g=boot({autoCreate:false,saved:old,random:0.53});
+    g.click({"data-action":auto?"start-auto":"start-live"});
+    if(!auto)for(let i=0;i<10;i++)g.tick();
+    g.click({"data-action":"finish"});
+    return JSON.parse(g.storage.get(key));
+  }
+  const watched=play(false),offline=play(true);
+  assert.deepEqual(watched.results,offline.results);
+  assert.deepEqual(watched.fitness,offline.fitness);
+  assert.deepEqual(watched.playerStats,offline.playerStats);
+  assert.deepEqual(watched.playerMatchHistory,offline.playerMatchHistory);
+  assert.equal(offline.tacticalReports["1:0"].formation,"2-1-1");
+  assert.equal(offline.tacticalReports["1:0"].startingPlan,"counter");
+  assert.equal(watched.tacticalReports["1:0"].finalApproach,"counter");
+  assert.equal(offline.tacticalReports["1:0"].finalApproach,"counter");
+});
+
+test("B06 offline plan switches to saved leading condition from minute 14 and persists the executed trace",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1";
+  const saved=JSON.parse(base.storage.get(key));
+  saved.plan="balanced";saved.planAhead="press";saved.planBehind="counter";
+  let n=0;
+  const g=boot({autoCreate:false,saved,random:()=>{n++;return .01;}});
+  g.click({"data-action":"start-auto"});
+  assert.match(g.app.innerHTML,/Saved plan: High press activated/);
+  assert.match(g.app.innerHTML,/CURRENT APPROACH/);
+  g.click({"data-action":"finish"});
+  const final=JSON.parse(g.storage.get(key)),report=final.tacticalReports["1:0"];
+  assert.equal(report.live,false);
+  assert.equal(report.startingPlan,"balanced");
+  assert.equal(report.ahead,"press");
+  assert.equal(report.finalApproach,"press");
+  assert.ok(report.phases.some(x=>x.approach==="press"&&x.minute>=14));
+  assert.ok(final.playerStats[3]||final.playerStats[4]);
+  const again=boot({autoCreate:false,saved:final});
+  again.click({"data-action":"go-tactics"});
+  assert.match(again.app.innerHTML,/Previous match tactical report/);
+  assert.match(again.app.innerHTML,/High press/);
+});
+
+test("B06 trailing saved plan activates at minute 10 and does not follow live-manager push",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1",saved=JSON.parse(base.storage.get(key));
+  saved.plan="balanced";saved.planBehind="counter";saved.planAhead="press";
+  let next=0;
+  const random=()=>{next++;return next===2?0.001:0.99;};
+  const g=boot({autoCreate:false,saved,random});
+  g.click({"data-action":"start-auto"});
+  assert.match(g.app.innerHTML,/Saved plan: Counterattack activated/);
+  g.click({"data-action":"finish"});
+  const report=JSON.parse(g.storage.get(key)).tacticalReports["1:0"];
+  assert.equal(report.finalApproach,"counter");
+  assert.ok(report.phases.some(x=>x.approach==="counter"&&x.minute>=10));
+  const live=boot({autoCreate:false,saved,random:0.53});
+  live.click({"data-action":"start-live"});
+  live.click({"data-action":"push"});
+  live.tick();
+  assert.match(live.app.innerHTML,/Push forward/);
+  for(let i=1;i<10;i++)live.tick();
+  live.click({"data-action":"finish"});
+  const liveReport=JSON.parse(live.storage.get(key)).tacticalReports["1:0"];
+  assert.equal(liveReport.live,true);
+  assert.equal(liveReport.finalApproach,"push");
+  assert.ok(liveReport.phases.some(x=>x.reason==="Live manager"&&x.approach==="push"));
+});
+
+test("B06 pressing changes actual recorded fatigue while saved player histories remain intact",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1",saved=JSON.parse(base.storage.get(key));
+  function play(style){
+    const old=JSON.parse(JSON.stringify(saved));
+    old.plan=style;old.style=style;
+    const g=boot({autoCreate:false,saved:old,random:0.53});
+    g.click({"data-action":"start-auto"});
+    g.click({"data-action":"finish"});
+    return JSON.parse(g.storage.get(key));
+  }
+  const balanced=play("balanced"),press=play("press"),counter=play("counter");
+  assert.ok(press.fitness[1]<balanced.fitness[1]);
+  assert.ok(counter.fitness[1]>balanced.fitness[1]);
+  assert.equal(press.playerStats[1].appearances,1);
+  assert.equal(counter.playerMatchHistory[1][0].minutes,20);
+  assert.deepEqual(press.roster.map(p=>p.id),balanced.roster.map(p=>p.id));
+});
+
+test("B06 training impact previews are actual per-player forecasts, not financial transactions",()=>{
+  const g=boot(),key="five-aside-manager-alpha-v1";
+  g.click({"data-action":"go-training"});
+  assert.match(g.app.innerHTML,/Training impact preview/);
+  assert.match(g.app.innerHTML,/Passing \+2/);
+  const old=JSON.parse(g.storage.get(key));
+  g.click({"data-action":"training-preview","data-value":"finishing"});
+  const after=JSON.parse(g.storage.get(key));
+  assert.equal(after.trainingFocus,"finishing");
+  assert.equal(after.money,old.money);
+  assert.equal(after.roster[3].attributes.finishing,old.roster[3].attributes.finishing);
+  assert.match(g.app.innerHTML,/\+30 XP/);
+  assert.match(g.app.innerHTML,/FITNESS/);
+  const reloaded=boot({autoCreate:false,saved:after});
+  reloaded.click({"data-action":"go-training"});
+  assert.match(reloaded.app.innerHTML,/FINISHING/);
+  assert.match(reloaded.app.innerHTML,/Training impact preview/);
+});
+
+test("B06 training session applies the preview to real saved stats once and stores a complete review",()=>{
+  const g=boot(),key="five-aside-manager-alpha-v1";
+  g.click({"data-action":"go-training"});
+  const before=JSON.parse(g.storage.get(key));
+  g.click({"data-action":"train","data-value":"defending"});
+  const after=JSON.parse(g.storage.get(key));
+  assert.equal(after.money,before.money-12);
+  assert.equal(after.training["1:0"],"defending");
+  assert.equal(after.trainingReports["1:0"].cost,12);
+  assert.equal(after.trainingReports["1:0"].players.length,before.roster.length);
+  for(let i=0;i<before.roster.length;i++){
+    const prior=before.roster[i],now=after.roster[i],log=after.trainingReports["1:0"].players[i];
+    const skill=prior.pos==="GK"?"keeping":"defending";
+    assert.equal(log.skill,skill);
+    assert.equal(now.attributes[skill],Math.min(99,prior.attributes[skill]+2));
+    assert.equal(log.skillBefore,prior.attributes[skill]);
+    assert.equal(log.skillAfter,now.attributes[skill]);
+    assert.equal(now.attributes.passing,prior.attributes.passing);
+    assert.equal(log.xp,prior.pos==="DEF"||prior.pos==="GK"?30:12);
+    assert.equal(log.fitnessAfter,Math.max(45,log.fitnessBefore-5));
+    assert.ok((after.developmentHistory[prior.id]||[]).some(e=>e.source==="Training: defending"));
+  }
+  assert.match(g.app.innerHTML,/Completed session report/);
+  g.click({"data-action":"train","data-value":"fitness"});
+  assert.equal(JSON.parse(g.storage.get(key)).money,before.money-12);
+  const again=boot({autoCreate:false,saved:after});
+  again.click({"data-action":"go-training"});
+  assert.match(again.app.innerHTML,/Completed session report/);
+  assert.equal(JSON.parse(again.storage.get(key)).trainingReports["1:0"].players.length,9);
+});
+
+test("B06 recovery training restores current fitness without exceeding 100 or providing a free second session",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1",old=JSON.parse(base.storage.get(key));
+  old.fitness={1:84,3:99,4:35};
+  const g=boot({autoCreate:false,saved:old});
+  g.click({"data-action":"go-training"});
+  g.click({"data-action":"train","data-value":"fitness"});
+  const after=JSON.parse(g.storage.get(key));
+  assert.equal(after.fitness["1"],100);
+  assert.equal(after.fitness["3"],100);
+  assert.equal(after.fitness["4"],52);
+  assert.equal(after.trainingReports["1:0"].players[0].fitnessBefore,84);
+  assert.equal(after.trainingReports["1:0"].players[0].fitnessAfter,100);
+  assert.equal(after.trainingReports["1:0"].players[0].xp,5);
+  g.click({"data-action":"train","data-value":"passing"});
+  assert.equal(JSON.parse(g.storage.get(key)).money,old.money-12);
+});
+
+test("B06 skill and potential caps, insufficient funds and imported saves never invent progress",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1",old=JSON.parse(base.storage.get(key));
+  old.money=10;old.roster[2].potential=old.roster[2].rating;
+  old.roster[2].attributes.passing=99;
+  old.roster[2].xp=37;
+  delete old.roleAssignments;delete old.trainingReports;delete old.trainingFocus;delete old.tacticalReports;
+  const g=boot({autoCreate:false,saved:old});
+  g.click({"data-action":"go-training"});
+  g.click({"data-action":"train","data-value":"passing"});
+  let after=JSON.parse(g.storage.get(key));
+  assert.equal(after.money,10);
+  assert.equal(after.trainingReports["1:0"],undefined);
+  assert.equal(after.roster[2].xp,37);
+  after.money=240;
+  const restored=boot({autoCreate:false,saved:after});
+  restored.click({"data-action":"go-training"});
+  assert.match(restored.app.innerHTML,/AT POTENTIAL CAP/);
+  restored.click({"data-action":"train","data-value":"passing"});
+  const trained=JSON.parse(restored.storage.get(key));
+  assert.equal(trained.roster[2].xp,37);
+  assert.equal(trained.roster[2].attributes.passing,99);
+  assert.equal(trained.trainingReports["1:0"].players[2].xp,0);
+  assert.equal(trained.trainingReports["1:0"].players[2].skillAfter,99);
+  assert.equal(trained.money,228);
+  assert.equal(trained.roster.length,9);
+  assert.equal(trained.club,old.club);
+});
+
+test("B06 simulated training and tactical history survives season change without changing legacy saves",()=>{
+  const key="five-aside-manager-alpha-v1",base=boot();
+  const configured=JSON.parse(base.storage.get(key));
+  // This test isolates persistence and season changes: make every round eligible
+  // rather than accidentally testing the B05 guest/availability conditions again.
+  configured.roster.forEach(p=>{p.available=[1,1,1,1,1,1];});
+  const g=boot({autoCreate:false,saved:configured});
+  g.click({"data-action":"train","data-value":"passing"});
+  for(let i=0;i<6;i++){
+    g.click({"data-action":"go-fixtures"});
+    const snapshot=JSON.parse(g.storage.get(key));
+    if(snapshot.round===2)g.click({"data-action":"guest"});
+    g.click({"data-action":"start-auto"});
+    g.click({"data-action":"finish"});
+  }
+  let data=JSON.parse(g.storage.get(key));
+  assert.ok(data.tacticalReports["1:0"]);
+  assert.ok(data.trainingReports["1:0"]);
+  g.click({"data-action":"next-season"});
+  data=JSON.parse(g.storage.get(key));
+  assert.equal(data.season,2);
+  assert.ok(data.tacticalReports["1:0"]);
+  assert.ok(data.trainingReports["1:0"]);
+  assert.ok(data.playerMatchHistory[1].length>=1);
+  assert.equal(data.training["2:0"],undefined);
+});
+
+
+test("B06 saved absence policy genuinely rotates tired outfielders but never the goalkeeper",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1";
+  const save=JSON.parse(base.storage.get(key));
+  save.roster.find(p=>p.id===4).available=[1,1,1,1,1,1];
+  save.fitness[4]=70;
+  save.autoSubPolicy="rotate";
+  function play(rotate){
+    const configured=JSON.parse(JSON.stringify(save));
+    configured.autoSubPolicy=rotate?"rotate":"none";
+    const g=boot({autoCreate:false,saved:configured,random:0.53});
+    g.click({"data-action":"go-tactics"});
+    assert.match(g.app.innerHTML,/Unattended substitutions/);
+    g.click({"data-action":"go-fixtures"});
+    g.click({"data-action":"start-auto"});
+    assert.match(g.app.innerHTML,rotate?/Saved rotation rule/:/FULL-TIME WHISTLE|Full-time whistle/i);
+    g.click({"data-action":"finish"});
+    return JSON.parse(g.storage.get(key));
+  }
+  const rotating=play(true),staticTeam=play(false);
+  const report=rotating.tacticalReports["1:0"];
+  assert.equal(report.rotationPolicy,"rotate");
+  assert.ok(report.substitutions.length>=1);
+  assert.ok(report.substitutions.length<=2);
+  assert.equal(staticTeam.tacticalReports["1:0"].substitutions.length,0);
+  assert.ok(Object.values(rotating.playerStats).reduce((sum,p)=>sum+p.appearances,0)>
+    Object.values(staticTeam.playerStats).reduce((sum,p)=>sum+p.appearances,0));
+  const starter=report.initialRoles.GK;
+  assert.ok(report.substitutions.every(p=>p.offId!==starter&&p.onId!==starter));
+  const keeper=rotating.playerMatchHistory[starter];
+  assert.equal(keeper[0].minutes,20);
+  assert.equal(new Set(report.substitutions.map(s=>s.offId)).size,report.substitutions.length);
+});
+
+test("B06 absence rotation selection persists and is safe on imported saves",()=>{
+  const g=boot(),key="five-aside-manager-alpha-v1";
+  g.click({"data-action":"go-tactics"});
+  g.click({"data-action":"autoSubPolicy","data-value":"rotate"});
+  let saved=JSON.parse(g.storage.get(key));
+  assert.equal(saved.autoSubPolicy,"rotate");
+  const again=boot({autoCreate:false,saved});
+  again.click({"data-action":"go-tactics"});
+  assert.match(again.app.innerHTML,/Unattended substitutions/);
+  assert.match(again.app.innerHTML,/data-action="autoSubPolicy" data-value="rotate" aria-pressed="true"/);
+  again.click({"data-action":"autoSubPolicy","data-value":"none"});
+  saved=JSON.parse(again.storage.get(key));
+  assert.equal(saved.autoSubPolicy,"none");
+  delete saved.autoSubPolicy;
+  const legacy=boot({autoCreate:false,saved});
+  assert.equal(JSON.parse(legacy.storage.get(key)).autoSubPolicy,"none");
 });
