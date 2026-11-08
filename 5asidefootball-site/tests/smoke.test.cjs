@@ -895,3 +895,298 @@ test("B04 substitutions preserve appearances for both outgoing and incoming foot
   const goals=appeared.flatMap(([id,rows])=>rows).reduce((sum,r)=>sum+r.goals,0);
   assert.equal(goals,data.results[0].home,"Recorded scorers must match the actual match result after substitutions");
 });
+
+
+test("B05 match preparation shows explicit starting five, bench, keeper and same-night rotation",()=>{
+  const g=boot(),k="five-aside-manager-alpha-v1";
+  g.click({"data-action":"go-tactics"});
+  assert.match(g.app.innerHTML,/Pick your starting five/);
+  assert.match(g.app.innerHTML,/READY FOR KICKOFF/);
+  assert.match(g.app.innerHTML,/Substitute bench/);
+  assert.match(g.app.innerHTML,/MULTI-MATCH NIGHT/);
+  assert.match(g.app.innerHTML,/19:40/);
+  const selected=(g.app.innerHTML.match(/aria-pressed="true"/g)||[]).length;
+  assert.ok(selected>=5);
+  const saved=JSON.parse(g.storage.get(k));
+  assert.equal(saved.round,0);
+  g.click({"data-action":"go-squad"});
+  assert.match(g.app.innerHTML,/Fixture availability desk/);
+  assert.match(g.app.innerHTML,/BACK-TO-BACK MATCH NIGHT/);
+  assert.match(g.app.innerHTML,/Education commitment|Work shift/);
+});
+
+test("B05 outfield substitutes cannot replace the required keeper and manual picks validate a full five",()=>{
+  const first=boot();
+  const k="five-aside-manager-alpha-v1";
+  const saved=JSON.parse(first.storage.get(k));
+  saved.roster.push({...saved.roster[0],id:88,name:"Backup Keeper",rating:62,available:[1,1,1,1,1,1]});
+  saved.tab="tactics";const g=boot({autoCreate:false,saved});
+  g.click({"data-action":"lineup","data-player":"88"});
+  let s=JSON.parse(g.storage.get(k));
+  assert.equal(s.lineup.filter(id=>id===1||id===88).length,1);
+  assert.ok(s.lineup.includes(88),"one-tap keeper swap should select replacement");
+  assert.ok(!s.lineup.includes(1));
+  g.click({"data-action":"lineup","data-player":"88"});
+  assert.match(g.app.innerHTML,/KICKOFF BLOCKED/);
+  g.click({"data-action":"go-fixtures"});
+  assert.match(g.app.innerHTML,/Exactly one goalkeeper/);
+  g.click({"data-action":"forfeit"});
+  assert.equal(JSON.parse(g.storage.get(k)).round,0,"cannot forfeit merely because a valid keeper was deselected");
+  g.click({"data-action":"go-tactics"});
+  g.click({"data-action":"auto-pick"});
+  assert.match(g.app.innerHTML,/READY FOR KICKOFF/);
+  s=JSON.parse(g.storage.get(k));
+  assert.equal(s.lineupCustomized,false);
+  g.click({"data-action":"go-fixtures"});
+  assert.match(g.app.innerHTML,/READY TO PLAY/);
+});
+
+test("B05 unavailable keeper and one-off emergency guest resolve an otherwise invalid fixture",()=>{
+  const first=boot();
+  const k="five-aside-manager-alpha-v1";
+  const saved=JSON.parse(first.storage.get(k));
+  saved.roster[0].available[0]=0;
+  saved.tab="fixtures";
+  const g=boot({autoCreate:false,saved});
+  assert.match(g.app.innerHTML,/No eligible goalkeeper/);
+  g.click({"data-action":"start-auto"});
+  assert.equal(JSON.parse(g.storage.get(k)).round,0);
+  g.click({"data-action":"go-squad"});
+  g.click({"data-action":"guest"});
+  let after=JSON.parse(g.storage.get(k));
+  assert.equal(after.guest[0][0].pos,"GK");
+  assert.equal(after.money,saved.money-15);
+  assert.equal(after.guestAttempts["1:0"],1);
+  assert.equal(after.roster.length,saved.roster.length);
+  g.click({"data-action":"go-fixtures"});
+  assert.match(g.app.innerHTML,/READY TO PLAY/);
+  g.click({"data-action":"start-auto"});
+  g.click({"data-action":"finish"});
+  after=JSON.parse(g.storage.get(k));
+  assert.equal(after.round,1);
+  assert.equal(after.roster.length,saved.roster.length);
+  assert.equal(after.formerGuests.length,1);
+  assert.equal(after.formerGuests[0].pos,"GK");
+});
+
+test("B05 unsuccessful guest arrivals cost nothing, max three requests and legacy guest limits survive",()=>{
+  const g=boot({random:0.99}),k="five-aside-manager-alpha-v1";
+  const starting=JSON.parse(g.storage.get(k));
+  g.click({"data-action":"go-squad"});
+  for(let i=0;i<3;i++)g.click({"data-action":"guest"});
+  let after=JSON.parse(g.storage.get(k));
+  assert.equal(after.money,starting.money);
+  assert.equal(after.guestAttempts["1:0"],3);
+  assert.equal(after.guest[0],undefined);
+  assert.equal(after.inbox.filter(m=>m.title==="Guest request unsuccessful").length,3);
+  assert.match(g.app.innerHTML,/Requests used: 3 \/ 3/);
+  g.click({"data-action":"guest"});
+  after=JSON.parse(g.storage.get(k));
+  assert.equal(after.guestAttempts["1:0"],3);
+  assert.equal(after.inbox.filter(m=>m.title==="Guest request unsuccessful").length,3);
+  const previous=JSON.parse(starting.clubCreated?JSON.stringify(starting):"null");
+  previous.guest={0:[
+    {id:100,name:"Guest One",pos:"DEF",rating:55},
+    {id:101,name:"Guest Two",pos:"FWD",rating:48},
+    {id:102,name:"Guest Three",pos:"GK",rating:43}
+  ]};
+  delete previous.guestAttempts;
+  previous.tab="squad";
+  const legacy=boot({autoCreate:false,saved:previous});
+  assert.match(legacy.app.innerHTML,/Requests used: 3 \/ 3/);
+  legacy.click({"data-action":"guest"});
+  assert.equal(JSON.parse(legacy.storage.get(k)).guest[0].length,3);
+});
+
+test("B05 refused appearance offer is free and never rerollable within a fixture",()=>{
+  const g=boot({random:0.99}),k="five-aside-manager-alpha-v1";
+  const original=JSON.parse(g.storage.get(k));
+  g.click({"data-action":"go-squad"});
+  g.click({"data-action":"offer","data-player":"6"});
+  let after=JSON.parse(g.storage.get(k));
+  assert.equal(after.money,original.money);
+  assert.equal(after.offerAttempts["1:0:6"],true);
+  assert.equal(after.offers["0:6"],undefined);
+  assert.ok(after.inbox.some(m=>m.title==="Player remains unavailable"));
+  const count=after.inbox.length;
+  g.click({"data-action":"offer","data-player":"6"});
+  after=JSON.parse(g.storage.get(k));
+  assert.equal(after.inbox.length,count);
+  const again=boot({autoCreate:false,saved:after});
+  again.click({"data-action":"go-squad"});
+  assert.match(again.app.innerHTML,/ALREADY ASKED/);
+  again.click({"data-action":"offer","data-player":"6"});
+  assert.equal(JSON.parse(again.storage.get(k)).money,original.money);
+});
+
+test("B05 accepted appearance offer costs £20 exactly once and clears a work shift",()=>{
+  const g=boot(),k="five-aside-manager-alpha-v1";
+  const original=JSON.parse(g.storage.get(k));
+  g.click({"data-action":"go-squad"});
+  g.click({"data-action":"offer","data-player":"6"});
+  let after=JSON.parse(g.storage.get(k));
+  assert.equal(after.money,original.money-20);
+  assert.equal(after.offers["0:6"],true);
+  assert.equal(after.offerAttempts["1:0:6"],true);
+  assert.ok(after.inbox.some(m=>m.title==="Appearance offer accepted"));
+  g.click({"data-action":"offer","data-player":"6"});
+  assert.equal(JSON.parse(g.storage.get(k)).money,original.money-20);
+  g.click({"data-action":"go-tactics"});
+  assert.match(g.app.innerHTML,/Dylan Brooks/);
+  assert.match(g.app.innerHTML,/Attendance confirmed by appearance offer|Appearance offer accepted/);
+});
+
+test("B05 exhaustion prevents kickoff and a fitness session legitimately restores eligibility",()=>{
+  const base=boot(),k="five-aside-manager-alpha-v1";
+  const saved=JSON.parse(base.storage.get(k));
+  saved.fitness["1"]=35;
+  saved.tab="fixtures";
+  const g=boot({autoCreate:false,saved});
+  assert.match(g.app.innerHTML,/No eligible goalkeeper/);
+  g.click({"data-action":"start-auto"});
+  assert.equal(JSON.parse(g.storage.get(k)).round,0);
+  g.click({"data-action":"go-squad"});
+  assert.match(g.app.innerHTML,/Exhausted/);
+  assert.match(g.app.innerHTML,/REST REQUIRED/);
+  g.click({"data-action":"offer","data-player":"1"});
+  assert.equal(JSON.parse(g.storage.get(k)).money,saved.money,"cannot pay an exhausted player into eligibility");
+  g.click({"data-action":"go-training"});
+  g.click({"data-action":"train","data-value":"fitness"});
+  const after=JSON.parse(g.storage.get(k));
+  assert.ok(after.fitness["1"]>=40);
+  assert.equal(after.money,saved.money-12);
+  g.click({"data-action":"go-fixtures"});
+  assert.match(g.app.innerHTML,/READY TO PLAY/);
+});
+
+test("B05 genuine same-night fatigue does not recover between rounds but recovers across different nights",()=>{
+  const g=boot(),k="five-aside-manager-alpha-v1";
+  g.click({"data-action":"go-fixtures"});
+  g.click({"data-action":"start-auto"});
+  g.click({"data-action":"finish"});
+  let after=JSON.parse(g.storage.get(k));
+  assert.equal(after.round,1);
+  assert.equal(after.fitness["1"],86);
+  g.click({"data-action":"go-tactics"});
+  assert.match(g.app.innerHTML,/ROUND 2/);
+  g.click({"data-action":"go-fixtures"});
+  g.click({"data-action":"start-auto"});
+  g.click({"data-action":"finish"});
+  after=JSON.parse(g.storage.get(k));
+  assert.equal(after.round,2);
+  assert.equal(after.fitness["1"],96,"recovery should happen when moving from Tuesday to Thursday, not between Tuesday games");
+});
+
+test("B05 live substitution only allows compatible roles and records actual playing minutes",()=>{
+  const first=boot(),k="five-aside-manager-alpha-v1";
+  const saved=JSON.parse(first.storage.get(k));
+  saved.roster.push({...saved.roster[0],id:88,name:"Reserve Keeper",rating:55,available:[1,1,1,1,1,1]});
+  const g=boot({autoCreate:false,saved});
+  g.click({"data-action":"go-fixtures"});
+  g.click({"data-action":"start-live"});
+  assert.match(g.app.innerHTML,/Pitch & bench/);
+  for(let i=0;i<3;i++)g.tick();
+  g.click({"data-action":"sub-off","data-player":"4"});
+  assert.match(g.app.innerHTML,/LEAVING PITCH/);
+  g.click({"data-action":"sub-on","data-player":"88"});
+  assert.match(g.app.innerHTML,/goalkeeper must replace a goalkeeper/i);
+  g.click({"data-action":"sub-on","data-player":"9"});
+  assert.match(g.app.innerHTML,/Substitution: Finley Hughes replaces Ollie Wright/);
+  for(let i=0;i<7;i++)g.tick();
+  g.click({"data-action":"finish"});
+  const after=JSON.parse(g.storage.get(k));
+  assert.equal(after.round,1);
+  assert.equal(after.playerMatchHistory[4][0].minutes,6);
+  assert.equal(after.playerMatchHistory[9][0].minutes,14);
+  assert.equal(after.playerStats[4].appearances,1);
+  assert.equal(after.playerStats[9].appearances,1);
+  assert.equal(after.fitness["4"],100-Math.round(14*6/20));
+  assert.equal(after.fitness["9"],100-Math.round(14*14/20));
+  const total=Object.values(after.playerMatchHistory).reduce((a,h)=>a+h.filter(r=>r.round===0).length,0);
+  assert.equal(total,6);
+});
+
+test("B05 forfeit is deliberate only when a legitimate eligible team is impossible",()=>{
+  const first=boot(),k="five-aside-manager-alpha-v1";
+  const saved=JSON.parse(first.storage.get(k));
+  saved.roster[0].available[0]=0;
+  saved.tab="fixtures";
+  const g=boot({autoCreate:false,saved});
+  assert.match(g.app.innerHTML,/CONFIRM FORFEIT 0–3/);
+  assert.match(g.app.innerHTML,/no sponsor income/i);
+  g.click({"data-action":"forfeit"});
+  const after=JSON.parse(g.storage.get(k));
+  assert.equal(after.round,1);
+  assert.equal(after.results[0].home,0);
+  assert.equal(after.results[0].away,3);
+  assert.equal(after.money,saved.money-15);
+  assert.equal(after.financeLog.filter(x=>x.kind.startsWith("Local match sponsorship")).length,0);
+  assert.ok(after.inbox.some(m=>m.title==="Fixture forfeited"));
+});
+
+test("B05 legacy imports and season reset retain real histories and reset old offers/guest requests",()=>{
+  const original=boot(),k="five-aside-manager-alpha-v1";
+  const old=JSON.parse(original.storage.get(k));
+  delete old.offerAttempts;delete old.guestAttempts;
+  old.playerStats[3]={appearances:4,goals:2,cleanSheets:0};
+  old.developmentHistory={3:[{season:1,round:0,source:"Training: passing",xpGained:22,ratingBefore:76,ratingAfter:76}]};
+  old.round=6;old.tab="overview";
+  const g=boot({autoCreate:false,saved:old});
+  const migrated=JSON.parse(g.storage.get(k));
+  assert.equal(migrated.playerStats[3].appearances,4);
+  assert.equal(migrated.developmentHistory[3].length,1);
+  assert.deepEqual(migrated.offerAttempts,{});
+  assert.deepEqual(migrated.guestAttempts,{});
+  g.click({"data-action":"next-season"});
+  const after=JSON.parse(g.storage.get(k));
+  assert.equal(after.season,2);
+  assert.equal(after.round,0);
+  assert.equal(after.playerStats[3].appearances,4);
+  assert.equal(after.developmentHistory[3].length,1);
+  assert.equal(Object.keys(after.offerAttempts).length,0);
+  assert.equal(Object.keys(after.guestAttempts).length,0);
+});
+
+
+test("B05 insufficient funds and absence of a registered inviter block guest/fee exploits",()=>{
+  const base=boot(),key="five-aside-manager-alpha-v1";
+  const saved=JSON.parse(base.storage.get(key));
+  saved.money=10;saved.roster[0].available[0]=0;
+  const broke=boot({autoCreate:false,saved});
+  broke.click({"data-action":"go-squad"});
+  assert.match(broke.app.innerHTML,/Insufficient funds: £15 needed/);
+  broke.click({"data-action":"guest"});
+  broke.click({"data-action":"offer","data-player":"6"});
+  let after=JSON.parse(broke.storage.get(key));
+  assert.equal(after.money,10);
+  assert.equal(after.guestAttempts["1:0"],undefined);
+  assert.equal(after.offerAttempts["1:0:6"],undefined);
+  const empty=JSON.parse(base.storage.get(key));
+  empty.roster.forEach(p=>{p.available[0]=0;});
+  const noInviter=boot({autoCreate:false,saved:empty});
+  noInviter.click({"data-action":"go-squad"});
+  noInviter.click({"data-action":"guest"});
+  after=JSON.parse(noInviter.storage.get(key));
+  assert.equal(after.money,empty.money);
+  assert.equal(after.guestAttempts["1:0"],undefined);
+  assert.equal(after.guest[0],undefined);
+  noInviter.click({"data-action":"go-fixtures"});
+  assert.match(noInviter.app.innerHTML,/No eligible goalkeeper/);
+  assert.match(noInviter.app.innerHTML,/Need four eligible outfield players/);
+  assert.match(noInviter.app.innerHTML,/CONFIRM FORFEIT 0–3/);
+});
+
+test("B05 injured players cannot pay to bypass injury and guest medical restrictions",()=>{
+  const original=boot(),key="five-aside-manager-alpha-v1";
+  const saved=JSON.parse(original.storage.get(key));
+  saved.injuries[6]=2;saved.money=19;
+  const g=boot({autoCreate:false,saved});
+  g.click({"data-action":"go-squad"});
+  assert.match(g.app.innerHTML,/Injured/);
+  g.click({"data-action":"offer","data-player":"6"});
+  g.click({"data-action":"physio","data-player":"6"});
+  const after=JSON.parse(g.storage.get(key));
+  assert.equal(after.money,19);
+  assert.equal(after.offerAttempts["1:0:6"],undefined);
+  assert.equal(after.injuries[6],2);
+});

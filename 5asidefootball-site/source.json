@@ -2,7 +2,7 @@
   "project": "5asidefootball",
   "source": "benhorner9/5AsideManager",
   "sourceBranch": "main",
-  "sourceCommit": "fa96e8584e73007f07f0c7ba3897786e025fdbb4",
+  "sourceCommit": "11aeb9ee6fae747196711dbcbd7304c3825f67a6",
   "target": "/5asidefootball.com/",
-  "note": "Final B04 playtest mirror, including correct substituted footballer appearances and scorer records. Direct source FTPS deferred to B16."
+  "note": "B05 complete fixture eligibility, team selection, one-time fee/guest decisions, live substitutions and fatigue. Playtesting bridge; direct source FTPS and physical Safari QA deferred to B16."
 }

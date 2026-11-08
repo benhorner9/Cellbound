@@ -66,7 +66,7 @@
     return p;
   }
   function initial() {
-    return {tab:'overview', club:'Sunday Strikers',clubCreated:false,kit:defaultKit(),money:240, sponsor:35, formation:'1-2-1',style:'balanced',plan:'balanced', offers:{},guest:{},round:0,results:{}, fitness:{},seasonDone:false, season:1,division:8,roster:JSON.parse(JSON.stringify(originalRoster)),registeredCap:12,
+    return {tab:'overview', club:'Sunday Strikers',clubCreated:false,kit:defaultKit(),money:240, sponsor:35, formation:'1-2-1',style:'balanced',plan:'balanced', offers:{},offerAttempts:{},guest:{},guestAttempts:{},round:0,results:{}, fitness:{},seasonDone:false, season:1,division:8,roster:JSON.parse(JSON.stringify(originalRoster)),registeredCap:12,
       market:marketPool(1,8),youth:youthPool(1),training:{},injuries:{},playerStats:{},developmentHistory:{},playerMatchHistory:{},squadView:{position:'all',availability:'all',sort:'rating',group:'position',query:''},profileCompareId:null,lineup:[],lineupRound:0,lineupCustomized:false,
       planBehind:'press',planAhead:'counter',formerGuests:[],seasonHistory:[],financeLog:[{kind:'Starting funds',amount:240,season:1,round:0}],inbox:[],inboxSeq:0,inboxFilter:'all',inboxReturn:false,homeReturn:false,profileReturn:'squad',match:null, log:[], standings:names.map(function(n){return {name:n,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0};}).concat([{name:'Sunday Strikers',played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}])};
   }
@@ -90,7 +90,12 @@
   roster=state.roster;roster.forEach(ensureDetails);state.season=state.season||1;state.division=state.division||8;state.registeredCap=12;
   state.market=state.market||marketPool(state.season,state.division);state.youth=state.youth||youthPool(state.season);
   state.training=state.training||{};state.injuries=state.injuries||{};state.playerStats=state.playerStats||{};state.seasonHistory=state.seasonHistory||[];state.formerGuests=state.formerGuests||[];state.financeLog=state.financeLog||[];
-  state.lineup=state.lineup||[];state.lineupCustomized=!!state.lineupCustomized;
+  state.lineup=Array.isArray(state.lineup)?state.lineup.filter(function(id){return Number.isSafeInteger(id);}):[];
+  state.lineupCustomized=!!state.lineupCustomized;
+  state.offerAttempts=state.offerAttempts&&typeof state.offerAttempts==='object'&&!Array.isArray(state.offerAttempts)?state.offerAttempts:{};
+  state.guestAttempts=state.guestAttempts&&typeof state.guestAttempts==='object'&&!Array.isArray(state.guestAttempts)?state.guestAttempts:{};
+  state.guest=state.guest&&typeof state.guest==='object'&&!Array.isArray(state.guest)?state.guest:{};
+  state.offers=state.offers&&typeof state.offers==='object'&&!Array.isArray(state.offers)?state.offers:{};
   // B04: preserve old/imported games; migrate only new presentation and event-log fields.
   var importedView=state.squadView&&typeof state.squadView==='object'?state.squadView:{};
   state.squadView={
@@ -149,23 +154,81 @@
       kind+' · '+(amount>=0?'+':'−')+money(Math.abs(amount))+'. Balance: '+money(state.money)+'.','finances');
   }
   function fitness(p){return state.fitness[p.id]==null?100:state.fitness[p.id];}
-  function reason(p,round){if(state.injuries[p.id]>round)return 'Injured';if(p.professional)return 'Available';return p.available[round]?'Available':(/student|college|university|apprentice/i.test(p.job)?'Education commitment':/evening|shift/i.test(p.job)?'Work shift':'Work / personal commitment');}
-  function available(p,round){return (p.professional || !!(p.available&&p.available[round]) || !!state.offers[round+':'+p.id]) && !(state.injuries[p.id]>round);}
-  function players(round) {
-    if(round==null) round=state.round;
-    var list=roster.filter(function(p){return available(p,round);}).slice().sort(function(a,b){return b.rating-a.rating;});
-    if(state.guest[round])list.push.apply(list,Array.isArray(state.guest[round])?state.guest[round]:[state.guest[round]]);
+  function reason(p,round){
+    if(state.injuries[p.id]>round)return 'Injured';
+    if(p.professional)return 'Available';
+    return p.available&&p.available[round]?'Available':(/student|college|university|apprentice/i.test(p.job)?'Education commitment':/evening|shift/i.test(p.job)?'Work shift':'Work / personal commitment');
+  }
+  function available(p,round){
+    return (p.professional||!!(p.available&&p.available[round])||!!state.offers[round+':'+p.id])&&!(state.injuries[p.id]>round);
+  }
+  // Attendance and match fitness are separate: future shifts are not retrospectively affected by today's fatigue.
+  function matchEligible(p,round){
+    if(p.id>=100&&p.id<2000)return true; // arrived temporary stand-in; not part of registered career
+    return available(p,round)&&(round!==state.round||fitness(p)>=40);
+  }
+  function eligibilityReason(p,round){
+    if(p.id>=100&&p.id<2000)return 'One-off stand-in · this match only';
+    if(state.injuries[p.id]>round)return 'Injured · physio available for £40';
+    if(!available(p,round)){
+      var offerKey=state.season+':'+round+':'+p.id;
+      return reason(p,round)+(state.offerAttempts[offerKey]?' · already asked':' · appearance offer possible');
+    }
+    if(round===state.round&&fitness(p)<40)return 'Exhausted ('+fitness(p)+'% fit) · rest required';
+    if(round===state.round&&fitness(p)<55)return 'Fatigue risk ('+fitness(p)+'% fit) · consider rotation';
+    return state.offers[round+':'+p.id]?'Appearance offer accepted':'Cleared for fixture';
+  }
+  function guestsAt(round){
+    var raw=state.guest[round];
+    return Array.isArray(raw)?raw:(raw?[raw]:[]);
+  }
+  function guestRequests(round){
+    // Older saves may already contain guests without a separate attempt counter.
+    return Math.min(3,Math.max(0,Number(state.guestAttempts[state.season+':'+round])||0,guestsAt(round).length));
+  }
+  function players(round){
+    if(round==null)round=state.round;
+    var list=roster.filter(function(p){return matchEligible(p,round);}).slice().sort(function(a,b){return b.rating-a.rating;});
+    list.push.apply(list,guestsAt(round));
     return list;
   }
-  function starters(round) {
-    var arr=players(round);var team=[];
-    var goal=arr.find(function(p){return p.pos==='GK';});if(goal)team.push(goal);
-    arr.forEach(function(p){if(team.length<5 && team.indexOf(p)<0)team.push(p);});
-    if(state.match && round===state.match.round && state.match.selectedIds)return state.match.selectedIds.map(function(id){return arr.find(function(p){return p.id===id;});}).filter(Boolean);
-    if(state.lineupCustomized && round===state.lineupRound)return state.lineup.map(function(id){return arr.find(function(p){return p.id===id;});}).filter(Boolean);
-    return team;
+  function recommendFive(round){
+    var arr=players(round);
+    function score(p){return p.rating+Math.min(12,(fitness(p)-65)*.26)+(p.morale||75)*.028;}
+    var keeper=arr.filter(function(p){return p.pos==='GK';}).sort(function(a,b){return score(b)-score(a);})[0];
+    var field=arr.filter(function(p){return p.pos!=='GK';}).sort(function(a,b){return score(b)-score(a);}).slice(0,4);
+    return (keeper?[keeper]:[]).concat(field).slice(0,5);
   }
-  function ready(){var group=starters(state.round);return group.length===5 && group.some(function(p){return p.pos==='GK';});}
+  function starters(round){
+    if(round==null)round=state.round;
+    var arr=players(round);
+    if(state.match&&round===state.match.round&&Array.isArray(state.match.selectedIds))
+      return state.match.selectedIds.map(function(id){return arr.find(function(p){return p.id===id;});}).filter(Boolean);
+    if(state.lineupCustomized&&round===state.lineupRound)
+      return state.lineup.map(function(id){return arr.find(function(p){return p.id===id;});}).filter(Boolean);
+    return recommendFive(round);
+  }
+  function selectionIssues(){
+    var f=fixture(),list=players(state.round),team=starters(state.round),issues=[];
+    if(!f)return ['No fixture scheduled'];
+    if(!list.some(function(p){return p.pos==='GK';}))issues.push('No eligible goalkeeper · resolve a work shift or invite an emergency keeper');
+    if(list.filter(function(p){return p.pos!=='GK';}).length<4)issues.push('Need four eligible outfield players · '+list.filter(function(p){return p.pos!=='GK';}).length+' available');
+    if(team.length!==5)issues.push('Starting five incomplete · '+team.length+' / 5 selected');
+    if(team.filter(function(p){return p.pos==='GK';}).length!==1)issues.push('Exactly one goalkeeper must start');
+    if(new Set(team.map(function(p){return p.id;})).size!==team.length)issues.push('A player cannot be selected twice');
+    if(team.some(function(p){return !list.some(function(x){return x.id===p.id;});}))issues.push('A selected player is unavailable or too exhausted');
+    return issues;
+  }
+  function ready(){return !!fixture()&&selectionIssues().length===0;}
+  function canForfeit(){
+    if(!fixture()||state.match)return false;
+    var list=players(state.round);
+    return !list.some(function(p){return p.pos==='GK';})||list.filter(function(p){return p.pos!=='GK';}).length<4;
+  }
+  function benchPlayers(round){
+    var ids=starters(round).map(function(p){return p.id;});
+    return players(round).filter(function(p){return !ids.includes(p.id);});
+  }
   function develop(p,xp,source){
     ensureDetails(p);
     var startRating=p.rating,startXP=p.xp||0;
@@ -541,9 +604,9 @@
   }
   function playerStatus(p){
     if(!fixture())return {key:'complete',label:'Season finished',why:'No fixtures scheduled'};
-    if(state.injuries[p.id]>state.round)return {key:'injured',label:'Injured',why:'Treatment or recovery required'};
-    if(available(p,state.round))return {key:'available',label:'Available',why:p.professional?'Full-time footballer':state.offers[state.round+':'+p.id]?'Appearance fee accepted':'Clear to play'};
-    return {key:'unavailable',label:'Unavailable',why:reason(p,state.round)};
+    if(state.injuries[p.id]>state.round)return {key:'injured',label:'Injured',why:eligibilityReason(p,state.round)};
+    if(!matchEligible(p,state.round))return {key:'unavailable',label:available(p,state.round)?'Exhausted':'Unavailable',why:eligibilityReason(p,state.round)};
+    return {key:'available',label:'Available',why:eligibilityReason(p,state.round)};
   }
   function squadSorted(){
     var cfg=state.squadView,q=cfg.query.trim().toLocaleLowerCase('en-GB');
@@ -588,6 +651,36 @@
       '<td data-label="FIXTURE STATUS"><span class="squad-status '+status.key+'">'+esc(status.label)+'</span><small>'+esc(status.why)+'</small></td>'+
       '<td data-label="CAREER"><strong>'+rec.appearances+' app · '+rec.goals+' goals</strong><small>'+rec.cleanSheets+' clean sheets</small></td>'+
       '<td data-label="ACTIONS">'+button('VIEW REPORT','profile-player','small primary','data-player="'+p.id+'"')+'</td></tr>';
+  }
+  function availabilityDesk(){
+    var f=fixture();
+    if(!f)return '<section class="card availability-desk"><div class="head"><h2>Fixture availability</h2></div><p>The current season has finished. Players receive new work/study availability when you start another season.</p></section>';
+    // Keep the availability desk in sync with First Team search/position/status filters.
+    var list=squadSorted();
+    var low=list.filter(function(p){return available(p,state.round)&&fitness(p)<55;});
+    var next=fixtureAt(state.round+1),sameNight=next&&next.night===f.night;
+    return '<section class="card availability-desk" aria-label="Fixture availability desk">'+
+      '<div class="head"><div><div class="eyebrow">ROUND '+(state.round+1)+' · '+f.day+' '+f.time+'</div><h2>Fixture availability desk</h2></div>'+
+      button('PICK FIVE','go-tactics','small primary')+'</div>'+
+      '<p>Work and education commitments change by fixture. A £20 offer may persuade an unavailable but fit player to attend; it is charged only on acceptance, and you may ask only once per fixture. Injured players need physio; exhausted players must rest.</p>'+
+      (sameNight?'<div class="rotation-warning"><b>BACK-TO-BACK MATCH NIGHT</b><span>Round '+(state.round+2)+' follows at '+next.time+'. No overnight recovery between these fixtures. Rest tired players or use fresh substitutes.</span></div>':
+       '<p class="fine">Next league fixture: '+(next?next.day+' '+next.time+' · Night '+next.night:'season ends after this match')+'. Players recover between different match nights, not between games on the same evening.</p>')+
+      (low.length?'<p class="fine"><b>Fatigue watch:</b> '+low.slice(0,4).map(function(p){return esc(p.name)+' ('+fitness(p)+'%)';}).join(', ')+'.</p>':'')+
+      '<div class="availability-list">'+list.map(function(p){
+        var status=playerStatus(p),attempted=!!state.offerAttempts[state.season+':'+state.round+':'+p.id];
+        var canOffer=!state.match&&!available(p,state.round)&&!(state.injuries[p.id]>state.round)&&fitness(p)>=40&&!attempted&&state.money>=20;
+        var injured=state.injuries[p.id]>state.round;
+        return '<div class="availability-entry" data-player="'+p.id+'">'+
+          '<div class="availability-person"><strong>'+esc(p.name)+'</strong><small>'+esc(p.pos)+' · '+esc(p.job)+' · '+fitness(p)+'% fit</small></div>'+
+          '<div class="availability-note"><span class="squad-status '+status.key+'">'+esc(status.label)+'</span><small>'+esc(eligibilityReason(p,state.round))+'</small></div>'+
+          '<div class="availability-tools">'+
+          (injured?button('PHYSIO · £40','physio','small warning','data-player="'+p.id+'" '+(state.money<40||state.match?'disabled':'')):
+           !available(p,state.round)?button(attempted?'ALREADY ASKED':state.money<20?'£20 NEEDED':'OFFER £20','offer','small warning',
+              'data-player="'+p.id+'" '+(canOffer?'':'disabled')):
+           fitness(p)<40?badge('REST REQUIRED','amber'):
+           button('REPORT','profile-player','small ghost','data-player="'+p.id+'" data-section="availability"'))+
+          '</div></div>';
+      }).join('')+'</div></section>';
   }
   function squad(){
     var f=fixture(),eligible=f?players().length:0,cfg=state.squadView,filtered=squadSorted();
@@ -645,11 +738,13 @@
       '</section><section class="card"><div class="head"><h2>Emergency cover</h2></div>'+
       '<p>Outside shifts and education may leave gaps. A one-off stand-in is not automatically registered to the club.</p>'+
       guests.map(function(g){return '<div class="squad-guest-row">'+badge('GUEST','grey')+' '+esc(g.name)+' · '+g.pos+' · '+g.rating+' OVR</div>';}).join('')+
-      (f?button('INVITE A FRIEND · £15','guest','primary',guests.length>=3||state.money<15||
-        !roster.some(function(p){return available(p,state.round);})?'disabled':''):
+      (f?button('REQUEST A FRIEND · £15 IF ARRIVED','guest','primary',guestRequests(state.round)>=3||state.money<15||state.match||
+        !roster.some(function(p){return matchEligible(p,state.round);})?'disabled':''):
         '<p class="fine">Guest invitations reopen when a new season begins.</p>')+
-      '<p class="fine">Appearance offers and guest conditions are provisional alpha rules. Full availability management follows in B05.</p></section>'+
-      '</div></div>';
+      '<p class="fine">Stand-in ability varies between 40 and 82 OVR. Arrival is uncertain; £15 is charged only on arrival. Maximum three requests per fixture and guests are never automatically registered.</p>'+
+      '<p class="fine">Requests used: '+guestRequests(state.round)+' / 3. '+
+        (state.money<15?'Insufficient funds: £15 needed.':'You have '+money(state.money)+' in the club balance.')+'</p></section>'+
+      '</div>'+availabilityDesk()+'</div>';
   }
 
   function tactics(){
@@ -660,16 +755,40 @@
     return '<p class="section-intro">Pick your five, set a formation, then prepare an automatic plan for when you cannot attend the match live. You can still issue direct commands during a live simulation.</p>'+
       '<div class="grid"><div class="card"><div class="head"><h2>Formation</h2>'+badge(esc(state.formation),'')+'</div>'+draw(choices,'formation')+
       '<div class="head" style="margin-top:27px"><h2>Live approach</h2></div>'+draw(styles,'style')+'</div>'+
-      '<div class="card"><div class="head"><h2>Your starting five</h2></div><div class="pitch" '+kitVars(state.kit)+'>'+picks.map(function(p){return '<div class="pitch-player"><span class="shirt kit-shirt kit-'+state.kit.pattern+'">'+p.rating+'</span><small>'+esc(p.name.split(' ').pop())+'<br>'+esc(p.pos)+'</small></div>';}).join('')+'</div><p class="fine">Available players not in the starting five will sit on your substitute bench.</p></div>'+
+      '<div class="card"><div class="head"><h2>Your starting five</h2></div><div class="pitch" '+kitVars(state.kit)+'>'+picks.map(function(p){return '<div class="pitch-player"><span class="shirt kit-shirt kit-'+state.kit.pattern+'">'+p.rating+'</span><small>'+esc(p.name.split(' ').pop())+'<br>'+esc(p.pos)+'</small></div>';}).join('')+'</div><p class="fine">Eligible footballers not chosen for the starting five are shown on the explicit substitute bench below. Tired players may be better rested for the next game.</p></div>'+
       '<div class="card"><div class="head"><h2>Automatic match plan</h2></div><p>Starting approach</p>'+draw(styles,'plan')+
       '<p>If losing after 10 minutes</p>'+draw(styles,'planBehind')+
       '<p>If winning after 14 minutes</p>'+draw(styles,'planAhead')+'</div>'+
       '<div>'+lineupView()+'<div class="actions" style="margin-top:16px">'+button('MATCH CENTRE →','go-fixtures','primary')+'</div></div></div>';
   }
   function fixtures(){
-    var f=fixture();
+    var f=fixture(),issues=f?selectionIssues():[],team=starters(state.round),bench=benchPlayers(state.round);
     var rows=names.map(function(n,i){return rowFixture(fixtureAt(i),i);}).join('');
-    return '<div class="grid"><div class="card"><div class="head"><h2>Season fixture list</h2>'+badge('6 MATCHES','grey')+'</div>'+rows+'</div><div><div class="card"><div class="head"><h2>'+(f?'Your next kickoff':'End of season')+'</h2></div>'+(f?'<div class="eyebrow">ROUND '+(state.round+1)+' · '+f.day+' '+f.time+'</div><div class="fixture-feature-identity">'+club(state.club,true)+'<strong>'+esc(state.club)+'</strong></div><h2 style="margin:15px 0 5px"><span class="muted">vs</span> '+esc(f.opponent)+'</h2><p>'+players().length+' players available · '+state.formation+' · '+state.style+' play</p><div class="actions">'+button('WATCH LIVE MATCH','start-live','primary',!ready()?'disabled':'')+button('SIMULATE OFFLINE','start-auto','',!ready()?'disabled':'')+'</div>'+(!ready()?'<div class="banner">Five players, including a goalkeeper, are required to play. If you cannot get a team together, you can concede the fixture 0–3.</div>'+button('FORFEIT 0–3','forfeit','small warning'):''):'<p>All six test fixtures are complete.</p>'+button('START NEXT SEASON →','next-season','primary')+button('League table','go-league','small'))+'</div><div class="card" style="margin-top:16px"><h2>Testing modes</h2><p><b>Live:</b> Watch a 20-minute simulated game, sending simple touchline instructions as it runs.</p><p><b>Offline:</b> Apply your saved pre-match plan instantly. In the eventual online game, real scheduled fixtures will use this plan if you are away.</p></div></div></div>';
+    return '<div class="grid"><div class="card"><div class="head"><h2>Season fixture list</h2>'+badge('6 MATCHES','grey')+'</div>'+rows+'</div>'+
+      '<div><section class="card fixture-readiness" aria-label="Match readiness"><div class="head"><h2>'+(f?'Your next kickoff':'End of season')+'</h2>'+
+      (f?badge(issues.length?'PREPARATION NEEDED':'READY TO PLAY',issues.length?'amber':''):'')+'</div>'+
+      (f?'<div class="eyebrow">ROUND '+(state.round+1)+' · '+f.day+' '+f.time+' · MATCH NIGHT '+f.night+'</div>'+
+        '<div class="fixture-feature-identity">'+club(state.club,true)+'<strong>'+esc(state.club)+'</strong></div>'+
+        '<h2 style="margin:15px 0 5px"><span class="muted">vs</span> '+esc(f.opponent)+'</h2>'+
+        '<p>'+players().length+' eligible footballers · '+team.length+' starting · '+bench.length+' substitutes · '+state.formation+' · '+state.style+' play</p>'+
+        (issues.length?'<div class="selection-match-status blocked" role="status"><strong>KICKOFF IS BLOCKED</strong><ul>'+
+          issues.map(function(item){return '<li>'+esc(item)+'</li>';}).join('')+'</ul></div>':
+          '<div class="selection-match-status ready" role="status"><strong>READY TO PLAY</strong><p>One goalkeeper and four outfield starters. You can watch live or simulate your saved plan.</p></div>')+
+        '<div class="actions fixture-match-actions">'+button('WATCH LIVE MATCH','start-live','primary',issues.length?'disabled':'')+
+        button('SIMULATE OFFLINE','start-auto','',issues.length?'disabled':'')+
+        button('EDIT LINEUP','go-tactics','ghost')+'</div>'+
+        (canForfeit()?'<section class="forfeit-decision"><h3>Unable to field your team?</h3>'+
+          '<p>First consider appearances, physio and one-off guests. Forfeiting is irreversible: a 0–3 defeat, no sponsor income and a £15 administrative penalty. It advances to the next fixture.</p>'+
+          '<div class="actions">'+button('SOLVE AVAILABILITY','go-squad','small primary')+
+          button('CONFIRM FORFEIT 0–3','forfeit','small warning')+'</div></section>':'')+
+        (fixtureAt(state.round+1)&&fixtureAt(state.round+1).night===f.night?
+          '<div class="rotation-warning"><b>BACK-TO-BACK FIXTURES</b><span>Another kickoff follows at '+
+          fixtureAt(state.round+1).time+' tonight. Rotate tired starters. There is no between-game recovery on this match night.</span></div>':''):
+        '<p>All six test fixtures are complete.</p>'+button('START NEXT SEASON →','next-season','primary')+
+        button('League table','go-league','small'))+
+      '</section><div class="card" style="margin-top:16px"><h2>Testing modes</h2>'+
+      '<p><b>Live:</b> Watch a 20-minute simulated game and manage eligible substitutions.</p>'+
+      '<p><b>Offline:</b> Your saved match plan is simulated instantly. In the eventual online game, planned instructions will run while you are away.</p></div></div></div>';
   }
   function league(){
     var sorted=state.standings.slice().sort(sortTable);
@@ -677,9 +796,44 @@
   }
   function match(){
     var m=state.match;if(!m)return fixtures();
-    return '<div class="grid"><div class="card span-all"><div class="match-scoreboard"><div class="home">'+club(state.club,true)+'<span>'+esc(state.club)+'</span></div><div><div class="big-score">'+m.home+' : '+m.away+'</div><div class="minute">'+m.minute+"' / 20'"+(m.auto?' · OFFLINE PLAN':' · LIVE')+'</div></div><div class="away">'+esc(m.opponent)+'</div></div><div class="actions" style="justify-content:center;margin-top:20px">'+(m.auto?'':button('PUSH FORWARD','push','primary',m.minute>=20?'disabled':'')+button('HOLD SHAPE','hold','',m.minute>=20?'disabled':'')+button('ROTATE SUBSTITUTE','substitute','',m.minute>=20?'disabled':''))+button('FINISH MATCH','finish','ghost',m.minute>=20?'':'disabled')+'</div></div><div class="card"><div class="head"><h2>Match commentary</h2>'+badge('LIVE','')+'</div><div class="log" aria-live="polite">'+m.events.slice().reverse().map(function(e){return '<div class="logline '+(e.goal?'goal':'')+'"><strong>'+e.minute+"'</strong><span>"+esc(e.text)+'</span></div>';}).join('')+'</div></div><div class="card"><div class="head"><h2>Touchline instructions</h2></div><div class="detail-list"><div class="detail-line"><span>Formation</span><b>'+esc(state.formation)+'</b></div><div class="detail-line"><span>Team style</span><b>'+esc(state.style)+'</b></div><div class="detail-line"><span>Current instruction</span><b>'+esc(m.instruction)+'</b></div><div class="detail-line"><span>Average squad rating</span><b>'+Math.round(starters(m.round).reduce(function(a,p){return a+p.rating;},0)/5)+'</b></div></div><p class="fine">This is a simplified playable match engine, not the finished real-time football simulation.</p></div></div>';
+    var on=starters(m.round),bench=benchPlayers(m.round),selected=on.find(function(p){return p.id===m.targetOffId;});
+    var canChange=!m.auto&&m.minute<20;
+    var liveBench='<section class="card match-bench" aria-label="Live substitution bench">'+
+      '<div class="head"><div><div class="eyebrow">SUBSTITUTION BOARD · '+m.minute+"'"+'</div>'+
+      '<h2>Pitch & bench</h2></div>'+badge(bench.length+' ON BENCH','grey')+'</div>'+
+      '<p>Select who comes off, then a compatible replacement. Goalkeepers may replace goalkeepers only. Everyone who plays earns a recorded appearance and fatigue depends on actual minutes.</p>'+
+      '<div class="match-sub-layout"><div><h3>On the pitch</h3><div class="match-sub-list">'+on.map(function(p){
+        var isSelected=m.targetOffId===p.id;
+        return '<button class="match-sub-person '+(isSelected?'selected':'')+'" data-action="sub-off" data-player="'+p.id+'"'+(!canChange?' disabled':'')+
+          ' aria-pressed="'+isSelected+'"><b>'+esc(p.name)+'</b><small>'+esc(p.pos)+' · '+p.rating+' OVR · '+fitness(p)+'% fit</small><span>'+(!canChange?'ON PITCH':isSelected?'LEAVING PITCH':'CHOOSE OFF')+'</span></button>';
+      }).join('')+'</div></div><div><h3>Substitute bench</h3><div class="match-sub-list">'+
+      (bench.length?bench.map(function(p){
+        var allowed=selected&&(selected.pos==='GK')===(p.pos==='GK');
+        return '<button class="match-sub-person '+(allowed?'compatible':'')+'" data-action="sub-on" data-player="'+p.id+
+          '"'+(!canChange||!allowed?' disabled':'')+'><b>'+esc(p.name)+'</b><small>'+esc(p.pos)+' · '+p.rating+' OVR · '+fitness(p)+'% fit</small>'+
+          '<span>'+(allowed?'SEND ON':'BENCH')+'</span></button>';
+      }).join(''):'<p>No eligible substitutes. You must finish with your current five.</p>')+'</div></div></div></section>';
+    return '<div class="grid match-centre">'+
+      '<div class="card span-all"><div class="match-scoreboard"><div class="home">'+club(state.club,true)+'<span>'+esc(state.club)+'</span></div>'+
+      '<div><div class="big-score">'+m.home+' : '+m.away+'</div><div class="minute">'+m.minute+"' / 20'"+(m.auto?' · OFFLINE PLAN':' · LIVE')+'</div></div>'+
+      '<div class="away">'+esc(m.opponent)+'</div></div>'+
+      '<div class="actions" style="justify-content:center;margin-top:20px">'+
+      (m.auto?'':button('PUSH FORWARD','push','primary',m.minute>=20?'disabled':'')+
+        button('HOLD SHAPE','hold','',m.minute>=20?'disabled':'')+
+        button('ROTATE SUBSTITUTE','substitute','',m.minute>=20?'disabled':''))+
+      button('FINISH MATCH','finish','ghost',m.minute>=20?'':'disabled')+'</div></div>'+
+      (!m.auto?'<div class="span-all">'+liveBench+'</div>':'')+
+      '<div class="card"><div class="head"><h2>Match commentary</h2>'+badge('LIVE','')+'</div>'+
+      '<div class="log" aria-live="polite">'+m.events.slice().reverse().map(function(e){
+        return '<div class="logline '+(e.goal?'goal':'')+'"><strong>'+e.minute+"'</strong><span>"+esc(e.text)+'</span></div>';
+      }).join('')+'</div></div>'+
+      '<div class="card"><div class="head"><h2>Touchline instructions</h2></div>'+
+      '<div class="detail-list"><div class="detail-line"><span>Formation</span><b>'+esc(state.formation)+'</b></div>'+
+      '<div class="detail-line"><span>Team style</span><b>'+esc(state.style)+'</b></div>'+
+      '<div class="detail-line"><span>Current instruction</span><b>'+esc(m.instruction)+'</b></div>'+
+      '<div class="detail-line"><span>Average squad rating</span><b>'+Math.round(on.reduce(function(sum,p){return sum+p.rating;},0)/Math.max(1,on.length))+'</b></div></div>'+
+      '<p class="fine">The current match engine is an alpha simulation. B07–B08 will deepen actions and visual match presentation.</p></div></div>';
   }
-
   function availableTeam(){return players(state.round);}
 
   // All profile numbers come from the saved player or real simulated appearances.
@@ -725,7 +879,7 @@
     var other=roster.find(function(x){return x.id===state.profileCompareId&&x.id!==p.id;});
     var totalUpcoming=Math.max(0,6-Math.max(0,state.round));
     var eligibleUpcoming=Array.from({length:totalUpcoming},function(_,i){return state.round+i;})
-      .filter(function(i){return available(p,i);}).length;
+      .filter(function(i){return i===state.round?matchEligible(p,i):available(p,i);}).length;
     var reportReturn=state.profileReturn==='overview'?'← BACK TO CLUBHOUSE':'← BACK TO SQUAD';
     var hero='<section class="card player-report-hero"><div class="profile-topline">'+button(reportReturn,'profile-close','small ghost')+
       '<div class="actions">'+button('← PREVIOUS','profile-prev','small',idx<=0?'disabled':'')+
@@ -811,22 +965,28 @@
         badge(eligibleUpcoming+' / '+totalUpcoming+' UPCOMING','grey')+'</div>'+
         '<p>'+esc(p.job)+(p.professional?' · Full-time professional':' · Work or study impacts individual fixtures')+'. Below are confirmed eligibility and recorded match outcomes, not an assumed attendance history.</p>'+
         '<div class="player-fixture-timeline">'+matchSlots.map(function(slot,i){
-          var finished=i<state.round,statusText=finished?'Fixture complete':available(p,i)?'Available':reason(p,i);
+          var finished=i<state.round,statusText=finished?'Fixture complete':
+            (i===state.round?matchEligible(p,i):available(p,i))?'Available':
+            (i===state.round&&available(p,i)?'Exhausted':reason(p,i));
           var r=state.results[i];
           var note=finished?(r?'Result: '+r.home+'–'+r.away+' vs '+r.opponent:'Played · no recorded score'):
             !available(p,i)&&state.injuries[p.id]>i?'Injury · '+esc(reason(p,i)):
-            available(p,i)?state.offers[i+':'+p.id]?'Attendance confirmed by appearance offer':'Eligible for selection':'Commitment: '+reason(p,i);
+            (i===state.round?matchEligible(p,i):available(p,i))?
+              state.offers[i+':'+p.id]?'Attendance confirmed by appearance offer':'Eligible for selection':
+              eligibilityReason(p,i);
           return '<div class="player-fixture-row '+(finished?'past':i===state.round?'current':'future')+'">'+
             '<div><strong>ROUND '+(i+1)+'</strong><small>'+slot[0]+' · '+slot[1]+' · NIGHT '+slot[2]+'</small></div>'+
-            '<div><span class="squad-status '+(finished?'complete':available(p,i)?'available':state.injuries[p.id]>i?'injured':'unavailable')+'">'+esc(statusText)+'</span>'+
+            '<div><span class="squad-status '+(finished?'complete':
+            (i===state.round?matchEligible(p,i):available(p,i))?'available':
+            state.injuries[p.id]>i?'injured':'unavailable')+'">'+esc(statusText)+'</span>'+
             '<small>'+esc(note)+'</small></div></div>';
         }).join('')+'</div></section>'+
         '<section class="card"><div class="head"><h2>Manager action</h2></div>'+
         '<p><b>'+esc(status.label)+'</b> · '+esc(status.why)+'.</p>'+
         (f&&state.injuries[p.id]>state.round?button('PHYSIO TREATMENT · £40','physio','warning',
-          'data-player="'+p.id+'" '+(state.money<40?'disabled':'') ):
+          'data-player="'+p.id+'" '+(state.money<40||state.match?'disabled':'') ):
           f&&!available(p,state.round)?button('OFFER £20 TO ATTEND','offer','primary',
-          'data-player="'+p.id+'" '+(state.money<20||state.offerAttempts&&state.offerAttempts[state.season+':'+state.round+':'+p.id]?'disabled':'') ):
+          'data-player="'+p.id+'" '+(state.money<20||state.match||fitness(p)<40||state.offerAttempts&&state.offerAttempts[state.season+':'+state.round+':'+p.id]?'disabled':'') ):
           f?button('REVIEW STARTING FIVE','go-tactics','primary'):button('START NEXT SEASON','next-season','primary'))+
         '<p class="fine">Appearance fees are only charged if accepted. Injured footballers cannot play until cleared; guest invites and detailed squad availability are expanded in B05.</p></section></div>';
     }
@@ -844,18 +1004,51 @@
     return '<div class="player-row"><span class="avatar '+(p.pos==='GK'?'gk':'')+'">'+esc(p.name[0])+'</span><div class="player-main"><b>'+esc(p.name)+(p.professional?' ★':'')+'</b><small>'+p.pos+' · '+esc(p.job)+' · age '+(p.age||22)+' · fitness '+fitness(p)+'% · morale '+p.morale+'% · '+esc(note)+'</small></div><span class="rating">'+p.rating+'</span><div style="text-align:right">'+(a?badge('AVAILABLE',''):injured?badge('INJURED','red'):button('Offer £20','offer','small warning','data-player="'+p.id+'" '+(state.money<20?'disabled':'')))+button('PROFILE','profile-player','small ghost','data-player="'+p.id+'"')+'</div></div>';
   }
   function lineupView(){
-    if(!fixture())return '';
-    var selected=starters(state.round),availablePlayers=availableTeam();
-    return '<div class="card"><div class="head"><h2>Pick your starting five</h2>'+badge(selected.length+'/5 SELECTED',selected.length===5?'':'amber')+'</div><p>Choose exactly five available players, including a goalkeeper. Your remaining available players become substitutes.</p>'+
-      '<div class="lineup-grid">'+availablePlayers.map(function(p){var chosen=selected.some(function(x){return x.id===p.id;});return '<button class="tactic-choice '+(chosen?'selected':'')+'" data-action="lineup" data-player="'+p.id+'"><b>'+(chosen?'✓ ':'')+esc(p.name)+'</b><small>'+p.pos+' · '+p.rating+' OVR · '+fitness(p)+'% fit'+(chosen?' · STARTER':' · BENCH')+'</small></button>';}).join('')+'</div>'+
-      '<div class="actions" style="margin-top:15px">'+button('AUTO SELECT BEST FIVE','auto-pick','small')+'</div></div>';
+    var f=fixture();
+    if(!f)return '';
+    var selected=starters(state.round),availablePlayers=availableTeam(),bench=benchPlayers(state.round);
+    var issues=selectionIssues(),next=fixtureAt(state.round+1);
+    var sameNight=next&&next.night===f.night;
+    function playerChip(p,slot){
+      var chosen=selected.some(function(x){return x.id===p.id;});
+      var label=slot==='starter'?'✓ STARTING':slot==='bench'?'SUBSTITUTE':'UNAVAILABLE';
+      var fatigue=fitness(p),note=p.id>=100&&p.id<2000?'GUEST · THIS FIXTURE':eligibilityReason(p,state.round);
+      return '<button class="selection-player '+(chosen?'selected':'')+
+        (fatigue<55?' tired':'')+'" data-action="lineup" data-player="'+p.id+'" aria-pressed="'+chosen+'"'+
+        (state.match||slot==='unavailable'?' disabled':'')+'>'+
+        '<span class="selection-shirt '+(p.pos==='GK'?'keeper':'')+'">'+esc(p.pos)+'</span>'+
+        '<span class="selection-player-info"><b>'+esc(p.name)+'</b><small>'+p.rating+' OVR · '+fatigue+'% fitness · '+esc(note)+'</small></span>'+
+        '<span class="selection-label">'+label+'</span></button>';
+    }
+    var missing=roster.filter(function(p){return !matchEligible(p,state.round);});
+    return '<section class="card lineup-manager" aria-label="Match selection and substitutes">'+
+      '<div class="head"><div><div class="eyebrow">ROUND '+(state.round+1)+' · '+f.day+' '+f.time+'</div>'+
+      '<h2>Pick your starting five</h2></div>'+badge(selected.length+'/5 SELECTED',issues.length?'amber':'')+'</div>'+
+      '<p>Select one eligible goalkeeper and four outfield players. Tap a starter to remove them, or tap a bench player to select them. Selecting another goalkeeper swaps your keeper automatically.</p>'+
+      '<div class="selection-match-status '+(issues.length?'blocked':'ready')+'" role="status">'+
+        (issues.length?'<strong>KICKOFF BLOCKED</strong><ul>'+issues.map(function(msg){return '<li>'+esc(msg)+'</li>';}).join('')+'</ul>':
+          '<strong>READY FOR KICKOFF</strong><p>One goalkeeper, four outfield players, '+bench.length+' substitutes available.</p>')+'</div>'+
+      (sameNight?'<div class="rotation-warning"><b>MULTI-MATCH NIGHT</b><span>Your next game kicks off at '+next.time+' on the same evening. Players will not recover between these fixtures. Plan for rotation.</span></div>':'')+
+      '<div class="selection-layout"><div><div class="selection-subheading"><h3>Starting five</h3><span>'+selected.length+' / 5</span></div>'+
+      '<div class="selection-pitch" '+kitVars(state.kit)+'>'+selected.map(function(p){return playerChip(p,'starter');}).join('')+
+        (selected.length<5?Array.from({length:5-selected.length},function(){return '<div class="selection-empty">EMPTY STARTING SPOT</div>';}).join(''):'')+'</div></div>'+
+      '<div><div class="selection-subheading"><h3>Substitute bench</h3><span>'+bench.length+' eligible</span></div>'+
+      '<div class="selection-bench">'+(bench.length?bench.map(function(p){return playerChip(p,'bench');}).join(''):
+        '<div class="selection-empty">No eligible substitutes. Check availability or guest options.</div>')+'</div></div></div>'+
+      '<div class="selection-actions">'+button('SUGGEST BEST FIT FIVE','auto-pick','primary',state.match?'disabled':'')+
+        button('OPEN AVAILABILITY DESK','go-squad','ghost')+button('GO TO KICKOFF','go-fixtures','ghost')+'</div>'+
+      (missing.length?'<details class="selection-absent"><summary>Unavailable / exhausted squad members ('+missing.length+')</summary>'+
+        missing.map(function(p){return '<div class="selection-unavailable"><b>'+esc(p.name)+'</b><span>'+esc(eligibilityReason(p,state.round))+'</span>'+
+          button('REPORT','profile-player','small ghost','data-player="'+p.id+'" data-section="availability"')+'</div>';}).join('')+'</details>':'')+
+      '</section>';
   }
+
   function trainingView(){
     var f=fixture(),key=state.season+':'+state.round,done=!!state.training[key];
     var options=[['passing','Passing & movement','Work on possession and combination play.'],['finishing','Shooting & finishing','Give attacking players extra development.'],['defending','Shape & defending','Prioritise your defensive unit and keeper.'],['fitness','Fitness & recovery','Improve fitness, with less technical development.']];
     return '<p class="section-intro">Train between matches, develop young players and manage fatigue. Sessions can only be used once before each fixture. On back-to-back match nights, fresh legs are valuable.</p>'+
-      '<div class="metrics"><div class="metric"><small>REGISTERED</small><strong>'+roster.length+' / 12</strong></div><div class="metric"><small>AVG FITNESS</small><strong>'+Math.round(roster.reduce(function(sum,p){return sum+fitness(p);},0)/Math.max(1,roster.length))+'%</strong></div><div class="metric"><small>TRAINING COST</small><strong>£12</strong></div><div class="metric"><small>SESSION</small><strong>'+(done?'DONE':f?'READY':'—')+'</strong></div></div>'+
-      (f?'<div class="card"><div class="head"><h2>Training focus</h2>'+badge('BEFORE ROUND '+(state.round+1),'grey')+'</div><div class="tactic-grid">'+options.map(function(o){return '<button class="tactic-choice" data-action="train" data-value="'+o[0]+'" '+(done||state.money<12?'disabled':'')+'><b>'+o[1]+'</b><small>'+o[2]+'</small></button>';}).join('')+'</div>'+(done?'<div class="banner success">You have completed this fixture’s training session.</div>':'<p class="fine">A training session costs £12. Technical work creates some fatigue; recovery work restores it.</p>')+'</div>':'<div class="banner">The season is complete. Begin the next season to schedule more training.</div>')+
+      '<div class="metrics"><div class="metric"><small>REGISTERED</small><strong>'+roster.length+' / 12</strong></div><div class="metric"><small>AVG FITNESS</small><strong>'+Math.round(roster.reduce(function(sum,p){return sum+fitness(p);},0)/Math.max(1,roster.length))+'%</strong></div><div class="metric"><small>TRAINING COST</small><strong>£12</strong></div><div class="metric"><small>SESSION</small><strong>'+(done?'DONE':state.match?'IN MATCH':f?'READY':'—')+'</strong></div></div>'+
+      (f?'<div class="card"><div class="head"><h2>Training focus</h2>'+badge('BEFORE ROUND '+(state.round+1),'grey')+'</div><div class="tactic-grid">'+options.map(function(o){return '<button class="tactic-choice" data-action="train" data-value="'+o[0]+'" '+(done||state.match||state.money<12?'disabled':'')+'><b>'+o[1]+'</b><small>'+o[2]+'</small></button>';}).join('')+'</div>'+(done?'<div class="banner success">You have completed this fixture’s training session.</div>':'<p class="fine">A training session costs £12. Technical work creates some fatigue; recovery work restores it.</p>')+'</div>':'<div class="banner">The season is complete. Begin the next season to schedule more training.</div>')+
       '<div class="card" style="margin-top:16px"><div class="head"><h2>Player development</h2></div>'+
       roster.map(function(p){var progress=Math.min(100,Math.round(100*(p.xp||0)/Math.max(1,70+(p.rating-45)*5)));return '<div class="training-player"><b>'+esc(p.name)+'</b><span>'+p.rating+' / '+(p.potential||Math.min(88,p.rating+10))+' potential · '+progress+'% towards next improvement</span><div class="progress"><span style="width:'+progress+'%"></span></div></div>';}).join('')+'</div>';
   }
@@ -918,7 +1111,7 @@
     pushInbox('league','Season '+prior+' review', 'Finished '+(rank===1?'1st':rank===2?'2nd':rank===3?'3rd':rank+'th')+
       ' in Division '+old+'. '+(state.division<old?'Promoted to Division '+state.division+'.':state.division>old?'Relegated to Division '+state.division+'.':'Division '+state.division+' retained.')+
       ' '+money(prize)+' prize.','career');
-    state.season++;state.round=0;state.results={};state.offers={};state.guest={};state.training={};state.injuries={};
+    state.season++;state.round=0;state.results={};state.offers={};state.offerAttempts={};state.guest={};state.guestAttempts={};state.training={};state.injuries={};
     state.lineup=[];state.lineupCustomized=false;state.lineupRound=0;
     state.standings=names.map(function(n){return {name:n,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0};}).concat([{name:'Sunday Strikers',played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}]);
     roster.forEach(function(p){
@@ -932,6 +1125,20 @@
     pushInbox('availability','New season availability',roster.filter(function(p){return available(p,0);}).length+
       ' registered players are eligible for round 1 of season '+state.season+'. Work, education and shifts may affect selection.','squad');
     notice('Season '+prior+' finished '+(rank<=2?'with promotion':rank>=6?'in the relegation places':'in mid-table')+'. Division '+state.division+' is ready. '+money(prize)+' prize received.');
+  }
+  function applySubstitution(off,on){
+    var m=state.match;
+    if(!m||m.minute>=20||!off||!on)return false;
+    if(!m.selectedIds.includes(off.id)||m.selectedIds.includes(on.id)||
+       (off.pos==='GK')!==(on.pos==='GK')||!players(m.round).some(function(p){return p.id===on.id;}))return false;
+    if(!Array.isArray(m.participantIds))m.participantIds=m.selectedIds.slice();
+    if(!m.participantIds.includes(on.id))m.participantIds.push(on.id);
+    if(!m.minutes||typeof m.minutes!=='object')m.minutes={};
+    if(m.minutes[on.id]==null)m.minutes[on.id]=0;
+    m.selectedIds[m.selectedIds.indexOf(off.id)]=on.id;
+    m.targetOffId=null;
+    m.events.push({minute:m.minute,text:'Substitution: '+on.name+' replaces '+off.name+'.'});
+    render();return true;
   }
   function extraAction(action,target){
     var id=Number(target.getAttribute('data-player')),p,fee,f=fixture();
@@ -991,30 +1198,44 @@
     }
     if(action==='physio'){
       p=roster.find(function(x){return x.id===id;});
-      if(!p||!(state.injuries[id]>state.round)||state.money<40)return true;
+      if(!p||state.match||!(state.injuries[id]>state.round)||state.money<40)return true;
       ledger('Physio care: '+p.name,-40);state.injuries[id]=state.round;state.fitness[id]=Math.max(70,fitness(p));
       pushInbox('injury','Player cleared for selection',p.name+' completed physio treatment. Check fixture eligibility.','squad');
       notice(p.name+' completed treatment and is available for selection.');return true;
     }
     if(action==='forfeit'){
-      if(!f||state.match||ready())return true;
+      // A manager cannot take a shortcut for an incomplete manual selection when a real five is available.
+      if(!canForfeit())return true;
       if(!confirm('Forfeit this match 0–3? You will not receive sponsorship and a £15 admin penalty applies.'))return true;
       state.match={round:state.round,opponent:f.opponent,minute:20,home:0,away:3,instruction:'balanced',auto:true,forfeit:true,selectedIds:[],events:[{minute:20,text:'Fixture forfeited. No eligible team available.'}]};
       finish();return true;
     }
     if(action==='next-season'){nextSeason();return true;}
-    if(action==='auto-pick'){state.lineup=[];state.lineupCustomized=false;notice('The best available starting five have been selected.');return true;}
+    if(action==='auto-pick'){
+      if(!f||state.match)return true;
+      state.lineup=[];state.lineupCustomized=false;
+      notice('The best eligible five have been suggested, balancing playing ability with current fitness.');return true;
+    }
     if(action==='lineup'){
-      if(!f)return true;
+      if(!f||state.match)return true;
       p=players().find(function(x){return x.id===id;});if(!p)return true;
-      if(!state.lineupCustomized || state.lineupRound!==state.round){state.lineup=starters(state.round).map(function(x){return x.id;});state.lineupCustomized=true;state.lineupRound=state.round;}
+      if(!state.lineupCustomized||state.lineupRound!==state.round){
+        state.lineup=starters(state.round).map(function(x){return x.id;});
+        state.lineupCustomized=true;state.lineupRound=state.round;
+      }
       if(state.lineup.includes(id))state.lineup=state.lineup.filter(function(x){return x!==id;});
-      else if(state.lineup.length<5)state.lineup.push(id);
-      else{notice('Deselect a starter before selecting another player.');return true;}
+      else if(p.pos==='GK'){
+        // A five-a-side team can start only one keeper; swapping keepers is one touch.
+        var oldKeeper=state.lineup.find(function(id){return players().some(function(x){return x.id===id&&x.pos==='GK';});});
+        if(oldKeeper!=null)state.lineup=state.lineup.map(function(x){return x===oldKeeper?id:x;});
+        else if(state.lineup.length<5)state.lineup.unshift(id);
+        else{notice('Deselect an outfield starter to make room for the goalkeeper.');return true;}
+      }else if(state.lineup.length<5)state.lineup.push(id);
+      else{notice('Deselect a starter before adding '+p.name+' to your five.');return true;}
       toast='';render();return true;
     }
     if(action==='train'){
-      if(!f)return true;var key=state.season+':'+state.round,focus=target.getAttribute('data-value');
+      if(!f||state.match)return true;var key=state.season+':'+state.round,focus=target.getAttribute('data-value');
       if(state.training[key]||state.money<12)return true;
       if(!['passing','finishing','defending','fitness'].includes(focus))return true;
       ledger('Training: '+focus,-12);state.training[key]=focus;
@@ -1062,10 +1283,13 @@
       notice(p.name+' has left your squad.');return true;
     }
     if(action==='offer'){
-      p=roster.find(function(x){return x.id===id;});if(!p||!f||available(p,state.round)||state.money<20||(state.injuries[id]>state.round))return true;
-      state.offerAttempts=state.offerAttempts||{};
+      p=roster.find(function(x){return x.id===id;});
+      if(!p||!f||state.match||available(p,state.round)||state.money<20||
+         state.injuries[id]>state.round||fitness(p)<40)return true;
       var key=state.season+':'+state.round+':'+id;
       if(state.offerAttempts[key]){notice('You have already asked '+p.name+' about this fixture.');return true;}
+      if(!confirm('Ask '+p.name+' to change their '+reason(p,state.round).toLowerCase()+
+        ' for round '+(state.round+1)+'? An appearance fee of £20 applies only if accepted. One request per player per fixture.'))return true;
       state.offerAttempts[key]=true;
       var odds=/shift|evening/i.test(p.job)?.62:/college|university|student/i.test(p.job)?.54:.75;
       if(Math.random()<odds){
@@ -1079,29 +1303,60 @@
       return true;
     }
     if(action==='guest'){
-      if(!f||state.money<15||!roster.some(function(x){return available(x,state.round);}))return true;
-      var current=state.guest[state.round]?(Array.isArray(state.guest[state.round])?state.guest[state.round]:[state.guest[state.round]]):[];
-      if(current.length>=3)return true;
+      if(!f||state.match||state.money<15)return true;
+      var inviters=roster.filter(function(p){return matchEligible(p,state.round);});
+      if(!inviters.length){notice('At least one eligible registered player must invite their friend.');return true;}
+      var current=guestsAt(state.round),attempts=guestRequests(state.round);
+      if(attempts>=3){notice('All three guest requests for this fixture have been used.');return true;}
+      if(!confirm('Ask a registered squad member to bring a stand-in for round '+(state.round+1)+
+        '? Up to three requests are allowed per fixture. Arrival is not guaranteed and ability (40–82 OVR) is unknown until arrival. £15 is charged ONLY if a friend arrives. A guest plays this fixture only and is never automatically registered.'))return true;
+      var requestKey=state.season+':'+state.round;
+      state.guestAttempts[requestKey]=attempts+1;
+      var inviter=inviters[attempts%inviters.length];
+      if(Math.random()>=.85){
+        pushInbox('availability','Guest request unsuccessful',
+          inviter.name+' could not find a friend for round '+(state.round+1)+'. No fee was charged. '+(2-attempts)+' requests remain.','squad');
+        notice(inviter.name+' could not bring a friend. No fee charged. Try another request if available.');
+        return true;
+      }
       var friends=['Taylor Clarke','Morgan Price','Riley Scott','Jordan Ellis','Casey Hall','Avery Lewis','Frankie Wood','Jesse Brown'];
-      p=roster.filter(function(x){return available(x,state.round);})[current.length%roster.filter(function(x){return available(x,state.round);}).length];
       var needsGoalkeeper=!players(state.round).some(function(x){return x.pos==='GK';});
-      var guest={id:100+state.round*10+current.length,name:friends[(state.round+state.season+current.length)%friends.length],
-        pos:needsGoalkeeper?'GK':current.length%2?'DEF':'FWD',rating:40+Math.floor(Math.random()*43)};
-      current.push(guest);state.guest[state.round]=current;ledger('Stand-in introduced by '+p.name,-15);
-      pushInbox('availability','Stand-in arrived',guest.name+' is available as a '+guest.pos+' for round '+(state.round+1)+' only.','squad');
-      notice(p.name+' brought '+guest.name+' along. '+guest.rating+' overall · '+guest.pos+' · guest for this match only.');return true;
+      var guest={id:100+state.round*10+current.length,
+        name:friends[(state.round+state.season+attempts)%friends.length],
+        pos:needsGoalkeeper?'GK':attempts%2?'DEF':'FWD',
+        rating:40+Math.floor(Math.random()*43)};
+      current.push(guest);state.guest[state.round]=current;
+      ledger('Stand-in introduced by '+inviter.name,-15);
+      pushInbox('availability','Stand-in arrived',guest.name+' can play as '+guest.pos+' in round '+(state.round+1)+
+        ' only. '+guest.rating+' OVR revealed on arrival; not registered for future fixtures.','squad');
+      notice(inviter.name+' introduced '+guest.name+' ('+guest.pos+', '+guest.rating+
+        ' OVR). £15 charged. One fixture only; future signing is a separate manager choice.');
+      return true;
+    }
+    if(action==='sub-off'){
+      if(!state.match||state.match.minute>=20)return true;
+      if(state.match.selectedIds.includes(id))state.match.targetOffId=id;
+      render();return true;
+    }
+    if(action==='sub-on'){
+      if(!state.match||state.match.minute>=20)return true;
+      var currentTeam=starters(state.match.round),candidate=benchPlayers(state.match.round).find(function(x){return x.id===id;});
+      var off=currentTeam.find(function(x){return x.id===state.match.targetOffId;});
+      if(!candidate||!off){notice('Choose a player on the pitch first, then select the replacement on the bench.');return true;}
+      if((candidate.pos==='GK')!==(off.pos==='GK')){
+        notice('A goalkeeper must replace a goalkeeper; choose a matching bench option.');return true;
+      }
+      applySubstitution(off,candidate);return true;
     }
     if(action==='substitute'){
       if(!state.match||state.match.minute>=20)return true;
-      var m=state.match,used=starters(m.round),bench=players(m.round).filter(function(x){return !used.some(function(p){return p.id===x.id;});});
-      var on=bench.sort(function(a,b){return b.rating-a.rating;})[0],off=used.filter(function(p){return p.pos!=='GK';}).sort(function(a,b){return fitness(a)-fitness(b);})[0];
-      if(!on||!off){notice('No substitute is available.');return true;}
-      // Keep every actual participant, including the footballer who just went off.
-      if(!Array.isArray(m.participantIds))m.participantIds=m.selectedIds.slice();
-      if(!m.participantIds.includes(on.id))m.participantIds.push(on.id);
-      m.selectedIds[m.selectedIds.indexOf(off.id)]=on.id;
-      m.events.push({minute:m.minute,text:'Substitution: '+on.name+' replaces '+off.name+'.'});
-      render();return true;
+      var m=state.match,team=starters(m.round),bench=benchPlayers(m.round);
+      var off=team.filter(function(p){return p.pos!=='GK';}).sort(function(a,b){return fitness(a)-fitness(b);})[0];
+      var on=bench.filter(function(p){return p.pos!=='GK';}).sort(function(a,b){
+        return (b.rating+fitness(b)*.2)-(a.rating+fitness(a)*.2);
+      })[0];
+      if(!off||!on){notice('No compatible outfield substitute is available. Open the bench panel for a goalkeeper change.');return true;}
+      applySubstitution(off,on);return true;
     }
     return false;
   }
@@ -1123,7 +1378,9 @@
   }
   function randomGoal(chance){return Math.random()<chance;}
   function tick() {
-    var m=state.match;if(!m || m.minute>=20)return;
+    var m=state.match;if(!m||m.minute>=20)return;
+    if(!m.minutes||typeof m.minutes!=='object')m.minutes={};
+    (m.selectedIds||[]).forEach(function(id){m.minutes[id]=(m.minutes[id]||0)+2;});
     m.minute+=2;
     var team=starters(m.round),mean=team.reduce(function(a,p){
       ensureDetails(p);
@@ -1181,12 +1438,15 @@
         var history=state.playerMatchHistory[p.id]||(state.playerMatchHistory[p.id]=[]);
         history.push({season:state.season,round:state.round,opponent:f.opponent,
           home:m.home,away:m.away,goals:matchGoals[p.id]||0,
-          cleanSheet:p.pos==='GK'&&m.away===0,position:p.pos});
+          cleanSheet:p.pos==='GK'&&m.away===0,position:p.pos,
+          minutes:m.minutes&&Number.isFinite(m.minutes[p.id])?m.minutes[p.id]:20});
         if(history.length>40)history.splice(0,history.length-40);
       });
       played.forEach(function(p){
         if(p.id>=100 && p.id<2000)return;
-        state.fitness[p.id]=Math.max(35,fitness(p)-(state.style==='press'||m.instruction==='press'?20:14));
+        var minutes=m.minutes&&Number.isFinite(m.minutes[p.id])?m.minutes[p.id]:20;
+        var fatigueCost=Math.max(3,Math.round((state.style==='press'||m.instruction==='press'?20:14)*minutes/20));
+        state.fitness[p.id]=Math.max(35,fitness(p)-fatigueCost);
         develop(p,22+(m.home>m.away?8:0),'Match: '+f.opponent);
         p.morale=clamp(p.morale+(m.home>m.away?4:m.home===m.away?1:-3),35,100);
         if(Math.random()<.025 && !p.professional){
@@ -1222,7 +1482,7 @@
     if(!fixture()||state.match)return;
     if(!ready()){notice('You need five available players including a goalkeeper before kickoff.');return;}
     toast='';
-    state.match={round:state.round,opponent:fixture().opponent,minute:0,home:0,away:0,instruction:state.plan,auto:auto,selectedIds:starters(state.round).map(function(p){return p.id;}),events:[{minute:0,text:'Kickoff! '+state.club+' take on '+fixture().opponent+'.'}]};
+    state.match={round:state.round,opponent:fixture().opponent,minute:0,home:0,away:0,instruction:state.plan,auto:auto,selectedIds:starters(state.round).map(function(p){return p.id;}),minutes:{},events:[{minute:0,text:'Kickoff! '+state.club+' take on '+fixture().opponent+'.'}]};
     state.match.participantIds=state.match.selectedIds.slice();
     state.tab='match';
     if(auto){for(var i=0;i<10;i++)tick();render();}
