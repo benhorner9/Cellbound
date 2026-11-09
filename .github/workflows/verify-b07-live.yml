@@ -1,0 +1,60 @@
+name: Independent B07 live release verification - no artifacts
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-b07-live.yml'
+permissions:
+  contents: read
+jobs:
+  verify-b07-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm expected hosted source and bridge commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://playcellbound.com/5asidefootball.com'
+          matched=0
+          for attempt in $(seq 1 42); do
+            if curl -fsSL --retry 1 --max-time 20 "$base/build-meta.json?verification=$GITHUB_RUN_ID-$attempt" -o /tmp/b07-live-meta.json; then
+              if node -e "const m=require('/tmp/b07-live-meta.json');if(m.bridgeCommit!=='6b3c87a5344d37e9a1e6eb8a393a0b1a5b3d149e'||m.sourceCommit!=='6a6d7663baca8c0edede759c71c0b3224302bf06'||m.target!=='/5asidefootball.com/')process.exit(1)"; then
+                matched=1
+                break
+              fi
+            fi
+            echo "Waiting for the exact isolated B07 source/bridge deployment ($attempt)"
+            sleep 10
+          done
+          test "$matched" = "1"
+          echo "PASS: hosted B07 source and bridge commits exactly match the verified merge"
+      - name: Compare all hosted B07 assets against merged bridge source
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://playcellbound.com/5asidefootball.com'
+          for file in index.html styles.css match-engine.js game.js source.json save-transfer.html; do
+            curl -fsSL --retry 2 --max-time 30 "$base/$file?check=$GITHUB_RUN_ID" -o "/tmp/b07-live-$file"
+            cmp "5asidefootball-site/$file" "/tmp/b07-live-$file"
+          done
+          curl -fsSL --retry 2 --max-time 30 "$base/?check=$GITHUB_RUN_ID" -o /tmp/b07-live-root.html
+          cmp 5asidefootball-site/index.html /tmp/b07-live-root.html
+          echo "PASS: B07 live source, engine, HTML, styles and save transfer are byte-identical"
+      - name: Run seeded engine and all historical functional regressions
+        working-directory: 5asidefootball-site
+        run: |
+          node --check match-engine.js
+          node --check game.js
+          node --test tests/smoke.test.cjs
+      - name: Install Chromium and WebKit without creating artifacts
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Run all six hosted browser and responsive interaction checks
+        env:
+          B06_BASE_URL: https://playcellbound.com/5asidefootball.com/
+        run: node 5asidefootball-site/qa/b06-ui.cjs
