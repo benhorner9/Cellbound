@@ -1,0 +1,38 @@
+name: B07 5 Aside engine validation - no artifacts
+on:
+  pull_request:
+    paths:
+      - '5asidefootball-site/**'
+      - '.github/workflows/test-5aside-b07.yml'
+  push:
+    branches: [b07-fiveaside-test-release]
+    paths:
+      - '5asidefootball-site/**'
+      - '.github/workflows/test-5aside-b07.yml'
+permissions:
+  contents: read
+jobs:
+  b07-engine-tests:
+    name: B01-B07 regression and seeded engine checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: 5asidefootball-site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check match-engine.js
+          node --check game.js
+      - name: Run complete offline functional and B07 deterministic tests
+        run: node --test tests/smoke.test.cjs
+      - name: Assert proper static asset loading and original save key
+        run: |
+          test -s match-engine.js
+          grep -F 'src="./match-engine.js?v=b07-seeded-20261109"' index.html
+          grep -F 'src="./game.js?v=b07-seeded-20261109"' index.html
+          grep -F "five-aside-manager-alpha-v1" game.js
