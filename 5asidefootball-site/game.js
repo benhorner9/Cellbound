@@ -952,6 +952,19 @@
   function fixtures(){
     var f=fixture(),issues=f?selectionIssues():[],team=starters(state.round),bench=benchPlayers(state.round);
     var rows=names.map(function(n,i){return rowFixture(fixtureAt(i),i);}).join('');
+    var latest=state.matchReports[state.season+':'+(state.round-1)];
+    var recap=latest?'<section class="card span-all b07-recap" aria-label="Previous match event report">'+
+      '<div class="head"><div><div class="eyebrow">SEE WHAT REALLY HAPPENED</div><h2>Previous match report</h2></div>'+
+      badge('SEED '+latest.seed,'grey')+'</div>'+
+      '<p><b>'+esc(state.club)+' '+latest.home+'–'+latest.away+' '+esc(latest.opponent)+'</b></p>'+
+      '<div class="b07-match-stats">Shots '+latest.metrics.shotsFor+'–'+latest.metrics.shotsAgainst+
+      ' · On target '+latest.metrics.onTargetFor+'–'+latest.metrics.onTargetAgainst+
+      ' · Keeper saves '+latest.metrics.savesFor+
+      ' · Possession '+latest.metrics.possession+'%</div>'+
+      '<div class="log">'+latest.events.filter(function(e){return e.goal||e.type==='save'||e.type==='saved-shot';}).slice(-8).reverse().map(function(e){
+        return '<div class="logline '+(e.goal?'goal':'')+'"><strong>'+e.minute+"'" +'</strong><span>'+esc(e.text)+'</span></div>';
+      }).join('')+'</div>'+
+      '<p class="fine">Every scorer and shot in this match is stored in your club save. The same seed and decisions reproduce the result.</p></section>':'';
     return '<div class="grid"><div class="card"><div class="head"><h2>Season fixture list</h2>'+badge('6 MATCHES','grey')+'</div>'+rows+'</div>'+
       '<div><section class="card fixture-readiness" aria-label="Match readiness"><div class="head"><h2>'+(f?'Your next kickoff':'End of season')+'</h2>'+
       (f?badge(issues.length?'PREPARATION NEEDED':'READY TO PLAY',issues.length?'amber':''):'')+'</div>'+
@@ -976,7 +989,7 @@
         button('League table','go-league','small'))+
       '</section><div class="card" style="margin-top:16px"><h2>Testing modes</h2>'+
       '<p><b>Live:</b> Watch a 20-minute simulated game and manage eligible substitutions.</p>'+
-      '<p><b>Offline:</b> Your saved match plan is simulated instantly. In the eventual online game, planned instructions will run while you are away.</p></div></div></div>';
+      '<p><b>Offline:</b> Your saved match plan is simulated instantly. In the eventual online game, planned instructions will run while you are away.</p></div></div>'+recap+'</div>';
   }
   function league(){
     var sorted=state.standings.slice().sort(sortTable);
@@ -1721,7 +1734,7 @@
     if(!m.forfeit&&!FiveAsideEngine.verify(m)){notice('Match totals did not reconcile. Result not recorded.');return;}
     var f=fixture();
     var metrics={shotsFor:m.shotsFor||0,shotsAgainst:m.shotsAgainst||0,onTargetFor:m.onTargetFor||0,
-      onTargetAgainst:m.onTargetAgainst||0,savesFor:m.savesFor||0,
+      onTargetAgainst:m.onTargetAgainst||0,savesFor:m.savesFor||0,savesAgainst:m.savesAgainst||0,
       possession:m.phases?Math.round(m.possessionSum/m.phases):50};
     state.results[f.id]={home:m.home,away:m.away,opponent:f.opponent,metrics:metrics};
     updateTable('Sunday Strikers',m.home,m.away);updateTable(f.opponent,m.away,m.home);
