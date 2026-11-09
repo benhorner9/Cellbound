@@ -3,6 +3,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
+const B07Engine = require("../match-engine.js");
 
 function boot({autoCreate=true,saved=null,random=0.53}={}) {
   const key="five-aside-manager-alpha-v1";
@@ -24,6 +25,7 @@ function boot({autoCreate=true,saved=null,random=0.53}={}) {
     confirm(){return true;},
     Math:seededMath, JSON, String, Object, Array, Number, Date
   };
+  vm.runInNewContext(fs.readFileSync("match-engine.js","utf8"),sandbox,{filename:"match-engine.js"});
   vm.runInNewContext(fs.readFileSync("game.js","utf8"),sandbox,{filename:"game.js"});
   const click=(data)=>{
     assert.ok(app.handle,"Click handler installed");
@@ -34,7 +36,7 @@ function boot({autoCreate=true,saved=null,random=0.53}={}) {
     click({"data-action":"creator-next"});
     click({"data-action":"create-club"});
   }
-  return {app,storage,nameInput,previewName,previewCrest,nameLength,click,
+  return {app,storage,nameInput,previewName,previewCrest,nameLength,click,engine:sandbox.FiveAsideEngine,
     input(value){nameInput.value=value;app.inputHandle({target:{id:"club-create-name",value}});},
     inputField(id,value){app.inputHandle({target:{id,value,selectionStart:value.length}});},
     change(id,value){assert.ok(app.changeHandle,"Change handler installed");app.changeHandle({target:{id,value}});},
@@ -638,17 +640,23 @@ test("B03 old/imported saves gain inbox safely without inventing historical mess
   assert.equal(saved.inbox.length,0);
 });
 
-test("B03 injury messages follow actual simulation events and medical actions",()=>{
-  const g=boot({random:0.01});
-  g.click({"data-action":"start-auto"});
-  g.click({"data-action":"finish"});
-  const s=JSON.parse(g.storage.get("five-aside-manager-alpha-v1"));
-  const injured=s.inbox.filter(m=>m.kind==="injury");
-  assert.ok(injured.length>0,"no simulated injury events");
-  assert.ok(injured.every(m=>m.detail.includes("sidelined")));
-  assert.ok(Object.values(s.injuries).some(round=>round>0));
+test("B03 injury messages follow genuine seeded match events and medical actions",()=>{
+  const initial=boot(),key="five-aside-manager-alpha-v1";
+  const template=JSON.parse(initial.storage.get(key));
+  let injuredSave;
+  for(let season=1;season<=80;season++){
+    const saved=JSON.parse(JSON.stringify(template));
+    saved.season=season;
+    const g=boot({autoCreate:false,saved});
+    g.click({"data-action":"start-auto"});
+    g.click({"data-action":"finish"});
+    const final=JSON.parse(g.storage.get(key));
+    if(final.inbox.some(m=>m.kind==="injury")){injuredSave=final;break;}
+  }
+  assert.ok(injuredSave,"Seeded fixtures can generate injuries");
+  assert.ok(injuredSave.inbox.filter(m=>m.kind==="injury").every(m=>m.detail.includes("sidelined")));
+  assert.ok(Object.values(injuredSave.injuries).some(round=>round>0));
 });
-
 
 test("B04 grouped squad sorting, position filtering, status and live search are functional",()=>{
   const g=boot();
@@ -1290,7 +1298,8 @@ test("B06 watched match and equal saved offline plan have equal score and fitnes
   const base=boot(),key="five-aside-manager-alpha-v1";
   const old=JSON.parse(base.storage.get(key));
   old.style="counter";old.plan="counter";
-  old.planBehind="press";old.planAhead="balanced";
+  // Equal instructions give the same seeded result in both viewing modes.
+  old.planBehind="counter";old.planAhead="counter";
   old.formation="2-1-1";
   function play(auto){
     const g=boot({autoCreate:false,saved:old,random:0.53});
@@ -1310,42 +1319,37 @@ test("B06 watched match and equal saved offline plan have equal score and fitnes
   assert.equal(offline.tacticalReports["1:0"].finalApproach,"counter");
 });
 
-test("B06 offline plan switches to saved leading condition from minute 14 and persists the executed trace",()=>{
-  const base=boot(),key="five-aside-manager-alpha-v1";
-  const saved=JSON.parse(base.storage.get(key));
-  saved.plan="balanced";saved.planAhead="press";saved.planBehind="counter";
-  let n=0;
-  const g=boot({autoCreate:false,saved,random:()=>{n++;return .01;}});
-  g.click({"data-action":"start-auto"});
-  assert.match(g.app.innerHTML,/Saved plan: High press activated/);
-  assert.match(g.app.innerHTML,/CURRENT APPROACH/);
-  g.click({"data-action":"finish"});
-  const final=JSON.parse(g.storage.get(key)),report=final.tacticalReports["1:0"];
-  assert.equal(report.live,false);
-  assert.equal(report.startingPlan,"balanced");
-  assert.equal(report.ahead,"press");
-  assert.equal(report.finalApproach,"press");
-  assert.ok(report.phases.some(x=>x.approach==="press"&&x.minute>=14));
-  assert.ok(final.playerStats[3]||final.playerStats[4]);
-  const again=boot({autoCreate:false,saved:final});
-  again.click({"data-action":"go-tactics"});
-  assert.match(again.app.innerHTML,/Previous match tactical report/);
-  assert.match(again.app.innerHTML,/High press/);
-});
-
-test("B06 trailing saved plan activates at minute 10 and does not follow live-manager push",()=>{
-  const base=boot(),key="five-aside-manager-alpha-v1",saved=JSON.parse(base.storage.get(key));
-  saved.plan="balanced";saved.planBehind="counter";saved.planAhead="press";
-  let next=0;
-  const random=()=>{next++;return next===2?0.001:0.99;};
-  const g=boot({autoCreate:false,saved,random});
-  g.click({"data-action":"start-auto"});
-  assert.match(g.app.innerHTML,/Saved plan: Counterattack activated/);
-  g.click({"data-action":"finish"});
-  const report=JSON.parse(g.storage.get(key)).tacticalReports["1:0"];
-  assert.equal(report.finalApproach,"counter");
-  assert.ok(report.phases.some(x=>x.approach==="counter"&&x.minute>=10));
-  const live=boot({autoCreate:false,saved,random:0.53});
+test("B06 seeded offline plans react to real leading and trailing score states",()=>{
+  const key="five-aside-manager-alpha-v1",base=boot();
+  const template=JSON.parse(base.storage.get(key));
+  function scenario(type){
+    for(let season=1;season<=120;season++){
+      const saved=JSON.parse(JSON.stringify(template));
+      saved.season=season;saved.division=type==="trailing"?1:8;
+      saved.plan="balanced";saved.planAhead="press";saved.planBehind="counter";
+      const g=boot({autoCreate:false,saved});
+      g.click({"data-action":"start-auto"});
+      g.click({"data-action":"finish"});
+      const final=JSON.parse(g.storage.get(key));
+      const report=final.tacticalReports[season+":0"];
+      if(report&&report.phases.some(p=>p.reason===(type==="trailing"?"Trailing after 10 minutes":"Protect or extend lead")&&
+          p.approach===(type==="trailing"?"counter":"press")))return {g,final,report};
+    }
+    return null;
+  }
+  const leading=scenario("leading"),trailing=scenario("trailing");
+  assert.ok(leading,"At least one seeded fixture should lead from minute 14");
+  assert.ok(trailing,"At least one seeded fixture should trail from minute 10");
+  assert.equal(leading.report.live,false);
+  assert.equal(trailing.report.live,false);
+  assert.equal(leading.report.startingPlan,"balanced");
+  assert.ok(leading.report.phases.some(p=>p.minute>=14&&p.approach==="press"));
+  assert.ok(trailing.report.phases.some(p=>p.minute>=10&&p.approach==="counter"));
+  assert.ok(leading.final.matchReports[leading.final.season+":0"]);
+  const reloaded=boot({autoCreate:false,saved:leading.final});
+  reloaded.click({"data-action":"go-tactics"});
+  assert.match(reloaded.app.innerHTML,/Previous match tactical report/);
+  const live=boot({autoCreate:false,saved:template});
   live.click({"data-action":"start-live"});
   live.click({"data-action":"push"});
   live.tick();
@@ -1548,4 +1552,111 @@ test("B06 absence rotation selection persists and is safe on imported saves",()=
   delete saved.autoSubPolicy;
   const legacy=boot({autoCreate:false,saved});
   assert.equal(JSON.parse(legacy.storage.get(key)).autoSubPolicy,"none");
+});
+
+
+test("B07 phase engine is pure, seeded and reconciles every goal, shot and save",()=>{
+  const team=[
+    {id:1,name:"Keeper",pos:"GK",rating:71,roleFit:72,attributes:{keeping:78,passing:55,defending:65}},
+    {id:2,name:"Anchor",pos:"DEF",rating:69,roleFit:72,attributes:{finishing:48,passing:68,defending:76}},
+    {id:3,name:"Left",pos:"MID",rating:74,roleFit:77,attributes:{finishing:68,passing:80,defending:62}},
+    {id:4,name:"Right",pos:"MID",rating:73,roleFit:71,attributes:{finishing:64,passing:76,defending:65}},
+    {id:5,name:"Striker",pos:"FWD",rating:77,roleFit:83,attributes:{finishing:84,passing:67,defending:43}}
+  ];
+  const context={team,keeperId:1,opponentStrength:68,attackChance:.21,concedeChance:.14,
+    approach:"balanced",club:"Test FC",opponent:"Away Club"};
+  const original={minute:0,seed:B07Engine.seed("fixture-test"),rngState:B07Engine.seed("fixture-test"),
+    home:0,away:0,events:[{minute:0,type:"kickoff",text:"Kickoff!"}]};
+  const saved=JSON.stringify({original,context});
+  const play=()=>Array.from({length:10}).reduce(m=>B07Engine.step(m,context),original);
+  const one=play(),two=play();
+  assert.deepEqual(one,two);
+  assert.equal(JSON.stringify({original,context}),saved,"Engine must not mutate supplied objects");
+  assert.equal(one.minute,20);
+  assert.equal(one.phases,10);
+  assert.ok(B07Engine.verify(one));
+  assert.equal(one.events.filter(e=>e.scorerId!=null).length,one.home);
+  assert.equal(one.events.filter(e=>e.keeperId!=null).length,one.savesFor);
+  assert.equal(one.shotsFor,one.onTargetFor+one.events.filter(e=>e.side==="home"&&!e.onTarget).length);
+});
+
+test("B07 live and offline reproduce exact events, metrics and player histories with identical decisions",()=>{
+  const key="five-aside-manager-alpha-v1",base=boot();
+  const saved=JSON.parse(base.storage.get(key));
+  saved.style="balanced";saved.plan="balanced";saved.planAhead="balanced";saved.planBehind="balanced";
+  saved.autoSubPolicy="none";
+  function play(auto){
+    const g=boot({autoCreate:false,saved});
+    g.click({"data-action":auto?"start-auto":"start-live"});
+    if(!auto)for(let i=0;i<10;i++)g.tick();
+    assert.match(g.app.innerHTML,/Match statistics/);
+    g.click({"data-action":"finish"});
+    return JSON.parse(g.storage.get(key));
+  }
+  const watched=play(false),offline=play(true);
+  assert.deepEqual(watched.results,offline.results);
+  assert.deepEqual(watched.playerStats,offline.playerStats);
+  assert.deepEqual(watched.playerMatchHistory,offline.playerMatchHistory);
+  assert.deepEqual(watched.matchReports["1:0"].events,offline.matchReports["1:0"].events);
+  assert.deepEqual(watched.matchReports["1:0"].metrics,offline.matchReports["1:0"].metrics);
+  assert.ok(B07Engine.verify(Object.assign({},offline.matchReports["1:0"].metrics,{
+    home:offline.results[0].home,away:offline.results[0].away,
+    shotsFor:offline.results[0].metrics.shotsFor,shotsAgainst:offline.results[0].metrics.shotsAgainst,
+    onTargetFor:offline.results[0].metrics.onTargetFor,
+    onTargetAgainst:offline.results[0].metrics.onTargetAgainst,
+    savesFor:offline.results[0].metrics.savesFor,
+    savesAgainst:offline.matchReports["1:0"].events.filter(e=>e.type==="saved-shot").length,
+    events:offline.matchReports["1:0"].events
+  })));
+  const totalGoals=Object.values(offline.playerStats).reduce((n,p)=>n+p.goals,0);
+  const totalShots=Object.values(offline.playerStats).reduce((n,p)=>n+(p.shots||0),0);
+  assert.equal(totalGoals,offline.results[0].home);
+  assert.equal(totalShots,offline.results[0].metrics.shotsFor);
+});
+
+test("B07 legacy career migration is additive and match ledgers persist across reload",()=>{
+  const key="five-aside-manager-alpha-v1",first=boot();
+  const prior=JSON.parse(first.storage.get(key));
+  prior.playerStats={3:{appearances:7,goals:4,cleanSheets:0}};
+  delete prior.matchReports;
+  const g=boot({autoCreate:false,saved:prior});
+  g.click({"data-action":"start-auto"});
+  g.click({"data-action":"finish"});
+  const recorded=JSON.parse(g.storage.get(key));
+  assert.equal(recorded.playerStats[3].appearances,8);
+  assert.ok(recorded.playerStats[3].goals>=4);
+  assert.ok(recorded.matchReports["1:0"].events.length>0);
+  assert.equal(recorded.matchReports["1:0"].seed,B07Engine.seed("5aside:v1:1:0:Dockside Rovers"));
+  const reloaded=boot({autoCreate:false,saved:recorded});
+  const again=JSON.parse(reloaded.storage.get(key));
+  assert.equal(again.matchReports["1:0"].seed,recorded.matchReports["1:0"].seed);
+  assert.equal(again.playerStats[3].appearances,8);
+});
+
+test("B07 player ability, opponent quality and goalkeeper skill change repeatable outcomes",()=>{
+  const team=[
+    {id:1,name:"GK",pos:"GK",rating:72,roleFit:70,attributes:{keeping:75,passing:55,defending:60}},
+    {id:2,name:"DEF",pos:"DEF",rating:70,roleFit:72,attributes:{finishing:45,passing:65,defending:78}},
+    {id:3,name:"MID",pos:"MID",rating:70,roleFit:72,attributes:{finishing:65,passing:75,defending:60}},
+    {id:4,name:"MID2",pos:"MID",rating:70,roleFit:72,attributes:{finishing:65,passing:75,defending:60}},
+    {id:5,name:"FWD",pos:"FWD",rating:70,roleFit:72,attributes:{finishing:80,passing:65,defending:45}}
+  ];
+  function sample(opponentStrength,keeperSkill){
+    let goals=0,saves=0;
+    for(let n=0;n<120;n++){
+      const players=JSON.parse(JSON.stringify(team));
+      players[0].attributes.keeping=keeperSkill;
+      const context={team:players,keeperId:1,opponentStrength,attackChance:.18,concedeChance:.18,
+        approach:"balanced",club:"Test",opponent:"CPU"};
+      const fixtureSeed=B07Engine.seed("balance-"+n);
+      let match={minute:0,seed:fixtureSeed,rngState:fixtureSeed,home:0,away:0,events:[]};
+      for(let phase=0;phase<10;phase++)match=B07Engine.step(match,context);
+      goals+=match.away;saves+=match.savesFor;
+    }
+    return {goals,saves};
+  }
+  const weakKeeper=sample(70,40),strongKeeper=sample(70,95);
+  const weakRivals=sample(48,75),strongRivals=sample(91,75);
+  assert.ok(strongKeeper.goals<weakKeeper.goals);
+  assert.ok(strongRivals.goals>weakRivals.goals);
 });

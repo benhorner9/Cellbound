@@ -2,7 +2,7 @@
   "project": "5asidefootball",
   "source": "benhorner9/5AsideManager",
   "sourceBranch": "main",
-  "sourceCommit": "1f40bcc48a67de696271a6b57423161fc4bbbd6c",
+  "sourceCommit": "6a6d7663baca8c0edede759c71c0b3224302bf06",
   "target": "/5asidefootball.com/",
-  "note": "B06 tactical formations, skill-weighted roles, conditional absence plan and auto-rotation, Training Ground previews and actual reports. Direct source FTPS and physical Safari signoff deferred B16."
+  "note": "B07 deterministic, seeded, event-based match engine; exact source asset mirrors, 69/69 functional tests, B02-B06 browser regression. Direct FTPS and physical Safari release signoff deferred to B16."
 }
