@@ -66,7 +66,7 @@
     return p;
   }
   function initial() {
-    return {tab:'overview', club:'Sunday Strikers',clubCreated:false,kit:defaultKit(),money:240, sponsor:35, formation:'1-2-1',style:'balanced',plan:'balanced',roleAssignments:{},trainingReports:{},trainingFocus:'passing',tacticalReports:{},autoSubPolicy:'none', offers:{},offerAttempts:{},guest:{},guestAttempts:{},round:0,results:{}, fitness:{},seasonDone:false, season:1,division:8,roster:JSON.parse(JSON.stringify(originalRoster)),registeredCap:12,
+    return {tab:'overview', club:'Sunday Strikers',clubCreated:false,kit:defaultKit(),money:240, sponsor:35, formation:'1-2-1',style:'balanced',plan:'balanced',roleAssignments:{},trainingReports:{},trainingFocus:'passing',tacticalReports:{},matchReports:{},autoSubPolicy:'none', offers:{},offerAttempts:{},guest:{},guestAttempts:{},round:0,results:{}, fitness:{},seasonDone:false, season:1,division:8,roster:JSON.parse(JSON.stringify(originalRoster)),registeredCap:12,
       market:marketPool(1,8),youth:youthPool(1),training:{},injuries:{},playerStats:{},developmentHistory:{},playerMatchHistory:{},squadView:{position:'all',availability:'all',sort:'rating',group:'position',query:''},profileCompareId:null,lineup:[],lineupRound:0,lineupCustomized:false,
       planBehind:'press',planAhead:'counter',formerGuests:[],seasonHistory:[],financeLog:[{kind:'Starting funds',amount:240,season:1,round:0}],inbox:[],inboxSeq:0,inboxFilter:'all',inboxReturn:false,homeReturn:false,profileReturn:'squad',match:null, log:[], standings:names.map(function(n){return {name:n,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0};}).concat([{name:'Sunday Strikers',played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}])};
   }
@@ -95,6 +95,8 @@
   state.trainingReports=state.trainingReports&&typeof state.trainingReports==='object'&&!Array.isArray(state.trainingReports)?state.trainingReports:{};
   state.trainingFocus=['passing','finishing','defending','fitness'].includes(state.trainingFocus)?state.trainingFocus:'passing';
   state.tacticalReports=state.tacticalReports&&typeof state.tacticalReports==='object'&&!Array.isArray(state.tacticalReports)?state.tacticalReports:{};
+  // B07 reports are additive: never rewrite an imported result or pre-B07 player statistics.
+  state.matchReports=state.matchReports&&typeof state.matchReports==='object'&&!Array.isArray(state.matchReports)?state.matchReports:{};
   state.autoSubPolicy=state.autoSubPolicy==='rotate'?'rotate':'none';
   state.formation=['1-2-1','2-1-1','1-1-2'].includes(state.formation)?state.formation:'1-2-1';
   ['style','plan','planBehind','planAhead'].forEach(function(key){
@@ -718,7 +720,7 @@
   }
   function playerRecord(p){
     var rec=state.playerStats[p.id]||{};
-    return {appearances:rec.appearances||0,goals:rec.goals||0,cleanSheets:rec.cleanSheets||0};
+    return {appearances:rec.appearances||0,goals:rec.goals||0,cleanSheets:rec.cleanSheets||0,shots:rec.shots||0,saves:rec.saves||0};
   }
   function playerStatus(p){
     if(!fixture())return {key:'complete',label:'Season finished',why:'No fixtures scheduled'};
@@ -1008,8 +1010,9 @@
       '<span><b>FORMATION</b> '+esc(m.formation||state.formation)+'</span>'+
       '<span><b>CURRENT APPROACH</b> '+esc((TACTIC_PROFILES[m.instruction]||TACTIC_PROFILES.balanced).label)+'</span>'+
       '<span><b>ACTUAL ROLE FIT</b> '+tacticalAssessment(on,m.formation||state.formation,m.roleMap||rolesForTeam(on,m.formation||state.formation)).average+'/100</span>'+
-      (m.lastProbabilities?'<span><b>ATTACK / CONCEDE</b> '+(m.lastProbabilities.attack*100).toFixed(1)+'% / '+
+      (m.lastProbabilities?'<span><b>SHOT OPPORTUNITY</b> '+(m.lastProbabilities.attack*100).toFixed(1)+'% / '+
         (m.lastProbabilities.concede*100).toFixed(1)+'% this 2-minute phase</span>':'')+'</div>'+
+      '<div class="b07-match-stats" aria-label="Match statistics"><b>Match statistics</b> · Shots '+(m.shotsFor||0)+'–'+(m.shotsAgainst||0)+' · On target '+(m.onTargetFor||0)+'–'+(m.onTargetAgainst||0)+' · Saves '+(m.savesFor||0)+' · Possession '+(m.phases?Math.round(m.possessionSum/m.phases):50)+'%</div>'+ 
       '<div class="actions" style="justify-content:center;margin-top:20px">'+
       (m.auto?'':button('PUSH FORWARD','push','primary',m.minute>=20?'disabled':'')+
         button('HOLD SHAPE','hold','',m.minute>=20?'disabled':'')+
@@ -1025,7 +1028,7 @@
       '<div class="detail-line"><span>Team style</span><b>'+esc(state.style)+'</b></div>'+
       '<div class="detail-line"><span>Current instruction</span><b>'+esc(m.instruction)+'</b></div>'+
       '<div class="detail-line"><span>Average squad rating</span><b>'+Math.round(on.reduce(function(sum,p){return sum+p.rating;},0)/Math.max(1,on.length))+'</b></div></div>'+
-      '<p class="fine">The current match engine is an alpha simulation. B07–B08 will deepen actions and visual match presentation.</p></div></div>';
+      '<p class="fine">B07 seeded match events now drive actual goals, chances, shot totals, goalkeeper saves and player histories. B08 will improve the visual presentation.</p></div></div>';
   }
   function availableTeam(){return players(state.round);}
 
@@ -1108,7 +1111,9 @@
         '<section class="card"><div class="head"><h2>Career record</h2></div>'+
         '<div class="profile-record"><div><strong>'+stats.appearances+'</strong><small>Appearances</small></div>'+
         '<div><strong>'+stats.goals+'</strong><small>Goals</small></div>'+
-        '<div><strong>'+stats.cleanSheets+'</strong><small>Clean sheets</small></div></div>'+
+        '<div><strong>'+stats.cleanSheets+'</strong><small>Clean sheets</small></div>'+ 
+        '<div><strong>'+stats.shots+'</strong><small>Shots</small></div>'+ 
+        '<div><strong>'+stats.saves+'</strong><small>Saves</small></div></div>'+
         '<p class="fine">Stats use recorded matches, not assumptions about past saves. Clean sheets count for goalkeepers only.</p>'+
         '<div class="detail-list"><div class="detail-line"><span>Position / role</span><b>'+esc(p.pos)+' · '+esc(role)+'</b></div>'+
         '<div class="detail-line"><span>Age / potential</span><b>'+p.age+' years · '+p.potential+' potential</b></div>'+
@@ -1118,7 +1123,7 @@
         '<section class="card profile-wide"><div class="head"><h2>Recent match record</h2></div>'+
         (matches.length?matches.slice(0,5).map(function(m){
           return '<div class="profile-history-row"><span>S'+m.season+' · R'+(m.round+1)+' · '+esc(m.opponent)+'</span>'+
-            '<strong>'+m.home+'–'+m.away+' · '+m.goals+' goals'+(m.cleanSheet?' · CLEAN SHEET':'')+'</strong></div>';
+            '<strong>'+m.home+'–'+m.away+' · '+m.goals+' goals · '+(m.shots||0)+' shots'+(m.saves?' · '+m.saves+' saves':'')+(m.cleanSheet?' · CLEAN SHEET':'')+'</strong></div>';
         }).join(''):'<p>No individually tracked match entries yet. Future matches will record appearances, goals and clean sheets. Existing career totals remain intact.</p>')+'</section></div>';
     }else if(tab==='attributes'){
       body='<div class="profile-content-grid"><section class="card"><div class="head"><h2>Technical skills</h2></div>'+
@@ -1637,25 +1642,27 @@
     var t=state.standings.find(function(x){return x.name===name;});if(!t)return;
     t.played++;t.gf+=gf;t.ga+=ga;if(gf>ga){t.won++;t.points+=3;}else if(gf===ga){t.drawn++;t.points++;}else t.lost++;
   }
-  function randomGoal(chance){return Math.random()<chance;}
+  // Stable opponent ability across replays; higher divisions and team identity matter.
+  function oppositionRating(name){
+    return clamp(59+(8-state.division)*3+(FiveAsideEngine.seed(name)%13)-6,38,94);
+  }
   function tick() {
     var m=state.match;
     if(!m||m.minute>=20)return;
     if(!m.minutes||typeof m.minutes!=='object')m.minutes={};
     if(!m.fatigueLoad||typeof m.fatigueLoad!=='object')m.fatigueLoad={};
     if(!Array.isArray(m.tacticTimeline))m.tacticTimeline=[];
-    m.minute+=2;
-    var team=starters(m.round);
+    var nextMinute=m.minute+2,team=starters(m.round);
     if(m.auto){
-      var expected=m.minute>=14&&m.home>m.away?m.planAhead:
-        m.minute>=10&&m.home<m.away?m.planBehind:m.plan;
+      var expected=nextMinute>=14&&m.home>m.away?m.planAhead:
+        nextMinute>=10&&m.home<m.away?m.planBehind:m.plan;
       if(!TACTIC_PROFILES[expected])expected='balanced';
       if(m.instruction!==expected){
-        m.tacticTimeline.push({minute:m.minute,reason:m.minute>=14&&m.home>m.away?'Protect or extend lead':
-          m.minute>=10&&m.home<m.away?'Trailing after 10 minutes':'Score levelled',
+        m.tacticTimeline.push({minute:nextMinute,reason:nextMinute>=14&&m.home>m.away?'Protect or extend lead':
+          nextMinute>=10&&m.home<m.away?'Trailing after 10 minutes':'Score levelled',
           approach:expected});
         m.instruction=expected;
-        m.events.push({minute:m.minute,text:'Saved plan: '+TACTIC_PROFILES[expected].label+' activated.'});
+        m.events.push({minute:nextMinute,type:'instruction',text:'Saved plan: '+TACTIC_PROFILES[expected].label+' activated.'});
       }
     }
     var planProfile=TACTIC_PROFILES[m.instruction]||TACTIC_PROFILES.balanced;
@@ -1663,36 +1670,32 @@
       m.minutes[p.id]=(m.minutes[p.id]||0)+2;
       m.fatigueLoad[p.id]=Math.round(((m.fatigueLoad[p.id]||0)+planProfile.fatigue)*100)/100;
     });
-    // Role assignments and live/offline instructions share precisely the same football calculation.
-    var formation=m.formation||state.formation;
-    var roles=m.roleMap||rolesForTeam(team,formation);
-    var stats=tacticForecast(team,formation,roles,m.instruction);
+    var formation=m.formation||state.formation,roles=m.roleMap||rolesForTeam(team,formation);
+    var forecast=tacticForecast(team,formation,roles,m.instruction);
     var mean=team.reduce(function(total,p){
       ensureDetails(p);
-      var role=formationSlots(formation).find(function(slot){return roles[slot.key]===p.id;});
-      var ability=role?roleQuality(p,role):p.rating;
-      var drained=m.fatigueLoad[p.id]||0;
-      return total+p.rating+(ability-p.rating)*.28+(p.morale-75)*.08+
-        (p.attributes.stamina-65)*.045-(100-fitness(p)+drained)*.12;
+      var slot=formationSlots(formation).find(function(item){return roles[item.key]===p.id;});
+      var fit=slot?roleQuality(p,slot):p.rating;
+      return total+p.rating+(fit-p.rating)*.28+(p.morale-75)*.08+
+        (p.attributes.stamina-65)*.045-(100-fitness(p)+(m.fatigueLoad[p.id]||0))*.12;
     },0)/Math.max(1,team.length);
-    var attackChance=chanceRange(stats.attack+(mean-65)*.0075+(stats.roleFit-65)*.0018);
-    var concedeChance=chanceRange(stats.concede+(70-mean)*.007+(65-stats.roleFit)*.0014);
-    m.lastProbabilities={attack:attackChance,concede:concedeChance,roleFit:stats.roleFit,
-      approach:m.instruction,minute:m.minute};
-    if(randomGoal(attackChance)){
-      m.home++;
-      var scorers=team.filter(function(p){return p.pos!=='GK';});
-      var scorer=scorers[Math.floor(Math.random()*scorers.length)]||team[0];
-      m.events.push({minute:m.minute,goal:true,scorerId:scorer.id,
-        text:'GOAL! '+scorer.name+' finishes a chance for '+state.club+'.'});
-    }else if(randomGoal(concedeChance)){
-      m.away++;m.events.push({minute:m.minute,goal:true,text:'Goal for '+m.opponent+' after a quick move.'});
-    }else{
-      var lines=['Patient possession creates a passing lane.','Both teams compete for midfield space.',
-        'The keeper makes an important save.','A shot flashes just outside the post.',
-        'The defensive shape blocks a dangerous attack.'];
-      m.events.push({minute:m.minute,text:lines[Math.floor(Math.random()*lines.length)]});
-    }
+    var attackChance=chanceRange(forecast.attack+(mean-65)*.0075+(forecast.roleFit-65)*.0018);
+    var concedeChance=chanceRange(forecast.concede+(70-mean)*.007+(65-forecast.roleFit)*.0014);
+    var context={
+      team:team.map(function(p){
+        var slot=formationSlots(formation).find(function(item){return roles[item.key]===p.id;});
+        return {id:p.id,name:p.name,pos:p.pos,rating:p.rating,morale:p.morale,fitness:fitness(p)-(m.fatigueLoad[p.id]||0),
+          attributes:p.attributes,roleType:slot?slot.type:p.pos,roleFit:slot?roleQuality(p,slot):p.rating};
+      }),
+      keeperId:roles.GK,opponentStrength:m.opponentStrength,
+      attackChance:attackChance,concedeChance:concedeChance,approach:m.instruction,
+      club:state.club,opponent:m.opponent
+    };
+    // This is the same pure, seeded transition for watched and offline matches.
+    // Rendering speed is not a scoring modifier. No Math.random is used per phase.
+    Object.assign(m,FiveAsideEngine.step(m,context));
+    m.lastProbabilities={attack:m.lastPhase.attack,concede:m.lastPhase.concede,
+      roleFit:forecast.roleFit,approach:m.instruction,minute:m.minute};
     if(m.auto&&m.autoSubPolicy==='rotate'&&m.minute>=12&&m.minute<20&&(m.autoRotations||0)<2){
       var active=starters(m.round).filter(function(p){return p.pos!=='GK';});
       var reserves=benchPlayers(m.round).filter(function(p){return p.pos!=='GK';});
@@ -1715,13 +1718,18 @@
   }
   function finish(){
     var m=state.match;if(!m || m.minute<20)return;
-    var f=fixture();state.results[f.id]={home:m.home,away:m.away,opponent:f.opponent};
+    if(!m.forfeit&&!FiveAsideEngine.verify(m)){notice('Match totals did not reconcile. Result not recorded.');return;}
+    var f=fixture();
+    var metrics={shotsFor:m.shotsFor||0,shotsAgainst:m.shotsAgainst||0,onTargetFor:m.onTargetFor||0,
+      onTargetAgainst:m.onTargetAgainst||0,savesFor:m.savesFor||0,
+      possession:m.phases?Math.round(m.possessionSum/m.phases):50};
+    state.results[f.id]={home:m.home,away:m.away,opponent:f.opponent,metrics:metrics};
     updateTable('Sunday Strikers',m.home,m.away);updateTable(f.opponent,m.away,m.home);
     var others=names.filter(function(n){return n!==f.opponent;});
     var offset=state.round%others.length;
     others=others.slice(offset).concat(others.slice(0,offset));
     for(var i=0;i<2;i++){
-      var a=others[i*2],b=others[i*2+1],x=Math.floor(Math.random()*4),y=Math.floor(Math.random()*4);
+      var a=others[i*2],b=others[i*2+1],x=FiveAsideEngine.seed(String(m.seed)+':'+a+':'+i)%4,y=FiveAsideEngine.seed(String(m.seed)+':'+b+':'+i)%4;
       updateTable(a,x,y);updateTable(b,y,x);
     }
     var before=fixtureAt(state.round);
@@ -1733,19 +1741,23 @@
       ledger('Fixture forfeit penalty',-15);
     }else{
       state.playerStats=state.playerStats||{};
-      var matchGoals={};
+      var matchGoals={},matchShots={},matchSaves={};
       m.events.forEach(function(event){
         if(event.scorerId!=null)matchGoals[event.scorerId]=(matchGoals[event.scorerId]||0)+1;
+        if(event.shooterId!=null)matchShots[event.shooterId]=(matchShots[event.shooterId]||0)+1;
+        if(event.keeperId!=null)matchSaves[event.keeperId]=(matchSaves[event.keeperId]||0)+1;
       });
       played.forEach(function(p){
         if(p.id>=100&&p.id<2000)return;
         var rec=state.playerStats[p.id]||(state.playerStats[p.id]={appearances:0,goals:0,cleanSheets:0});
         rec.appearances++;
         rec.goals+=(matchGoals[p.id]||0);
+        rec.shots=(rec.shots||0)+(matchShots[p.id]||0);
+        rec.saves=(rec.saves||0)+(matchSaves[p.id]||0);
         if(p.pos==='GK'&&m.away===0)rec.cleanSheets++;
         var history=state.playerMatchHistory[p.id]||(state.playerMatchHistory[p.id]=[]);
         history.push({season:state.season,round:state.round,opponent:f.opponent,
-          home:m.home,away:m.away,goals:matchGoals[p.id]||0,
+          home:m.home,away:m.away,goals:matchGoals[p.id]||0,shots:matchShots[p.id]||0,saves:matchSaves[p.id]||0,
           cleanSheet:p.pos==='GK'&&m.away===0,position:p.pos,
           minutes:m.minutes&&Number.isFinite(m.minutes[p.id])?m.minutes[p.id]:20});
         if(history.length>40)history.splice(0,history.length-40);
@@ -1759,7 +1771,7 @@
         state.fitness[p.id]=Math.max(35,fitness(p)-fatigueCost);
         develop(p,22+(m.home>m.away?8:0),'Match: '+f.opponent);
         p.morale=clamp(p.morale+(m.home>m.away?4:m.home===m.away?1:-3),35,100);
-        if(Math.random()<.025 && !p.professional){
+        if(FiveAsideEngine.seed(String(m.seed)+':injury:'+p.id)%1000<25 && !p.professional){
           state.injuries[p.id]=state.round+2;
           pushInbox('injury','Injury report: '+p.name,p.name+' is sidelined after round '+(state.round+1)+'. Review treatment and future availability.','squad');
         }
@@ -1769,6 +1781,13 @@
       if(paidProfessionals.length)ledger('Professional match wages',-45*paidProfessionals.length);
     }
     if(!m.forfeit){
+      // Keep a bounded event ledger: goals, scorers, shots, saves, substitutions, phase totals.
+      var reportKey=state.season+':'+state.round;
+      state.matchReports[reportKey]={season:state.season,round:state.round,seed:m.seed,
+        opponent:m.opponent,home:m.home,away:m.away,metrics:metrics,
+        events:m.events.slice(0,60),substitutions:(m.substitutions||[]).slice(0,15),
+        selectedIds:(m.participantIds||[]).slice(),version:FiveAsideEngine.version};
+      if(Object.keys(state.matchReports).length>30)delete state.matchReports[Object.keys(state.matchReports)[0]];
       var key=state.season+':'+state.round;
       state.tacticalReports[key]={formation:m.formation||state.formation,
         startingPlan:m.plan||state.plan,behind:m.planBehind||state.planBehind,
@@ -1805,7 +1824,10 @@
     toast='';
     var team=starters(state.round),roleMap=rolesForTeam(team,state.formation);
     var kickoffStyle=auto?state.plan:state.style;
+    var matchSeed=FiveAsideEngine.seed('5aside:v1:'+state.season+':'+state.round+':'+fixture().opponent);
     state.match={round:state.round,opponent:fixture().opponent,minute:0,home:0,away:0,
+      seed:matchSeed,rngState:matchSeed,opponentStrength:oppositionRating(fixture().opponent),
+      shotsFor:0,shotsAgainst:0,onTargetFor:0,onTargetAgainst:0,savesFor:0,savesAgainst:0,phases:0,possessionSum:0,
       instruction:kickoffStyle,formation:state.formation,baseStyle:state.style,
       plan:state.plan,planBehind:state.planBehind,planAhead:state.planAhead,
       autoSubPolicy:auto?state.autoSubPolicy:'none',autoRotations:0,substitutions:[],
