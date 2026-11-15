@@ -104,7 +104,7 @@ for(const [label,options] of [
   const dims=await page.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:window.innerWidth}));
   if(dims.content>dims.viewport+3)throw Error(label+" layout overflows horizontally: "+JSON.stringify(dims));
   const title=await page.locator("#page-title").textContent();
-  if(!title.includes("Calories"))throw Error(label+" did not open nutrition on direct URL");
+  if(!title.includes("Nutrition"))throw Error(label+" did not open nutrition on direct URL");
   if(errors.length)throw Error(label+" runtime errors: "+errors.join("; "));
   console.log(label+" PASS: visible nutrition shortcut, cache-busted scripts, direct #nutrition deep link");
   await context.close();
