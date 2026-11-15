@@ -26,6 +26,7 @@ import {newProgramme,validProgramme,validProgrammeLibrary,updateProgrammeBasics,
  importAIProgramme,saveNewTemplate,saveTemplateVersion,loadTemplateIntoDraft,assignTemplateToClient,
  currentClientAssignment,clientPlanWarnings,canonicalYoutubeUrl} from "./coach-programmes-model.mjs";
 import {renderProgrammesCentre,aiImportDialog,assignmentDialog,renderClientProgrammeSummary} from "./coach-programmes-ui.mjs";
+import {emptyAIBrief,validAIBrief,aiBriefFromClient,createAIRequest,parseAIResponse,aiExampleResponse} from "./coach-ai-brief-model.mjs";
 /*
  * TrainSmart Coach Hub D01 — strictly fictional, isolated, client-side preview.
  * No fetch, no Supabase SDK, no Auth, no email, no WhatsApp send, no real records.
@@ -67,7 +68,8 @@ function initial(){
  for(const c of seeded)tasks=syncFreshTasks(tasks,enrolments[c.id],c,currentDay());
  return {tasks,drafts:[],clients:seeded,clientEvents:[],
   library:initialLibrary(seeded),programmeDraft:newProgramme("draft:initial-001","New training plan"),
-  programmeTemplates:[],programmeAssignments:[],programmeTab:"build",
+  programmeTemplates:[],programmeAssignments:[],programmeTab:"ai",
+  aiBrief:emptyAIBrief(),aiClientId:"",aiPrompt:"",aiReply:"",
   programmeTemplateId:"",programmeClientId:"",
   libraryTab:"exercises",libraryQuery:"",libraryMovement:"all",libraryEquipment:"all",libraryStatus:"active",libraryClientId:"",libraryOnlyClientFit:false,
   messagePreferences:Object.fromEntries(seeded.map(c=>[c.id,defaultContactPreference(c.id)])),
@@ -109,9 +111,14 @@ function load(){
       parsed.programmeDraft:base.programmeDraft;
     const programmeTemplates=validPlanState?parsed.programmeTemplates:base.programmeTemplates;
     const programmeAssignments=validPlanState?parsed.programmeAssignments:base.programmeAssignments;
+    const aiBrief=validAIBrief(parsed.aiBrief)?parsed.aiBrief:base.aiBrief;
+    const aiClientId=storedClients.some(c=>c.id===parsed.aiClientId)?parsed.aiClientId:"";
+    const aiPrompt=typeof parsed.aiPrompt==="string"&&parsed.aiPrompt.length<=30000?parsed.aiPrompt:"";
+    const aiReply=typeof parsed.aiReply==="string"&&parsed.aiReply.length<=30000?parsed.aiReply:"";
     return {...base,...parsed,clients:storedClients,clientEvents:events,onboardingRecords:records,enrolments,
       coachSessions,coachSafety,coachRecordingMode,sessionClientId,messagePreferences,
-      customMessageTemplates,drafts,library:safeLibrary,programmeDraft,programmeTemplates,programmeAssignments};
+      customMessageTemplates,drafts,library:safeLibrary,programmeDraft,programmeTemplates,programmeAssignments,
+      aiBrief,aiClientId,aiPrompt,aiReply};
   }}catch{}
  return initial();
 }
@@ -958,7 +965,8 @@ function render(){
  status:state.libraryStatus,selectedClientId:state.libraryClientId,onlyClientFit:state.libraryOnlyClientFit}):
  state.view==="programmes"?renderProgrammesCentre({draft:state.programmeDraft,templates:state.programmeTemplates,
  assignments:state.programmeAssignments,library:state.library,clients,tab:state.programmeTab,
- selectedClientId:state.programmeClientId,selectedTemplateId:state.programmeTemplateId}):
+ selectedClientId:state.programmeClientId,selectedTemplateId:state.programmeTemplateId,
+ aiBrief:state.aiBrief,aiPrompt:state.aiPrompt,aiReply:state.aiReply,aiClientId:state.aiClientId}):
  state.view==="tasks"?renderTasks():state.view==="messages"?renderMessageCentre({
  clients,drafts:state.drafts,preferences:state.messagePreferences,enrolments:state.enrolments,
  customTemplates:state.customMessageTemplates,selectedClientId:state.messageClientFilter,
