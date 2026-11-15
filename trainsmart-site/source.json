@@ -30,6 +30,10 @@
     "coach-library.css",
     "coach-programmes-model.mjs",
     "coach-programmes-ui.mjs",
-    "coach-programmes.css"
-  ]
+    "coach-programmes.css",
+    "coach-ai-brief-model.mjs",
+    "coach-ai-brief-ui.mjs",
+    "coach-ai-brief.css"
+  ],
+  "overlaidFeature": "D06.1 AI brief/response workflow developed in isolated Cellbound preview; pending private Coaching branch sync"
 }
