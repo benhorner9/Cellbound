@@ -69,7 +69,7 @@ export function calculateNutrition(raw){
    activityFactor:ACTIVITY[raw.activity],goalFactor:factor,method:"Mifflin–St Jeor"};
  }
  const manual=String(raw.calorieTarget??"").trim()!=="";
- if(!estimate&&!manual)throw Error("Height and formula setting are required for an estimate. Alternatively enter a coach-reviewed calorie target.");
+ if(!estimate&&!manual)throw Error("Height and formula setting are required for an estimate. Alternatively enter a coach-reviewed manual calorie target.");
  const calories=manual?num(raw.calorieTarget,1200,5500,"Daily calories"):estimate.recommendedCalories;
  if(calories<1200||calories>5500)throw Error("Estimated calories are outside the supported range. Enter a reviewed manual target.");
  const keys=["proteinTarget","carbTarget","fatTarget"];
