@@ -189,7 +189,7 @@ test("D06: saved plan screen has reuse/version actions; manual and AI controls a
  assert.match(html,/Assign example copy to client/);
  assert.match(html,/Version 1/);
  assert.match(html,/New manual plan/);
- assert.match(html,/AI plan builder/);
+ assert.match(html,/Create with ChatGPT/);
  html=renderProgrammesCentre({draft:p,templates:[t],assignments:[],library:l,clients,tab:"build"});
  assert.match(html,/Save named plan to library/);
  assert.doesNotMatch(html,/name="rir"/i);

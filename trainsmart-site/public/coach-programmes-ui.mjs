@@ -1,4 +1,4 @@
-/* D06 fictional TrainSmart manual and AI plan builder UI; no RIR field. */
+/* D06 fictional TrainSmart manual and Create with ChatGPT UI; no RIR field. */
 import {programmeMetrics,currentClientAssignment,latestTemplateVersion,
  clientPlanWarnings,videoForExercise,instructionForExercise} from "./coach-programmes-model.mjs";
 import {renderAIBriefWorkflow} from "./coach-ai-brief-ui.mjs";
@@ -38,7 +38,7 @@ function builder(draft,library,templates,selectedTemplateId){
  const metrics=programmeMetrics(draft);
  const selected=templates.find(t=>t.id===selectedTemplateId);
  const picked=selected?.versions?.length||0;
- return '<section class="programme-builder"><div class="programme-editor-header"><div><p class="eyebrow">'+(draft.source==="ai-import"?"AI-IMPORTED · EDITABLE":draft.source==="saved-template"?"REUSED FROM A SAVED PLAN":"MANUAL PROGRAMME")+'</p>'+
+ return '<section class="programme-builder"><div class="programme-editor-header"><div><p class="eyebrow">'+(draft.source==="ai-import"?"CHATGPT DRAFT":draft.source==="saved-template"?"SAVED PLAN COPY":"MANUAL DRAFT")+'</p>'+
  '<h3>Build your programme</h3><p>Name it, add ordered sessions, select exercises and save to your library.</p></div>'+
  '<span class="tag muted">'+metrics.sessions+' session(s) · '+metrics.exercises+' exercises</span></div>'+
  '<div class="programme-plan-basics panel"><div class="programme-plan-fields"><label>Programme name<input id="programme-draft-name" maxlength="90" value="'+esc(draft.name)+'" placeholder="e.g. Strength Foundations — 3 days"></label>'+
@@ -50,7 +50,7 @@ function builder(draft,library,templates,selectedTemplateId){
  '<span class="small-muted">'+(selected?"Selected template currently v"+picked:"New saved plans stay independent from client assignments")+'</span></div></div>'+
  '<div class="programme-session-container">'+draft.sessions.map(s=>sessionCard(s,library)).join("")+'</div>'+
  '<div class="programme-bottom-actions">'+btn("programme-add-session","+ Add ordered session","","primary")+'</div>'+
- '<div class="library-warning"><strong>Preview builder.</strong> Saving a draft or template does not publish it. A genuine client programme needs approved exercise data and the live security gates.</div></section>';
+ '<div class="library-warning"><strong>Draft only.</strong> Saving a draft or template does not publish it. A genuine client programme needs approved exercise data and the live security gates.</div></section>';
 }
 function savedList(templates,clients,library,assignments){
  return '<section class="panel"><div class="panel-header"><div><h3>Saved programme library</h3><p class="small-muted">Name once, reuse for another client, and keep earlier versions safe.</p></div><span class="tag muted">'+templates.length+' saved</span></div>'+
@@ -72,7 +72,7 @@ function savedList(templates,clients,library,assignments){
 }
 export function renderProgrammesCentre({draft,templates,assignments,library,clients,tab="build",selectedClientId="",selectedTemplateId="",
  aiBrief=null,aiPrompt="",aiReply="",aiClientId=""}){
- const tabs=[["ai","AI plan builder"],["build","Manual / edit plan"],["saved","Saved plans"],["preview","Client preview"]];
+ const tabs=[["ai","Create with ChatGPT"],["build","Plan editor"],["saved","Plan library"],["preview","Client view"]];
  const client=clients.find(c=>c.id===selectedClientId&&c.status!=="Archived");
  const current=client?currentClientAssignment(assignments,client.id):null;
  let content=tab==="ai"?renderAIBriefWorkflow({brief:aiBrief,prompt:aiPrompt,reply:aiReply,clients,clientId:aiClientId}):
@@ -89,14 +89,14 @@ export function renderProgrammesCentre({draft,templates,assignments,library,clie
  (ex.youtubeUrl?youtubeLink(ex.youtubeUrl,"Watch here — YouTube"):'<span class="small-muted">No coach-approved YouTube link yet</span>')+'</div>').join("")+'</section>').join("")+'</div>':
  '<div class="empty"><h3>No example plan assigned</h3><p>Save a named template, mark its exercises demo-reviewed, and assign a copy to this fictional client.</p></div>')+'</section>':
  builder(draft,library,templates,selectedTemplateId);
- return '<div class="programme-header"><div><p class="eyebrow">TRAINSMART D06 · FICTIONAL PROGRAMME TOOL</p><h2>Build once. Reuse whenever you need.</h2><p>Start with your ChatGPT brief or build a plan manually. Either way, edit and save it to your reusable library.</p></div>'+
- '<div class="programme-toolbar">'+btn("programme-new","New manual plan","","primary")+btn("programme-open-ai","AI plan builder")+'</div></div>'+
+ return '<div class="programme-header"><div><p class="eyebrow">TRAINING PLANS</p><h2>Training plans</h2><p>Build a programme, work from a saved plan or import a ChatGPT draft.</p></div>'+
+ '<div class="programme-toolbar">'+btn("programme-new","New manual plan","","primary")+btn("programme-open-ai","Create with ChatGPT")+'</div></div>'+
  '<div class="programme-overview"><div class="stat"><p class="stat-label">Saved named plans</p><div class="stat-number">'+templates.length+'</div></div>'+
  '<div class="stat"><p class="stat-label">Demo client assignments</p><div class="stat-number">'+assignments.length+'</div></div></div>'+
  '<div class="programme-tabs">'+tabs.map(([id,title])=>'<button type="button" class="seg '+(tab===id?"active":"")+'" data-programme-tab="'+id+'">'+esc(title)+'</button>').join("")+'</div>'+
- '<div class="library-warning"><strong>Your preferences:</strong> Sets, reps, rest and optional load are the primary inputs. RIR is not part of the generated brief or normal builder. All AI plans require coach review.</div>'+
+ '<div class="library-warning"><strong>Plan settings:</strong> Sets, reps, rest and optional load are the primary inputs. RIR is not part of the generated brief or normal builder. All AI plans require coach review.</div>'+
  content+
- '<p class="footer-bits">Fictional browser-session preview only. No actual AI service, sent training plans, client logins, or training records modified.</p>';
+ '<p class="footer-bits">Sample workspace only. Plans are not published to real clients.</p>';
 }
 export function aiImportDialog(){
  return '<p class="programme-modal-copy">Paste a JSON object from ChatGPT with <code>name</code>, <code>goal</code> and an ordered <code>sessions</code> array. Each session has <code>name</code> and <code>exercises</code> with catalogue <code>exerciseId</code>, working sets and reps. RIR is NOT required.</p>'+
@@ -124,7 +124,7 @@ export function renderClientProgrammeSummary(client,assignments){
  '<p>'+esc(ex.instructions)+'</p></div>'+
  (ex.youtubeUrl?youtubeLink(ex.youtubeUrl,"Watch here — YouTube"):'<span class="small-muted">Coach video not supplied</span>')+'</div>').join("")+'</div>').join("")+
  (prior.length?'<p class="small-muted">'+prior.length+' previous example assignment(s) preserved as history.</p>':""):
- '<div class="empty"><h3>No programme assigned yet</h3><p>Build and save a named plan, then assign a fictional copy from the Saved plans library.</p></div>')+
+ '<div class="empty"><h3>No programme assigned yet</h3><p>Build and save a named plan, then assign a fictional copy from the Plan library library.</p></div>')+
  '<div class="programme-bottom-actions"><button type="button" class="btn btn-primary" data-action="programme-open-for-client" data-client-id="'+esc(client.id)+'">Open programme builder</button></div>'+
  '<p class="small-muted">Example only. No real client account, signed documents or live programme publication.</p></div>';
 }

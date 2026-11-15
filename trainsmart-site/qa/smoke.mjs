@@ -8,7 +8,9 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   page.on("pageerror",err=>errors.push(err.message));
   const response=await page.goto(url,{waitUntil:"networkidle",timeout:25000});
   if(!response?.ok())throw Error("Failed to load "+url+" "+response?.status());
-  await page.locator('[data-view="programmes"]').click();
+  if((await page.locator('.nav-group').count())!==3)throw Error("Grouped coach navigation missing");
+  if(!(await page.locator('#page-title').innerText()).includes("Dashboard"))throw Error("Coach dashboard not opened");
+  await page.locator('.nav-link[data-view="programmes"]').click();
   // Two-box AI flow is the default entry point.
   await page.locator('[data-programme-tab="ai"]').click();
   await page.locator('[data-ai-field="name"]').fill("AI Bridge Strength Plan");
@@ -35,11 +37,12 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   await page.locator('[data-action="programme-use-template"]').first().click();
   if((await page.locator("#programme-draft-name").inputValue())!=="Bridge Test Strength Plan")
    throw Error("Saved plan could not be reused");
-  await page.locator('[data-view="library"]').click();
+  await page.locator('.nav-link[data-view="library"]').click();
   if(!(await page.locator("body").innerText()).includes("Exercise catalogue"))
    throw Error("Exercise catalogue missing");
   // D07 end-to-end fictional nutrition builder on the same Chromium/WebKit run.
-  await page.locator('[data-view="nutrition"]').click();
+  await page.locator('.nav-link[data-view="nutrition"]').click();
+  if((await page.locator('.nut-view-tabs [role="tab"]').count())!==4)throw Error("Nutrition is missing its four work areas");
   await page.locator('[data-nut-field="clientId"]').selectOption("sarah");
   await page.locator('[data-nut-field="age"]').fill("35");
   await page.locator('[data-nut-field="weightKg"]').fill("80");
@@ -47,22 +50,25 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   await page.locator('[data-nut-field="sexForEstimate"]').selectOption("male");
   await page.locator('[data-nut-field="activity"]').selectOption("moderate");
   await page.locator('[data-nut-field="goal"]').selectOption("maintain");
-  await page.locator('[data-nut-field="name"]').fill("D07 Preview Meal Plan");
   await page.locator('[data-nut-action="calculate"]').click();
   await page.locator('[data-nut-action="approve"]').click();
+  if((await page.locator('[data-tab="create"][aria-selected="true"]').count())!==1)throw Error("Approved target did not open plan creation");
+  await page.locator('[data-nut-field="name"]').fill("D07 Preview Meal Plan");
   await page.locator('[data-nut-action="prompt"]').click();
   const mealPrompt=await page.locator('#nut-prompt').inputValue();
   if(!mealPrompt.includes("allowedFoods:")||mealPrompt.includes("Sarah Morgan"))throw Error("D07 prompt missing allowed food IDs or containing a client name");
   await page.locator('[data-nut-action="example"]').click();
   await page.locator('[data-nut-action="import"]').click();
+  if((await page.locator('[data-tab="plan"][aria-selected="true"]').count())!==1)throw Error("Import did not open the meal editor");
   if((await page.locator('.nut-recipe').count())!==4)throw Error("D07 did not render four editable options in the selected category");
   await page.locator('[data-nut-action="save-recipe"]').first().click();
+  if((await page.locator('[data-tab="library"][aria-selected="true"]').count())!==1)throw Error("Saved recipe not shown in library");
   await page.locator('[data-nut-action="reuse-recipe"]').first().click();
   await page.locator('[data-nut-action="save-plan"]').click();
   await page.locator('[data-nut-action="assign-plan"]').first().click();
   if(!(await page.locator('body').innerText()).includes("Fictional client meal-plan assignments"))throw Error("D07 saved plan assignment not visible");
   console.log(label+" PASS: D07 calculator, approved targets, anonymised prompt, 16 meals, saved recipe and template");
-  await page.locator('[data-view="clients"]').click();
+  await page.locator('.nav-link[data-view="clients"]').click();
   if(!(await page.locator("body").innerText()).includes("Clients"))
    throw Error("Client directory navigation missing");
   if(errors.length)throw Error("Browser runtime errors: "+errors.join("; "));
@@ -89,12 +95,16 @@ for(const [label,options] of [
   const shortcut=page.locator("#nutrition-shortcut");
   if(!await shortcut.isVisible())throw Error(label+" does not expose the nutrition shortcut");
   await shortcut.click();
-  await page.locator("#nut-prompt").waitFor({state:"visible",timeout:10000});
+  await page.locator('[data-nut-field="clientId"]').waitFor({state:"visible",timeout:10000});
   if(!page.url().includes("#nutrition"))throw Error(label+" did not navigate to #nutrition");
   await page.goto(url+"#nutrition",{waitUntil:"networkidle",timeout:25000});
+  await page.locator('[data-nut-field="clientId"]').waitFor({state:"visible",timeout:10000});
+  await page.locator('[data-nut-action="tab"][data-tab="create"]').click();
   await page.locator("#nut-prompt").waitFor({state:"visible",timeout:10000});
+  const dims=await page.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:window.innerWidth}));
+  if(dims.content>dims.viewport+3)throw Error(label+" layout overflows horizontally: "+JSON.stringify(dims));
   const title=await page.locator("#page-title").textContent();
-  if(!title.includes("Calories"))throw Error(label+" did not open nutrition on direct URL");
+  if(!title.includes("Nutrition"))throw Error(label+" did not open nutrition on direct URL");
   if(errors.length)throw Error(label+" runtime errors: "+errors.join("; "));
   console.log(label+" PASS: visible nutrition shortcut, cache-busted scripts, direct #nutrition deep link");
   await context.close();

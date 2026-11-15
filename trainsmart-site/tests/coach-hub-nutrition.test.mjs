@@ -126,12 +126,14 @@ test("D07: manual ingredient requires a source note and measured nutrient profil
  const x=calculateRecipe({name:"Test pear slices",servings:1,ingredients:[{ingredientId:f.at(-1).id,quantity:150,unit:"g"}],steps:["Wash and serve"]},f);
  assert.equal(x.nutrition.calories,75);
 });
-test("D07: UI exposes client selection, calculator, two-box AI handoff and recipe library",()=>{
+test("D07: focused nutrition layout exposes goals and clear workflow navigation",()=>{
  const html=renderNutritionHub(ctx);
- for(const word of ["Daily activity","Age (18–100)","Calculate calories & macros","Approve target","Generate ChatGPT prompt",
- "Box 1","Box 2","Import JSON","Start manual 16-meal plan","Saved meal plans","Ingredient library"]){
+ for(const word of ["Daily activity","Age (18–100)","Calculate calories & macros","Approve target","Nutrition plans",
+ "Targets","Create plan","Meal editor","Library"]){
   assert.ok(html.includes(word),word);
  }
+ assert.match(html,/role="tablist"/);
+ assert.doesNotMatch(html,/<h3>Saved meal plans<\/h3>/);
  assert.match(html,/data-nut-field="clientId"/);
  assert.doesNotMatch(html,/fetch\(/);
 });
@@ -149,7 +151,7 @@ test("D07: live preview has no background API, maintains prior D06 imports and s
 test("D07.1: Meals & Nutrition shortcut and direct hash router remain accessible",async()=>{
  const [hub,html,css]=await Promise.all(["coach-hub.mjs","coach-hub.html","coach-hub.css"].map(p=>
   readFile(new URL("../public/"+p,import.meta.url),"utf8")));
- assert.match(html,/<a class="btn btn-outline nutrition-shortcut" href="#nutrition" id="nutrition-shortcut">Meals &amp; Nutrition<\/a>/);
+ assert.match(html,/<a class="btn btn-outline nutrition-shortcut" href="#nutrition" id="nutrition-shortcut">Open nutrition<\/a>/);
  assert.match(hub,/COACH_VIEWS=Object\.freeze/);
  assert.match(hub,/window\.location\.hash\.slice\(1\)/);
  assert.match(hub,/hashchange/);

@@ -79,7 +79,7 @@ function initial(){
   coachSessions:[],coachSafety:Object.fromEntries(seeded.map(c=>[c.id,initialCoachSafety(c.id)])),
   coachRecordingMode:{},sessionClientId:seeded[0].id,
   enrolments,onboardingRecords:{[demoClient.id]:starter},selectedOnboarding:demoClient.id,
-  view:"fresh",setupClientId:null,setupStep:"contacts",filter:"open",selectedClient:null,clientFilter:"all",clientSearch:"",clientTab:"enrolment"};
+  view:"today",setupClientId:null,setupStep:"contacts",filter:"open",selectedClient:null,clientFilter:"all",clientSearch:"",clientTab:"enrolment"};
 }
 function validTask(t){return t&&typeof t.id==="string"&&typeof t.title==="string"&&typeof t.due==="string"&&["high","normal","low"].includes(t.priority)&&["open","completed","waiting","snoozed"].includes(t.status);}
 function load(){
@@ -161,17 +161,17 @@ function taskForDashboard(t){return actionable(t)&&(!t.clientId||clientById(t.cl
 function openCount(){return state.tasks.filter(taskForDashboard).length;}
 function viewHeading(){
  const headings={
- today:["COACH OVERVIEW","Your day, organised.","One clear priority at a time. Everything else can wait.","TODAY"],
- clients:["CLIENT DIRECTORY","All your clients.","See who needs attention, and open the right actions.","CLIENTS"],
- tasks:["COACH TO-DO LIST","Your priorities.","Everything in one place, without losing track.","TASKS"],
- messages:["COACH MESSAGING CENTRE","Messages, under your control.","Prepare, personalise, approve and track fictional messages without sending.","MESSAGES"],
- fresh:["NEW CLIENT ENROLMENT","Everyone starts fresh.","Open any fictional client for guided setup.","CLIENT SETUP"],
- setup:["GUIDED CLIENT ONBOARDING","Every step in one place.","Complete the next requirement automatically, then review the invitation.","SETUP WIZARD"],
- sessions:["COACH-LED TRAINING","Run and record client sessions.","Clients do not need to log in for you to record their training.","COACH SESSIONS"],
- library:["TRAINING LIBRARY · DEMO","Your exercises and methods, organised.","Search equipment and reusable training structures before building actual programmes.","TRAINING LIBRARY"],
- programmes:["PROGRAMME BUILDER · FICTIONAL","Name, save and reuse plans.","Build manually or import AI JSON, then save a reusable training programme.","PROGRAMMES"],
- nutrition:["NUTRITION · D07 FICTIONAL","Calories, macros & meal plans.","Estimate targets, import AI meals and save reusable plans.","MEALS & NUTRITION"],
- onboarding:["CLIENT ONBOARDING","Every new client, organised.","An intake checklist and a clear next action for every client.","ONBOARDING"]
+ today:["OVERVIEW","Dashboard","Clients, training plans and work requiring attention.","OVERVIEW"],
+ clients:["CLIENTS","Clients","Profiles, plans and coaching history in one place.","CLIENTS"],
+ tasks:["TASKS","Tasks","Review, complete or reschedule outstanding work.","TASKS"],
+ messages:["MESSAGING","Messages","Prepare and review client communication.","MESSAGES"],
+ fresh:["CLIENT SETUP","Client setup","Review details and complete onboarding steps.","CLIENT SETUP"],
+ setup:["CLIENT SETUP","Onboarding checklist","Complete the outstanding steps for this client.","ONBOARDING"],
+ sessions:["SESSIONS","Sessions","Run and log coached training sessions.","SESSIONS"],
+ library:["EXERCISE LIBRARY","Exercise library","Find and manage exercises and coaching methods.","EXERCISES"],
+ programmes:["TRAINING","Training plans","Build, edit and reuse coaching programmes.","TRAINING PLANS"],
+ nutrition:["NUTRITION","Nutrition","Calorie targets, meal plans and saved recipes.","NUTRITION"],
+ onboarding:["ONBOARDING","Onboarding","Intake details and outstanding actions.","ONBOARDING"]
  };
  return headings[state.view]||headings.today;
 }
@@ -218,8 +218,8 @@ function renderToday(){
  const next=active[0];
  const reviews=active.filter(t=>t.kind==="review").length;
  const payments=active.filter(t=>t.kind==="payment").length;
- const nextHtml=next?'<div class="priority-card"><div class="next-top"><span class="mini-label">✦ YOUR NEXT ACTION</span><span class="time-hint">'+escapeHtml(next.estimate)+" MIN · "+escapeHtml(dueLabel(next))+'</span></div><h2>'+escapeHtml(next.title)+'</h2><p class="client-line">'+escapeHtml(clientLabel(next))+' · '+escapeHtml(kinds[next.kind]?.label||"Your task")+'</p><p class="explain">'+escapeHtml(next.note||taskActionText(next))+'</p><div class="button-row"><button class="btn btn-primary" data-action="task" data-id="'+escapeHtml(next.id)+'">Open & take action <span aria-hidden="true">↗</span></button><button class="btn btn-outline" data-action="snooze" data-id="'+escapeHtml(next.id)+'">Snooze a day</button></div></div>':
- '<div class="priority-card"><span class="mini-label">✦ YOUR NEXT ACTION</span><h2>You are up to date.</h2><p class="explain">No open tasks to work on right now. Review the next few days or add a task to capture an idea.</p><button class="btn btn-primary" data-view="tasks">View all tasks</button></div>';
+ const nextHtml=next?'<div class="priority-card"><div class="next-top"><span class="mini-label">NEXT UP</span><span class="time-hint">'+escapeHtml(next.estimate)+" MIN · "+escapeHtml(dueLabel(next))+'</span></div><h2>'+escapeHtml(next.title)+'</h2><p class="client-line">'+escapeHtml(clientLabel(next))+' · '+escapeHtml(kinds[next.kind]?.label||"Your task")+'</p><p class="explain">'+escapeHtml(next.note||taskActionText(next))+'</p><div class="button-row"><button class="btn btn-primary" data-action="task" data-id="'+escapeHtml(next.id)+'">Open task <span aria-hidden="true">↗</span></button><button class="btn btn-outline" data-action="snooze" data-id="'+escapeHtml(next.id)+'">Snooze a day</button></div></div>':
+ '<div class="priority-card"><span class="mini-label">NEXT UP</span><h2>You are up to date.</h2><p class="explain">No open tasks to work on right now. Review the next few days or add a task to capture an idea.</p><button class="btn btn-primary" data-view="tasks">View all tasks</button></div>';
  const focus=active.filter(t=>t!==next).slice(0,4);
  const activity='<div class="activity">'+[
  ['green',"Workout log received","Fictional client · Today"],
@@ -231,17 +231,19 @@ function renderToday(){
  stat("Needs review",reviews,"Open check-in tasks","◴")+
  stat("Payments due",payments,"Fictional follow-ups","£")+
  stat("Tasks to action",active.length,"Prioritised for you","✓")+
- '</div><div class="main-grid"><div><section class="panel"><div class="panel-header"><h3>Today’s focus</h3><span class="tag good">ONE THING AT A TIME</span></div>'+nextHtml+
- '<div class="section-space"><div class="panel-header"><h3>After that</h3><button class="subdued-link" data-view="tasks">View all tasks ↗</button></div>'+
- (focus.length?'<div class="work-items">'+focus.map(t=>taskRow(t,true)).join("")+'</div>':'<p class="no-items">Nothing else waiting — nice and clear.</p>')+'</div></section></div>'+
- '<div><section class="panel"><div class="panel-header"><h3>Quick access</h3><span class="small-muted">Coaching tools</span></div>'+
+ '</div><div class="main-grid"><div><section class="panel"><div class="panel-header"><h3>Next action</h3><span class="tag muted">CURRENT QUEUE</span></div>'+nextHtml+
+ '<div class="section-space"><div class="panel-header"><h3>Also due</h3><button class="subdued-link" data-view="tasks">View all tasks ↗</button></div>'+
+ (focus.length?'<div class="work-items">'+focus.map(t=>taskRow(t,true)).join("")+'</div>':'<p class="no-items">No other tasks due.</p>')+'</div></section></div>'+
+ '<div><section class="panel"><div class="panel-header"><h3>Coach tools</h3><span class="small-muted">Shortcuts</span></div>'+
  '<div class="quick-grid">'+
- '<button class="quick" data-view="clients"><strong>◫ Clients</strong><small>View your roster</small></button>'+
- '<button class="quick" data-view="tasks"><strong>☷ To-do list</strong><small>See everything due</small></button>'+
- '<button class="quick" data-view="messages"><strong>✉ Message drafts</strong><small>Review & copy</small></button>'+
- '<button class="quick" data-action="new-task"><strong>＋ Add task</strong><small>Capture the next action</small></button></div></section>'+
- '<section class="panel section-full"><div class="panel-header"><h3>Recent activity</h3><span class="small-muted">Fictional examples</span></div>'+activity+'</section>'+
- '<section class="panel section-full"><div class="panel-header"><h3>Your focus rule</h3><span class="tag good">STAY ON TRACK</span></div><p class="no-items">Finish or defer the first action before looking for more work. Ideas you don’t want to lose can go into <strong>+ Add task</strong>.</p></section>'+
+ '<button class="quick" data-view="clients"><strong>Clients</strong><small>Open client profiles</small></button>'+
+ '<button class="quick" data-view="programmes"><strong>Training plans</strong><small>Create or edit a plan</small></button>'+
+ '<button class="quick" data-view="nutrition"><strong>Nutrition</strong><small>Meal plans and targets</small></button>'+
+ '<button class="quick" data-view="tasks"><strong>Tasks</strong><small>Review the queue</small></button>'+
+ '<button class="quick" data-view="messages"><strong>Messages</strong><small>Review drafts</small></button>'+
+ '<button class="quick" data-action="new-task"><strong>New task</strong><small>Add a reminder</small></button></div></section>'+
+ '<section class="panel section-full"><div class="panel-header"><h3>Activity</h3><span class="small-muted">Sample feed</span></div>'+activity+'</section>'+
+ 
  '</div></div>';
 }
 function renderClients(){
