@@ -1,6 +1,6 @@
 # TrainSmart fictional Coach Hub — isolated Cellbound distribution
 
-This folder mirrors the D01–D07 **fictional** TrainSmart Coach Hub from `benhorner9/Coaching` commit `e4bd0c523d60f5368d5e067930335d6b268e19a0`. Never enter real client data; this public demonstration has **no authentication, signed consent, secure storage, email delivery or production database**.
+This folder mirrors the D01–D07 **fictional** TrainSmart Coach Hub from `benhorner9/Coaching` commit `228d6797e50efa0028f7a4ff939ab02975d35e8b`. Never enter real client data; this public demonstration has **no authentication, signed consent, secure storage, email delivery or production database**.
 
 Source files live in `public/`, tests in `tests/`, and `npm test && npm run build` generates `dist-trainsmart/`. For shared-host compatibility, the build changes .mjs module imports to .js and HTML root-relative asset paths to relative links, adds a prominent public-demo warning, and writes build-meta.json. No source workbook, live config, keys, private files, hosted databases or production Vercel assets are copied.
 
@@ -11,3 +11,5 @@ Only `./trainsmart/` is uploaded by `.github/workflows/deploy-trainsmart.yml`. T
 D07 adds fictional Mifflin–St Jeor calorie/macros, anonymous ChatGPT meal prompt/JSON import, manual 16-choice meals, recipe reuse and named versioned meal templates. All food amounts are illustrative, not verified for real clients; see Coaching/docs/D07_NUTRITION_PREVIEW.md.
 
 D07.1 navigation fix: visible Meals & Nutrition shortcut, bookmarkable #nutrition route, and source-versioned CSS/entry module to avoid old Safari caches. Mobile WebKit tests are part of the smoke QA.
+
+UX08: grouped navigation, quiet coach-facing copy, premium responsive workspace and four focused nutrition stages (Targets, Create plan, Meal editor, Library). Includes native accessible tab focus and no loss of demo data.

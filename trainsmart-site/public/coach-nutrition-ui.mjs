@@ -125,9 +125,9 @@ export function renderNutritionHub(ctx){
  '<span>Targets not approved</span>')+'</div></div>'+
  '<div class="nut-view-tabs" role="tablist" aria-label="Nutrition workflow">'+
  [["targets","Targets","1"],["create","Create plan","2"],["plan","Meal editor","3"],["library","Library","4"]].map(([id,label,n])=>
- '<button type="button" role="tab" aria-selected="'+(activeTab===id)+'" data-nut-action="tab" data-tab="'+id+'">'+
+ '<button type="button" role="tab" aria-controls="nutrition-panel" aria-selected="'+(activeTab===id)+'" data-nut-action="tab" data-tab="'+id+'">'+
  '<span class="tab-count">'+n+'</span>'+label+'</button>').join("")+'</div>'+
- '<div class="nut-panel-body">'+
+ '<div class="nut-panel-body" id="nutrition-panel" role="tabpanel" tabindex="-1">'+
  (activeTab==="targets" ?
  '<section class="panel nut-section"><div class="ai-step-title"><span class="ai-step-number">1</span><div><h3>Set calorie and macro targets</h3>'+
  '<p>Use the selected client’s recorded details. Fill any gaps before calculating.</p></div></div>'+
@@ -222,7 +222,7 @@ export async function handleNutritionClick(btn,ctx,refresh,notify){
  try{
   if(action==="tab"){
    if(!["targets","create","plan","library"].includes(btn.dataset.tab))throw Error("Unknown nutrition section.");
-   activeTab=btn.dataset.tab;refresh();return true;
+   activeTab=btn.dataset.tab;refresh();document.querySelector('[data-nut-action="tab"][data-tab="'+activeTab+'"]')?.focus({preventScroll:true});return true;
   }
   if(action==="kind"){viewKind=btn.dataset.kind;refresh();return true;}
   if(action==="calculate"){data.target=calculateNutrition(currentDraft(ctx));data.approvedFingerprint="";notify("Targets calculated. Review before approval.");}
