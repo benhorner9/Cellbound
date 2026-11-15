@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "2113d568a2da566731edb7c64e9e957e6ecf4275",
+  "sourceCommit": "c8e1d1e81a3e35acaca1b9582c1edc31777796f7",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -35,5 +35,5 @@
     "coach-ai-brief-ui.mjs",
     "coach-ai-brief.css"
   ],
-  "overlaidFeature": "D06.1 AI brief/response workflow developed in isolated Cellbound preview; pending private Coaching branch sync"
+  "feature": "D06.1 two-box anonymous AI brief -> ChatGPT copy -> validated JSON -> editable named programme"
 }
