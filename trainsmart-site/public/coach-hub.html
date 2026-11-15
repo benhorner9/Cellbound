@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101c1a">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+  <title>TrainSmart | Coach Hub Preview</title>
+  <link rel="stylesheet" href="/coach-hub.css">
+  <link rel="stylesheet" href="/coach-clients.css">
+  <link rel="stylesheet" href="/coach-onboarding.css">
+  <link rel="stylesheet" href="/coach-fresh.css">
+  <link rel="stylesheet" href="/coach-setup.css">
+  <link rel="stylesheet" href="/coach-sessions.css">
+  <link rel="stylesheet" href="/coach-messaging.css">
+  <link rel="stylesheet" href="/coach-library.css">
+  <link rel="stylesheet" href="/coach-programmes.css">
+  <script type="module" src="/coach-hub.mjs"></script>
+</head>
+<body>
+  <a class="skip" href="#main-content">Skip to main content</a>
+  <div class="app">
+    <aside class="side" aria-label="Coach Hub navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">TS<span>.</span></div>
+        <div><strong>TrainSmart</strong><span>COACHING HUB</span></div>
+      </div>
+      <div class="sidebar-rule"></div>
+      <p class="nav-caption">WORKSPACE</p>
+      <nav class="main-nav" aria-label="Coach navigation">
+        <button class="nav-link active" type="button" data-view="today" aria-current="page"><span class="nav-icon">◫</span> Today <span class="nav-bubble" id="today-count">0</span></button>
+        <button class="nav-link" type="button" data-view="clients"><span class="nav-icon">♙</span> Clients</button>
+        <button class="nav-link" type="button" data-view="fresh"><span class="nav-icon">▣</span> Client setup <span class="nav-bubble" id="fresh-count">0</span></button>
+        <button class="nav-link" type="button" data-view="onboarding"><span class="nav-icon">◈</span> Onboarding <span class="nav-bubble" id="onboarding-count">0</span></button>
+        <button class="nav-link" type="button" data-view="programmes"><span class="nav-icon">▤</span> Programmes</button>
+        <button class="nav-link" type="button" data-view="library"><span class="nav-icon">▧</span> Training library</button>
+        <button class="nav-link" type="button" data-view="sessions"><span class="nav-icon">▤</span> Coach sessions</button>
+        <button class="nav-link" type="button" data-view="tasks"><span class="nav-icon">☷</span> All tasks</button>
+        <button class="nav-link" type="button" data-view="messages"><span class="nav-icon">✉</span> Message centre</button>
+      </nav>
+      <p class="nav-caption later-caption">COMING IN LATER BLOCKS</p>
+      <div class="future-nav" aria-label="Planned sections">
+        <div class="future-link">Meals & AI services <span>H07–08</span></div>
+        <div class="future-link">Reviews & progress <span>H09</span></div>
+        <div class="future-link">Payments & reports <span>H10–11</span></div>
+      </div>
+      <div class="side-bottom">
+        <div class="tiny-status"><span class="pulse"></span> ISOLATED FICTIONAL PREVIEW</div>
+        <p>No live clients, no database writes, no messages sent.</p>
+        <button class="text-reset" id="reset-preview" type="button">Reset demo data</button>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="mobile-logo">TS.</span> TrainSmart <span class="mobile-brand-sub">COACH</span></div>
+        <div class="crumb"><span class="crumb-root">WORKSPACE</span><span aria-hidden="true">/</span><strong id="crumb-page">TODAY</strong></div>
+        <div class="top-right">
+          <span class="preview-pill"><span class="pulse"></span> PREVIEW MODE</span>
+          <div class="avatar" aria-label="Fictional coach account">BH</div>
+        </div>
+      </header>
+      <main id="main-content" tabindex="-1">
+        <div class="page-heading">
+          <div><p class="eyebrow" id="page-eyebrow">SUNDAY · COACH OVERVIEW</p><h1 id="page-title">Your day, organised.</h1><p id="page-subtitle" class="page-subtitle">One clear priority at a time. Everything else can wait.</p></div>
+          <button id="add-task" class="btn btn-primary" type="button"><span aria-hidden="true">＋</span> Add task</button>
+        </div>
+        <div class="notice" role="note"><strong>Interactive preview</strong> · All names and records are fictional. Task changes are saved only for this browser session. Refreshing keeps your demo changes; resetting clears them. No real client data is connected.</div>
+        <div id="view-content" aria-live="polite"></div>
+        <footer class="foot"><span>TRAINSMART COACHING</span><span>Coach Hub · Named Programmes D06 Preview</span></footer>
+      </main>
+    </div>
+  </div>
+  <dialog id="task-dialog" class="task-dialog" aria-labelledby="task-dialog-title">
+    <div class="dialog-head"><div><p class="eyebrow">NEXT ACTION</p><h2 id="task-dialog-title">Task detail</h2></div><button class="icon-button" type="button" data-close-dialog="task-dialog" aria-label="Close task details">×</button></div>
+    <div id="task-detail-content"></div>
+  </dialog>
+  <dialog id="new-task-dialog" class="task-dialog" aria-labelledby="new-task-title">
+    <div class="dialog-head"><div><p class="eyebrow">PERSONAL PRIORITIES</p><h2 id="new-task-title">Create a task</h2></div><button class="icon-button" type="button" data-close-dialog="new-task-dialog" aria-label="Close new task">×</button></div>
+    <form id="new-task-form">
+      <label for="task-title">What needs doing?</label><input id="task-title" name="title" maxlength="90" required placeholder="e.g. Prepare Friday check-in notes" autocomplete="off">
+      <label for="task-client">Client (optional)</label><select id="task-client" name="clientId"><option value="">General coaching admin</option></select>
+      <div class="form-grid"><div><label for="task-when">When?</label><select id="task-when" name="when"><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="week">In 3 days</option></select></div><div><label for="task-priority">Priority</label><select id="task-priority" name="priority"><option value="high">High</option><option value="normal" selected>Normal</option><option value="low">Low</option></select></div></div>
+      <label for="task-note">Notes (optional)</label><textarea id="task-note" name="note" rows="3" maxlength="280" placeholder="Anything helpful to remember"></textarea>
+      <div class="form-actions"><button class="btn btn-ghost" type="button" data-close-dialog="new-task-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save task</button></div>
+    </form>
+  </dialog>
+  <dialog id="client-dialog" class="task-dialog client-dialog" aria-labelledby="client-dialog-title">
+    <div class="dialog-head"><div><p class="eyebrow">FICTIONAL CLIENT MANAGEMENT</p><h2 id="client-dialog-title">Edit client</h2></div><button class="icon-button" type="button" data-close-dialog="client-dialog" aria-label="Close client editor">×</button></div>
+    <div class="notice"><strong>Demo only</strong> — use fictional names and details. This form does not save to Supabase or contact real clients.</div>
+    <form id="client-form">
+      <input type="hidden" name="clientId" id="client-id">
+      <label for="client-name">Fictional client name</label><input id="client-name" name="name" maxlength="80" autocomplete="off" required placeholder="e.g. Demo Client">
+      <label for="client-service">Type of coaching (new clients only)</label><select id="client-service" name="service"><option value="pt">Personal training</option><option value="online">Online coaching</option><option value="group">Small-group training</option></select>
+      <label for="client-goal">Main coaching goal</label><input id="client-goal" name="goal" maxlength="280" required placeholder="e.g. Improve strength and mobility">
+      <div class="form-grid">
+        <div><label for="client-status">Coaching status</label><select id="client-status" name="status"><option>Onboarding</option><option>Active</option><option>Paused</option><option>Archived</option></select></div>
+        <div><label for="client-experience">Experience</label><select id="client-experience" name="experience"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div>
+        <div><label for="client-days">Sessions per week</label><input type="number" id="client-days" name="trainingDays" min="1" max="7" step="1" value="3" required></div>
+        <div><label for="client-duration">Session length (minutes)</label><input type="number" id="client-duration" name="sessionMinutes" min="15" max="180" step="5" value="45" required></div>
+      </div>
+      <label for="client-equipment">Available equipment</label><textarea id="client-equipment" name="equipment" rows="2" maxlength="280" placeholder="e.g. TrainSmart Gym, dumbbells, bands"></textarea>
+      <label for="client-notes">Coach-only fictional notes</label><textarea id="client-notes" name="privateNotes" rows="3" maxlength="1000" placeholder="No real client or health information here"></textarea>
+      <p id="client-form-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="client-dialog">Cancel</button><button type="submit" class="btn btn-primary">Save fictional profile</button></div>
+    </form>
+  </dialog>
+  <dialog id="onboarding-intake-dialog" class="task-dialog client-dialog" aria-labelledby="onboarding-intake-title">
+    <div class="dialog-head"><div><p class="eyebrow">FICTIONAL INTAKE DETAILS</p><h2 id="onboarding-intake-title">Review intake details</h2></div><button class="icon-button" type="button" data-close-dialog="onboarding-intake-dialog" aria-label="Close intake form">×</button></div>
+    <p class="dialog-copy">Enter demonstration details only. This does not send a form to a client or save anything to Supabase.</p>
+    <form id="onboarding-intake-form">
+      <input type="hidden" id="onboarding-intake-client" name="clientId">
+      <label for="onboarding-goal">Example training goal</label><textarea id="onboarding-goal" name="goal" rows="2" maxlength="180" required></textarea>
+      <label for="onboarding-equipment">Available equipment</label><textarea id="onboarding-equipment" name="equipment" rows="2" maxlength="250" required></textarea>
+      <div class="form-grid"><div><label for="onboarding-days">Training days each week</label><input id="onboarding-days" type="number" name="days" min="1" max="7" step="1" required></div><div><label for="onboarding-schedule">Example preferred schedule</label><input id="onboarding-schedule" name="preferredSchedule" maxlength="180" placeholder="e.g. Mon, Wed, Fri mornings" required></div></div>
+      <label for="onboarding-food">Example meal preferences (optional)</label><textarea id="onboarding-food" name="foodPreferences" rows="2" maxlength="280" placeholder="e.g. enjoys simple UK meals"></textarea>
+      <label for="onboarding-notes">Demonstration coach notes (optional)</label><textarea id="onboarding-notes" name="notes" rows="2" maxlength="320"></textarea>
+      <p id="onboarding-intake-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button class="btn btn-ghost" type="button" data-close-dialog="onboarding-intake-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save fictional intake</button></div>
+    </form>
+  </dialog>
+  <dialog id="fresh-contact-dialog" class="task-dialog client-dialog fresh-dialog" aria-labelledby="fresh-contact-heading">
+    <div class="dialog-head"><div><p class="eyebrow">FRESH ENROLMENT · FICTIONAL</p><h2 id="fresh-contact-heading">Contact & emergency details</h2></div><button class="icon-button" type="button" data-close-dialog="fresh-contact-dialog" aria-label="Close contact form">×</button></div>
+    <div class="notice"><strong>Preview only:</strong> Do not enter genuine names, emails, phone numbers or emergency contacts. This is not secure real-client storage.</div>
+    <form id="fresh-contact-form">
+      <input type="hidden" name="clientId" id="fresh-contact-client">
+      <p class="eyebrow">Personal contact</p>
+      <label for="fresh-email">Fictional email</label><input id="fresh-email" name="email" type="email" maxlength="110" placeholder="example@example.invalid" required autocomplete="off">
+      <label for="fresh-phone">Fictional telephone number</label><input id="fresh-phone" name="phone" type="tel" maxlength="40" placeholder="07700 900123" required autocomplete="off">
+      <div class="divider-line"></div><p class="eyebrow">Emergency contact · safety only</p>
+      <label for="fresh-emergency-name">Fictional contact name</label><input id="fresh-emergency-name" name="emergencyName" maxlength="80" placeholder="Example Contact" required autocomplete="off">
+      <div class="form-grid"><div><label for="fresh-emergency-relation">Relationship</label><input id="fresh-emergency-relation" name="emergencyRelation" maxlength="50" placeholder="Friend" required autocomplete="off"></div>
+      <div><label for="fresh-emergency-phone">Fictional contact phone</label><input id="fresh-emergency-phone" name="emergencyPhone" type="tel" maxlength="40" placeholder="07700 900456" required autocomplete="off"></div></div>
+      <p class="small-muted">An emergency contact is not automatically invited or included in marketing communications.</p>
+      <p id="fresh-contact-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button class="btn btn-ghost" type="button" data-close-dialog="fresh-contact-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save demo contacts</button></div>
+    </form>
+  </dialog>
+  <dialog id="fresh-baseline-dialog" class="task-dialog client-dialog fresh-dialog" aria-labelledby="fresh-baseline-heading">
+    <div class="dialog-head"><div><p class="eyebrow">NEW MEASUREMENTS · DEMO</p><h2 id="fresh-baseline-heading">Record a fresh baseline</h2></div><button class="icon-button" type="button" data-close-dialog="fresh-baseline-dialog" aria-label="Close baseline form">×</button></div>
+    <p class="dialog-copy">Use made-up figures only. None of the client's former measurements are brought into TrainSmart.</p>
+    <form id="fresh-baseline-form"><input type="hidden" id="fresh-baseline-client" name="clientId">
+      <div class="form-grid"><div><label for="fresh-height">Height (cm)</label><input type="number" id="fresh-height" name="heightCm" min="80" max="250" step="0.1" placeholder="170" required></div>
+      <div><label for="fresh-weight">Weight (kg)</label><input type="number" id="fresh-weight" name="weightKg" min="20" max="400" step="0.1" placeholder="75" required></div></div>
+      <label for="fresh-date">Fictional measurement date</label><input id="fresh-date" name="measuredAt" type="date" required>
+      <p id="fresh-baseline-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button class="btn btn-ghost" type="button" data-close-dialog="fresh-baseline-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save fresh demo baseline</button></div>
+    </form>
+  </dialog>
+  <dialog id="fresh-document-dialog" class="task-dialog client-dialog fresh-dialog" aria-labelledby="fresh-document-heading">
+    <div class="dialog-head"><div><p class="eyebrow">DEMO — NOT LEGALLY EXECUTED</p><h2 id="fresh-document-heading">Example document</h2></div><button class="icon-button" type="button" data-close-dialog="fresh-document-dialog" aria-label="Close document">×</button></div>
+    <div class="notice"><strong>Not a legal signature or health assessment.</strong> Approved TrainSmart document wording has not yet been supplied.</div>
+    <form id="fresh-document-form"><input type="hidden" id="fresh-document-client" name="clientId"><input type="hidden" id="fresh-document-id" name="docId">
+      <div id="fresh-document-content"></div>
+      <p id="fresh-document-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button class="btn btn-ghost" type="button" data-close-dialog="fresh-document-dialog">Cancel</button><button class="btn btn-primary" type="submit">Record demo action</button></div>
+    </form>
+  </dialog>
+  <dialog id="message-compose-dialog" class="task-dialog client-dialog message-dialog" aria-labelledby="message-compose-heading">
+    <div class="dialog-head"><div><p class="eyebrow">FICTIONAL MESSAGING · NOT SENT</p><h2 id="message-compose-heading">Compose message</h2></div><button class="icon-button" type="button" data-close-dialog="message-compose-dialog" aria-label="Close message composer">×</button></div>
+    <div class="notice"><strong>Demonstration only</strong> — No emails or WhatsApp messages leave this preview. Do not enter real clients' details.</div>
+    <form id="message-compose-form"><input type="hidden" id="message-compose-id" name="draftId">
+      <div id="message-compose-content"></div>
+      <p class="form-error" id="message-compose-error" role="alert" hidden></p>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="message-compose-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save draft — do not send</button></div>
+    </form>
+  </dialog>
+  <dialog id="message-preference-dialog" class="task-dialog client-dialog message-dialog" aria-labelledby="message-preference-heading">
+    <div class="dialog-head"><div><p class="eyebrow">FICTIONAL CLIENT COMMUNICATION</p><h2 id="message-preference-heading">Contact preferences</h2></div><button class="icon-button" type="button" data-close-dialog="message-preference-dialog" aria-label="Close preferences">×</button></div>
+    <form id="message-preference-form"><input type="hidden" name="clientId" id="message-preference-client">
+      <div id="message-preference-content"></div>
+      <p class="form-error" id="message-preference-error" role="alert" hidden></p>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="message-preference-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save fictional preference</button></div>
+    </form>
+  </dialog>
+  <dialog id="message-template-dialog" class="task-dialog client-dialog message-dialog" aria-labelledby="message-template-heading">
+    <div class="dialog-head"><div><p class="eyebrow">REUSABLE MESSAGE LIBRARY</p><h2 id="message-template-heading">Save a template</h2></div><button class="icon-button" type="button" data-close-dialog="message-template-dialog" aria-label="Close template editor">×</button></div>
+    <form id="message-template-form"><input type="hidden" name="templateId" id="message-template-id">
+      <div id="message-template-content"></div>
+      <p class="form-error" id="message-template-error" role="alert" hidden></p>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="message-template-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save template</button></div>
+    </form>
+  </dialog>
+  <dialog id="library-exercise-dialog" class="task-dialog client-dialog" aria-labelledby="library-exercise-title">
+    <div class="dialog-head"><div><p class="eyebrow">FICTIONAL EXERCISE CATALOGUE</p><h2 id="library-exercise-title">Edit example exercise</h2></div><button type="button" class="icon-button" data-close-dialog="library-exercise-dialog" aria-label="Close exercise editor">×</button></div>
+    <div class="notice"><strong>Demo only.</strong> These exercises are not verified against your TrainSmart Master Library and cannot be published to real clients.</div>
+    <form id="library-exercise-form"><input type="hidden" id="library-exercise-id" name="exerciseId">
+      <div id="library-exercise-content"></div>
+      <p class="form-error" id="library-exercise-error" role="alert" hidden></p>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="library-exercise-dialog">Cancel</button><button type="submit" class="btn btn-primary">Save example exercise</button></div>
+    </form>
+  </dialog>
+  <dialog id="library-method-dialog" class="task-dialog client-dialog" aria-labelledby="library-method-title">
+    <div class="dialog-head"><div><p class="eyebrow">FICTIONAL COACHING METHOD</p><h2 id="library-method-title">Edit example method</h2></div><button type="button" class="icon-button" data-close-dialog="library-method-dialog" aria-label="Close method editor">×</button></div>
+    <div class="notice"><strong>Preview only.</strong> Progressive Logbook V3 progression/loading rules have not been verified. Do not apply example prescriptions to real clients.</div>
+    <form id="library-method-form"><input type="hidden" name="methodId" id="library-method-id">
+      <div id="library-method-content"></div>
+      <p class="form-error" id="library-method-error" role="alert" hidden></p>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="library-method-dialog">Cancel</button><button type="submit" class="btn btn-primary">Save example method</button></div>
+    </form>
+  </dialog>
+  <dialog id="programme-ai-dialog" class="task-dialog client-dialog" aria-labelledby="programme-ai-title">
+    <div class="dialog-head"><div><p class="eyebrow">AI DRAFT IMPORT · FICTIONAL</p><h2 id="programme-ai-title">Import a programme from ChatGPT</h2></div><button type="button" class="icon-button" data-close-dialog="programme-ai-dialog" aria-label="Close AI import">×</button></div>
+    <div class="notice">Paste structured AI-generated JSON only. No real clients, automatic AI calls or direct publishing.</div>
+    <form id="programme-ai-form"><div id="programme-ai-content"></div><p id="programme-ai-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="programme-ai-dialog">Cancel</button><button type="submit" class="btn btn-primary">Import editable draft</button></div>
+    </form>
+  </dialog>
+  <dialog id="programme-assignment-dialog" class="task-dialog client-dialog" aria-labelledby="programme-assignment-title">
+    <div class="dialog-head"><div><p class="eyebrow">CLIENT ASSIGNMENT · DEMO ONLY</p><h2 id="programme-assignment-title">Reuse saved plan for client</h2></div><button type="button" class="icon-button" data-close-dialog="programme-assignment-dialog" aria-label="Close assignment">×</button></div>
+    <div class="notice">Example assignments are browser-session snapshots and are NOT visible to real clients.</div>
+    <form id="programme-assignment-form"><input type="hidden" name="templateId" id="programme-assignment-template">
+      <div id="programme-assignment-content"></div><p id="programme-assignment-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="programme-assignment-dialog">Cancel</button><button type="submit" class="btn btn-primary">Save separate client copy</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+name: TrainSmart - isolated fictional /trainsmart/ preview
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'trainsmart-site/**'
+      - '.github/workflows/deploy-trainsmart.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: trainsmart-isolated-ftps
+  cancel-in-progress: false
+jobs:
+  deploy:
+    name: Test and publish ONLY /trainsmart/
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out approved Cellbound hosting bridge
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run all TrainSmart Coach Hub regression tests (no artifacts)
+        run: npm --prefix trainsmart-site test
+      - name: Build only fictional network-disabled static preview
+        run: npm --prefix trainsmart-site run build
+      - name: Verify package contains only authorized flat static files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s trainsmart-site/dist-trainsmart/index.html
+          test -s trainsmart-site/dist-trainsmart/coach-hub.js
+          test -s trainsmart-site/dist-trainsmart/build-meta.json
+          ! grep -Eq '(src|href)="/' trainsmart-site/dist-trainsmart/index.html
+          grep -F 'connect-src ' trainsmart-site/dist-trainsmart/index.html
+          ! grep -R -E 'supabase.co|service_role|auth\.js' trainsmart-site/dist-trainsmart/
+          node -e "const m=require('./trainsmart-site/dist-trainsmart/build-meta.json');if(m.target!=='/trainsmart/'||m.channel!=='fictional-preview'||m.bridgeCommit!==process.env.GITHUB_SHA)process.exit(1)"
+      - name: Install browser smoke runners
+        working-directory: trainsmart-site
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Verify actual pre-deployment Chromium and iPad-WebKit interactions
+        working-directory: trainsmart-site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8769 --bind 127.0.0.1 --directory dist-trainsmart >/tmp/trainsmart-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in 1 2 3 4 5; do if curl -fsS --max-time 2 http://127.0.0.1:8769/ >/dev/null; then break; fi; sleep 1; done
+          TRAINSMART_BASE_URL=http://127.0.0.1:8769/ node qa/smoke.mjs
+      - name: Require established FTPS secrets
+        env:
+          HOST: '${{ secrets.FTP_SERVER }}'
+          USER: '${{ secrets.FTP_USERNAME }}'
+          PASS: '${{ secrets.FTP_PASSWORD }}'
+        run: test -n "$HOST" && test -n "$USER" && test -n "$PASS"
+      - name: Upload ONLY the TrainSmart subdirectory
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: '${{ secrets.FTP_SERVER }}'
+          username: '${{ secrets.FTP_USERNAME }}'
+          password: '${{ secrets.FTP_PASSWORD }}'
+          protocol: ftps
+          port: '${{ secrets.FTP_PORT || 21 }}'
+          local-dir: ./trainsmart-site/dist-trainsmart/
+          server-dir: ./trainsmart/
+          state-name: .ftp-deploy-trainsmart-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+      - name: Verify exact hosted build and asset bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://playcellbound.com/trainsmart'
+          matched=0
+          for i in 1 2 3 4 5 6; do
+            if curl -fsSL --max-time 25 "$base/build-meta.json?commit=$GITHUB_SHA" -o /tmp/trainsmart-build.json && node -e "const m=require('/tmp/trainsmart-build.json');if(m.bridgeCommit!==process.env.GITHUB_SHA||m.target!=='/trainsmart/')process.exit(1)"; then matched=1; break; fi
+            sleep 7
+          done
+          test "$matched" = 1
+          for f in trainsmart-site/dist-trainsmart/*; do
+            file="${f##*/}"
+            curl -fsSL --max-time 25 "$base/$file?commit=$GITHUB_SHA" -o "/tmp/trainsmart-$file"
+            cmp -s "$f" "/tmp/trainsmart-$file"
+          done
+          curl -fsSL --max-time 25 "$base/?commit=$GITHUB_SHA" -o /tmp/trainsmart-root.html
+          cmp -s trainsmart-site/dist-trainsmart/index.html /tmp/trainsmart-root.html
+          for f in coach-hub.js coach-programmes-model.js coach-programmes-ui.js; do
+            mime="$(curl -LfsS --max-time 20 -o /dev/null -w '%{content_type}' "$base/$f?commit=$GITHUB_SHA")"
+            case "${mime%%;*}" in text/javascript|application/javascript|application/x-javascript|text/ecmascript|application/ecmascript) echo "PASS module MIME: $f";; *) echo "::error::Invalid JS MIME $mime for $f"; exit 1;; esac
+          done
+      - name: Run live hosted programme save/reuse in Chromium and WebKit
+        working-directory: trainsmart-site
+        env:
+          TRAINSMART_BASE_URL: https://playcellbound.com/trainsmart/
+        run: node qa/smoke.mjs
+      - name: Publish release evidence
+        run: |
+          echo '### TrainSmart FICTIONAL Coach Hub preview' >> "$GITHUB_STEP_SUMMARY"
+          echo '- URL: https://playcellbound.com/trainsmart/' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Source commit: 2113d568a2da566731edb7c64e9e957e6ecf4275' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Only /trainsmart/ updated. No live client service or other Cellbound games touched.' >> "$GITHUB_STEP_SUMMARY"
