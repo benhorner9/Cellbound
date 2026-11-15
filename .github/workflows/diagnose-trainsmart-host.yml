@@ -1,0 +1,37 @@
+name: TrainSmart public host response diagnostic
+on:
+  push:
+    branches: [diagnostic/trainsmart-host-response]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect public HTML and JSON without access tokens
+        shell: bash
+        run: |
+          set -euo pipefail
+          for url in \
+            "https://playcellbound.com/trainsmart/" \
+            "https://playcellbound.com/trainsmart/build-meta.json" \
+            "https://playcellbound.com/trainsmart/build-meta.json?commit=67fa23a2a62a916957a49d145d1f8167a2a1efbb" \
+            "https://playcellbound.com/trainsmart/coach-design.css"; do
+            echo "== URL: $url"
+            for ua in "curl/8.0" "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1"; do
+              curl --silent --show-error --location --max-time 12 -D /tmp/headers -o /tmp/body \
+                --user-agent "$ua" --header 'Cache-Control: no-cache' \
+                --write-out 'HTTP=%{http_code} URL_EFFECTIVE=%{url_effective} BYTES=%{size_download} TYPE=%{content_type}\n' \
+                "$url" || true
+              grep -Ei '^(HTTP/|location:|content-type:|server:|cache-control:|x-cache:|cf-ray:)' /tmp/headers | tail -10 || true
+              python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/body')
+          if p.exists():
+              b=p.read_bytes()
+              print("Body first 180:",repr(b[:180].decode('utf-8','replace')))
+          PY
+            done
+          done
