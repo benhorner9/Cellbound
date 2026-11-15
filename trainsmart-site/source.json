@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "d7b4bc5994ae2ba2721874907efe83b2454fe0d4",
+  "sourceCommit": "e4bd0c523d60f5368d5e067930335d6b268e19a0",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -38,5 +38,5 @@
     "coach-nutrition-ui.mjs",
     "coach-nutrition.css"
   ],
-  "feature": "D07 isolated fictional nutrition calculator, two-box AI 16-meal planner and reusable plan library (D01–D06.1 preserved)"
+  "feature": "D07 isolated fictional nutrition calculator, two-box AI 16-meal planner and reusable plan library (D01–D06.1 preserved); Safari cache-safe navigation and visible nutrition shortcut"
 }
