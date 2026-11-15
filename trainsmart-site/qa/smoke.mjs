@@ -10,7 +10,7 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   if(!response?.ok())throw Error("Failed to load "+url+" "+response?.status());
   if((await page.locator('.nav-group').count())!==3)throw Error("Grouped coach navigation missing");
   if(!(await page.locator('#page-title').innerText()).includes("Dashboard"))throw Error("Coach dashboard not opened");
-  await page.locator('[data-view="programmes"]').click();
+  await page.locator('.nav-link[data-view="programmes"]').click();
   // Two-box AI flow is the default entry point.
   await page.locator('[data-programme-tab="ai"]').click();
   await page.locator('[data-ai-field="name"]').fill("AI Bridge Strength Plan");
@@ -37,11 +37,11 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   await page.locator('[data-action="programme-use-template"]').first().click();
   if((await page.locator("#programme-draft-name").inputValue())!=="Bridge Test Strength Plan")
    throw Error("Saved plan could not be reused");
-  await page.locator('[data-view="library"]').click();
+  await page.locator('.nav-link[data-view="library"]').click();
   if(!(await page.locator("body").innerText()).includes("Exercise catalogue"))
    throw Error("Exercise catalogue missing");
   // D07 end-to-end fictional nutrition builder on the same Chromium/WebKit run.
-  await page.locator('[data-view="nutrition"]').click();
+  await page.locator('.nav-link[data-view="nutrition"]').click();
   if((await page.locator('.nut-view-tabs [role="tab"]').count())!==4)throw Error("Nutrition is missing its four work areas");
   await page.locator('[data-nut-field="clientId"]').selectOption("sarah");
   await page.locator('[data-nut-field="age"]').fill("35");
@@ -68,7 +68,7 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   await page.locator('[data-nut-action="assign-plan"]').first().click();
   if(!(await page.locator('body').innerText()).includes("Fictional client meal-plan assignments"))throw Error("D07 saved plan assignment not visible");
   console.log(label+" PASS: D07 calculator, approved targets, anonymised prompt, 16 meals, saved recipe and template");
-  await page.locator('[data-view="clients"]').click();
+  await page.locator('.nav-link[data-view="clients"]').click();
   if(!(await page.locator("body").innerText()).includes("Clients"))
    throw Error("Client directory navigation missing");
   if(errors.length)throw Error("Browser runtime errors: "+errors.join("; "));
