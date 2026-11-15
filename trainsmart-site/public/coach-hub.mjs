@@ -27,6 +27,7 @@ import {newProgramme,validProgramme,validProgrammeLibrary,updateProgrammeBasics,
  currentClientAssignment,clientPlanWarnings,canonicalYoutubeUrl} from "./coach-programmes-model.mjs";
 import {renderProgrammesCentre,aiImportDialog,assignmentDialog,renderClientProgrammeSummary} from "./coach-programmes-ui.mjs";
 import {emptyAIBrief,validAIBrief,aiBriefFromClient,createAIRequest,parseAIResponse,aiExampleResponse} from "./coach-ai-brief-model.mjs";
+import {renderNutritionHub,handleNutritionClick,handleNutritionChange,handleNutritionInput,resetNutritionDemo} from "./coach-nutrition-ui.mjs";
 /*
  * TrainSmart Coach Hub D01 — strictly fictional, isolated, client-side preview.
  * No fetch, no Supabase SDK, no Auth, no email, no WhatsApp send, no real records.
@@ -167,6 +168,7 @@ function viewHeading(){
  sessions:["COACH-LED TRAINING","Run and record client sessions.","Clients do not need to log in for you to record their training.","COACH SESSIONS"],
  library:["TRAINING LIBRARY · DEMO","Your exercises and methods, organised.","Search equipment and reusable training structures before building actual programmes.","TRAINING LIBRARY"],
  programmes:["PROGRAMME BUILDER · FICTIONAL","Name, save and reuse plans.","Build manually or import AI JSON, then save a reusable training programme.","PROGRAMMES"],
+ nutrition:["NUTRITION · D07 FICTIONAL","Calories, macros & meal plans.","Estimate targets, import AI meals and save reusable plans.","MEALS & NUTRITION"],
  onboarding:["CLIENT ONBOARDING","Every new client, organised.","An intake checklist and a clear next action for every client.","ONBOARDING"]
  };
  return headings[state.view]||headings.today;
@@ -1049,6 +1051,7 @@ function render(){
  assignments:state.programmeAssignments,library:state.library,clients,tab:state.programmeTab,
  selectedClientId:state.programmeClientId,selectedTemplateId:state.programmeTemplateId,
  aiBrief:state.aiBrief,aiPrompt:state.aiPrompt,aiReply:state.aiReply,aiClientId:state.aiClientId}):
+ state.view==="nutrition"?renderNutritionHub({clients,enrolments:state.enrolments}):
  state.view==="tasks"?renderTasks():state.view==="messages"?renderMessageCentre({
  clients,drafts:state.drafts,preferences:state.messagePreferences,enrolments:state.enrolments,
  customTemplates:state.customMessageTemplates,selectedClientId:state.messageClientFilter,
@@ -1103,7 +1106,7 @@ function openTask(id){
  document.getElementById("task-dialog").showModal();
 }
 function changeView(view){
- if(!["today","clients","onboarding","fresh","setup","sessions","tasks","messages","library","programmes"].includes(view))return;
+ if(!["today","clients","onboarding","fresh","setup","sessions","tasks","messages","library","programmes","nutrition"].includes(view))return;
  state.view=view;if(view!=="clients")state.selectedClient=null;
  render();document.getElementById("main-content").focus({preventScroll:true});window.scrollTo({top:0,behavior:"auto"});
 }
@@ -1129,6 +1132,7 @@ document.addEventListener("click",async ev=>{
  const btn=ev.target.closest("button");if(!btn)return;
  if(btn.dataset.closeDialog){document.getElementById(btn.dataset.closeDialog)?.close();return;}
  if(btn.dataset.view){changeView(btn.dataset.view);return;}
+ if(btn.dataset.nutAction){await handleNutritionClick(btn,{clients,enrolments:state.enrolments},render,flash);return;}
  if(btn.dataset.filter){state.filter=btn.dataset.filter;render();return;}
  if(btn.dataset.clientFilter){state.clientFilter=btn.dataset.clientFilter;state.selectedClient=null;render();return;}
  if(btn.dataset.clientTab){state.clientTab=btn.dataset.clientTab;render();return;}
@@ -1269,6 +1273,7 @@ document.addEventListener("submit",ev=>{
 });
 document.addEventListener("change",ev=>{
  const target=ev.target;
+ if(target?.dataset?.nutField){handleNutritionChange(target,{clients,enrolments:state.enrolments},render);return;}
  if(target?.id==="ai-client-select"){chooseAIClient(target.value);return;}
  if(target?.dataset?.aiEquipment){setAIEquipment(target);return;}
  if(target?.dataset?.aiField){updateAIField(target);return;}
@@ -1304,12 +1309,13 @@ document.addEventListener("change",ev=>{
   save();render();
  }catch(error){flash(error.message);render();}
 });
-document.getElementById("add-task").addEventListener("click",()=>state.view==="programmes"?newManualProgramme():["clients","onboarding","fresh","setup"].includes(state.view)?openClientEditor():newTask());
+document.getElementById("add-task").addEventListener("click",()=>state.view==="nutrition"?changeView("nutrition"):state.view==="programmes"?newManualProgramme():["clients","onboarding","fresh","setup"].includes(state.view)?openClientEditor():newTask());
 document.getElementById("reset-preview").addEventListener("click",()=>{
  if(!confirm("Reset fictional tasks and message drafts? This does not affect any real client data."))return;
- try{sessionStorage.removeItem(STORE);}catch{}state=initial();clients=state.clients;render();flash("Fictional preview reset.");
+ try{sessionStorage.removeItem(STORE);}catch{}resetNutritionDemo();state=initial();clients=state.clients;render();flash("Fictional preview reset.");
 });
 document.addEventListener("input",ev=>{
+ if(ev.target?.dataset?.nutField||ev.target?.dataset?.nutMealField||ev.target?.dataset?.nutRowQty){handleNutritionInput(ev.target,{clients,enrolments:state.enrolments});return;}
  if(ev.target?.id==="ai-response-box"){
   state.aiReply=String(ev.target.value||"").slice(0,30000);save();return;
  }
