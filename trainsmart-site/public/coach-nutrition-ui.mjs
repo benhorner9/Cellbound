@@ -89,7 +89,7 @@ function renderSaved(ctx){
  '<h3>Saved individual recipes</h3>'+
  (data.recipes.length?data.recipes.slice(-18).map(r=>'<div class="nut-saved-row"><div><strong>'+esc(r.name)+'</strong><p class="small-muted">'+money(r.nutrition.calories)+' kcal · '+esc(r.id)+'</p></div>'+
  '<select aria-label="Choose meal slot" id="nut-recipe-slot-'+esc(r.id)+'">'+
- MEAL_KINDS.flatMap(kind=>Array.from({length:4},(_,i)=>option(kind+":"+i,MEAL_LABELS[kind]+" "+(i+1),kind+":"+i))).join("")+
+ MEAL_KINDS.flatMap(kind=>Array.from({length:4},(_,i)=>option(kind+":"+i,MEAL_LABELS[kind]+" "+(i+1),viewKind+":0"))).join("")+
  '</select><button type="button" class="btn btn-outline btn-sm" data-nut-action="reuse-recipe" data-recipe="'+esc(r.id)+'">Use recipe in slot</button></div>').join(""):'<p class="small-muted">No recipes saved yet.</p>')+
  '<h3>Fictional client meal-plan assignments</h3>'+
  (data.assignments.length?data.assignments.slice().reverse().map(a=>'<p>'+esc(ctx.clients.find(c=>c.id===a.clientId)?.name||"Example client")+
