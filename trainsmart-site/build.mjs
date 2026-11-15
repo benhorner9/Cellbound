@@ -33,7 +33,7 @@ for(const file of m.files){
  checks[output]=createHash("sha256").update(body).digest("hex");
 }
 const html=readFileSync(join(out,"coach-hub.html"),"utf8");
-for(const [attr,asset] of html.matchAll(/(href|src)="\.\/(coach-[^"?#]+)/g)){
+for(const [,attr,asset] of html.matchAll(/(href|src)="\.\/(coach-[^"?#]+)/g)){
  if(!files.includes(asset))throw Error("HTML references missing asset: "+asset);
 }
 for(const file of files.filter(x=>x.endsWith(".js"))){
