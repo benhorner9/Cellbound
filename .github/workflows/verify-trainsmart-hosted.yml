@@ -1,0 +1,47 @@
+name: TrainSmart hosted UX08 verification (test only)
+on:
+  push:
+    branches: [fix/trainsmart-verified-host-release]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify_hosted:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Validate local source
+        run: |
+          npm --prefix trainsmart-site test
+          npm --prefix trainsmart-site run build
+      - name: Validate hosted build with hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=https://playcellbound.com/trainsmart
+          curl -fLsS --retry 3 --max-time 20 -H 'Cache-Control: no-cache' "$base/build-meta.json?check=$GITHUB_SHA" -o /tmp/hosted-meta.json
+          node <<'JS'
+          const fs=require('fs');
+          const hosted=JSON.parse(fs.readFileSync('/tmp/hosted-meta.json','utf8'));
+          const built=JSON.parse(fs.readFileSync('trainsmart-site/dist-trainsmart/build-meta.json','utf8'));
+          if(!/^[a-f0-9]{40}$/.test(hosted.bridgeCommit))throw Error('invalid hosted release commit');
+          if(hosted.sourceCommit!==built.sourceCommit||hosted.target!==built.target)throw Error('source or target mismatch');
+          const keys=Object.keys(built.files).sort();
+          if(JSON.stringify(keys)!==JSON.stringify(Object.keys(hosted.files).sort()))throw Error('files mismatch');
+          for(const key of keys)if(built.files[key]!==hosted.files[key])throw Error(key+' asset hash mismatch');
+          console.log('PASS exact TrainSmart asset manifest', keys.length,'assets; hosted commit',hosted.bridgeCommit);
+          JS
+      - name: Install browser checks
+        working-directory: trainsmart-site
+        run: |
+          npm install --no-save --package-lock=false playwright@1.65.1
+          npx playwright install --with-deps chromium webkit
+      - name: Run live desktop, phone and iPad checks
+        working-directory: trainsmart-site
+        env:
+          TRAINSMART_BASE_URL: https://playcellbound.com/trainsmart/
+        run: node qa/smoke.mjs
