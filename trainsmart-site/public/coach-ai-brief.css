@@ -1,0 +1,27 @@
+/* D06.1 TrainSmart two-box workflow; compact on iPad, responsive on mobile */
+.ai-two-box-workflow{display:grid;gap:16px}
+.ai-privacy-banner{background:#3c3529;color:#f0dfbc;border:1px solid #997e4b;padding:13px 16px;border-radius:11px;font-size:12px;line-height:1.7}
+.ai-privacy-banner strong{display:block;font-size:13px;margin-bottom:3px}
+.ai-workflow-step{margin:0!important;padding:20px}
+.ai-step-title{display:flex;align-items:start;gap:13px;margin:0 0 16px}
+.ai-step-title h3{font-size:18px;margin:2px 0 5px}
+.ai-step-title p{color:#b1c9b6;font-size:11px;line-height:1.5}
+.ai-step-number{width:34px;height:34px;min-width:34px;border-radius:9px;background:#b9e18d;color:#203c2b;font-size:18px;font-weight:900;display:grid;place-items:center}
+.ai-workflow-step>label,.ai-input-grid label{display:grid;gap:6px;font-size:11px;color:#c1d7c4;margin:10px 0}
+.ai-workflow-step input,.ai-workflow-step select,.ai-workflow-step textarea{box-sizing:border-box;width:100%;min-height:43px;font-size:13px}
+.ai-input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 13px;margin-top:12px}
+.ai-input-grid .ai-wide{grid-column:1/-1}
+.ai-workflow-step textarea{white-space:pre-wrap;line-height:1.6}
+.ai-workflow-step #ai-request-box,.ai-workflow-step #ai-response-box{font-size:11px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;min-height:210px;overflow-wrap:anywhere}
+.ai-workflow-step #ai-request-box[readonly]{background:#243a30;color:#d9e6da}
+.ai-gear{border:1px solid #4b6751;border-radius:10px;padding:11px 13px;margin:15px 0}
+.ai-gear legend{font-size:11px;color:#c2d9c8;padding:0 6px}
+.ai-equipment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ai-equipment-grid label{display:flex;align-items:center;gap:9px;border:1px solid #3d5e49;border-radius:8px;padding:10px;background:#284333;font-size:11px;min-height:43px;box-sizing:border-box}
+.ai-equipment-grid input{min-height:0;width:18px;height:18px;flex-shrink:0;accent-color:#b6de85}
+.ai-actions{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}
+.ai-actions .btn{min-height:44px}
+.ai-workflow-next{margin:0!important}
+.ai-workflow-next h3{font-size:15px}
+.ai-workflow-next p{font-size:12px;line-height:1.65;color:#c1d2c0}
+@media(max-width:700px){.ai-input-grid,.ai-equipment-grid{grid-template-columns:1fr}.ai-actions .btn{width:100%}.ai-workflow-step{padding:14px}.ai-step-title h3{font-size:16px}.ai-workflow-step #ai-request-box,.ai-workflow-step #ai-response-box{min-height:260px}}

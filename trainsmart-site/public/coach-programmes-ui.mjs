@@ -1,6 +1,7 @@
 /* D06 fictional TrainSmart manual and AI plan builder UI; no RIR field. */
 import {programmeMetrics,currentClientAssignment,latestTemplateVersion,
  clientPlanWarnings,videoForExercise,instructionForExercise} from "./coach-programmes-model.mjs";
+import {renderAIBriefWorkflow} from "./coach-ai-brief-ui.mjs";
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const option=(v,txt,selected)=>'<option value="'+esc(v)+'" '+(v===selected?"selected":"")+'>'+esc(txt)+'</option>';
 const btn=(action,title,attributes="",variant="outline")=>'<button type="button" class="btn btn-'+variant+' btn-sm" data-action="'+action+'" '+attributes+'>'+esc(title)+'</button>';
@@ -69,11 +70,13 @@ function savedList(templates,clients,library,assignments){
  btn("programme-client-preview","View client experience",'data-client-id="'+esc(a.clientId)+'"')+'</div>').join(""):
  '<div class="empty"><h3>No demo client assignments</h3><p>After you save and demo-review each exercise, select Assign from a template above.</p></div>')+'</section>';
 }
-export function renderProgrammesCentre({draft,templates,assignments,library,clients,tab="build",selectedClientId="",selectedTemplateId=""}){
- const tabs=[["build","Programme builder"],["saved","Saved plans"],["preview","Client preview"]];
+export function renderProgrammesCentre({draft,templates,assignments,library,clients,tab="build",selectedClientId="",selectedTemplateId="",
+ aiBrief=null,aiPrompt="",aiReply="",aiClientId=""}){
+ const tabs=[["ai","AI plan builder"],["build","Manual / edit plan"],["saved","Saved plans"],["preview","Client preview"]];
  const client=clients.find(c=>c.id===selectedClientId&&c.status!=="Archived");
  const current=client?currentClientAssignment(assignments,client.id):null;
- let content=tab==="saved"?savedList(templates,clients,library,assignments):
+ let content=tab==="ai"?renderAIBriefWorkflow({brief:aiBrief,prompt:aiPrompt,reply:aiReply,clients,clientId:aiClientId}):
+ tab==="saved"?savedList(templates,clients,library,assignments):
  tab==="preview"?'<section class="panel"><div class="panel-header"><div><h3>Client-facing programme preview</h3><p class="small-muted">This previews what a client would see. It is not an authenticated client account.</p></div></div>'+
  '<label for="programme-client-preview-select">Fictional client</label><select id="programme-client-preview-select">'+option("","Choose a client",selectedClientId)+
  clients.filter(c=>c.status!=="Archived").map(c=>option(c.id,c.name,selectedClientId)).join("")+'</select>'+
@@ -86,12 +89,12 @@ export function renderProgrammesCentre({draft,templates,assignments,library,clie
  (ex.youtubeUrl?youtubeLink(ex.youtubeUrl,"Watch here — YouTube"):'<span class="small-muted">No coach-approved YouTube link yet</span>')+'</div>').join("")+'</section>').join("")+'</div>':
  '<div class="empty"><h3>No example plan assigned</h3><p>Save a named template, mark its exercises demo-reviewed, and assign a copy to this fictional client.</p></div>')+'</section>':
  builder(draft,library,templates,selectedTemplateId);
- return '<div class="programme-header"><div><p class="eyebrow">TRAINSMART D06 · FICTIONAL PROGRAMME TOOL</p><h2>Build once. Reuse whenever you need.</h2><p>Manual and AI plans follow the same save-to-library workflow. Client login stays optional for coach-led training.</p></div>'+
- '<div class="programme-toolbar">'+btn("programme-new","New manual plan","","primary")+btn("programme-import","Import AI-generated JSON")+'</div></div>'+
+ return '<div class="programme-header"><div><p class="eyebrow">TRAINSMART D06 · FICTIONAL PROGRAMME TOOL</p><h2>Build once. Reuse whenever you need.</h2><p>Start with your ChatGPT brief or build a plan manually. Either way, edit and save it to your reusable library.</p></div>'+
+ '<div class="programme-toolbar">'+btn("programme-new","New manual plan","","primary")+btn("programme-open-ai","AI plan builder")+'</div></div>'+
  '<div class="programme-overview"><div class="stat"><p class="stat-label">Saved named plans</p><div class="stat-number">'+templates.length+'</div></div>'+
  '<div class="stat"><p class="stat-label">Demo client assignments</p><div class="stat-number">'+assignments.length+'</div></div></div>'+
  '<div class="programme-tabs">'+tabs.map(([id,title])=>'<button type="button" class="seg '+(tab===id?"active":"")+'" data-programme-tab="'+id+'">'+esc(title)+'</button>').join("")+'</div>'+
- '<div class="library-warning"><strong>Your preferences:</strong> Sets/reps/load are the primary inputs. RIR has been removed from this builder by default. Use the exercise library to write cues and add your own vetted YouTube links.</div>'+
+ '<div class="library-warning"><strong>Your preferences:</strong> Sets, reps, rest and optional load are the primary inputs. RIR is not part of the generated brief or normal builder. All AI plans require coach review.</div>'+
  content+
  '<p class="footer-bits">Fictional browser-session preview only. No actual AI service, sent training plans, client logins, or training records modified.</p>';
 }

@@ -26,6 +26,7 @@ import {newProgramme,validProgramme,validProgrammeLibrary,updateProgrammeBasics,
  importAIProgramme,saveNewTemplate,saveTemplateVersion,loadTemplateIntoDraft,assignTemplateToClient,
  currentClientAssignment,clientPlanWarnings,canonicalYoutubeUrl} from "./coach-programmes-model.mjs";
 import {renderProgrammesCentre,aiImportDialog,assignmentDialog,renderClientProgrammeSummary} from "./coach-programmes-ui.mjs";
+import {emptyAIBrief,validAIBrief,aiBriefFromClient,createAIRequest,parseAIResponse,aiExampleResponse} from "./coach-ai-brief-model.mjs";
 /*
  * TrainSmart Coach Hub D01 — strictly fictional, isolated, client-side preview.
  * No fetch, no Supabase SDK, no Auth, no email, no WhatsApp send, no real records.
@@ -67,7 +68,8 @@ function initial(){
  for(const c of seeded)tasks=syncFreshTasks(tasks,enrolments[c.id],c,currentDay());
  return {tasks,drafts:[],clients:seeded,clientEvents:[],
   library:initialLibrary(seeded),programmeDraft:newProgramme("draft:initial-001","New training plan"),
-  programmeTemplates:[],programmeAssignments:[],programmeTab:"build",
+  programmeTemplates:[],programmeAssignments:[],programmeTab:"ai",
+  aiBrief:emptyAIBrief(),aiClientId:"",aiPrompt:"",aiReply:"",
   programmeTemplateId:"",programmeClientId:"",
   libraryTab:"exercises",libraryQuery:"",libraryMovement:"all",libraryEquipment:"all",libraryStatus:"active",libraryClientId:"",libraryOnlyClientFit:false,
   messagePreferences:Object.fromEntries(seeded.map(c=>[c.id,defaultContactPreference(c.id)])),
@@ -109,9 +111,14 @@ function load(){
       parsed.programmeDraft:base.programmeDraft;
     const programmeTemplates=validPlanState?parsed.programmeTemplates:base.programmeTemplates;
     const programmeAssignments=validPlanState?parsed.programmeAssignments:base.programmeAssignments;
+    const aiBrief=validAIBrief(parsed.aiBrief)?parsed.aiBrief:base.aiBrief;
+    const aiClientId=storedClients.some(c=>c.id===parsed.aiClientId)?parsed.aiClientId:"";
+    const aiPrompt=typeof parsed.aiPrompt==="string"&&parsed.aiPrompt.length<=30000?parsed.aiPrompt:"";
+    const aiReply=typeof parsed.aiReply==="string"&&parsed.aiReply.length<=30000?parsed.aiReply:"";
     return {...base,...parsed,clients:storedClients,clientEvents:events,onboardingRecords:records,enrolments,
       coachSessions,coachSafety,coachRecordingMode,sessionClientId,messagePreferences,
-      customMessageTemplates,drafts,library:safeLibrary,programmeDraft,programmeTemplates,programmeAssignments};
+      customMessageTemplates,drafts,library:safeLibrary,programmeDraft,programmeTemplates,programmeAssignments,
+      aiBrief,aiClientId,aiPrompt,aiReply};
   }}catch{}
  return initial();
 }
@@ -836,6 +843,88 @@ function newManualProgramme(){
  state.programmeTab="build";
  save();render();flash("New manual training draft ready — give it a name.");
 }
+
+function aiBriefChanged(){
+ state.aiPrompt="";
+ state.aiReply="";
+ const briefBox=document.getElementById("ai-request-box");
+ const answerBox=document.getElementById("ai-response-box");
+ if(briefBox)briefBox.value="";
+ if(answerBox)answerBox.value="";
+ const copy=document.querySelector('[data-action="ai-copy-brief"]');
+ const apply=document.querySelector('[data-action="ai-apply-reply"]');
+ if(copy)copy.disabled=true;
+ if(apply)apply.disabled=true;
+ save();
+}
+function updateAIField(target){
+ const key=target.dataset.aiField;
+ if(!["name","goal","ageBand","experience","sessionsPerWeek","sessionMinutes","preferences","coachingNotes"].includes(key))return;
+ const value=["sessionsPerWeek","sessionMinutes"].includes(key)?Number(target.value):target.value;
+ state.aiBrief={...state.aiBrief,[key]:value};
+ aiBriefChanged();
+}
+function setAIEquipment(target){
+ const id=target.dataset.aiEquipment;
+ if(!EQUIPMENT.some(e=>e.id===id))return;
+ const chosen=new Set(state.aiBrief.equipment);
+ if(target.checked)chosen.add(id);else chosen.delete(id);
+ state.aiBrief={...state.aiBrief,equipment:[...chosen]};
+ aiBriefChanged();
+}
+function chooseAIClient(id){
+ if(!id){
+  state.aiClientId="";
+  state.aiBrief=emptyAIBrief();
+ }else{
+  const client=clientById(id);
+  if(!client||client.status==="Archived")return;
+  try{state.aiBrief=aiBriefFromClient(client,state.library);}
+  catch(error){flash(error.message);return;}
+  state.aiClientId=id;
+ }
+ state.aiPrompt="";state.aiReply="";save();render();
+ flash(id?"Fictional training details filled. No name, contact or private note will be copied.":"Manual fictional brief ready.");
+}
+function generateAIBrief(){
+ try{
+  state.aiPrompt=createAIRequest(state.aiBrief,state.library);
+  state.aiReply="";save();render();
+  flash("Anonymous fictional brief generated. Copy it into ChatGPT — nothing has been sent automatically.");
+ }catch(error){flash(error.message);}
+}
+async function copyAIBrief(){
+ if(!state.aiPrompt){flash("Generate the brief first.");return;}
+ try{
+  await navigator.clipboard.writeText(state.aiPrompt);
+  flash("Coaching brief copied. Paste it into ChatGPT and ask for JSON.");
+ }catch{
+  const box=document.getElementById("ai-request-box");
+  box?.focus();box?.select();
+  flash("Clipboard permission unavailable. The brief is selected so you can copy it manually.");
+ }
+}
+function loadAIReplyExample(){
+ try{
+  if(!state.aiPrompt)throw Error("Generate the brief first.");
+  state.aiReply=aiExampleResponse(state.aiBrief,state.library);
+  document.getElementById("ai-response-box").value=state.aiReply;
+  save();flash("Fictional example response loaded. Select Apply to test the flow.");
+ }catch(error){flash(error.message);}
+}
+function applyAIReply(){
+ try{
+  if(!state.aiPrompt)throw Error("Generate the brief before applying an answer.");
+  const raw=String(document.getElementById("ai-response-box")?.value||"");
+  const draft=parseAIResponse(raw,programmeNextId("draft"),state.library,state.aiBrief);
+  state.aiReply=raw.slice(0,30000);
+  state.programmeDraft=draft;
+  state.programmeTemplateId="";
+  state.programmeTab="build";
+  save();render();
+  flash("AI programme applied as editable draft. Review it, then save the named plan.");
+ }catch(error){flash(error.message);}
+}
 function openAIProgrammeDialog(){
  const dialog=document.getElementById("programme-ai-dialog");
  document.getElementById("programme-ai-form").reset();
@@ -958,7 +1047,8 @@ function render(){
  status:state.libraryStatus,selectedClientId:state.libraryClientId,onlyClientFit:state.libraryOnlyClientFit}):
  state.view==="programmes"?renderProgrammesCentre({draft:state.programmeDraft,templates:state.programmeTemplates,
  assignments:state.programmeAssignments,library:state.library,clients,tab:state.programmeTab,
- selectedClientId:state.programmeClientId,selectedTemplateId:state.programmeTemplateId}):
+ selectedClientId:state.programmeClientId,selectedTemplateId:state.programmeTemplateId,
+ aiBrief:state.aiBrief,aiPrompt:state.aiPrompt,aiReply:state.aiReply,aiClientId:state.aiClientId}):
  state.view==="tasks"?renderTasks():state.view==="messages"?renderMessageCentre({
  clients,drafts:state.drafts,preferences:state.messagePreferences,enrolments:state.enrolments,
  customTemplates:state.customMessageTemplates,selectedClientId:state.messageClientFilter,
@@ -1051,6 +1141,12 @@ document.addEventListener("click",async ev=>{
  if(action==="new-task"){newTask();return;}
  if(action==="new-client"){openClientEditor();return;}
  if(action==="programme-new"){newManualProgramme();return;}
+ if(action==="programme-open-ai"){state.programmeTab="ai";save();render();return;}
+ if(action==="ai-load-sample"){state.aiClientId="";state.aiBrief=emptyAIBrief();state.aiPrompt="";state.aiReply="";save();render();flash("Fictional example details loaded.");return;}
+ if(action==="ai-generate-brief"){generateAIBrief();return;}
+ if(action==="ai-copy-brief"){await copyAIBrief();return;}
+ if(action==="ai-example-reply"){loadAIReplyExample();return;}
+ if(action==="ai-apply-reply"){applyAIReply();return;}
  if(action==="programme-import"){openAIProgrammeDialog();return;}
  if(action==="programme-save-new"){saveProgrammeNew();return;}
  if(action==="programme-save-version"){saveProgrammeRevision(btn.dataset.templateId);return;}
@@ -1173,6 +1269,9 @@ document.addEventListener("submit",ev=>{
 });
 document.addEventListener("change",ev=>{
  const target=ev.target;
+ if(target?.id==="ai-client-select"){chooseAIClient(target.value);return;}
+ if(target?.dataset?.aiEquipment){setAIEquipment(target);return;}
+ if(target?.dataset?.aiField){updateAIField(target);return;}
  if(target?.id==="programme-client-preview-select"){
   state.programmeClientId=target.value;save();render();return;
  }
@@ -1211,6 +1310,12 @@ document.getElementById("reset-preview").addEventListener("click",()=>{
  try{sessionStorage.removeItem(STORE);}catch{}state=initial();clients=state.clients;render();flash("Fictional preview reset.");
 });
 document.addEventListener("input",ev=>{
+ if(ev.target?.id==="ai-response-box"){
+  state.aiReply=String(ev.target.value||"").slice(0,30000);save();return;
+ }
+ if(ev.target?.dataset?.aiField){
+  updateAIField(ev.target);return;
+ }
  if(["programme-draft-name","programme-draft-goal","programme-draft-notes"].includes(ev.target?.id)){
   const fields={"programme-draft-name":"name","programme-draft-goal":"goal","programme-draft-notes":"notes"};
   const k=fields[ev.target.id];
