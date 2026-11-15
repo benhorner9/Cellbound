@@ -74,6 +74,27 @@ jobs:
           state-name: .ftp-deploy-trainsmart-state.json
           dangerous-clean-slate: false
           log-level: standard
+  verify:
+    name: Verify live /trainsmart/ from an independent runner
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout approved preview source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use Node 22 for verification
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebuild expected static assets without uploading
+        run: npm --prefix trainsmart-site run build
+      - name: Install hosted browser test tools
+        working-directory: trainsmart-site
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
       - name: Verify exact hosted build and asset bytes
         shell: bash
         run: |
@@ -81,12 +102,13 @@ jobs:
           base='https://playcellbound.com/trainsmart'
           matched=0
           for i in 1 2 3 4 5 6; do
-            if curl -fsSL --max-time 25 "$base/build-meta.json?commit=$GITHUB_SHA" -o /tmp/trainsmart-build.json && node -e "const m=require('/tmp/trainsmart-build.json');if(m.bridgeCommit!==process.env.GITHUB_SHA||m.target!=='/trainsmart/')process.exit(1)"; then matched=1; break; fi
+            if curl -fsSL --max-time 25 -H 'Cache-Control: no-cache' "$base/build-meta.json?commit=$GITHUB_SHA" -o /tmp/trainsmart-build.json && node -e "const r=require('/tmp/trainsmart-build.json'),l=require('./trainsmart-site/dist-trainsmart/build-meta.json');if(r.bridgeCommit!==process.env.GITHUB_SHA||r.target!=='/trainsmart/'||r.sourceCommit!==l.sourceCommit||JSON.stringify(r.files)!==JSON.stringify(l.files))process.exit(1)"; then matched=1; break; fi
             sleep 7
           done
           test "$matched" = 1
           for f in trainsmart-site/dist-trainsmart/*; do
             file="${f##*/}"
+            if [ "$file" = "build-meta.json" ]; then continue; fi
             curl -fsSL --max-time 25 "$base/$file?commit=$GITHUB_SHA" -o "/tmp/trainsmart-$file"
             cmp -s "$f" "/tmp/trainsmart-$file"
           done
@@ -105,5 +127,6 @@ jobs:
         run: |
           echo '### TrainSmart FICTIONAL Coach Hub preview' >> "$GITHUB_STEP_SUMMARY"
           echo '- URL: https://playcellbound.com/trainsmart/' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Source commit: c8e1d1e81a3e35acaca1b9582c1edc31777796f7' >> "$GITHUB_STEP_SUMMARY"
+          echo "- Source commit: $(node -p 'require("./trainsmart-site/dist-trainsmart/build-meta.json").sourceCommit')" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Hosting bridge commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo '- Only /trainsmart/ updated. No live client service or other Cellbound games touched.' >> "$GITHUB_STEP_SUMMARY"
