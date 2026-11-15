@@ -77,7 +77,7 @@ export function createAIRequest(data,library){
  "For EACH exercise include exerciseId, feederSets 0–3, workingSets 1–8, repsMin/repsMax 1–60, restSeconds 20–300, optional tempo and short notes.",
  "Do NOT include RIR, percentages, starting loads, client names, email addresses, medical details or private identifiers.",
  "No unreviewed AI output is automatically assigned. Coach will review and edit everything after import.",
- "Output shape: {\"name\":\"...\",\"goal\":\"...\",\"notes\":\"...\",\"sessions\":[{\"name\":\"Session 1\",\"exercises\":[{\"exerciseId\":\"demo:goblet-squat\",\"feederSets\":0,\"workingSets\":3,\"repsMin\":8,\"repsMax\":10,\"restSeconds\":90,\"tempo\":\"\",\"notes\":\"...\"}]}]}.",
+ "Output shape: {\"name\":\"...\",\"goal\":\"...\",\"notes\":\"...\",\"sessions\":[{\"name\":\"Session 1\",\"exercises\":[{\"exerciseId\":\"EXACT_ID_FROM_ALLOWED_LIST\",\"feederSets\":0,\"workingSets\":3,\"repsMin\":8,\"repsMax\":10,\"restSeconds\":90,\"tempo\":\"\",\"notes\":\"...\"}]}]}.",
  "coachBrief: "+JSON.stringify(brief),
  "allowedExercises: "+JSON.stringify(allowed)
  ].join("\n");
