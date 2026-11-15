@@ -50,10 +50,10 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   await page.locator('[data-nut-field="sexForEstimate"]').selectOption("male");
   await page.locator('[data-nut-field="activity"]').selectOption("moderate");
   await page.locator('[data-nut-field="goal"]').selectOption("maintain");
-  await page.locator('[data-nut-field="name"]').fill("D07 Preview Meal Plan");
   await page.locator('[data-nut-action="calculate"]').click();
   await page.locator('[data-nut-action="approve"]').click();
   if((await page.locator('[data-tab="create"][aria-selected="true"]').count())!==1)throw Error("Approved target did not open plan creation");
+  await page.locator('[data-nut-field="name"]').fill("D07 Preview Meal Plan");
   await page.locator('[data-nut-action="prompt"]').click();
   const mealPrompt=await page.locator('#nut-prompt').inputValue();
   if(!mealPrompt.includes("allowedFoods:")||mealPrompt.includes("Sarah Morgan"))throw Error("D07 prompt missing allowed food IDs or containing a client name");
