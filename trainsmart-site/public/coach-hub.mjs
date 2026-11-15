@@ -35,6 +35,7 @@ import {renderNutritionHub,handleNutritionClick,handleNutritionChange,handleNutr
  */
 const STORE="trainsmart-coach-hub-programmes-06-fictional-v1";
 const TIME_ZONE="Europe/London";
+const COACH_VIEWS=Object.freeze(["today","clients","onboarding","fresh","setup","sessions","tasks","messages","library","programmes","nutrition"]);
 let clients;
 
 const kinds={
@@ -124,6 +125,7 @@ function load(){
  return initial();
 }
 let state=load();
+if(typeof window!=="undefined"&&COACH_VIEWS.includes(window.location.hash.slice(1)))state.view=window.location.hash.slice(1);
 clients=state.clients;
 function save(){
  state.clients=clients;
@@ -1106,8 +1108,9 @@ function openTask(id){
  document.getElementById("task-dialog").showModal();
 }
 function changeView(view){
- if(!["today","clients","onboarding","fresh","setup","sessions","tasks","messages","library","programmes","nutrition"].includes(view))return;
+ if(!COACH_VIEWS.includes(view))return;
  state.view=view;if(view!=="clients")state.selectedClient=null;
+ if(window.location.hash!=="#"+view)window.history.replaceState(window.history.state,"","#"+view);
  render();document.getElementById("main-content").focus({preventScroll:true});window.scrollTo({top:0,behavior:"auto"});
 }
 function newTask(clientId=""){
@@ -1128,6 +1131,7 @@ function submitNewTask(form){
  document.getElementById("new-task-dialog").close();save();render();flash("Your task is saved in this preview session.");
 }
 if (typeof document !== "undefined") {
+window.addEventListener("hashchange",()=>{const requested=window.location.hash.slice(1);if(COACH_VIEWS.includes(requested)&&requested!==state.view)changeView(requested);});
 document.addEventListener("click",async ev=>{
  const btn=ev.target.closest("button");if(!btn)return;
  if(btn.dataset.closeDialog){document.getElementById(btn.dataset.closeDialog)?.close();return;}

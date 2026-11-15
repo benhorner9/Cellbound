@@ -145,3 +145,15 @@ test("D07: live preview has no background API, maintains prior D06 imports and s
  assert.match(html,/connect-src 'none'/);
  assert.doesNotMatch(ui+model,/\bfetch\s*\(|\bXMLHttpRequest\s*\(|\bWebSocket\s*\(|service_role|supabase\.co/i);
 });
+
+test("D07.1: Meals & Nutrition shortcut and direct hash router remain accessible",async()=>{
+ const [hub,html,css]=await Promise.all(["coach-hub.mjs","coach-hub.html","coach-hub.css"].map(p=>
+  readFile(new URL("../public/"+p,import.meta.url),"utf8")));
+ assert.match(html,/<a class="btn btn-outline nutrition-shortcut" href="#nutrition" id="nutrition-shortcut">Meals &amp; Nutrition<\/a>/);
+ assert.match(hub,/COACH_VIEWS=Object\.freeze/);
+ assert.match(hub,/window\.location\.hash\.slice\(1\)/);
+ assert.match(hub,/hashchange/);
+ assert.match(hub,/window\.history\.replaceState/);
+ assert.match(css,/page-heading-actions/);
+ assert.match(css,/max-width:700px/);
+});
