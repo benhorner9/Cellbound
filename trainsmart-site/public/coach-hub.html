@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#101c1a">
+  <meta name="theme-color" content="#111719">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
-  <title>TrainSmart | Coach Hub Preview</title>
+  <title>TrainSmart | Coach Workspace</title>
   <link rel="stylesheet" href="/coach-hub.css">
   <link rel="stylesheet" href="/coach-clients.css">
   <link rel="stylesheet" href="/coach-onboarding.css">
@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="/coach-programmes.css">
   <link rel="stylesheet" href="/coach-ai-brief.css">
   <link rel="stylesheet" href="/coach-nutrition.css">
+  <link rel="stylesheet" href="/coach-design.css">
   <script type="module" src="/coach-hub.mjs"></script>
 </head>
 <body>
@@ -26,27 +27,36 @@
     <aside class="side" aria-label="Coach Hub navigation">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">TS<span>.</span></div>
-        <div><strong>TrainSmart</strong><span>COACHING HUB</span></div>
+        <div><strong>TrainSmart</strong><span>COACH WORKSPACE</span></div>
       </div>
       <div class="sidebar-rule"></div>
       <p class="nav-caption">WORKSPACE</p>
       <nav class="main-nav" aria-label="Coach navigation">
-        <button class="nav-link active" type="button" data-view="today" aria-current="page"><span class="nav-icon">◫</span> Today <span class="nav-bubble" id="today-count">0</span></button>
-        <button class="nav-link" type="button" data-view="clients"><span class="nav-icon">♙</span> Clients</button>
-        <button class="nav-link" type="button" data-view="fresh"><span class="nav-icon">▣</span> Client setup <span class="nav-bubble" id="fresh-count">0</span></button>
-        <button class="nav-link" type="button" data-view="onboarding"><span class="nav-icon">◈</span> Onboarding <span class="nav-bubble" id="onboarding-count">0</span></button>
-        <button class="nav-link" type="button" data-view="programmes"><span class="nav-icon">▤</span> Programmes</button>
-        <button class="nav-link" type="button" data-view="nutrition"><span class="nav-icon">◫</span> Meals &amp; Nutrition</button>
-        <button class="nav-link" type="button" data-view="library"><span class="nav-icon">▧</span> Training library</button>
-        <button class="nav-link" type="button" data-view="sessions"><span class="nav-icon">▤</span> Coach sessions</button>
-        <button class="nav-link" type="button" data-view="tasks"><span class="nav-icon">☷</span> All tasks</button>
-        <button class="nav-link" type="button" data-view="messages"><span class="nav-icon">✉</span> Message centre</button>
+        <div class="nav-group">
+          <span class="nav-section-label">WORKSPACE</span>
+          <button class="nav-link active" type="button" data-view="today" aria-current="page"><span class="nav-icon" aria-hidden="true">⌂</span> Overview <span class="nav-bubble" id="today-count">0</span></button>
+          <button class="nav-link" type="button" data-view="clients"><span class="nav-icon" aria-hidden="true">♙</span> Clients</button>
+        </div>
+        <div class="nav-group">
+          <span class="nav-section-label">COACHING</span>
+          <button class="nav-link" type="button" data-view="programmes"><span class="nav-icon" aria-hidden="true">▤</span> Training plans</button>
+          <button class="nav-link" type="button" data-view="nutrition"><span class="nav-icon" aria-hidden="true">◉</span> Nutrition</button>
+          <button class="nav-link" type="button" data-view="sessions"><span class="nav-icon" aria-hidden="true">◎</span> Sessions</button>
+          <button class="nav-link" type="button" data-view="library"><span class="nav-icon" aria-hidden="true">▦</span> Exercise library</button>
+        </div>
+        <div class="nav-group">
+          <span class="nav-section-label">MANAGEMENT</span>
+          <button class="nav-link" type="button" data-view="fresh"><span class="nav-icon" aria-hidden="true">⊕</span> Client setup <span class="nav-bubble" id="fresh-count">0</span></button>
+          <button class="nav-link" type="button" data-view="onboarding"><span class="nav-icon" aria-hidden="true">◇</span> Onboarding <span class="nav-bubble" id="onboarding-count">0</span></button>
+          <button class="nav-link" type="button" data-view="tasks"><span class="nav-icon" aria-hidden="true">☷</span> Tasks</button>
+          <button class="nav-link" type="button" data-view="messages"><span class="nav-icon" aria-hidden="true">✉</span> Messages</button>
+        </div>
       </nav>
-      <p class="nav-caption later-caption">COMING IN LATER BLOCKS</p>
+      <p class="nav-caption later-caption">COMING LATER</p>
       <div class="future-nav" aria-label="Planned sections">
-        <div class="future-link">Full AI nutrition rollout <span>H07–08</span></div>
-        <div class="future-link">Reviews & progress <span>H09</span></div>
-        <div class="future-link">Payments & reports <span>H10–11</span></div>
+        <div class="future-link">Client progress <span>Planned</span></div>
+        <div class="future-link">Payment tracking <span>Planned</span></div>
+        <div class="future-link">Reports <span>Planned</span></div>
       </div>
       <div class="side-bottom">
         <div class="tiny-status"><span class="pulse"></span> ISOLATED FICTIONAL PREVIEW</div>
@@ -56,22 +66,22 @@
     </aside>
     <div class="workspace">
       <header class="topbar">
-        <div class="mobile-brand"><span class="mobile-logo">TS.</span> TrainSmart <span class="mobile-brand-sub">COACH</span></div>
-        <div class="crumb"><span class="crumb-root">WORKSPACE</span><span aria-hidden="true">/</span><strong id="crumb-page">TODAY</strong></div>
+        <div class="mobile-brand"><span class="mobile-logo">TS.</span> TrainSmart <span class="mobile-brand-sub">WORKSPACE</span></div>
+        <div class="crumb"><span class="crumb-root">TRAINSMART</span><span aria-hidden="true">/</span><strong id="crumb-page">TODAY</strong></div>
         <div class="top-right">
-          <span class="preview-pill"><span class="pulse"></span> PREVIEW MODE</span>
+          <span class="preview-pill"><span class="pulse"></span> SAMPLE DATA</span>
           <div class="avatar" aria-label="Fictional coach account">BH</div>
         </div>
       </header>
       <main id="main-content" tabindex="-1">
         <div class="page-heading">
           <div><p class="eyebrow" id="page-eyebrow">SUNDAY · COACH OVERVIEW</p><h1 id="page-title">Your day, organised.</h1><p id="page-subtitle" class="page-subtitle">One clear priority at a time. Everything else can wait.</p></div>
-          <div class="page-heading-actions"><a class="btn btn-outline nutrition-shortcut" href="#nutrition" id="nutrition-shortcut">Meals &amp; Nutrition</a>
-          <button id="add-task" class="btn btn-primary" type="button"><span aria-hidden="true">＋</span> Add task</button></div>
+          <div class="page-heading-actions"><a class="btn btn-outline nutrition-shortcut" href="#nutrition" id="nutrition-shortcut">Open nutrition</a>
+          <button id="add-task" class="btn btn-primary" type="button"><span aria-hidden="true">＋</span> New task</button></div>
         </div>
-        <div class="notice" role="note"><strong>Interactive preview</strong> · All names and records are fictional. Task changes are saved only for this browser session. Refreshing keeps your demo changes; resetting clears them. No real client data is connected.</div>
+        <div class="notice" role="note"><strong>Preview workspace.</strong> Sample clients only. Changes stay in this browser session; no live client records are connected.</div>
         <div id="view-content" aria-live="polite"></div>
-        <footer class="foot"><span>TRAINSMART COACHING</span><span>Coach Hub · D07 Nutrition + AI Preview</span></footer>
+        <footer class="foot"><span>TRAINSMART COACHING</span><span>Coach workspace · Sample data</span></footer>
       </main>
     </div>
   </div>

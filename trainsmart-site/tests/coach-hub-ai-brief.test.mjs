@@ -117,8 +117,8 @@ test("D06.1: AI output can be named and saved; client assignment remains control
 test("D06.1: UI exposes three guided steps, two copy-paste boxes, and demo-only wording",()=>{
  const b=brief(),l=lib(),prompt=createAIRequest(b,l),reply=aiExampleResponse(b,l);
  const html=renderAIBriefWorkflow({brief:b,prompt,reply,clients:[client],clientId:""});
- for(const fragment of ["Enter client coaching details","Box 1","Box 2","Generate ChatGPT brief","Copy brief","Try example JSON",
-  "Apply & open editable plan","Save","No API","fictional","Open ChatGPT"]){
+ for(const fragment of ["Training requirements","Copy your brief","Import the plan","Prepare brief","Copy brief","Load example",
+  "Open in plan editor","Save","fictional","Open ChatGPT"]){
   assert.ok(html.includes(fragment),fragment);
  }
  assert.match(html,/id="ai-request-box"/);
@@ -144,7 +144,7 @@ test("D06.1: the published demo integrates source only; no AI API or external da
  assert.match(hub,/copyAIBrief/);
  assert.match(hub,/aiBriefChanged/);
  assert.match(programmes,/renderAIBriefWorkflow/);
- assert.match(programmes,/AI plan builder/);
+ assert.match(programmes,/Create with ChatGPT/);
  assert.match(html,/coach-ai-brief\.css/);
  assert.match(html,/connect-src 'none'/);
  assert.match(css,/@media\(max-width:700px\)/);
