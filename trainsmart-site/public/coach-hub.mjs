@@ -843,6 +843,88 @@ function newManualProgramme(){
  state.programmeTab="build";
  save();render();flash("New manual training draft ready — give it a name.");
 }
+
+function aiBriefChanged(){
+ state.aiPrompt="";
+ state.aiReply="";
+ const briefBox=document.getElementById("ai-request-box");
+ const answerBox=document.getElementById("ai-response-box");
+ if(briefBox)briefBox.value="";
+ if(answerBox)answerBox.value="";
+ const copy=document.querySelector('[data-action="ai-copy-brief"]');
+ const apply=document.querySelector('[data-action="ai-apply-reply"]');
+ if(copy)copy.disabled=true;
+ if(apply)apply.disabled=true;
+ save();
+}
+function updateAIField(target){
+ const key=target.dataset.aiField;
+ if(!["name","goal","ageBand","experience","sessionsPerWeek","sessionMinutes","preferences","coachingNotes"].includes(key))return;
+ const value=["sessionsPerWeek","sessionMinutes"].includes(key)?Number(target.value):target.value;
+ state.aiBrief={...state.aiBrief,[key]:value};
+ aiBriefChanged();
+}
+function setAIEquipment(target){
+ const id=target.dataset.aiEquipment;
+ if(!EQUIPMENT.some(e=>e.id===id))return;
+ const chosen=new Set(state.aiBrief.equipment);
+ if(target.checked)chosen.add(id);else chosen.delete(id);
+ state.aiBrief={...state.aiBrief,equipment:[...chosen]};
+ aiBriefChanged();
+}
+function chooseAIClient(id){
+ if(!id){
+  state.aiClientId="";
+  state.aiBrief=emptyAIBrief();
+ }else{
+  const client=clientById(id);
+  if(!client||client.status==="Archived")return;
+  try{state.aiBrief=aiBriefFromClient(client,state.library);}
+  catch(error){flash(error.message);return;}
+  state.aiClientId=id;
+ }
+ state.aiPrompt="";state.aiReply="";save();render();
+ flash(id?"Fictional training details filled. No name, contact or private note will be copied.":"Manual fictional brief ready.");
+}
+function generateAIBrief(){
+ try{
+  state.aiPrompt=createAIRequest(state.aiBrief,state.library);
+  state.aiReply="";save();render();
+  flash("Anonymous fictional brief generated. Copy it into ChatGPT — nothing has been sent automatically.");
+ }catch(error){flash(error.message);}
+}
+async function copyAIBrief(){
+ if(!state.aiPrompt){flash("Generate the brief first.");return;}
+ try{
+  await navigator.clipboard.writeText(state.aiPrompt);
+  flash("Coaching brief copied. Paste it into ChatGPT and ask for JSON.");
+ }catch{
+  const box=document.getElementById("ai-request-box");
+  box?.focus();box?.select();
+  flash("Clipboard permission unavailable. The brief is selected so you can copy it manually.");
+ }
+}
+function loadAIReplyExample(){
+ try{
+  if(!state.aiPrompt)throw Error("Generate the brief first.");
+  state.aiReply=aiExampleResponse(state.aiBrief,state.library);
+  document.getElementById("ai-response-box").value=state.aiReply;
+  save();flash("Fictional example response loaded. Select Apply to test the flow.");
+ }catch(error){flash(error.message);}
+}
+function applyAIReply(){
+ try{
+  if(!state.aiPrompt)throw Error("Generate the brief before applying an answer.");
+  const raw=String(document.getElementById("ai-response-box")?.value||"");
+  const draft=parseAIResponse(raw,programmeNextId("draft"),state.library,state.aiBrief);
+  state.aiReply=raw.slice(0,30000);
+  state.programmeDraft=draft;
+  state.programmeTemplateId="";
+  state.programmeTab="build";
+  save();render();
+  flash("AI programme applied as editable draft. Review it, then save the named plan.");
+ }catch(error){flash(error.message);}
+}
 function openAIProgrammeDialog(){
  const dialog=document.getElementById("programme-ai-dialog");
  document.getElementById("programme-ai-form").reset();
