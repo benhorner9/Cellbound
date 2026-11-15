@@ -1141,6 +1141,12 @@ document.addEventListener("click",async ev=>{
  if(action==="new-task"){newTask();return;}
  if(action==="new-client"){openClientEditor();return;}
  if(action==="programme-new"){newManualProgramme();return;}
+ if(action==="programme-open-ai"){state.programmeTab="ai";save();render();return;}
+ if(action==="ai-load-sample"){state.aiClientId="";state.aiBrief=emptyAIBrief();state.aiPrompt="";state.aiReply="";save();render();flash("Fictional example details loaded.");return;}
+ if(action==="ai-generate-brief"){generateAIBrief();return;}
+ if(action==="ai-copy-brief"){await copyAIBrief();return;}
+ if(action==="ai-example-reply"){loadAIReplyExample();return;}
+ if(action==="ai-apply-reply"){applyAIReply();return;}
  if(action==="programme-import"){openAIProgrammeDialog();return;}
  if(action==="programme-save-new"){saveProgrammeNew();return;}
  if(action==="programme-save-version"){saveProgrammeRevision(btn.dataset.templateId);return;}
@@ -1263,6 +1269,9 @@ document.addEventListener("submit",ev=>{
 });
 document.addEventListener("change",ev=>{
  const target=ev.target;
+ if(target?.id==="ai-client-select"){chooseAIClient(target.value);return;}
+ if(target?.dataset?.aiEquipment){setAIEquipment(target);return;}
+ if(target?.dataset?.aiField){updateAIField(target);return;}
  if(target?.id==="programme-client-preview-select"){
   state.programmeClientId=target.value;save();render();return;
  }
@@ -1301,6 +1310,12 @@ document.getElementById("reset-preview").addEventListener("click",()=>{
  try{sessionStorage.removeItem(STORE);}catch{}state=initial();clients=state.clients;render();flash("Fictional preview reset.");
 });
 document.addEventListener("input",ev=>{
+ if(ev.target?.id==="ai-response-box"){
+  state.aiReply=String(ev.target.value||"").slice(0,30000);save();return;
+ }
+ if(ev.target?.dataset?.aiField){
+  updateAIField(ev.target);return;
+ }
  if(["programme-draft-name","programme-draft-goal","programme-draft-notes"].includes(ev.target?.id)){
   const fields={"programme-draft-name":"name","programme-draft-goal":"goal","programme-draft-notes":"notes"};
   const k=fields[ev.target.id];
