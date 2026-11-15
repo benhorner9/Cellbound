@@ -1,0 +1,47 @@
+name: TrainSmart D07 isolated pre-deploy verification
+on:
+  push:
+    branches: [preview/trainsmart-nutrition-07]
+    paths:
+      - "trainsmart-site/**"
+      - ".github/workflows/verify-trainsmart-d07.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Isolated source and regression tests
+        run: npm --prefix trainsmart-site test
+      - name: Build only static fictional TrainSmart assets
+        run: npm --prefix trainsmart-site run build
+      - name: Install Chromium and WebKit smoke tools
+        working-directory: trainsmart-site
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Local-only browser interactions
+        working-directory: trainsmart-site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8769 --bind 127.0.0.1 --directory dist-trainsmart >/tmp/trainsmart-d07-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in 1 2 3 4 5; do
+            if curl -fsS --max-time 2 http://127.0.0.1:8769/ >/dev/null; then break; fi
+            sleep 1
+          done
+          TRAINSMART_BASE_URL=http://127.0.0.1:8769/ node qa/smoke.mjs
+      - name: Confirm no hosting change in verification job
+        run: |
+          test -s trainsmart-site/dist-trainsmart/build-meta.json
+          echo "D07 verified in local CI. No FTPS or live client actions performed."

@@ -1,0 +1,56 @@
+/* D07 fictional nutrition workspace, responsive to iPad/mobile. */
+.nut-section{margin-top:18px;padding:22px;display:grid;gap:16px;min-width:0}
+.nut-section h3,.nut-section h4{margin:0}
+.nut-section>label,.nut-recipe>label{display:grid;gap:8px}
+.nut-section label{font-size:13px;font-weight:650;color:inherit;display:grid;gap:7px}
+.nut-section input,.nut-section select,.nut-section textarea,.nut-recipe input,.nut-recipe select{
+ width:100%;max-width:100%;font:inherit;border:1px solid #515d6b;border-radius:9px;
+ padding:11px 12px;color:#e7edf5;background:#1d2a36;box-sizing:border-box
+}
+.nut-section textarea{resize:vertical;min-height:64px}
+.nut-section .nut-food-line input{width:80px;min-width:60px}
+.nut-section .nut-food-line select{min-width:140px;flex:1}
+.nut-input-grid,.nut-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.nut-wide{grid-column:1/-1}
+.nut-actions{display:flex;gap:10px;flex-wrap:wrap}
+.nut-actions>.btn,.nut-actions>a{min-height:41px;white-space:normal}
+.nut-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.nut-metric{background:#1d2a36;padding:13px;border-radius:11px;display:grid;gap:6px;min-width:0}
+.nut-metric small{color:#a6b4c3;font-size:11px}
+.nut-metric strong{font-size:18px;overflow-wrap:anywhere}
+.nut-target,.nut-day{display:grid;gap:12px}
+.nut-target p,.nut-day p{margin:0;font-size:13px}
+.nut-warning{border:1px solid #ae954e;color:#f5e8c7;background:#4b422c;padding:12px;border-radius:9px;font-size:13px;line-height:1.55}
+.nut-ok{color:#bde8cd}
+.nut-context{color:#d8dfe7;font-size:13px}
+.nut-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.nut-tabs .seg{min-height:41px}
+.nut-recipes{display:grid;gap:15px}
+.nut-recipe{border:1px solid #485563;border-radius:12px;padding:16px;display:grid;gap:14px;background:#16232e;min-width:0}
+.nut-recipe-head,.nut-saved-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.nut-saved-row{border-bottom:1px solid #465463;padding:12px 0}
+.nut-saved-row>div{flex:1;min-width:180px}
+.nut-saved-row p{margin:4px 0 0}
+.nut-food-lines{display:grid;gap:8px}
+.nut-food-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.nut-food-line>span:first-child{flex:1;min-width:130px}
+.nut-food-line>span:nth-child(3){min-width:26px}
+.nut-food-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:370px;overflow:auto}
+.nut-food-list>div{background:#192734;border-radius:9px;padding:12px;font-size:12px;line-height:1.5}
+.nut-food-list small{display:block;color:#9faebf;line-height:1.4;margin-top:4px}
+.nut-empty{border:1px dashed #53606b;padding:25px;border-radius:12px;color:#b8c6d2}
+#nut-prompt{white-space:pre-wrap;min-height:180px}
+@media(max-width:900px){
+ .nut-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .nut-food-list{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+ .nut-section{padding:16px}
+ .nut-input-grid,.nut-editor-grid{grid-template-columns:1fr}
+ .nut-metric strong{font-size:16px}
+ .nut-actions .btn,.nut-actions a{width:100%;justify-content:center}
+ .nut-food-line{align-items:stretch}
+ .nut-food-line select{width:100%;flex:1 0 100%}
+ .nut-food-line>span:first-child{flex:1 0 100%}
+ .nut-food-line>button{max-width:100%}
+}

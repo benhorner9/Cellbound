@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "c8e1d1e81a3e35acaca1b9582c1edc31777796f7",
+  "sourceCommit": "d7b4bc5994ae2ba2721874907efe83b2454fe0d4",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -33,7 +33,10 @@
     "coach-programmes.css",
     "coach-ai-brief-model.mjs",
     "coach-ai-brief-ui.mjs",
-    "coach-ai-brief.css"
+    "coach-ai-brief.css",
+    "coach-nutrition-model.mjs",
+    "coach-nutrition-ui.mjs",
+    "coach-nutrition.css"
   ],
-  "feature": "D06.1 two-box anonymous AI brief -> ChatGPT copy -> validated JSON -> editable named programme"
+  "feature": "D07 isolated fictional nutrition calculator, two-box AI 16-meal planner and reusable plan library (D01–D06.1 preserved)"
 }
