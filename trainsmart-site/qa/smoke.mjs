@@ -70,3 +70,33 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   console.log(label+" PASS: two-box AI request/JSON/apply, manual save/reuse, library, client navigation");
  }finally{await browser.close();}
 }
+
+// D07.1 regression: mobile touch navigation + direct URL must work even when menu tabs scroll.
+for(const [label,options] of [
+ ["WebKit iPhone portrait",{viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:3}],
+ ["WebKit iPad portrait",{viewport:{width:820,height:1180},isMobile:true,hasTouch:true,deviceScaleFactor:2}]
+]){
+ const browser=await webkit.launch({headless:true});
+ try{
+  const context=await browser.newContext(options);
+  const page=await context.newPage(),errors=[];
+  page.on("pageerror",error=>errors.push(error.message));
+  await page.goto(url,{waitUntil:"networkidle",timeout:25000});
+  if(await page.locator('script[src*="coach-hub.js?v="]').count()!==1)
+   throw Error(label+" still loads unversioned entrypoint and may reuse Safari D06.1 cache");
+  if(await page.locator('link[href*="coach-hub.css?v="]').count()!==1)
+   throw Error(label+" still loads unversioned styling");
+  const shortcut=page.locator("#nutrition-shortcut");
+  if(!await shortcut.isVisible())throw Error(label+" does not expose the nutrition shortcut");
+  await shortcut.click();
+  await page.locator("#nut-prompt").waitFor({state:"visible",timeout:10000});
+  if(!page.url().includes("#nutrition"))throw Error(label+" did not navigate to #nutrition");
+  await page.goto(url+"#nutrition",{waitUntil:"networkidle",timeout:25000});
+  await page.locator("#nut-prompt").waitFor({state:"visible",timeout:10000});
+  const title=await page.locator("#page-title").textContent();
+  if(!title.includes("Calories"))throw Error(label+" did not open nutrition on direct URL");
+  if(errors.length)throw Error(label+" runtime errors: "+errors.join("; "));
+  console.log(label+" PASS: visible nutrition shortcut, cache-busted scripts, direct #nutrition deep link");
+  await context.close();
+ }finally{await browser.close();}
+}
