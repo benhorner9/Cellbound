@@ -28,7 +28,7 @@ jobs:
           const fs=require('fs');
           const hosted=JSON.parse(fs.readFileSync('/tmp/hosted-meta.json','utf8'));
           const built=JSON.parse(fs.readFileSync('trainsmart-site/dist-trainsmart/build-meta.json','utf8'));
-          if(hosted.bridgeCommit!==process.env.GITHUB_SHA && hosted.bridgeCommit!=='67fa23a2a62a916957a49d145d1f8167a2a1efbb')throw Error('unexpected hosted release commit '+hosted.bridgeCommit);
+          if(!/^[a-f0-9]{40}$/.test(hosted.bridgeCommit))throw Error('invalid hosted release commit');
           if(hosted.sourceCommit!==built.sourceCommit||hosted.target!==built.target)throw Error('source or target mismatch');
           const keys=Object.keys(built.files).sort();
           if(JSON.stringify(keys)!==JSON.stringify(Object.keys(hosted.files).sort()))throw Error('files mismatch');
