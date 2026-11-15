@@ -23,6 +23,7 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   if((await page.locator("#programme-draft-name").inputValue())!=="AI Bridge Strength Plan")
    throw Error("AI JSON could not be applied to the editable programme");
   // Previous manual save/reuse flow still works as a separate option.
+  page.once("dialog",async dialog=>dialog.accept());
   await page.locator('[data-action="programme-new"]').click();
   await page.locator("#programme-draft-name").fill("Bridge Test Strength Plan");
   await page.locator("#programme-draft-goal").fill("Demo strength goals");
