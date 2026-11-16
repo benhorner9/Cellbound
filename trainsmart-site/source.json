@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "228d6797e50efa0028f7a4ff939ab02975d35e8b",
+  "sourceCommit": "3da737e649375b97794e309fbf893801ad2c0535",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -37,7 +37,7 @@
     "coach-nutrition-model.mjs",
     "coach-nutrition-ui.mjs",
     "coach-nutrition.css",
-    "coach-design.css"
+    "coach-studio.css"
   ],
-  "feature": "UX08 coach workspace: grouped navigation, focused nutrition tabs, clean text, reusable D01–D07 features; public fictional preview only"
+  "feature": "UX09 professional light workspace: porcelain canvas, charcoal/navy navigation, cobalt actions, modern card layout and ten SVG icons; fictional preview"
 }
