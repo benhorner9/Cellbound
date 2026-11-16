@@ -8,6 +8,22 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   page.on("pageerror",err=>errors.push(err.message));
   const response=await page.goto(url,{waitUntil:"networkidle",timeout:25000});
   if(!response?.ok())throw Error("Failed to load "+url+" "+response?.status());
+  const studioStyle=await page.evaluate(()=>{
+    const rgb=selector=>getComputedStyle(document.querySelector(selector)).backgroundColor;
+    return {body:rgb('body'),canvas:rgb('.workspace'),sidebar:rgb('.side'),
+      card:rgb('.stat'),button:rgb('.btn-primary'),
+      active:rgb('.nav-link.active'),cssActive:!!document.querySelector('link[href*="coach-studio.css"]'),
+      svgCount:document.querySelectorAll('.main-nav .nav-icon svg').length,
+      sidebarW:document.querySelector('.side').getBoundingClientRect().width,
+      whiteCard:document.querySelector('.stat').getBoundingClientRect().width};
+  });
+  if(!studioStyle.cssActive||studioStyle.svgCount!==10)throw Error("UX09 studio CSS/icons not active: "+JSON.stringify(studioStyle));
+  if(studioStyle.body!=="rgb(243, 245, 249)"||studioStyle.canvas!=="rgb(243, 245, 249)"||
+     studioStyle.sidebar!=="rgb(21, 31, 49)"||studioStyle.card!=="rgb(255, 255, 255)"||
+     studioStyle.button!=="rgb(41, 86, 204)")
+     throw Error("Old dark/green colours still applied: "+JSON.stringify(studioStyle));
+  if(studioStyle.sidebarW<210||studioStyle.whiteCard<155)throw Error("UX09 new desktop layout is squeezed: "+JSON.stringify(studioStyle));
+  console.log(label+" PASS: UX09 actual computed light navy/cobalt colour palette and line-icon layout");
   if((await page.locator('.nav-group').count())!==3)throw Error("Grouped coach navigation missing");
   if(!(await page.locator('#page-title').innerText()).includes("Dashboard"))throw Error("Coach dashboard not opened");
   await page.locator('.nav-link[data-view="programmes"]').click();
@@ -92,6 +108,15 @@ for(const [label,options] of [
    throw Error(label+" still loads unversioned entrypoint and may reuse Safari D06.1 cache");
   if(await page.locator('link[href*="coach-hub.css?v="]').count()!==1)
    throw Error(label+" still loads unversioned styling");
+  const mobileColours=await page.evaluate(()=>({
+    body:getComputedStyle(document.body).backgroundColor,
+    sidebar:getComputedStyle(document.querySelector('.side')).backgroundColor,
+    cssActive:!!document.querySelector('link[href*="coach-studio.css"]'),
+    horizontalOverflow:document.documentElement.scrollWidth>window.innerWidth+3
+  }));
+  if(!mobileColours.cssActive||mobileColours.body!=="rgb(243, 245, 249)"||
+     mobileColours.sidebar!=="rgb(21, 31, 49)"||mobileColours.horizontalOverflow)
+    throw Error(label+" wrong visual theme or mobile overflow: "+JSON.stringify(mobileColours));
   const shortcut=page.locator("#nutrition-shortcut");
   if(!await shortcut.isVisible())throw Error(label+" does not expose the nutrition shortcut");
   await shortcut.click();
