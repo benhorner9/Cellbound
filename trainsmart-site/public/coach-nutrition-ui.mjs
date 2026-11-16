@@ -2,7 +2,8 @@
 import {MEAL_KINDS,MEAL_LABELS,DEMO_FOODS,initialNutrition,nutritionInputs,
  calculateNutrition,approveNutrition,isNutritionApproved,generateMealPrompt,calculateRecipe,
  parseMealsJSON,bestMealDay,storeMealRecipe,saveNutritionPlan,assignNutritionPlan,
- saveDemoIngredient,demoMealJSON} from "./coach-nutrition-model.mjs";
+ saveDemoIngredient,demoMealJSON,importFlexibleMeals,reviewSuggestedFood,
+ unresolvedMealFoods,updateNutritionReview,demoNewFoodJSON} from "./coach-nutrition-model.mjs";
 const STORE="trainsmart-coach-hub-nutrition-07-fictional-v1";
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=n=>Math.round(Number(n)||0).toLocaleString("en-GB");
@@ -46,8 +47,9 @@ function renderTarget(d){
 function renderRecipe(meal,kind,index){
  const n=mealNutrition(meal);
  const foods=data.foods;
+ const incomplete=meal.ingredients?.some(row=>!foods.find(f=>f.id===row.ingredientId)?.demoReviewed);
  return '<article class="nut-recipe"><div class="nut-recipe-head"><strong>'+esc(MEAL_LABELS[kind])+' '+(index+1)+'</strong>'+
- '<span class="tag muted">'+(n?money(n.calories)+" kcal · P "+money(n.proteinG)+"g":"Incomplete recipe")+'</span></div>'+
+ '<span class="tag muted">'+(n?money(n.calories)+" kcal · P "+money(n.proteinG)+"g":incomplete?"Ingredient review needed":"Incomplete recipe")+'</span></div>'+
  '<div class="nut-editor-grid">'+
  '<label>Meal name<input data-nut-meal-field="name" data-kind="'+kind+'" data-index="'+index+'" maxlength="100" value="'+esc(meal.name)+'"></label>'+
  '<label>Servings<input type="number" min="1" max="8" step="1" data-nut-meal-field="servings" data-kind="'+kind+'" data-index="'+index+'" value="'+esc(meal.servings)+'"></label></div>'+
@@ -69,14 +71,16 @@ function renderPlan(ctx){
  if(!data.currentPlan)return '<div class="nut-empty">Import ChatGPT JSON or select <strong>Start manual 16-meal plan</strong> to edit recipes here.</div>';
  const k=viewKind;
  const plan=data.currentPlan,coverage=(()=>{try{const fresh={categories:{}};for(const kind of MEAL_KINDS)fresh.categories[kind]=plan.categories[kind].map(meal=>calculateRecipe(meal,data.foods));return bestMealDay(fresh,data.target);}catch{return null;}})();
- return '<div class="nut-tabs">'+MEAL_KINDS.map(kind=>'<button type="button" class="seg '+(kind===k?"active":"")+'" data-nut-action="kind" data-kind="'+kind+'">'+esc(MEAL_LABELS[kind])+' ×4</button>').join("")+'</div>'+
+ const waiting=unresolvedMealFoods(plan,data.foods);
+ return (waiting.length?'<div class="nut-review-strip"><div><strong>'+waiting.length+' ingredient'+(waiting.length===1?"":"s")+' need review</strong><p>Check per-100 g/ml values from a label or food composition reference before calculating totals or saving.</p></div><button class="btn btn-outline" type="button" data-nut-action="tab" data-tab="library">Review ingredients</button></div>':"")+
+ '<div class="nut-tabs">'+MEAL_KINDS.map(kind=>'<button type="button" class="seg '+(kind===k?"active":"")+'" data-nut-action="kind" data-kind="'+kind+'">'+esc(MEAL_LABELS[kind])+' ×4</button>').join("")+'</div>'+
  '<div class="nut-recipes">'+plan.categories[k].map((m,i)=>renderRecipe(m,k,i)).join("")+'</div>'+
  (coverage?'<div class="nut-day"><strong>Closest combination of one meal per category (256 checked)</strong>'+
  nutritionSummary(coverage.totals)+
  '<p>'+MEAL_KINDS.map(kind=>MEAL_LABELS[kind]+": "+esc(plan.categories[kind][coverage.choices[kind]].name)).join(" · ")+'</p>'+
  '<p class="'+(coverage.within?"nut-ok":"nut-warning")+'">'+(coverage.within?"Within illustrative comparison tolerances.":"At least one daily target is outside 10% calorie / 20% macro comparison tolerances.")+'</p></div>':
  '<p class="nut-warning">Complete all 16 recipes to compare possible full-day combinations.</p>')+
- '<div class="nut-actions"><button class="btn btn-primary" type="button" data-nut-action="save-plan">Save named meal plan / new version</button></div>';
+ '<div class="nut-actions"><button class="btn btn-primary" type="button" data-nut-action="save-plan"'+(waiting.length?' disabled title="Review new ingredients first"':"")+'>Save named meal plan / new version</button></div>';
 }
 function renderSaved(ctx){
  return '<section class="panel nut-section"><h3>Saved meal plans</h3><p>Reuse an existing plan or assign a copy to a sample client. Earlier versions remain unchanged.</p>'+
@@ -96,10 +100,27 @@ function renderSaved(ctx){
  ' · '+esc(a.name)+' v'+a.version+(a.current?" · Current":" · Previous")+'</p>').join(""):'<p class="small-muted">No assignments. Demo-only; no actual client portal.</p>')+
  '</section>';
 }
+function renderPendingIngredients(){
+ const pending=data.foods.filter(f=>!f.demoReviewed&&f.id.startsWith("suggested:"));
+ if(!pending.length)return '<div class="nut-review-done">No ingredients awaiting review.</div>';
+ return '<section class="nut-review-queue"><div class="nut-review-heading"><div><h3>Ingredient review queue</h3>'+
+ '<p>'+pending.length+' proposed food'+(pending.length===1?"":"s")+'. Nutrition totals will remain incomplete until each one has reviewed per-100 values.</p></div>'+
+ '<span class="tag warn">'+pending.length+' to check</span></div>'+
+ pending.map(food=>'<article class="nut-review-item"><div class="nut-review-head"><strong>'+esc(food.name)+'</strong>'+
+ '<span>Per 100 '+esc(food.unit)+'</span></div>'+
+ '<div class="nut-review-fields">'+
+ [["calories","Calories (kcal)"],["proteinG","Protein (g)"],["carbsG","Carbs (g)"],["fatG","Fat (g)"]].map(([key,label])=>
+ '<label>'+label+'<input type="number" min="0" max="1000" step="0.1" inputmode="decimal" data-review-field="'+key+'" data-food-id="'+esc(food.id)+'" placeholder="From label"></label>').join("")+
+ '<label class="nut-review-source">Food label / composition source<input maxlength="200" data-review-field="source" data-food-id="'+esc(food.id)+'" placeholder="e.g. UK product label, brand and date"></label></div>'+
+ '<button type="button" class="btn btn-primary" data-nut-action="review-food" data-food-id="'+esc(food.id)+'">Add reviewed values</button>'+
+ '<p class="small-muted">Coach-entered figures in this demonstration are not automatically verified. Check preparation, product labels and food safety independently.</p></article>'
+ ).join("")+'</section>';
+}
 function renderFoods(){
  return '<section class="panel nut-section"><h3>Ingredient library</h3>'+
- '<p><strong>Example nutrition values:</strong> The '+data.foods.length+' illustrative entries are fictional test values, not verified UK label data. AI is restricted to reviewed demo IDs. For real coaching, accurate product labels, serving conversions and allergens still require independent verification.</p>'+
- '<div class="nut-food-list">'+data.foods.slice(0,40).map(f=>'<div><strong>'+esc(f.name)+'</strong> · per 100 '+esc(f.unit)+
+ '<p>ChatGPT can suggest any food. New ingredients appear below until you enter reviewed per-100 g/ml values and a product-label or composition reference. The example entries remain illustrative rather than verified UK data.</p>'+
+ renderPendingIngredients()+
+ '<h4>Available ingredients</h4><div class="nut-food-list">'+data.foods.filter(f=>f.demoReviewed).slice(0,80).map(f=>'<div><strong>'+esc(f.name)+'</strong> · per 100 '+esc(f.unit)+
  ': '+money(f.calories)+' kcal, P '+money(f.proteinG)+'g, C '+money(f.carbsG)+'g, F '+money(f.fatG)+'g'+
  '<small>'+esc(f.source)+'</small></div>').join("")+'</div>'+
  '<h4>Add an ingredient from a product label (fictional test only)</h4>'+
@@ -126,7 +147,7 @@ export function renderNutritionHub(ctx){
  '<div class="nut-view-tabs" role="tablist" aria-label="Nutrition workflow">'+
  [["targets","Targets","1"],["create","Create plan","2"],["plan","Meal editor","3"],["library","Library","4"]].map(([id,label,n])=>
  '<button type="button" role="tab" aria-controls="nutrition-panel" aria-selected="'+(activeTab===id)+'" data-nut-action="tab" data-tab="'+id+'">'+
- '<span class="tab-count">'+n+'</span>'+label+'</button>').join("")+'</div>'+
+ '<span class="tab-count">'+n+'</span>'+label+(id==="library"&&data.currentPlan&&unresolvedMealFoods(data.currentPlan,data.foods).length?" · "+unresolvedMealFoods(data.currentPlan,data.foods).length+" to review":"")+'</button>').join("")+'</div>'+
  '<div class="nut-panel-body" id="nutrition-panel" role="tabpanel" tabindex="-1">'+
  (activeTab==="targets" ?
  '<section class="panel nut-section"><div class="ai-step-title"><span class="ai-step-number">1</span><div><h3>Set calorie and macro targets</h3>'+
@@ -161,9 +182,10 @@ export function renderNutritionHub(ctx){
  '<a class="btn btn-outline" target="_blank" rel="noopener noreferrer" href="https://chatgpt.com/">Open ChatGPT ↗</a></div>'+
  '<label>Brief to copy<textarea id="nut-prompt" readonly rows="7" placeholder="Approve targets, then prepare the brief.">'+esc(data.prompt||"")+'</textarea></label></section>'+
  '<section class="panel nut-section"><div class="ai-step-title"><span class="ai-step-number">3</span><div><h3>Bring your plan back</h3>'+
- '<p>Paste the reply from ChatGPT. We check the ingredients and recalculate the totals.</p></div></div>'+
- '<label>Paste ChatGPT response<textarea data-nut-field="reply" rows="7" maxlength="45000" placeholder="Paste TRAINSMART_MEALS_V1 JSON here.">'+esc(data.reply||"")+'</textarea></label>'+
+ '<p>New foods are welcome. TrainSmart will queue any unknown ingredients for your review before calculating nutrition.</p></div></div>'+
+ '<label>Paste ChatGPT response<textarea data-nut-field="reply" rows="7" maxlength="45000" placeholder="Paste TRAINSMART_MEALS_V2 JSON here.">'+esc(data.reply||"")+'</textarea></label>'+
  '<div class="nut-actions"><button type="button" class="btn btn-outline" data-nut-action="example">Load an example</button>'+
+ '<button type="button" class="btn btn-outline" data-nut-action="example-new">Try new ingredients example</button>'+
  '<button type="button" class="btn btn-primary" data-nut-action="import">Import meal plan</button>'+
  '<button type="button" class="btn btn-outline" data-nut-action="manual">Build manually</button></div>'+
  '</section></div>':"")+
@@ -237,10 +259,14 @@ export async function handleNutritionClick(btn,ctx,refresh,notify){
    catch{document.getElementById("nut-prompt")?.select();notify("Prompt selected — copy it manually.");}
   }
   if(action==="example"){data.reply=demoMealJSON(data.foods);notify("Fictional example JSON loaded.");}
+  if(action==="example-new"){data.reply=demoNewFoodJSON(data.foods);notify("Example with suggested new foods loaded.");}
   if(action==="import"){
    if(!isNutritionApproved(data))throw Error("Approve calorie and macro targets before importing.");
-   data.currentPlan=parseMealsJSON(data.reply,data.foods,data.excludedFoods);activeTab="plan";
-   notify("Meal plan imported. Review each meal before saving.");}
+   const imported=importFlexibleMeals(data.reply,data.foods,data.excludedFoods);
+   data.foods=imported.foods;data.currentPlan=imported.plan;
+   const pending=unresolvedMealFoods(data.currentPlan,data.foods).length;
+   activeTab=pending?"library":"plan";
+   notify(pending?pending+" ingredients need a nutrition source and per-100 values before saving.":"Meal plan imported. Review each meal before saving.");}
   if(action==="manual"){data.currentPlan=blankPlan();activeTab="plan";notify("Meal editor opened. Complete each meal to save.");}
   if(action==="add-row"||action==="remove-row"||action==="save-recipe"){
    const kind=btn.dataset.kind,index=Number(btn.dataset.index);
@@ -277,6 +303,16 @@ export async function handleNutritionClick(btn,ctx,refresh,notify){
    const p=data.savedPlans.find(x=>x.id===btn.dataset.plan);
    data.assignments=assignNutritionPlan(data.assignments,p,data.clientId);
    notify("Independent demo-only client snapshot assigned. No live client changes.");}
+  if(action==="review-food"){
+   const id=btn.dataset.foodId;
+   const val=key=>document.querySelector('[data-review-field="'+key+'"][data-food-id="'+id+'"]')?.value??"";
+   data.foods=reviewSuggestedFood(data.foods,id,{source:val("source"),calories:val("calories"),
+     proteinG:val("proteinG"),carbsG:val("carbsG"),fatG:val("fatG")});
+   data.currentPlan=updateNutritionReview(data.currentPlan,data.foods);
+   const rest=unresolvedMealFoods(data.currentPlan,data.foods);
+   if(!rest.length&&data.currentPlan){activeTab="plan";notify("All new ingredient values entered. Review the recalculated meals before saving.");}
+   else notify("Food added to your ingredient library. "+rest.length+" still need review.");
+  }
   if(action==="add-food"){
    const val=id=>document.querySelector('[data-nut-field="'+id+'"]')?.value??"";
    data.foods=saveDemoIngredient(data.foods,{name:val("foodName"),unit:val("foodUnit"),source:val("foodSource"),

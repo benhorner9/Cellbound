@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "3da737e649375b97794e309fbf893801ad2c0535",
+  "sourceCommit": "2ab199279f2308d9bd8be6dec4129b7eb8aaf105",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -39,5 +39,5 @@
     "coach-nutrition.css",
     "coach-studio.css"
   ],
-  "feature": "UX09 professional light workspace: porcelain canvas, charcoal/navy navigation, cobalt actions, modern card layout and ten SVG icons; fictional preview"
+  "feature": "D07.2 dynamic named-ingredient ChatGPT meal drafts; review and source-gate new foods before macro calculation/saving, retain D01–D07.1 and UX09"
 }
