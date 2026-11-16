@@ -86,7 +86,7 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   console.log(label+" PASS: D07 calculator, approved targets, anonymised prompt, 16 meals, saved recipe and template");
 
   // D07.2: named foods that are not pre-programmed must import without invented nutrition.
-  await page.locator('[data-nut-action="tab"][data-tab="create"]').click();
+  await page.locator('.nut-view-tabs [data-nut-action="tab"][data-tab="create"]').click();
   await page.locator('[data-nut-field="name"]').fill("Flexible New Foods Test");
   await page.locator('[data-nut-action="prompt"]').click();
   const flexBrief=await page.locator("#nut-prompt").inputValue();
@@ -98,10 +98,10 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
    throw Error("D07.2 import did not open ingredient review");
   if((await page.locator(".nut-review-item").count())!==2)
    throw Error("D07.2 did not deduplicate and queue two new ingredient names");
-  await page.locator('[data-nut-action="tab"][data-tab="plan"]').click();
+  await page.locator('.nut-view-tabs [data-nut-action="tab"][data-tab="plan"]').click();
   if(!(await page.locator('[data-nut-action="save-plan"]').isDisabled()))
    throw Error("D07.2 saved an unreviewed ingredient meal plan");
-  await page.locator('[data-nut-action="tab"][data-tab="library"]').click();
+  await page.locator('.nut-view-tabs [data-nut-action="tab"][data-tab="library"]').click();
   for(let i=0;i<2;i++){
    const item=page.locator(".nut-review-item").first();
    await item.locator('[data-review-field="calories"]').fill("55");
@@ -160,7 +160,7 @@ for(const [label,options] of [
   if(!page.url().includes("#nutrition"))throw Error(label+" did not navigate to #nutrition");
   await page.goto(url+"#nutrition",{waitUntil:"networkidle",timeout:25000});
   await page.locator('[data-nut-field="clientId"]').waitFor({state:"visible",timeout:10000});
-  await page.locator('[data-nut-action="tab"][data-tab="create"]').click();
+  await page.locator('.nut-view-tabs [data-nut-action="tab"][data-tab="create"]').click();
   await page.locator("#nut-prompt").waitFor({state:"visible",timeout:10000});
   const dims=await page.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:window.innerWidth}));
   if(dims.content>dims.viewport+3)throw Error(label+" layout overflows horizontally: "+JSON.stringify(dims));
