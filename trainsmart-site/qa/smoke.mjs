@@ -84,6 +84,42 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   await page.locator('[data-nut-action="assign-plan"]').first().click();
   if(!(await page.locator('body').innerText()).includes("Fictional client meal-plan assignments"))throw Error("D07 saved plan assignment not visible");
   console.log(label+" PASS: D07 calculator, approved targets, anonymised prompt, 16 meals, saved recipe and template");
+
+  // D07.2: named foods that are not pre-programmed must import without invented nutrition.
+  await page.locator('.nut-view-tabs [data-nut-action="tab"][data-tab="create"]').click();
+  await page.locator('[data-nut-field="name"]').fill("Flexible New Foods Test");
+  await page.locator('[data-nut-action="prompt"]').click();
+  const flexBrief=await page.locator("#nut-prompt").inputValue();
+  if(!flexBrief.includes("TRAINSMART_MEALS_V2")||!flexBrief.includes("ANY reasonable new food"))
+   throw Error("D07.2 ChatGPT prompt still restricts ingredients to the existing catalogue");
+  await page.locator('[data-nut-action="example-new"]').click();
+  await page.locator('[data-nut-action="import"]').click();
+  if((await page.locator('[data-tab="library"][aria-selected="true"]').count())!==1)
+   throw Error("D07.2 import did not open ingredient review");
+  if((await page.locator(".nut-review-item").count())!==2)
+   throw Error("D07.2 did not deduplicate and queue two new ingredient names");
+  await page.locator('.nut-view-tabs [data-nut-action="tab"][data-tab="plan"]').click();
+  if(!(await page.locator('[data-nut-action="save-plan"]').isDisabled()))
+   throw Error("D07.2 saved an unreviewed ingredient meal plan");
+  await page.locator('.nut-view-tabs [data-nut-action="tab"][data-tab="library"]').click();
+  for(let i=0;i<2;i++){
+   const item=page.locator(".nut-review-item").first();
+   await item.locator('[data-review-field="calories"]').fill("55");
+   await item.locator('[data-review-field="proteinG"]').fill("1.3");
+   await item.locator('[data-review-field="carbsG"]').fill("10");
+   await item.locator('[data-review-field="fatG"]').fill("0.5");
+   await item.locator('[data-review-field="source"]').fill("Sample UK shop label reviewed by coach");
+   await item.locator('[data-nut-action="review-food"]').click();
+  }
+  if((await page.locator('[data-tab="plan"][aria-selected="true"]').count())!==1)
+   throw Error("D07.2 did not return to meal editor after the last reviewed food");
+  const totalLabel=await page.locator(".nut-recipe-head .tag").first().innerText();
+  if(!totalLabel.includes("kcal"))throw Error("D07.2 has not recalculated meals from reviewed values");
+  await page.locator('[data-nut-action="save-plan"]').click();
+  if(!(await page.locator("body").innerText()).includes("Flexible New Foods Test"))
+   throw Error("D07.2 reusable plan was not saved");
+  console.log(label+" PASS: D07.2 unrestricted named food import, review queue, source values, automatic recalculation and safe reusable plan");
+
   await page.locator('.nav-link[data-view="clients"]').click();
   if(!(await page.locator("body").innerText()).includes("Clients"))
    throw Error("Client directory navigation missing");
@@ -124,7 +160,7 @@ for(const [label,options] of [
   if(!page.url().includes("#nutrition"))throw Error(label+" did not navigate to #nutrition");
   await page.goto(url+"#nutrition",{waitUntil:"networkidle",timeout:25000});
   await page.locator('[data-nut-field="clientId"]').waitFor({state:"visible",timeout:10000});
-  await page.locator('[data-nut-action="tab"][data-tab="create"]').click();
+  await page.locator('.nut-view-tabs [data-nut-action="tab"][data-tab="create"]').click();
   await page.locator("#nut-prompt").waitFor({state:"visible",timeout:10000});
   const dims=await page.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:window.innerWidth}));
   if(dims.content>dims.viewport+3)throw Error(label+" layout overflows horizontally: "+JSON.stringify(dims));

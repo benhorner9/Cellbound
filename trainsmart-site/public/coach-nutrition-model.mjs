@@ -135,13 +135,17 @@ export function generateMealPrompt(raw){
  "You assist a qualified coach. This is a fictional preview, not nutrition, allergy or medical advice.",
  "Return ONE JSON object only. No Markdown or code fences. Do not include client names or private identifiers.",
  "Use EXACTLY four unique options for each: breakfast, lunch, dinner, snacks (16 different names).",
- "Use ONLY ingredientId values listed in allowedFoods. Do not invent ingredients, IDs or nutritional figures.",
- "For every meal specify name, servings:1, ingredients:[{ingredientId,quantity,unit}], steps:[short strings].",
- "Quantity refers to the edible amount PER SERVING. Unit must exactly equal allowedFoods unit (g or ml).",
+ "You may use an existing food ID from allowedFoods OR suggest ANY reasonable new food by its plain name.",
+ "For a catalogue food, use {ingredientId,quantity,unit}. For a NEW food, use {name,quantity,unit}.",
+ "Never invent ingredient IDs, nutrient amounts, calories, macros, or sources. Do not supply nutrition figures.",
+ "For every meal specify name, servings:1, ingredients:[{ingredientId OR name,quantity,unit}], steps:[short strings].",
+ "Quantity refers to the edible amount PER SERVING. Use g or ml only; catalogue ingredient units must match existing entries exactly.",
  "Choose reasonable portions and varied meals. Try to make one choice from each category fit daily targets.",
  "Do not state that these meals are allergy-safe. Coach independently checks foods, labels, quantities and exclusions.",
- 'Schema: {"format":"TRAINSMART_MEALS_V1","categories":{"breakfast":[{"name":"...","servings":1,"ingredients":[{"ingredientId":"demo:oats","quantity":60,"unit":"g"}],"steps":["..."]}],"lunch":[],"dinner":[],"snacks":[]}}',
- "Do NOT output nutrition totals: TrainSmart recalculates them using its ingredient catalogue.",
+ 'Schema: {"format":"TRAINSMART_MEALS_V2","categories":{"breakfast":[{"name":"...","servings":1,"ingredients":[{"name":"Mango flesh","quantity":120,"unit":"g"},{"ingredientId":"demo:oats","quantity":60,"unit":"g"}],"steps":["..."]}],"lunch":[],"dinner":[],"snacks":[]}}',
+ "A legacy TRAINSMART_MEALS_V1 import is supported for old plans, but use V2 for unlimited food choices.",
+ "Any NEW food is added to a review queue, where the coach must supply a source and per-100 g/ml nutrition values before saving or assigning the finished plan.",
+ "Do NOT output nutrition totals: TrainSmart recalculates them only from coach-reviewed ingredient entries.",
  "coachBrief: "+JSON.stringify(intent),
  "allowedFoods: "+JSON.stringify(allowed.map(x=>({ingredientId:x.id,name:x.name,unit:x.unit})))
  ];
@@ -262,4 +266,129 @@ export function demoMealJSON(foods){
   })),steps:["Measure the ingredients.","Prepare appropriately and serve."]
  }));
  return JSON.stringify({format:"TRAINSMART_MEALS_V1",categories},null,2);
+}
+
+
+/* D07.2 flexible ingredient bridge. The AI may suggest ANY food name; it never
+ * creates trusted nutrition figures. New foods are PENDING until a coach
+ * explicitly enters source + per-100 g/ml numbers in the review queue. */
+export function unresolvedMealFoods(plan,foods){
+ if(!plan?.categories)return [];
+ const seen=new Set();
+ for(const kind of MEAL_KINDS)for(const meal of plan.categories[kind]||[])
+  for(const row of meal.ingredients||[]){
+   const f=foods.find(x=>x.id===row.ingredientId);
+   if(!f||!validateFood(f))seen.add(row.ingredientId);
+  }
+ return [...seen];
+}
+const foodKey=x=>String(x||"").trim().replace(/\s+/g," ").toLocaleLowerCase("en-GB");
+function validFoodSuggestion(value){
+ const name=clean(value,100);
+ if(name.length<2||name.length>90||/[<>{}\[\]\x00-\x1f]/.test(name)||
+    /https?:\/\/|www\.|@/.test(name)||forbidden.test(name))
+  throw Error("New ingredients must have a plain food name (2–90 characters), not a URL, contact or medical note.");
+ return name;
+}
+function pendingFoodId(foods){
+ let id,seq=1;do{id="suggested:food-"+seq++;}while(foods.some(f=>f.id===id));
+ return id;
+}
+function parseImportObject(text){
+ let raw=String(text||"").trim();
+ if(raw.length<2||raw.length>45000)throw Error("Paste a complete meal plan JSON response.");
+ if(raw.startsWith("\u0060\u0060\u0060")){
+  const match=raw.match(/^\u0060\u0060\u0060(?:json)?\s*\n([\s\S]*?)\n\u0060\u0060\u0060\s*$/i);
+  if(!match)throw Error("Paste one complete JSON object.");raw=match[1];
+ }
+ try{const doc=JSON.parse(raw);if(doc&&typeof doc==="object"&&!Array.isArray(doc))return doc;}
+ catch{}
+ throw Error("The response is not valid JSON. Ask ChatGPT to return one JSON object.");
+}
+export function importFlexibleMeals(text,foods,excludedFoods=""){
+ const doc=parseImportObject(text);
+ if(doc.format==="TRAINSMART_MEALS_V1")
+  return {plan:parseMealsJSON(text,foods,excludedFoods),foods:clone(foods),newFoods:[]};
+ if(doc.format!=="TRAINSMART_MEALS_V2"||!doc.categories||
+    typeof doc.categories!=="object"||Array.isArray(doc.categories))
+  throw Error("Expected TRAINSMART_MEALS_V2 with breakfast, lunch, dinner and snacks.");
+ const draftFoods=clone(foods),newFoods=[],names=new Set(),categories={};
+ const excluded=String(excludedFoods||"").toLowerCase().split(/[,;\n]/).map(x=>x.trim()).filter(x=>x.length>2);
+ for(const kind of MEAL_KINDS){
+  const options=doc.categories[kind];
+  if(!Array.isArray(options)||options.length!==4)throw Error("Provide exactly four "+kind+" meals.");
+  categories[kind]=options.map(raw=>{
+   if(!raw||typeof raw!=="object"||Array.isArray(raw))throw Error("Every meal must be an object.");
+   const name=clean(raw.name,100);
+   if(name.length<3||names.has(foodKey(name)))throw Error("Every one of the 16 meals needs a different name.");
+   names.add(foodKey(name));
+   if(raw.servings!==1)throw Error("Each meal must specify servings: 1 for measured per-serving portions.");
+   if(!Array.isArray(raw.ingredients)||raw.ingredients.length<1||raw.ingredients.length>24)
+    throw Error("Meals need 1–24 ingredients.");
+   if(!Array.isArray(raw.steps)||raw.steps.length<1||raw.steps.length>12||
+      raw.steps.some(step=>typeof step!=="string"||step.trim().length<2||step.length>350))
+    throw Error("Every meal needs 1–12 short preparation steps.");
+   const ingredients=raw.ingredients.map(row=>{
+    if(!row||typeof row!=="object"||Array.isArray(row))throw Error("Invalid ingredient.");
+    const unit=row.unit;
+    if(!["g","ml"].includes(unit))throw Error("Ingredient unit must be g or ml. Ask ChatGPT for a measurable edible amount.");
+    const quantity=num(row.quantity,.1,2000,"Ingredient quantity");
+    let food=typeof row.ingredientId==="string"?draftFoods.find(x=>x.id===row.ingredientId):null;
+    if(!food&&typeof row.name==="string"){
+     const newName=validFoodSuggestion(row.name);
+     food=draftFoods.find(x=>foodKey(x.name)===foodKey(newName));
+     if(!food){
+      if(draftFoods.length>=200||newFoods.length>=110)throw Error("Too many new foods in one draft; review and split the plan.");
+      food={id:pendingFoodId(draftFoods),name:newName,unit,
+       calories:null,proteinG:null,carbsG:null,fatG:null,source:"",
+       demoReviewed:false,liveVerified:false,needsReview:true};
+      draftFoods.push(food);newFoods.push(food.id);
+     }
+    }
+    if(!food)throw Error("Unknown ingredient ID without a food name. Ask ChatGPT to include its name.");
+    if(food.unit!==unit)throw Error(food.name+" uses "+food.unit+" in the library; review the measurement before importing.");
+    if(excluded.some(term=>food.name.toLowerCase().includes(term)))
+     throw Error(food.name+" conflicts with a food to avoid. Ask ChatGPT to replace it.");
+    return {ingredientId:food.id,quantity,unit,name:food.name};
+   });
+   const meal={name,servings:1,ingredients,steps:raw.steps.map(x=>x.trim()),nutrition:null};
+   try{const done=calculateRecipe(meal,draftFoods);return {...done,needsReview:false};}
+   catch(error){
+    if(!ingredients.some(x=>!validateFood(draftFoods.find(f=>f.id===x.ingredientId))))throw error;
+    return {...meal,needsReview:true};
+   }
+  });
+ }
+ return {plan:{format:"TRAINSMART_MEALS_V2",categories,reviewStatus:"ingredient-review",
+   notes:[],notice:"New foods require coach-supplied label or composition figures before nutrient totals can be calculated."},
+  foods:draftFoods,newFoods};
+}
+export function reviewSuggestedFood(foods,id,raw){
+ const current=foods.find(x=>x.id===id);
+ if(!current||!id.startsWith("suggested:")||validateFood(current))
+  throw Error("Select an unreviewed suggested ingredient.");
+ const source=clean(raw.source,200);
+ if(source.length<8||forbidden.test(source))throw Error("Add a non-personal UK product label or composition source reference (at least eight characters).");
+ const values={};
+ for(const key of ["calories","proteinG","carbsG","fatG"])values[key]=num(raw[key],0,1000,key+" per 100 "+current.unit);
+ return foods.map(f=>f.id===id?{...f,...values,source,demoReviewed:true,
+  coachEntered:true,needsReview:false,liveVerified:false}:f);
+}
+export function updateNutritionReview(plan,foods){
+ if(!plan)return null;
+ const categories={};
+ for(const kind of MEAL_KINDS)categories[kind]=(plan.categories?.[kind]||[]).map(meal=>{
+  if(meal.ingredients?.some(x=>!validateFood(foods.find(f=>f.id===x.ingredientId))))
+   return {...meal,needsReview:true,nutrition:null};
+  return {...calculateRecipe(meal,foods),needsReview:false};
+ });
+ return {...plan,categories,reviewStatus:unresolvedMealFoods({categories},foods).length?"ingredient-review":"draft"};
+}
+export function demoNewFoodJSON(foods){
+ const doc=JSON.parse(demoMealJSON(foods));
+ doc.format="TRAINSMART_MEALS_V2";
+ doc.categories.breakfast[0].ingredients[0]={name:"Fresh mango flesh",quantity:110,unit:"g"};
+ doc.categories.lunch[1].ingredients[1]={name:"Roasted red pepper",quantity:95,unit:"g"};
+ doc.categories.dinner[0].ingredients[2]={name:"Roasted red pepper",quantity:140,unit:"g"};
+ return JSON.stringify(doc,null,2);
 }
