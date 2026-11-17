@@ -123,6 +123,26 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   await page.locator('.nav-link[data-view="clients"]').click();
   if(!(await page.locator("body").innerText()).includes("Clients"))
    throw Error("Client directory navigation missing");
+  // D08.2: always-visible header role switch, same-tab fictional state and
+  // restore the coach section when returning from the client view.
+  const clientSwitch=page.locator("#preview-client-switch");
+  if(!await clientSwitch.isVisible())throw Error(label+": coach-to-client switch is not visible");
+  if(!((await clientSwitch.getAttribute("href"))||"").includes("coach-client.html"))
+   throw Error(label+": client switch target is missing");
+  await clientSwitch.click();
+  if(!page.url().includes("coach-client.html"))throw Error(label+": coach switch did not open client view");
+  if((await page.locator(".portal-role-switch [aria-current=page]").innerText())!=="Client view")
+   throw Error(label+": client preview active state is wrong");
+  await page.locator("#portal-person").selectOption("tom");
+  if(!((await page.locator("#portal-person").inputValue())==="tom"))
+   throw Error(label+": fictional client selector did not change");
+  await page.locator(".portal-role-switch a").click();
+  if(!page.url().includes("#clients"))throw Error(label+": returning to coach lost its previous screen");
+  if((await page.locator(".workspace-role-switch [aria-current=page]").innerText())!=="Coach view")
+   throw Error(label+": coach preview active state is wrong");
+  const returningClientHref=await page.locator("#preview-client-switch").getAttribute("href");
+  if(!returningClientHref?.includes("client=tom"))
+   throw Error(label+": last fictional client was not remembered");
   if(errors.length)throw Error("Browser runtime errors: "+errors.join("; "));
   await context.close();
   console.log(label+" PASS: two-box AI request/JSON/apply, manual save/reuse, library, client navigation");
@@ -166,8 +186,20 @@ for(const [label,options] of [
   if(dims.content>dims.viewport+3)throw Error(label+" layout overflows horizontally: "+JSON.stringify(dims));
   const title=await page.locator("#page-title").textContent();
   if(!title.includes("Nutrition"))throw Error(label+" did not open nutrition on direct URL");
+  if(!await page.locator("#preview-client-switch").isVisible())
+   throw Error(label+" coach/client role switch is hidden on the coach layout");
+  await page.locator("#preview-client-switch").click();
+  if(!page.url().includes("coach-client.html"))
+   throw Error(label+" coach/client role switch did not navigate");
+  if(!(await page.locator(".portal-role-switch [aria-current=page]").isVisible()))
+   throw Error(label+" client header role switch is hidden");
+  const dims2=await page.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:window.innerWidth}));
+  if(dims2.content>dims2.viewport+3)
+   throw Error(label+" client header overflows viewport: "+JSON.stringify(dims2));
+  await page.locator(".portal-role-switch a").click();
+  if(!page.url().includes("#nutrition"))throw Error(label+" coach return did not restore Nutrition");
   if(errors.length)throw Error(label+" runtime errors: "+errors.join("; "));
-  console.log(label+" PASS: visible nutrition shortcut, cache-busted scripts, direct #nutrition deep link");
+  console.log(label+" PASS: navigation and persistent role switch, no overflow, direct #nutrition deep link");
   await context.close();
  }finally{await browser.close();}
 }
@@ -176,7 +208,8 @@ for(const [label,options] of [
 // D08 isolated client experience — same-tab fictional state, no hosted writes.
 for(const [label,engine,opts] of [
  ["Chromium client",chromium,{viewport:{width:1280,height:850}}],
- ["iPad WebKit client",webkit,{viewport:{width:820,height:1180},isMobile:true,hasTouch:true}]
+ ["iPad WebKit client",webkit,{viewport:{width:820,height:1180},isMobile:true,hasTouch:true}],
+ ["iPhone WebKit client",webkit,{viewport:{width:390,height:844},isMobile:true,hasTouch:true}]
 ]){
  const browser=await engine.launch({headless:true});
  try{
