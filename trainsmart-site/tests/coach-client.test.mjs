@@ -40,7 +40,7 @@ test("completion, weight recall and isolation",()=>{
  assert.equal(s.programmeAssignments[0].sessions[0].exercises[0].prescription.workingSets,2);
 });
 test("unfinished set blocks completion but does not block a draft",()=>{
- let s=fixture(), partial=[{rowId:"row:1",skipReason:"",sets:[{reps:"8",loadKg:"0"},{reps:"",loadKg:""}]}];
+ let s=fixture(), partial=[{rowId:"row:1",skipReason:"",sets:[{reps:"8",loadKg:"0"},{reps:"",loadKg:"25"}]}];
  s=saveClientSession(s,"a","assignment:one",0,partial);
  assert.throws(()=>saveClientSession(s,"a","assignment:one",0,partial,{complete:true}),/Log each set/);
  assert.equal(nextSession(s,"a").index,0);
