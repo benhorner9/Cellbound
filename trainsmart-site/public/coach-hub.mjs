@@ -185,12 +185,14 @@ function previewClientId(){
   clients.find(c=>c.status!=="Archived");
  return selected?.id||"";
 }
-function renderChrome(){
+function refreshPreviewClientLink(){
  const previewLink=document.getElementById("preview-client-switch");
- if(previewLink){
-  const selectedId=previewClientId();
-  previewLink.href="./coach-client.html"+(selectedId?"?client="+encodeURIComponent(selectedId):"")+"#training";
- }
+ if(!previewLink)return;
+ const selectedId=previewClientId();
+ previewLink.href="./coach-client.html"+(selectedId?"?client="+encodeURIComponent(selectedId):"")+"#training";
+}
+function renderChrome(){
+ refreshPreviewClientLink();
  const h=viewHeading();
  document.getElementById("page-eyebrow").textContent=h[0]+" · "+new Intl.DateTimeFormat("en-GB",{weekday:"long",timeZone:TIME_ZONE}).format(new Date()).toUpperCase();
  document.getElementById("page-title").textContent=h[1];
@@ -1149,7 +1151,10 @@ function submitNewTask(form){
  document.getElementById("new-task-dialog").close();save();render();flash("Your task is saved in this preview session.");
 }
 if (typeof document !== "undefined") {
+// Safari can restore the coach page from BFCache without running render() again.
+window.addEventListener("pageshow",refreshPreviewClientLink);
 document.getElementById("preview-client-switch")?.addEventListener("click",()=>{
+ refreshPreviewClientLink();
  try{sessionStorage.setItem(PREVIEW_COACH_VIEW,state.view);}catch{}
 });
 window.addEventListener("hashchange",()=>{const requested=window.location.hash.slice(1);if(COACH_VIEWS.includes(requested)&&requested!==state.view)changeView(requested);});
