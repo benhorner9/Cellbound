@@ -19,9 +19,9 @@ for(const file of m.files){
   if(!body.includes("connect-src 'none'"))throw Error("Demo network CSP missing");
   body=body.replace(/((?:href|src))="\/(coach-[^"]+)"/g,'$1="./$2"');
   body=body.replace(/\.mjs(?=["'])/g,".js");
-  // New entrypoint URL forces Safari to fetch the post-D07 navigation script, not a cached D06.1 file.
+  // Version both role entrypoints, preventing stale Safari client/coach navigation after a release.
   const revision=m.sourceCommit.slice(0,12);
-  body=body.replace(/(src="\.\/coach-hub\.js)(")/,`$1?v=${revision}$2`);
+  body=body.replace(/(src="\.\/coach-(?:hub|client)\.js)(")/g,`$1?v=${revision}$2`);
   body=body.replace(/(href="\.\/coach-[a-z0-9-]+\.css)(")/g,`$1?v=${revision}$2`);
   if(/(?:src|href)="\/(?!\/)/.test(body))throw Error("Root-relative site asset: "+file);
   if(!body.includes("FICTIONAL PREVIEW"))throw Error("User-facing demo disclosure missing");
