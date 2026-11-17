@@ -85,3 +85,44 @@ input::placeholder,textarea::placeholder{color:#98a6ba}.portal-form-actions{disp
 }
 @media(max-width:410px){.portal-hero-stat{display:none}.portal-history>div{display:grid;gap:2px}.portal-history small{text-align:left}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* D08.1 — two-plan client workflow and daily meal confirmation. */
+.portal-plan-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.portal-plan-heading h2{margin:2px 0 8px}
+.portal-plan-heading p{margin-top:4px}
+.portal-plan-count{flex:0 0 auto;align-self:center;font-size:12px;font-weight:750;background:#edf3fe;color:#214c9f;padding:9px 12px;border:1px solid #cbdcf8;border-radius:999px}
+.portal-plan-list{display:grid;gap:9px;margin-top:14px}
+.portal-plan-session{background:#fbfcff;border:1px solid #dce5f1;border-radius:11px}
+.portal-plan-session[open]{border-color:#a5bce9}
+.portal-plan-session summary{cursor:pointer;display:flex;align-items:center;gap:14px;padding:15px;list-style:none}
+.portal-plan-session summary::-webkit-details-marker{display:none}
+.portal-session-number{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;background:#edf3fe;border-radius:9px;color:#2956cc;font-weight:800;font-size:13px}
+.portal-session-summary{display:grid;gap:3px;flex:1}
+.portal-session-summary strong{color:#263a58;font-size:13px}
+.portal-session-summary small{color:#7a899e;font-size:11px}
+.portal-chevron{font-size:20px;color:#657b9d}
+.portal-plan-exercises{border-top:1px solid #e4eaf3;padding:6px 19px}
+.portal-plan-exercise{padding:13px 0;border-bottom:1px solid #e5ecf5}
+.portal-plan-exercise:last-child{border:0}
+.portal-plan-exercise strong,.portal-plan-exercise small{display:block}
+.portal-plan-exercise strong{font-size:12px;color:#344a6a}
+.portal-plan-exercise small{font-size:11px;color:#7484a0;margin-top:4px}
+.portal-plan-exercise p{margin:7px 0 0;font-size:11px}
+.portal-daily-log{border-color:#c4d6f5;background:#fdfefe}
+.portal-meal-category-head{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:15px}
+.portal-meal-category-head h2{margin:0}
+.portal-logged-indicator{font-size:12px;color:#2257a4;font-weight:750;max-width:70%;text-align:right}
+.portal-logged-indicator button{border:0;background:none;color:#6e7f9b;text-decoration:underline;padding:3px 4px;font-size:11px;font-weight:650}
+.portal-unlogged{color:#8797ac;font-size:11px}
+.portal-meal-selected{border:2px solid #82a6eb}
+.portal-meal-selected summary{background:#f0f5ff;border-radius:9px}
+.portal-log-button{margin-top:15px;width:100%}
+.portal-log-button:disabled{opacity:1;cursor:default;background:#e4ecfb;border-color:#b5c8ea;color:#254a9a}
+@media(max-width:720px){
+ .portal-nav{grid-template-columns:repeat(2,1fr)}
+ .portal-plan-heading{gap:12px}
+ .portal-plan-count{padding:7px 9px;font-size:10px}
+ .portal-meal-category-head{align-items:flex-start}
+ .portal-logged-indicator{font-size:11px}
+}
