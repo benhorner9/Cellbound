@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {currentAssignment,currentMealAssignment,nextSession,sessionHistory,storedSession,saveClientSession,lastWeight,
- weekStart,latestCheckin,saveWeeklyCheckin} from "../public/coach-client-model.mjs";
+ weekStart,latestCheckin,saveWeeklyCheckin,MEAL_CATEGORIES,dailyMealSelections,logMealSelection,clearMealSelection} from "../public/coach-client-model.mjs";
 const client=id=>({id,status:"Active",name:id});
 const ex=(id,sets=2)=>({id,exerciseId:"demo:"+id,name:"Exercise "+id,prescription:{workingSets:sets,repsMin:8,repsMax:12,loadKg:null,restSeconds:90}});
 const fixture=()=>({clients:[client("a"),client("b")],programmeAssignments:[
@@ -62,4 +62,50 @@ test("weekly check-in upserts only selected fictional client and increments revi
  assert.equal(s.clientPortalCheckins.length,1);
  assert.equal(latestCheckin(s,"a","2026-11-16").revision,2);
  assert.throws(()=>saveWeeklyCheckin(s,"a","2026-11-17",{energy:"9",sleep:"2",weightKg:""}),/Energy/);
+});
+
+
+const mealFixture=()=>({assignments:[
+ {clientId:"a",current:true,id:"mealassignment:1",plan:{categories:{
+  breakfast:Array.from({length:4},(_,i)=>({name:"Breakfast "+(i+1)})),
+  lunch:Array.from({length:4},(_,i)=>({name:"Lunch "+(i+1)})),
+  dinner:Array.from({length:4},(_,i)=>({name:"Dinner "+(i+1)})),
+  snacks:Array.from({length:4},(_,i)=>({name:"Snack "+(i+1)}))
+ }}},
+ {clientId:"b",current:true,id:"mealassignment:2",plan:{categories:{
+  breakfast:Array.from({length:4},(_,i)=>({name:"B Breakfast "+(i+1)})),
+  lunch:Array.from({length:4},(_,i)=>({name:"B Lunch "+(i+1)})),
+  dinner:Array.from({length:4},(_,i)=>({name:"B Dinner "+(i+1)})),
+  snacks:Array.from({length:4},(_,i)=>({name:"B Snack "+(i+1)}))
+ }}}
+]});
+test("meal logging selects one of four assigned choices per category and per day",()=>{
+ let s=fixture(),n=mealFixture();
+ assert.deepEqual(MEAL_CATEGORIES,["breakfast","lunch","dinner","snacks"]);
+ s=logMealSelection(s,n,"a","mealassignment:1","2026-11-17","breakfast",0);
+ assert.equal(dailyMealSelections(s,"a","mealassignment:1","2026-11-17")[0].mealName,"Breakfast 1");
+ s=logMealSelection(s,n,"a","mealassignment:1","2026-11-17","breakfast",3);
+ assert.equal(s.clientMealLogs.length,1);
+ assert.equal(s.clientMealLogs[0].optionIndex,3);
+ s=logMealSelection(s,n,"a","mealassignment:1","2026-11-17","lunch",1);
+ assert.equal(dailyMealSelections(s,"a","mealassignment:1","2026-11-17").length,2);
+ assert.equal(dailyMealSelections(s,"a","mealassignment:1","2026-11-18").length,0);
+ assert.equal(dailyMealSelections(s,"b","mealassignment:2","2026-11-17").length,0);
+ s=clearMealSelection(s,n,"a","mealassignment:1","2026-11-17","breakfast");
+ assert.equal(dailyMealSelections(s,"a","mealassignment:1","2026-11-17").length,1);
+ assert.equal(s.clientMealLogs[0].mealName,"Lunch 2");
+});
+test("meal logger enforces current assignment and isolates historical snapshots",()=>{
+ let s=fixture(),n=mealFixture();
+ assert.throws(()=>logMealSelection(s,n,"a","mealassignment:2","2026-11-17","breakfast",1),/no longer assigned/i);
+ assert.throws(()=>logMealSelection(s,n,"a","mealassignment:1","2026-11-17","dessert",1),/category/);
+ assert.throws(()=>logMealSelection(s,n,"a","mealassignment:1","2026-11-17","breakfast",4),/four assigned/);
+ assert.throws(()=>logMealSelection(s,n,"a","mealassignment:1","2026-02-30","breakfast",2),/date/);
+ s=logMealSelection(s,n,"a","mealassignment:1","2026-11-17","dinner",2);
+ const original=structuredClone(s.clientMealLogs[0]);
+ n.assignments[0].current=false;
+ n.assignments.push({...n.assignments[0],id:"mealassignment:3",current:true});
+ assert.throws(()=>logMealSelection(s,n,"a","mealassignment:1","2026-11-17","dinner",3),/no longer assigned/);
+ assert.deepEqual(s.clientMealLogs[0],original);
+ assert.equal(dailyMealSelections(s,"a","mealassignment:3","2026-11-17").length,0);
 });
