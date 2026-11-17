@@ -171,3 +171,84 @@ for(const [label,options] of [
   await context.close();
  }finally{await browser.close();}
 }
+
+
+// D08 isolated client experience — same-tab fictional state, no hosted writes.
+for(const [label,engine,opts] of [
+ ["Chromium client",chromium,{viewport:{width:1280,height:850}}],
+ ["iPad WebKit client",webkit,{viewport:{width:820,height:1180},isMobile:true,hasTouch:true}]
+]){
+ const browser=await engine.launch({headless:true});
+ try{
+  const context=await browser.newContext(opts),page=await context.newPage(),errors=[];
+  page.on("pageerror",error=>errors.push(error.message));
+  await page.goto(url,{waitUntil:"networkidle",timeout:25000});
+  await page.evaluate(()=>{
+   const key="trainsmart-coach-hub-programmes-06-fictional-v1";
+   const state=JSON.parse(sessionStorage.getItem(key));
+   const exercise=(id,name,workingSets)=>({id,exerciseId:"demo:goblet-squat",name,
+     instructions:"Follow the coach-approved technique.",youtubeUrl:null,
+     prescription:{workingSets,repsMin:8,repsMax:12,loadKg:15,restSeconds:90,notes:"Controlled movement"}});
+   state.programmeAssignments=[{
+     id:"assignment:portal-demo",clientId:"sarah",current:true,name:"D08 Test Strength",
+     sessions:[{id:"session:1",name:"Strength Day A",exercises:[exercise("row:1","Goblet squat",2)]},
+       {id:"session:2",name:"Strength Day B",exercises:[exercise("row:2","Squat",1)]}]
+   }];
+   sessionStorage.setItem(key,JSON.stringify(state));
+   const mealKey="trainsmart-coach-hub-nutrition-07-fictional-v1";
+   const meal={name:"Example porridge",servings:1,nutrition:{calories:300,proteinG:12},
+     ingredients:[{name:"Oats",quantity:65,unit:"g"}],steps:["Mix and serve."]};
+   const categories=Object.fromEntries(["breakfast","lunch","dinner","snacks"].map(kind=>
+    [kind,Array.from({length:4},(_,i)=>({...meal,name:kind+" option "+(i+1)}))]));
+   sessionStorage.setItem(mealKey,JSON.stringify({foods:[],assignments:[{
+     id:"mealassignment:sample",clientId:"sarah",current:true,name:"D08 Example Meals",
+     plan:{target:{calories:2100,proteinG:140,carbsG:210,fatG:65},categories}}]}));
+  });
+  await page.goto(url+"coach-client.html?client=sarah",{waitUntil:"networkidle",timeout:25000});
+  if(!(await page.locator("h1").innerText()).includes("Training plan"))throw Error(label+": training must be the default screen");
+  if((await page.locator('.portal-nav [data-tab]').count())!==2||
+   (await page.locator('.portal-nav [data-tab="progress"]').count())!==0||
+   (await page.locator('.portal-nav [data-tab="home"]').count())!==0)
+   throw Error(label+": client must only see training and nutrition");
+  if((await page.locator(".portal-plan-session").count())!==2)throw Error(label+": full programme outline missing");
+  if(!(await page.locator("h2").first().innerText()).includes("Strength Day A"))throw Error(label+": missing assigned session");
+  const reps=page.locator('input[name="reps_0_0"]'),reps2=page.locator('input[name="reps_0_1"]');
+  await reps.fill("10");await page.locator('input[name="kg_0_0"]').fill("15");
+  await page.locator('#portal-workout button[value="draft"]').click();
+  if(!await page.locator("#portal-workout").count())throw Error(label+": draft advanced the workout");
+  await reps2.fill("9");await page.locator('input[name="kg_0_1"]').fill("15");
+  await page.locator('#portal-workout button[value="complete"]').click();
+  if(!(await page.locator("h2").first().innerText()).includes("Strength Day B"))throw Error(label+": completion did not advance");
+  if(!(await page.locator("body").innerText()).includes("Strength Day A"))throw Error(label+": completed workout must remain in session history");
+  await page.locator('[data-tab="meals"]').click();
+  if((await page.locator('.portal-meal').count())!==16)throw Error(label+": missing four choices per meal");
+  if(!(await page.locator('.portal-daily-log h2').innerText()).includes("0 of 4"))throw Error(label+": initial daily meal count wrong");
+  await page.locator('.portal-meal').nth(0).locator('summary').click();
+  await page.locator('[data-meal-category="breakfast"][data-meal-option="0"]').click();
+  if(!(await page.locator('.portal-daily-log h2').innerText()).includes("1 of 4"))throw Error(label+": meal did not log");
+  await page.locator('.portal-meal').nth(1).locator('summary').click();
+  await page.locator('[data-meal-category="breakfast"][data-meal-option="1"]').click();
+  if((await page.locator('.portal-daily-log h2').innerText()).includes("2 of 4"))throw Error(label+": replacing one category duplicated the log");
+  await page.locator('[data-meal-clear="breakfast"]').click();
+  if(!(await page.locator('.portal-daily-log h2').innerText()).includes("0 of 4"))throw Error(label+": removing the meal log failed");
+  await page.locator('.portal-meal').nth(0).locator('summary').click();
+  await page.locator('[data-meal-category="breakfast"][data-meal-option="0"]').click();
+  await page.locator('.portal-meal').nth(4).locator('summary').click();
+  await page.locator('[data-meal-category="lunch"][data-meal-option="0"]').click();
+  if(!(await page.locator('.portal-daily-log h2').innerText()).includes("2 of 4"))throw Error(label+": daily meal log tally wrong");
+  await page.goto(url,{waitUntil:"networkidle",timeout:25000});
+  const result=await page.evaluate(()=>{
+   const s=JSON.parse(sessionStorage.getItem("trainsmart-coach-hub-programmes-06-fictional-v1"));
+   return {completed:s.clientPortalLogs?.filter(x=>x.clientId==="sarah"&&x.completed).length,
+    meals:s.clientMealLogs?.filter(x=>x.clientId==="sarah").length,
+    otherClientMeals:s.clientMealLogs?.filter(x=>x.clientId!=="sarah").length};
+  });
+  if(result.completed!==1||result.meals!==2||result.otherClientMeals!==0)
+   throw Error(label+": same-tab fictional records not preserved or client-isolated: "+JSON.stringify(result));
+  if(errors.length)throw Error(label+": JS errors "+errors.join("; "));
+  const width=await page.evaluate(()=>document.documentElement.scrollWidth);
+  if(width>opts.viewport.width+4)throw Error(label+": unexpected horizontal overflow");
+  console.log(label+" PASS: two-plan navigation, full training plan, workout logs, daily meals (choose/replace/remove), 16 recipe options, same-tab client isolation");
+  await context.close();
+ }finally{await browser.close();}
+}
