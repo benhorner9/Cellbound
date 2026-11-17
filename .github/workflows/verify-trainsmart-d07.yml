@@ -1,7 +1,7 @@
 name: TrainSmart D07 isolated pre-deploy verification
 on:
   push:
-    branches: [preview/trainsmart-nutrition-07, fix/trainsmart-d07-nutrition-access, design/trainsmart-coach-ui-08, design/trainsmart-professional-blue-09, preview/trainsmart-meal-dynamic-d071, preview/trainsmart-client-d08, preview/trainsmart-client-plans-d081]
+    branches: [preview/trainsmart-nutrition-07, fix/trainsmart-d07-nutrition-access, design/trainsmart-coach-ui-08, design/trainsmart-professional-blue-09, preview/trainsmart-meal-dynamic-d071, preview/trainsmart-client-d08, preview/trainsmart-client-plans-d081, preview/trainsmart-role-switch-d082]
     paths:
       - "trainsmart-site/**"
       - ".github/workflows/verify-trainsmart-d07.yml"
