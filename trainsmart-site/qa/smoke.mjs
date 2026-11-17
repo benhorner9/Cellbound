@@ -193,8 +193,7 @@ for(const [label,options] of [
   await page.locator("#preview-client-switch").click();
   if(!page.url().includes("coach-client.html"))
    throw Error(label+" coach/client role switch did not navigate");
-  if(!(await page.locator(".portal-role-switch [aria-current=page]").isVisible()))
-   throw Error(label+" client header role switch is hidden");
+  await page.locator(".portal-role-switch [aria-current=page]").waitFor({state:"visible",timeout:10000});
   const dims2=await page.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:window.innerWidth}));
   if(dims2.content>dims2.viewport+3)
    throw Error(label+" client header overflows viewport: "+JSON.stringify(dims2));
