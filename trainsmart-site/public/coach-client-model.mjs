@@ -87,3 +87,43 @@ export function saveWeeklyCheckin(state,clientId,week,input,at=new Date().toISOS
   revision:(existing?.revision||0)+1,submittedAt:at};
  return {...state,clientPortalCheckins:[...(state.clientPortalCheckins||[]).filter(x=>!(x.clientId===clientId&&x.week===monday)),value].slice(-200)};
 }
+
+
+/* D08.1: meal choice logs are client-and-assignment scoped, per local calendar day.
+   One selected coach-assigned option per breakfast/lunch/dinner/snacks.
+   No AI nutrition values or medically sensitive data are calculated. */
+export const MEAL_CATEGORIES=Object.freeze(["breakfast","lunch","dinner","snacks"]);
+function requireMealContext(state,nutrition,clientId,assignmentId,day){
+ if(!state?.clients?.some(c=>c.id===clientId&&c.status!=="Archived"))
+  throw Error("Fictional client is unavailable.");
+ const assignment=currentMealAssignment(nutrition,clientId);
+ if(!assignment||assignment.id!==assignmentId)throw Error("This nutrition plan is no longer assigned. Reopen the current plan.");
+ if(typeof day!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(day))throw Error("Invalid meal log date.");
+ const check=new Date(day+"T12:00:00Z");
+ if(!Number.isFinite(check.valueOf())||check.toISOString().slice(0,10)!==day)throw Error("Invalid meal log date.");
+ return assignment;
+}
+export function dailyMealSelections(state,clientId,assignmentId,day){
+ return (state?.clientMealLogs||[]).filter(log=>
+  log.clientId===clientId&&log.assignmentId===assignmentId&&log.day===day&&MEAL_CATEGORIES.includes(log.category));
+}
+export function logMealSelection(state,nutrition,clientId,assignmentId,day,category,optionIndex,at=new Date().toISOString()){
+ const assignment=requireMealContext(state,nutrition,clientId,assignmentId,day);
+ if(!MEAL_CATEGORIES.includes(category))throw Error("Choose a valid meal category.");
+ const meals=assignment.plan?.categories?.[category];
+ if(!Array.isArray(meals)||meals.length!==4||!Number.isInteger(optionIndex)||optionIndex<0||optionIndex>=4)
+  throw Error("Choose one of the four assigned meal options.");
+ const meal=meals[optionIndex];
+ if(!meal||typeof meal.name!=="string"||!meal.name.trim())throw Error("Assigned meal is incomplete.");
+ const entry={clientId,assignmentId,day,category,optionIndex,
+  mealName:meal.name.trim().slice(0,100),loggedAt:at};
+ const existing=(state.clientMealLogs||[]).filter(log=>
+  !(log.clientId===clientId&&log.day===day&&log.category===category&&log.assignmentId===assignmentId));
+ return {...state,clientMealLogs:[...existing,entry].slice(-750)};
+}
+export function clearMealSelection(state,nutrition,clientId,assignmentId,day,category){
+ requireMealContext(state,nutrition,clientId,assignmentId,day);
+ if(!MEAL_CATEGORIES.includes(category))throw Error("Choose a valid meal category.");
+ return {...state,clientMealLogs:(state.clientMealLogs||[]).filter(log=>
+  !(log.clientId===clientId&&log.assignmentId===assignmentId&&log.day===day&&log.category===category))};
+}
