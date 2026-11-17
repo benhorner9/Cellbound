@@ -14,7 +14,7 @@ function overview(client,tasks,sorted,actionable,taskRow,enrolment,renderFreshSe
  return '<div class="client-profile-head"><div class="profile-avatar">'+safe(client.initials)+'</div>'+
  '<div class="profile-identity"><p class="eyebrow">FICTIONAL CLIENT</p><h2>'+safe(client.name)+'</h2>'+
  '<div class="profile-meta">'+chip(client.status)+'<span class="small-muted">'+safe(client.experience)+' · '+safe(client.trainingDays)+' sessions per week</span></div></div>'+
- '<div class="profile-head-actions"><button type="button" class="btn btn-primary" data-action="edit-client" data-client-id="'+safe(client.id)+'">Edit profile</button>'+
+ '<div class="profile-head-actions"><a class="btn btn-outline" href="./coach-client.html?client='+encodeURIComponent(client.id)+'">Preview client app</a><button type="button" class="btn btn-primary" data-action="edit-client" data-client-id="'+safe(client.id)+'">Edit profile</button>'+
  '<button type="button" class="btn btn-outline" data-action="run-session" data-client-id="'+safe(client.id)+'">Run session</button>'+
  '<button type="button" class="btn btn-outline" data-action="open-onboarding" data-client-id="'+safe(client.id)+'">Onboarding</button>'+
  (client.status==="Archived"?'<button type="button" class="btn btn-ghost" data-action="restore-client" data-client-id="'+safe(client.id)+'">Restore</button>':'<button type="button" class="btn btn-ghost" data-action="archive-client" data-client-id="'+safe(client.id)+'">Archive</button>')+
