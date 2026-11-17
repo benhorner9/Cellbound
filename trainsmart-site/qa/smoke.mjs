@@ -8,6 +8,8 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   page.on("pageerror",err=>errors.push(err.message));
   const response=await page.goto(url,{waitUntil:"networkidle",timeout:25000});
   if(!response?.ok())throw Error("Failed to load "+url+" "+response?.status());
+  // WebKit may complete navigation before deferred coach modules paint the dashboard.
+  await page.locator(".stat").first().waitFor({state:"visible",timeout:15000});
   const studioStyle=await page.evaluate(()=>{
     const rgb=selector=>getComputedStyle(document.querySelector(selector)).backgroundColor;
     return {body:rgb('body'),canvas:rgb('.workspace'),sidebar:rgb('.side'),
