@@ -237,6 +237,7 @@ function renderToday(){
  '<div><section class="panel"><div class="panel-header"><h3>Coach tools</h3><span class="small-muted">Shortcuts</span></div>'+
  '<div class="quick-grid">'+
  '<button class="quick" data-view="clients"><strong>Clients</strong><small>Open client profiles</small></button>'+
+ '<a class="quick" href="./coach-client.html?client=sarah"><strong>Client app preview</strong><small>Try the fictional client experience</small></a>'+
  '<button class="quick" data-view="programmes"><strong>Training plans</strong><small>Create or edit a plan</small></button>'+
  '<button class="quick" data-view="nutrition"><strong>Nutrition</strong><small>Meal plans and targets</small></button>'+
  '<button class="quick" data-view="tasks"><strong>Tasks</strong><small>Review the queue</small></button>'+
