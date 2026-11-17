@@ -140,15 +140,11 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   if(!page.url().includes("#clients"))throw Error(label+": returning to coach lost its previous screen");
   if((await page.locator(".workspace-role-switch [aria-current=page]").innerText())!=="Coach view")
    throw Error(label+": coach preview active state is wrong");
-  const returningClientHref=await page.locator("#preview-client-switch").getAttribute("href");
-  if(!returningClientHref?.includes("client=tom")){
-   const debug=await page.evaluate(()=>({url:location.href,stored:sessionStorage.getItem("trainsmart-preview-selected-client-v1"),
-    coachSaved:sessionStorage.getItem("trainsmart-preview-coach-view-v1"),
-    link:document.getElementById("preview-client-switch")?.getAttribute("href"),
-    stateClient:JSON.parse(sessionStorage.getItem("trainsmart-coach-hub-programmes-06-fictional-v1")||"null")?.selectedClient,
-    nav:performance.getEntriesByType("navigation").map(x=>x.type)}));
-   throw Error(label+": last fictional client was not remembered: "+JSON.stringify(debug));
-  }
+  // WebKit may finish its pageshow/BFCache refresh one task after navigation.
+  // Wait for the role switch to settle rather than checking a stale first frame.
+  await page.waitForFunction(()=>
+    document.getElementById("preview-client-switch")?.getAttribute("href")?.includes("client=tom"),
+    null,{timeout:7000});
   if(errors.length)throw Error("Browser runtime errors: "+errors.join("; "));
   await context.close();
   console.log(label+" PASS: two-box AI request/JSON/apply, manual save/reuse, library, client navigation");
