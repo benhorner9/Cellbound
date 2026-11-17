@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "2ab199279f2308d9bd8be6dec4129b7eb8aaf105",
+  "sourceCommit": "5d723385d6ed292bb417d2b0d3ab236632b914bf",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -37,7 +37,11 @@
     "coach-nutrition-model.mjs",
     "coach-nutrition-ui.mjs",
     "coach-nutrition.css",
-    "coach-studio.css"
+    "coach-studio.css",
+    "coach-client.html",
+    "coach-client.mjs",
+    "coach-client-model.mjs",
+    "coach-client.css"
   ],
-  "feature": "D07.2 dynamic named-ingredient ChatGPT meal drafts; review and source-gate new foods before macro calculation/saving, retain D01–D07.1 and UX09"
+  "feature": "D08 fictional mobile client portal: assigned training, ordered session log, save draft, check-ins, meal choices, coach link; D07.2 and UX09 preserved"
 }
