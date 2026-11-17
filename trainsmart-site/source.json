@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "8634620ab2929b44c8efb86a1f2c43f88b119f12",
+  "sourceCommit": "734d676343d524803b29bfec8caac82fb1932523",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -43,5 +43,5 @@
     "coach-client-model.mjs",
     "coach-client.css"
   ],
-  "feature": "D08 fictional mobile client portal: assigned training, ordered session log, save draft, check-ins, meal choices, coach link; D07.2 and UX09 preserved"
+  "feature": "D08.1 two-plan fictional client portal, workout sets and ordered completion, meal choice daily logging; no progress/check-in UI; D07.2 & UX09 preserved"
 }
