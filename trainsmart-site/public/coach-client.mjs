@@ -1,15 +1,15 @@
 /* D08 isolated client-facing preview. Fictional records only; no login or shared backend. */
 import {COACH_STORE,NUTRITION_STORE,currentAssignment,currentMealAssignment,sessionHistory,
- nextSession,storedSession,saveClientSession,lastWeight,weekStart,latestCheckin,saveWeeklyCheckin} from "./coach-client-model.mjs";
+ nextSession,storedSession,saveClientSession,lastWeight,dailyMealSelections,logMealSelection,clearMealSelection} from "./coach-client-model.mjs";
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const read=key=>{try{return JSON.parse(sessionStorage.getItem(key)||"null");}catch{return null;}};
 const save=state=>{sessionStorage.setItem(COACH_STORE,JSON.stringify(state));};
 const day=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const date=x=>x?new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"}).format(new Date(x)):"";
 const query=new URLSearchParams(location.search);
-let clientId=query.get("client")||"",tab=["home","training","meals","progress"].includes(location.hash.slice(1))?location.hash.slice(1):"home";
+let clientId=query.get("client")||"",tab=["training","meals"].includes(location.hash.slice(1))?location.hash.slice(1):"training";
 const root=document.querySelector("#client-root");
-const tabs=[["home","Home","⌂"],["training","Training","▤"],["meals","Meals","◫"],["progress","Progress","◷"]];
+const tabs=[["training","Training plan","▤"],["meals","Nutrition plan","◫"]];
 let notice="";
 function setTab(next){if(!tabs.some(t=>t[0]===next))return;tab=next;history.replaceState(null,"","#"+tab);notice="";render();window.scrollTo(0,0);}
 function notify(msg,isError=false){notice={msg,isError};const el=document.querySelector("#portal-notice");if(el){el.textContent=msg;el.hidden=false;el.className=isError?"portal-alert error":"portal-alert";}}
@@ -28,29 +28,25 @@ function frame(state,client,content){
  if(notice&&typeof notice==="object")notify(notice.msg,notice.isError);
 }
 function hero(client,title,kicker,desc){return '<div class="portal-title"><p>'+esc(kicker)+'</p><h1>'+esc(title)+'</h1><span>'+esc(desc)+'</span></div>';}
-function home(state,client,nutrition){
- const next=nextSession(state,client.id),assignment=currentAssignment(state,client.id);
- const meal=currentMealAssignment(nutrition,client.id);
- const completed=assignment?sessionHistory(state,client.id,assignment.id).length:0;
- const currentWeek=weekStart(day()),check=latestCheckin(state,client.id,currentWeek);
- const first=String(client.name||"Client").split(" ")[0];
- return hero(client,"Good to see you, "+first,"YOUR COACHING SPACE","Your next session, nutrition and updates in one place.")+
- '<div class="portal-hero"><div><p class="portal-overline">NEXT WORKOUT</p><h2>'+esc(next?.session?.name||(!assignment?"No programme assigned":"Programme completed"))+'</h2><p>'+
- (next?"Session "+(next.index+1)+" of "+assignment.sessions.length+" · Follow the sessions in order.":
-  !assignment?"Your coach has not assigned a training plan yet.":"You have completed every session in this assigned plan.")+
- '</p><button type="button" data-go="training" class="portal-primary">'+(next?"View workout":"View training")+'</button></div>'+
- '<div class="portal-hero-stat"><strong>'+completed+(assignment?"/"+assignment.sessions.length:"")+'</strong><small>Sessions completed</small></div></div>'+
- '<div class="portal-grid"><button type="button" class="portal-link-card" data-go="meals"><span class="portal-link-icon">◫</span><span><strong>Meal plan</strong><small>'+esc(meal?meal.name:"Waiting for coach assignment")+'</small></span><span aria-hidden="true">›</span></button>'+
- '<button type="button" class="portal-link-card" data-go="progress"><span class="portal-link-icon">◷</span><span><strong>Weekly check-in</strong><small>'+esc(check?"Submitted · Edit this week":"Ready when you are")+'</small></span><span aria-hidden="true">›</span></button></div>'+
- '<section class="portal-card"><p class="portal-overline">YOUR TRAINING GOAL</p><h2>'+esc(client.goal||"Work towards your goals")+'</h2><p>Programme changes are made by your coach, so your active sessions stay clear and consistent.</p></section>';
+function planOverview(assign,logs){
+ const complete=new Set(logs.map(l=>l.sessionIndex));
+ return '<section class="portal-card"><div class="portal-plan-heading"><div><p class="portal-overline">YOUR FULL PROGRAMME</p><h2>All training sessions</h2></div><span class="portal-plan-count">'+complete.size+' of '+assign.sessions.length+' complete</span></div>'+
+ '<div class="portal-plan-list">'+assign.sessions.map((session,index)=>{
+  const status=complete.has(index)?"Completed":index===complete.size?"Next session":"Upcoming";
+  return '<details class="portal-plan-session"><summary><span class="portal-session-number">'+(index+1)+'</span><span class="portal-session-summary"><strong>'+esc(session.name)+'</strong><small>'+session.exercises.length+' exercises · '+status+'</small></span><span class="portal-chevron" aria-hidden="true">⌄</span></summary>'+
+  '<div class="portal-plan-exercises">'+session.exercises.map(ex=>
+  '<div class="portal-plan-exercise"><div><strong>'+esc(ex.name)+'</strong><small>'+ex.prescription.workingSets+' sets · '+
+  esc(ex.prescription.repsMin===ex.prescription.repsMax?ex.prescription.repsMin:ex.prescription.repsMin+'–'+ex.prescription.repsMax)+' reps · '+ex.prescription.restSeconds+'s rest</small></div>'+
+  '<p>'+esc(ex.instructions||"")+'</p></div>').join("")+'</div></details>';
+ }).join("")+'</div></section>';
 }
 function training(state,client){
  const assign=currentAssignment(state,client.id);
- if(!assign)return hero(client,"Training","WORKOUTS","Your assigned sessions appear here.")+empty("No training plan yet","Once your coach assigns a plan, your first workout will appear here.");
+ if(!assign)return hero(client,"Training plan","YOUR WORKOUTS","Your assigned sessions appear here.")+empty("No training plan yet","Once your coach assigns a plan, your first workout will appear here.");
  const next=nextSession(state,client.id);
- if(!next)return hero(client,"Training","WORKOUTS",assign.name)+
+ if(!next)return hero(client,"Training plan","YOUR WORKOUTS",assign.name)+
  '<section class="portal-success"><h2>Programme complete</h2><p>All '+assign.sessions.length+' ordered sessions are finished. Your coach can assign the next block.</p></section>'+
- renderHistory(sessionHistory(state,client.id,assign.id));
+ renderHistory(sessionHistory(state,client.id,assign.id)) +planOverview(assign,sessionHistory(state,client.id,assign.id));
  const old=storedSession(state,client.id,assign.id,next.index);
  const exercises=next.session.exercises.map((ex,ei)=>{
   const previous=old?.rows?.find(r=>r.rowId===ex.id);
@@ -72,55 +68,44 @@ function training(state,client){
      '" aria-label="'+esc(ex.name)+' set '+(si+1)+' weight" min="0" max="500" step="0.5" value="'+esc(defaultKg??"")+'" placeholder="0"></div>';
   }).join("")+'</div><label class="portal-skip">Skipped? Explain why (optional)<textarea name="skip_'+ei+'" rows="2" maxlength="200" placeholder="Only complete if the exercise was skipped">'+esc(previous?.skipReason||"")+'</textarea></label></article>';
  }).join("");
- return hero(client,"Your next workout","TRAINING · SESSION "+(next.index+1)+" OF "+assign.sessions.length,assign.name)+
+ return hero(client,"Training plan","NEXT: SESSION "+(next.index+1)+" OF "+assign.sessions.length,assign.name)+
  '<section class="portal-card portal-training-head"><h2>'+esc(next.session.name)+'</h2><p>Log your working sets as you go. Save a draft if you need to return later. Completing advances to the next ordered session.</p></section>'+
  '<form id="portal-workout" class="portal-workout" data-assignment="'+esc(assign.id)+'" data-index="'+next.index+'">'+exercises+
  '<div class="portal-form-actions"><button type="submit" class="portal-secondary" name="intent" value="draft">Save draft</button>'+
  '<button type="submit" class="portal-primary" name="intent" value="complete">Complete session</button></div></form>'+
- renderHistory(sessionHistory(state,client.id,assign.id));
+ planOverview(assign,sessionHistory(state,client.id,assign.id))+renderHistory(sessionHistory(state,client.id,assign.id));
 }
 function renderHistory(logs){
  if(!logs.length)return '';
  return '<section class="portal-card"><h2>Completed sessions</h2><div class="portal-history">'+logs.slice().reverse().map(l=>
   '<div><strong>'+esc(l.sessionName)+'</strong><small>'+esc(date(l.completedAt))+' · '+l.rows.reduce((n,r)=>n+r.sets.filter(s=>s.reps!==null).length,0)+' sets logged</small></div>').join("")+'</div></section>';
 }
-function meals(client,nutrition){
+function meals(state,client,nutrition){
  const assignment=currentMealAssignment(nutrition,client.id);
- if(!assignment)return hero(client,"Meals","NUTRITION","Your saved meal choices.")+empty("No meal plan assigned","Your coach can assign a reviewed meal plan when it is ready.");
+ if(!assignment)return hero(client,"Nutrition plan","YOUR MEALS","Your assigned meal choices appear here.")+empty("No nutrition plan assigned","Your coach can assign a reviewed meal plan when it is ready.");
  const plan=assignment.plan||{},target=plan.target||{};
  const labels={breakfast:"Breakfast",lunch:"Lunch",dinner:"Dinner",snacks:"Snacks"};
  const foods=new Map((nutrition?.foods||[]).map(f=>[f.id,f]));
- return hero(client,"Your meal plan","NUTRITION",assignment.name)+
- '<section class="portal-card"><p class="portal-overline">DAILY GUIDANCE · EXAMPLE ONLY</p><div class="portal-macros">'+
+ const selected=dailyMealSelections(state,client.id,assignment.id,day());
+ const picked=Object.fromEntries(selected.map(x=>[x.category,x]));
+ return hero(client,"Nutrition plan","YOUR MEALS",assignment.name)+
+ '<section class="portal-card portal-daily-log"><div class="portal-plan-heading"><div><p class="portal-overline">TODAY’S MEAL LOG</p><h2>'+selected.length+' of 4 meals logged</h2><p>Choose the option you had in each category. You can change or remove it today.</p></div><span class="portal-plan-count">'+esc(date(day()))+'</span></div></section>'+
+ '<section class="portal-card"><p class="portal-overline">COACH-ASSIGNED DAILY GUIDANCE · EXAMPLE ONLY</p><div class="portal-macros">'+
  [["Calories",target.calories,"kcal"],["Protein",target.proteinG,"g"],["Carbs",target.carbsG,"g"],["Fat",target.fatG,"g"]].map(([label,n,unit])=>
  '<div><small>'+label+'</small><strong>'+(Number.isFinite(n)?Math.round(n)+" "+unit:"—")+'</strong></div>').join("")+'</div>'+
- '<p>Choose one meal from each category according to your coach’s guidance. Nutritional values in this demonstration are not verified for real use.</p></section>'+
- Object.entries(labels).map(([kind,label])=>'<section class="portal-card"><h2>'+label+'</h2><div class="portal-meal-list">'+
- (plan.categories?.[kind]||[]).map((m,i)=>'<details class="portal-meal"><summary><span><small>OPTION '+(i+1)+'</small><strong>'+esc(m.name)+'</strong></span><span>View recipe</span></summary>'+
- '<div class="portal-meal-details">'+(m.nutrition?.calories!=null?'<p>'+Math.round(m.nutrition.calories)+' kcal · '+Math.round(m.nutrition.proteinG||0)+'g protein</p>':"")+
+ '<p>These are illustrative coach-approved targets from the fictional plan, not totals of what you actually ate. Nutritional values are not verified for real clients.</p></section>'+
+ Object.entries(labels).map(([kind,label])=>'<section class="portal-card"><div class="portal-meal-category-head"><h2>'+label+'</h2>'+
+ (picked[kind]?'<div class="portal-logged-indicator">✓ '+esc(picked[kind].mealName)+' <button type="button" data-meal-clear="'+kind+'" aria-label="Remove '+label+' log">Remove</button></div>':
+ '<span class="portal-unlogged">Not logged today</span>')+'</div><div class="portal-meal-list">'+
+ (plan.categories?.[kind]||[]).map((m,i)=>{
+ const active=picked[kind]?.optionIndex===i;
+ return '<details class="portal-meal'+(active?' portal-meal-selected':'')+'"><summary><span><small>OPTION '+(i+1)+(active?' · LOGGED TODAY':'')+'</small><strong>'+esc(m.name)+'</strong></span><span>View recipe</span></summary>'+
+ '<div class="portal-meal-details">'+(m.nutrition?.calories!=null?'<p>'+Math.round(m.nutrition.calories)+' kcal · '+Math.round(m.nutrition.proteinG||0)+'g protein (illustrative)</p>':"")+
  '<h3>Ingredients</h3><ul>'+(m.ingredients||[]).map(x=>'<li>'+esc(foods.get(x.ingredientId)?.name||x.name||"Ingredient")+' · '+esc(x.quantity)+' '+esc(x.unit)+'</li>').join("")+'</ul>'+
- '<h3>Method</h3><ol>'+(m.steps||[]).map(s=>'<li>'+esc(s)+'</li>').join("")+'</ol></div></details>').join("")+'</div></section>').join("");
-}
-function progress(state,client){
- const logs=(state.clientPortalLogs||[]).filter(l=>l.clientId===client.id&&l.completed).slice().sort((a,b)=>String(b.completedAt).localeCompare(String(a.completedAt)));
- const monday=weekStart(day()),check=latestCheckin(state,client.id,monday);
- const checks=(state.clientPortalCheckins||[]).filter(c=>c.clientId===client.id).slice().sort((a,b)=>b.week.localeCompare(a.week));
- const select=(name,label,value)=>'<label>'+label+'<select name="'+name+'">'+Array.from({length:5},(_,i)=>
- '<option value="'+(i+1)+'"'+(Number(value)===i+1?" selected":"")+'>'+(i+1)+' / 5</option>').join("")+'</select></label>';
- return hero(client,"Your progress","CHECK-INS & HISTORY","A simple record of your completed sessions and weekly feedback.")+
- '<div class="portal-metric-cards"><div><small>Sessions completed</small><strong>'+logs.length+'</strong></div><div><small>Weekly check-ins</small><strong>'+checks.length+'</strong></div></div>'+
- '<section class="portal-card"><h2>'+esc(check?"Update this week’s check-in":"Weekly check-in")+'</h2>'+
- '<p>Share your weekly feedback for your coach to review. This is a fictional form.</p>'+
- '<form id="portal-checkin"><div class="portal-checkin-fields">'+
- select("energy","Energy",check?.energy||3)+select("sleep","Sleep",check?.sleep||3)+
- '<label>Weight (kg, optional)<input type="number" name="weightKg" min="25" max="350" step="0.1" value="'+esc(check?.weightKg??"")+'" placeholder="Optional"></label></div>'+
- '<label>Anything worth mentioning?<textarea name="notes" rows="3" maxlength="400" placeholder="Example feedback only">'+esc(check?.notes||"")+'</textarea></label>'+
- '<div class="portal-form-actions"><button class="portal-primary" type="submit">'+(check?"Update check-in":"Submit check-in")+'</button></div></form></section>'+
- '<section class="portal-card"><h2>Training history</h2>'+(
- logs.length?'<div class="portal-history">'+logs.map(l=>'<div><strong>'+esc(l.sessionName)+'</strong><small>'+esc(date(l.completedAt))+' · '+l.rows.reduce((n,r)=>n+r.sets.filter(s=>s.reps!==null).length,0)+' sets</small></div>').join("")+'</div>':
- '<p>No completed workouts yet. Your first completed session will appear here.</p>')+'</section>'+
- (checks.length?'<section class="portal-card"><h2>Check-in history</h2><div class="portal-history">'+checks.map(c=>
- '<div><strong>Week of '+esc(date(c.week))+'</strong><small>Energy '+c.energy+'/5 · Sleep '+c.sleep+'/5'+(c.weightKg?" · "+c.weightKg+" kg":"")+'</small></div>').join("")+'</div></section>':"");
+ '<h3>Method</h3><ol>'+(m.steps||[]).map(step=>'<li>'+esc(step)+'</li>').join("")+'</ol>'+
+ '<button type="button" class="'+(active?'portal-secondary':'portal-primary')+' portal-log-button" data-meal-category="'+kind+'" data-meal-option="'+i+'"'+(active?' disabled':'')+'>'+(
+ active?'✓ Logged today':picked[kind]?'Replace with this meal':'Log this meal')+'</button></div></details>';
+ }).join("")+'</div></section>').join("");
 }
 function render(){
  const {state,client}=stateForClient();
@@ -130,14 +115,25 @@ function render(){
   '<a href="./coach-hub.html#clients" class="portal-primary portal-inline">Open coach dashboard</a></main></div>';return;
  }
  const nutrition=read(NUTRITION_STORE);
- const content=tab==="training"?training(state,client):tab==="meals"?meals(client,nutrition):
-  tab==="progress"?progress(state,client):home(state,client,nutrition);
+ const content=tab==="meals"?meals(state,client,nutrition):training(state,client);
  frame(state,client,content);
 }
 root.addEventListener("click",ev=>{
  const button=ev.target.closest("button");
  if(button?.dataset.tab){setTab(button.dataset.tab);return;}
  if(button?.dataset.go){setTab(button.dataset.go);return;}
+ if(button?.dataset.mealCategory!==undefined||button?.dataset.mealClear!==undefined){
+  const state=read(COACH_STORE),nutrition=read(NUTRITION_STORE);
+  const assigned=currentMealAssignment(nutrition,clientId);
+  if(!assigned)return notify("Your nutrition plan has changed. Refresh the plan.",true);
+  try{
+   const next=button.dataset.mealClear!==undefined?
+    clearMealSelection(state,nutrition,clientId,assigned.id,day(),button.dataset.mealClear):
+    logMealSelection(state,nutrition,clientId,assigned.id,day(),button.dataset.mealCategory,Number(button.dataset.mealOption));
+   save(next);notice={msg:button.dataset.mealClear!==undefined?"Meal log removed.":"Meal logged for today.",isError:false};render();
+  }catch(error){notify(error.message||"Could not save this meal.",true);}
+  return;
+ }
 });
 root.addEventListener("change",ev=>{
  if(ev.target?.id!=="portal-person")return;
@@ -165,13 +161,7 @@ root.addEventListener("submit",ev=>{
    save(next);notice={msg:complete?"Session completed — your next workout is ready.":"Workout draft saved in this browser tab.",isError:false};
    render();window.scrollTo({top:0,behavior:"auto"});
   }catch(err){notify(err.message||"Could not save this session.",true);}
- }else if(ev.target.id==="portal-checkin"){
-  ev.preventDefault();
-  const fd=new FormData(ev.target);
-  try{
-   const next=saveWeeklyCheckin(read(COACH_STORE),clientId,day(),Object.fromEntries(fd.entries()));
-   save(next);notice={msg:"Fictional weekly check-in saved.",isError:false};render();
-  }catch(err){notify(err.message||"Please review your check-in.",true);}
+
  }
 });
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(tabs.some(t=>t[0]===h)){tab=h;render();}});
