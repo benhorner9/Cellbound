@@ -42,11 +42,13 @@ export function saveClientSession(state,clientId,assignmentId,index,entries,{com
   if(!entry)throw Error("A prescribed exercise is missing.");
   const skipReason=text(entry.skipReason,200);
   if(!Array.isArray(entry.sets)||entry.sets.length!==ex.prescription.workingSets)throw Error("Incorrect number of sets for "+ex.name+".");
-  if(skipReason&&entry.sets.some(s=>s.reps!==""||s.loadKg!==""))throw Error("Skipped exercises cannot also have performed sets.");
+  if(skipReason&&entry.sets.some(s=>s.reps!==""&&s.reps!==null&&s.reps!==undefined))throw Error("Skipped exercises cannot also have performed sets.");
   const sets=entry.sets.map(s=>{
-   const empty=(s.reps===""||s.reps===null||s.reps===undefined)&&(s.loadKg===""||s.loadKg===null||s.loadKg===undefined);
-   if(empty)return {reps:null,loadKg:null};
-   return {reps:num(s.reps,1,60,"Reps"),loadKg:num(s.loadKg,0,500,"Weight")};
+   if(skipReason)return {reps:null,loadKg:null};
+   const missingReps=s.reps===""||s.reps===null||s.reps===undefined;
+   const missingLoad=s.loadKg===""||s.loadKg===null||s.loadKg===undefined;
+   return {reps:missingReps?null:num(s.reps,1,60,"Reps"),
+    loadKg:missingLoad?null:num(s.loadKg,0,500,"Weight")};
   });
   if(complete&&!skipReason&&sets.some(s=>s.reps===null))throw Error("Log each set or add a skip reason for "+ex.name+".");
   if(complete&&skipReason&&skipReason.length<5)throw Error("Explain a skipped exercise in at least five characters.");
