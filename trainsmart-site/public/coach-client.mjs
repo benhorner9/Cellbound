@@ -7,7 +7,10 @@ const save=state=>{sessionStorage.setItem(COACH_STORE,JSON.stringify(state));};
 const day=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const date=x=>x?new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"}).format(new Date(x)):"";
 const query=new URLSearchParams(location.search);
-let clientId=query.get("client")||"",tab=["training","meals"].includes(location.hash.slice(1))?location.hash.slice(1):"training";
+const PREVIEW_CLIENT_SELECTION="trainsmart-preview-selected-client-v1";
+const PREVIEW_COACH_VIEW="trainsmart-preview-coach-view-v1";
+const savedClient=(()=>{try{return sessionStorage.getItem(PREVIEW_CLIENT_SELECTION)||"";}catch{return "";}})();
+let clientId=query.get("client")||savedClient,tab=["training","meals"].includes(location.hash.slice(1))?location.hash.slice(1):"training";
 const root=document.querySelector("#client-root");
 const tabs=[["training","Training plan","▤"],["meals","Nutrition plan","◫"]];
 let notice="";
@@ -15,12 +18,18 @@ function setTab(next){if(!tabs.some(t=>t[0]===next))return;tab=next;history.repl
 function notify(msg,isError=false){notice={msg,isError};const el=document.querySelector("#portal-notice");if(el){el.textContent=msg;el.hidden=false;el.className=isError?"portal-alert error":"portal-alert";}}
 function pill(s){return '<span class="portal-pill">'+esc(s)+'</span>';}
 function empty(title,description){return '<section class="portal-card portal-empty"><h2>'+esc(title)+'</h2><p>'+esc(description)+'</p></section>';}
-function stateForClient(){const state=read(COACH_STORE);if(!state||!Array.isArray(state.clients))return {state:null,client:null};const eligible=state.clients.filter(c=>c.status!=="Archived");const selected=eligible.find(c=>c.id===clientId)||eligible[0];if(selected)clientId=selected.id;return {state,client:selected};}
+function stateForClient(){const state=read(COACH_STORE);if(!state||!Array.isArray(state.clients))return {state:null,client:null};const eligible=state.clients.filter(c=>c.status!=="Archived");const selected=eligible.find(c=>c.id===clientId)||eligible[0];if(selected){clientId=selected.id;try{sessionStorage.setItem(PREVIEW_CLIENT_SELECTION,clientId);}catch{}}return {state,client:selected};}
 function nav(){return '<nav class="portal-nav" aria-label="Client preview sections">'+tabs.map(([id,label,symbol])=>'<button type="button" data-tab="'+id+'" class="'+(tab===id?"active":"")+'" '+(tab===id?'aria-current="page"':"")+'><span aria-hidden="true">'+symbol+'</span><span>'+label+'</span></button>').join("")+'</nav>';}
 function options(list,selected){return list.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===selected?" selected":"")+'>'+esc(c.name)+'</option>').join("");}
+function coachReturnUrl(){
+ const allowed=new Set(["today","clients","onboarding","fresh","setup","sessions","tasks","messages","library","programmes","nutrition"]);
+ let view="today";
+ try{const stored=sessionStorage.getItem(PREVIEW_COACH_VIEW);if(allowed.has(stored))view=stored;}catch{}
+ return "./coach-hub.html#"+view;
+}
 function frame(state,client,content){
  const eligible=state.clients.filter(c=>c.status!=="Archived");
- root.innerHTML='<div class="portal-shell"><header class="portal-header"><a class="portal-brand" href="./coach-hub.html#clients" aria-label="Back to coach preview">TS<span>.</span><span class="portal-brand-text">TrainSmart <small>CLIENT PREVIEW</small></span></a><div class="portal-header-right">'+pill("FICTIONAL PREVIEW")+'<a class="portal-back" href="./coach-hub.html#clients">Coach dashboard</a></div></header>'+
+ root.innerHTML='<div class="portal-shell"><header class="portal-header"><a class="portal-brand" href="'+esc(coachReturnUrl())+'" aria-label="Return to coach preview">TS<span>.</span><span class="portal-brand-text">TrainSmart <small>CLIENT PREVIEW</small></span></a><div class="portal-header-right"><nav class="portal-role-switch" aria-label="Switch preview between coach and client"><a class="portal-role-option" href="'+esc(coachReturnUrl())+'">Coach view</a><span class="portal-role-option selected" aria-current="page">Client view</span></nav>'+pill("FICTIONAL PREVIEW")+'</div></header>'+
  '<div class="portal-warning" role="note"><strong>Sample interface — not a secure client account.</strong> Only fictional data. No authentication, invitations, remote syncing or real-client records.</div>'+
  '<div class="portal-container"><div class="portal-preview-tools"><label for="portal-person">Preview as fictional client</label><select id="portal-person">'+options(eligible,client.id)+'</select></div>'+
  nav()+'<div id="portal-notice" class="portal-alert" hidden></div><main id="portal-main" tabindex="-1">'+content+'</main>'+
