@@ -175,7 +175,24 @@ function viewHeading(){
  };
  return headings[state.view]||headings.today;
 }
+const PREVIEW_CLIENT_SELECTION="trainsmart-preview-selected-client-v1";
+const PREVIEW_COACH_VIEW="trainsmart-preview-coach-view-v1";
+function previewClientId(){
+ let stored="";
+ try{stored=sessionStorage.getItem(PREVIEW_CLIENT_SELECTION)||"";}catch{}
+ const selected=clients.find(c=>c.id===stored&&c.status!=="Archived")||
+  clients.find(c=>c.id===state.selectedClient&&c.status!=="Archived")||
+  clients.find(c=>c.status!=="Archived");
+ return selected?.id||"";
+}
+function refreshPreviewClientLink(){
+ const previewLink=document.getElementById("preview-client-switch");
+ if(!previewLink)return;
+ const selectedId=previewClientId();
+ previewLink.href="./coach-client.html"+(selectedId?"?client="+encodeURIComponent(selectedId):"")+"#training";
+}
 function renderChrome(){
+ refreshPreviewClientLink();
  const h=viewHeading();
  document.getElementById("page-eyebrow").textContent=h[0]+" · "+new Intl.DateTimeFormat("en-GB",{weekday:"long",timeZone:TIME_ZONE}).format(new Date()).toUpperCase();
  document.getElementById("page-title").textContent=h[1];
@@ -1134,6 +1151,12 @@ function submitNewTask(form){
  document.getElementById("new-task-dialog").close();save();render();flash("Your task is saved in this preview session.");
 }
 if (typeof document !== "undefined") {
+// Safari can restore the coach page from BFCache without running render() again.
+window.addEventListener("pageshow",refreshPreviewClientLink);
+document.getElementById("preview-client-switch")?.addEventListener("click",()=>{
+ refreshPreviewClientLink();
+ try{sessionStorage.setItem(PREVIEW_COACH_VIEW,state.view);}catch{}
+});
 window.addEventListener("hashchange",()=>{const requested=window.location.hash.slice(1);if(COACH_VIEWS.includes(requested)&&requested!==state.view)changeView(requested);});
 document.addEventListener("click",async ev=>{
  const btn=ev.target.closest("button");if(!btn)return;
@@ -1244,7 +1267,7 @@ document.addEventListener("click",async ev=>{
  if(action==="archive-client"){setClientStatus(btn.dataset.clientId,"Archived");return;}
  if(action==="restore-client"){setClientStatus(btn.dataset.clientId,"Onboarding");return;}
  if(action==="client-task"){newTask(btn.dataset.clientId||"");return;}
- if(action==="client"){state.selectedClient=btn.dataset.clientId;state.clientTab="enrolment";changeView("clients");return;}
+ if(action==="client"){state.selectedClient=btn.dataset.clientId;try{sessionStorage.setItem(PREVIEW_CLIENT_SELECTION,state.selectedClient);}catch{}state.clientTab="enrolment";changeView("clients");return;}
  if(action==="back-clients"){state.selectedClient=null;state.clientTab="overview";render();return;}
  if(action==="task"){openTask(id);return;}
  if(action==="complete"){updateTask(id,"completed");return;}
