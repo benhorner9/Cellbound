@@ -180,8 +180,8 @@ const PREVIEW_COACH_VIEW="trainsmart-preview-coach-view-v1";
 function previewClientId(){
  let stored="";
  try{stored=sessionStorage.getItem(PREVIEW_CLIENT_SELECTION)||"";}catch{}
- const selected=clients.find(c=>c.id===state.selectedClient&&c.status!=="Archived")||
-  clients.find(c=>c.id===stored&&c.status!=="Archived")||
+ const selected=clients.find(c=>c.id===stored&&c.status!=="Archived")||
+  clients.find(c=>c.id===state.selectedClient&&c.status!=="Archived")||
   clients.find(c=>c.status!=="Archived");
  return selected?.id||"";
 }
@@ -1262,7 +1262,7 @@ document.addEventListener("click",async ev=>{
  if(action==="archive-client"){setClientStatus(btn.dataset.clientId,"Archived");return;}
  if(action==="restore-client"){setClientStatus(btn.dataset.clientId,"Onboarding");return;}
  if(action==="client-task"){newTask(btn.dataset.clientId||"");return;}
- if(action==="client"){state.selectedClient=btn.dataset.clientId;state.clientTab="enrolment";changeView("clients");return;}
+ if(action==="client"){state.selectedClient=btn.dataset.clientId;try{sessionStorage.setItem(PREVIEW_CLIENT_SELECTION,state.selectedClient);}catch{}state.clientTab="enrolment";changeView("clients");return;}
  if(action==="back-clients"){state.selectedClient=null;state.clientTab="overview";render();return;}
  if(action==="task"){openTask(id);return;}
  if(action==="complete"){updateTask(id,"completed");return;}
