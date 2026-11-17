@@ -126,3 +126,29 @@ input::placeholder,textarea::placeholder{color:#98a6ba}.portal-form-actions{disp
  .portal-meal-category-head{align-items:flex-start}
  .portal-logged-indicator{font-size:11px}
 }
+
+
+/* D08.2 — client header matches coach's always-visible preview mode switch. */
+.portal-role-switch{
+ display:inline-flex;align-items:center;gap:3px;padding:4px;
+ border:1px solid #627593;background:#263b5a;border-radius:11px;white-space:nowrap;
+}
+.portal-role-option{
+ display:inline-flex;align-items:center;justify-content:center;min-height:35px;
+ padding:8px 13px;border-radius:8px;font-size:12px;font-weight:750;
+ color:#d8e5fa;text-decoration:none;
+}
+a.portal-role-option:hover{background:#3a5378;color:#fff;text-decoration:none}
+.portal-role-option.selected{background:#fff;color:#1e427e}
+.portal-role-switch a:focus-visible{outline:3px solid #a9caff;outline-offset:2px}
+@media(max-width:720px){
+ .portal-header .portal-pill{display:none}
+ .portal-header-right{gap:5px}
+ .portal-role-switch{padding:3px;gap:1px}
+ .portal-role-option{min-height:35px;padding:8px 10px;font-size:11px}
+}
+@media(max-width:380px){
+ .portal-role-option{padding:8px 7px;font-size:10.5px}
+ .portal-brand-text{font-size:13px}
+ .portal-brand{gap:11px}
+}
