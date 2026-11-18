@@ -28,7 +28,12 @@ for(const [label,engine] of [["Chromium",chromium],["WebKit iPad",webkit]]){
   console.log(label+" PASS: UX09 actual computed light navy/cobalt colour palette and line-icon layout");
   if((await page.locator('.nav-group').count())!==3)throw Error("Grouped coach navigation missing");
   if(!(await page.locator('#page-title').innerText()).includes("Dashboard"))throw Error("Coach dashboard not opened");
+  if(await page.locator('#workspace-demo-note').count()!==1||await page.locator('.public-demo-notice').count()!==1)throw Error("Demo disclosure duplicated or missing");
+  if(await page.locator('.future-nav').count()!==0)throw Error("Planned sections clutter navigation");
+  if(!await page.locator('#add-task').isVisible())throw Error("Dashboard primary action missing");
   await page.locator('.nav-link[data-view="programmes"]').click();
+  if(await page.locator('#add-task').isVisible())throw Error("Duplicated global plan action remains");
+  if(await page.locator('#nutrition-shortcut').isVisible())throw Error("Unrelated nutrition shortcut remains in training plans");
   // Two-box AI flow is the default entry point.
   await page.locator('[data-programme-tab="ai"]').click();
   await page.locator('[data-ai-field="name"]').fill("AI Bridge Strength Plan");
@@ -248,6 +253,11 @@ for(const [label,engine,opts] of [
    throw Error(label+": client must only see training and nutrition");
   if((await page.locator(".portal-plan-session").count())!==2)throw Error(label+": full programme outline missing");
   if(!(await page.locator("h2").first().innerText()).includes("Strength Day A"))throw Error(label+": missing assigned session");
+  const skip=page.locator(".portal-skip-control").first();
+  if(await skip.count()!==1||await skip.getAttribute("open")!==null)throw Error(label+": skip reason should be collapsed");
+  await skip.locator("summary").click();
+  if(!await skip.locator("textarea").isVisible())throw Error(label+": cannot access skip reason");
+  await skip.locator("summary").click();
   const reps=page.locator('input[name="reps_0_0"]'),reps2=page.locator('input[name="reps_0_1"]');
   await reps.fill("10");await page.locator('input[name="kg_0_0"]').fill("15");
   await page.locator('#portal-workout button[value="draft"]').click();

@@ -29,17 +29,17 @@ function coachReturnUrl(){
 }
 function frame(state,client,content){
  const eligible=state.clients.filter(c=>c.status!=="Archived");
- root.innerHTML='<div class="portal-shell"><header class="portal-header"><a class="portal-brand" href="'+esc(coachReturnUrl())+'" aria-label="Return to coach preview">TS<span>.</span><span class="portal-brand-text">TrainSmart <small>CLIENT PREVIEW</small></span></a><div class="portal-header-right"><nav class="portal-role-switch" aria-label="Switch preview between coach and client"><a class="portal-role-option" href="'+esc(coachReturnUrl())+'">Coach view</a><span class="portal-role-option selected" aria-current="page">Client view</span></nav>'+pill("FICTIONAL PREVIEW")+'</div></header>'+
- '<div class="portal-warning" role="note"><strong>Sample interface — not a secure client account.</strong> Only fictional data. No authentication, invitations, remote syncing or real-client records.</div>'+
- '<div class="portal-container"><div class="portal-preview-tools"><label for="portal-person">Preview as fictional client</label><select id="portal-person">'+options(eligible,client.id)+'</select></div>'+
+ root.innerHTML='<div class="portal-shell"><header class="portal-header"><a class="portal-brand" href="'+esc(coachReturnUrl())+'" aria-label="Return to coach preview">TS<span>.</span><span class="portal-brand-text">TrainSmart <small>COACHING</small></span></a><div class="portal-header-right"><nav class="portal-role-switch" aria-label="Switch preview between coach and client"><a class="portal-role-option" href="'+esc(coachReturnUrl())+'">Coach view</a><span class="portal-role-option selected" aria-current="page">Client view</span></nav>'+pill("FICTIONAL PREVIEW")+'</div></header>'+
+ '<div class="portal-warning" role="note"><strong>Demo only.</strong> Fictional data in this tab; no secure account or syncing.</div>'+
+ '<div class="portal-container"><div class="portal-preview-tools"><label for="portal-person">Preview as</label><select id="portal-person">'+options(eligible,client.id)+'</select></div>'+
  nav()+'<div id="portal-notice" class="portal-alert" hidden></div><main id="portal-main" tabindex="-1">'+content+'</main>'+
- '<footer class="portal-footer">TrainSmart Coaching · Fictional in-browser preview</footer></div></div>';
+ '</div></div>';
  if(notice&&typeof notice==="object")notify(notice.msg,notice.isError);
 }
 function hero(client,title,kicker,desc){return '<div class="portal-title"><p>'+esc(kicker)+'</p><h1>'+esc(title)+'</h1><span>'+esc(desc)+'</span></div>';}
 function planOverview(assign,logs){
  const complete=new Set(logs.map(l=>l.sessionIndex));
- return '<section class="portal-card"><div class="portal-plan-heading"><div><p class="portal-overline">YOUR FULL PROGRAMME</p><h2>All training sessions</h2></div><span class="portal-plan-count">'+complete.size+' of '+assign.sessions.length+' complete</span></div>'+
+ return '<section class="portal-card"><div class="portal-plan-heading"><div><p class="portal-overline"></p><h2>All training sessions</h2></div><span class="portal-plan-count">'+complete.size+' of '+assign.sessions.length+' complete</span></div>'+
  '<div class="portal-plan-list">'+assign.sessions.map((session,index)=>{
   const status=complete.has(index)?"Completed":index===complete.size?"Next session":"Upcoming";
   return '<details class="portal-plan-session"><summary><span class="portal-session-number">'+(index+1)+'</span><span class="portal-session-summary"><strong>'+esc(session.name)+'</strong><small>'+session.exercises.length+' exercises · '+status+'</small></span><span class="portal-chevron" aria-hidden="true">⌄</span></summary>'+
@@ -51,7 +51,7 @@ function planOverview(assign,logs){
 }
 function training(state,client){
  const assign=currentAssignment(state,client.id);
- if(!assign)return hero(client,"Training plan","YOUR WORKOUTS","Your assigned sessions appear here.")+empty("No training plan yet","Once your coach assigns a plan, your first workout will appear here.");
+ if(!assign)return hero(client,"Training plan","YOUR WORKOUTS","")+empty("No training plan yet","Your assigned workouts will appear here.");
  const next=nextSession(state,client.id);
  if(!next)return hero(client,"Training plan","YOUR WORKOUTS",assign.name)+
  '<section class="portal-success"><h2>Programme complete</h2><p>All '+assign.sessions.length+' ordered sessions are finished. Your coach can assign the next block.</p></section>'+
@@ -75,10 +75,10 @@ function training(state,client){
      '" aria-label="'+esc(ex.name)+' set '+(si+1)+' reps" min="1" max="60" step="1" value="'+esc(set?.reps??"")+
      '" placeholder="'+esc(ex.prescription.repsMin)+'"><input inputmode="decimal" type="number" name="kg_'+ei+'_'+si+
      '" aria-label="'+esc(ex.name)+' set '+(si+1)+' weight" min="0" max="500" step="0.5" value="'+esc(defaultKg??"")+'" placeholder="0"></div>';
-  }).join("")+'</div><label class="portal-skip">Skipped? Explain why (optional)<textarea name="skip_'+ei+'" rows="2" maxlength="200" placeholder="Only complete if the exercise was skipped">'+esc(previous?.skipReason||"")+'</textarea></label></article>';
+  }).join("")+'</div><details class="portal-skip-control"'+(previous?.skipReason?' open':'')+'><summary>Skip exercise</summary><label class="portal-skip">Reason<textarea name="skip_'+ei+'" rows="2" maxlength="200" placeholder="Reason for skipping">'+esc(previous?.skipReason||"")+'</textarea></label></details></article>';
  }).join("");
  return hero(client,"Training plan","NEXT: SESSION "+(next.index+1)+" OF "+assign.sessions.length,assign.name)+
- '<section class="portal-card portal-training-head"><h2>'+esc(next.session.name)+'</h2><p>Log your working sets as you go. Save a draft if you need to return later. Completing advances to the next ordered session.</p></section>'+
+ '<section class="portal-card portal-training-head"><h2>'+esc(next.session.name)+'</h2><p>Log each set. Complete to advance.</p></section>'+
  '<form id="portal-workout" class="portal-workout" data-assignment="'+esc(assign.id)+'" data-index="'+next.index+'">'+exercises+
  '<div class="portal-form-actions"><button type="submit" class="portal-secondary" name="intent" value="draft">Save draft</button>'+
  '<button type="submit" class="portal-primary" name="intent" value="complete">Complete session</button></div></form>'+
@@ -91,18 +91,18 @@ function renderHistory(logs){
 }
 function meals(state,client,nutrition){
  const assignment=currentMealAssignment(nutrition,client.id);
- if(!assignment)return hero(client,"Nutrition plan","YOUR MEALS","Your assigned meal choices appear here.")+empty("No nutrition plan assigned","Your coach can assign a reviewed meal plan when it is ready.");
+ if(!assignment)return hero(client,"Nutrition plan","YOUR MEALS","")+empty("No nutrition plan assigned","Your assigned meals will appear here.");
  const plan=assignment.plan||{},target=plan.target||{};
  const labels={breakfast:"Breakfast",lunch:"Lunch",dinner:"Dinner",snacks:"Snacks"};
  const foods=new Map((nutrition?.foods||[]).map(f=>[f.id,f]));
  const selected=dailyMealSelections(state,client.id,assignment.id,day());
  const picked=Object.fromEntries(selected.map(x=>[x.category,x]));
  return hero(client,"Nutrition plan","YOUR MEALS",assignment.name)+
- '<section class="portal-card portal-daily-log"><div class="portal-plan-heading"><div><p class="portal-overline">TODAY’S MEAL LOG</p><h2>'+selected.length+' of 4 meals logged</h2><p>Choose the option you had in each category. You can change or remove it today.</p></div><span class="portal-plan-count">'+esc(date(day()))+'</span></div></section>'+
- '<section class="portal-card"><p class="portal-overline">COACH-ASSIGNED DAILY GUIDANCE · EXAMPLE ONLY</p><div class="portal-macros">'+
+ '<section class="portal-card portal-daily-log"><div class="portal-plan-heading"><div><p class="portal-overline">TODAY’S MEAL LOG</p><h2>'+selected.length+' of 4 meals logged</h2><p>Select one option per category.</p></div><span class="portal-plan-count">'+esc(date(day()))+'</span></div></section>'+
+ '<section class="portal-card"><p class="portal-overline">DAILY TARGETS · SAMPLE</p><div class="portal-macros">'+
  [["Calories",target.calories,"kcal"],["Protein",target.proteinG,"g"],["Carbs",target.carbsG,"g"],["Fat",target.fatG,"g"]].map(([label,n,unit])=>
  '<div><small>'+label+'</small><strong>'+(Number.isFinite(n)?Math.round(n)+" "+unit:"—")+'</strong></div>').join("")+'</div>'+
- '<p>These are illustrative coach-approved targets from the fictional plan, not totals of what you actually ate. Nutritional values are not verified for real clients.</p></section>'+
+ '<p>Sample targets, not intake totals. Values are unverified.</p></section>'+
  Object.entries(labels).map(([kind,label])=>'<section class="portal-card"><div class="portal-meal-category-head"><h2>'+label+'</h2>'+
  (picked[kind]?'<div class="portal-logged-indicator">✓ '+esc(picked[kind].mealName)+' <button type="button" data-meal-clear="'+kind+'" aria-label="Remove '+label+' log">Remove</button></div>':
  '<span class="portal-unlogged">Not logged today</span>')+'</div><div class="portal-meal-list">'+
@@ -167,7 +167,7 @@ root.addEventListener("submit",ev=>{
   const complete=ev.submitter?.value==="complete";
   try{
    const next=saveClientSession(state,clientId,assignment.id,index,rows,{complete});
-   save(next);notice={msg:complete?"Session completed — your next workout is ready.":"Workout draft saved in this browser tab.",isError:false};
+   save(next);notice={msg:complete?"Session complete. Next workout ready.":"Draft saved.",isError:false};
    render();window.scrollTo({top:0,behavior:"auto"});
   }catch(err){notify(err.message||"Could not save this session.",true);}
 

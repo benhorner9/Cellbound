@@ -25,8 +25,12 @@ for(const file of m.files){
   body=body.replace(/(href="\.\/coach-[a-z0-9-]+\.css)(")/g,`$1?v=${revision}$2`);
   if(/(?:src|href)="\/(?!\/)/.test(body))throw Error("Root-relative site asset: "+file);
   if(!body.includes("FICTIONAL PREVIEW"))throw Error("User-facing demo disclosure missing");
-  body=body.replace('<main id="main-content" tabindex="-1">',
-   '<main id="main-content" tabindex="-1"><div class="public-demo-notice" role="note"><strong>PUBLIC DEMONSTRATION — NOT A SECURE CLIENT SYSTEM</strong> Do not enter real client names, contact details, health information or workout records. All sample changes stay in this browser tab and can be lost.</div>');
+  // Consolidate the workspace and public demo notices into one explicit safety notice.
+  if(file==="coach-hub.html"){
+   const note=/<div class="notice" role="note" id="workspace-demo-note">[^]*?<\/div>/;
+   if(!note.test(body))throw Error("Missing coach workspace disclosure");
+   body=body.replace(note,'<div class="public-demo-notice" id="workspace-demo-note" role="note"><strong>Public demonstration — not a secure client system.</strong> Use fictional details and logs only. Data stays in this tab and can be lost.</div>');
+  }
  }
  if(file==="coach-hub.css"){
   body+='\n.public-demo-notice{border:1px solid #b5b069;background:#3f3f2a;color:#f6ebc1;border-radius:11px;padding:12px 16px;font-size:12px;line-height:1.6;margin:10px 0 17px}.public-demo-notice strong{display:block;margin-bottom:4px}\n';

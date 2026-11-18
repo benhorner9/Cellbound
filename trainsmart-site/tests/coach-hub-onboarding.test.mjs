@@ -98,7 +98,7 @@ test("D03: HTML is escaped in fictional intake and controls show no invitation d
  assert.match(rendered,/data-onboarding-check="coach"/);
  assert.match(rendered,/&lt;script&gt;/);
  assert.doesNotMatch(rendered,/<script>script injection/);
- assert.match(rendered,/Nothing is actually sent|No actual invitation/);
+ assert.match(rendered,/Nothing is actually sent|Invitations and account creation are disabled/);
 });
 test("D03: isolated code and UI remain disconnected from hosted records",async()=>{
  const paths=["../public/coach-hub.html","../public/coach-hub.mjs","../public/coach-onboarding-model.mjs","../public/coach-onboarding-ui.mjs","../public/coach-onboarding.css"];

@@ -80,24 +80,24 @@ function renderPlan(ctx){
  '<p>'+MEAL_KINDS.map(kind=>MEAL_LABELS[kind]+": "+esc(plan.categories[kind][coverage.choices[kind]].name)).join(" · ")+'</p>'+
  '<p class="'+(coverage.within?"nut-ok":"nut-warning")+'">'+(coverage.within?"Within illustrative comparison tolerances.":"At least one daily target is outside 10% calorie / 20% macro comparison tolerances.")+'</p></div>':
  '<p class="nut-warning">Complete all 16 recipes to compare possible full-day combinations.</p>')+
- '<div class="nut-actions"><button class="btn btn-primary" type="button" data-nut-action="save-plan"'+(waiting.length?' disabled title="Review new ingredients first"':"")+'>Save named meal plan / new version</button></div>';
+ '<div class="nut-actions"><button class="btn btn-primary" type="button" data-nut-action="save-plan"'+(waiting.length?' disabled title="Review new ingredients first"':"")+'>Save meal plan</button></div>';
 }
 function renderSaved(ctx){
- return '<section class="panel nut-section"><h3>Saved meal plans</h3><p>Reuse an existing plan or assign a copy to a sample client. Earlier versions remain unchanged.</p>'+
+ return '<section class="panel nut-section"><h3>Saved meal plans</h3><p>Reuse plans or assign a copy. Earlier versions are retained.</p>'+
  (data.savedPlans.length?data.savedPlans.map(p=>{
   const v=p.versions.at(-1);
   return '<div class="nut-saved-row"><div><strong>'+esc(p.name)+'</strong><p class="small-muted">Version '+v.version+' · '+p.versions.length+' saved revision(s)</p></div>'+
  '<button type="button" class="btn btn-outline btn-sm" data-nut-action="load-plan" data-plan="'+esc(p.id)+'">Reuse / edit</button>'+
  '<button type="button" class="btn btn-outline btn-sm" data-nut-action="assign-plan" data-plan="'+esc(p.id)+'">Assign demo copy</button></div>';
  }).join(""):'<p class="small-muted">No meal plans saved yet.</p>')+
- '<h3>Saved individual recipes</h3>'+
+ '<h3>Saved recipes</h3>'+
  (data.recipes.length?data.recipes.slice(-18).map(r=>'<div class="nut-saved-row"><div><strong>'+esc(r.name)+'</strong><p class="small-muted">'+money(r.nutrition.calories)+' kcal · '+esc(r.id)+'</p></div>'+
  '<select aria-label="Choose meal slot" id="nut-recipe-slot-'+esc(r.id)+'">'+
  MEAL_KINDS.flatMap(kind=>Array.from({length:4},(_,i)=>option(kind+":"+i,MEAL_LABELS[kind]+" "+(i+1),viewKind+":0"))).join("")+
  '</select><button type="button" class="btn btn-outline btn-sm" data-nut-action="reuse-recipe" data-recipe="'+esc(r.id)+'">Use recipe in slot</button></div>').join(""):'<p class="small-muted">No recipes saved yet.</p>')+
  '<h3>Fictional client meal-plan assignments</h3>'+
  (data.assignments.length?data.assignments.slice().reverse().map(a=>'<p>'+esc(ctx.clients.find(c=>c.id===a.clientId)?.name||"Example client")+
- ' · '+esc(a.name)+' v'+a.version+(a.current?" · Current":" · Previous")+'</p>').join(""):'<p class="small-muted">No assignments. Demo-only; no actual client portal.</p>')+
+ ' · '+esc(a.name)+' v'+a.version+(a.current?" · Current":" · Previous")+'</p>').join(""):'<p class="small-muted">No sample assignments yet.</p>')+
  '</section>';
 }
 function renderPendingIngredients(){
@@ -113,17 +113,17 @@ function renderPendingIngredients(){
  '<label>'+label+'<input type="number" min="0" max="1000" step="0.1" inputmode="decimal" data-review-field="'+key+'" data-food-id="'+esc(food.id)+'" placeholder="From label"></label>').join("")+
  '<label class="nut-review-source">Food label / composition source<input maxlength="200" data-review-field="source" data-food-id="'+esc(food.id)+'" placeholder="e.g. UK product label, brand and date"></label></div>'+
  '<button type="button" class="btn btn-primary" data-nut-action="review-food" data-food-id="'+esc(food.id)+'">Add reviewed values</button>'+
- '<p class="small-muted">Coach-entered figures in this demonstration are not automatically verified. Check preparation, product labels and food safety independently.</p></article>'
+ '<p class="small-muted">Verify nutrition figures, preparation, labels and food safety.</p></article>'
  ).join("")+'</section>';
 }
 function renderFoods(){
  return '<section class="panel nut-section"><h3>Ingredient library</h3>'+
- '<p>ChatGPT can suggest any food. New ingredients appear below until you enter reviewed per-100 g/ml values and a product-label or composition reference. The example entries remain illustrative rather than verified UK data.</p>'+
+ '<p>Review new foods using per-100 g/ml values and a label or composition source. Sample entries are not verified.</p>'+
  renderPendingIngredients()+
  '<h4>Available ingredients</h4><div class="nut-food-list">'+data.foods.filter(f=>f.demoReviewed).slice(0,80).map(f=>'<div><strong>'+esc(f.name)+'</strong> · per 100 '+esc(f.unit)+
  ': '+money(f.calories)+' kcal, P '+money(f.proteinG)+'g, C '+money(f.carbsG)+'g, F '+money(f.fatG)+'g'+
  '<small>'+esc(f.source)+'</small></div>').join("")+'</div>'+
- '<h4>Add an ingredient from a product label (fictional test only)</h4>'+
+ '<h4>Add ingredient from label (sample)</h4>'+
  '<div class="nut-input-grid">'+[
  field("foodName","Ingredient name","","maxlength=80"),select("foodUnit","Unit","g",[["g","per 100 g"],["ml","per 100 ml"]]),
  field("foodCalories","Calories per 100","","type=number min=0 max=1000 step=0.1"),
@@ -138,8 +138,8 @@ export function renderNutritionHub(ctx){
  const c=currentClient(ctx),base=selectedBaseline(ctx),d=currentDraft(ctx);
  const options=ctx.clients.filter(x=>x.status!=="Archived");
  const sample=options.map(x=>option(x.id,x.name,data.clientId)).join("");
- return '<div class="nut-workspace-top"><div><p class="eyebrow">Nutrition workspace</p><h2>Nutrition plans</h2>'+
- '<p>Calculate targets, build meals and manage saved plans.</p></div>'+
+ return '<div class="nut-workspace-top"><div><h2>Meal planning</h2>'+
+ '</div>'+
  '<div class="nut-mini-target"><span>Client: '+esc(c?.name||"Not selected")+'</span>'+
  (data.target&&isNutritionApproved(data)?'<span>'+money(data.target.calories)+' kcal</span><span>P '+money(data.target.proteinG)+'g</span>'+
  '<span>C '+money(data.target.carbsG)+'g</span><span>F '+money(data.target.fatG)+'g</span>':
@@ -150,8 +150,8 @@ export function renderNutritionHub(ctx){
  '<span class="tab-count">'+n+'</span>'+label+(id==="library"&&data.currentPlan&&unresolvedMealFoods(data.currentPlan,data.foods).length?" · "+unresolvedMealFoods(data.currentPlan,data.foods).length+" to review":"")+'</button>').join("")+'</div>'+
  '<div class="nut-panel-body" id="nutrition-panel" role="tabpanel" tabindex="-1">'+
  (activeTab==="targets" ?
- '<section class="panel nut-section"><div class="ai-step-title"><span class="ai-step-number">1</span><div><h3>Set calorie and macro targets</h3>'+
- '<p>Use the selected client’s recorded details. Fill any gaps before calculating.</p></div></div>'+
+ '<section class="panel nut-section"><div class="ai-step-title"><span class="ai-step-number">1</span><div><h3>Calorie & macro targets</h3>'+
+ '<p>Complete missing details to calculate.</p></div></div>'+
  '<label>Client<select data-nut-field="clientId"><option value="">Choose a client</option>'+sample+'</select></label>'+
  (c?'<p class="nut-context">Goal: <strong>'+esc(c.goal)+'</strong> · Sessions/week: <strong>'+esc(c.trainingDays)+'</strong> · '+
  (base?.coachVerified?"Baseline on file":"Height and weight not yet confirmed")+'</p>':'')+
@@ -166,30 +166,30 @@ export function renderNutritionHub(ctx){
  field("proteinTarget","Manual protein (g, optional)",d.proteinTarget,'type="number" min="20" max="400"')+
  field("carbTarget","Manual carbohydrate (g, optional)",d.carbTarget,'type="number" min="0" max="900"')+
  field("fatTarget","Manual fat (g, optional)",d.fatTarget,'type="number" min="15" max="240"')+
- '</div><div class="nut-actions"><button type="button" class="btn btn-outline" data-nut-action="calculate">Calculate calories & macros</button>'+
- '<button type="button" class="btn btn-primary" data-nut-action="approve">Approve target</button></div>'+
+ '</div><div class="nut-actions"><button type="button" class="btn btn-outline" data-nut-action="calculate">Calculate targets</button>'+
+ '<button type="button" class="btn btn-primary" data-nut-action="approve">Approve targets</button></div>'+
  renderTarget(data)+'</section>':"")+
  (activeTab==="create" ? '<div class="nut-create-split">'+
  '<section class="panel nut-section"><div class="ai-step-title"><span class="ai-step-number">2</span><div><h3>Plan requirements</h3>'+
- '<p>Set food preferences and build the brief you’ll use in ChatGPT.</p></div></div>'+
+ '<p>Set preferences before creating the brief.</p></div></div>'+
  '<div class="nut-input-grid">'+field("name","Plan name",d.name,'maxlength="90"')+
  textArea("preferences","Food and meal preferences",d.preferences,"e.g. quick, supermarket-friendly meals")+
  textArea("excludedFoods","Foods to avoid (nonmedical preference only)",d.excludedFoods,"e.g. mushrooms or olives",250)+
  field("budget","Food budget / style",d.budget,'maxlength="130" placeholder="e.g. affordable"')+
  textArea("instructions","Additional coach instructions",d.instructions,"e.g. simple batch-cook dinners",400)+
- '</div><div class="nut-actions"><button type="button" class="btn btn-primary" data-nut-action="prompt"'+(!isNutritionApproved(data)?" disabled":"")+'>Prepare ChatGPT brief</button>'+
+ '</div><div class="nut-actions"><button type="button" class="btn btn-primary" data-nut-action="prompt"'+(!isNutritionApproved(data)?" disabled":"")+'>Create brief</button>'+
  '<button type="button" class="btn btn-outline" data-nut-action="copy"'+(!data.prompt?" disabled":"")+'>Copy brief</button>'+
  '<a class="btn btn-outline" target="_blank" rel="noopener noreferrer" href="https://chatgpt.com/">Open ChatGPT ↗</a></div>'+
- '<label>Brief to copy<textarea id="nut-prompt" readonly rows="7" placeholder="Approve targets, then prepare the brief.">'+esc(data.prompt||"")+'</textarea></label></section>'+
- '<section class="panel nut-section"><div class="ai-step-title"><span class="ai-step-number">3</span><div><h3>Bring your plan back</h3>'+
- '<p>New foods are welcome. TrainSmart will queue any unknown ingredients for your review before calculating nutrition.</p></div></div>'+
+ '<label>Brief to copy<textarea id="nut-prompt" readonly rows="7" placeholder="Approve targetss, then prepare the brief.">'+esc(data.prompt||"")+'</textarea></label></section>'+
+ '<section class="panel nut-section"><div class="ai-step-title"><span class="ai-step-number">3</span><div><h3>Import plan</h3>'+
+ '<p>New ingredients require review before calculating nutrition.</p></div></div>'+
  '<label>Paste ChatGPT response<textarea data-nut-field="reply" rows="7" maxlength="45000" placeholder="Paste TRAINSMART_MEALS_V2 JSON here.">'+esc(data.reply||"")+'</textarea></label>'+
  '<div class="nut-actions"><button type="button" class="btn btn-outline" data-nut-action="example">Load an example</button>'+
- '<button type="button" class="btn btn-outline" data-nut-action="example-new">Try new ingredients example</button>'+
+ '<button type="button" class="btn btn-outline" data-nut-action="example-new">Test new ingredients</button>'+
  '<button type="button" class="btn btn-primary" data-nut-action="import">Import meal plan</button>'+
  '<button type="button" class="btn btn-outline" data-nut-action="manual">Build manually</button></div>'+
  '</section></div>':"")+
- (activeTab==="plan" ? '<section class="panel nut-section nut-section--editor"><div class="panel-header"><div><h3>Meal editor</h3><p class="small-muted">Edit quantities, review totals and save your plan.</p></div>'+
+ (activeTab==="plan" ? '<section class="panel nut-section nut-section--editor"><div class="panel-header"><div><h3>Meal editor</h3><p class="small-muted"></p></div>'+
  '<button class="btn btn-outline btn-sm" type="button" data-nut-action="tab" data-tab="create">Create new plan</button></div>'+
  renderPlan(ctx)+'</section>':"")+
  (activeTab==="library" ? renderSaved(ctx)+renderFoods():"")+

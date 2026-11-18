@@ -117,7 +117,7 @@ test("D07.2 UI exposes review queue and pending status without new outbound call
  assert.match(ui,/data-review-field/);
  assert.match(ui,/importFlexibleMeals/);
  assert.match(ui,/updateNutritionReview/);
- assert.match(ui,/Try new ingredients example/);
+ assert.match(ui,/Test new ingredients/);
  assert.match(model,/TRAINSMART_MEALS_V2/);
  assert.doesNotMatch(ui+model,/\bfetch\s*\(|\bXMLHttpRequest\s*\(|\bWebSocket\s*\(/);
 });

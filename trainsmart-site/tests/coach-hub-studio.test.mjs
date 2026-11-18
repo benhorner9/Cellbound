@@ -26,6 +26,6 @@ test("UX09 replaces glyph-based navigation with ten actual inline line-art SVGs"
 test("UX09 remains an offline public example-only coaching workspace",async()=>{
  const [html,css]=await Promise.all([get("coach-hub.html"),get("coach-studio.css")]);
  assert.match(html,/connect-src 'none'/);
- assert.match(html,/Preview workspace/);
+ assert.match(html,/id="workspace-demo-note"/);
  assert.doesNotMatch(css,/@import|url\(https?:|fonts\.googleapis/);
 });

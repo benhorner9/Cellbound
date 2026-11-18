@@ -14,20 +14,20 @@ export function renderLibraryCentre({library,clients,tab="exercises",q="",moveme
  let main="";
  if(tab==="equipment"){
   const selected=client?.id||"";
-  main='<section class="panel library-main"><div class="panel-header"><div><h3>TrainSmart Gym equipment</h3><p class="small-muted">The known Gym preset is preselected. Confirm the equipment each fictional client actually has access to.</p></div>'+tag("10 equipment categories",true)+'</div>'+
+  main='<section class="panel library-main"><div class="panel-header"><div><h3>TrainSmart Gym equipment</h3><p class="small-muted">Confirm equipment available to this client.</p></div>'+tag("10 equipment categories",true)+'</div>'+
   '<div class="library-gym-preset">'+EQUIPMENT.map(item=>'<div class="library-equipment-card"><span class="library-equipment-symbol">▣</span><div><strong>'+esc(item.name)+'</strong><small>'+esc(item.category)+'</small></div></div>').join("")+'</div></section>'+
   '<section class="panel library-main"><div class="panel-header"><h3>Client equipment access</h3>'+tag(client?"Fictional "+client.name:"Select client")+'</div>'+
-   '<p class="library-help">Each client’s equipment is independent of the Gym preset. Changing the list updates **demo library filters only**; it never rewrites existing session results or assigned plans.</p>'+
+   '<p class="library-help">Equipment changes affect filters, not existing plans or logs.</p>'+
    '<label for="library-equipment-client">Fictional client</label><select id="library-equipment-client">'+option("","Choose a client",selected)+selectable.map(c=>option(c.id,c.name,selected)).join("")+'</select>'+
    (client?'<form id="library-client-equipment-form" data-client-id="'+esc(client.id)+'">'+
    '<div class="library-equipment-checks">'+EQUIPMENT.map(item=>'<label><input type="checkbox" name="equipmentId" value="'+esc(item.id)+'" '+(gear.includes(item.id)?"checked":"")+'><span>'+esc(item.name)+'</span></label>').join("")+'</div>'+
    '<div class="library-form-actions">'+smallBtn("library-gym-preset","Use all Gym equipment",'data-client-id="'+esc(client.id)+'"')+
-    '<button class="btn btn-primary" type="submit">Save fictional client equipment</button></div></form>'+
+    '<button class="btn btn-primary" type="submit">Save equipment</button></div></form>'+
    '<p class="small-muted">'+gear.length+' equipment categories currently available to this client. Use the Exercise filter to see which exercises might fit; nothing is prescribed automatically.</p>':
-   '<div class="empty"><h3>Choose a client</h3><p>Select a client above to edit their equipment access.</p></div>')+'</section>';
+   '<div class="empty"><h3>Choose a client</h3><p>Select a client to edit equipment.</p></div>')+'</section>';
  }else if(tab==="methods"){
   const methods=library.methods.filter(m=>!q||[m.name,m.type,m.notes].join(" ").toLowerCase().includes(q.toLowerCase()));
-  main='<section class="panel library-main"><div class="panel-header"><div><h3>Reusable coaching methods</h3><p class="small-muted">Example feeder/working sets and method structures. Progressive Logbook V3 rules are not yet verified.</p></div>'+
+  main='<section class="panel library-main"><div class="panel-header"><div><h3>Reusable coaching methods</h3><p class="small-muted">Example methods. Progression rules are not verified.</p></div>'+
   '<button class="btn btn-primary btn-sm" data-action="library-add-method" type="button">+ Add method</button></div>'+
   '<div class="library-method-grid">'+methods.map(m=>'<article class="library-method-card"><div class="library-card-heading"><div><p class="eyebrow">'+esc(m.type.replaceAll("_"," "))+' · v'+m.version+'</p><h3>'+esc(m.name)+'</h3></div>'+
   tag(m.reviewStatus==="demo-reviewed"?"Demo reviewed":"Needs review",m.reviewStatus==="demo-reviewed")+'</div>'+
@@ -42,7 +42,7 @@ export function renderLibraryCentre({library,clients,tab="exercises",q="",moveme
   const available=client?gear:null;
   const records=filterExercises(library.exercises,{q,movement,equipment,status,available:client&&onlyClientFit?gear:null});
   const selectedRecords=records.map(ex=>({ex,clientFit:available===null?null:ex.primaryEquipment.every(eq=>available.includes(eq))}));
-  main='<section class="panel library-main"><div class="panel-header"><div><h3>Exercise catalogue</h3><p class="small-muted">Stable IDs, equipment matching and substitutes; coach review before any programme could use an exercise.</p></div>'+
+  main='<section class="panel library-main"><div class="panel-header"><div><h3>Exercise catalogue</h3><p class="small-muted">Find exercises, substitutes and equipment matches.</p></div>'+
   '<button type="button" class="btn btn-primary btn-sm" data-action="library-add-exercise">+ Add exercise</button></div>'+
   '<div class="library-filters"><div><label for="library-search">Search</label><input id="library-search" type="search" maxlength="85" value="'+esc(q)+'" placeholder="Exercise, muscle group, tag…"></div>'+
   '<div><label for="library-movement">Movement</label><select id="library-movement">'+option("all","All movements",movement)+MOVEMENTS.map(m=>option(m,m,movement)).join("")+'</select></div>'+
@@ -54,7 +54,7 @@ export function renderLibraryCentre({library,clients,tab="exercises",q="",moveme
   selectable.map(c=>option(c.id,c.name,selectedClientId)).join("")+'</select>'+
   (client?'<span class="small-muted">'+gear.length+' available equipment categories · '+esc(client.name)+'</span>':
    '<span class="small-muted">Use the Equipment tab to edit a client’s available equipment.</span>')+'</div>'+
-  (client?'<label class="library-eligible-toggle"><input type="checkbox" id="library-fit-only" '+(onlyClientFit?"checked":"")+'><span>Show only demo-reviewed exercises matching this client’s equipment</span></label>':"")+
+  (client?'<label class="library-eligible-toggle"><input type="checkbox" id="library-fit-only" '+(onlyClientFit?"checked":"")+'><span>Show reviewed, compatible exercises</span></label>':"")+
   '<div class="library-exercise-grid">'+selectedRecords.map(({ex,clientFit})=>{
    const subs=substitutionOptions(ex,library.exercises,available||GYM_PRESET);
    return '<article class="library-exercise-card"><div class="library-card-heading"><div><p class="eyebrow">'+esc(ex.movement)+' · '+esc(ex.category)+'</p><h3>'+esc(ex.name)+'</h3></div>'+flags(ex)+'</div>'+
@@ -73,16 +73,16 @@ export function renderLibraryCentre({library,clients,tab="exercises",q="",moveme
   (!selectedRecords.length?'<div class="empty"><h3>No matching exercises</h3><p>Adjust search or filters; archived or missing exercises are never silently replaced.</p></div>':"")+
   '</section>';
  }
- return '<div class="library-header"><div><p class="eyebrow">TRAINSMART PROGRAMMING FOUNDATION · DEMO ONLY</p><h2>Exercise & coaching library</h2>'+
- '<p>Build reusable structures before the full programme builder. These are fictional example entries, not the approved Google Sheets exercise catalogue.</p></div>'+
+ return '<div class="library-header"><div><p class="eyebrow">EXERCISE LIBRARY</p><h2>Exercise & coaching library</h2>'+
+ '<p>Sample catalogue. TrainSmart’s original library is not yet verified.</p></div>'+
  '<span class="tag warn">Not approved for real clients</span></div>'+
  '<div class="library-stats">'+[
  ["Example exercises",stats.exercises],["Waiting for review",stats.needsReview],["Gym equipment",stats.equipment],["Method templates",stats.methods]
  ].map(([title,n])=>'<div class="stat"><p class="stat-label">'+esc(title)+'</p><div class="stat-number">'+n+'</div></div>').join("")+'</div>'+
  '<div class="library-tabs" role="group" aria-label="Library section">'+tabs.map(([key,name])=>
  '<button type="button" class="seg '+(tab===key?"active":"")+'" data-library-tab="'+key+'">'+esc(name)+'</button>').join("")+'</div>'+
- '<div class="library-warning"><strong>Source verification still needed.</strong> Your original exercise IDs, method details, load progression rules and media URLs must be checked against the approved TrainSmart worksheets before live use. “Demo reviewed” is not a production approval.</div>'+
- main+'<p class="footer-bits">D05 fictional session-only data. No approved training prescriptions, programme assignments, Supabase writes or external messages.</p>';
+ '<div class="library-warning"><strong>Source verification still needed.</strong> Demo review is not production approval. Verify exercises, progression rules and links before real use.</div>'+
+ main+'<p class="footer-bits">Sample library only. No live data or prescriptions.</p>';
 }
 function eqCheckboxes(field,selected){
  return '<fieldset class="library-equipment-fieldset"><legend>'+esc(field==="primaryEquipment"?"Required equipment":"Additional / optional equipment")+'</legend>'+
@@ -100,7 +100,7 @@ export function exerciseDialog(ex=null){
  '<label for="lib-ex-setup">Setup notes</label><textarea id="lib-ex-setup" name="setupNotes" rows="2" maxlength="400">'+esc(data.setupNotes)+'</textarea>'+
  '<label for="lib-ex-cues">Coach cues</label><textarea id="lib-ex-cues" name="cues" rows="2" maxlength="400">'+esc(data.cues)+'</textarea>'+
  '<label for="lib-ex-video">Coach-selected YouTube video link (optional)</label><input id="lib-ex-video" name="videoUrl" type="url" maxlength="260" value="'+esc(data.videoUrl)+'" placeholder="https://www.youtube.com/watch?v=...">'+
- '<p class="small-muted">Saving creates or increments a stable demo version and resets coach review. No real programme will be changed.</p>';
+ '<p class="small-muted">Saving creates a new version and requires review. Existing plans are unchanged.</p>';
 }
 export function methodDialog(m=null){
  const data=m||{name:"",type:"straight",feederSets:0,workingSets:3,repsMin:8,repsMax:10,rir:2,tempo:"2-0-2-0",restSeconds:90,notes:""};

@@ -141,7 +141,7 @@ test("D03.1: user-entered fictional content is escaped in the preview",()=>{
  const doc=documentDialogContent(e,"terms");
  assert.match(doc.body,/NOT LEGALLY EXECUTED|FICTIONAL DEMONSTRATION/);
  const dashboard=renderFreshDashboard([client],{[client.id]:e});
- assert.match(dashboard,/Clean-start client queue/);
+ assert.match(dashboard,/Client setup queue/);
 });
 test("D03.1: strict source boundary, no API, live records or real-client documents",async()=>{
  const parts=await Promise.all(["../public/coach-hub.html","../public/coach-hub.mjs","../public/coach-fresh-model.mjs","../public/coach-fresh-ui.mjs","../public/coach-fresh.css"].map(p=>readFile(new URL(p,import.meta.url),"utf8")));

@@ -194,9 +194,9 @@ function refreshPreviewClientLink(){
 function renderChrome(){
  refreshPreviewClientLink();
  const h=viewHeading();
- document.getElementById("page-eyebrow").textContent=h[0]+" · "+new Intl.DateTimeFormat("en-GB",{weekday:"long",timeZone:TIME_ZONE}).format(new Date()).toUpperCase();
+ document.getElementById("page-eyebrow").textContent=state.view==="today"?new Intl.DateTimeFormat("en-GB",{weekday:"long",day:"numeric",month:"long",timeZone:TIME_ZONE}).format(new Date()):"";
  document.getElementById("page-title").textContent=h[1];
- document.getElementById("page-subtitle").textContent=h[2];
+ document.getElementById("page-subtitle").textContent="";
  document.getElementById("crumb-page").textContent=h[3];
  document.querySelectorAll(".nav-link[data-view]").forEach(el=>{
   const on=el.dataset.view===state.view;
@@ -206,7 +206,10 @@ function renderChrome(){
  document.getElementById("today-count").textContent=String(openCount());
  document.getElementById("onboarding-count").textContent=String(onboardingSummary(clients,state.onboardingRecords).pending);
  document.getElementById("fresh-count").textContent=String(enrollmentSummary(clients,state.enrolments).pending);
- document.getElementById("add-task").textContent=state.view==="programmes"?"＋ New plan":["clients","onboarding","fresh","setup"].includes(state.view)?"＋ Add client":"＋ Add task";
+ const primary=document.getElementById("add-task");
+ primary.hidden=!["today","tasks","onboarding","fresh","setup"].includes(state.view);
+ primary.textContent=["onboarding","fresh","setup"].includes(state.view)?"＋ Add client":"＋ New task";
+ document.getElementById("nutrition-shortcut").hidden=state.view!=="today";
  const select=document.getElementById("task-client");
  const old=select.value;
  select.innerHTML='<option value="">General coaching admin</option>'+clients.map(c=>'<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>').join("");
@@ -221,11 +224,11 @@ function taskRow(t,small=false){
 }
 function taskActionText(t){
  const examples={
- review:"Fictional check-in: sessions completed 3/3; energy 3/5; sleep 4/5. Read the full check-in in H09. For now, decide what you would do next.",
- payment:"Fictional amount due: £75. Payment is not confirmed. This demo will create a message draft; it cannot send or verify a payment.",
- programme:"Fictional current block: Strength and Conditioning, week 6/6. The programme library and real assignment workflow are scheduled for H05–H08.",
+ review:"Sample check-in: 3/3 sessions · energy 3/5 · sleep 4/5.",
+ payment:"Sample balance: £75. Payment unconfirmed; prepare a draft reminder.",
+ programme:"Sample programme: Strength and Conditioning · week 6/6.",
  onboarding:"Open the fictional onboarding checklist to review stage and details. Real invitations, client accounts and email are disabled.",
- followup:"Fictional client follow-up. Use a saved message template in the later messaging block.",
+ followup:"Prepare a follow-up message.",
  personal:"Keep this task focused on one clear action. Completing it will remove it from the active queue."
  };
  return examples[t.kind]||examples.personal;
@@ -236,7 +239,7 @@ function renderToday(){
  const reviews=active.filter(t=>t.kind==="review").length;
  const payments=active.filter(t=>t.kind==="payment").length;
  const nextHtml=next?'<div class="priority-card"><div class="next-top"><span class="mini-label">NEXT UP</span><span class="time-hint">'+escapeHtml(next.estimate)+" MIN · "+escapeHtml(dueLabel(next))+'</span></div><h2>'+escapeHtml(next.title)+'</h2><p class="client-line">'+escapeHtml(clientLabel(next))+' · '+escapeHtml(kinds[next.kind]?.label||"Your task")+'</p><p class="explain">'+escapeHtml(next.note||taskActionText(next))+'</p><div class="button-row"><button class="btn btn-primary" data-action="task" data-id="'+escapeHtml(next.id)+'">Open task <span aria-hidden="true">↗</span></button><button class="btn btn-outline" data-action="snooze" data-id="'+escapeHtml(next.id)+'">Snooze a day</button></div></div>':
- '<div class="priority-card"><span class="mini-label">NEXT UP</span><h2>You are up to date.</h2><p class="explain">No open tasks to work on right now. Review the next few days or add a task to capture an idea.</p><button class="btn btn-primary" data-view="tasks">View all tasks</button></div>';
+ '<div class="priority-card"><span class="mini-label">NEXT UP</span><h2>You are up to date.</h2><p class="explain">No outstanding tasks.</p><button class="btn btn-primary" data-view="tasks">View all tasks</button></div>';
  const focus=active.filter(t=>t!==next).slice(0,4);
  const activity='<div class="activity">'+[
  ['green',"Workout log received","Fictional client · Today"],
@@ -248,18 +251,17 @@ function renderToday(){
  stat("Needs review",reviews,"Open check-in tasks","◴")+
  stat("Payments due",payments,"Fictional follow-ups","£")+
  stat("Tasks to action",active.length,"Prioritised for you","✓")+
- '</div><div class="main-grid"><div><section class="panel"><div class="panel-header"><h3>Next action</h3><span class="tag muted">CURRENT QUEUE</span></div>'+nextHtml+
+ '</div><div class="main-grid"><div><section class="panel"><div class="panel-header"><h3>Next action</h3></div>'+nextHtml+
  '<div class="section-space"><div class="panel-header"><h3>Also due</h3><button class="subdued-link" data-view="tasks">View all tasks ↗</button></div>'+
  (focus.length?'<div class="work-items">'+focus.map(t=>taskRow(t,true)).join("")+'</div>':'<p class="no-items">No other tasks due.</p>')+'</div></section></div>'+
- '<div><section class="panel"><div class="panel-header"><h3>Coach tools</h3><span class="small-muted">Shortcuts</span></div>'+
+ '<div><section class="panel"><div class="panel-header"><h3>Coach tools</h3></div>'+
  '<div class="quick-grid">'+
  '<button class="quick" data-view="clients"><strong>Clients</strong><small>Open client profiles</small></button>'+
- '<a class="quick" href="./coach-client.html?client=sarah"><strong>Client app preview</strong><small>Try the fictional client experience</small></a>'+
  '<button class="quick" data-view="programmes"><strong>Training plans</strong><small>Create or edit a plan</small></button>'+
  '<button class="quick" data-view="nutrition"><strong>Nutrition</strong><small>Meal plans and targets</small></button>'+
  '<button class="quick" data-view="tasks"><strong>Tasks</strong><small>Review the queue</small></button>'+
  '<button class="quick" data-view="messages"><strong>Messages</strong><small>Review drafts</small></button>'+
- '<button class="quick" data-action="new-task"><strong>New task</strong><small>Add a reminder</small></button></div></section>'+
+ '</div></section>'+
  '<section class="panel section-full"><div class="panel-header"><h3>Activity</h3><span class="small-muted">Sample feed</span></div>'+activity+'</section>'+
  
  '</div></div>';
@@ -631,7 +633,7 @@ function renderTasks(){
  return '<section class="panel"><div class="panel-header"><div><h3>Coaching tasks</h3><p class="small-muted">One list for client actions and everything else.</p></div><span class="tag good">'+all.length+' total</span></div>'+
  '<div class="segment" role="group" aria-label="Filter tasks">'+filters.map(([v,label,n])=>'<button class="seg '+(f===v?"active":"")+'" type="button" data-filter="'+v+'" aria-pressed="'+(f===v)+'">'+label+' <span class="task-count">'+n+'</span></button>').join("")+'</div>'+
  (subset.length?'<div class="task-list">'+subset.map(t=>taskRow(t)).join("")+'</div>':'<div class="empty"><h3>Nothing in this view</h3><p>You’re clear here. Check another filter or add a manual task.</p></div>')+
- '<p class="footer-bits">Task actions persist in this browser session only. Automated due-date rules will be implemented with the real backend in H03.</p></section>';
+ '<p class="footer-bits">Tasks are saved in this demo tab.</p></section>';
 }
 
 function messageClientContact(id){return state.enrolments[id]?.contacts||{};}
@@ -1056,7 +1058,7 @@ function renderLegacyMessages(){
  const drafts=state.drafts;
  return '<div class="main-grid"><section class="panel"><div class="panel-header"><h3>Message drafts</h3><span class="tag muted">NOT SENT</span></div>'+
  (drafts.length?drafts.map(d=>'<article class="message-card"><h3>'+escapeHtml(d.title)+'</h3><p class="small-muted">Fictional client · '+escapeHtml(d.clientName||"General")+'</p><pre>'+escapeHtml(d.text)+'</pre><button class="btn btn-ghost btn-sm" data-action="copy-draft" data-id="'+escapeHtml(d.id)+'">Copy draft</button></article>').join(""):'<div class="empty"><h3>No message drafts yet</h3><p>Open a client task and choose “Prepare message” to create an editable draft in this session.</p></div>')+
- '</section><section class="panel"><div class="panel-header"><h3>How messaging will work</h3></div><p class="dialog-copy">The final Coach Hub will prepare personalised WhatsApp and email messages. You will approve messages before they are sent. This prototype only creates and copies text; it never contacts a messaging service.</p><div class="divider-line"></div><button class="btn btn-primary" data-view="tasks">Find a task to message about</button></section></div>';
+ '</section><section class="panel"><div class="panel-header"><h3>How messaging will work</h3></div><p class="dialog-copy">Prepare and copy a message. Sending is disabled in this demo.</p><div class="divider-line"></div><button class="btn btn-primary" data-view="tasks">Find a task to message about</button></section></div>';
 }
 function render(){
  renderChrome();

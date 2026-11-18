@@ -116,8 +116,8 @@ test("D04: UI labels approval, sender, opt-out and no-delivery confirmation hone
  assert.match(html,/data-action="message-approve"/);
  assert.match(html,/data-action="message-copy"/);
  assert.match(html,/disabled>Copy WhatsApp text/);
- assert.match(html,/Client portal login is optional/);
- assert.match(html,/No automatic email, WhatsApp, SMS/);
+ assert.match(html,/Prepare client messages by WhatsApp or email/);
+ assert.match(html,/Sending is disabled/);
  const approved=approveMessageDraft(drafts,"test-msg",pref(),verified);
  html=renderMessageCentre({clients,drafts:approved,preferences:prefs,enrolments,customTemplates:[]});
  assert.match(html,/Approved · Not sent/);

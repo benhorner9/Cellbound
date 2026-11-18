@@ -93,7 +93,7 @@ test("D03.2: guided UI shows in-place next action and safe disabled send button"
  assert.match(first,/Fictional/i);
  const docs=renderSetupWizard(client,e,"documents");
  assert.match(docs,/data-action="wizard-confirm-documents"/);
- assert.match(docs,/COACH CHECK/);
+ assert.match(docs,/PAPERWORK/);
  assert.match(docs,/after.*accepting.*invitation/);
  const invite=renderSetupWizard(client,e,"invite");
  assert.match(invite,/Send secure invitation — unavailable/);

@@ -199,7 +199,7 @@ test("D05: source and production isolation, no fetch/Supabase, stable IDs and iP
 test("D05: optional client-equipment filter shows only demo-reviewed suitable exercises",()=>{
  let lib=initialLibrary(clients);
  const htmlEmpty=renderLibraryCentre({library:lib,clients,tab:"exercises",selectedClientId:second.id,onlyClientFit:true});
- assert.match(htmlEmpty,/Show only demo-reviewed exercises matching/);
+ assert.match(htmlEmpty,/Show reviewed, compatible exercises/);
  assert.match(htmlEmpty,/No matching exercises/);
  lib={...lib,exercises:setExerciseReviewed(lib.exercises,"demo:goblet-squat",true)};
  const html=renderLibraryCentre({library:lib,clients,tab:"exercises",selectedClientId:second.id,onlyClientFit:true});
