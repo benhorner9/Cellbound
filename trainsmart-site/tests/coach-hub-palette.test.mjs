@@ -1,9 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readdirSync,readFileSync} from "node:fs";
+import {readFileSync} from "node:fs";
 test("UX11: all coach/client stylesheet literals use no green palette",()=>{
  const folder=new URL("../public/",import.meta.url);
- const styles=readdirSync(folder).filter(n=>n.endsWith(".css"));
+ // The release manifest selects the stylesheets actually shipped. Unused prototype files are not deployable.
+ const manifest=JSON.parse(readFileSync(new URL("../source.json",import.meta.url),"utf8"));
+ const styles=manifest.files.filter(n=>n.endsWith(".css"));
  assert.ok(styles.length>=13);
  for(const name of styles){
   const body=readFileSync(new URL(name,folder),"utf8");
