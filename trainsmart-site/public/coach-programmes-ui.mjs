@@ -115,7 +115,7 @@ export function assignmentDialog(template,clients,library){
 export function renderClientProgrammeSummary(client,assignments){
  const current=currentClientAssignment(assignments,client.id);
  const prior=assignments.filter(a=>a.clientId===client.id&&!a.current);
- return '<div class="programme-client-profile"><div class="panel-header"><div><h3>Current training programme</h3><p class="small-muted"></p></div></div>'+
+ return '<div class="programme-client-profile"><div class="panel-header"><div><h3>Current training programme</h3><p class="small-muted">Independent client copy.</p></div></div>'+
  (current?'<div class="programme-client-title"><p class="eyebrow">ASSIGNED PLAN</p><h3>'+esc(current.name)+'</h3>'+
  '<p>Saved template v'+esc(current.templateVersion)+' · '+current.sessions.length+' ordered sessions</p></div>'+
  current.sessions.map((session,i)=>'<div class="programme-client-session"><h4>Session '+(i+1)+': '+esc(session.name)+'</h4>'+

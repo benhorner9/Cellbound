@@ -81,7 +81,7 @@ export function renderLibraryCentre({library,clients,tab="exercises",q="",moveme
  ].map(([title,n])=>'<div class="stat"><p class="stat-label">'+esc(title)+'</p><div class="stat-number">'+n+'</div></div>').join("")+'</div>'+
  '<div class="library-tabs" role="group" aria-label="Library section">'+tabs.map(([key,name])=>
  '<button type="button" class="seg '+(tab===key?"active":"")+'" data-library-tab="'+key+'">'+esc(name)+'</button>').join("")+'</div>'+
- '<div class="library-warning"><strong>Source verification still needed.</strong> Demo review is not production approval. Verify exercises, rules and links before real use.</div>'+
+ '<div class="library-warning"><strong>Source verification still needed.</strong> Demo review is not production approval. Verify exercises, progression rules and links before real use.</div>'+
  main+'<p class="footer-bits">Sample library only. No live data or prescriptions.</p>';
 }
 function eqCheckboxes(field,selected){
