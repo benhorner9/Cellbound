@@ -1,24 +1,24 @@
 /* D04 Coach Messaging Centre, fictional-only, iPad-first layout */
 .message-top-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px}
 .message-top-metrics .stat{padding:18px}.message-commands{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-.message-commands h2{font-size:23px}.message-commands p:not(.eyebrow){color:#a8c3b0;font-size:12px;line-height:1.65}
+.message-commands h2{font-size:23px}.message-commands p:not(.eyebrow){color:#24364d;font-size:12px;line-height:1.65}
 .message-actions{display:flex;gap:9px;flex-wrap:wrap}
 .message-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(255px,.8fr);gap:17px;align-items:start}
 .message-draft-list .panel-header{flex-wrap:wrap}.message-draft-list>label{display:block;font-size:11px;margin:12px 0 7px}
 .message-draft-list>select{width:100%;max-width:450px}
 .message-filter-row{display:flex;gap:5px;flex-wrap:wrap;margin:15px 0}.message-filter-row .seg{min-height:38px;font-size:10px;white-space:normal}
-.message-list{display:grid;gap:12px}.message-item{border:1px solid #425e49;background:#233b2e;border-radius:12px;padding:17px}
+.message-list{display:grid;gap:12px}.message-item{border:1px solid #dbe3ee;background:#f6f8fc;border-radius:12px;padding:17px}
 .message-item-head{display:flex;align-items:flex-start;gap:13px;justify-content:space-between;flex-wrap:wrap}
-.message-item-head small{display:block;color:#9fbbaa;font-size:10px;margin-bottom:6px}.message-item-head h3{font-size:16px}
-.message-preview{margin:13px 0;color:#d6e5d3;font-size:12px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
-.message-block-note{font-size:11px;color:#ebc79b;line-height:1.55;border:1px solid #7a6749;background:#423b31;padding:10px;border-radius:8px;margin:11px 0}
+.message-item-head small{display:block;color:#536782;font-size:10px;margin-bottom:6px}.message-item-head h3{font-size:16px}
+.message-preview{margin:13px 0;color:#536782;font-size:12px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.message-block-note{font-size:11px;color:#81521a;line-height:1.55;border:1px solid #dbe3ee;background:#f6f8fc;padding:10px;border-radius:8px;margin:11px 0}
 .message-item-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.message-item-buttons .btn{min-height:40px}
 .message-aside{display:grid;gap:17px}.message-aside .panel{margin:0}
 .message-client-preferences,.message-template-list{display:grid;gap:8px;margin:13px 0}
-.message-pref-item,.message-template-item{display:flex;gap:9px;align-items:center;justify-content:space-between;border-bottom:1px solid #3b5645;padding:8px 0;flex-wrap:wrap}
+.message-pref-item,.message-template-item{display:flex;gap:9px;align-items:center;justify-content:space-between;border-bottom:1px solid #dbe3ee;padding:8px 0;flex-wrap:wrap}
 .message-pref-item>div,.message-template-item>div{flex:1;min-width:130px}
-.message-pref-item strong,.message-template-item strong{font-size:12px;display:block}.message-pref-item small,.message-template-item small{font-size:10px;display:block;color:#a1bbad;margin-top:5px}
-.message-template-item .btn{padding-left:9px;padding-right:9px}.message-checkbox{display:flex;gap:12px;align-items:flex-start;font-size:12px;line-height:1.5;margin:16px 0}.message-checkbox input{width:18px;height:18px;min-height:0;flex:0 0 18px;accent-color:#bce98e;margin:0}
+.message-pref-item strong,.message-template-item strong{font-size:12px;display:block}.message-pref-item small,.message-template-item small{font-size:10px;display:block;color:#536782;margin-top:5px}
+.message-template-item .btn{padding-left:9px;padding-right:9px}.message-checkbox{display:flex;gap:12px;align-items:flex-start;font-size:12px;line-height:1.5;margin:16px 0}.message-checkbox input{width:18px;height:18px;min-height:0;flex:0 0 18px;accent-color:#2956cc;margin:0}
 .message-dialog .notice{margin:10px 0 14px}
 @media(max-width:1000px){.message-layout{grid-template-columns:1fr}.message-aside{grid-template-columns:repeat(2,minmax(0,1fr))}.message-aside .panel:last-child{grid-column:1 / -1}}
 @media(max-width:700px){.message-top-metrics{grid-template-columns:1fr;gap:7px}.message-top-metrics .stat{min-height:64px;padding:12px}.message-layout,.message-aside{grid-template-columns:1fr}.message-aside .panel:last-child{grid-column:auto}.message-actions{width:100%}.message-actions .btn{flex:1}.message-item-buttons .btn{flex:1}.message-item{padding:13px}.message-filter-row .seg{flex:1;min-width:90px}}

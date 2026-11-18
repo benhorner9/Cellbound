@@ -2,55 +2,55 @@
 .coach-session-layout{display:grid;grid-template-columns:minmax(200px,.53fr) minmax(0,1.55fr);gap:16px;align-items:start}
 .coach-session-roster{position:sticky;top:16px}
 .coach-session-client-list{display:grid;gap:7px;margin-top:15px}
-.coach-session-client{width:100%;display:flex;align-items:center;gap:10px;border:1px solid #3c5747;border-radius:10px;text-align:left;padding:11px;background:#243a2e;color:#e7f1e2;min-height:62px}
-.coach-session-client:hover{background:#2a4636}.coach-session-client.selected{background:#334f38;border-color:#b4df8b}
+.coach-session-client{width:100%;display:flex;align-items:center;gap:10px;border:1px solid #dbe3ee;border-radius:10px;text-align:left;padding:11px;background:#f6f8fc;color:#24364d;min-height:62px}
+.coach-session-client:hover{background:#edf3ff}.coach-session-client.selected{background:#eaf0ff;border-color:#b6c9f4}
 .coach-session-client span:last-child{min-width:0;display:grid;gap:4px}
-.coach-session-client strong{font-size:12px}.coach-session-client small{font-size:10px;color:#a7c0aa}
+.coach-session-client strong{font-size:12px}.coach-session-client small{font-size:10px;color:#536782}
 .coach-session-client .directory-avatar{width:37px;height:37px;font-size:10px}
 .coach-session-main{min-width:0;display:grid;gap:16px}
 .coach-client-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.coach-client-heading h2{font-size:22px}.coach-client-heading p:not(.eyebrow){font-size:12px;color:#b8cbb6}
+.coach-client-heading h2{font-size:22px}.coach-client-heading p:not(.eyebrow){font-size:12px;color:#24364d}
 .coach-session-main .panel{margin:0}.coach-session-main h3{font-size:15px}
 .coach-mode-options{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}
 .coach-mode-options .seg{min-height:44px;white-space:normal;flex:1;min-width:125px}
-.coach-login-independent{border:1px solid #46664d;background:#263e2d;border-radius:10px;padding:13px}
-.coach-login-independent strong{font-size:12px}.coach-login-independent p{font-size:11px;line-height:1.6;color:#afc7b0;margin:6px 0 0}
-.coach-green-dot{color:#b8e58f}
-.coach-session-notice{font-size:11px;line-height:1.65;color:#bed0bd}
-.coach-preflight{margin:18px 0;border:1px solid #6a765a;background:#353d2f;border-radius:12px;padding:17px}
-.coach-preflight h3{font-size:15px}.coach-preflight p{font-size:12px;line-height:1.6;color:#e1d7ba}
-.coach-safety-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #65705b;padding:13px 0;flex-wrap:wrap}
+.coach-login-independent{border:1px solid #dbe3ee;background:#f6f8fc;border-radius:10px;padding:13px}
+.coach-login-independent strong{font-size:12px}.coach-login-independent p{font-size:11px;line-height:1.6;color:#24364d;margin:6px 0 0}
+.coach-green-dot{color:#2956cc}
+.coach-session-notice{font-size:11px;line-height:1.65;color:#24364d}
+.coach-preflight{margin:18px 0;border:1px solid #dbe3ee;background:#f6f8fc;border-radius:12px;padding:17px}
+.coach-preflight h3{font-size:15px}.coach-preflight p{font-size:12px;line-height:1.6;color:#24364d}
+.coach-safety-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #dbe3ee;padding:13px 0;flex-wrap:wrap}
 .coach-safety-row span{font-size:11px;flex:1;min-width:170px}
-.coach-safety-confirmed{display:flex;gap:10px;padding:15px;margin:15px 0;border-radius:11px;border:1px solid #6b9064;background:#2b4d34}
-.coach-safety-confirmed span{color:#d5f1b8;font-size:20px}.coach-safety-confirmed strong{font-size:12px}.coach-safety-confirmed p{font-size:11px;color:#bbd1b5;margin-top:5px;line-height:1.55}
+.coach-safety-confirmed{display:flex;gap:10px;padding:15px;margin:15px 0;border-radius:11px;border:1px solid #dbe3ee;background:#f6f8fc}
+.coach-safety-confirmed span{color:#24364d;font-size:20px}.coach-safety-confirmed strong{font-size:12px}.coach-safety-confirmed p{font-size:11px;color:#24364d;margin-top:5px;line-height:1.55}
 .coach-session-active .panel-header{align-items:flex-start;flex-wrap:wrap}
 .coach-session-exercises{display:grid;gap:13px;margin:18px 0}
-.coach-exercise{border:1px solid #425a49;background:#22382c;border-radius:13px;padding:16px}
+.coach-exercise{border:1px solid #dbe3ee;background:#f6f8fc;border-radius:13px;padding:16px}
 .coach-exercise-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 .coach-exercise-header .eyebrow{margin-bottom:5px}.coach-exercise-header h3{font-size:17px;margin:5px 0}
-.coach-exercise-header p{font-size:11px;color:#b6c8b8}
+.coach-exercise-header p{font-size:11px;color:#24364d}
 .coach-performed-sets{display:grid;gap:6px;margin:12px 0}
-.coach-performed-set{border:1px solid #436049;background:#294432;border-radius:8px;padding:9px 11px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
-.coach-performed-set span{font-size:10px;color:#d2ead1;min-width:44px}
-.coach-performed-set strong{font-size:12px;flex:1}.coach-performed-set small{font-size:10px;color:#a4c4a8}
+.coach-performed-set{border:1px solid #dbe3ee;background:#f6f8fc;border-radius:8px;padding:9px 11px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.coach-performed-set span{font-size:10px;color:#24364d;min-width:44px}
+.coach-performed-set strong{font-size:12px;flex:1}.coach-performed-set small{font-size:10px;color:#536782}
 .coach-set-form{display:grid;grid-template-columns:repeat(3,minmax(92px,1fr));gap:9px;align-items:end;margin-top:14px}
-.coach-set-form>div{min-width:0}.coach-set-form label,.coach-skip-form label{display:block;font-size:10px;color:#bed2bd}
+.coach-set-form>div{min-width:0}.coach-set-form label,.coach-skip-form label{display:block;font-size:10px;color:#536782}
 .coach-set-form input,.coach-skip-form input{width:100%;margin-top:6px;font-size:13px;min-height:42px;box-sizing:border-box}
 .coach-set-form .coach-set-note{grid-column:span 2}.coach-set-form .btn{min-height:43px}
 .coach-skip-form{display:flex;align-items:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
 .coach-skip-form label{flex:1;min-width:180px}.coach-skip-form .btn{min-height:42px}
-.coach-skip-note{font-size:12px;color:#f3d7a8;border:1px solid #725f46;background:#4c4333;border-radius:9px;padding:12px;margin-top:15px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.coach-finish{border-top:1px solid #425b46;margin-top:15px;padding-top:20px}
-.coach-finish p{font-size:11px;color:#b8cbb5;line-height:1.5}
+.coach-skip-note{font-size:12px;color:#81521a;border:1px solid #dbe3ee;background:#f6f8fc;border-radius:9px;padding:12px;margin-top:15px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.coach-finish{border-top:1px solid #dbe3ee;margin-top:15px;padding-top:20px}
+.coach-finish p{font-size:11px;color:#24364d;line-height:1.5}
 .coach-finish label{display:block;margin:12px 0 6px;font-size:11px}
 .coach-finish textarea{width:100%;margin-bottom:15px;box-sizing:border-box}
-.coach-session-warning{font-weight:650;color:#e8c48f!important;margin-top:10px}
-.coach-history-item{border:1px solid #3d5846;border-radius:10px;background:#23392c;margin:9px 0}
+.coach-session-warning{font-weight:650;color:#81521a!important;margin-top:10px}
+.coach-history-item{border:1px solid #dbe3ee;border-radius:10px;background:#f6f8fc;margin:9px 0}
 .coach-history-item summary{padding:14px;cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .coach-history-item summary strong{font-size:12px;flex:1}
-.coach-history-item summary span{font-size:10px;color:#adc3ab}
-.coach-history-detail{border-top:1px solid #3d5846;padding:12px;display:grid;gap:8px}
+.coach-history-item summary span{font-size:10px;color:#24364d}
+.coach-history-detail{border-top:1px solid #dbe3ee;padding:12px;display:grid;gap:8px}
 .coach-history-detail>div{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px}
-.coach-history-detail>div>span{color:#b0c9b6}
+.coach-history-detail>div>span{color:#24364d}
 @media(max-width:1000px){.coach-session-layout{grid-template-columns:1fr}.coach-session-roster{position:static}.coach-session-client-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.coach-session-client-list{grid-template-columns:1fr}.coach-set-form{grid-template-columns:repeat(2,minmax(0,1fr))}.coach-set-form .coach-set-note{grid-column:1 / -1}.coach-set-form .btn{grid-column:1 / -1}.coach-exercise{padding:13px}.coach-safety-row .btn,.coach-skip-form .btn{width:100%}.coach-mode-options .seg{flex-basis:100%}.coach-session-active .panel-header{gap:8px}}

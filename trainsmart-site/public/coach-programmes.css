@@ -1,7 +1,7 @@
 /* D06 named programme builder, template library and client preview */
 .programme-header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
 .programme-header h2{font-size:24px;line-height:1.25;margin:5px 0}
-.programme-header p:not(.eyebrow){font-size:12px;line-height:1.6;color:#b4c8b6;max-width:610px}
+.programme-header p:not(.eyebrow){font-size:12px;line-height:1.6;color:#24364d;max-width:610px}
 .programme-toolbar{display:flex;gap:9px;flex-wrap:wrap}.programme-toolbar .btn{min-height:44px}
 .programme-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:17px}
 .programme-overview .stat{padding:15px}
@@ -10,13 +10,13 @@
 .programme-builder,.programme-session-container{display:grid;gap:14px}
 .programme-editor-header{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:start}
 .programme-editor-header h3{font-size:19px;margin:4px 0}
-.programme-editor-header p:not(.eyebrow){font-size:12px;color:#aec9b6}
+.programme-editor-header p:not(.eyebrow){font-size:12px;color:#24364d}
 .programme-plan-basics{margin:0!important}
 .programme-plan-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.programme-plan-fields label,.programme-exercise-form label{min-width:0;color:#bfd3bf;font-size:11px;display:grid;gap:6px}
+.programme-plan-fields label,.programme-exercise-form label{min-width:0;color:#536782;font-size:11px;display:grid;gap:6px}
 .programme-plan-fields label.programme-notes{grid-column:1/-1}
 .programme-plan-fields input,.programme-plan-fields textarea{width:100%;box-sizing:border-box;min-height:43px}
-.programme-no-rir{font-size:11px;color:#c3d8c2;line-height:1.6;margin:13px 0}
+.programme-no-rir{font-size:11px;color:#24364d;line-height:1.6;margin:13px 0}
 .programme-plan-actions,.programme-bottom-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:15px}
 .programme-plan-actions .btn,.programme-bottom-actions .btn{min-height:44px}
 .programme-plan-actions .small-muted{font-size:11px}
@@ -24,44 +24,44 @@
 .programme-session-heading,.programme-exercise-heading{display:flex;align-items:start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .programme-session-heading h3{font-size:19px;margin:5px 0}
 .programme-session-name{display:grid;gap:5px;margin:16px 0}
-.programme-session-name label{font-size:11px;color:#b2cbb3}
+.programme-session-name label{font-size:11px;color:#536782}
 .programme-session-name input{width:100%;max-width:390px;min-height:43px}
 .programme-exercise-list{display:grid;gap:11px}
-.programme-exercise{border:1px solid #426049;background:#243b2e;border-radius:12px;padding:15px}
+.programme-exercise{border:1px solid #dbe3ee;background:#f6f8fc;border-radius:12px;padding:15px}
 .programme-exercise-heading h4{font-size:16px;margin:4px 0 5px}
-.programme-exercise-id{font-size:10px;color:#95b6a3;margin:0}
-.programme-guide{font-size:11px;color:#b5cbb9;line-height:1.6}
+.programme-exercise-id{font-size:10px;color:#24364d;margin:0}
+.programme-guide{font-size:11px;color:#24364d;line-height:1.6}
 .programme-exercise-form{margin:16px 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;align-items:end}
 .programme-exercise-form input{width:100%;min-height:42px;box-sizing:border-box;font-size:12px}
 .programme-exercise-form .programme-notes{grid-column:span 2}
 .programme-exercise-form button{min-height:43px}
-.programme-add-exercise{border:1px dashed #5d805e;border-radius:10px;padding:13px;margin-top:14px;display:flex;align-items:end;flex-wrap:wrap;gap:10px}
-.programme-add-exercise label{font-size:11px;color:#bfd3bd;width:100%}
+.programme-add-exercise{border:1px dashed #dbe3ee;border-radius:10px;padding:13px;margin-top:14px;display:flex;align-items:end;flex-wrap:wrap;gap:10px}
+.programme-add-exercise label{font-size:11px;color:#536782;width:100%}
 .programme-add-exercise select{min-width:210px;max-width:470px;flex:1;min-height:43px}
 .programme-add-exercise .btn{min-height:43px}
 .programme-template-list{display:grid;gap:12px;margin:17px 0}
-.programme-template{border:1px solid #42614a;border-radius:12px;padding:16px;background:#243a2c}
+.programme-template{border:1px solid #dbe3ee;border-radius:12px;padding:16px;background:#f6f8fc}
 .programme-template-head{display:flex;align-items:start;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .programme-template-head h3{font-size:16px;margin:0 0 7px}
-.programme-template-sub,.programme-versions small{font-size:11px;color:#a7c3ac}
+.programme-template-sub,.programme-versions small{font-size:11px;color:#536782}
 .programme-template-actions{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}
 .programme-template-actions .btn{min-height:41px}
-.programme-policy{font-size:11px;color:#cde0c5;border-left:3px solid #afd891;background:#2a4531;padding:12px;margin-top:15px}
-.programme-assignment-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 0;border-bottom:1px solid #3a5544}
+.programme-policy{font-size:11px;color:#81521a;border-left:3px solid #e7d7bc;background:#fff8ed;padding:12px;margin-top:15px}
+.programme-assignment-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 0;border-bottom:1px solid #dbe3ee}
 .programme-assignment-row strong{display:block;font-size:12px}
-.programme-assignment-row small{display:block;color:#aec9ad;font-size:11px;margin-top:6px}
+.programme-assignment-row small{display:block;color:#536782;font-size:11px;margin-top:6px}
 .programme-client-preview{margin-top:20px}
-.programme-client-title{border:1px solid #577b5b;border-radius:13px;background:#2a4432;padding:20px;margin:15px 0}
+.programme-client-title{border:1px solid #dbe3ee;border-radius:13px;background:#f6f8fc;padding:20px;margin:15px 0}
 .programme-client-title h2{font-size:24px;margin:8px 0}
-.programme-client-title p:last-child{font-size:12px;color:#bdcfbc}
-.programme-client-session{border:1px solid #405f48;border-radius:12px;margin:14px 0;overflow:hidden}
-.programme-client-session h3{font-size:16px;background:#253f30;padding:15px;margin:0}
-.programme-client-exercise{padding:16px;border-top:1px solid #3c5747;display:flex;align-items:center;justify-content:space-between;gap:17px;flex-wrap:wrap}
+.programme-client-title p:last-child{font-size:12px;color:#24364d}
+.programme-client-session{border:1px solid #dbe3ee;border-radius:12px;margin:14px 0;overflow:hidden}
+.programme-client-session h3{font-size:16px;background:#f6f8fc;padding:15px;margin:0}
+.programme-client-exercise{padding:16px;border-top:1px solid #dbe3ee;display:flex;align-items:center;justify-content:space-between;gap:17px;flex-wrap:wrap}
 .programme-client-exercise strong{font-size:14px}
-.programme-client-exercise p{color:#adcbb1;font-size:12px;line-height:1.6;margin:5px 0}
+.programme-client-exercise p{color:#24364d;font-size:12px;line-height:1.6;margin:5px 0}
 .programme-client-exercise .btn{min-height:42px}
-.programme-modal-copy{font-size:12px;line-height:1.65;color:#c4d9c7}
-.programme-modal-copy code{color:#c9eea1}
+.programme-modal-copy{font-size:12px;line-height:1.65;color:#24364d}
+.programme-modal-copy code{color:#24364d}
 #programme-ai-json{min-height:230px;font-size:11px;line-height:1.6;white-space:pre;max-width:100%}
 @media(max-width:1050px){.programme-exercise-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){.programme-header h2{font-size:21px}.programme-toolbar{width:100%}.programme-toolbar .btn{flex:1}.programme-overview{gap:7px}.programme-overview .stat{padding:12px}.programme-plan-fields{grid-template-columns:1fr}.programme-exercise-form{grid-template-columns:repeat(2,minmax(0,1fr))}.programme-exercise-form .programme-notes{grid-column:1/-1}.programme-exercise-form button{grid-column:1/-1}.programme-template-actions .btn{width:100%}.programme-tabs .seg{flex:1}.programme-add-exercise select{min-width:0;width:100%}.programme-add-exercise .btn{width:100%}.programme-client-exercise .btn{width:100%}}
