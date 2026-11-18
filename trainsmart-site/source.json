@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "a461bad922110095ec05a8feaa4769d35c51ab9f",
+  "sourceCommit": "5d5eb82d81cdec8da6585426f563d6088fd450e7",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -43,5 +43,5 @@
     "coach-client-model.mjs",
     "coach-client.css"
   ],
-  "feature": "UX10 action-led coach and client app; concise copy, contextual actions, uncluttered navigation; training and nutrition logging preserved; fictional preview only"
+  "feature": "UX11 unified navy, cobalt and neutral light palette throughout all coach and client styling; UX10 cleanup retained; fictional demo only"
 }

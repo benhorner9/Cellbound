@@ -26,3 +26,6 @@ D08.2 preview role switch: top navigation includes **Coach view / Client view** 
 
 ### UX10 — product polish
 Concise labels and purposeful empty states across coach and client screens; retired planned-feature sidebar entries, duplicate headings, repeat explanatory copy and unnecessary global actions. Preserved existing sections, data contracts, review/validation and coach/client switching. Client workout skip reasons are expandable and logging actions stay accessible. One public demo warning on the coach page; sensitive-data and ingredient-review cautions retained. No backend, security-role or real-client data changes.
+
+### UX11 — unified colour system
+Retire historic green/dark component colours in all eleven legacy stylesheets. Preserve blue/white/navy styling, dark readable text on neutral surfaces, and amber/red safety states. The browser checks inspect each rendered coach navigation section plus guided onboarding contacts and every wizard step; a source regression rejects green CSS colour tokens. No workflows, client data or permissions changed.

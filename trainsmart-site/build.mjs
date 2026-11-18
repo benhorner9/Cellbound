@@ -33,7 +33,7 @@ for(const file of m.files){
   }
  }
  if(file==="coach-hub.css"){
-  body+='\n.public-demo-notice{border:1px solid #b5b069;background:#3f3f2a;color:#f6ebc1;border-radius:11px;padding:12px 16px;font-size:12px;line-height:1.6;margin:10px 0 17px}.public-demo-notice strong{display:block;margin-bottom:4px}\n';
+  body+='\n.public-demo-notice{border:1px solid #dfe5ed;background:#f8fafc;color:#536782;border-radius:11px;padding:12px 16px;font-size:12px;line-height:1.6;margin:10px 0 17px}.public-demo-notice strong{display:block;margin-bottom:4px}\n';
  }
  const output=file.replace(/\.mjs$/,".js");
  writeFileSync(join(out,output),body);

@@ -298,3 +298,58 @@ for(const [label,engine,opts] of [
   await context.close();
  }finally{await browser.close();}
 }
+
+
+// UX11: check actual rendered CSS in all sections, not just the dashboard.
+for(const [label,engine] of [["UX11 Chromium",chromium],["UX11 iPad WebKit",webkit]]){
+ const browser=await engine.launch({headless:true});
+ try{
+  const context=await browser.newContext({viewport:{width:1366,height:1024},hasTouch:engine===webkit});
+  const page=await context.newPage(),errors=[];
+  page.on("pageerror",e=>errors.push(e.message));
+  await page.goto(url,{waitUntil:"networkidle",timeout:25000});
+  await page.locator(".stat").first().waitFor({state:"visible",timeout:15000});
+  const check=async(section)=>{
+   const issues=await page.evaluate(()=>{
+    const visible=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=="hidden";
+    const green=v=>{const m=v.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);if(!m)return false;let [r,g,b]=m.slice(1).map(Number);return g>r+3&&g>b+3;};
+    return [...document.querySelectorAll("body *")].filter(visible).flatMap(e=>{
+     const cs=getComputedStyle(e);
+     return ["color","backgroundColor","borderColor","outlineColor","accentColor"].filter(p=>green(cs[p])).map(p=>({element:e.className?.baseVal||e.className||e.tagName,property:p,value:cs[p]}));
+    }).slice(0,15);
+   });
+   if(issues.length)throw Error(label+" legacy green styling in "+section+": "+JSON.stringify(issues));
+  };
+  for(const view of ["today","clients","programmes","nutrition","sessions","library","fresh","onboarding","tasks","messages"]){
+   await page.locator('.nav-link[data-view="'+view+'"]').click();
+   await page.locator('.nav-link[data-view="'+view+'"][aria-current="page"]').waitFor({state:"visible",timeout:10000});
+   await check(view);
+  }
+  await page.locator('.nav-link[data-view="fresh"]').click();
+  await page.locator('[data-action="fresh-open"]').first().click();
+  await page.locator('[data-action="wizard-go"][data-step="contacts"]').click();
+  await page.locator(".wizard-readout").waitFor({state:"visible",timeout:10000});
+  const contrast=await page.evaluate(()=>{
+   const parse=v=>v.match(/[\d.]+/g)?.slice(0,3).map(Number);
+   const lum=v=>{let a=parse(v);if(!a||a.length!==3)return null;return a.map(n=>{let x=n/255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4;}).reduce((sum,x,i)=>sum+x*[.2126,.7152,.0722][i],0);};
+   const actualBg=e=>{for(let n=e;n;n=n.parentElement){let bg=getComputedStyle(n).backgroundColor;if(bg!=="rgba(0, 0, 0, 0)"&&bg!=="transparent")return bg;}return "rgb(255,255,255)";};
+   return [".wizard-topline p:last-child",".wizard-overall span",".wizard-step-copy small",".wizard-subtitle",".wizard-explainer",".wizard-readout p",".wizard-checkline span:nth-child(2)",".wizard-checkline strong"].map(sel=>{
+    const el=document.querySelector(sel);if(!el)return {sel,ratio:0};
+    const fg=getComputedStyle(el).color,bg=actualBg(el);let a=lum(fg),b=lum(bg);return {sel,fg,bg,ratio:a===null||b===null?0:(Math.max(a,b)+.05)/(Math.min(a,b)+.05)};
+   });
+  });
+  if(contrast.some(x=>x.ratio<4.5))throw Error(label+" onboarding contrast below 4.5:1: "+JSON.stringify(contrast));
+  for(const step of ["profile","contacts","baseline","documents","training","nutrition","invite"]){
+   await page.locator('[data-action="wizard-go"][data-step="'+step+'"]').click();
+   await check("wizard/"+step);
+  }
+  await page.locator("#preview-client-switch").click();
+  await page.locator(".portal-role-switch").waitFor({state:"visible",timeout:10000});
+  await check("client/training");
+  await page.locator('[data-tab="meals"]').click();
+  await check("client/nutrition");
+  if(errors.length)throw Error(label+" UI errors "+errors.join("; "));
+  console.log(label+" PASS: all coach sections and onboarding steps, contacts 4.5:1 text contrast, both client tabs, no visible legacy green palette");
+  await context.close();
+ }finally{await browser.close();}
+}
