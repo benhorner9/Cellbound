@@ -8,7 +8,7 @@ const btn=(action,title,attributes="",variant="outline")=>'<button type="button"
 const numeric=(name,label,value,min,max,step=1)=>'<label><span>'+esc(label)+'</span><input type="number" name="'+name+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+esc(value??"")+'"></label>';
 const youtubeLink=(url,label="Watch on YouTube")=>url?'<a class="btn btn-outline btn-sm" target="_blank" rel="noopener noreferrer" href="'+esc(url)+'">'+esc(label)+' ↗</a>':"";
 function sessionCard(s,library){
- return '<section class="programme-session panel"><div class="programme-session-heading"><div><p class="eyebrow">ORDERED TRAINING SESSION</p><h3>'+esc(s.name)+'</h3></div>'+
+ return '<section class="programme-session panel"><div class="programme-session-heading"><div><h3>'+esc(s.name)+'</h3></div>'+
  btn("programme-remove-session","Remove session",'data-sid="'+esc(s.id)+'"')+'</div>'+
  '<div class="programme-session-name"><label for="programme-name-'+esc(s.id)+'">Session name</label>'+
  '<input id="programme-name-'+esc(s.id)+'" data-session-name="'+esc(s.id)+'" maxlength="90" value="'+esc(s.name)+'"></div>'+
@@ -39,7 +39,7 @@ function builder(draft,library,templates,selectedTemplateId){
  const selected=templates.find(t=>t.id===selectedTemplateId);
  const picked=selected?.versions?.length||0;
  return '<section class="programme-builder"><div class="programme-editor-header"><div><p class="eyebrow">'+(draft.source==="ai-import"?"CHATGPT DRAFT":draft.source==="saved-template"?"SAVED PLAN COPY":"MANUAL DRAFT")+'</p>'+
- '<h3>Build your programme</h3><p>Name it, add ordered sessions, select exercises and save to your library.</p></div>'+
+ '<h3>Build your programme</h3></div>'+
  '<span class="tag muted">'+metrics.sessions+' session(s) · '+metrics.exercises+' exercises</span></div>'+
  '<div class="programme-plan-basics panel"><div class="programme-plan-fields"><label>Programme name<input id="programme-draft-name" maxlength="90" value="'+esc(draft.name)+'" placeholder="e.g. Strength Foundations — 3 days"></label>'+
  '<label>Main goal<input id="programme-draft-goal" maxlength="180" value="'+esc(draft.goal)+'" placeholder="e.g. Build strength and consistency"></label>'+
@@ -50,10 +50,10 @@ function builder(draft,library,templates,selectedTemplateId){
  '<span class="small-muted">'+(selected?"Selected template currently v"+picked:"New saved plans stay independent from client assignments")+'</span></div></div>'+
  '<div class="programme-session-container">'+draft.sessions.map(s=>sessionCard(s,library)).join("")+'</div>'+
  '<div class="programme-bottom-actions">'+btn("programme-add-session","+ Add ordered session","","primary")+'</div>'+
- '<div class="library-warning"><strong>Draft only.</strong> Saving a draft or template does not publish it. A genuine client programme needs approved exercise data and the live security gates.</div></section>';
+ '<div class="library-warning"><strong>Draft only.</strong> Save a template, then assign a copy. Demo assignments only.</div></section>';
 }
 function savedList(templates,clients,library,assignments){
- return '<section class="panel"><div class="panel-header"><div><h3>Saved programme library</h3><p class="small-muted">Name once, reuse for another client, and keep earlier versions safe.</p></div><span class="tag muted">'+templates.length+' saved</span></div>'+
+ return '<section class="panel"><div class="panel-header"><div><h3>Saved programme library</h3><p class="small-muted">Reuse saved plans for other clients.</p></div><span class="tag muted">'+templates.length+' saved</span></div>'+
  (templates.length?'<div class="programme-template-list">'+templates.map(t=>{
   const current=latestTemplateVersion(t),met=programmeMetrics(current.plan);
   return '<article class="programme-template"><div class="programme-template-head"><div><h3>'+esc(t.name)+'</h3>'+
@@ -64,8 +64,8 @@ function savedList(templates,clients,library,assignments){
   btn("programme-preview-template","Preview template",'data-template-id="'+esc(t.id)+'"')+'</div>'+
   '<div class="programme-versions"><small>Versions saved: '+t.versions.map(v=>"v"+v.version).join(", ")+'</small></div></article>';
  }).join("")+'</div>':'<div class="empty"><h3>No saved programmes yet</h3><p>Start a manual plan or import AI JSON, then give it a name and select Save to library.</p></div>')+
- '<div class="programme-policy">Saving a revised template never silently updates a client who already received an older snapshot.</div></section>'+
- '<section class="panel"><h3>Client programme assignments (demo)</h3><p class="small-muted">These are independently saved examples only, not published to a real client portal.</p>'+
+ '<div class="programme-policy">Editing a template keeps earlier client copies unchanged.</div></section>'+
+ '<section class="panel"><h3>Client programme assignments (demo)</h3><p class="small-muted">Sample copies only; not published to real clients.</p>'+
  (assignments.length?assignments.slice().reverse().map(a=>'<div class="programme-assignment-row"><div><strong>'+esc(a.clientName)+' — '+esc(a.name)+'</strong><small>Template v'+a.templateVersion+' · '+(a.current?"Current example":"Previous example")+'</small></div>'+
  btn("programme-client-preview","View client experience",'data-client-id="'+esc(a.clientId)+'"')+'</div>').join(""):
  '<div class="empty"><h3>No demo client assignments</h3><p>After you save and demo-review each exercise, select Assign from a template above.</p></div>')+'</section>';
@@ -77,24 +77,24 @@ export function renderProgrammesCentre({draft,templates,assignments,library,clie
  const current=client?currentClientAssignment(assignments,client.id):null;
  let content=tab==="ai"?renderAIBriefWorkflow({brief:aiBrief,prompt:aiPrompt,reply:aiReply,clients,clientId:aiClientId}):
  tab==="saved"?savedList(templates,clients,library,assignments):
- tab==="preview"?'<section class="panel"><div class="panel-header"><div><h3>Client-facing programme preview</h3><p class="small-muted">This previews what a client would see. It is not an authenticated client account.</p></div></div>'+
+ tab==="preview"?'<section class="panel"><div class="panel-header"><div><h3>Client preview</h3><p class="small-muted">Sample view, not a secure client account.</p></div></div>'+
  '<label for="programme-client-preview-select">Fictional client</label><select id="programme-client-preview-select">'+option("","Choose a client",selectedClientId)+
  clients.filter(c=>c.status!=="Archived").map(c=>option(c.id,c.name,selectedClientId)).join("")+'</select>'+
- (current?'<div class="programme-client-preview"><div class="programme-client-title"><p class="eyebrow">TRAINSMART COACHING · EXAMPLE CLIENT VIEW</p><h2>'+esc(current.name)+'</h2><p>'+esc(current.goal||"Your training plan")+'</p></div>'+
+ (current?'<div class="programme-client-preview"><div class="programme-client-title"><p class="eyebrow">TRAINING PLAN</p><h2>'+esc(current.name)+'</h2><p>'+esc(current.goal||"Your training plan")+'</p></div>'+
  current.sessions.map((s,i)=>'<section class="programme-client-session"><h3>Session '+(i+1)+': '+esc(s.name)+'</h3>'+
  s.exercises.map(ex=>'<div class="programme-client-exercise"><div><strong>'+esc(ex.name)+'</strong><p>'+ex.prescription.workingSets+' working sets · '+
  esc(ex.prescription.repsMin===ex.prescription.repsMax?ex.prescription.repsMin:ex.prescription.repsMin+"–"+ex.prescription.repsMax)+' reps'+
  (ex.prescription.loadKg===null?"":" · "+esc(ex.prescription.loadKg)+" kg")+' · '+ex.prescription.restSeconds+'s rest</p>'+
  '<p>'+esc(ex.instructions)+'</p>'+(ex.prescription.notes?'<p class="small-muted">Coach note: '+esc(ex.prescription.notes)+'</p>':"")+'</div>'+
  (ex.youtubeUrl?youtubeLink(ex.youtubeUrl,"Watch here — YouTube"):'<span class="small-muted">No coach-approved YouTube link yet</span>')+'</div>').join("")+'</section>').join("")+'</div>':
- '<div class="empty"><h3>No example plan assigned</h3><p>Save a named template, mark its exercises demo-reviewed, and assign a copy to this fictional client.</p></div>')+'</section>':
+ '<div class="empty"><h3>No example plan assigned</h3><p>Save and review a plan, then assign it from the library.</p></div>')+'</section>':
  builder(draft,library,templates,selectedTemplateId);
- return '<div class="programme-header"><div><p class="eyebrow">TRAINING PLANS</p><h2>Training plans</h2><p>Build a programme, work from a saved plan or import a ChatGPT draft.</p></div>'+
- '<div class="programme-toolbar">'+btn("programme-new","New manual plan","","primary")+btn("programme-open-ai","Create with ChatGPT")+'</div></div>'+
- '<div class="programme-overview"><div class="stat"><p class="stat-label">Saved named plans</p><div class="stat-number">'+templates.length+'</div></div>'+
- '<div class="stat"><p class="stat-label">Demo client assignments</p><div class="stat-number">'+assignments.length+'</div></div></div>'+
+ return '<div class="programme-header"><div><h2>Your programmes</h2></div>'+
+ '<div class="programme-toolbar">'+btn("programme-new","New plan","","primary")+btn("programme-open-ai","Create with ChatGPT")+'</div></div>'+
+ '<div class="programme-overview"><div class="stat"><p class="stat-label">Saved plans</p><div class="stat-number">'+templates.length+'</div></div>'+
+ '<div class="stat"><p class="stat-label">Assigned copies</p><div class="stat-number">'+assignments.length+'</div></div></div>'+
  '<div class="programme-tabs">'+tabs.map(([id,title])=>'<button type="button" class="seg '+(tab===id?"active":"")+'" data-programme-tab="'+id+'">'+esc(title)+'</button>').join("")+'</div>'+
- '<div class="library-warning"><strong>Plan settings:</strong> Sets, reps, rest and optional load are the primary inputs. RIR is not part of the generated brief or normal builder. All AI plans require coach review.</div>'+
+ '<div class="library-warning"><strong>Plan settings:</strong> AI imports need coach review before assignment.</div>'+
  content+
  '<p class="footer-bits">Sample workspace only. Plans are not published to real clients.</p>';
 }
@@ -115,8 +115,8 @@ export function assignmentDialog(template,clients,library){
 export function renderClientProgrammeSummary(client,assignments){
  const current=currentClientAssignment(assignments,client.id);
  const prior=assignments.filter(a=>a.clientId===client.id&&!a.current);
- return '<div class="programme-client-profile"><div class="panel-header"><div><h3>Current training programme</h3><p class="small-muted">Coach-assigned snapshots stay linked to the client even without a client portal login.</p></div></div>'+
- (current?'<div class="programme-client-title"><p class="eyebrow">FICTIONAL CLIENT COPY</p><h3>'+esc(current.name)+'</h3>'+
+ return '<div class="programme-client-profile"><div class="panel-header"><div><h3>Current training programme</h3><p class="small-muted"></p></div></div>'+
+ (current?'<div class="programme-client-title"><p class="eyebrow">ASSIGNED PLAN</p><h3>'+esc(current.name)+'</h3>'+
  '<p>Saved template v'+esc(current.templateVersion)+' · '+current.sessions.length+' ordered sessions</p></div>'+
  current.sessions.map((session,i)=>'<div class="programme-client-session"><h4>Session '+(i+1)+': '+esc(session.name)+'</h4>'+
  session.exercises.map(ex=>'<div class="programme-client-exercise"><div><strong>'+esc(ex.name)+'</strong>'+
@@ -124,7 +124,7 @@ export function renderClientProgrammeSummary(client,assignments){
  '<p>'+esc(ex.instructions)+'</p></div>'+
  (ex.youtubeUrl?youtubeLink(ex.youtubeUrl,"Watch here — YouTube"):'<span class="small-muted">Coach video not supplied</span>')+'</div>').join("")+'</div>').join("")+
  (prior.length?'<p class="small-muted">'+prior.length+' previous example assignment(s) preserved as history.</p>':""):
- '<div class="empty"><h3>No programme assigned yet</h3><p>Build and save a named plan, then assign a fictional copy from the Plan library library.</p></div>')+
+ '<div class="empty"><h3>No programme assigned yet</h3><p>Save a plan, then assign it from the library.</p></div>')+
  '<div class="programme-bottom-actions"><button type="button" class="btn btn-primary" data-action="programme-open-for-client" data-client-id="'+esc(client.id)+'">Open programme builder</button></div>'+
- '<p class="small-muted">Example only. No real client account, signed documents or live programme publication.</p></div>';
+ '<p class="small-muted">Sample assignment only.</p></div>';
 }

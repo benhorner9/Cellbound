@@ -9,7 +9,7 @@ function checkLine(label,complete){
  return '<div class="wizard-checkline"><span class="'+(complete?"wizard-ok":"wizard-pending")+'">'+(complete?"✓":"○")+'</span><span>'+esc(label)+'</span><strong>'+(complete?"Confirmed":"Required")+'</strong></div>';
 }
 export function renderSetupWizard(client,e,currentStep="contacts"){
- if(!client||!e)return '<div class="empty"><h3>Select a fictional client</h3><p>Create or open a client to begin their guided enrolment.</p></div>';
+ if(!client||!e)return '<div class="empty"><h3>Select client</h3><p>Open a client to begin.</p></div>';
  const checks=setupChecks(client,e);
  const current=SETUP_STEPS.some(s=>s.id===currentStep)?currentStep:"contacts";
  const title=SETUP_STEPS.find(s=>s.id===current);
@@ -58,7 +58,7 @@ export function renderSetupWizard(client,e,currentStep="contacts"){
   }).join("");
   body='<p class="wizard-explainer">Your job now is to confirm which forms the client will receive. The client completes and signs their own paperwork <strong>after</strong> accepting the account invitation. Coach review and final activation come afterwards.</p>'+
    '<div class="wizard-progress"><span>'+required.length+' required forms assigned · '+assigned.length+' total</span><progress max="1" value="'+(e.documentPackConfirmed?1:0)+'"></progress></div>'+
-   '<div class="wizard-highlight"><p class="eyebrow">COACH CHECK · PAPERWORK PACK</p><h3>'+esc(e.documentPackConfirmed?"Paperwork pack assigned":"Check the assigned documents")+'</h3>'+
+   '<div class="wizard-highlight"><p class="eyebrow">PAPERWORK</p><h3>'+esc(e.documentPackConfirmed?"Paperwork pack assigned":"Check the assigned documents")+'</h3>'+
    '<p>'+esc(e.documentPackConfirmed?"The sample pack is prepared. No client has signed these documents.":"Review the required and optional forms below. Confirm this fictional pack when ready; a real system will use your approved templates.")+'</p>'+
    (e.documentPackConfirmed?btn("wizard-next",client.id,"Continue to new training programme"):
    btn("wizard-confirm-documents",client.id,"Confirm sample pack & continue"))+'</div>'+
@@ -73,10 +73,10 @@ export function renderSetupWizard(client,e,currentStep="contacts"){
  }else{
   const invite=inviteEligibility(client,e,false,false);
   const example=sampleInvite(client,e);
-  body='<div class="wizard-invite"><p class="eyebrow">FINAL STEP · EMAIL NOT ENABLED</p><h3>Optional welcome email and account setup</h3>'+
+  body='<div class="wizard-invite"><p class="eyebrow">INVITATION · DEMO ONLY</p><h3>Optional welcome email and account setup</h3>'+
   '<p>Clients do not need an app account to train with you. If they want their own portal, they can receive a secure, single-use link to choose a password. We do <strong>not</strong> email temporary passwords in plain text.</p>'+
   '<div class="wizard-email-preview"><p><strong>To:</strong> '+esc(example.username)+'</p><p><strong>Subject:</strong> '+esc(example.subject)+'</p><pre>'+esc(example.body)+'</pre></div>'+
-  '<p class="wizard-small-note">No email, invitation link, password or authentication user has been created in this fictional preview. The client will complete and sign actual forms only after accepting their invitation.</p>'+
+  '<p class="wizard-small-note">No email, invitation or account has been created. The client will complete and sign actual forms only after accepting their invitation.</p>'+
   '<div class="wizard-actions">'+btn("wizard-copy-email",client.id,"Copy sample email","ghost")+
   '<button class="btn btn-primary" type="button" disabled title="Requires secure backend, approved forms and new plans">Send secure invitation — unavailable</button></div>'+
   '<ul class="wizard-blockers">'+invite.reasons.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
@@ -86,10 +86,10 @@ export function renderSetupWizard(client,e,currentStep="contacts"){
  (checks[current]&&current!=="invite"&&current!=="profile"&&current!=="documents"?btn("wizard-next",client.id,"Next step →"):"")+
  '</div>';
  const count=SETUP_STEPS.filter(s=>s.id!=="invite"&&checks[s.id]).length;
- return '<div class="wizard-topline"><div><p class="eyebrow">TRAINSMART GUIDED ENROLMENT · FICTIONAL</p><h2>'+esc(client.name)+'</h2><p>'+esc(e.service==="pt"?"Personal training":e.service==="online"?"Online coaching":"Small-group training")+' · New enrolment from scratch</p></div>'+
+ return '<div class="wizard-topline"><div><p class="eyebrow">CLIENT SETUP</p><h2>'+esc(client.name)+'</h2><p>'+esc(e.service==="pt"?"Personal training":e.service==="online"?"Online coaching":"Small-group training")+' · New enrolment from scratch</p></div>'+
  btn("wizard-close",client.id,"Exit setup","ghost")+'</div>'+
  '<div class="wizard-overall"><span>'+count+' of 6 preparation stages confirmed</span><progress value="'+count+'" max="6"></progress></div>'+
  '<div class="wizard-grid"><aside class="wizard-rail">'+steps+'</aside><section class="panel wizard-panel"><p class="eyebrow">STEP '+(currentIndex+1)+' OF '+SETUP_STEPS.length+'</p>'+
  '<h2>'+esc(title.title)+'</h2><p class="wizard-subtitle">'+esc(title.help)+'</p>'+body+actions+'</section></div>'+
- '<p class="footer-bits">Fictional iPad preview only. No client information should be entered, no real invitation can be sent, and full activation remains blocked pending F00 and approved documents.</p>';
+ '<p class="footer-bits">Demo only. Do not enter real details. Invitations and activation are disabled.</p>';
 }

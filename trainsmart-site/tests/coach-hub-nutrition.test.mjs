@@ -128,7 +128,7 @@ test("D07: manual ingredient requires a source note and measured nutrient profil
 });
 test("D07: focused nutrition layout exposes goals and clear workflow navigation",()=>{
  const html=renderNutritionHub(ctx);
- for(const word of ["Daily activity","Age (18–100)","Calculate calories & macros","Approve target","Nutrition plans",
+ for(const word of ["Daily activity","Age (18–100)","Calculate targets","Approve targets","Meal planning",
  "Targets","Create plan","Meal editor","Library"]){
   assert.ok(html.includes(word),word);
  }

@@ -12,10 +12,10 @@ export function renderMessageCentre({clients,drafts,preferences,enrolments,custo
  return '<div class="message-top-metrics">'+[
   ["Drafts awaiting review",stats.draft],["Approved, not sent",stats.approved],["Coach reported sent",stats.coachMarked]
  ].map(([k,v])=>'<div class="stat"><p class="stat-label">'+esc(k)+'</p><div class="stat-number">'+v+'</div></div>').join("")+'</div>'+
- '<div class="message-commands"><div><p class="eyebrow">PERSONALISED CLIENT COMMUNICATION</p><h2>Message centre</h2><p>Client portal login is optional. You can prepare WhatsApp or email messages for clients you coach in person.</p></div>'+
+ '<div class="message-commands"><div><p class="eyebrow">MESSAGES</p><h2>Message centre</h2><p>Prepare client messages by WhatsApp or email.</p></div>'+
  '<div class="message-actions"><button type="button" class="btn btn-primary" data-action="message-new">+ New message</button>'+
  '<button type="button" class="btn btn-outline" data-action="message-template">+ Save a template</button></div></div>'+
- '<div class="message-layout"><section class="panel message-draft-list"><div class="panel-header"><h3>Outbox and drafts</h3><span class="tag muted">PREVIEW · NO ACTUAL SENDING</span></div>'+
+ '<div class="message-layout"><section class="panel message-draft-list"><div class="panel-header"><h3>Outbox and drafts</h3><span class="tag muted">DRAFTS ONLY</span></div>'+
  '<label for="message-client-filter">Client</label><select id="message-client-filter">'+option("","All fictional clients",chosen)+eligible.map(c=>option(c.id,c.name,chosen)).join("")+'</select>'+
  '<div class="message-filter-row">'+filters.map(([id,title,count])=>'<button type="button" class="seg '+(filter===id?"active":"")+'" data-message-filter="'+esc(id)+'">'+esc(title)+' ('+count+')</button>').join("")+'</div>'+
  (shown.length?'<div class="message-list">'+shown.map(d=>{
@@ -32,9 +32,9 @@ export function renderMessageCentre({clients,drafts,preferences,enrolments,custo
    (d.channel==="whatsapp"&&d.status==="approved"&&ready?'<button type="button" class="btn btn-ghost btn-sm" data-action="message-copy-wa" data-id="'+esc(d.id)+'">Copy WhatsApp link</button>':"")+
    (d.status==="approved"?'<button type="button" class="btn btn-ghost btn-sm" data-action="message-mark-sent" data-id="'+esc(d.id)+'">I sent this externally</button>':"")+
    '</div></article>';
- }).join("")+'</div>':'<div class="empty"><h3>No messages here yet</h3><p>Choose a fictional client and a template to prepare your first message.</p></div>')+'</section>'+
+ }).join("")+'</div>':'<div class="empty"><h3>No messages here yet</h3><p>Select a client and template.</p></div>')+'</section>'+
  '<aside class="message-aside"><section class="panel"><div class="panel-header"><h3>Client contact preferences</h3></div>'+
- '<p class="small-muted">These choices are independent of whether a client uses TrainSmart login. They apply only to normal coaching communications, not marketing.</p>'+
+ '<p class="small-muted">Coaching contact preferences only, not marketing consent.</p>'+
  '<div class="message-client-preferences">'+eligible.map(c=>{
   const pref=preferences[c.id],channel=pref?.serviceChannel||"none",contact=enrolments[c.id]?.contacts||{};
   const hasContact=canContact(pref,channel,contact);
@@ -48,8 +48,8 @@ export function renderMessageCentre({clients,drafts,preferences,enrolments,custo
  '<button class="btn btn-ghost btn-sm" type="button" data-action="message-from-template" data-template-id="'+esc(t.id)+'">Use</button>'+
  (customTemplates.some(x=>x.id===t.id)?'<button class="btn btn-ghost btn-sm" type="button" data-action="message-edit-template" data-template-id="'+esc(t.id)+'">Edit</button>':"")+
  '</div>').join("")+'</div></section>'+
- '<section class="panel"><h3>Delivery safeguard</h3><p class="small-muted">Copying a message or WhatsApp link does not send it. “Coach marked sent” is your own note; it is not confirmation from WhatsApp or an email provider.</p>'+
- '<p class="message-block-note">No automatic email, WhatsApp, SMS or real client notification is enabled.</p></section></aside></div>';
+ '<section class="panel"><h3>Delivery safeguard</h3><p class="small-muted">Copying does not send a message. Sent status is manually recorded, not verified.</p>'+
+ '<p class="message-block-note">Sending is disabled.</p></section></aside></div>';
 }
 export function messageComposeDialog({clients,selectedClientId="",draft=null,templateId="",templates=[]}){
  const list=allMessageTemplates(templates),chosen=templateId||draft?.templateId||list[0]?.id||"";
@@ -62,10 +62,10 @@ export function messageComposeDialog({clients,selectedClientId="",draft=null,tem
  option("whatsapp","WhatsApp",draft?.channel||"whatsapp")+option("email","Email",draft?.channel||"whatsapp")+'</select>'+
  '<label for="message-compose-subject">Subject / title</label><input name="subject" id="message-compose-subject" maxlength="160" required value="'+esc(draft?.subject||"")+'">'+
  '<label for="message-compose-text">Message (editable)</label><textarea name="text" id="message-compose-text" maxlength="2000" rows="6" required>'+esc(draft?.text||"")+'</textarea>'+
- '<p class="small-muted">Nothing here will be sent. Use fictional names and contact details only.</p>'};
+ '<p class="small-muted">Use sample details only. No messages are sent.</p>'};
 }
 export function messagePreferenceDialog(client,pref,contact){
- return '<p class="dialog-copy">Choose a preferred way to contact this fictional client about their coaching. Their app login remains optional. Never use this for marketing without separate permission.</p>'+
+ return '<p class="dialog-copy">Choose a coaching contact channel. Marketing requires separate permission.</p>'+
  '<p class="small-muted">Email: '+esc(contact?.email||"Not entered")+' · Phone: '+esc(contact?.phone||"Not entered")+'</p>'+
  '<label for="message-service-channel">Preferred coaching channel</label>'+
  '<select id="message-service-channel" name="channel">'+option("none","Not confirmed — block approval",pref?.serviceChannel||"none")+

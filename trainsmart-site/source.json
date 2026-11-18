@@ -1,6 +1,6 @@
 {
   "source": "benhorner9/Coaching",
-  "sourceCommit": "782302913ce23aece69eb782c5db26b2ee53f943",
+  "sourceCommit": "93e9ce5651302d3db6e7e7f0d98dbbd4dde39f7f",
   "target": "/trainsmart/",
   "demoOnly": true,
   "files": [
@@ -43,5 +43,5 @@
     "coach-client-model.mjs",
     "coach-client.css"
   ],
-  "feature": "D08.2 always-visible coach/client preview mode switch, fictional client selection and coach return view restored; D08.1 two-plan training/nutrition logs; demo only"
+  "feature": "UX10 action-led coach and client app; concise copy, contextual actions, uncluttered navigation; training and nutrition logging preserved; fictional preview only"
 }

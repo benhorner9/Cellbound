@@ -27,10 +27,9 @@
     <aside class="side" aria-label="Coach Hub navigation">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">TS<span>.</span></div>
-        <div><strong>TrainSmart</strong><span>COACHING PLATFORM</span></div>
+        <div><strong>TrainSmart</strong><span>COACHING</span></div>
       </div>
       <div class="sidebar-rule"></div>
-      <p class="nav-caption">WORKSPACE</p>
       <nav class="main-nav" aria-label="Coach navigation">
         <div class="nav-group">
           <span class="nav-section-label">WORKSPACE</span>
@@ -52,15 +51,8 @@
           <button class="nav-link" type="button" data-view="messages"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9 9 0 0 1-4-.9L3 21l1.9-5A8.7 8.7 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"/></svg></span> Messages</button>
         </div>
       </nav>
-      <p class="nav-caption later-caption">COMING LATER</p>
-      <div class="future-nav" aria-label="Planned sections">
-        <div class="future-link">Client progress <span>Planned</span></div>
-        <div class="future-link">Payment tracking <span>Planned</span></div>
-        <div class="future-link">Reports <span>Planned</span></div>
-      </div>
       <div class="side-bottom">
-        <div class="tiny-status"><span class="pulse"></span> ISOLATED FICTIONAL PREVIEW</div>
-        <p>No live clients, no database writes, no messages sent.</p>
+        <div class="tiny-status"><span class="pulse"></span> FICTIONAL PREVIEW</div>
         <button class="text-reset" id="reset-preview" type="button">Reset demo data</button>
       </div>
     </aside>
@@ -83,9 +75,9 @@
           <div class="page-heading-actions"><a class="btn btn-outline nutrition-shortcut" href="#nutrition" id="nutrition-shortcut">Open nutrition</a>
           <button id="add-task" class="btn btn-primary" type="button"><span aria-hidden="true">＋</span> New task</button></div>
         </div>
-        <div class="notice" role="note"><strong>Preview workspace.</strong> Sample clients only. Changes stay in this browser session; no live client records are connected.</div>
+        <div class="notice" role="note" id="workspace-demo-note"><strong>Demo only.</strong> Use fictional data. Changes stay in this tab; no real records or messages are connected.</div>
         <div id="view-content" aria-live="polite"></div>
-        <footer class="foot"><span>TRAINSMART COACHING</span><span>Private preview · Example records</span></footer>
+        
       </main>
     </div>
   </div>
@@ -108,7 +100,7 @@
     <div class="notice"><strong>Demo only</strong> — use fictional names and details. This form does not save to Supabase or contact real clients.</div>
     <form id="client-form">
       <input type="hidden" name="clientId" id="client-id">
-      <label for="client-name">Fictional client name</label><input id="client-name" name="name" maxlength="80" autocomplete="off" required placeholder="e.g. Demo Client">
+      <label for="client-name">Client name (sample)</label><input id="client-name" name="name" maxlength="80" autocomplete="off" required placeholder="e.g. Demo Client">
       <label for="client-service">Type of coaching (new clients only)</label><select id="client-service" name="service"><option value="pt">Personal training</option><option value="online">Online coaching</option><option value="group">Small-group training</option></select>
       <label for="client-goal">Main coaching goal</label><input id="client-goal" name="goal" maxlength="280" required placeholder="e.g. Improve strength and mobility">
       <div class="form-grid">
@@ -118,9 +110,9 @@
         <div><label for="client-duration">Session length (minutes)</label><input type="number" id="client-duration" name="sessionMinutes" min="15" max="180" step="5" value="45" required></div>
       </div>
       <label for="client-equipment">Available equipment</label><textarea id="client-equipment" name="equipment" rows="2" maxlength="280" placeholder="e.g. TrainSmart Gym, dumbbells, bands"></textarea>
-      <label for="client-notes">Coach-only fictional notes</label><textarea id="client-notes" name="privateNotes" rows="3" maxlength="1000" placeholder="No real client or health information here"></textarea>
+      <label for="client-notes">Coach notes (sample)</label><textarea id="client-notes" name="privateNotes" rows="3" maxlength="1000" placeholder="No real client or health information here"></textarea>
       <p id="client-form-error" class="form-error" role="alert" hidden></p>
-      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="client-dialog">Cancel</button><button type="submit" class="btn btn-primary">Save fictional profile</button></div>
+      <div class="form-actions"><button type="button" class="btn btn-ghost" data-close-dialog="client-dialog">Cancel</button><button type="submit" class="btn btn-primary">Save profile</button></div>
     </form>
   </dialog>
   <dialog id="onboarding-intake-dialog" class="task-dialog client-dialog" aria-labelledby="onboarding-intake-title">
@@ -128,13 +120,13 @@
     <p class="dialog-copy">Enter demonstration details only. This does not send a form to a client or save anything to Supabase.</p>
     <form id="onboarding-intake-form">
       <input type="hidden" id="onboarding-intake-client" name="clientId">
-      <label for="onboarding-goal">Example training goal</label><textarea id="onboarding-goal" name="goal" rows="2" maxlength="180" required></textarea>
+      <label for="onboarding-goal">Training goal</label><textarea id="onboarding-goal" name="goal" rows="2" maxlength="180" required></textarea>
       <label for="onboarding-equipment">Available equipment</label><textarea id="onboarding-equipment" name="equipment" rows="2" maxlength="250" required></textarea>
-      <div class="form-grid"><div><label for="onboarding-days">Training days each week</label><input id="onboarding-days" type="number" name="days" min="1" max="7" step="1" required></div><div><label for="onboarding-schedule">Example preferred schedule</label><input id="onboarding-schedule" name="preferredSchedule" maxlength="180" placeholder="e.g. Mon, Wed, Fri mornings" required></div></div>
-      <label for="onboarding-food">Example meal preferences (optional)</label><textarea id="onboarding-food" name="foodPreferences" rows="2" maxlength="280" placeholder="e.g. enjoys simple UK meals"></textarea>
-      <label for="onboarding-notes">Demonstration coach notes (optional)</label><textarea id="onboarding-notes" name="notes" rows="2" maxlength="320"></textarea>
+      <div class="form-grid"><div><label for="onboarding-days">Training days each week</label><input id="onboarding-days" type="number" name="days" min="1" max="7" step="1" required></div><div><label for="onboarding-schedule">Preferred schedule</label><input id="onboarding-schedule" name="preferredSchedule" maxlength="180" placeholder="e.g. Mon, Wed, Fri mornings" required></div></div>
+      <label for="onboarding-food">Meal preferences (optional)</label><textarea id="onboarding-food" name="foodPreferences" rows="2" maxlength="280" placeholder="e.g. enjoys simple UK meals"></textarea>
+      <label for="onboarding-notes">Coach notes (optional)</label><textarea id="onboarding-notes" name="notes" rows="2" maxlength="320"></textarea>
       <p id="onboarding-intake-error" class="form-error" role="alert" hidden></p>
-      <div class="form-actions"><button class="btn btn-ghost" type="button" data-close-dialog="onboarding-intake-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save fictional intake</button></div>
+      <div class="form-actions"><button class="btn btn-ghost" type="button" data-close-dialog="onboarding-intake-dialog">Cancel</button><button class="btn btn-primary" type="submit">Save intake</button></div>
     </form>
   </dialog>
   <dialog id="fresh-contact-dialog" class="task-dialog client-dialog fresh-dialog" aria-labelledby="fresh-contact-heading">
